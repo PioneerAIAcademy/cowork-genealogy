@@ -151,9 +151,11 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | Rule | Severity | What |
 |---|---|---|
 | 1 | block | At most one newly-added-or-renamed-into-place `v{N}.json` per skill (`--diff-filter=AR` catches the candidate → released rename). |
-| 2 | block | The latest full-skill run log per touched skill is **active** — its snapshot matches the current PR-branch state. |
+| 2 | block | The latest full-skill run log per touched skill is **active** — its snapshot matches the current PR-branch state. **Cosmetic-skip:** a senior can apply the `eval-cosmetic-skip` label to a PR whose only skill-side change is behavior-neutral; the workflow sets `COSMETIC_SKIP=1` and this rule downgrades to a warning (no re-run). |
 | 2b | warn | The same run log's `judge_prompt_hash` matches the current judge prompt. Mismatch is non-blocking (judge edits are a separate cadence). |
-| 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. |
+| 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. (Cosmetic-skip keeps the *prior* run log as the target, so its already-complete `.ann.json` satisfies this with no re-grade — and because rule 3 still runs, an unannotated baseline can't be waved through.) |
+
+The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rewording, typos, comments, formatting). It is **auto-removed on every new push** (the workflow's `synchronize` step), so the bypass can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed. Full workflow + one-time `gh label create` setup: `eval/README.md` "Cosmetic-change exemption". The label must exist in the repo and seniors need Triage/Write to apply it.
 
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 

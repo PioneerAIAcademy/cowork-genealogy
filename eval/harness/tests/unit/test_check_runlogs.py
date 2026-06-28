@@ -103,3 +103,36 @@ def test_rule3_missing_dimension_still_reported(tmp_path, capsys):
     rc = check_runlogs.rule3_completeness("init-project", _log_with_one_dimension(), fn, skill_dir)
     assert rc == 1
     assert "unreviewed" in capsys.readouterr().out
+
+
+# --- Rule 2 cosmetic-skip escape hatch -----------------------------------
+
+# A snapshot entry pointing at a path that does not exist under REPO_ROOT
+# guarantees diff_snapshot_vs_disk reports a mismatch (missing-on-disk), so
+# rule 2 has something to either block on or bypass.
+_INACTIVE_LOG = {"snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"}}
+
+
+def test_rule2_blocks_without_cosmetic_skip(monkeypatch, capsys):
+    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "NOT active" in out
+    assert "eval-cosmetic-skip" in out  # tells the senior the escape hatch exists
+
+
+def test_rule2_bypassed_with_cosmetic_skip(monkeypatch, capsys):
+    monkeypatch.setenv("COSMETIC_SKIP", "1")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and "eval-cosmetic-skip" in out
+
+
+def test_rule2_skip_zero_does_not_bypass(monkeypatch, capsys):
+    """Only COSMETIC_SKIP == '1' bypasses; '0' (label absent) still blocks."""
+    monkeypatch.setenv("COSMETIC_SKIP", "0")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    assert "NOT active" in capsys.readouterr().out
