@@ -28,6 +28,7 @@ test JSON and exits 0.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -185,15 +186,51 @@ _MAX_AUTO_CONCURRENCY = 8
 _GB_PER_SLOT = 2.0
 
 
-def _est_test_seconds(spec) -> int:
+def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
     """Estimated weight of a test for longest-first scheduling.
 
-    Uses the per-test wall-clock cap (`execution.max_wall_clock_seconds`),
-    which test authors raise precisely for slow tests, so it tracks real
-    duration well enough to front-load the long poles. Falls back to the
-    300s default when unset. A future refinement could read the prior run
-    log's actual `duration_ms`, but the cap needs no I/O and no coupling."""
-    return int((spec.execution or {}).get("max_wall_clock_seconds", 300))
+    Prefers the test's last-observed actual skill duration from the most
+    recent run log (sharpest — it tracks real cost, and now reflects the
+    routing short-circuit, so negative tests correctly sort to the back).
+    Falls back to the per-test wall-clock cap (`execution.max_wall_clock_
+    seconds`), which authors raise for slow tests, then to the 300s default.
+    Best-effort: with no prior run log it degrades to the cap, needing no I/O.
+    """
+    if actuals and spec.id in actuals:
+        return actuals[spec.id]
+    return float((spec.execution or {}).get("max_wall_clock_seconds", 300))
+
+
+def _load_actual_durations(runlogs_root: Path, skills: set[str]) -> dict[str, float]:
+    """Map test_id -> last-observed skill duration (seconds), read from the
+    most recent run log (by envelope `timestamp`) of each skill under test.
+
+    Drives the actual-duration weight in `_est_test_seconds`. Best-effort:
+    missing/unreadable/pre-instrumentation run logs are skipped, and the
+    caller transparently falls back to the wall-clock cap."""
+    out: dict[str, float] = {}
+    for skill in skills:
+        skill_dir = runlogs_root / "unit" / skill
+        if not skill_dir.exists():
+            continue
+        latest_ts, latest_env = "", None
+        for jf in sorted(skill_dir.glob("*.json")):
+            if jf.name.endswith(".ann.json"):
+                continue
+            try:
+                env = json.loads(jf.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                continue
+            ts = env.get("timestamp", "")
+            if ts > latest_ts:
+                latest_ts, latest_env = ts, env
+        if not latest_env:
+            continue
+        for t in latest_env.get("tests", []):
+            dur = (t.get("totals") or {}).get("duration_ms")
+            if isinstance(dur, (int, float)) and t.get("test_id"):
+                out[t["test_id"]] = dur / 1000.0
+    return out
 
 
 def _resolve_concurrency(requested: int | None) -> tuple[int, str]:
@@ -545,15 +582,21 @@ def main(argv: list[str] | None = None) -> int:
     harness_error: Exception | None = None
     # Longest-processing-time-first scheduling: submit the heaviest tests
     # earliest so a long-pole test (e.g. the 1500s record-extraction census
-    # test) can't land in the last wave and stretch the makespan tail. We
-    # estimate weight from each test's wall-clock cap — authors raise it
-    # precisely for slow tests, so it correlates with real duration without
-    # needing to parse prior run logs. The (original_index, spec) tuples keep
-    # their selection-order index, so output and run-log order are unchanged
-    # (rebuilt via enumerate(specs) below); only submission order shifts.
-    # sorted() is stable and pop() takes from the end, so we sort ascending
-    # by weight and pop the heaviest first; equal-weight ties keep order.
-    pending = sorted(enumerate(specs), key=lambda it: _est_test_seconds(it[1]))
+    # test) can't land in the last wave and stretch the makespan tail. Weight
+    # is each test's last-observed actual duration when a prior run log exists
+    # (sharpest, and reflects the negative-test short-circuit), else its
+    # wall-clock cap, else 300s. The (original_index, spec) tuples keep their
+    # selection-order index, so output and run-log order are unchanged (rebuilt
+    # via enumerate(specs) below); only submission order shifts. sorted() is
+    # stable and pop() takes from the end, so we sort ascending by weight and
+    # pop the heaviest first; equal-weight ties keep order.
+    actual_durations = _load_actual_durations(
+        paths.runlogs_root, {s.skill for s in specs}
+    )
+    pending = sorted(
+        enumerate(specs),
+        key=lambda it: _est_test_seconds(it[1], actual_durations),
+    )
     stop_submitting = False
     total = len(specs)
     done_n = 0
