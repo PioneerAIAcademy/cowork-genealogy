@@ -34,8 +34,12 @@ $(JS_DEPS): package.json pnpm-lock.yaml
 	@touch $@
 
 # Genealogy engine deps. Reinstall when the engine manifest/lockfile changes.
+# Use `npm ci`: it installs exactly from the lockfile and never rewrites it, so
+# builds can't dirty package-lock.json (some npm versions re-normalize the `libc`
+# tags on rolldown's optional binaries). It hard-fails if package.json and the
+# lockfile drift out of sync — run `npm install` in $(ENGINE_DIR) to re-sync.
 $(ENGINE_DEPS): $(ENGINE_DIR)/package.json $(ENGINE_DIR)/package-lock.json
-	cd $(ENGINE_DIR) && npm install
+	cd $(ENGINE_DIR) && npm ci
 	@touch $@
 
 # Genealogy engine build. Real-agent LOCAL runs fork this compiled entrypoint
@@ -220,13 +224,30 @@ harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv a
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill
-eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding the engine first: make eval-skill SKILL=tree-edit
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
 	# source/deps changed, so the harness's "mcp-server build is stale" check
 	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
 	# candidate. uv auto-syncs the harness venv on invocation.
+	#
+	# SKILL may name several skills (quote them): make eval-skill SKILL="tree-edit timeline".
+	# They share one bounded pool — the safe way to cover multiple skills — and
+	# each writes its own releasable run log. Do NOT instead launch several
+	# `make eval-skill` processes at once; concurrent SDK subprocesses SIGKILL.
+	#
+	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
+	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
+	# 16 GiB machine resolves to 8). Override for a bigger box or tighter API
+	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
-	cd eval/harness && uv run python run_tests.py --skill $(SKILL)
+	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
+
+.PHONY: eval-timings
+eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
+	# Reads the timing instrumentation already in the run logs — does NOT
+	# re-run anything. Use it to spot makespan long poles and the stall tax
+	# week over week. TOP overrides how many slowest tests to list.
+	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
 
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
@@ -259,8 +280,11 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
 	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	# Keep the machine awake for the whole run — see eval/README.md "Keep the
+	# machine awake" (a sleep inflates real-clock time; the harness flags it).
+	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
 
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)

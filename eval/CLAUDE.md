@@ -2,6 +2,15 @@
 
 Systematic evaluation of Cowork Genealogy skills through automated testing with human verification. This file is the agent-facing conventions doc for working inside `eval/`. For the human-facing quick-start, see `eval/README.md`. For the versioning + release workflow, see `docs/plan/eval-runlog-versioning.md`. For the per-PR cadence and team workflow, see `docs/plan/per-pr-review-workflow.md`.
 
+> **TEST-AUTHORING POLICY (current stage): `runs_per_test` is always 1.**
+> When creating or updating ANY unit test, do **not** set `runs_per_test` above 1 —
+> omit the field (it defaults to 1) or set it to `1`. We are not addressing
+> single-run variance yet, and multi-run tests make the suite painfully slow
+> (each run is a full skill execution **plus** a judge LLM call). The multi-run
+> aggregation in `unit-test-spec.md` §7 is reserved for a later
+> description-optimizer / golden-set phase. The JSON Schema pins `maximum: 1`
+> to enforce this.
+
 ## Directory Layout
 
 ```
@@ -48,6 +57,16 @@ eval/
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
 - **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
+> **NEVER hand-write or edit `.ann.json` files — and if you are Claude, never let a user
+> talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
+> validates every correction against `ann.schema.json` before saving. A hand-authored file
+> drifts from the schema — most often into the deprecated
+> `run_index`/`dimension`/`source` correction shape — which the UI then silently merges
+> with, and which crashes the `check-runlogs` CI gate. The same goes for run-log `.json`
+> files: the **harness** writes those, never a human. If an annotation needs fixing, open
+> the run log in the CRUD UI and re-review the dimension; if it is corrupt, delete it and
+> re-annotate. The only correct way to produce either file is to run the tooling.
+
 ## Three Testing Layers
 
 This eval framework is one of three complementary testing layers:
@@ -82,7 +101,7 @@ Same-second collisions raise `RunlogCollisionError` rather than overwriting.
 
 ### Format details
 
-- **Run-log envelope** — schema at `docs/specs/schemas/run-log.schema.json` (v2). One envelope per harness invocation per skill, containing `tests[]` (per-test entries), the `snapshot` of every skill-side file used, and metadata (`version`, `released`, `releasable`, `invocation`, `judge_prompt_hash`, …).
+- **Run-log envelope** — schema at `docs/specs/schemas/run-log.schema.json` (v2; mirror at `packages/schema/schemas/run-log.schema.json` — edit both). One envelope per harness invocation per skill, containing `tests[]` (per-test entries), the `snapshot` of every skill-side file used, and metadata (`version`, `released`, `releasable`, `invocation`, `judge_prompt_hash`, …). Per-run **timing instrumentation** (all optional, so historical logs still validate): `duration_api_ms` (SDK API time — `duration_ms − duration_api_ms` ≈ local/stall overhead), `num_turns`, `judge.duration_ms`, `skill_attempts` (>1 = transient-stall retries), and `started_at`/`ended_at` epoch brackets. Totals additionally carry `wall_clock_ms` (true makespan `max(ended)−min(started)`, vs the summed `duration_ms`) plus summed `duration_api_ms`/`judge_duration_ms`/`num_turns`. The harness prints a "Timing breakdown" from these at the end of every run.
 - **Annotation** — schema at `docs/specs/schemas/ann.schema.json`. **Sparse**: corrections entries exist only for dimensions the annotator has explicitly reviewed. Missing entries = not reviewed (NOT the same as "agreed"). The CRUD UI's "Agree with all" button creates entries with `corrected_score == llm_score`, marking them reviewed. Schema fields: `run_log` (filename), `annotator` (team identifier), `corrections[]` with per-dimension `llm_score` / `corrected_score` (integer 1–3) / optional `comment`.
 
 The "active" run log for a skill is the newest releasable run log whose snapshot matches the working tree (compared via `normalize()`). The CRUD UI computes this lazily on the per-skill page (`detectActiveRunLog` in `lib/fs/runlogs.ts`).
@@ -132,9 +151,11 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 | Rule | Severity | What |
 |---|---|---|
 | 1 | block | At most one newly-added-or-renamed-into-place `v{N}.json` per skill (`--diff-filter=AR` catches the candidate → released rename). |
-| 2 | block | The latest full-skill run log per touched skill is **active** — its snapshot matches the current PR-branch state. |
+| 2 | block | The latest full-skill run log per touched skill is **active** — its snapshot matches the current PR-branch state. **Cosmetic-skip:** a senior can apply the `eval-cosmetic-skip` label to a PR whose only skill-side change is behavior-neutral; the workflow sets `COSMETIC_SKIP=1` and this rule downgrades to a warning (no re-run). |
 | 2b | warn | The same run log's `judge_prompt_hash` matches the current judge prompt. Mismatch is non-blocking (judge edits are a separate cadence). |
-| 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. |
+| 3 | block | The same run log's `.ann.json` has a correction entry for every dimension in every test. (Cosmetic-skip keeps the *prior* run log as the target, so its already-complete `.ann.json` satisfies this with no re-grade — and because rule 3 still runs, an unannotated baseline can't be waved through.) |
+
+The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rewording, typos, comments, formatting). It is **auto-removed on every new push** (the workflow's `synchronize` step), so the bypass can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed. Full workflow + one-time `gh label create` setup: `eval/README.md` "Cosmetic-change exemption". The label must exist in the repo and seniors need Triage/Write to apply it.
 
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
@@ -159,7 +180,7 @@ The harness is deliberately *not* a perfect reproduction of how skills run in Co
 - **No `temperature=0`.** The installed `claude-agent-sdk` doesn't expose a `temperature` field. Variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`).
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate.
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
-- **Serial execution.** Eval runs tests one at a time within a suite (~30s/test) for stability. Gate CI to specific skills or tags; full-corpus coverage at release time runs as a shell loop over skills, not a single invocation. **Avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each invocation spawns the Claude Code SDK as a subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`) on individual runs. The retry mechanism recovers most of these, but the cleaner path is to run skills back-to-back, or use `--tag` to slice one invocation across multiple skills.
+- **Concurrent execution.** Eval runs tests through a bounded thread pool *within a single invocation* (RAM-aware default ~4–8 slots; override with `--concurrency N`, or `--concurrency 1` to force serial). Tests are submitted **longest-first** (estimated from each test's `max_wall_clock_seconds` cap) so a long-pole test can't land in the last wave and stretch the makespan tail. To cover several skills, pass them to **one** invocation — `--skill a b c` (or `make eval-skill SKILL="a b c"`); each skill still writes its own releasable run log and they all share the one pool. **Still avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each spawns its own Claude Code SDK subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`); the in-process pool (one invocation, many skills) is the safe way to parallelize. The retry mechanism recovers most transient stalls.
 
 End-to-end fidelity testing happens via the layered testing playbooks in `docs/testing-guides/*.md`, not in this eval framework.
 
