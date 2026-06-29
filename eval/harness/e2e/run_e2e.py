@@ -71,11 +71,43 @@ def _filter_by_tag(fixture_dirs: Iterable[Path], tag: str) -> list[Path]:
     return matched
 
 
+def _print_proof_quality(result: E2eResult) -> None:
+    """Surface the judge's advisory proof-quality grade directly under the
+    verdict. The verdict is recall-only (did the final tree recover the
+    answer), so a ``pass`` can hide a missing or weak proof conclusion — this
+    line makes that visible. ``score`` is 1|2|3, or null (printed ``n/a``)
+    when no proof_summary was written, e.g. proof-conclusion never completed.
+    Advisory only: it never changes the verdict (judge_prompt.md Task 2)."""
+    pq = (result.judge_output or {}).get("proof_quality")
+    if not isinstance(pq, dict):
+        return  # judge skipped or emitted no proof-quality block
+    score = pq.get("score")
+    if score is None:
+        reason = (pq.get("rationale") or "no proof summary written").strip()
+        if len(reason) > 100:
+            reason = reason[:97] + "..."
+        print(f"  proof_quality: n/a    ({reason})")
+    else:
+        print(
+            f"  proof_quality: {score}/3    "
+            f"exhaustiveness={pq.get('exhaustiveness')} "
+            f"conflicts={pq.get('conflicts_addressed')} "
+            f"corroboration={pq.get('corroboration')} "
+            f"tier={pq.get('tier_appropriate')}"
+        )
+
+
 async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"\n=== Running {fixture_dir.name} ===")
     result, paths = await run_e2e_test(fixture_dir=fixture_dir, **kwargs)
     print(f"  verdict: {result.verdict}    stop_reason: {result.stop_reason}")
+    _print_proof_quality(result)
     print(f"  result: {paths['result']}")
+    if result.verdict != "pass":
+        print(
+            "  (scratch run — gitignored; only a passing run validates the "
+            "fixture and is committed)"
+        )
     return result
 
 
@@ -117,6 +149,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Skip the judge step (writes result with verdict=skipped)",
     )
+    parser.add_argument(
+        "--resume-on-stall",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "On a no-progress stall (see progress_stall_seconds), tear down the "
+            "hung query and resume the session — but only in a provably-safe "
+            "state (no in-flight tool call), else fail fast. ON by default "
+            "(the safe-state gate means the worst case is a clean fail-fast, "
+            "not a double-applied write); pass --no-resume-on-stall to disable."
+        ),
+    )
     args = parser.parse_args(argv)
 
     fixtures_root: Path = args.fixtures_root
@@ -141,6 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         "mcp_server_entry": args.mcp_server_entry,
         "skills_dir": args.skills_dir,
         "skip_judge": args.skip_judge,
+        "resume_on_stall": args.resume_on_stall,
     }
 
     results: list[E2eResult] = []

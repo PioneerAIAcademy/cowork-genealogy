@@ -67,6 +67,25 @@ def build_workspace(
         if skill_dir.is_dir() and not skill_dir.name.startswith("."):
             shutil.copytree(skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True)
 
+    # Write a CLAUDE.md so the base model knows it is operating as a
+    # genealogy research assistant. Without this, the model defaults to
+    # general-purpose assistant behavior and answers out-of-scope requests
+    # (e.g. programming questions) rather than declining — which causes
+    # out-of-scope negative tests (correct_skill: []) to fail even though
+    # no skill fired.
+    (target / "CLAUDE.md").write_text(
+        "# Genealogy Research Assistant\n\n"
+        "You are a genealogy research assistant. Help users with genealogy-related\n"
+        "tasks: looking up Wikipedia articles, searching historical records, building\n"
+        "family trees, analyzing genealogical documents, converting calendar dates,\n"
+        "and other genealogy research work.\n\n"
+        "If the user asks for something unrelated to genealogy — such as general\n"
+        "programming help, mathematics, or unrelated everyday questions — respond\n"
+        "with one brief sentence declining and explaining you handle genealogy\n"
+        "research only.\n",
+        encoding="utf-8",
+    )
+
     return target
 
 

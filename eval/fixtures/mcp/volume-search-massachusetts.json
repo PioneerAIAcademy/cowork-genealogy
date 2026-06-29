@@ -1,0 +1,32 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering Boston, Massachusetts immigration records 1840s. Full-text (OCR) searchable but not name-indexed.",
+  "args": {
+    "standardPlace": "~Massachusetts"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Suffolk, Massachusetts, United States",
+      "startYear": 1840,
+      "endYear": 1850
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "003345210",
+        "imageGroupPrefix": "003345210",
+        "imageCount": 389,
+        "recordSearchablePercent": 3,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Boston, Suffolk, Massachusetts, United States",
+            "dateRange": "1840-1850",
+            "recordType": "Passenger Lists, Port of Boston"
+          }
+        ]
+      }
+    ]
+  }
+}

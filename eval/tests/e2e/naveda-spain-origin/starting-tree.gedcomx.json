@@ -1,0 +1,136 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Francisco",
+          "surname": "Naveda Somarriba",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-francisco-birth",
+          "type": "Birth",
+          "date": "abt 1830",
+          "standard_date": "Abt 1830",
+          "place": "Spain",
+          "standard_place": "Spain"
+        },
+        {
+          "id": "fact-francisco-nationality",
+          "type": "Nationality",
+          "value": "native of Spain"
+        },
+        {
+          "id": "fact-francisco-emigration",
+          "type": "Emigration",
+          "date": "abt 1856",
+          "standard_date": "Abt 1856",
+          "place": "Spain",
+          "standard_place": "Spain"
+        },
+        {
+          "id": "fact-francisco-residence",
+          "type": "Residence",
+          "date": "1862",
+          "standard_date": "1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "p-spouse",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Maria Josefa",
+          "surname": "Silvera",
+          "id": "p-spouse-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-josefa-residence",
+          "type": "Residence",
+          "date": "1862",
+          "standard_date": "1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "p-child-1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Maria Valentina Josefa Teofila de Jesus",
+          "surname": "Naveda Silvera",
+          "id": "p-child-1-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-valentina-birth",
+          "type": "Birth",
+          "date": "8 Jan 1862",
+          "standard_date": "8 Jan 1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico"
+        },
+        {
+          "id": "fact-valentina-christening",
+          "type": "Christening",
+          "date": "18 Jan 1862",
+          "standard_date": "18 Jan 1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "PID-TODO",
+      "person2": "p-spouse",
+      "facts": []
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "PID-TODO",
+      "child": "p-child-1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "p-spouse",
+      "child": "p-child-1",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-1",
+      "title": "Baptism of Maria Valentina Josefa Teofila de Jesus Naveda Silvera, \"México, Veracruz, registros parroquiales y diocesanos, 1590-1978,\" Santa Maria, Papantla, Veracruz, database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133 : accessed 5 July 2024), image 20 of 486.",
+      "citation": "Baptism of Maria Valentina Josefa Teofila de Jesus Naveda Silvera, \"México, Veracruz, registros parroquiales y diocesanos, 1590-1978,\" Santa Maria, Papantla, Veracruz, database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133 : accessed 5 July 2024), image 20 of 486.",
+      "url": "https://familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133"
+    },
+    {
+      "id": "src-2",
+      "title": "\"Immigrant Ancestors Project,\" online database, Center for Family History and Genealogy, Brigham Young University, entry for Francisco Naveda y [Somarriba], (http://immigrants.byu.edu/search/view_newrecord/836925 : accessed 5 July 2024).",
+      "citation": "\"Immigrant Ancestors Project,\" online database, Center for Family History and Genealogy, Brigham Young University, entry for Francisco Naveda y [Somarriba], (http://immigrants.byu.edu/search/view_newrecord/836925 : accessed 5 July 2024).",
+      "url": "http://immigrants.byu.edu/search/view_newrecord/836925"
+    }
+  ]
+}

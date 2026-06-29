@@ -356,6 +356,101 @@ def test_negative_evidence_value_describes_expectation(
     )
 
 
+# --- Tag-gated: sibling person stubs in tree.gedcomx.json ------------
+
+def test_sibling_stubs_created_in_tree(before_state, after_state, test):
+    """Tag-gated (sibling-stubs): when the subject is `child_N` on a
+    household record AND a household parent already exists in
+    tree.gedcomx.json, SKILL.md §5d requires the skill to write minimal
+    person stubs for the subject's siblings PLUS a ParentChild edge from
+    the existing parent to each new sibling. This validator structurally
+    confirms that:
+      1. tree.gedcomx.json grew at least one NEW person entry (a
+         sibling stub).
+      2. tree.gedcomx.json grew at least one NEW ParentChild
+         relationship whose `parent` is an in-tree person from before
+         and whose `child` is one of the new persons.
+      3. Each new person carries only the minimal stub shape — a
+         preferred name and gender — and NO `facts` (those belong to
+         the per-sibling assertions in research.json from step 5b).
+
+    Skips when before/after tree is unavailable so non-§5d tests aren't
+    falsely failed."""
+    if "sibling-stubs" not in test.get("tags", []):
+        pytest.skip("not a sibling-stubs scenario")
+
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
+        "tree.gedcomx.json"
+    )
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get(
+        "tree.gedcomx.json"
+    )
+    if before_tree is None or after_tree is None:
+        pytest.skip("Missing tree.gedcomx.json for diff")
+
+    before_person_ids = {
+        p.get("id") for p in before_tree.get("persons", []) if isinstance(p, dict)
+    }
+    before_rel_ids = {
+        r.get("id") for r in before_tree.get("relationships", []) if isinstance(r, dict)
+    }
+
+    new_persons = [
+        p
+        for p in after_tree.get("persons", [])
+        if isinstance(p, dict) and p.get("id") not in before_person_ids
+    ]
+    assert new_persons, (
+        "sibling-stubs scenario produced no new person entries in "
+        "tree.gedcomx.json — SKILL.md §5d trigger fired without writing "
+        "sibling stubs"
+    )
+
+    new_rels = [
+        r
+        for r in after_tree.get("relationships", [])
+        if isinstance(r, dict) and r.get("id") not in before_rel_ids
+    ]
+    new_pc_rels = [r for r in new_rels if r.get("type") == "ParentChild"]
+    new_person_ids = {p.get("id") for p in new_persons}
+    bridging = [
+        r
+        for r in new_pc_rels
+        if r.get("parent") in before_person_ids
+        and r.get("child") in new_person_ids
+    ]
+    assert bridging, (
+        "no new ParentChild relationship links an existing in-tree "
+        "parent to a newly created sibling — the stub was written but "
+        "the ParentChild edge is missing, so buildParentMob still can't "
+        "discover the sibling"
+    )
+
+    shape_errors = []
+    for p in new_persons:
+        pid = p.get("id", "?")
+        if p.get("facts"):
+            shape_errors.append(
+                f"{pid}: sibling stub has facts[] — per §5d, facts belong "
+                f"to the per-sibling assertions in research.json, not on "
+                f"the stub itself"
+            )
+        names = p.get("names") or []
+        if not any(n.get("preferred") is True for n in names):
+            shape_errors.append(
+                f"{pid}: sibling stub has no preferred name (§5d requires "
+                f"`preferred: true` on the single name entry)"
+            )
+        if p.get("gender") not in ("Male", "Female"):
+            shape_errors.append(
+                f"{pid}: sibling stub gender {p.get('gender')!r} is not "
+                f"Male/Female (§5d derives gender from the record's sex column)"
+            )
+    assert not shape_errors, (
+        "sibling stub shape violations:\n  - " + "\n  - ".join(shape_errors)
+    )
+
+
 # --- Tag-gated: record_persona_id on record_search assertions --------
 
 def test_record_persona_id_set(before_state, after_state, test):
