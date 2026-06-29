@@ -2,40 +2,51 @@
   "test": {
     "id": "ut_locality_guide_018",
     "skill": "locality-guide",
-    "name": "Locality guide for Pennsylvania, late 1800s — coal mining records",
+    "name": "Locality guide for Pennsylvania, late 1800s \u2014 coal mining records",
     "type": "positive",
-    "description": "Checks if the skill recognizes Pennsylvania’s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers.",
+    "description": "Checks if the skill recognizes Pennsylvania\u2019s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers.",
     "tags": [
       "Pennsylvania",
       "coal mining",
       "occupational records",
       "unions",
-      "archives"
+      "archives",
+      "volume-search"
     ]
   },
   "input": {
-    "user_message": "I’m researching ancestors in Pennsylvania coal mining towns during the late 1800s. What records or repositories would help trace families?",
+    "user_message": "I\u2019m researching ancestors in Pennsylvania coal mining towns during the late 1800s. What records or repositories would help trace families?",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
   "mcp_fixtures": [
-    "place-search-pennsylvania",
     "place-search-schuylkill-county",
     "place-search-luzerne-county",
     "place-search-lackawanna-county",
+    "place-search-carbon-county",
+    "place-search-cambria-county",
+    "place-search-westmoreland-county",
+    "place-search-pennsylvania",
     "collections-search-pennsylvania",
     "wikipedia-search-pennsylvania-coal-mining",
     "wikipedia-search-pennsylvania-anthracite",
     "wiki-search-pennsylvania-coal-mining",
     "wiki-search-pennsylvania-vital-records",
+    "volume-search-pennsylvania-coal",
     "wiki-place-page-any",
     "wiki-read-any",
     "external-links-search-any",
     "place-population-any",
     "place-search-all-any",
-    "collection-read-by-id"
+    "collection-read-by-id",
+    "wiki-search-any",
+    "wikipedia-search-any"
   ],
   "judge_context": [
-    "Must mention coal mining industry context. Must highlight employment registers, union rolls, census, and church records. Must not suggest modern HR databases or statewide vital registration as the main source."
+    "Must mention coal mining industry context. Must highlight employment registers, union rolls, census, and church records. Must not suggest modern HR databases or statewide vital registration as the main source.",
+    "volume_search returns 23 total results (paginated, nextPageToken present) spanning all three named counties: a 95%-indexed mine worker employment card volume in Schuylkill, and browse-only mine accident reports (Luzerne) and colliery payroll ledgers (Lackawanna). The skill should reflect that digitized coverage varies by county and access level rather than treating the multi-county region as a single uniform source."
   ]
 }

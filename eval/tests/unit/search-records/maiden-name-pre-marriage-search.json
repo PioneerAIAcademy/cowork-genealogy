@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_search_records_015",
+    "skill": "search-records",
+    "name": "Use maiden surname for pre-marriage census search on woman with multiple marriages",
+    "type": "positive",
+    "description": "The tree has three name entries for Sarah Ann Mullen (BirthName: Mullen, MarriedName: Price, MarriedName: Mielke). Plan item pli_001 targets the 1860 census — before either marriage. The skill must use the maiden surname 'Mullen' as the primary search parameter for this pre-marriage time period, not the married names. Tests whether the skill correctly selects from multiple name entries based on name type and the search date relative to marriage dates.",
+    "tags": ["search", "census", "1860", "name-variation", "maiden-name", "multiple-marriages", "plan-execution"]
+  },
+  "input": {
+    "user_message": "Execute the 1860 census search for plan item pli_001. Sarah has three name entries in the tree — her birth name Mullen and two married names (Price, Mielke). Since this is 1860 and she didn't marry until 1872, search under her maiden name.",
+    "scenario": "mullen-price-multiple-marriages"
+  },
+  "mcp_fixtures": [
+    "record-search-1860-census-mullen-sarah",
+    "record-search-price-no-results",
+    "record-search-mielke-no-results",
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The skill MUST use surname 'Mullen' (the BirthName) as the primary surname parameter for the 1860 census search. Using 'Price' or 'Mielke' as the primary surname is incorrect for a pre-marriage search and should score Correctness=1.",
+    "It is acceptable (and encouraged) for the skill to additionally search under 'Price' or 'Mielke' as surnameAlt or as follow-up variant searches. But the primary search must use the maiden surname.",
+    "The givenName should be 'Sarah' or 'Sarah Ann' — do NOT penalize for including or omitting the middle name 'Ann'.",
+    "The log entry must record the search parameters accurately in query{} and the results honestly. The fixture returns 1 match (Sarah A. Mullen in William Mullen's household).",
+    "CRITICAL for Search strategy scoring: The key signal is whether the skill recognized that pli_001 targets a date (1860) before the first marriage (1872) and therefore chose the maiden surname. Score 3 if it explicitly reasons about the name type or marriage date. Score 2 if it uses Mullen but doesn't explain why. Score 1 if it uses a married name as the primary surname.",
+    "same_person is NOT mocked in this test. If the skill does manual triage based on field comparison, accept that as sufficient — do NOT penalize for not calling same_person."
+  ]
+}

@@ -16,9 +16,10 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
+import sys
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,12 @@ from claude_agent_sdk import (
 )
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
-from e2e.stop_checker import derive_stop_reason, read_research_json, read_tree_json
+from e2e.stop_checker import (
+    derive_stop_reason,
+    read_research_json,
+    read_tree_json,
+    should_continue_run,
+)
 from e2e import judge as judge_module
 
 
@@ -45,9 +51,16 @@ DEFAULT_MCP_SERVER_ENTRY = REPO_ROOT / "packages" / "engine" / "mcp-server" / "b
 DEFAULT_RUNLOG_ROOT = REPO_ROOT / "eval" / "runlogs" / "e2e"
 DEFAULT_FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
 DEFAULT_PLUGIN_SKILLS = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
+DEFAULT_PLUGIN_AGENTS = REPO_ROOT / "packages" / "engine" / "plugin" / "agents"
 
 
 # Tools always allowed alongside MCP tools. See e2e-test-spec.md §6.
+# "Task" lets the /research orchestrator delegate to the gps-mentor
+# subagent (staged into .claude/agents/ by build_workspace). Without it,
+# the main agent cannot spawn the mentor and improvises a verdict that
+# never appends to research.json's evaluations[] — see
+# docs/specs/gps-mentor-agent-spec.md §8 and the gps-mentor staging note
+# in build_workspace below.
 BASELINE_ALLOWED_TOOLS = [
     "Read",
     "Write",
@@ -55,6 +68,7 @@ BASELINE_ALLOWED_TOOLS = [
     "Glob",
     "Grep",
     "Skill",
+    "Task",
 ]
 
 
@@ -132,10 +146,21 @@ class FixtureCaps:
     # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
     # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
     wall_clock_seconds: int = 3600  # 60 min
-    inactivity_seconds: int = 600   # 10 min between SDK messages
+    inactivity_seconds: int = 600   # 10 min with NO SDK message at all (silence)
+    # Abort (or, with resume_on_stall, resume) when the agent makes no PROGRESS
+    # — no assistant text and no tool call/result — for this long, even while the
+    # SDK keeps emitting non-progress messages (so the inactivity timer never
+    # fires). The observed stalls were exactly this: the stream stayed alive but
+    # the model made no progress for ~40 min until the wall-clock cap. Conservative
+    # default; tune down once the per-turn `timeline` shows the normal max gap.
+    progress_stall_seconds: int = 600
     tool_calls: int = 300
     max_turns: int = 250
     max_cost_usd: float = 15.0
+    # Voluntary-yield nudges allowed before an autonomous run is permitted to
+    # end. The agent sometimes narrates the next step then stops mid-loop; a
+    # Stop hook vetoes that, bounded by this cap. See should_continue_run().
+    max_continue_nudges: int = 5
 
 
 @dataclass
@@ -166,9 +191,15 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     caps = FixtureCaps(
         wall_clock_seconds=caps_raw.get("wall_clock_seconds", defaults.wall_clock_seconds),
         inactivity_seconds=caps_raw.get("inactivity_seconds", defaults.inactivity_seconds),
+        progress_stall_seconds=caps_raw.get(
+            "progress_stall_seconds", defaults.progress_stall_seconds
+        ),
         tool_calls=caps_raw.get("tool_calls", defaults.tool_calls),
         max_turns=caps_raw.get("max_turns", defaults.max_turns),
         max_cost_usd=caps_raw.get("max_cost_usd", defaults.max_cost_usd),
+        max_continue_nudges=caps_raw.get(
+            "max_continue_nudges", defaults.max_continue_nudges
+        ),
     )
     model = fixture_json.get("model") or {}
     return Fixture(
@@ -202,8 +233,25 @@ def provided_documents(fixture: Fixture) -> list[Path]:
     return sorted(p for p in d.iterdir() if p.is_file() and not p.name.startswith("."))
 
 
-def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
-    """Populate a temp dir with fixture starting state + plugin skills."""
+def build_workspace(
+    fixture: Fixture,
+    target: Path,
+    skills_dir: Path,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> Path:
+    """Populate a temp dir with fixture starting state + plugin skills + agents.
+
+    Plugin subagents (`packages/engine/plugin/agents/*.md`) are staged into
+    `.claude/agents/` as project subagents so the /research orchestrator's
+    `@plugin:gps-mentor` delegation can resolve to the real agent. Without
+    this the agent file is absent from the workspace, the orchestrator falls
+    back to an improvised generic subagent, and the mentor's verdict never
+    appends to research.json's `evaluations[]` (see
+    docs/specs/gps-mentor-agent-spec.md §8). This mirrors how the shipped
+    plugin zip carries `agents/` (scripts/package-plugin.sh); the harness
+    simply flattens it into the project scope the SDK loads via
+    setting_sources=["project"].
+    """
     target = Path(target)
     shutil.copy(fixture.starting_research_path, target / "research.json")
     shutil.copy(fixture.starting_tree_path, target / "tree.gedcomx.json")
@@ -213,6 +261,14 @@ def build_workspace(fixture: Fixture, target: Path, skills_dir: Path) -> Path:
     for skill in Path(skills_dir).iterdir():
         if skill.is_dir() and not skill.name.startswith("."):
             shutil.copytree(skill, skills_target / skill.name, dirs_exist_ok=True)
+
+    # Stage plugin subagents as project subagents (.claude/agents/<name>.md).
+    agents_dir = Path(agents_dir)
+    if agents_dir.is_dir():
+        agents_target = target / ".claude" / "agents"
+        agents_target.mkdir(parents=True, exist_ok=True)
+        for agent_file in sorted(agents_dir.glob("*.md")):
+            shutil.copy(agent_file, agents_target / agent_file.name)
 
     # Drop bundled captures into the workspace root, where an uploaded PDF
     # would land — the agent reads them by filename like a user upload.
@@ -261,6 +317,7 @@ async def _run_agent(
     fixture: Fixture,
     workspace: Path,
     mcp_server_entry: Path,
+    resume_on_stall: bool = False,
 ) -> tuple[
     list[dict[str, Any]],
     list[str],
@@ -285,6 +342,40 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
+    # Continue-nudge state: when the agent voluntarily yields before
+    # project.status == "completed" (the known "narrated next step then
+    # stopped" stall), the Stop hook vetoes the yield and tells it to resume —
+    # bounded by max_continue_nudges + a no-progress check (see
+    # should_continue_run) so a genuinely stuck run still ends and fails.
+    continue_nudges = {"n": 0}
+    last_nudge_tool_count = {"n": -1}
+
+    run_started = time.monotonic()
+
+    # Per-message timeline for forensics: [elapsed_seconds, kind]. Lets a later
+    # analysis split a run into structural vs stall time and pinpoint a
+    # no-progress gap WITHOUT a session.jsonl (which isn't reliably copied).
+    timeline: list[list[Any]] = []
+    # Stall detection tracks time since the last PROGRESS message (assistant
+    # text, a tool call, or a tool result) — not since any message, because the
+    # SDK keeps emitting non-progress messages during a hang, so a plain
+    # inactivity timer misses it (the observed stall ran to the wall-clock cap).
+    last_progress = {"t": run_started}
+    # session_id from the SDK init message — required to resume a stalled run.
+    session_id: dict[str, str | None] = {"id": None}
+    resumes = {"n": 0}  # how many times we resumed after a stall (capped)
+    MAX_RESUME = 2
+
+    def _emit(line: str) -> None:
+        """Live progress to stderr so a long, otherwise-silent run shows
+        roughly where it is. ASCII only (the genealogist team runs on Windows
+        cp1252 consoles); stdout stays clean for the CLI's own output."""
+        elapsed = int(time.monotonic() - run_started)
+        print(
+            f"  [{elapsed // 60}m{elapsed % 60:02d}s] {line}",
+            file=sys.stderr,
+            flush=True,
+        )
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
@@ -303,6 +394,7 @@ async def _run_agent(
                 f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
                 "disabled in e2e runs; recover the answer from records.\n"
             )
+            _emit(f"[blocked tree-read] {bare}")
             return {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
@@ -331,6 +423,43 @@ async def _run_agent(
             }
         return {}
 
+    async def stop_hook(_input_data, _tool_use_id, _ctx):
+        # The agent is ending its turn. In an autonomous e2e run the only
+        # valid end is project.status == "completed"; an earlier yield is the
+        # known stall. Veto it (decision=block) and tell the agent to resume,
+        # bounded by should_continue_run() so a stuck run still ends + fails.
+        research = read_research_json(workspace)
+        if not should_continue_run(
+            research=research,
+            nudges_used=continue_nudges["n"],
+            max_nudges=fixture.caps.max_continue_nudges,
+            tool_count=tool_call_count["n"],
+            tool_count_at_last_nudge=last_nudge_tool_count["n"],
+        ):
+            return {}
+        continue_nudges["n"] += 1
+        last_nudge_tool_count["n"] = tool_call_count["n"]
+        transcript.append(
+            f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
+            f"{fixture.caps.max_continue_nudges}: agent yielded before "
+            "project.status=='completed'; instructing it to resume the loop.\n"
+        )
+        _emit(
+            f"[continue-nudge {continue_nudges['n']}/"
+            f"{fixture.caps.max_continue_nudges}] agent yielded; resuming"
+        )
+        return {
+            "decision": "block",
+            "reason": (
+                "You are mid-run in an autonomous /research session and the "
+                "project is not yet complete (project.status is not "
+                "'completed'). Do not stop to report progress or announce the "
+                "next step. Re-read research.json and invoke the next GPS "
+                "sub-skill now; keep going until project.status is "
+                "'completed' or you hit a genuine, logged blocker."
+            ),
+        }
+
     options = ClaudeAgentOptions(
         cwd=str(workspace),
         setting_sources=["project"],
@@ -348,96 +477,185 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
+        # Idea 3a (speedup plan §3a): eager-load the genealogy MCP tool schemas.
+        # The bundled CLI defers MCP tool schemas above a token threshold (the
+        # ~38-tool genealogy server trips it), forcing repeated ToolSearch
+        # re-discovery (17x in the spriggs run). Forcing tool search off loads
+        # them once at session start. `env` MERGES onto the inherited environment
+        # (claude_agent_sdk subprocess_cli merges os.environ, then options.env),
+        # so this adds the var without dropping ANTHROPIC_API_KEY/PATH.
+        env={"ENABLE_TOOL_SEARCH": "true"},
         model=fixture.agent_model,
         max_turns=fixture.caps.max_turns,
-        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
+        hooks={
+            "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],
+        },
     )
 
     user_message = _render_user_message(fixture)
     transcript.append(f"# E2e run: {fixture.id}\n\n## User message\n\n```\n{user_message}\n```\n\n## Trace\n")
 
+    def _should_resume() -> bool:
+        # Resume only in a provably-safe state: the flag is on, we have a session
+        # id, no tool call is in flight (so we can't double-apply a write whose
+        # result hadn't returned), and we're under the retry cap. When unsure,
+        # DON'T resume — fall back to a clean abort. (Residual: a write that
+        # committed in the MCP server before its tool_result arrived would still
+        # look "not pending"; this gate narrows but doesn't fully close that
+        # window — acceptable for a flagged first cut.)
+        return (
+            resume_on_stall
+            and session_id["id"] is not None
+            and not pending_tool_uses
+            and resumes["n"] < MAX_RESUME
+        )
+
     async def _consume():
         nonlocal usage, error, aborted_reason
-        iterator = query(prompt=user_message, options=options).__aiter__()
-        while True:
-            try:
-                message = await asyncio.wait_for(
-                    iterator.__anext__(),
-                    timeout=fixture.caps.inactivity_seconds,
-                )
-            except StopAsyncIteration:
-                return
-            except asyncio.TimeoutError:
-                aborted_reason = "sdk_stream_silence"
-                error = (
-                    f"no SDK message within {fixture.caps.inactivity_seconds}s "
-                    "(inactivity)"
-                )
-                return
+        current_options = options
+        current_prompt = user_message
+        while True:  # session (re)start loop — re-entered only to resume a stall
+            iterator = query(prompt=current_prompt, options=current_options).__aiter__()
+            _emit("agent started" if resumes["n"] == 0
+                  else f"resumed session (attempt {resumes['n']}) after stall")
+            restart = False
+            while True:  # message loop
+                try:
+                    message = await asyncio.wait_for(
+                        iterator.__anext__(),
+                        timeout=fixture.caps.inactivity_seconds,
+                    )
+                except StopAsyncIteration:
+                    return
+                except asyncio.TimeoutError:
+                    # No SDK message at all within the window (true silence).
+                    if _should_resume():
+                        restart = True
+                        break
+                    aborted_reason = "sdk_stream_silence"
+                    error = (
+                        f"no SDK message within {fixture.caps.inactivity_seconds}s "
+                        "(inactivity)"
+                    )
+                    return
 
-            if isinstance(message, AssistantMessage):
-                for block in message.content:
-                    if isinstance(block, TextBlock):
-                        transcript.append(f"\n**assistant:** {block.text}\n")
-                    elif isinstance(block, ToolUseBlock):
-                        entry = {
-                            "tool": block.name,
-                            "args": dict(block.input or {}),
-                            "response_summary": None,
-                        }
-                        tool_calls.append(entry)
-                        pending_tool_uses[block.id] = entry
-                        args_short = _summarize_tool_response(block.input)
-                        transcript.append(
-                            f"\n**tool_use** `{block.name}` — args: {args_short}\n"
-                        )
-            elif isinstance(message, UserMessage):
-                # Tool results return as UserMessages with ToolResultBlock content.
-                content = message.content
-                if isinstance(content, list):
-                    for block in content:
-                        if isinstance(block, ToolResultBlock):
-                            entry = pending_tool_uses.pop(block.tool_use_id, None)
-                            summary = _summarize_tool_response(block.content)
-                            if entry is not None:
-                                entry["response_summary"] = summary
-                            transcript.append(f"\n**tool_result:** {summary}\n")
-            elif isinstance(message, SystemMessage):
-                # Init / config / hint messages from the SDK. Not interesting
-                # for the transcript.
-                pass
-            elif isinstance(message, ResultMessage):
-                usage = {
-                    "duration_ms": message.duration_ms,
-                    "duration_api_ms": message.duration_api_ms,
-                    "num_turns": message.num_turns,
-                    "is_error": message.is_error,
-                    "stop_reason": message.stop_reason,
-                    "total_cost_usd": message.total_cost_usd,
-                    "usage": message.usage,
-                }
-                if message.is_error and aborted_reason is None:
-                    detail = message.result or message.stop_reason or ""
-                    # The SDK surfaces a turn-cap hit as an *error result*
-                    # rather than a clean stop_reason="max_turns". Reclassify.
-                    if is_turn_cap_error(detail):
+                now = time.monotonic()
+                progressed = False
+
+                if isinstance(message, AssistantMessage):
+                    for block in message.content:
+                        if isinstance(block, TextBlock):
+                            transcript.append(f"\n**assistant:** {block.text}\n")
+                            narration = " ".join(block.text.split())
+                            if narration:
+                                _emit(narration[:200])
+                            progressed = True
+                        elif isinstance(block, ToolUseBlock):
+                            entry = {
+                                "tool": block.name,
+                                "args": dict(block.input or {}),
+                                "response_summary": None,
+                            }
+                            tool_calls.append(entry)
+                            pending_tool_uses[block.id] = entry
+                            args_short = _summarize_tool_response(block.input)
+                            transcript.append(
+                                f"\n**tool_use** `{block.name}` — args: {args_short}\n"
+                            )
+                            if block.name == "Skill":
+                                _emit(f">> skill: {(block.input or {}).get('skill', '?')}")
+                            elif block.name.startswith("mcp__"):
+                                _emit(f"   - {_bare_tool_name(block.name)}")
+                            progressed = True
+                    timeline.append([round(now - run_started, 1), "assistant"])
+                elif isinstance(message, UserMessage):
+                    # Tool results return as UserMessages with ToolResultBlock content.
+                    content = message.content
+                    if isinstance(content, list):
+                        for block in content:
+                            if isinstance(block, ToolResultBlock):
+                                entry = pending_tool_uses.pop(block.tool_use_id, None)
+                                summary = _summarize_tool_response(block.content)
+                                if entry is not None:
+                                    entry["response_summary"] = summary
+                                transcript.append(f"\n**tool_result:** {summary}\n")
+                                progressed = True
+                    timeline.append([round(now - run_started, 1), "tool_result"])
+                elif isinstance(message, SystemMessage):
+                    # Init / config / hint messages. Capture the session id (for
+                    # resume); these do NOT count as progress.
+                    sid = (getattr(message, "data", None) or {}).get("session_id")
+                    if sid:
+                        session_id["id"] = sid
+                    timeline.append(
+                        [round(now - run_started, 1), f"system:{message.subtype}"]
+                    )
+                elif isinstance(message, ResultMessage):
+                    timeline.append([round(now - run_started, 1), "result"])
+                    usage = {
+                        "duration_ms": message.duration_ms,
+                        "duration_api_ms": message.duration_api_ms,
+                        "num_turns": message.num_turns,
+                        "is_error": message.is_error,
+                        "stop_reason": message.stop_reason,
+                        "total_cost_usd": message.total_cost_usd,
+                        "usage": message.usage,
+                    }
+                    if message.is_error and aborted_reason is None:
+                        detail = message.result or message.stop_reason or ""
+                        # The SDK surfaces a turn-cap hit as an *error result*
+                        # rather than a clean stop_reason="max_turns". Reclassify.
+                        if is_turn_cap_error(detail):
+                            aborted_reason = "max_turns"
+                            error = str(detail)
+                        else:
+                            aborted_reason = "error"
+                            error = detail
+                    # Cost cap wins over a plain max_turns end: if the run both
+                    # hit the turn limit and blew the budget, the budget is the
+                    # more actionable reason. Neither overwrites an earlier abort
+                    # (e.g. a mid-stream error).
+                    if (
+                        aborted_reason is None
+                        and message.total_cost_usd is not None
+                        and message.total_cost_usd > fixture.caps.max_cost_usd
+                    ):
+                        aborted_reason = "cost_cap"
+                    if aborted_reason is None and message.stop_reason == "max_turns":
                         aborted_reason = "max_turns"
-                        error = str(detail)
-                    else:
-                        aborted_reason = "error"
-                        error = detail
-                # Cost cap wins over a plain max_turns end: if the run both
-                # hit the turn limit and blew the budget, the budget is the
-                # more actionable reason. Neither overwrites an earlier abort
-                # (e.g. a mid-stream error).
-                if (
-                    aborted_reason is None
-                    and message.total_cost_usd is not None
-                    and message.total_cost_usd > fixture.caps.max_cost_usd
-                ):
-                    aborted_reason = "cost_cap"
-                if aborted_reason is None and message.stop_reason == "max_turns":
-                    aborted_reason = "max_turns"
+
+                # Progress watchdog: a stall is "stream alive, no progress". The
+                # plain inactivity timer above misses it (messages keep arriving),
+                # which is why the observed stall burned to the wall-clock cap.
+                if progressed:
+                    last_progress["t"] = now
+                elif now - last_progress["t"] > fixture.caps.progress_stall_seconds:
+                    if _should_resume():
+                        restart = True
+                        break
+                    aborted_reason = "no_progress_stall"
+                    error = (
+                        "no progress (assistant text / tool call) for "
+                        f"{fixture.caps.progress_stall_seconds}s"
+                    )
+                    return
+
+            # Reached only on a stall in a provably-safe state: tear down the
+            # hung query and resume the same session from where it left off.
+            if not restart:
+                return
+            resumes["n"] += 1
+            try:
+                await asyncio.wait_for(iterator.aclose(), timeout=15)
+            except Exception:  # noqa: BLE001 — best-effort teardown of a hung subprocess
+                pass
+            _emit(f"stall — resuming session {session_id['id']!r} (attempt {resumes['n']})")
+            current_options = replace(options, resume=session_id["id"], fork_session=False)
+            current_prompt = (
+                "Continue from where you left off — resume the research workflow."
+            )
+            last_progress["t"] = time.monotonic()
 
     try:
         await asyncio.wait_for(_consume(), timeout=fixture.caps.wall_clock_seconds)
@@ -445,14 +663,68 @@ async def _run_agent(
         aborted_reason = "max_wall_clock_seconds"
         error = f"wall-clock timeout after {fixture.caps.wall_clock_seconds}s"
     except Exception as e:  # noqa: BLE001 — surface any SDK failure cleanly
-        aborted_reason = "error"
-        error = f"{type(e).__name__}: {e}"
+        detail = f"{type(e).__name__}: {e}"
+        # The SDK can raise the turn-cap as an exception rather than a clean
+        # ResultMessage; reclassify it to `max_turns` (a known stop) the same
+        # way the ResultMessage branch does, so it isn't mislabeled `error`.
+        aborted_reason = "max_turns" if is_turn_cap_error(detail) else "error"
+        error = detail
 
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
 
+    usage = {
+        **usage,
+        "continue_nudges": continue_nudges["n"],
+        # Stall-resume + forensics (added with the progress watchdog). `timeline`
+        # is [elapsed_seconds, kind] per SDK message — split structural vs stall
+        # time and locate a no-progress gap without a session.jsonl. `caps` makes
+        # the runlog self-describing so a `timeout` is never ambiguous again.
+        "session_id": session_id["id"],
+        "resumes": resumes["n"],
+        "resume_on_stall": resume_on_stall,
+        "timeline": timeline,
+        "caps": {
+            "wall_clock_seconds": fixture.caps.wall_clock_seconds,
+            "inactivity_seconds": fixture.caps.inactivity_seconds,
+            "progress_stall_seconds": fixture.caps.progress_stall_seconds,
+            "tool_calls": fixture.caps.tool_calls,
+            "max_turns": fixture.caps.max_turns,
+            "max_cost_usd": fixture.caps.max_cost_usd,
+        },
+    }
     return tool_calls, transcript, usage, aborted_reason, error, blocked_tree_reads
+
+
+def _find_session_transcript(workspace: Path) -> Path | None:
+    """Locate the Agent SDK's raw session JSONL for this run.
+
+    The SDK runs Claude Code as a subprocess, which writes a session transcript
+    to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
+    the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
+    is otherwise only discoverable by hand. It is strictly richer than the
+    runlog's own ``transcript.md`` (which is a lossy summary): only the JSONL has
+    per-message timestamps, per-turn token/cache usage, thinking blocks, and
+    untruncated tool payloads — everything needed to diagnose latency and cost.
+
+    Matched on the unique tempdir leaf (``e2e-<id>-<rand>``), which appears
+    verbatim in the slug, so this does not depend on the exact path-slug
+    transform. Returns the newest matching JSONL, or None if none is found.
+    """
+    projects = Path.home() / ".claude" / "projects"
+    if not projects.is_dir():
+        return None
+    leaf = workspace.name
+    candidates = [
+        p
+        for d in projects.iterdir()
+        if d.is_dir() and d.name.endswith(leaf)
+        for p in d.glob("*.jsonl")
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
 async def run_e2e_test(
@@ -462,6 +734,7 @@ async def run_e2e_test(
     mcp_server_entry: Path = DEFAULT_MCP_SERVER_ENTRY,
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
     skip_judge: bool = False,
+    resume_on_stall: bool = False,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths)."""
     fixture = load_fixture(fixture_dir)
@@ -471,7 +744,8 @@ async def run_e2e_test(
             "Run `npm run build` in packages/engine/mcp-server/ first."
         )
 
-    started_at = time.time()
+    started_at = time.time()  # real clock (counts system sleep)
+    started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
         workspace = build_workspace(fixture, Path(tmp), skills_dir)
 
@@ -486,6 +760,7 @@ async def run_e2e_test(
             fixture=fixture,
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
+            resume_on_stall=resume_on_stall,
         )
 
         final_research = read_research_json(workspace)
@@ -494,12 +769,14 @@ async def run_e2e_test(
             sdk_aborted_reason=aborted, research=final_research
         )
 
+        judge_seconds = 0.0
         if skip_judge or final_tree is None:
             # Both cases produce no verdict: --skip-judge by request, or no
             # tree for the judge to grade (agent crashed before writing one).
             judge_output: dict[str, Any] = {}
             verdict = "skipped"
         else:
+            judge_start = time.monotonic()
             try:
                 judge_output = judge_module.run_judge(
                     research_question=fixture.researcher_question,
@@ -512,9 +789,23 @@ async def run_e2e_test(
             except Exception as e:  # noqa: BLE001 — keep the run loggable
                 judge_output = {"error": f"{type(e).__name__}: {e}"}
                 verdict = "skipped"
+            judge_seconds = time.monotonic() - judge_start
 
-        wall_clock_seconds = time.time() - started_at
-        usage = {**usage, "wall_clock_seconds": wall_clock_seconds}
+        # `wall_clock_seconds` is the ACTIVE wall-clock (time.monotonic), so it
+        # matches the wall-clock cap and the stall watchdog (also monotonic) and
+        # is NOT inflated by laptop sleep. `real_clock_seconds` is the literal
+        # elapsed (time.time); `slept_seconds` (their gap) is ≈ time the machine
+        # slept, so a long idle never masquerades as a stall again. `judge_seconds`
+        # is the post-agent judge call, kept separate from the agent run.
+        active_seconds = time.monotonic() - started_mono
+        real_seconds = time.time() - started_at
+        usage = {
+            **usage,
+            "wall_clock_seconds": active_seconds,
+            "real_clock_seconds": real_seconds,
+            "slept_seconds": max(0.0, real_seconds - active_seconds),
+            "judge_seconds": judge_seconds,
+        }
 
         result = E2eResult(
             test_id=fixture.id,
@@ -538,5 +829,17 @@ async def run_e2e_test(
             final_research=final_research,
             timestamp=result.captured_at,
         )
+
+        # Copy the raw SDK session transcript next to the runlog. The runlog's
+        # transcript.md is a lossy summary; this JSONL carries per-message
+        # timestamps, per-turn token/cache usage, thinking, and untruncated
+        # payloads. Best-effort — a missing session file never fails an
+        # otherwise-successful run. Done inside the tempdir block so `workspace`
+        # is still in scope (the JSONL itself lives outside the tempdir).
+        session_jsonl = _find_session_transcript(workspace)
+        if session_jsonl is not None:
+            dest = runlog_dir / f"{paths['result'].stem}.session.jsonl"
+            shutil.copy(session_jsonl, dest)
+            paths["session"] = dest
 
     return result, paths

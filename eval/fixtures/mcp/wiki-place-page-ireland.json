@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "Ireland-specific wiki_place_page content for the County Cork / pre-Famine Ireland test (ut_locality_guide_002). Listed before wiki-place-page-any so an Ireland test gets Ireland record context instead of the US-flavored generic fallback.",
+  "args": {
+    "standardPlace": "~Ireland"
+  },
+  "response": {
+    "standardPlace": "Ireland",
+    "section": "home",
+    "title": "Ireland Genealogy",
+    "content": "# Ireland Genealogy\n\nResearching Irish ancestors before the Great Famine (pre-1845) depends heavily on church and land records, because civil registration began late.\n\n## Civil Registration\nIreland did not register births and deaths, or Roman Catholic marriages, until 1 January 1864. Non-Catholic (mostly Church of Ireland) marriages were registered from 1845. For the 1830s-1840s there are no civil birth, marriage, or death certificates — researchers must use church records instead.\n\n## Church Records\nRoman Catholic parish registers (baptisms and marriages, rarely burials) are the core source for Catholic families. Survival varies widely by parish; many Cork parishes begin in the 1810s-1830s. The National Library of Ireland holds microfilm/digital images of Catholic registers up to 1880 (free online). Church of Ireland registers are held by the Representative Church Body Library and local custody.\n\n## Land and Tax Records\nThe Tithe Applotment Books (1823-1837) list occupiers of tithe-liable land and are a key census substitute for the 1830s. Griffith's Valuation (published for Cork in the early 1850s) lists every householder and is the major substitute for the destroyed 1841/1851 censuses.\n\n## Emigration\nFamine-era emigration from Cork ports (Cobh/Queenstown) generated passenger manifests; these list whole family groups including infants, not just heads of household.\n\n## Record Loss\nThe 1922 Four Courts fire destroyed most pre-1901 census returns and many wills and government records. Church and land records held elsewhere are the surviving substitutes.",
+    "url": "https://www.familysearch.org/en/wiki/Ireland_Genealogy"
+  }
+}
