@@ -2,10 +2,9 @@
 
 ## Overview
 
-An authenticated, online MCP tool that reads a person's **data-quality
-score** from FamilySearch's person-quality-score service and returns the
-per-issue findings to the LLM as **plain English sentences** (not raw
-JSON), to keep the LLM's context lean.
+An MCP tool that reads a person's **data-quality score** from
+FamilySearch's person-quality-score service and returns the per-issue
+findings to the LLM and tries to keep the LLM's context lean.
 
 Given a FamilySearch tree-person ID, the tool calls the quality scores
 endpoint, reads the live (non-dismissed) `issues`, maps each issue's
