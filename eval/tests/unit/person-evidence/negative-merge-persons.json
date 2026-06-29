@@ -8,7 +8,7 @@
     "tags": ["near-miss", "person-evidence-vs-tree-edit", "boundary"]
   },
   "input": {
-    "user_message": "I've confirmed these two person records are the same individual — please merge them into one in the tree.",
+    "user_message": "I've confirmed that Patrick Flynn (I1) and the Patrick Flynn persona in the 1860 census record are the same individual — please merge them into one person in the tree.",
     "scenario": "mid-research-flynn"
   },
   "negative": {

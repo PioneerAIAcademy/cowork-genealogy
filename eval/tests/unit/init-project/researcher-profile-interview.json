@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_init_project_007",
+    "skill": "init-project",
+    "name": "Researcher-profile interview maps answers to normalized profile fields",
+    "type": "positive",
+    "description": "Single-turn decomposition: the user states their experience level and subscriptions in the first message, so the two-question profile interview can be answered without a follow-up. Tests that init-project maps the answers to experience_level, normalizes subscriptions to the canonical enum, and stores the verbatim narration_guidance for that level.",
+    "tags": ["initialization", "researcher-profile", "interview", "normalization", "narration-guidance", "single-turn-decomposition"]
+  },
+  "input": {
+    "user_message": "init-project: Start a new project to find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF. About me: I'm a professional genealogist, and I subscribe to ancestry.com and Newspapers.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn", "validate-research-schema"],
+  "judge_context": [
+    "`researcher_profile.experience_level` should be `professional`",
+    "`researcher_profile.subscriptions` should be normalized to the canonical enum: `[\"Ancestry\", \"Newspapers.com\"]` (case-folded, alias-mapped from 'ancestry.com' and 'Newspapers')",
+    "`researcher_profile.narration_guidance` should be the verbatim professional-level text: 'No preambles. Do the work and report results concisely. Assume fluency with GPS, BCG standards, and standard genealogy terminology.'",
+    "Should still create both research.json and tree.gedcomx.json and seed the Patrick Flynn stub from person-read-flynn",
+    "Should not leave researcher_profile at the intermediate/none default, since the user supplied explicit answers in the message"
+  ]
+}

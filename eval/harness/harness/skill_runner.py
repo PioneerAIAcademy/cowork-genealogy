@@ -150,6 +150,12 @@ class SkillRunResult:
     # unmatched-tool-call gate to distinguish Type 1 (tool doesn't exist,
     # abort) from Type 2 (wrong args to existing tool, continue to judge).
     registered_mcp_tools: set[str] = field(default_factory=set)
+    # How many skill-execution attempts this result took (1 = clean first
+    # try; >1 means transient stalls/errors forced a retry in
+    # _execute_skill_with_retry). The keystone stall-tax signal: a suite
+    # with many >1 runs is paying the cold-cache / API-stall cost the e2e
+    # perf analysis flagged. Set by the retry wrapper, not run_skill.
+    attempts: int = 1
 
 
 async def run_skill(
@@ -166,6 +172,7 @@ async def run_skill(
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     allowed_tools_override: list[str] | None = None,
+    routing_short_circuit_skills: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
@@ -204,6 +211,14 @@ async def run_skill(
     # over-limit calls without raising (the SDK swallows hook exceptions
     # in some paths).
     tool_call_count = {"n": 0}
+    # Set by the hook when a negative test routes to its `correct_skill`:
+    # the verdict is sealed the moment that skill is invoked (orchestrator
+    # `_compute_outcome` grades negatives on routing, not on downstream
+    # execution), so we deny the sub-skill launch and stop the run instead
+    # of paying for the routed-to skill's full workload. The loop reads
+    # this after consuming to force a clean (non-aborted) termination.
+    routing_resolved = {"v": False}
+    _short_circuit = routing_short_circuit_skills or set()
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
@@ -221,6 +236,25 @@ async def run_skill(
                 _observed_skill_keys.add(
                     "skill" if "skill" in tool_input else "name"
                 )
+                # Negative-test routing short-circuit: the correct skill was
+                # invoked, so the routing verdict is decided. skills_invoked
+                # already holds it (recorded just above), so denying the
+                # launch and stopping loses no grading signal while skipping
+                # the routed-to skill's (often very expensive) execution.
+                if skill_name in _short_circuit:
+                    routing_resolved["v"] = True
+                    return {
+                        "hookSpecificOutput": {
+                            "hookEventName": "PreToolUse",
+                            "permissionDecision": "deny",
+                            "permissionDecisionReason": (
+                                f"negative-test routing to {skill_name!r} "
+                                f"observed; verdict decided, stopping"
+                            ),
+                        },
+                        "continue_": False,
+                        "stopReason": "routing_resolved",
+                    }
         # Count MCP tool calls toward max_tool_calls. Block over-limit calls
         # with a permission deny so the SDK doesn't actually execute them; the
         # outer loop reads tool_call_count after the iteration ends and sets
@@ -296,6 +330,14 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            # Negative-test routing short-circuit: the hook denied the
+            # correct-skill launch and set this flag. The SDK does NOT honor
+            # the hook's `continue_: False` to end the run (it just retries
+            # other tools), so we stop consuming here — the routing verdict
+            # is already captured in skills_invoked. This is the early-exit
+            # the hook's stopReason alone can't deliver.
+            if routing_resolved["v"]:
+                return
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
@@ -363,6 +405,14 @@ async def run_skill(
     if aborted_reason is None and tool_call_count["n"] > max_tool_calls:
         aborted_reason = "max_tool_calls"
         error = f"max_tool_calls ({max_tool_calls}) exceeded"
+
+    # A routing short-circuit is a deliberate, successful early stop — not a
+    # failure. The SDK may surface the hook-initiated stop as an error/abort
+    # on the trailing ResultMessage, so clear any such state and keep the
+    # run clean. The downstream skill never ran; that's the whole point.
+    if routing_resolved["v"]:
+        aborted_reason = None
+        error = None
 
     duration_ms = (time.perf_counter() - start) * 1000.0
 
