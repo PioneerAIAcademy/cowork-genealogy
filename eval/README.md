@@ -53,11 +53,11 @@ the e2e benchmark; see
   npm install -g @anthropic-ai/claude-code
   ```
   Then run `claude` once to authenticate (browser login or paste an API key). `Setup.bat` installs the CLI for you on Windows; macOS/Linux users do this step manually. If `claude --version` returns "not recognized," the harness will fail every test with a misleading "Claude Code returned an error result: success" error even though the SKILL.md, fixtures, and tests are fine.
-- **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
+- **Anthropic API key** — required for the LLM judge (the Anthropic SDK has no subscription path). `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
   ```
-  Or set it in your shell. Claude Code subscription auth (`~/.claude/`) is supported as a fallback only when no API key is configured. See `eval/harness/harness/auth.py` for resolution rules.
+  Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
 ## Running manually (macOS / Linux)
 
