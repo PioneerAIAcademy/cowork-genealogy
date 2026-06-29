@@ -42,7 +42,7 @@
     "postcss-simple-vars": "^7.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.9"
   },
   "overrides": {
     "react-textarea-autosize": "8.5.9"

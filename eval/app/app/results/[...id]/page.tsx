@@ -709,6 +709,17 @@ const TracePane = memo(function TracePane({
   const activated = output?.activated as boolean | undefined;
   const skillsInvoked = (output?.skills_invoked as string[] | undefined) ?? [];
 
+  // Timing instrumentation. All fields are optional — they degrade
+  // gracefully on pre-instrumentation run logs and on short-circuited
+  // negative runs (no ResultMessage, so num_turns / API% are absent).
+  const durSec = (run.duration_ms ?? 0) / 1000;
+  const apiMs = run.duration_api_ms ?? 0;
+  const apiPct =
+    run.duration_ms && apiMs ? Math.round((apiMs / run.duration_ms) * 100) : null;
+  const numTurns = run.num_turns;
+  const attempts = run.skill_attempts ?? 1;
+  const judgeSec = (run.judge?.duration_ms ?? 0) / 1000;
+
   const userMessage =
     (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
   const scenarioNotes =
@@ -747,6 +758,25 @@ const TracePane = memo(function TracePane({
             </Badge>
           ))
         )}
+      </Group>
+      {/* Timing summary: the per-run instrumentation, mirroring the
+          `make eval-timings` breakdown. A low API% (or an attempts badge)
+          flags where a slow test's time actually went. */}
+      <Group gap={6} mb="xs" wrap="wrap" align="center">
+        <Text size="xs" c="dimmed">timing:</Text>
+        <Badge size="xs" variant="light" color="gray">{durSec.toFixed(0)}s skill</Badge>
+        {numTurns != null ? (
+          <Badge size="xs" variant="light" color="gray">{numTurns} turns</Badge>
+        ) : null}
+        {apiPct != null ? (
+          <Badge size="xs" variant="light" color="gray">{apiPct}% API</Badge>
+        ) : null}
+        {judgeSec > 0 ? (
+          <Badge size="xs" variant="light" color="gray">judge {judgeSec.toFixed(1)}s</Badge>
+        ) : null}
+        {attempts > 1 ? (
+          <Badge size="xs" variant="light" color="orange">{attempts} attempts</Badge>
+        ) : null}
       </Group>
       <Accordion multiple defaultValue={defaultOpen} variant="separated">
         <Accordion.Item value="user">
