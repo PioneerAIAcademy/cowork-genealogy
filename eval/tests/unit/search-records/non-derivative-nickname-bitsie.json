@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_search_records_nickname_bitsie",
+    "skill": "search-records",
+    "name": "Non-derivative nickname — search by 'Bitsie' should resolve to formal name 'Mary' via the tree's Nickname entry",
+    "type": "positive",
+    "description": "Per Clorinda's review: derivative nicknames (Bill/Billy → William, Polly/Molly → Mary) are well-covered by name-search-mechanics.md's nickname-equivalences table. Non-derivative nicknames acquired through life — community context, occupation, family disambiguation — are NOT in that table. The mid-research-jackson-nickname scenario encodes the mapping where the project state has it: tree.gedcomx.json I1 carries both a BirthName ('Mary Jackson') and a Nickname ('Bitsie Jackson'). When the user asks to search by the nickname, the skill must read the tree, detect the alias, and search by the formal name — otherwise the record_search returns zero (record_search indexes by formal name).",
+    "tags": ["search-records", "nickname", "non-derivative-nickname", "name-mapping", "tree-alias", "clorinda-review"]
+  },
+  "input": {
+    "user_message": "Search the 1880 Lancaster County, Pennsylvania census for Bitsie Jackson, per plan item pli_001. Log the result and write the sidecar.",
+    "scenario": "mid-research-jackson-nickname"
+  },
+  "mcp_fixtures": [
+    "record-search-jackson-1880-mary",
+    "record-search-jackson-bitsie-no-results"
+  ],
+  "judge_context": [
+    "Should read tree.gedcomx.json before searching and notice that person I1 has TWO names — BirthName 'Mary Jackson' (preferred) and Nickname 'Bitsie Jackson'",
+    "Should recognize that 'Bitsie' does NOT appear in the standard formal-to-nickname equivalences table in references/name-search-mechanics.md (the Mary row lists Polly, Molly, Mamie, May, Mim, Minnie — NOT Bitsie). Therefore the skill cannot rely on FamilySearch's fuzzy nickname expansion to bridge it",
+    "Should issue the record_search using `givenName: 'Mary'` (the formal BirthName from the tree) — NOT 'Bitsie'. The Bitsie search exists as a fixture only to surface the failure mode if the skill ignores the project state",
+    "Should explain to the user WHY the formal name was used: 'Bitsie' is a non-derivative nickname recorded on I1's Nickname name entry; official records (census, vital, etc.) index people by their formal name",
+    "May optionally ALSO issue a search using 'Bitsie' to confirm the empty-result fallback — but the formal-name search is the one that recovers the record",
+    "Should report the matched 1880 census record (Mary Jackson in William Jackson's household, Lancaster County) and note that it corresponds to the user's 'Bitsie Jackson' query",
+    "FOCUS GRADING NOTE for the judge: this test exists to verify the NON-DERIVATIVE NICKNAME RESOLUTION behavior (does the skill read the tree's Nickname entry and search by the formal BirthName?). The general search-records hygiene dimensions — Log quality, Sidecar correctness, sidecar payload completeness — are covered by the existing positive tests (execute-census-search, write-result-sidecar). For THIS test, those dimensions should score `pass` as long as the skill correctly issues `record_search` with the formal given name and reports the matched record back to the user. Do NOT score Log quality / Sidecar correctness / Completeness partial here purely on the basis that the skill described rather than executed an exhaustively-shaped log entry or sidecar — that is a general-mechanics concern tested elsewhere, not a nickname-resolution concern"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

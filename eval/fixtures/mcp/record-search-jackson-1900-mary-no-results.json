@@ -1,0 +1,17 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning ZERO results when the skill searches for 'Mary Jackson' in the 1900 collection. Models the real-world case Clorinda raised: in the 1900 enumeration of this household, the informant was a neighbor (not the head of household) who knew Mary only by her community nickname 'Bitsie'. The record is indexed under 'Bitsie Jackson' — the formal-name search under-matches. Fixture predicate is substring-match on givenName='~Mary' AND collection='~1900', so it fires whenever the skill searches the 1900 collection by the formal name. The skill should treat this empty result as a signal to retry using the documented Nickname from tree person I1.",
+  "args": {
+    "surname": "Jackson",
+    "givenName": "~Mary"
+  },
+  "response": {
+    "query": { "surname": "Jackson", "givenName": "Mary", "collection": "1900 Census" },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
