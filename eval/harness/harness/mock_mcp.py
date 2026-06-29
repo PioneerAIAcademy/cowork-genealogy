@@ -29,6 +29,14 @@ Current live tools:
   field renaming, and validation — exactly as production does. Without this,
   skills that write log entries directly use the tool's camelCase parameter
   names instead of the schema's snake_case field names.
+- research_append: calls the compiled TS tool to append/update an entry in a
+  research.json section (the post-migration write path for skills like
+  assertion-classification, person-evidence, hypothesis-tracking). It
+  validates-before-persist and enforces supersede-not-delete, so its result
+  reflects the actual file the skill produced — a fixture cannot. Without it
+  registered live, the migrated skills' write calls return `fixture_not_found`
+  and the model silently fails to persist (it analyzes in text but never
+  writes), which the validators and judge then grade as a write failure.
 """
 
 from __future__ import annotations
@@ -46,7 +54,7 @@ from harness.tool_catalog import default_tools_dir, load_tool_catalog
 
 # Bare tool names that are always registered as live handlers rather than
 # fixture-backed mocks. See module docstring for the rationale.
-LIVE_TOOLS: set[str] = {"validate_research_schema", "research_log_append"}
+LIVE_TOOLS: set[str] = {"validate_research_schema", "research_log_append", "research_append"}
 
 # Path to the compiled MCP server build output, used by live tool handlers.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -257,6 +265,20 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
             },
             "required": ["projectPath", "tool", "query", "outcome", "resultsExamined"],
         }
+    if tool_name == "research_append":
+        return {
+            "type": "object",
+            "properties": {
+                "projectPath": {"type": "string"},
+                "section": {"type": "string"},
+                "op": {"type": "string", "enum": ["append", "update"]},
+                "entry": {"type": "object"},
+                "entryId": {"type": "string"},
+                "fields": {"type": "object"},
+                "planId": {"type": ["string", "null"]},
+            },
+            "required": ["projectPath", "section", "op"],
+        }
     return {"type": "object", "properties": {}, "additionalProperties": True}
 
 
@@ -270,6 +292,8 @@ def _make_live_handler(
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
         return _make_log_append_handler(workspace, call_log)
+    if tool_name == "research_append":
+        return _make_research_append_handler(workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -402,6 +426,75 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
             "response_fixture": "live:research_log_append",
+            "response": response,
+        }
+        call_log.append(entry)
+        return {"content": [{"type": "text", "text": json.dumps(response)}]}
+
+    return handler
+
+
+def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """Build the live handler for research_append.
+
+    Calls the compiled TS tool via `node --input-type=module` against the
+    workspace path. The skill passes its own projectPath arg, but we always
+    override it with workspace (the harness tempdir) to avoid path drift.
+
+    Input is piped via stdin (as JSON) to avoid shell/JS string escaping
+    issues with values that may contain quotes, backslashes, or newlines.
+    """
+    append_js = _MCP_BUILD / "tools" / "research-append.js"
+
+    async def handler(args, _ws=workspace, _ajs=append_js):
+        if _ws is None or not _ajs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_ajs}"
+            response: dict[str, Any] = {
+                "ok": False,
+                "errors": [f"research_append: {reason}"],
+            }
+        else:
+            ajs_posix = str(_ajs).replace("\\", "/").replace("'", "\\'")
+            append_url = ("file:///" + ajs_posix) if sys.platform == "win32" else ajs_posix
+
+            # Override projectPath with workspace; pipe the full input via
+            # stdin so no value needs JS-string escaping.
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+
+            script = (
+                f"import {{ researchAppend }} from '{append_url}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const r = await researchAppend(input);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = subprocess.run(
+                    ["node", "--input-type=module", "--eval", script],
+                    input=json.dumps(input_obj),
+                    capture_output=True, text=True, timeout=30,
+                )
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"research_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {
+                    "ok": False,
+                    "errors": [f"research_append: {e}"],
+                }
+
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__research_append",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:research_append",
             "response": response,
         }
         call_log.append(entry)
