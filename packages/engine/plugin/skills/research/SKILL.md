@@ -88,9 +88,11 @@ user as you encounter them.
    | Assertions not yet linked to persons | `person-evidence` |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `hypothesis-tracking` |
-   | All plan items for a question are `completed` or `skipped`, and analysis above is done | `research-exhaustiveness` |
+   | All plan items for a question are `completed` or `skipped`, and analysis above is done | **Mentor gate** (`pre-exhaustiveness` on `<q_id>`), then `research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
-   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` (writes the proof and flips the question to `resolved`) |
+   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | **Mentor gate** (`conclusion-readiness` on `<q_id>`), then `proof-conclusion` |
+   | `proof-conclusion` just wrote `<ps_id>` | **Mentor gate** (`proof-critique` on `<ps_id>`) |
+   | All questions are `resolved` and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    Exhaustiveness is the last gate before proof. It evaluates a
