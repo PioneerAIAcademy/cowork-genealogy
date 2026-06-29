@@ -220,7 +220,7 @@ research_log_append({
   outcome: "partial",
   resultsExamined: 0,
   notes: "URL generated; awaiting user capture.",
-  externalSite: {
+  externalSite: {            // TOP-LEVEL — a sibling of query, NOT nested inside it; required on EVERY entry, incl. a negative/nil search
     site: "<ancestry|myheritage|findmypast|findagrave|newspapers>",
     urlGenerated: "<the exact URL you present below>",
     captureReceived: false,
