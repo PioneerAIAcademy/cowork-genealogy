@@ -118,27 +118,30 @@ in `research.json`. A question is "open" only when its `status` is
 `open` or `in_progress`. A question whose `status` is `resolved` or
 `exhaustive_declared` is **closed** and does NOT count as open here.
 
-**If there are NO open research questions** (every question is `resolved`
-/ `exhaustive_declared`, or the project has none), then evidence type
-**cannot be classified** — evidence only exists in relation to an open
-question. In that case, **do not assign or refine any `evidence_type`
-values**. Stop the Layer-3 step. **Recommend to the user, as the
-immediate next step, that they open or re-open a research question** so
-evidence-type classification can resume. Phrase this as a present-tense
-action ("Open a research question so evidence types can be classified")
--- never as a conditional about what to do later ("If you reopen a
-question, re-run this skill"). Soft-pedaling the recommendation, or
-leaving it as a "next time" note, is wrong: the user does not know that
-opening a question is the unblocking step. You may still refine Layer-2
-(information quality / informant) fields, which do not depend on a
+**If there are NO open research questions** (all `resolved` /
+`exhaustive_declared`, or none exist), evidence type **cannot be
+classified** — evidence only exists relative to an open question. Do
+**not** assign or refine any `evidence_type`; stop the Layer-3 step. As
+the **immediate** next step, recommend the user open or re-open a
+question, phrased as a present-tense action ("Open a research question so
+evidence types can be classified") — not a "next time" conditional, since
+they may not know this is the unblocking step. You may still refine
+Layer-2 (information quality / informant) fields, which don't depend on a
 question.
 
 `evidence_type` is a closed set of exactly three values: `direct` |
 `indirect` | `negative` (source of truth
 `docs/specs/research-schema-spec.md`). Decision rules:
 - **Direct**: explicitly answers a question with no inference needed.
+  A subject-identifying `name` assertion is **direct** for where/when
+  questions about that subject — finding the subject in a dated, located
+  record answers the question directly, even when the name's own `place`
+  field is null (see the Hard rule below). Do not downgrade it to
+  indirect.
 - **Indirect**: implies an answer but requires inference or
-  correlation with other facts.
+  correlation with other facts. This does **not** cover a subject-id
+  `name` assertion, whose correlation with its sibling assertions is how
+  multi-fact records work — not an inference chain.
 - **Negative**: meaningful absence of EXPECTED information. The record
   must be one where the fact SHOULD appear if true, and the absence
   must be meaningful given context.
@@ -149,35 +152,21 @@ is irrelevant to every open question — it is **not** a fourth
 `indirect`); do not set `evidence_type: "no_evidence"` — the schema
 rejects it and the write tool will refuse the entry.
 
-**Subject-identification rule.** An assertion whose value identifies
-the subject within the record — typically the `name` assertion for
-the record's principal — IS direct evidence for questions asking
-where or when the subject was, **even when the assertion's `place`
-field is null**. Finding the subject in a record dated and located
-within the question's scope answers the question directly; the
-location lives on sibling assertions (residence, place_of_event,
-event-specific facts) extracted from the same record, but the name
-assertion is what anchors the subject *in* that record. Do not
-downgrade such name assertions to `indirect` on the reasoning that
-"the name field has no place" — that misreads the role of
-correlation. The relevant correlation is between the name assertion
-and its sibling assertions on the same source; that's how all
-multi-fact records work, not an inference chain that triggers
-`indirect`.
-
 > **Hard rule — do not break it.** If a subject's `name` assertion is
 > already classified `evidence_type: direct` for a where/when question,
 > **leave it `direct`.** Never rewrite a subject-identifying name
-> assertion to `indirect`. A null `place` on the name assertion is
-> expected and is NOT a reason to downgrade. (Example: a_001, "Patrick
-> Flynn" on the 1850 census for "Where was Patrick in 1850?", stays
-> `direct` — changing it to `indirect` is wrong.)
+> assertion to `indirect`. A null/empty `place` on the name assertion is
+> **expected** and is **not** grounds to downgrade — *even when the
+> prompt invites that doubt* ("should this really be direct when the
+> place field is empty?"). The answer to that question is "yes, it stays
+> direct": the location lives on sibling residence/event assertions from
+> the same record, and the name anchors the subject in it. A missing
+> `place` on a name assertion is never, on its own, a reason to move it
+> to `indirect`. (Example: a_001, "Patrick Flynn" on the 1850 census for
+> "Where was Patrick in 1850?", stays `direct` — changing it to
+> `indirect` is wrong.)
 
 **Critical distinctions:**
-- Absence of information NOT expected in a record type is the "no
-  evidence" *concept* (e.g., parents' names missing from a marriage
-  record) — it is neither negative evidence nor an `evidence_type` value
-  (see above); such a fact is simply not classified `negative`
 - A nil search result is NOT negative evidence unless search was
   reasonably exhaustive
 - Evidence type can change when new questions are added -- update
@@ -196,25 +185,25 @@ the strongest single item. Examples:
 
 ### 6. Update assertions
 
-If steps 2-5 identified any classification field that should change --
-even on an assertion the user did not name, and even when the field the
-user asked about turns out to be correct as-is -- write those changes
-back. A question-shaped prompt ("should a_006's evidence_type really be
-direct?") does not become read-only just because the answer to the
-question is "yes, leave it." If the same analysis surfaced an incorrect
-`informant` or `informant_bias_notes` on the same or a sibling
-assertion, write the correction. Steps 6-7 run whenever any
-classification field changed during analysis, not only when the user
+Write back any classification field that should change — even on an
+assertion the user did not name, and even when the field the user asked
+about is correct as-is. A question-shaped prompt ("should a_006's
+evidence_type really be direct?") is not read-only just because the
+answer is "leave it"; if the analysis surfaced a wrong `informant` or
+`informant_bias_notes` on a sibling assertion, fix that too. Steps 6-7
+run whenever any classification field changed, not only when the user
 said "fix it."
 
-Write the refined classifications back to `research.json` in ONE
-batched `research_append` call — pass an `ops` array with one `update`
-op per assertion (never `append` — this skill only refines existing
-assertions, it never creates them). Each assertion is still its own op;
-batching changes only the number of *calls*, not the data. The whole
-batch validates once and writes once; on any per-op failure it returns
-`{ ok: false, errors: ["ops[i]: <msg>"] }` and writes NOTHING — surface
-the errors and fix the offending op:
+For every classification field that changed, you MUST actually call
+`research_append` to persist it — do not just describe the change in a
+summary table or say "change made": an unexecuted update leaves
+`research.json` unchanged and fails the task. Make it ONE batched call:
+pass an `ops` array with one `update` op per assertion (never `append` —
+this skill only refines existing assertions, it never creates them). Each
+assertion is still its own op; batching changes only the number of
+*calls*, not the data. The whole batch validates once and writes once; on
+any per-op failure it returns `{ ok: false, errors: ["ops[i]: <msg>"] }`
+and writes NOTHING — surface the errors and fix the offending op:
 
 ```
 research_append({
@@ -238,19 +227,11 @@ research_append({
 })
 ```
 
-`information_quality`, `informant_proximity`, and `evidence_type` are
-closed enums — the allowed values are exactly those listed above (source
-of truth `docs/specs/research-schema-spec.md`). Any other value (e.g.
-`no_evidence`, `analyst`) is rejected by the schema and the write tool
-refuses the entry, so do not attempt one. Pass only the classification
-fields that actually changed. You only ever
-pass classification fields; the immutable fields (`id`, `source_id`,
-`record_id`, `record_role`, `fact_type`, `value`, `structured_value`,
-`date`, `date_certainty`, `place`, `log_entry_id` — all set by
-record-extraction) are not yours to pass and the tool will not let you
-mutate them. The tool validates every op in the batch before persisting
-and writes nothing on `{ ok: false, errors }`; surface those errors to
-the user rather than retrying blindly.
+Pass only the classification fields that actually changed; the immutable
+extraction fields (set by record-extraction) are not yours to pass, and
+the tool rejects any attempt to mutate them. The tool validates every op
+in the batch before persisting and writes nothing on `{ ok: false,
+errors }` — surface those rather than retrying blindly.
 
 ### 7. Check warnings
 
@@ -309,16 +290,13 @@ knowledge, classify as secondary regardless of informant identity.
 
 ## Re-invocation behavior
 
-**Writes:** the classification fields on existing `assertions` entries in
-`research.json` — `information_quality`, `informant`,
-`informant_proximity`, `informant_bias_notes`, and `evidence_type`.
-Refines in place by assertion `id` — never creates new assertions.
+**Writes:** only the classification fields on existing `assertions` entries
+in `research.json` (`information_quality`, `informant`,
+`informant_proximity`, `informant_bias_notes`, `evidence_type`,
+`extracted_for_question_ids`), via `research_append` with `op: "update"`.
 
-**On repeat invocation:** re-evaluates the same assertions and may update
-their classification fields. Idempotent if the source/extraction story
-hasn't changed; otherwise refines toward better classification.
-
-**Do not duplicate:** never add a second assertion entry for the same
-underlying fact. If the existing assertion's classification is wrong,
-update the fields in place. Creating new assertions is
-record-extraction's job, not this skill's.
+**On repeat invocation:** re-evaluates the same assertions and refines their
+classification fields in place by assertion `id`. Idempotent when the
+source/extraction story is unchanged. **Never** creates a new assertion or
+duplicates one for the same fact — creating assertions is record-extraction's
+job; if an existing classification is wrong, update it in place.
