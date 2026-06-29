@@ -63,6 +63,13 @@ EXEMPT_TOOLS: dict[str, str] = {
         "assignment, timestamping, camelCase-to-snake_case field renaming, "
         "and validation. No fixture needed; it is always available."
     ),
+    "research_append": (
+        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
+        "implementation against the workspace research.json rather than "
+        "matching a fixture. It validates-before-persist and enforces "
+        "supersede-not-delete, so its result reflects the actual file the "
+        "skill wrote. No fixture needed; it is always available."
+    ),
 }
 
 
