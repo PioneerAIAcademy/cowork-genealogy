@@ -20,7 +20,11 @@
       "recordType": { "type": "string" },
       "count": { "type": "integer" },
       "offset": { "type": "integer" },
-      "includeFacets": { "type": "boolean" }
+      "includeFacets": { "type": "boolean" },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
     }
   },
   "response": {

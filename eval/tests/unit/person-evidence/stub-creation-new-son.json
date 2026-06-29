@@ -8,7 +8,7 @@
     "tags": ["person-evidence", "stub-creation", "new-person", "a_005"]
   },
   "input": {
-    "user_message": "The will of Thomas Flynn names 'my son James Flynn' (assertion a_005). Link it to the right person in the tree.",
+    "user_message": "Link assertion a_005 — the will of Thomas Flynn naming 'my son James Flynn' — to the correct person in the tree.",
     "scenario": "flynn-stub-needed"
   },
   "judge_context": [
