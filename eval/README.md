@@ -32,6 +32,7 @@ eval/
   Login.bat               Windows: FamilySearch login for e2e (once a day)
   CheckSetup.bat          Windows: e2e preflight (run this first)
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
+  ViewE2E.bat             Windows: load the latest e2e run into the Research Viewer
   ValidateFixture.bat     Windows: e2e stripping linter
   ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
   RunCalibration.bat      Windows: run judge calibration (maintainer only)
@@ -307,7 +308,11 @@ equivalent in parentheses:
 7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
    live run (20–60 min, $3–10).
 8. `/interpret-e2e-result` → read the verdict.
-9. If it passes, commit the fixture (and optionally its run log), and
+9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → open
+   `eval\.e2e-view` in the Research Viewer (its **Open Project** button) to
+   inspect the agent's final tree, research log, and each finding's
+   direct/indirect badge. Keep the viewer open — re-running refreshes it live.
+10. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
 
 ### Keep the machine awake during a run
