@@ -17,6 +17,7 @@
     "Summary should explain where marriage records are held and how to search them on FamilySearch",
     "Should not invent information the wiki did not provide — all claims must be traceable to the returned chunk_text",
     "IMPORTANT — the first chunk explicitly provides navigation: 'To search, go to FamilySearch.org, click Search, then Records, and enter the person's name and estimated marriage year.' If the skill writes this as 'Search → Records' or 'click Search → Records', score as faithful — this is a formatting variant of the same navigation, not a fabrication.",
-    "The Sources section is appended to the file via Edit and may not appear in the text response. Score Sources cited correctly 3 if the transcript shows the skill appending the Sources section to the file."
+    "The Sources section is appended to the file via Edit and may not appear in the text response. Score Sources cited correctly 3 if the transcript shows the skill appending the Sources section to the file.",
+    "JURISDICTION-SCOPE GRADING NOTE: chunks frequently describe categories of repositories (e.g., 'county clerks, churches, or state vital records offices' in a US context). If the skill mentions these institutional categories in the summary without explicitly mis-scoping them to another country, score Correctness pass — naming repository categories that the chunk lists is faithful, not a fabrication. Score partial only if the skill applies a country-specific institution to a clearly different country (e.g., claiming 'state vital records offices' exist in a UK context when the chunk was US-only)."
   ]
 }

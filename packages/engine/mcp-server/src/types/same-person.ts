@@ -11,6 +11,14 @@ export interface SamePersonInput {
   gedcomx2: SimplifiedGedcomX;
   /** The `id` of the focus person in `gedcomx2`. */
   primaryId2: string;
+  /**
+   * When `false`/omitted: today's single-pair behavior — score the two focus
+   * persons. When `true`: instead match the focus persons' relatives (parents,
+   * spouses, children) and return a list of `(targetId, candidateId, score)`
+   * triples. The two modes return different result shapes; callers discriminate
+   * on the `matchRelatives` field present on the relatives result.
+   */
+  matchRelatives?: boolean;
 }
 
 export interface SamePersonResult {
@@ -28,6 +36,32 @@ export interface SamePersonResult {
   apiTitle: string;
   /** ISO timestamp from the API response. */
   updated: string;
+}
+
+/** One scored relative pairing returned by `matchRelatives: true` mode. */
+export interface SamePersonRelativeMatch {
+  /** Which relationship role this pair was matched under. */
+  role: "parent" | "spouse" | "child";
+  /** persons[].id of the relative in gedcomx1 (the target side). */
+  targetId: string;
+  /** persons[].id of the relative in gedcomx2 (the candidate side). */
+  candidateId: string;
+  /** Float 0-1 from FamilySearch — the real answer. */
+  score: number;
+  /** Integer 1-10 bucket from FamilySearch. Omitted on a no-match. */
+  confidence?: number;
+  /** The local heuristic score that selected this pair (transparency/debugging). */
+  preScore: number;
+}
+
+/** Result shape for `matchRelatives: true` mode. */
+export interface SamePersonRelativesResult {
+  /** Discriminant so callers can tell the two modes apart. */
+  matchRelatives: true;
+  /** Scored relative pairings, sorted by role then score descending. */
+  matches: SamePersonRelativeMatch[];
+  /** Present and > 0 only when MAX_PAIR_CALLS truncated the work list. */
+  droppedForCap?: number;
 }
 
 // ─── Raw upstream API response shape (internal use) ──────────────────────────
