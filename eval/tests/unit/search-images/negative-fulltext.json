@@ -12,6 +12,12 @@
     "user_message": "Run a full-text search for Flynn appearing as a witness in Schuylkill County deed transcripts.",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-witnesses",
+    "fulltext-search-flynn-witnesses-by-name",
+    "fulltext-search-flynn-flinn-variant",
+    "fulltext-search-flynn-wildcard-variant"
+  ],
   "execution": {
     "max_wall_clock_seconds": 600
   },
