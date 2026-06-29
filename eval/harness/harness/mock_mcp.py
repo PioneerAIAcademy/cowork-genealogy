@@ -262,6 +262,7 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
                 "resultsAvailable": {"type": ["number", "null"]},
                 "notes": {"type": ["string", "null"]},
                 "stagedResultsRef": {"type": ["string", "null"]},
+                "externalSite": {"type": ["object", "null"]},
             },
             "required": ["projectPath", "tool", "query", "outcome", "resultsExamined"],
         }
