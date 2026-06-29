@@ -2,7 +2,7 @@
   "tool": "collections_search",
   "description": "Collections search for Chicago / Illinois records",
   "args": {
-    "standardPlace": "~Chicago"
+    "standardPlace": "~Illinois"
   },
   "response": {
     "collections": [

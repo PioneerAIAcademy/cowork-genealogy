@@ -434,11 +434,18 @@ candidate / relative mobs (warnings).
 - **Half/full-sibling caveat:** the simplified format can't always distinguish
   co-parentage; include all children of all parents (the FS match algorithm and
   the warnings tolerate this).
-- **Tool behavior:** `same_person` is a pass-through (`same-person.ts`,
-  `same-person-tool-spec.md` §"Restructuring") — it forwards whatever persons /
-  relationships the caller includes and anchors the focus via a
-  `sourceDescription`. The assembly is therefore a **caller (person-evidence)**
-  responsibility, not a tool change.
+- **Tool behavior:** the **focus** match stays a pass-through
+  (`same-person.ts`, `same-person-tool-spec.md` §"Restructuring") — it forwards
+  whatever persons / relationships the caller includes and anchors the focus via
+  a `sourceDescription`, so assembling the mob is the **caller (person-evidence)**
+  responsibility. Relative **pairing** within a household now has an optional
+  tool-side mode: `same_person({ …, matchRelatives: true })` pairs the focus
+  persons' relatives (parents/spouses/children) and returns scored
+  `(role, targetId, candidateId, score)` triples, using local heuristics to
+  avoid an N×M FS-call explosion (spec:
+  `same-person-match-relatives-spec.md`). person-evidence uses that mode to
+  drive the cross-person consistency check and seed the merge set; the focus
+  match itself is unchanged.
 
 ---
 

@@ -28,7 +28,7 @@ things when the evidence demands it.
 
 | File | Action | Notes |
 |------|--------|-------|
-| `packages/engine/plugin/agents/gps-mentor.md` | Update | Pre-spec draft written by DallanQ (commit `c533ce9`). The draft covers the core rubric and output format but predates this spec — it does not yet include existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§12), or the deterministic fallback priority order (§3.3). The implementation PR will bring it into full conformance. |
+| `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
 | `CLAUDE.md` | Modify | Document `packages/engine/plugin/agents/` directory and the Cowork plugin agent pattern. |
@@ -664,3 +664,42 @@ These items are acknowledged but not specified here. They belong in future issue
 |------|-------|
 | Wiring into `/research` orchestrator skill | Depends on `/research` landing on main. DallanQ noted this explicitly in the implementation commit. |
 | Commit pending per-action approval | Not yet understood well enough to specify. Defer to DallanQ for clarification. |
+| Reducing per-gate mentor cost | Do not defer gates ad hoc to chase speed. Follow the staged sequence in §17.1. |
+
+### 17.1 Reducing per-gate mentor cost (defer until measurable)
+
+The e2e research-runtime speedup plan
+(`docs/plan/e2e-research-runtime-speedup-plan.md`, idea 2b) considered
+collapsing the three mentor gates (pre-exhaustiveness, conclusion-readiness,
+proof-critique) to a single conclusion gate to cut the cost of an autonomous
+`/research` run. **That change is explicitly NOT adopted**, for three reasons:
+
+1. **It is unmeasurable today.** The e2e harness does not stage
+   `packages/engine/plugin/agents/` into the sandbox — `build_workspace`
+   (`eval/harness/e2e/orchestrator.py`) copies only `plugin/skills/` into
+   `.claude/skills/`. So the mentor is absent from every benchmark run, both
+   passing e2e runs recorded `evaluations: []`, and gate deferral saves the
+   benchmark nothing while shipping a quality-affecting change with no test
+   coverage.
+2. **The agent is not yet conformant.** `agents/gps-mentor.md` is still the
+   pre-spec draft (see §2) pending the implementation PR. Optimizing a
+   component that has not landed is premature.
+3. **The final gate is the only production backstop.** There is no eval judge
+   in production Cowork, so the `proof-critique` gate is the only fresh-context
+   adversarial proof-quality check a real user receives. Trimming gates trades
+   the GPS workflow's one quality net for speed.
+
+If reducing mentor cost later becomes warranted (driven by **production**
+latency/cost evidence, not the e2e benchmark), do it in this sequence — **not**
+by deferring gates first:
+
+- **(a) Land the mentor conformance PR** (§2) so the agent behaves to spec.
+- **(b) Stage `plugin/agents/` into the e2e harness** (extend `build_workspace`
+  to copy agents into `.claude/agents/`, and add an `evaluations/` verdict
+  fixture) so e2e actually *exercises and measures* the gates — both their cost
+  (turns/tokens per gate) and whether any gate ever changes a verdict or proof
+  tier.
+- **(c) Then decide gating** with the GPS/spec owner, driven by that data plus
+  production cost. If measurement shows the two early gates (pre-exhaustiveness,
+  conclusion-readiness) never change an outcome, that is the evidence to
+  collapse to the single final `proof-critique` gate — earned, not assumed.

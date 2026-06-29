@@ -1,0 +1,18 @@
+{
+  "tool": "wiki_read",
+  "description": "Ireland-specific wiki_read content for the County Cork / pre-Famine Ireland test (ut_locality_guide_002). Catch-all url predicate, listed before wiki-read-any; used only by ut_locality_guide_002, so it returns Ireland record context for whichever Irish wiki page the skill opens (Ireland_Genealogy, County_Cork_Genealogy, Ireland_Civil_Registration).",
+  "args": {
+    "url": "~"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Ireland_Genealogy",
+    "title": "Ireland Genealogy Records",
+    "content": "# Ireland Genealogy Records\n\n## Civil Registration\nState registration of births, deaths, and Roman Catholic marriages began in Ireland on 1 January 1864; non-Catholic marriages from 1845. No civil vital records exist for the 1830s-1840s — use church registers instead. There is no county-courthouse vital-record system as in the United States.\n\n## Church Records\nRoman Catholic parish registers are the primary source for Catholic families. Survival varies by parish; the National Library of Ireland provides free online images of Catholic registers up to 1880. Church of Ireland (Anglican) registers are at the Representative Church Body Library and in local custody.\n\n## Census Substitutes\nThe Tithe Applotment Books (1823-1837) and Griffith's Valuation (Cork, early 1850s) substitute for the lost pre-1901 censuses, most of which were destroyed in the 1922 Four Courts fire.\n\n## Emigration\nPassenger manifests for departures from Cork ports during the Famine list complete family groups, including young children traveling with parents.",
+    "sections": [
+      "Civil Registration",
+      "Church Records",
+      "Census Substitutes",
+      "Emigration"
+    ]
+  }
+}

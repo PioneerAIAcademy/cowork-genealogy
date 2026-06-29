@@ -203,6 +203,57 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.
 
+## Cosmetic-change exemption (skip the re-run for a minor wording change)
+
+A PR reviewer asks for a one-word rewording or a typo fix in a `SKILL.md`.
+That edit changes the skill-side snapshot, which flips the latest run log
+**inactive** — so by default the gate (rule 2) demands a full harness re-run
+(~$1–3) *and* a complete re-grade, even though the behavior can't have
+changed. A senior can waive that for a genuinely behavior-neutral edit by
+applying a **PR label** — no branch checkout, no commands, nothing to install.
+
+**It exempts the PR from both:** no harness re-run, and no re-correcting
+scores. The prior run log stays the active one, and its already-complete
+`.ann.json` satisfies the completeness rule as-is. (Only rule 2 is relaxed —
+rules 1 and 3 still run, so an *unannotated* baseline can't be waved through.)
+
+**Use it only for genuinely behavior-neutral edits** — rewording, typos,
+comments, formatting. If a change *could* alter what Claude does (a new
+instruction, a reordered step, a changed tool argument, an edited fixture or
+scenario), it is **not** cosmetic: re-run the harness.
+
+### How a senior sets the flag (entirely in the GitHub web UI)
+
+1. Open the PR on github.com.
+2. In the right-hand sidebar, under **Labels**, add **`eval-cosmetic-skip`**.
+3. (Recommended) leave a one-line comment saying *why* it's behavior-neutral —
+   e.g. "Reworded step 3 'Look for' → 'Search for'; no behavior change." The
+   label records *who* and *when*; the comment records *why*.
+
+The `Check runlog discipline` check re-runs automatically when the label is
+added and turns green, with a warning noting the bypass so reviewers see it.
+
+### Safety: the label auto-expires on every new push
+
+The label is **removed automatically whenever a new commit is pushed** to the
+PR. So a waiver can never silently cover a *later* substantive change — if more
+commits land, the check goes red again and the senior must re-apply the label
+(after confirming the new commits are still cosmetic). This is the same
+"voids on any further edit" guarantee a re-run would give, with none of the
+work.
+
+### One-time repo setup
+
+The label has to exist before anyone can apply it. An admin creates it once:
+
+```bash
+gh label create eval-cosmetic-skip \
+  --description "Senior waiver: skill change is behavior-neutral; skip the eval re-run" \
+  --color FBCA04
+```
+
+Seniors need **Triage** or **Write** access on the repo to apply labels.
+
 ## Windows users
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
@@ -220,7 +271,67 @@ run on demand.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
 - **Code:** `harness/e2e/` — orchestrator, judge, CLI.
 - **Fixtures:** `tests/e2e/<test-id>/` (added incrementally).
-- **Runlogs:** `runlogs/e2e/<test-id>/run-<timestamp>.*` (committed).
+- **Runlogs:** a passing run commits as `runlogs/e2e/<test-id>/run-<timestamp>.*`; non-passing runs write as gitignored `scratch_<timestamp>.*`.
+
+### Authoring a new fixture
+
+Fixtures are authored interactively with the **`/author-e2e-fixture`**
+skill (in `.claude/skills/`), run from the **Code tab** of the Claude
+desktop app (or `claude` in a terminal) opened at the **repo root** —
+not in Cowork, and not a subfolder. The skill needs the host-side MCP
+tools `person_read` + `validate_research_schema`; the committed
+`.mcp.json` at the repo root wires up the `genealogy` MCP server, which
+you **approve once** on first open of the repo.
+
+Each step shows the Windows batch file with the macOS/Linux `make`
+equivalent in parentheses:
+
+1. **Once per machine:** `git pull`, then `eval\Setup.bat` (Mac:
+   `make install` for first-time setup — `make engine-build` is just the
+   rebuild after a later pull). Mac also needs `ANTHROPIC_API_KEY` in
+   your shell or `eval/.env` for the judge in step 7; `Setup.bat` prompts
+   for it on Windows.
+2. **Daily:** `eval\Login.bat` (`make e2e-login`) — FamilySearch login
+   (~24h token).
+3. *(recommended)* `eval\CheckSetup.bat` (`make e2e-preflight`) —
+   readiness check before you spend money.
+4. Open the **`cowork-genealogy`** folder (repo **root**) in the Claude
+   desktop **Code tab** — or `claude` at the repo root. **Approve** the
+   `genealogy` MCP prompt on first open (restart an already-open session
+   so it loads `.mcp.json`).
+5. `/author-e2e-fixture` → give a **deceased** person's FamilySearch ID
+   → pick the one subset to strip → answer the metadata questions. Writes
+   straight to `eval\tests\e2e\<slug>\` — no move needed.
+6. `eval\ValidateFixture.bat` → enter the slug (`make e2e-validate
+   TEST=<slug>`) → resolve any `WARN`.
+7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
+   live run (20–60 min, $3–10).
+8. `/interpret-e2e-result` → read the verdict.
+9. If it passes, commit the fixture (and optionally its run log), and
+   open a PR.
+
+### Keep the machine awake during a run
+
+A run is long (20–60 min) and the machine must **not sleep** partway through.
+If it does, the work pauses until the machine wakes — the result is still
+valid, but the run takes much longer in real time. The harness measures
+**active** time (so a sleep does not corrupt the wall-clock metric) and prints
+a `machine slept ~N min` note when it detects one — treat that note as your cue
+to set one of these up:
+
+- **Windows:** there's no per-command keep-awake tool, so set the power plan
+  once — `powercfg /change standby-timeout-ac 0` (add `powercfg /change
+  monitor-timeout-ac 0` to keep the display on), or Settings → System → Power →
+  "When plugged in, put my device to sleep → Never".
+- **macOS:** prefix the run with `caffeinate` — `caffeinate -i make e2e-run
+  TEST=<slug>` (holds off idle sleep until the run exits). On an always-on
+  machine (e.g. a Mac mini) set System Settings → Energy → "Prevent automatic
+  sleeping when the display is off" once instead.
+- **Linux:** prefix with `systemd-inhibit --what=idle:sleep make e2e-run
+  TEST=<slug>`, or disable sleep in your desktop's power settings.
+
+A closed laptop lid can still sleep regardless of the above (clamshell) — keep
+the lid open unless you're on power with an external display.
 
 ## Related specs
 

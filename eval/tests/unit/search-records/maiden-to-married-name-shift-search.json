@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_search_records_017",
+    "skill": "search-records",
+    "name": "Pre-marriage search for woman whose married name embeds maiden surname as middle name",
+    "type": "positive",
+    "description": "The tree has two name entries: BirthName (given='Sarah Ann', surname='Mullen') and MarriedName (given='Sarah Mullen', surname='Price'). Plan item pli_001 targets the 1860 census — before marriage. The skill must search under the BirthName (Mullen), not the MarriedName. The tricky part: the MarriedName's given field contains 'Sarah Mullen' (maiden surname as middle), so a naive parse might extract 'Mullen' and use it correctly for the wrong reason. The skill should explicitly select the BirthName entry because pli_001's date precedes the marriage.",
+    "tags": ["search", "census", "1860", "name-variation", "maiden-name", "name-shift", "plan-execution"]
+  },
+  "input": {
+    "user_message": "Execute plan item pli_001 — the 1860 census search for Sarah in Dodge County. She has two name entries in the tree: her birth name 'Sarah Ann Mullen' and her married name 'Sarah Mullen Price'. Since 1860 is before her 1872 marriage, use the birth name for the search.",
+    "scenario": "maiden-to-married-name-shift"
+  },
+  "mcp_fixtures": [
+    "record-search-1860-census-mullen-sarah",
+    "record-search-price-no-results",
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "The skill MUST use surname 'Mullen' as the primary surname for the 1860 census search. The BirthName entry (given='Sarah Ann', surname='Mullen') is the correct source for a pre-marriage search. Score Correctness=1 if the skill uses 'Price' as the primary surname.",
+    "The givenName should be 'Sarah' or 'Sarah Ann'. Do NOT penalize for omitting 'Ann'. Do NOT accept 'Sarah Mullen' as the givenName — that is from the MarriedName entry and would be using the wrong name entry for this time period.",
+    "It is acceptable for the skill to use surnameAlt='Price' as a fallback. However, the primary search must be under 'Mullen'.",
+    "CRITICAL for Search strategy scoring: The skill should demonstrate awareness that the tree has TWO name entries and explain why it chose the BirthName for a pre-marriage search. Score 3 if it explicitly reasons about name type vs. date. Score 2 if it uses Mullen without explanation. Score 1 if it uses the MarriedName entry.",
+    "The fixture returns 1 match (Sarah A. Mullen, age 8, in William Mullen's household, Dodge County). The skill should identify this as a strong candidate match.",
+    "same_person is NOT mocked in this test. Manual triage based on field comparison is sufficient.",
+    "Log quality: the log entry must record the actual search parameters (surname=Mullen, givenName=Sarah/Sarah Ann) in query{} and results_examined should match the count."
+  ]
+}

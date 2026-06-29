@@ -10,6 +10,7 @@ import asyncio
 import json
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -213,21 +214,48 @@ async def _run_one_test_async(
         skill_baseline = list(set(skill_baseline) | fixture_tools)
 
     runs: list[SingleRun] = []
-    for run_index in range(spec.runs_per_test):
-        runs.append(
-            await _execute_single_run(
-                run_index=run_index,
-                spec=spec,
-                paths=paths,
-                rubric=rubric,
-                skill_frontmatter=skill_frontmatter,
-                scenario_readme=scenario_readme,
-                skill_baseline=skill_baseline,
-                auth=auth,
-                model=model,
-                judge_model=judge_model,
+    n_runs = spec.runs_per_test
+    # Per-run progress. Only emitted for multi-run tests (runs_per_test > 1).
+    # Policy pins runs_per_test to 1, so in the normal path this stays silent
+    # and the suite's per-test completion line (run_tests.py) is the live
+    # signal — that line is the one that stays readable when the thread pool
+    # interleaves output from concurrent tests. The detail here (which sub-run,
+    # skill vs. judge/validators split) is retained for any future multi-run
+    # variance work. Transient retries within a run still log to stderr from
+    # _execute_skill_with_retry.
+    for run_index in range(n_runs):
+        if n_runs > 1:
+            print(
+                f"      {spec.id} run {run_index + 1}/{n_runs} (cap "
+                f"{spec.execution.get('max_wall_clock_seconds', 300)}s) ...",
+                flush=True,
             )
+        _run_start = time.perf_counter()
+        single = await _execute_single_run(
+            run_index=run_index,
+            spec=spec,
+            paths=paths,
+            rubric=rubric,
+            skill_frontmatter=skill_frontmatter,
+            scenario_readme=scenario_readme,
+            skill_baseline=skill_baseline,
+            auth=auth,
+            model=model,
+            judge_model=judge_model,
         )
+        runs.append(single)
+        if n_runs > 1:
+            _elapsed = time.perf_counter() - _run_start
+            _skill_s = single.duration_ms / 1000.0
+            # Remainder is judge + validators + diffing (all post-skill work).
+            _post_s = max(0.0, _elapsed - _skill_s)
+            _tag = single.aborted_reason or single.outcome
+            print(
+                f"      {spec.id} run {run_index + 1}/{n_runs} -> {_tag} "
+                f"({_elapsed:.0f}s = {_skill_s:.0f}s skill + "
+                f"{_post_s:.0f}s judge/validators)",
+                flush=True,
+            )
 
     return assemble_test_entry(
         test_id=spec.id,
@@ -238,6 +266,20 @@ async def _run_one_test_async(
         runs=runs,
         timestamp_for_run_id=timestamp,
     )
+
+
+def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
+    """The skills whose invocation seals a negative test's routing verdict.
+
+    Once any of these is invoked via the Skill tool, run_skill stops the run
+    (the downstream skill never executes) — see skill_runner. Returns None for
+    positive tests and for out-of-scope negatives (`correct_skill: []`), which
+    must run normally to be graded.
+    """
+    if spec.type != "negative":
+        return None
+    correct = (spec.negative or {}).get("correct_skill", [])
+    return set(correct) or None
 
 
 async def _execute_single_run(
@@ -256,7 +298,16 @@ async def _execute_single_run(
     """One run of the skill + validators + judge. Returned to the caller for
     multi-run aggregation in assemble_test_entry."""
 
+    # Epoch bracket for the whole single run (skill + validators + judge),
+    # so the run log can report true per-skill makespan under concurrency.
+    _started_at = time.time()
+
     # --- Workspace + skill execution ------------------------------------
+    # Negative tests are graded on the routing decision, not on the routed-to
+    # skill's execution (see _compute_outcome). Tell run_skill to stop as soon
+    # as the correct alternative skill is invoked, so the suite doesn't pay for
+    # that skill's full (often very expensive) workload.
+    routing_short_circuit = _routing_short_circuit_skills(spec)
     result, before_snapshot, after_snapshot = await _execute_skill_with_retry(
         run_index=run_index,
         spec=spec,
@@ -264,6 +315,7 @@ async def _execute_single_run(
         skill_baseline=skill_baseline,
         auth=auth,
         model=model,
+        routing_short_circuit_skills=routing_short_circuit,
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -364,6 +416,7 @@ async def _execute_single_run(
 
     # --- Judge ----------------------------------------------------------
     if validators_passed and result.aborted_reason is None:
+        _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
                 spec=spec,
@@ -396,6 +449,9 @@ async def _execute_single_run(
                 cached_input_tokens=judge_output.cached_input_tokens,
                 output_tokens=judge_output.output_tokens,
             )
+        # Records judge wall-clock on every attempted branch (success or
+        # error). The skipped branch below leaves the 0.0 default.
+        judge_result.duration_ms = (time.perf_counter() - _judge_start) * 1000.0
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
@@ -418,11 +474,21 @@ async def _execute_single_run(
     skill_input = int(sdk_usage.get("input_tokens") or 0)
     skill_cached = int(sdk_usage.get("cache_read_input_tokens") or 0)
     skill_output = int(sdk_usage.get("output_tokens") or 0)
+    # SDK timing (present only when a ResultMessage arrived — i.e. not on a
+    # wall-clock / stream-silence abort, where these stay 0).
+    skill_duration_api_ms = float(usage.get("duration_api_ms") or 0.0)
+    skill_num_turns = int(usage.get("num_turns") or 0)
+    _ended_at = time.time()
 
     return SingleRun(
         outcome=outcome,
         aborted_reason=result.aborted_reason,
         duration_ms=result.duration_ms,
+        duration_api_ms=skill_duration_api_ms,
+        num_turns=skill_num_turns,
+        started_at=_started_at,
+        ended_at=_ended_at,
+        skill_attempts=result.attempts,
         # Run-level tokens are SKILL ONLY. Judge tokens live on the
         # judge block so the spec §11 cache-hit-rate diagnostic
         # (cached/input on the skill side) stays meaningful.
@@ -475,6 +541,7 @@ async def _execute_skill_with_retry(
     skill_baseline: list[str],
     auth: AuthConfig,
     model: str,
+    routing_short_circuit_skills: set[str] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -551,6 +618,7 @@ async def _execute_skill_with_retry(
                         DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
                     ),
                     allowed_tools_override=skill_baseline,
+                    routing_short_circuit_skills=routing_short_circuit_skills,
                 )
                 after_snapshot = snapshot_files(workspace)
             finally:
@@ -562,6 +630,9 @@ async def _execute_skill_with_retry(
             result.aborted_reason not in RETRYABLE_ABORT_REASONS
             or attempt + 1 >= attempts
         ):
+            # Record how many attempts this run took so the stall tax is
+            # visible per-run in the log (1 = clean first try).
+            result.attempts = attempt + 1
             return result, before_snapshot, after_snapshot
 
         print(

@@ -323,7 +323,7 @@ export const fulltextSearchToolSchema = {
       projectPath: {
         type: "string",
         description:
-          "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle; pass that to `research_log_append` as `stagedResultsRef` so the results are retained without you re-serializing them. Omit it for an exploratory search you do not intend to log.",
+          "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle; pass that to `research_log_append` as `stagedResultsRef` so the results are retained without you re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log.",
       },
     },
   },
