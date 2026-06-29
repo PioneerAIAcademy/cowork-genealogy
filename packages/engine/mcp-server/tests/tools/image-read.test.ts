@@ -12,8 +12,8 @@ const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-function mockImageResponse() {
-  const pixel = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+function mockImageResponse(bytes?: Uint8Array) {
+  const pixel = bytes ?? new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
   mockFetch.mockResolvedValueOnce({
     ok: true,
     status: 200,
@@ -61,6 +61,25 @@ describe("imageReadTool — imageId input", () => {
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+  });
+
+  it("rejects an image that exceeds the inline size cap", async () => {
+    // 700 KB is the cap; 800 KB would base64-inflate past the ~1 MiB MCP
+    // transport buffer and crash the session, so the tool must refuse it.
+    mockImageResponse(new Uint8Array(800_000));
+
+    await expect(imageReadTool({ imageId: "004884748_02613" })).rejects.toThrow(
+      /too large to return inline/i
+    );
+  });
+
+  it("returns an image sitting just under the size cap", async () => {
+    mockImageResponse(new Uint8Array(699_999));
+
+    const result = await imageReadTool({ imageId: "004884748_02613" });
+
+    expect(result.metadata.sizeBytes).toBe(699_999);
+    expect(result.imageData.length).toBeGreaterThan(0);
   });
 
   it.each([
