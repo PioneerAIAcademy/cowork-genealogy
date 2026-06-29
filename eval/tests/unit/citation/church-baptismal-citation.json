@@ -20,6 +20,7 @@
     "where_within must flag the gap to the user — the register volume/page/entry number is not in the source entry, so the skill must ask the user to check the record image rather than inventing a volume or page value",
     "The formatted citation string must follow the church-records template: '[CHURCH NAME], [CITY/TOWN], [STATE], [RECORD TYPE], [DATE], [PERSON NAME]; [VOLUME/PAGE]; [REPOSITORY]'",
     "Must NOT create a new source entry — refine src_005 in place",
+    "Replication test — apply the rubric's decisive rule: src_005 does not carry the register volume/page/entry number, so where_within is genuinely unavailable from the source. The skill flagging it with an unknown-marker AND directing the user to read it from the record image is a PASS on Replication test, not a partial — 'honest about an unavoidable gap' is the top of that scale. Do NOT deduct on Replication for a locator the source cannot supply; partial/fail there are reserved for a locator that WAS on file but uncited, or an invented one",
     "Must call validate_research_schema after writing"
   ]
 }
