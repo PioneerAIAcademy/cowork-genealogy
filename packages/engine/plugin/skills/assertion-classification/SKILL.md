@@ -195,34 +195,43 @@ run whenever any classification field changed, not only when the user
 said "fix it."
 
 For every classification field that changed, you MUST actually call
-`research_append` to persist it — one call per assertion, using
-`op: "update"` (never `append` — this skill refines existing assertions,
-it never creates them). Do not just describe the change in a summary
-table or say "change made": an unexecuted update leaves `research.json`
-unchanged and fails the task.
+`research_append` to persist it — do not just describe the change in a
+summary table or say "change made": an unexecuted update leaves
+`research.json` unchanged and fails the task. Make it ONE batched call:
+pass an `ops` array with one `update` op per assertion (never `append` —
+this skill only refines existing assertions, it never creates them). Each
+assertion is still its own op; batching changes only the number of
+*calls*, not the data. The whole batch validates once and writes once; on
+any per-op failure it returns `{ ok: false, errors: ["ops[i]: <msg>"] }`
+and writes NOTHING — surface the errors and fix the offending op:
 
 ```
 research_append({
   projectPath: "<absolute-path-to-project-directory>",
-  section: "assertions",
-  op: "update",
-  entryId: "<assertion id, e.g. a_012>",
-  fields: {
-    information_quality: "...",   // primary | secondary | indeterminate (closed set)
-    informant: "...",             // if the analysis identifies a more specific informant
-    informant_proximity: "...",   // self | witness | household_member | family_not_present | official_duty | unknown (closed set)
-    informant_bias_notes: "...",  // add bias analysis if relevant
-    evidence_type: "...",         // direct | indirect | negative (closed set — there is no no_evidence)
-    extracted_for_question_ids: [ ... ]  // add any newly relevant question IDs
-  }
+  ops: [
+    {
+      section: "assertions",
+      op: "update",
+      entryId: "<assertion id, e.g. a_012>",
+      fields: {
+        information_quality: "...",   // primary | secondary | indeterminate (closed set)
+        informant: "...",             // if the analysis identifies a more specific informant
+        informant_proximity: "...",   // self | witness | household_member | family_not_present | official_duty | unknown (closed set)
+        informant_bias_notes: "...",  // add bias analysis if relevant
+        evidence_type: "...",         // direct | indirect | negative (closed set — there is no no_evidence)
+        extracted_for_question_ids: [ ... ]  // add any newly relevant question IDs
+      }
+    }
+    /* …one update op per assertion whose classification changed… */
+  ]
 })
 ```
 
 Pass only the classification fields that actually changed; the immutable
 extraction fields (set by record-extraction) are not yours to pass, and
-the tool rejects any attempt to mutate them. The tool validates each
-update before persisting and writes nothing on `{ ok: false, errors }` —
-surface those rather than retrying blindly.
+the tool rejects any attempt to mutate them. The tool validates every op
+in the batch before persisting and writes nothing on `{ ok: false,
+errors }` — surface those rather than retrying blindly.
 
 ### 7. Check warnings
 
