@@ -1,12 +1,20 @@
 """E2e result schema and persistence.
 
-A run produces four committed artifacts under
-eval/runlogs/e2e/<test-id>/:
+A run produces four artifacts under eval/runlogs/e2e/<test-id>/, named by
+outcome (see runlog_prefix):
 
-- run-<timestamp>.json — structured result (this module)
-- run-<timestamp>.transcript.md — human-readable transcript
-- run-<timestamp>.final-tree.gedcomx.json — agent's final tree
-- run-<timestamp>.final-research.json — agent's final research.json
+- a PASSING run uses the committable `run-<timestamp>.*` prefix — it is the
+  fixture's validity artifact and is committed (e2e-test-spec.md §14).
+- any other outcome (partial / fail / skipped) uses `scratch_<timestamp>.*`,
+  which `.gitignore` keeps out of version control so a non-passing run can't
+  be committed as if it validated the fixture.
+
+The four files per run ({prefix} = `run-` or `scratch_`):
+
+- {prefix}<timestamp>.json — structured result (this module)
+- {prefix}<timestamp>.transcript.md — human-readable transcript
+- {prefix}<timestamp>.final-tree.gedcomx.json — agent's final tree
+- {prefix}<timestamp>.final-research.json — agent's final research.json
 
 See e2e-test-spec.md §8.
 """
@@ -69,6 +77,21 @@ def timestamp_slug(now: datetime | None = None) -> str:
     return t.strftime("%Y-%m-%d_%H-%M-%S")
 
 
+def is_committable_run(verdict: str) -> bool:
+    """Whether a run is the fixture's *validity* artifact (committed).
+
+    Only a `pass` validates a fixture (e2e-test-spec.md §14); every other
+    outcome is a scratch run that `.gitignore` keeps out of version control,
+    so a failed run can't be committed as if it had validated the fixture.
+    """
+    return verdict == "pass"
+
+
+def runlog_prefix(verdict: str) -> str:
+    """`run-` for a committable (passing) run, otherwise `scratch_`."""
+    return "run-" if is_committable_run(verdict) else "scratch_"
+
+
 def write_result_files(
     *,
     result: E2eResult,
@@ -81,19 +104,22 @@ def write_result_files(
     """Write the four committed artifacts. Returns the paths written."""
     runlog_dir.mkdir(parents=True, exist_ok=True)
     ts = timestamp or timestamp_slug()
+    stem = f"{runlog_prefix(result.verdict)}{ts}"
 
     paths = {
-        "result": runlog_dir / f"run-{ts}.json",
-        "transcript": runlog_dir / f"run-{ts}.transcript.md",
-        "tree": runlog_dir / f"run-{ts}.final-tree.gedcomx.json",
-        "research": runlog_dir / f"run-{ts}.final-research.json",
+        "result": runlog_dir / f"{stem}.json",
+        "transcript": runlog_dir / f"{stem}.transcript.md",
+        "tree": runlog_dir / f"{stem}.final-tree.gedcomx.json",
+        "research": runlog_dir / f"{stem}.final-research.json",
     }
 
-    paths["result"].write_text(json.dumps(asdict(result), indent=2))
-    paths["transcript"].write_text(transcript)
+    paths["result"].write_text(json.dumps(asdict(result), indent=2), encoding="utf-8")
+    paths["transcript"].write_text(transcript, encoding="utf-8")
     if final_tree is not None:
-        paths["tree"].write_text(json.dumps(final_tree, indent=2))
+        paths["tree"].write_text(json.dumps(final_tree, indent=2), encoding="utf-8")
     if final_research is not None:
-        paths["research"].write_text(json.dumps(final_research, indent=2))
+        paths["research"].write_text(
+            json.dumps(final_research, indent=2), encoding="utf-8"
+        )
 
     return paths

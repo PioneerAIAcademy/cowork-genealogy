@@ -113,8 +113,8 @@
     "runs_per_test": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 10,
-      "description": "Optional override of the harness default (1). See unit-test-spec.md Section 7, Variance: runs per test."
+      "maximum": 1,
+      "description": "POLICY (current stage): ALWAYS 1. Do not set this above 1 when creating or updating a test. We are not addressing single-run variance yet, and multi-run tests make the suite painfully slow (each run is a full skill execution + judge call). The multi-run aggregation machinery (unit-test-spec.md Section 7) exists for future description-optimizer / golden-set work only; until that stage, omit this field (it defaults to 1) or set it to 1."
     },
     "intentionally_invalid": {
       "type": "boolean",

@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Carbon County, Pennsylvania (anthracite coal region; formed 1843 from Northampton and Monroe).",
+  "args": {
+    "placeName": "~Carbon"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Carbon, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1843/",
+        "latitude": 40.92,
+        "longitude": -75.71,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Carbon%2C%20Pennsylvania"
+      }
+    ]
+  }
+}
