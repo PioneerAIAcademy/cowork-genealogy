@@ -395,22 +395,6 @@
       "comment": "No tool called"
     },
     {
-      "test_id": "ut_search_external_sites_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "There was no result for this"
-    },
-    {
-      "test_id": "ut_search_external_sites_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "There was no result for this"
-    },
-    {
       "test_id": "ut_search_external_sites_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -441,22 +425,6 @@
       "llm_score": null,
       "corrected_score": 3,
       "comment": "No tool was called"
-    },
-    {
-      "test_id": "ut_search_external_sites_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "No results"
-    },
-    {
-      "test_id": "ut_search_external_sites_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "No results"
     },
     {
       "test_id": "ut_search_external_sites_006",
@@ -646,6 +614,38 @@
       "test_id": "ut_search_external_sites_009",
       "dimension_source": "rubric",
       "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "There was no result for this"
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
