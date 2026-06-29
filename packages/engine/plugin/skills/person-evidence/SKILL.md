@@ -322,36 +322,13 @@ reach and tree-edit to execute.
 
 ### 4. Create person_evidence entries
 
-Persist all assertion → person links in ONE batched `research_append`
-call — pass an `ops` array with one `append` op per assertion-person
-pair. Each link is still its own op; batching changes only the number
-of *calls*, never the number of links (one `pe_` entry per pair, as
-before). Supply each entry WITHOUT an `id`, `created`, or
-`superseded_by` — the tool assigns each `pe_` id, stamps `created`,
-validates the whole batch once, and writes once. On any per-op failure
-it returns `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes
-NOTHING — surface those errors to the user and fix the offending op
-rather than retrying blindly.
-
-```
-research_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  ops: [
-    {
-      section: "person_evidence",
-      op: "append",
-      entry: {
-        assertion_id: "a_015",
-        person_id: "KWCJ-RN4",
-        confidence: "probable",
-        rationale: "Thomas Flynn, will dated 1881, Schuylkill County. Names match. Location matches (same county as census records). Death date consistent with disappearance from tax records after 1880. Will names 'my son Patrick' — this assertion links the testator role to the Thomas Flynn (I2) in the tree.",
-        match_score: 0.64
-      }
-    }
-    /* …one op per assertion-person pair… */
-  ]
-})
-```
+Persist all assertion → person links in ONE batched `research_append({
+ops: [...] })` call — one `append` op per assertion-person pair (still one
+`pe_` entry per pair; batching changes the call count, not the links).
+Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
+the ids and validates the whole batch, writing NOTHING on a per-op failure
+(`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
+than retrying blindly.
 
 **Field guidance:**
 
