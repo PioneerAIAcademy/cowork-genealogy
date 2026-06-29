@@ -79,20 +79,19 @@ Record data arrives in one of four ways:
    PDF directly. This comes via search-external-sites or a direct
    user upload.
 
-4. **Image** — the user provides a FamilySearch image URL (image ARK
-   `3:1:.../$dist` or Image Group Number URL `dgs:.../dist.jpg`). The skill calls
-   `image_read` to fetch the image bytes. Claude reads the image
-   natively (multimodal) and produces a transcription. **Transcription
-   review is mandatory** — see the transcription review section below.
+4. **Image** — a FamilySearch image ARK (`3:1:.../$dist`) or Image
+   Group Number URL (`dgs:.../dist.jpg`). Call `image_read` to fetch
+   the bytes (image ARKs and DGS URLs only — not persona `1:1:` or
+   record `1:2:` ARKs). Claude reads natively, produces a verbatim
+   transcription using `[?]` / `[illegible]` / `[torn]` for uncertain
+   or damaged areas, presents it for user review, then extracts
+   assertions only after confirmation. Write the confirmed text to the
+   source's `transcription` field.
 
-   If the user wants to find images but doesn't have a URL yet (e.g.,
-   "look at probate records from Schuylkill County, 1870-1890"), use
-   `volume_search` to discover digitized volumes (image groups) by
-   standardPlace and year range. `volume_search` returns volume metadata
-   (image group numbers, coverage, record types). Once the user picks a
-   group, they need to browse it on FamilySearch to find the specific
-   image — the DGS URL format requires both the image group number and an
-   image index within the group (`dgs:{DGS}_{IMAGE}/dist.jpg`).
+   To find images without a URL, use `volume_search` by `standardPlace`
+   + year range to discover digitized volumes (image groups); the user
+   then browses on FamilySearch to pick a specific image
+   (`dgs:{DGS}_{IMAGE}/dist.jpg`).
 
 ## Steps
 
@@ -222,22 +221,15 @@ non-null `place` should carry a `standard_place` when one can be found.
 
 **Critical rules for each field:**
 
-**`record_id`** — Use the record's identifier from the search result
-(don't construct your own).
-- FamilySearch `record_search` results: use the result's **`recordId`**
-  field — the value search-records hands off to you. The validator matches
-  it to the record by **canonical ARK form**, so the exact format is the
-  tool's job, not yours: a bare ARK (`ark:/61903/1:1:MXYZ`), a bare id, or
-  a resolver URL for the same record all match. Pass through whatever
-  `recordId` you were given; you don't need to reformat it. (A full
-  resolver URL still belongs in the **source's** `url` field, step 1.)
-- FamilySearch `record_read` results: use the response's `recordId` field
-  the same way.
-- Ancestry: `ancestry:<collection_id>:<record_id>`
-- PDF captures: a descriptive ID (e.g., `capture:ancestry-1850-census-flynn`)
-- User-provided records with no ARK: use a descriptive capture ID
-  (e.g., `capture:1850-census-schuylkill-thomas-flynn`)
-- Always the same for all assertions from the same record
+**`record_id`** — For FamilySearch `record_search` results, use the
+result's **`arkUrl`** verbatim (the full URL form
+`https://www.familysearch.org/ark:/61903/1:1:<id>`) — downstream
+person-evidence requires the URL form to call `same_person`. For
+`record_read` results, use the response's `recordId` (also a URL or
+ARK; canonical matching makes the form forgiving here). For
+non-FamilySearch sources use `ancestry:<collection>:<id>` or a
+`capture:<descriptive>` id. Use the same `record_id` on every
+assertion from one record.
 
 **`record_role`** — The role of THIS person in THIS record. Not who
 the person is in the research project — that's person-evidence's job.
@@ -258,27 +250,19 @@ full-text-sourced records, which carry no structured GedcomX persona.
 interpretation). "age 5" not "born 1845". Use `[?]` for uncertain
 readings, `[illegible]`/`[torn]` for damage.
 
-**`structured_value`** — Machine-readable companion to `value`.
-Include it for name, birth, death, residence, relationship, and
-occupation facts. Shapes:
-- `name`: `{ "given": "Patrick", "surname": "Flynn" }`
-- `birth`/`death`: `{ "year": 1845, "place": "Ireland" }`
-- `residence`: `{ "place": "Schuylkill County, Pennsylvania" }`
-- `relationship`: `{ "relationship_type": "son", "related_person_role": "head_of_household" }`
-  Use `_inferred` suffix (e.g., `child_inferred`) when the
-  relationship is deduced from position, not stated in the record.
-- `occupation`: `{ "occupation": "coal miner" }`
+**`structured_value`** — Machine-readable companion to `value` for
+name (`given`/`surname`), birth/death (`year`/`place`), residence
+(`place`), relationship (`relationship_type`/`related_person_role` —
+add `_inferred` suffix when deduced from position, not stated), and
+occupation (`occupation`). One field per shape; see the schema for
+exact keys.
 
-**`information_quality`** ∈ `primary` | `secondary` | `indeterminate`
-(closed set; source of truth `docs/specs/research-schema-spec.md`).
-Best-effort classification — will be refined by assertion-classification,
-but provide an initial value using the two-question decision tree:
-1. Do we know the informant? No -> `indeterminate`
-2. Did the informant witness/participate? Yes -> `primary`;
-   No -> `secondary`; Cannot tell -> `indeterminate`
-
-Classification is about the informant's proximity to the event,
-not accuracy. Primary information can still be wrong.
+**`information_quality`** ∈ `primary` | `secondary` | `indeterminate`.
+Best-effort initial value (assertion-classification refines later): if
+the informant witnessed/participated, `primary`; if they were told,
+`secondary`; if the informant is unknown or it's unclear,
+`indeterminate`. Classification is about the informant's proximity to
+the event, not accuracy — primary information can still be wrong.
 
 **`informant` and `informant_proximity`** — **Required on every
 assertion — never omit these fields.** `informant_proximity` is a closed
@@ -360,38 +344,26 @@ names case above, where the certificate creator only records what the
 informant said — and a fact recorded from an informant who didn't
 witness it is `indirect` even when stated.
 
-There is no `no_evidence` value — a fact irrelevant to every open
-question keeps its best-effort type (most often `indirect`). Do not
-attempt `no_evidence`; the schema rejects it and the write tool will
-refuse the entry.
+**Age vs. birth year (separate assertions, different evidence types):**
+when the record states "age 32", the `age` assertion (`value: "32"`) is
+`direct`; a separate `birth` assertion (`value: "~1818"`, computed
+from age) is `indirect`. Same on a 1850/1860 census child age 5 →
+birth `~1845` is indirect. Keep them as **separate `a_` entries**.
 
-**Age vs. birth year:** If the record states "age 32", an assertion
-for fact_type `age` with value "32" is `direct` (explicitly stated).
-An assertion for fact_type `birth` with value "~1818" (computed from
-age) is `indirect` (requires arithmetic inference). Keep these as
-separate assertions with different evidence_types.
+**Pre-1880 census relationships are always `indirect`** — the 1850 and
+1860 U.S. census have no relationship column; relationships are inferred
+from household position. Even when `record_read`/`record_search` returns
+a `ParentChild` or `Couple` edge, the indexer inferred it — classify it
+`indirect` with `relationship_type: "child_inferred"` (or
+`"spouse_inferred"`). The 1880 census introduced explicit relationships.
 
-**Pre-1880 census relationships are always `indirect`:** The 1850 and
-1860 U.S. census do not have a relationship column — relationships
-must be inferred from household position, shared surname, and age
-patterns. Explicit relationship columns were introduced in the 1880
-census. Even when the GedcomX data from `record_read` or
-`record_search` includes a `ParentChild` or `Couple` relationship,
-that relationship was inferred by the indexer, not stated in the
-original record — classify it as `indirect` with
-`relationship_type: "child_inferred"` (or `"spouse_inferred"`) in
-`structured_value`.
+**`log_entry_id`** — the search-log entry that produced this record
+(reuse search-records/search-external-sites' `logId` if it logged the
+search; otherwise the one you create in step 4).
 
-**`log_entry_id`** — Reference to the search that produced this
-record. If search-records or search-external-sites already logged
-the search, use that log entry's ID. If processing a user-provided
-record (no prior search), this will be the log entry you create in
-step 4.
-
-**`extracted_for_question_ids`** — Which open research questions does
-this assertion bear on? Check `research.json` questions. Many
-assertions are extracted opportunistically — use an empty array for
-facts that don't clearly relate to any current question.
+**`extracted_for_question_ids`** — open research questions this
+assertion bears on (check `research.json` questions); empty array
+when the fact is extracted opportunistically.
 
 ### 4. Write log entry (conditional)
 
@@ -413,90 +385,66 @@ Staged handles expire (~24h); if `research_log_append` returns
 
 ### 5. Persist source and assertions
 
-**You must actually persist the data — do not just describe the
-extraction in your response.** A text summary without persisted entries
-is an incomplete extraction.
+**Call the tool BEFORE narrating it.** Do not write sentences like
+"Now I'll persist…", "Now writing the source…", "Now adding the
+sibling stubs…" in your text response unless the corresponding tool
+call has already executed. The pattern "narrate the persistence,
+[end of response]" is a hard test failure — your audit log must show
+the actual `research_append` / `tree_edit` invocations, not text
+claiming you made them.
+
+**Tool-first checklist for this step:**
+1. Make the `research_append` call (the batched `ops` from 5a/5b
+   below). Wait for its return.
+2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
+   `add_person` ops). Wait for its return.
+3. If 5d sibling stubs fired: make the second `tree_edit` call for
+   the `ParentChild` edges. Wait for its return.
+4. **Only after the tool returns are you allowed to summarize
+   what was persisted.** Match what you write to what the tool log
+   actually shows.
+
+**If `research_append` or `tree_edit` are not immediately available** in
+your tool list (e.g., shown as deferred), call ToolSearch first with
+`query: "select:research_append,tree_edit,research_log_append,place_search"`
+to load their schemas, then proceed with the tool-first checklist
+above. **Never fall back to writing `research.json` or
+`tree.gedcomx.json` files directly** — direct file writes bypass schema
+validation, id allocation, and the `.bak` safety net, and they fail the
+harness's tool-call validators even when the JSON is shape-correct.
 
 **5a/5b. Append the source and every assertion in ONE batched
-`research_append` call.** Pass an `ops` array: op #1 appends the source,
-then one `append` op per assertion (including each negative assertion).
-The whole batch validates once and writes once — on any per-op failure
-the call returns `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes
-NOTHING, so surface the errors and correct the offending op rather than
-retrying blindly. The tool assigns each id (`src_` for the source, `a_`
-for each assertion), so there is no first-persona / Edit-append chunking
-— just enumerate every fact as its own op:
+`research_append` call** (`ops`: source append first, then one append
+op per assertion — including each negative). The batch validates once
+and writes once; on any per-op failure it returns
+`{ ok: false, errors: ["ops[i]: <msg>"] }` and writes NOTHING, so
+surface and fix rather than retrying blindly. The tool assigns each
+id; do not invent one.
 
-```
-research_append({
-  projectPath: "<absolute project dir>",
-  ops: [
-    { section: "sources",    op: "append", entry: { /* the source fields from step 1, WITHOUT an id */ } },
-    { section: "assertions", op: "append", entry: { /* assertion #1 from step 3, WITHOUT an id */ } },
-    { section: "assertions", op: "append", entry: { /* assertion #2 … */ } }
-    /* …one op per assertion, including each negative assertion… */
-  ]
-})
-```
+**Intra-batch `source_id` prediction.** The source's assigned id is
+`(highest existing src_ in research.json) + 1`, zero-padded to 3 —
+**not always `src_001`**. Read `sources[]` and compute it (`src_009`
+present → this is `src_010`). Stamp each assertion op's `source_id`
+with that predicted id and `log_entry_id` with step 4's `logId`.
+Assuming `src_001` on a non-empty project points every assertion at a
+*different* record's source.
 
-**Intra-batch id prediction.** The source is op #1, so its assigned id
-is predictable — but it is **(highest existing `src_` in `research.json`)
-+ 1**, zero-padded to 3, *not* always `src_001`. Read `research.json`'s
-`sources[]` and compute it: with `src_001`…`src_009` already present, this
-source is `src_010`. **Do NOT assume `src_001`** — that is only correct for
-the very first source in a fresh project; assuming it would point every
-assertion at a *different record's* source. Stamp each later assertion op's
-`source_id` with that computed `src_` id, and stamp each assertion's
-`log_entry_id` with step 4's `logId`. (An op may *reference* an id an
-earlier op in the same batch created, but it may not `update` one — append
-assigns the id internally.)
+If a source for this record already exists, use an `update` op in the
+same batch instead of `append` (with `entryId: "<src_>"` and the
+changed `fields`), and stamp assertions with that existing `src_` id.
 
-If a source for this record already exists, refine it instead with an
-`update` op in the same batch: `{ section: "sources", op: "update",
-entryId: "<src_>", fields: { /* changed fields */ } }`, and stamp the
-assertions with that existing `src_` id rather than a predicted one.
+Every persona gets one append op — never a range op, never compressed.
+Batching changes the number of *calls*, not the per-fact granularity.
 
-Every persona gets fully expanded individual `a_` ops — one op per
-assertion, never a range op, never compressed into ranges. Batching
-changes only the number of *calls*; every assertion is still its own op
-in the array.
-
-**5c/5d. Write the tree side in ONE batched `tree_edit` call** — the
-source `S` entry plus any sibling person stubs and their ParentChild
-edges. `tree_edit` is a SEPARATE tool from `research_append`; its ops
-cannot be merged into the `research_append` batch above. Pass a single
-`ops` array: op #1 is the `add_source`, followed by the `add_person`
-and `add_relationship` ops for any in-scope siblings (5d below). The
-whole batch validates once and writes the tree once (with a one-deep
-`.bak`) — on any per-op failure it returns `{ ok: false, errors:
-["ops[i]: <msg>"] }` and writes NOTHING. The tool assigns every id (the
-next `S` for the source, the next `I`/`N` for each person/name); do
-**not** hand-edit the file, allocate ids, or call
-`validate_research_schema` for it.
-
-```
-tree_edit({
-  projectPath: "<absolute project dir>",
-  ops: [
-    { operation: "add_source", source: { /* title + optional author/url, NO id */ } }
-    /* …then one add_person op per in-scope sibling from 5d (the
-       add_relationship edges go in a SECOND tree_edit batch — see 5d)… */
-  ]
-})
-```
-
-For the `add_source` op, pass `title` (required) plus the optional
-`author`/`url`; omit any field that doesn't apply — never set it to
-`null`, and never pass an `id`. To correct an existing `S` entry's title
-or citation later, use a `{ operation: "update_source", sourceId,
-source }` op.
-
-Before writing, double-check the fields the validator is strict about,
-so the `research_append` batch passes on the first call:
-- `record_id` is the result's `recordId` (any ARK / URL / bare-id form — the validator matches by canonical ARK form, so just pass it through). The full resolver URL goes in the source's `url` field
-- `record_persona_id` is set (non-null) for `record_search` sources
-- All required assertion fields are present (informant, informant_proximity, evidence_type)
-- The `add_source` payload carries `title` (required) and only the optional `author`/`url`/`citation` — no `id`, no `null` values
+**5c. Write the tree side in ONE batched `tree_edit` call** — the
+source `S` entry plus any sibling `add_person` ops (5d below). The
+`tree_edit` batch is separate from `research_append`'s; the tool
+assigns every id (`S`, `I`, `N`), validates once, writes once with a
+one-deep `.bak`, and on any per-op failure returns
+`{ ok: false, errors: ["ops[i]: <msg>"] }` and writes NOTHING. For the
+`add_source` op, pass `title` (required) plus the optional
+`author`/`url`; omit any field that doesn't apply (never `null`, never
+pass `id`). Correct a later `S` entry via an `update_source` op.
 
 **5d. Sibling person stubs — when the subject is a child on a household
 record.** When the subject's `record_role` is `child_N` (i.e., the subject
@@ -561,92 +509,33 @@ whether to write any stub:
    that supports the conclusion. A reader (or validator) must be able
    to confirm the skip from the enumeration, not from a bare claim.
 
-**For each in-scope sibling (i.e., not already present in the tree),
-write the stub and the edges.** A sibling's ParentChild edge references
-the `I` id the tool assigns to that sibling. The tool *does* let a later
-op reference an id an earlier op created in the same batch (the `I`
-allocator is `max+1`, like `src_`/`a_`), so add_person + add_relationship
-in one batch is supported. But tree `I` ids are easier to mis-predict than
-research ids — a tree mixes synthesized `I<n>` ids with FamilySearch person
-ids — so prefer the robust pattern here: read each sibling's assigned `I`
-id back from the stub batch's `results[].assignedIds`, then reference it in
-a second `tree_edit` batch. Split this across two `tree_edit` calls:
+**Write the stubs and edges in two `tree_edit` batches** (tree `I` ids
+mix synthesized + FamilySearch ids and aren't safe to predict, so read
+each sibling's assigned `I` back from the first batch before
+referencing it in the second):
 
-1. **Person stubs — in the SAME batch as the 5c `add_source`.** Add one
-   `add_person` op per in-scope sibling to that first `tree_edit` ops
-   array. The tool assigns each sibling's `I` id and the `N` ids for
-   names; do not set `id`. Each op's shape:
-
-   ```
-   { operation: "add_person",
-     person: {
-       gender: "Male" | "Female",
-       names: [
-         {
-           given: "<given name from the record>",
-           surname: "<surname from the record>",
-           preferred: true,
-           type: "BirthName"
-         }
-       ]
-     } }
-   ```
-
-   No facts on the stub — the sibling's facts (birth, residence, etc.)
-   stay on the per-sibling assertions in `research.json` from step 5b.
-   Detailed sibling facts land later via record-extraction passes on
-   records that feature the sibling directly (e.g., the next census).
-   Read back each sibling's assigned `I` id from that batch's
+1. **Person stubs — in the SAME batch as the 5c `add_source`.** One
+   `add_person` op per in-scope sibling. Person shape: `gender`
+   (`Male`/`Female`) + a single `names` entry with `given`, `surname`,
+   `preferred: true`, `type: "BirthName"` — no `id`, no facts (facts
+   stay on the per-sibling assertions; later record-extraction passes
+   add more). Read back each assigned `I` id from
    `results[].assignedIds`.
+2. **ParentChild edges — in a SECOND `tree_edit` batch**, one
+   `add_relationship` op per (sibling × in-tree parent) pair:
+   `{ type: "ParentChild", parent: "<existing parent I>", child:
+   "<sibling I from step 1>" }`. If both household parents are in the
+   tree, emit two ops per sibling (one per parent) so the sibling
+   shows up under either `buildParentMob`.
 
-2. **ParentChild edges — in a SECOND `tree_edit` batch**, now that the
-   sibling `I` ids are known. Add one `add_relationship` op per (sibling
-   × in-tree parent) pair to a single ops array:
-
-   ```
-   tree_edit({
-     projectPath: "<absolute project dir>",
-     ops: [
-       { operation: "add_relationship",
-         relationship: {
-           type: "ParentChild",
-           parent: "<the existing parent's I id>",
-           child: "<the sibling I id from step 1's response>"
-         } }
-       /* …one op per (sibling × in-tree parent) pair… */
-     ]
-   })
-   ```
-
-   If both household parents exist in the tree (e.g., both
-   `head_of_household` and `wife` map to in-tree persons), emit TWO
-   ParentChild ops per sibling — one per parent — so the sibling
-   shows up correctly under either parent's `buildParentMob`.
-
-**The subject's own person and the subject's ParentChild edges are
-out of scope here** — those are written by `person-evidence` when it
-links the subject's assertions to the tree person. This step is only
-about the *siblings* the subject's `child_N` role implies.
-
-**No new tool, no new schema.** `tree_edit` already supports
-`add_person` and `add_relationship` (see `src/tools/tree-edit.ts`); the
-simplified GedcomX `relationships[]` array already supports unlimited
-`ParentChild` entries per parent (no schema change).
+The subject's own person and ParentChild edges are out of scope —
+`person-evidence` writes those.
 
 ### 6. Present results
 
 Show source, assertions by person-role, and classifications. Suggest
 `check-warnings` to surface genealogical impossibilities, and
 assertion-classification or person-evidence as next steps.
-
-## Image-based records
-
-For `image_read` records: produce a verbatim transcription, present
-it for user review, then extract assertions only after confirmation.
-Use `[?]` for uncertain readings, `[illegible]`/`[torn]` for damage.
-Write the confirmed transcription to the source's `transcription` field.
-`image_read` accepts only image ARKs (`3:1:...`) and Image Group Number
-URLs — not persona (`1:1:`) or record (`1:2:`) ARKs.
 
 ## Decision rules
 
@@ -716,17 +605,6 @@ dwelling 84, Thomas Flynn household.
 | a_003 | child_1 | residence | Schuylkill County, PA | primary | census enumerator | witness |
 | a_004 | child_1 | relationship | position consistent with child | indeterminate | census enumerator | witness |
 | a_005 | head_of_household | name | Thomas Flynn | indeterminate | unknown household member (likely self or spouse) | household_member |
-
-Note the per-fact informant analysis with reasoning in
-`informant_bias_notes`:
-- **Name** (a_001): `household_member` — a parent in the household
-  reported the child's name to the enumerator
-- **Birth/age** (a_002): `household_member` — a 5-year-old cannot
-  report their own age; a parent provided this
-- **Residence** (a_003): `witness` — the enumerator visited the dwelling
-- **Relationship** (a_004): `witness` — inferred from household
-  position; the enumerator recorded who lived in the dwelling. Uses
-  `child_inferred` in structured_value.
 
 ## Re-invocation behavior
 
