@@ -1,0 +1,611 @@
+{
+  "persons": [
+    {
+      "id": "KWZP-4Q8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Ivyl Phylena",
+          "surname": "Greenley",
+          "id": "KWZP-4Q8-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "26 May 1914",
+          "standard_date": "26 May 1914",
+          "place": "Farley, Taylor Twsp, Dubuque County, Iowa",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "24 May 2005",
+          "standard_date": "24 May 2005",
+          "place": "San Diego, San Diego, California",
+          "standard_place": "San Diego, San Diego, California, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Farley, Dubuque, Iowa, United States",
+          "standard_place": "Farley, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "98445906-2723-43fb-82e4-d2c9c3c38b0b",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Farley, Saskatchewan, Canada",
+          "standard_place": "Farley, Corman Park No. 344, Saskatchewan, Canada",
+          "value": "Census"
+        },
+        {
+          "id": "49dd74a8-b659-4133-87c9-c30a0156589b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Taylor, Dubuque, Iowa, United States",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "4c12a7e2-0f16-4631-bc0d-6f2c32298a6e",
+          "type": "Residence",
+          "date": "1925",
+          "standard_date": "1925",
+          "place": "Dubuque, Iowa, United States",
+          "standard_place": "Dubuque, Iowa, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Taylor, Dubuque, Iowa",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "place": "Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KW4T-D9J",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Donald Wendell",
+          "surname": "Quass",
+          "id": "KW4T-D9J-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "16 January 1940",
+          "standard_date": "16 Jan 1940",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Madelia Village, Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "b52c85f4-5f6c-4d7a-a8df-87e932a8bc25",
+          "type": "Christening",
+          "date": "31 May 1943",
+          "standard_date": "31 May 1943",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "7b2291a8-18a0-4189-aa93-d2d71618545b",
+          "type": "Death",
+          "date": "25 April 2024",
+          "standard_date": "25 Apr 2024",
+          "place": "Breezy Point, Crow Wing, Minnesota, United States",
+          "standard_place": "Breezy Point, Crow Wing, Minnesota, United States"
+        },
+        {
+          "id": "bf435172-7ef5-47ff-91d4-747781eac965",
+          "type": "Obituary",
+          "date": "27 April 2024",
+          "standard_date": "27 Apr 2024",
+          "place": "Saint Paul, Ramsey, Minnesota, United States",
+          "standard_place": "Saint Paul, Ramsey, Minnesota, United States"
+        },
+        {
+          "id": "df09702a-d087-4277-aebb-db9057efae45",
+          "type": "Burial",
+          "date": "1 May 2024",
+          "standard_date": "1 May 2024",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Watonwan, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KNS4-P6W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Kenneth Werner",
+          "surname": "Quass",
+          "id": "KNS4-P6W-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "4 December 1917",
+          "standard_date": "4 Dec 1917",
+          "place": "Sumner, Bremer, Iowa, United States",
+          "standard_place": "Sumner, Bremer, Iowa, United States"
+        },
+        {
+          "id": "e02d8c27-c8bb-4c09-9f8e-c1ba505d2ee4",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Sumner, Buchanan, Iowa, United States",
+          "standard_place": "Sumner Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "4a25d8ab-9854-478c-9090-a9004769dce4",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Sumner, Buchanan, Iowa",
+          "standard_place": "Sumner Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "R, Buchanan, Iowa",
+          "standard_place": "Buchanan, Iowa, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Madelia Village, Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "55b16226-9fe3-46c9-9ad9-7fecf3c40e57",
+          "type": "Military Draft Registration",
+          "date": "16 Oct 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Marshall, Watonwan, Minnesota, United States",
+          "standard_place": "Marshall, Minnesota, United States"
+        },
+        {
+          "id": "ab93f448-37cc-401f-b1c8-739d271affbb",
+          "type": "Move",
+          "date": "2 July 1962",
+          "standard_date": "2 Jul 1962",
+          "place": "Los Angeles, California, United States",
+          "standard_place": "Los Angeles, California, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 September 1982",
+          "standard_date": "17 Sep 1982",
+          "place": "Grapevine, Tarrant County, Texas, United States",
+          "standard_place": "Grapevine, Tarrant, Texas, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "date": "25 September 1982",
+          "standard_date": "25 Sep 1982",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "32f3ba77-8481-4d6d-8b66-a50d689b4d5f",
+          "type": "Residence",
+          "place": "Marshall, Watonwan, Minnesota",
+          "standard_place": "Marshall, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KNSS-9QM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Herbert Thomas",
+          "surname": "Greenley",
+          "id": "KNSS-9QM-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "23 June 1881",
+          "standard_date": "23 Jun 1881",
+          "place": "Concord Township, Dubuque, Iowa, United States",
+          "standard_place": "Concord Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "1e064ad1-d4b2-4f6c-bdb3-53c72906ead9",
+          "type": "Census",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Taylor, Dubuque, Iowa, USA",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States",
+          "value": "Listed as a servant at the Ensign household."
+        },
+        {
+          "id": "560b2c7a-282a-4730-8eac-f2a07f1f9d77",
+          "type": "Census",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Center, Dubuque, Iowa, USA",
+          "standard_place": "Center Township, Dubuque, Iowa, United States",
+          "value": "Living with wife. Listed as a Rural Mailman."
+        },
+        {
+          "id": "00d1c902-289f-4fe4-a2d8-635c8114e44b",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Center, Dubuque, Iowa, United States",
+          "standard_place": "Center Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "e7ab0d2c-4582-4321-b093-1ea2d8c42fca",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Faribault, Minnesota, United States",
+          "standard_place": "Faribault, Minnesota, United States"
+        },
+        {
+          "id": "8736a128-79f5-4476-869b-aafb833b08d2",
+          "type": "MilitaryService",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "WWI Draft Registration Cards",
+          "standard_place": "Draft, Sharp, Arkansas, United States",
+          "value": "Enlisted at Faribault, Minnesota. Listed as a Farmer and as having wife Alice."
+        },
+        {
+          "id": "dfbb4101-b189-41e1-9b31-71f5d8a3c95f",
+          "type": "Census",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Kiester, Fairbault, Minnesota, USA",
+          "standard_place": "Kiester, Faribault, Minnesota, United States",
+          "value": "Living alone. Listed as a Widower and as a General Farmer."
+        },
+        {
+          "id": "19cd8758-ae0e-435e-a865-8a3168afe66c",
+          "type": "Census",
+          "date": "1925",
+          "standard_date": "1925",
+          "place": "Epworth, Dubuque, Iowa, USA",
+          "standard_place": "Epworth, Dubuque, Iowa, United States",
+          "value": "Living with daughters ZMG and IPG."
+        },
+        {
+          "id": "8205f7b2-71a9-4176-8a27-fbfabd722a72",
+          "type": "Census",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "State Hospital, Washington, Buchanan, Iowa, USA",
+          "standard_place": "Washington Township, Buchanan, Iowa, United States",
+          "value": "Living with daughter ZMG. Listed as a Laundryman and as a Widower."
+        },
+        {
+          "id": "6b01be4e-11e1-4878-898a-3415a2395ef8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Washington, Buchanan, Iowa, United States",
+          "standard_place": "Washington Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "977ed40e-7eb6-458b-b24e-47a7458928ba",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "b0d370f6-43ff-4e7c-92bc-a9d83d62aca2",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 2, Independence City, Washington Township, Buchanan, Iowa, United States",
+          "standard_place": "Washington Township, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "976f2f02-1614-4562-a411-e04d04a44185",
+          "type": "Military Draft Registration",
+          "date": "27 Apr 1942",
+          "standard_date": "27 Apr 1942",
+          "place": "Frederika, Bremer, Iowa, United States",
+          "standard_place": "Frederika, Bremer, Iowa, United States"
+        },
+        {
+          "id": "0a9810c0-295b-4321-bb0d-ab2792650fc8",
+          "type": "Residence",
+          "date": "May 3, 1950",
+          "standard_date": "3 May 1950",
+          "place": "Tripoli, Bremer, Iowa, United States",
+          "standard_place": "Tripoli, Bremer, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "29 May 1963",
+          "standard_date": "29 May 1963",
+          "place": "Independence, Buchanan, Iowa, United States",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "2 June 1963",
+          "standard_date": "2 Jun 1963",
+          "place": "Epworth, Dubuque, Iowa, United States",
+          "standard_place": "Epworth, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "85f2157f-9872-4d3f-aeea-95597b5ad006",
+          "type": "Residence",
+          "place": "Frederika, Bremer, Iowa",
+          "standard_place": "Frederika, Bremer, Iowa, United States"
+        },
+        {
+          "id": "8373b325-0002-485d-b83d-740de608b4b8",
+          "type": "Occupation",
+          "value": "Farmer"
+        },
+        {
+          "id": "63b86a13-dcd7-49b4-99c8-a35cf9fc642c",
+          "type": "Occupation",
+          "value": "Rural Mailman"
+        },
+        {
+          "id": "31972d47-f82f-4cdd-a630-df652a23d382",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "KNS9-5S7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Alice Ann",
+          "surname": "Wilkinson",
+          "id": "KNS9-5S7-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "26 Jan 1880",
+          "standard_date": "26 Jan 1880",
+          "place": "Hazel Green, Grant, Wisconsin, United States",
+          "standard_place": "Hazel Green, Grant, Wisconsin, United States"
+        },
+        {
+          "id": "60606fc0-7d8b-44d0-8f16-dcf96a1cf62e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Hazel Green, Grant, Wisconsin, United States",
+          "standard_place": "Hazel Green, Grant, Wisconsin, United States"
+        },
+        {
+          "id": "a387f02c-8766-4fd7-beb2-96909e7ccefc",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Center, Dubuque, Iowa, United States",
+          "standard_place": "Center Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "3 Aug 1919",
+          "standard_date": "3 Aug 1919",
+          "place": "Kiester, Faribault, Minnesota, United States",
+          "standard_place": "Kiester, Faribault, Minnesota, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "6 August 1919",
+          "standard_date": "6 Aug 1919",
+          "place": "Epworth, Dubuque, Iowa, United States",
+          "standard_place": "Epworth, Dubuque, Iowa, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "KNS4-P6W",
+      "person2": "KWZP-4Q8",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "06 Mar 1938",
+          "standard_date": "6 Mar 1938",
+          "place": "Independence, Buchman, Iowa",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        }
+      ],
+      "id": "rel-1"
+    },
+    {
+      "type": "Couple",
+      "person1": "KNSS-9QM",
+      "person2": "KNS9-5S7",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "26 January 1910",
+          "standard_date": "26 Jan 1910",
+          "place": "Epworth, Dubuque, Iowa, United States",
+          "standard_place": "Epworth, Dubuque, Iowa, United States"
+        }
+      ],
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KNSS-9QM",
+      "child": "KWZP-4Q8",
+      "subtype": "Biological",
+      "id": "rel-3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KNS9-5S7",
+      "child": "KWZP-4Q8",
+      "subtype": "Biological",
+      "id": "rel-4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KNS4-P6W",
+      "child": "KW4T-D9J",
+      "subtype": "Biological",
+      "id": "rel-5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KWZP-4Q8",
+      "child": "KW4T-D9J",
+      "subtype": "Biological",
+      "id": "rel-6"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MS62-1FF",
+      "title": "Legacy NFS Source: Ivyl Phylena Greenley - Published information: Obituary: death: 24 May 2005; San Diego, San Diego, California, United States",
+      "citation": "Article"
+    },
+    {
+      "id": "38FF-11V",
+      "title": "Inyl Greenley, \"Iowa, State Census, 1925\"",
+      "citation": "\"Iowa, State Census, 1925\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKQH-C5YP : Sun Mar 10 15:16:39 UTC 2024), Entry for Inyl Greenley, 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKQH-C5YP"
+    },
+    {
+      "id": "QK2L-WL7",
+      "title": "Avyl Quass, \"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKGC-WSLK : Mon Jan 13 11:12:58 UTC 2025), Entry for Mrs Bernice H Quass Wegner and Ralph Quass, 22 Jun 2010.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKGC-W3S7"
+    },
+    {
+      "id": "M39F-8DF",
+      "title": "Ivyl Greenley, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XMJ7-HKN : Fri Mar 08 20:16:20 UTC 2024), Entry for Phylang Wilkinson and Ivyl Greenley, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XMJ7-HKJ"
+    },
+    {
+      "id": "9XZ1-Y2Q",
+      "title": "Ivyl Phylena Greenley Quass, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVK1-PM7Q : Thu Apr 03 09:52:45 UTC 2025), Entry for Ivyl Phylena Greenley Quass, 2005.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVK1-PM7Q"
+    },
+    {
+      "id": "MMMK-RW5",
+      "title": "Ivyl Quass, \"United States Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KSLN-B52 : Tue Jan 14 18:58:12 UTC 2025), Entry for Ivyl Quass and Kenneth Quass, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KSLN-B52"
+    },
+    {
+      "id": "SLTH-PYH",
+      "title": "Ivyl Phylena Quass, \"Minnesota, World War II Draft Registration Cards, 1940-1947\"",
+      "citation": "\"Minnesota, World War II Draft Registration Cards, 1940-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLF9-1GKW : Thu Apr 10 20:11:45 UTC 2025), Entry for Kenneth Warner Quass and Ivyl Phylena Quass, 16 Oct 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLF9-1GKC"
+    },
+    {
+      "id": "WWDC-3KV",
+      "title": "Phylena Ivyl Greenley, \"United States, Obituary Records, 2014-2023\"",
+      "citation": "\"United States, Obituary Records, 2014-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XM5X-SPSL : Sat Nov 30 06:36:18 UTC 2024), Entry for Donald Wendell Quass and Karen Ann Spriggs Quass, 27 April 2024.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XM5X-SPSB"
+    },
+    {
+      "id": "MMMK-RC8",
+      "title": "Ivyl P Quass, \"United States Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:VMQN-DYM : 11 January 2021), Ivyl P Quass, 24 May 2005; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:VMQN-DYM"
+    },
+    {
+      "id": "Q16G-TWF",
+      "title": "Ivyl Phylena Greenley, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7Y-MX4V : Tue Jun 09 07:59:37 UTC 2026), Entry for Ivyl P Quass and Herbert T Greenley.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7Y-MX4V"
+    },
+    {
+      "id": "WWG4-K8T",
+      "title": "Ingel Greenley, \"Iowa, County Births, 1880-1935\"",
+      "citation": "\"Iowa, County Births, 1880-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V464-9MW : Fri Jul 25 06:03:47 UTC 2025), Entry for Ingel Greenley and Hubert Greenley, 26 May 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V464-9MW"
+    },
+    {
+      "id": "9XZ1-BT5",
+      "title": "Ivyl Greenley, \"Iowa, State Census, 1915\"",
+      "citation": "\"Iowa, State Census, 1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK4T-SNZH : Sun Mar 10 16:22:43 UTC 2024), Entry for Ivyl Greenley, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK4T-SNZH"
+    },
+    {
+      "id": "9P9Q-9BF",
+      "title": "Ivyl Greenly in household of Robert Wilkinson, \"United States Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8BG-TGM : Tue Oct 21 19:49:25 UTC 2025), Entry for Robert Wilkinson and Phyellna Wilkinson, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8BG-TGQ"
+    },
+    {
+      "id": "39HN-W9G",
+      "title": "Ivyl Grunley, \"Iowa, State Census, 1915\"",
+      "citation": "\"Iowa, State Census, 1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK45-XJW8 : Sun Oct 12 08:54:09 UTC 2025), Entry for Ivyl Grunley, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK45-XJW8"
+    },
+    {
+      "id": "WWG4-2MT",
+      "title": "Ingel Greenley, \"Iowa, County Births, 1880-1935\"",
+      "citation": "\"Iowa, County Births, 1880-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V464-W1M : Fri Jul 25 06:51:50 UTC 2025), Entry for Ingel Greenley and Hubert Greenley, 26 May 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V464-W1M"
+    }
+  ]
+}
