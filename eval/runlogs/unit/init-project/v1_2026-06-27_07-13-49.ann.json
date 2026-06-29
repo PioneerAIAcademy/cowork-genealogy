@@ -1,0 +1,502 @@
+{
+  "run_log": "v1_2026-06-27_07-13-49.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "No place standardization was required because all place information used for Patrick Flynn came from the FamilySearch person_read fixture rather than a user-entered place requiring resolution. The skill correctly preserved the tool-provided places and did not make an unnecessary place_search call."
+    },
+    {
+      "test_id": "ut_init_project_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "No place standardization was needed because the locations used in the project came from the user’s provided information or the FamilySearch person_read result. The skill correctly preserved these places and did not make unnecessary place_search calls or alter the provided geographic information."
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "No place standardization was needed because Patrick Flynn’s birthplace and death place were obtained directly from the FamilySearch person_read record, not entered as new user-provided locations requiring resolution. The skill correctly preserved the FamilySearch places as recorded and did not make an unnecessary place_search call."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "No place standardization was required because the places used in the project (Ireland and Schuylkill County, Pennsylvania) were obtained directly from the FamilySearch person_read response. The skill correctly kept the source-provided locations unchanged and did not perform an unnecessary place search or modify the recorded places."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview & normalization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "The handling is correct. No hand-entered place required standardization, so the system properly did not call place_search or fabricate a standardized value. Since all places came directly from person_read, marking this as N/A is appropriate and fully compliant with the rules."
+    }
+  ]
+}
