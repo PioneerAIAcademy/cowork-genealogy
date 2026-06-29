@@ -183,7 +183,10 @@ beats a complete-looking citation with invented detail:
    which locator is missing and ask them to check the record image for the
    real value so they can supply it later. Do not stop at only asking without
    writing the marker — an un-refined citation is not an acceptable output —
-   and never present the placeholder as if it were a verified locator.
+   and never present the placeholder as if it were a verified locator. This
+   applies **even when the source notes already state the locator is missing**
+   (e.g. "volume and page not recorded") — that confirms the gap, it does not
+   excuse skipping the marker: still write it rather than asking in chat.
 6. **"On file" spans the whole project, not just the one entry.**
    Data recorded on a sibling source for the same underlying record
    (e.g., the family number on the FamilySearch copy of the same

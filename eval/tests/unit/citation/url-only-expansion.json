@@ -18,6 +18,7 @@
     "The skill must NOT guess the record type, year, jurisdiction, person, or any locator from the opaque ARK identifier — none of that is derivable from the URL. Asking the user for those details (or asking them to open the link and describe the record) is the correct behavior; inventing values is a failure",
     "where should follow the layered path: FamilySearch.org → underlying microfilm/original repository, once known",
     "Must NOT create a new src_ source entry for this URL — no source entry exists for it, and creating sources is record-extraction's job. Presenting the citation structure to the user (and directing them to record-extraction to persist it) is the correct outcome",
+    "Replication test — apply the rubric's decisive rule: the opaque ARK URL supplies no page/entry/dwelling locator, so where_within is genuinely unavailable from the source. The skill flagging it with an unknown-marker AND directing the user to supply it (open the record and read it) is a PASS on Replication test, not a partial — per the rubric, 'honest about an unavoidable gap' is the top of that scale. Do NOT deduct on Replication for a locator the URL cannot provide; partial/fail there are reserved for a locator that WAS on file but uncited, or an invented one",
     "If the skill writes nothing to research.json, skipping validate_research_schema is acceptable; if it modifies any existing source, it must validate"
   ]
 }
