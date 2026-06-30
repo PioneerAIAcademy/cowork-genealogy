@@ -1,0 +1,17 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search returning ZERO results for 'Bitsie Jackson'. Models the real-world failure mode: official records (census, vital records, etc.) index people by their formal name, not by community nicknames. A skill that searches by the user-supplied nickname 'Bitsie' without first checking the project state for an alias mapping will hit this empty result. Fixture predicate is substring-match on givenName='~Bitsie' so it fires whenever the skill literally searches the nickname.",
+  "args": {
+    "surname": "Jackson",
+    "givenName": "~Bitsie"
+  },
+  "response": {
+    "query": { "surname": "Jackson", "givenName": "Bitsie" },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

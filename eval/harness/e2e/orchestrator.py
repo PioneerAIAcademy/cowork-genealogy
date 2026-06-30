@@ -36,6 +36,8 @@ from claude_agent_sdk import (
     query,
 )
 
+from harness.auth import env_for_sdk, resolve_auth
+
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
     derive_stop_reason,
@@ -483,8 +485,15 @@ async def _run_agent(
         # re-discovery (17x in the spriggs run). Forcing tool search off loads
         # them once at session start. `env` MERGES onto the inherited environment
         # (claude_agent_sdk subprocess_cli merges os.environ, then options.env),
-        # so this adds the var without dropping ANTHROPIC_API_KEY/PATH.
-        env={"ENABLE_TOOL_SEARCH": "true"},
+        # so this adds the var without dropping PATH.
+        #
+        # env_for_sdk(resolve_auth()) routes the agent run to the operator's
+        # subscription when one is available (suppressing the ANTHROPIC_API_KEY
+        # that run_e2e.load_env_file pushed into os.environ for the judge), and
+        # falls back to injecting the key when there's no subscription. The
+        # judge keeps using the key from os.environ — only the agent subprocess
+        # env is overridden here.
+        env={"ENABLE_TOOL_SEARCH": "true", **env_for_sdk(resolve_auth())},
         model=fixture.agent_model,
         max_turns=fixture.caps.max_turns,
         hooks={
