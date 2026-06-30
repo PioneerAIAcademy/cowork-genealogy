@@ -24,7 +24,7 @@ allowed-tools:
 
 # /research — Full GPS Research Workflow
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). Under `--autonomous` mode, suppress per-entry preambles entirely — the audit trail lives in the persisted `rationale`/`notes` fields, not in chat, so narrate only at phase boundaries (or not at all) and keep moving.
 
 You drive the full Genealogical Proof Standard (GPS) workflow on the
 user's research objective. Rather than the user invoking each
@@ -48,10 +48,14 @@ or conflict resolution analysis) so the audit trail captures it.
 **You are the only driver. Keep working in one continuous turn.**
 There is no human to approve a tool, answer a question, or prompt you
 onward — so do **not** end your turn to announce, plan, or ask about a
-next step. After a sub-skill returns, immediately re-read `research.json`
-and invoke the next sub-skill in the **same turn**, and keep going
-through the full routing loop (§"What to do" steps 2–4) until a real
-stop condition is met (§"When to stop"). Writing something like "Next:
+next step. After a sub-skill returns, immediately invoke the next
+sub-skill in the **same turn**, and keep going through the full routing
+loop (§"What to do" steps 2–4) until a real stop condition is met
+(§"When to stop"). Trust the compact summaries the sub-skills and writer
+tools return plus the state you already hold in context — only re-read
+`research.json` when you're entering a phase cold without the relevant
+state in context, or when a sub-skill or the user changed the file in a
+way you don't already have. Writing something like "Next:
 research-plan" or "I'll now search records" and then yielding is a
 **failure** — it ends the run before any research happens. Narrate
 briefly if you like, but always follow the narration with the actual
@@ -95,18 +99,26 @@ user as you encounter them.
    conflict-resolved — the 5 threshold questions and 7-point stop
    criteria cannot be answered without those upstream artifacts.
 
-3. **Iterate — without yielding.** After each sub-skill returns, re-read
-   `research.json` and invoke the next step **in the same turn** (under
-   `--autonomous`; see "Autonomous mode"). New evidence may reveal new
+3. **Iterate — without yielding.** After each sub-skill returns, route
+   to the next step **in the same turn** (under `--autonomous`; see
+   "Autonomous mode") from the sub-skill's compact return plus the state
+   you already hold — re-read `research.json` only if the sub-skill
+   changed state you don't have in context, or you're routing into a
+   phase cold. New evidence may reveal new
    questions — return to `question-selection`. Resolved conflicts may
    unblock `proof-conclusion`. Do not assume the chain is linear; the
    same sub-skill may be invoked multiple times across the run. Do not
    stop after invoking just one sub-skill — that's the start of the
    loop, not the end.
 
-4. **Validate periodically.** After significant state changes, run
-   `validate_research_schema` to catch schema errors before they
-   compound across many entries.
+4. **Don't insert defensive validate passes.** Every writer tool
+   (`research_append`, `research_log_append`, `tree_edit`) validates the
+   **whole** project before it persists and writes nothing on failure, so
+   a separate periodic `validate_research_schema` pass between sub-skills
+   is pure redundancy — skip it. Only run `validate_research_schema`
+   directly when an **external/manual** edit touched the files outside the
+   writer tools (a hand-edit, or a file the user changed) and you need to
+   confirm it still conforms.
 
 ## Mentor checkpoints
 
@@ -195,8 +207,11 @@ of "What to do" and invoke the next sub-skill. (See "Autonomous mode".)
 
 **Writes:** nothing directly. This skill is a thin orchestrator — it
 reads `research.json` to decide the next step and delegates every
-write to the sub-skill it routes to. Between steps it calls
-`validate_research_schema` (read-only). The only side-channel writes
+write to the sub-skill it routes to. It does **not** insert defensive
+`validate_research_schema` passes between steps (the writer tools each
+validate the whole project before persisting); it calls
+`validate_research_schema` (read-only) only to confirm an external/manual
+edit to the files. The only side-channel writes
 during a run come from the `gps-mentor` subagent it invokes, which
 writes verdict files under `evaluations/` and never touches
 `research.json` or `tree.gedcomx.json`.
