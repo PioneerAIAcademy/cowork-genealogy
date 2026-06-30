@@ -385,3 +385,15 @@ compiled sources. Apply the nine criteria in
 photographed evidence from contributor-entered text, never cite them as
 primary, and use them as leads — add a plan item to find the originals
 they point to.
+
+## Re-invocation behavior
+
+This skill writes only to `research.json`: a new append-only `log[]` entry
+and the `status` on the matching `plans[].items[]`. It does not write
+source or assertion entries — record-extraction does that when the user
+returns a single-record capture.
+
+Re-running a search is itself a logged event by design (the log is the
+exhaustive-search audit trail), so always append a new `log_` entry and
+update the plan item's status. Never modify or delete a prior `log_`
+entry; two runs of the same search correctly produce two entries.
