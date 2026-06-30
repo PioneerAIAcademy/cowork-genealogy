@@ -161,18 +161,16 @@
 
 <!-- 3 THE LOOP -->
 <section class="slide">
-  <h2>The work is a loop</h2>
+  <h2>Two speeds: a fast loop, one slow score</h2>
   <div class="flow">
     <span class="step">Create</span><span class="arr">→</span>
-    <span class="step hot">Run</span><span class="arr">→</span>
-    <span class="step hot">Interpret</span><span class="arr">→</span>
-    <span class="step hot">Grade</span><span class="arr">→</span>
-    <span class="step hot">Improve skill</span><span class="arr">→</span>
-    <span class="step hot">Re-run</span><span class="arr">↺</span>
+    <span class="step hot">Debug live in Cowork</span><span class="arr">⟳</span>
+    <span class="step hot">tweak the skill</span><span class="arr">→</span>
+    <span class="step">Headless run + grade</span><span class="arr">→</span>
     <span class="step">PR</span>
   </div>
-  <p>Run it, see how the skill did, <strong>improve the skill</strong>, and re-run — until you <strong>can't improve the result anymore</strong>. Then submit a PR.</p>
-  <div class="card sub"><strong>One run ≈ 20–60 minutes and $3–10.</strong> Run one at a time, and plan your day around a handful — not dozens.</div>
+  <p><strong>Iterate fast, live:</strong> watch <code>/research</code> in Cowork, tweak the skill, run again — <strong>minutes</strong> per loop, no waiting for a verdict.</p>
+  <div class="card sub"><strong>Score once, at the end.</strong> When it works live, do <em>one</em> headless run — the honest, tree-read-blocked check — then grade that run. A 20–60 min / $3–10 run belongs at the end, not after every tweak.</div>
 </section>
 
 <!-- 4 HOW WE WORK -->
@@ -220,69 +218,60 @@ echo 'ANTHROPIC_API_KEY=sk-...' &gt;&gt; eval/.env</code></pre></div>
     </div>
     <div class="card">
       <h3>From a research document</h3>
-      <p>No FamilySearch access? Hand it a report, research log, or proof article — it <strong>builds the starting tree by hand</strong> from the document and uses the document's conclusion as the answer.</p>
+      <p>Alternatively, hand it a report, research log, or proof article — it <strong>builds the starting tree by hand</strong> from the document and uses the document's conclusion as the answer.</p>
     </div>
   </div>
   <p class="sub">Either way, keep it focused (one question, 1–5 findings), then confirm the answer is really gone: <code>ValidateFixture.bat</code> / <code>make e2e-validate TEST=&lt;slug&gt;</code>.</p>
 </section>
 
-<!-- 7 RUN -->
+<!-- 7 DEBUG LIVE -->
 <section class="slide">
-  <h2>Run a test</h2>
+  <h2>Debug live in Cowork — start here</h2>
   <div class="cmds">
-    <div><span class="os win">Windows</span><pre><code>RunE2E.bat
-# prompts for the slug</code></pre></div>
-    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-run TEST=kenneth-quass-death</code></pre></div>
+    <div><span class="os win">Windows</span><pre><code>SeedProject.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-project TEST=&lt;slug&gt;</code></pre></div>
   </div>
-  <p>Writes the result, a readable transcript, and the AI's final tree to <code>eval/runlogs/e2e/&lt;slug&gt;/</code>.</p>
-  <p class="sub">Rebuilds the server first if needed. Remember — one run at a time.</p>
+  <ul>
+    <li>Seeds an editable project from the fixture's <strong>starting state</strong>. Open it in <strong>Claude Cowork</strong>, run <code>/research</code> — <strong>init-project is auto-skipped</strong>.</li>
+    <li>Open the same folder in the <strong>Research Viewer</strong>: watch the log, assertions, and conflicts appear <strong>live</strong>, and ask Claude <em>"why didn't you search X? why direct, not indirect?"</em></li>
+  </ul>
+  <div class="card sub"><strong>Watch HOW it gets each answer</strong> — by searching records, not by reading the tree. Live runs don't block tree-reads, so a "find" via the tree won't hold up when you score.</div>
 </section>
 
-<!-- 8 DIAGNOSE -->
+<!-- 8 TWEAK LIVE -->
 <section class="slide">
-  <h2>See what the AI did</h2>
-  <p>Start with <code>/interpret-e2e-result</code> for the headline verdict. Then read the <strong>step-by-step</strong> — every search, result, and skill it used is in <code>run-&lt;ts&gt;.transcript.md</code>.</p>
-  <div class="card">
-    <h3>Ask Claude about the run</h3>
-    <p>"Did it <strong>skip a search</strong> it should have run? Try <strong>maiden-name or spelling variations</strong>? Call a finding <strong>direct</strong> when the evidence is only indirect? <strong>Where and why did it stop?</strong>"</p>
-  </div>
-  <p class="sub">This is where you catch the missed search or the over-claim — the verdict alone won't show it.</p>
+  <h2>Tweak the skill, re-run live — repeat</h2>
+  <p class="sub">A "skill" is a page of <strong>plain-English instructions</strong> telling the AI how to research (a <code>SKILL.md</code> file).</p>
+  <ul>
+    <li><strong>Diagnose</strong> what went wrong, <strong>reword the skill's instructions</strong>, and run <code>/research</code> again in Cowork.</li>
+    <li>Edits are picked up on the next run — <strong>watch the fix work in minutes</strong>, no waiting for a verdict.</li>
+    <li><strong>Loop</strong> until it researches well <em>and gets there by searching records.</em></li>
+  </ul>
+  <div class="card sub">This is the <strong>fast inner loop</strong> — stay here, iterating live, until you're confident. No headless runs yet.</div>
 </section>
 
-<!-- 9 VIEW -->
+<!-- 9 SCORE -->
 <section class="slide">
-  <h2>View the result in the app</h2>
+  <h2>Score it — once, at the end</h2>
   <div class="cmds">
-    <div><span class="os win">Windows</span><pre><code>ViewE2E.bat</code></pre></div>
-    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-view TEST=&lt;slug&gt;</code></pre></div>
+    <div><span class="os win">Windows</span><pre><code>RunE2E.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-run TEST=&lt;slug&gt;</code></pre></div>
   </div>
-  <p>Loads the latest run into the <strong>Research Viewer</strong> — the final tree, the research log, conflicts, and each finding's <strong>direct vs indirect</strong> badge.</p>
-  <div class="card sub">Open <code>eval/.e2e-view</code> in the viewer once (its <strong>Open Project</strong> button) and <strong>keep it open</strong> — every re-run, just run <code>e2e-view</code> again and it refreshes live.</div>
+  <p>When it works live, do <strong>one</strong> headless run — the honest check that <strong>blocks the tree-read tools</strong>. It writes the result + transcript + final tree to <code>eval/runlogs/e2e/&lt;slug&gt;/</code>; then <code>/interpret-e2e-result</code> for the verdict.</p>
+  <div class="card sub"><strong>If it fails</strong>, the live fix didn't hold — read <code>run-&lt;ts&gt;.transcript.md</code> (or <code>make e2e-view</code>) to see what the blocked run did, then back to live debugging. One run is noisy — re-run a borderline result before trusting it.</div>
 </section>
 
 <!-- 10 GRADE -->
 <section class="slide">
-  <h2>Grade the result</h2>
+  <h2>Grade the run</h2>
   <ul>
-    <li>For each expected finding, decide whether the AI really found it: <strong>true / partial / false</strong>.</li>
-    <li><strong>Ask Claude Code to grade the run</strong> — it records your labels in <code>run-&lt;ts&gt;.ann.json</code>, saved beside the run log.</li>
+    <li>For the run you'll commit, decide for each finding: <strong>true / partial / false</strong>.</li>
+    <li><strong>Ask Claude Code to grade the run</strong> — it records your labels in <code>run-&lt;ts&gt;.ann.json</code>, beside the run log.</li>
   </ul>
-  <div class="card">Grading is <strong>squarely genealogy judgment</strong> — and that <code>.ann.json</code> is the grade you commit. Where you disagree with the AI judge, your label is what counts.</div>
+  <div class="card">Grading is <strong>squarely genealogy judgment</strong> — and that <code>.ann.json</code> is the grade you commit. Do it <strong>once, on the passing run</strong>, not every iteration.</div>
 </section>
 
-<!-- 11 IMPROVE -->
-<section class="slide">
-  <h2>Improve the skill → re-run → compare</h2>
-  <p class="sub">A "skill" is a page of <strong>plain-English instructions</strong> telling the AI how to research (a <code>SKILL.md</code> file).</p>
-  <ul>
-    <li><strong>Diagnose</strong> — what did the AI get wrong, and what <em>should</em> good research have done?</li>
-    <li><strong>Adjust</strong> the skill's instructions, then <strong>re-run</strong> (picked up automatically).</li>
-    <li>Did it improve? <strong>Repeat until you can't improve it anymore.</strong></li>
-  </ul>
-  <div class="card sub"><strong>Re-run before concluding</strong> — the AI isn't perfectly repeatable; one finding flipping may be chance.</div>
-</section>
-
-<!-- 12 PR -->
+<!-- 11 PR -->
 <section class="slide">
   <h2>Submit a PR</h2>
   <p>Commit together:</p>
@@ -293,7 +282,7 @@ echo 'ANTHROPIC_API_KEY=sk-...' &gt;&gt; eval/.env</code></pre></div>
   <div class="card sub">The maintainers review and merge. You create and push; you don't merge your own.</div>
 </section>
 
-<!-- 13 QUESTIONS -->
+<!-- 12 QUESTIONS -->
 <section class="slide lead center">
   <h1>Questions?</h1>
   <p class="big sub">Then hands-on — we author, run, and interpret <strong>Kenneth Quass</strong> together.</p>
