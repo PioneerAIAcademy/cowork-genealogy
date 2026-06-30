@@ -173,6 +173,18 @@ describe('SidecarPanel — dismiss affordances', () => {
     await userEvent.click(screen.getByTestId('sidecar-backdrop'))
     expect(closeSidecar).toHaveBeenCalled()
   })
+
+  it('pressing Escape calls closeSidecar', async () => {
+    const { closeSidecar } = mountWithState({
+      status: 'loaded',
+      logId: 'log_001',
+      payload: patrickFlynnSidecar,
+      lastMtime: 1
+    })
+    render(<SidecarPanel />)
+    await userEvent.keyboard('{Escape}')
+    expect(closeSidecar).toHaveBeenCalled()
+  })
 })
 
 describe('SidecarPanel — clearFocusPersona', () => {
