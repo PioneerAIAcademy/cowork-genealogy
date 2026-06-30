@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import StatusBadge from '../shared/StatusBadge'
 import PersonCard from '../shared/PersonCard'
+import Linkify from '../shared/Linkify'
 import type { GedcomxPerson, GedcomxRelationship, ResearcherProfile } from '../../lib/schema'
 import { getPreferredName } from '../../lib/schema'
 import { parentChildLabel, describeRelationship } from '../../lib/relationship-label'
@@ -56,7 +57,7 @@ function ResearcherProfileBlock({ profile }: { profile: ResearcherProfile }): Re
         )}
       </div>
       {profile.narration_guidance && (
-        <div className={styles.profileGuidance}>{profile.narration_guidance}</div>
+        <div className={styles.profileGuidance}><Linkify text={profile.narration_guidance} /></div>
       )}
     </div>
   )
@@ -117,7 +118,7 @@ export default function ProjectOverview(): React.JSX.Element {
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Project Overview</h2>
 
-      <p className={styles.objective}>{project.objective}</p>
+      <p className={styles.objective}><Linkify text={project.objective} /></p>
 
       <div className={styles.meta}>
         <StatusBadge value={project.status} />
@@ -163,7 +164,7 @@ export default function ProjectOverview(): React.JSX.Element {
                 <div className={styles.relNoteHeader}>{rel.description}</div>
                 <ul className={styles.relNoteBullets}>
                   {rel.notes.map((note, idx) => (
-                    <li key={idx}>{note}</li>
+                    <li key={idx}><Linkify text={note} /></li>
                   ))}
                 </ul>
               </li>

@@ -66,25 +66,26 @@ def test_raises_when_no_auth_available(monkeypatch, tmp_path):
         auth.resolve_auth()
 
 
-def test_env_for_sdk_suppresses_key_in_subscription_mode():
-    """Subscription mode forces the SDK subprocess onto the CLI session by
-    setting ANTHROPIC_API_KEY="" — an empty string reads as unset to the
-    Claude Code CLI's truthiness check, so it falls back to its OAuth
-    session even when a key was inherited from os.environ."""
+def test_env_for_sdk_subscription_mode_sets_tool_search_and_suppresses_key():
+    """Subscription mode sets ENABLE_TOOL_SEARCH=true and suppresses any
+    inherited ANTHROPIC_API_KEY="" so the CLI falls back to its OAuth session."""
     cfg = auth.AuthConfig(skill_runner_mode="subscription", api_key=None, detail="x")
-    assert auth.env_for_sdk(cfg) == {"ANTHROPIC_API_KEY": ""}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
 
 
-def test_env_for_sdk_returns_key_in_api_mode():
+def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
     cfg = auth.AuthConfig(skill_runner_mode="api_key", api_key="sk-x", detail="x")
-    assert auth.env_for_sdk(cfg) == {"ANTHROPIC_API_KEY": "sk-x"}
+    assert auth.env_for_sdk(cfg) == {
+        "ENABLE_TOOL_SEARCH": "true",
+        "ANTHROPIC_API_KEY": "sk-x",
+    }
 
 
 def test_env_for_sdk_subscription_mode_suppresses_key_even_if_present():
     """Even when a key is available (carried for the judge), subscription
-    mode must NOT let the skill-runner subprocess use it — it's overridden
-    to empty so the CLI session wins."""
+    mode suppresses it with "" so the CLI OAuth session wins, and still
+    sets ENABLE_TOOL_SEARCH=true."""
     cfg = auth.AuthConfig(
         skill_runner_mode="subscription", api_key="sk-x", detail="x"
     )
-    assert auth.env_for_sdk(cfg) == {"ANTHROPIC_API_KEY": ""}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
