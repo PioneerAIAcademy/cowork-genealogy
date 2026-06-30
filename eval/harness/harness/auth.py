@@ -1,15 +1,23 @@
 """Authentication for the harness.
 
 Resolution order:
-  1. Skill runner — prefer the API key. If ANTHROPIC_API_KEY is set
-     (in the shell or in eval/.env via Setup.bat), the skill runner
-     uses it. Subscription auth (~/.claude/) is only a fallback for
-     the case where no key is configured.
+  1. Skill runner — prefer the subscription. If a Claude Code
+     subscription session is available (~/.claude/ exists), the skill
+     runner uses it for both unit-test and e2e skill execution. The
+     API key (from the shell or eval/.env via Setup.bat) is only a
+     fallback for the case where no subscription is configured.
 
-     Policy: eval runs should bill the project's API key, not an
-     operator's personal Claude subscription. Setup.bat collects the
-     key and writes it to eval/.env; resolve_auth picks it up before
-     checking for any subscription session.
+     Policy: the skill runner — the expensive layer that drives the
+     full agent loop — should bill the operator's flat-rate Claude
+     subscription, not the project's metered API key. The judge stays
+     on the key (see below). resolve_auth still resolves the API key
+     even in subscription mode and carries it on AuthConfig so the
+     judge has it.
+
+     Note: an inherited ANTHROPIC_API_KEY in the SDK subprocess would
+     otherwise take precedence over the subscription session, so
+     env_for_sdk actively suppresses it in subscription mode (see
+     that function).
 
   2. Judge — always uses an ANTHROPIC_API_KEY. The Anthropic SDK (the
      judge talks to it directly, bypassing the Agent SDK) has no
@@ -50,41 +58,48 @@ class AuthError(Exception):
 def resolve_auth() -> AuthConfig:
     """Resolve auth for both the skill runner and the judge.
 
-    Skill runner: prefer the API key (from env or eval/.env). Fall back
-    to subscription (~/.claude/) only when no key is configured.
+    Skill runner: prefer the subscription (~/.claude/). Fall back to the
+    API key (from env or eval/.env) only when no subscription session is
+    configured. Either way the API key, if present, is carried on the
+    returned config for the judge.
     Judge: always uses the API key; errors at grade time if absent.
 
-    Raises AuthError only when neither a key nor a subscription is
+    Raises AuthError only when neither a subscription nor a key is
     available — in that case nothing can run.
     """
     api_key = _load_api_key()
     has_sub = _has_subscription()
+
+    if has_sub:
+        return AuthConfig(
+            skill_runner_mode="subscription",
+            # Kept for the judge even in subscription mode. None is allowed
+            # (run_tests warns up front that the judge will fail when reached).
+            api_key=api_key,
+            detail=(
+                f"skill runner: subscription auth from {SUBSCRIPTION_DIRS[0]}; "
+                + (
+                    f"judge: ANTHROPIC_API_KEY (length={len(api_key)})"
+                    if api_key
+                    else "judge: MISSING — judge will fail when reached"
+                )
+            ),
+        )
 
     if api_key:
         return AuthConfig(
             skill_runner_mode="api_key",
             api_key=api_key,
             detail=(
-                f"skill runner: ANTHROPIC_API_KEY (length={len(api_key)}); "
-                f"judge: same key"
-            ),
-        )
-
-    if has_sub:
-        return AuthConfig(
-            skill_runner_mode="subscription",
-            api_key=None,
-            detail=(
-                f"skill runner: subscription auth from {SUBSCRIPTION_DIRS[0]} "
-                "(fallback — no ANTHROPIC_API_KEY configured); "
-                "judge: MISSING — judge will fail when reached"
+                f"skill runner: ANTHROPIC_API_KEY (length={len(api_key)}) "
+                "(fallback — no subscription session found); judge: same key"
             ),
         )
 
     raise AuthError(
-        "No auth available. Set ANTHROPIC_API_KEY in your environment or "
-        f"in {ENV_FILE} (Setup.bat does this for you), or run `claude` "
-        "once to log into a subscription as a fallback."
+        "No auth available. Run `claude` once to log into a subscription, "
+        "or set ANTHROPIC_API_KEY in your environment or in "
+        f"{ENV_FILE} (Setup.bat does this for you)."
     )
 
 
@@ -109,11 +124,22 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     For api_key mode: explicitly inject the key (covers the case where it
     lives in eval/.env but isn't in the shell environment).
 
-    For subscription mode: inject nothing. The SDK subprocess will use the
-    CLI's session. See module docstring for the os.environ-inheritance
-    caveat — if the operator has ANTHROPIC_API_KEY in their shell, the
-    subprocess may still see and prefer it over the subscription session.
+    For subscription mode: force the subprocess onto the CLI's subscription
+    session by suppressing any inherited ANTHROPIC_API_KEY (set to empty
+    string — the Claude Code CLI treats it as unset and falls back to its
+    OAuth session). Without this a key in the operator's shell would silently
+    win over the subscription.
+
+    `ENABLE_TOOL_SEARCH=true` eager-loads the genealogy MCP tool schemas at
+    agent start (matches the e2e orchestrator + hosted-web agent). Without
+    this flag the unit-test harness occasionally hits the deferred-tool
+    registry path, where the agent doesn't find `research_append` / `tree_edit`
+    via ToolSearch and falls back to "write JSON directly" — failing the test
+    on Completeness/Tool-Arguments rather than the skill's actual logic.
     """
+    env = {"ENABLE_TOOL_SEARCH": "true"}
     if auth.skill_runner_mode == "api_key" and auth.api_key:
-        return {"ANTHROPIC_API_KEY": auth.api_key}
-    return {}
+        env["ANTHROPIC_API_KEY"] = auth.api_key
+    else:
+        env["ANTHROPIC_API_KEY"] = ""
+    return env
