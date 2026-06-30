@@ -2,7 +2,7 @@
 
 `make e2e-project TEST=<slug>` (Windows: `SeedProject.bat`) copies a fixture's
 `starting-research.json` + `starting-tree.gedcomx.json` into a fresh, editable
-project folder — `eval/.e2e-project/<slug>/` — as `research.json` +
+project folder — `eval/e2e-project/<slug>/` — as `research.json` +
 `tree.gedcomx.json`. Open that folder in Claude Cowork to run `/research`
 step-by-step (init-project is auto-skipped because research.json already
 exists), and open the SAME folder in the Research Viewer to watch the run
@@ -29,7 +29,7 @@ from pathlib import Path
 
 from .orchestrator import DEFAULT_FIXTURES_ROOT, REPO_ROOT
 
-PROJECT_ROOT = REPO_ROOT / "eval" / ".e2e-project"
+PROJECT_ROOT = REPO_ROOT / "eval" / "e2e-project"
 
 
 def main(argv: list[str] | None = None) -> int:

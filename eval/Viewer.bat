@@ -5,8 +5,8 @@ echo === Cowork Genealogy — Research Viewer ===
 echo.
 echo Launches the Electron Research Viewer. Use its "Open Project" button to
 echo open a project folder:
-echo   eval\.e2e-project\^<slug^>   a live debug run  ^(SeedProject.bat^)
-echo   eval\.e2e-view              a scored run       ^(ViewE2E.bat^)
+echo   eval\e2e-project\^<slug^>   a live debug run  ^(SeedProject.bat^)
+echo   eval\e2e-view              a scored run       ^(ViewE2E.bat^)
 echo.
 echo Leave this window open while you work; close it or press Ctrl+C to stop
 echo the viewer.
