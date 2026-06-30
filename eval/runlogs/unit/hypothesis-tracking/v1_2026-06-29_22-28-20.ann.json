@@ -1,0 +1,630 @@
+{
+  "run_log": "v1_2026-06-29_22-28-20.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that a_005 (Thomas Flynn's name as household head in 1850 census) directly supports h_001's parentage claim. The analysis of all 13 assertions was sound—correctly dismissing name-only, birthplace, residence, and death facts as non-supporting. The file_changes diff shows a_005 was added to supporting_assertion_ids; status remains 'supported' as required. Schema validation passed. No fabricated or unsupported claims.\n\nJunior: (Accurate analysis, correct file update and adherence to instruction was highly demonstrated – Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed everything the user requested: systematically reviewed all unlinked assertions, analyzed their relevance to h_001, and added the one assertion (a_005) that merited linkage. The response included detailed reasoning for why other assertions were not linked, fulfilling the 'review and add relevant assertions' task completely. No silent omissions.\n\nJunior: (The skill demonstrated complete coverage of the task — review, analysis, linkage, and validation — with no gaps. Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls used correct arguments. The research_append call properly updated h_001 with the new supporting_assertion_ids array [a_004, a_005, a_010, a_013], included a detailed notes field, and operated on the correct section ('hypotheses') and entryId ('h_001'). The validate_research_schema call correctly specified the projectPath. No fixture_not_found errors; matched.kind == 'live' for both calls.\n\nJunior: (Both tool calls were executed with correct parameters and produced the expected results — Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> h_001's claim—'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania'—is highly specific. It names both individuals, identifies the relationship (parentage), and includes geographic detail (Schuylkill County, Pennsylvania). The claim is testable and would support targeted genealogical follow-up searches. Claude engaged with this claim structure clearly throughout the analysis.\n\nJunior: (The claim is well formed, specific, and research ready, and the skill maintained that clarity in its reasoning — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Claude correctly linked a_005 (Thomas Flynn's name as household head, 1850 census) as supporting h_001. This assertion directly establishes the identity of the candidate father named in the hypothesis. All four linked assertions (a_004, a_005, a_010, a_013) have genuine bearing on whether Thomas Flynn was Patrick's father—either via co-enumeration or direct statement. No off-topic or tangential linkages were made.\n\nJunior: (Evidence linkage was accurate, relevant, and complete — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_003`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Claude correctly maintained h_001's status as 'supported' and did not trigger any status transition. The instructions warned against changing status from supported, and Claude obeyed this requirement. Adding supporting assertions to an already-supported hypothesis is appropriate and does not mandate a status change. No invalid transition occurred.\n\nJunior: (Status handling was precise and compliant — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All outputs are factually correct. Both hypotheses are based on the actual 1850 census data cited (dwelling 84 vs household 197). The supporting and contradicting assertion linkages are accurate: a_004, a_010, a_013 genuinely bear on h_002; h_003 correctly has empty lists pending household 197 extraction. The schema validation confirms both entries passed validation. No fabricated material.\n\nJunior: (The skill demonstrated accurate, fact based hypothesis creation and proper evidence linkage. Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request to formulate identity conflict c_002 as testable hypotheses. Two competing hypotheses were created (h_002 and h_003), both with specific testable claims. All required schema fields were populated: id, claim, status, supporting_assertion_ids, contradicting_assertion_ids, ruled_out, related_question_ids, and notes. The file_changes diff confirms both entries were successfully appended to research.json.\n\nJunior: (The skill produced both hypotheses with all necessary fields and evidence linkage, fulfilling the request entirely — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP tool calls passed arguments correctly. Both mcp__genealogy__research_append calls provided complete, valid entry objects with all required hypothesis fields; projectPath and section were correct. The mcp__genealogy__validate_research_schema call correctly validated the result. No fixture_not_found errors occurred (all matched.kind == 'live'). Arguments align with expected behavior.\n\nJunior: (Tool arguments were accurate, complete, and correctly aligned with expected behavior — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> Both hypotheses are stated as specific, testable claims. h_002 names Patrick Flynn as the subject, specifies he is 'age 5, enumerated in Thomas Flynn's household, dwelling 84, 1850 census,' and includes the death year (1908) and place (Schuylkill County) for verification. h_003 similarly names the specific alternative: 'age 6, enumerated in household 197' and explicitly states he is NOT the dwelling-84 Patrick. Both claims are testable through record extraction and genealogical research.\n\nJunior: (The hypotheses are well structured, precise, and research ready, making them clear and testable — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Supporting and contradicting assertion linkages are correct and well-reasoned. h_002 links a_004 (1850 co-enumeration), a_010 (1860 continuity), and a_013 (death cert naming Thomas Flynn as father) — all direct or indirect statements about the dwelling-84 identity. h_003 correctly has empty lists, with explicit reasoning (provided in notes) that a_013 cannot be classified as contradicting until household 197's head is identified, avoiding the unsound assumption of two different Thomas Flynns. No tangential assertions are included.\n\nJunior: (Evidence linkage was accurate, relevant, and carefully justified — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_002`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Both hypotheses were set to 'active' status, which is correct per protocol. The skill correctly noted that even though h_002 has supporting evidence, the starting state for competing candidates should be 'active' rather than 'supported,' ensuring unbiased evaluation. Neither hypothesis was transitioned to 'ruled_out' without affirmative refutation (only lack of evidence), correctly following the research-schema-spec.md §5.9 rules. ruled_out_reason is null for both, as expected.\n\nJunior: (Status transitions were managed correctly and conservatively, with no invalid changes — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified hypothesis h_001 as SUPPORTED based on the three supporting assertions (a_004, a_010, a_013), accurately characterized their evidence types (two indirect, one direct), noted the absence of contradicting evidence, and verified chronological coherence. The analysis of the death certificate as direct evidence and the footnote about the informant being secondary is accurate. No fabricated claims; all assertions grounded in the provided research state.\n\nJunior: (The skill’s handling of correctness was thorough, accurate, and aligned with genealogical standards — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's query completely. It cited all three supporting assertions with their evidence types and explained why each supports the hypothesis. It noted that contradicting_assertion_ids is empty, identified probate (pli_006) as the next critical source, explained why the status is SUPPORTED vs PROVED (direct evidence present but informant secondary + research incomplete), and provided actionable next steps including the probate search.\n\nJunior: (The response was complete, covering evidence, status reasoning, contradictions, next sources, and future steps — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The skill made one MPC tool call: validate_research_schema with projectPath argument. The call matched expected args with kind='live' (successful fixture match). The argument passed the correct project path; no wrong identifiers or critical mismatches. Schema validation was appropriate as a mandatory pre-analysis step.\n\nJunior: (Tool arguments were correct, precise, and validated successfully — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis is clearly stated as a specific, testable claim: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, identifies the specific relationship (father-son parentage), and includes geographic detail (Schuylkill County). The claim is fully testable against the probate records and additional census searches identified in next steps.\n\nJunior: (The claim is well formed, precise, and actionable — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> All three supporting assertions are directly linked to the parentage hypothesis with clear bearing: a_004 and a_010 show Patrick in Thomas's household in consecutive censuses (household co-residence supports family relationship); a_013 directly names Thomas as Patrick's father on the death certificate. No tangential evidence was included. The skill correctly noted that the birthplace conflict (c_001) does not bear on the parentage question and thus was properly excluded from the linkage.\n\nJunior: (Evidence linkage is accurate, relevant, and carefully reasoned — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_001`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> The status transition to SUPPORTED is fully justified per research-schema-spec §5.9. The skill verified all three required criteria: at least one direct assertion (a_013, the death certificate), no unresolved contradictions (c_001 resolved and irrelevant to parentage), and no timeline impossibilities. The skill appropriately explained why status remains Probable (not Proved) due to informant being secondary and research being incomplete. The ruled_out scenario is correctly explained but not triggered; the transition logic is sound.\n\nJunior: (Status handling was precise, justified, and compliant with schema rules — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the chronological impossibility: Thomas Flynn of Luzerne County died 15 September 1840, five years before Patrick's ~1845 birth. The death assertion (a_016) is factually linked to the timeline, and the reasoning is sound under GPS evidence rules. No fabricated material or unsupported claims.\n\nJunior: (The contradiction was accurately recognized and applied, making the ruling out logically and factually sound — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request to update h_002 based on the death record. The hypothesis was properly evaluated, the status transitioned to ruled_out, contradicting evidence was linked, and the ruled_out_reason was supplied with detailed justification. No gaps in coverage.\n\nJunior: (The update was complete, covering evidence linkage, status transition, and reasoning — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_004`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls passed correct arguments. The research_append call properly targeted h_002 with correct field updates (status, contradicting_assertion_ids, ruled_out, ruled_out_reason). The validate call was appropriate for post-write verification. No fixture_not_found errors; arguments match the expected structure.\n\nJunior: (Tool arguments were accurate, complete, and aligned with protocol — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_004`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis claim is specific: 'Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania.' It names specific persons, the relationship being hypothesized (paternity), and includes place detail (Luzerne County, Pennsylvania). The claim is directly testable.\n\nJunior: (The claim is specific, well structured, and testable — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_004`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> The linkage is correct and precise. The death record (a_016) showing Thomas Flynn died 15 September 1840 is appropriately placed in contradicting_assertion_ids because it directly contradicts the paternity hypothesis—a man cannot father a child born five years after his death. The supporting evidence link (a_014, census) is also relevant as circumstantial evidence of the candidate.\n\nJunior: (Evidence linkage is correct, precise, and well reasoned — Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_004`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> The status transition to ruled_out is justified by affirmative refutation, not mere absence of evidence. Claude cites the specific death date (15 September 1840) and the timeline gap to Patrick's ~1845 birth as the grounds for ruling out. The ruled_out_reason explicitly states the chronological impossibility and the GPS framework violation. This meets the schema requirement for ruled_out transitions with documented affirmative refutation.\n\nJunior: (Status transition was justified, documented, and compliant with schema rules —Pass.)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The hypothesis claim is factually correct given the user's input. Thomas Flynn of Schuylkill County, Pennsylvania in the 1840s is correctly stated as a candidate father for Patrick Flynn (b. ~1845, d. 1908). The facts in the claim align with the user's message and the stub person in the project state. No fabricated material is present. The related_question_ids is correctly set to an empty array, avoiding ownership violations.\n\nJunior: (Overall, the skill demonstrated accurate handling of user's hunch, turning it into a preciese genealogical hypotheses - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: created a specific, testable hypothesis with proper formatting; called validate_research_schema as mandatory; set status to 'active' appropriately since no research evidence exists yet; included empty supporting and contradicting assertion arrays; and provided relevant guidance on next research steps.\n\nJunior: (All required elements were addressed - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_005`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both tool calls executed successfully with matched.kind='live'. The research_append call correctly specified all required fields: claim with specific names/places/timeframe, status='active', empty assertion arrays, ruled_out=false, null ruled_out_reason, and empty related_question_ids array. The validate_research_schema call was correctly invoked with only the projectPath argument. All arguments match expected usage.\n\nJunior: (The skill’s handling of tool arguments was precise. No errors or mismatches occurred. -Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_005`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The claim names specific persons (Thomas Flynn and Patrick Flynn), specifies the exact relationship (father-child), and includes precise place/time detail (Schuylkill County, Pennsylvania, 1840s for Thomas; born ca. 1845, died 1908 in Schuylkill County for Patrick). This is testable and would support targeted searches in census records and parish registers.\n\nJunior: (The hypothesis claim is clear and specific. The clarity ensures that research can be directed toward confirming or refuting the father–son link without ambiguity. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_005`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> No evidence has been linked yet, which is correct—this is the initial hypothesis creation. The supporting_assertion_ids and contradicting_assertion_ids arrays are appropriately empty since no research has been done. No tangential assertions are present to mislink.\n\nJunior: (No tangential or irrelevant assertions were mislinked, keeping the hypothesis clean and ready for future evidence tracking - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_005`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> The status is correctly set to 'active' per research-schema-spec.md §5.9 rules. Since no supporting evidence exists yet, 'supported' would be premature and incorrect. The ruled_out field is false with null ruled_out_reason, which is proper since there is no refuting evidence. The transition from project initialization to this initial 'active' hypothesis is justified.\n \nJunior: (The transition from project initialization to this initial active hypothesis is justified and compliant with schema requirements. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude's text response accurately reflects the research state: h_001 is correctly identified as SUPPORTED with three supporting assertions (a_004, a_010, a_013) and no contradictions; h_002 is correctly identified as ACTIVE with one supporting assertion (a_014). The schema validation passed. Claude correctly identifies the chronological impossibility (a_016: death in 1840 vs. ~1845 birth) that should lead to h_002 being ruled out, and appropriately flags this gap without making unsupported claims. All factual statements are grounded in the provided research data.\n\nJunior: (All factual statements are grounded in the project data, with no fabricated material. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude presented both competing hypotheses (h_001 and h_002) as required, along with their current status, supporting evidence, and contradicting evidence. It correctly identified the chronological contradiction (a_016) that the test notes indicated should be noticed. For a read-only review, Claude appropriately deferred modification while identifying the needed next action. No major portions of the request were omitted.\n\nJunior: (No major portions of the user’s request were omitted, and the summary gave a full snapshot of the research state. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_006`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made exactly one MCP tool call: validate_research_schema with projectPath set to the correct test directory. This matches expected behavior per SKILL.md requirements for every interaction, and the call is correctly structured and executed. The test explicitly required this validation even for read-only reviews, and Claude performed it.\n\nJunior: (The call was correctly structured and executed, ensuring the project state was validated without making unintended modifications. This fulfills the explicit requirement for tool usage in this scenario. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_006`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> Both hypotheses are stated with high clarity: h_001 names 'Thomas Flynn of Schuylkill County, PA' as father of Patrick Flynn (~1845 birth), and h_002 names 'Thomas Flynn of Luzerne County, PA' as the competing candidate. Both are specific, testable claims with place and time detail sufficient for follow-up searches. The relationship (biological father) is explicit and the persons are named with geographic specificity.\n\nJunior: (Each claim specifies the individuals, the exact relationship (father–child), and includes geographic and temporal detail, making them specific, testable, and suitable for targeted genealogical searches. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_006`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Claude correctly identifies and discusses the evidence linkages: a_004, a_010, a_013 genuinely support h_001 (household presence, age consistency, deathbed statement naming father); a_014 supports h_002 (Luzerne census showing Thomas with young child). Critically, Claude also correctly identifies a_016 (death record) as contradicting h_002 but appropriately flags it as 'not yet linked' in the data structure rather than falsely claiming it is already linked. This demonstrates correct read-only analysis: identifying the gap without fabricating existing linkages.\n\nJunior: (Claude correctly identified and discussed the evidence linkages, demonstrating proper read only analysis: recognizing the gap without fabricating existing linkages. - )Pass"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_006`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Claude correctly identifies that h_002 should move to 'ruled_out' based on affirmative refutation (a_016: death in 1840 before Patrick's ~1845 birth), matching research-schema-spec §5.9 rules. Critically, for a read-only review, Claude defers the actual transition while explicitly identifying the needed change and providing the exact rationale ('five years before Patrick's estimated 1845 birth — biological parentage is impossible'). This demonstrates correct behavior per test guidance: identifying needed transitions without modifying the file during a read-only summary. The score is pass because Claude correctly characterizes the current status (ACTIVE) and identifies why it should change, without mischaracterizing existing statuses.\n\nJunior: (Claude correctly identified that h_002 should transition to ruled_out based on affirmative refutation (a_016: Thomas Flynn of Luzerne County died in 1840, five years before Patrick’s ~1845 birth), which matches research schema spec §5.9 rules. For a read only review, Claude appropriately deferred making the actual transition while explicitly noting the needed change and providing the rationale (biological parentage is impossible due to chronological impossibility). This demonstrates correct behavior per test guidance: identifying the required transition without modifying the file. The current statuses were accurately characterized — h_001 as SUPPORTED and h_002 as ACTIVE — with no misrepresentation. -)Pass"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_007`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The hypothesis was created with accurate details: claim names Margaret O'Brien of County Cork as Patrick's mother; correctly identified the user-submitted FamilySearch tree as a compiled source (lead, not evidence); supporting_assertion_ids correctly left empty since no original-record assertions exist yet; status set to 'active' (appropriate for unverified lead); related to q_001 (parentage question). The file was successfully written and validated. No fabricated material or unsupported claims.\n\nJunior: (The hypothesis was created with accurate details: the claim clearly names Margaret O’Brien of County Cork, Ireland as Patrick Flynn’s mother, specifies the relationship (mother–child), and includes geographic detail sufficient for research. Claude correctly flagged the origin as a compiled source (user-submitted FamilySearch tree), treating it as a lead rather than evidence. supporting_assertion_ids and contradicting_assertion_ids were correctly left empty since no original-record assertions exist yet. The status was set to active, appropriate for an unverified lead, and the hypothesis was linked to q_001 (parentage question). The file was successfully written and validated, with no fabricated material or unsupported claims. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request: created a hypothesis tracking the Margaret O'Brien mother claim; explicitly flagged the compiled-source origin and stated the need for independent verification against original records; populated all required fields (claim, status, supporting/contradicting assertions, related question); provided concrete research pathways for verification and refutation. Nothing requested was omitted.\n\nJunior: (The skill fully addressed the user’s request by creating a hypothesis to track the Margaret O’Brien mother claim. It explicitly flagged the origin as a compiled source (user-submitted FamilySearch tree) and emphasized the need for independent verification against original records. All required fields were populated — claim, status set to active, empty supporting/contradicting assertion arrays, and linkage to q_001. The notes provided clear guidance on verification and refutation pathways, ensuring nothing was omitted from the request. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_007`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP calls matched expectations. The mcp__genealogy__research_append call correctly appended a hypothesis entry with projectPath, section='hypotheses', op='append', and a complete entry object matching schema (claim, status, assertion arrays, ruled_out/reason, notes, related_question_ids). The mcp__genealogy__validate_research_schema call correctly passed projectPath. Both calls succeeded (matched.kind='live') with valid responses.\n\nJunior: (Both MCP calls were executed exactly as expected. The mcp__genealogy__research_append call correctly appended a new hypothesis entry with projectPath, section='hypotheses', op='append', and a complete entry object containing all required fields (claim, status, assertion arrays, ruled_out/reason, notes, related_question_ids). The mcp__genealogy__validate_research_schema call correctly passed the projectPath and validated the schema. Both calls succeeded (matched.kind='live') with valid responses, fulfilling the SKILL.md requirement for schema validation even after append operations. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_007`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis claim is highly specific and testable: 'Patrick Flynn's mother was Margaret O'Brien from County Cork, Ireland.' It names the specific person (Margaret O'Brien), the specific relationship (mother), and includes geographic detail (County Cork) and implicit temporal context (Patrick born ~1845). A follow-up search can directly test this against original Irish records or naturalization/census documents. Not vague.\n\nJunior: (The hypothesis claim is highly specific and testable: “Patrick Flynn’s mother was Margaret O’Brien from County Cork, Ireland.” It clearly identifies the person (Margaret O’Brien), the relationship (mother), and geographic detail (County Cork), with implicit temporal context from Patrick’s ~1845 birth. This precision makes the claim suitable for targeted searches in Irish baptismal records, U.S. census data, and other original sources, ensuring it is not vague. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_007`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Supporting and contradicting assertion IDs are both empty arrays, which is correct since no assertions in research.json yet address Patrick's mother. The hypothesis is properly linked via related_question_ids to q_001 ('Who were the parents?'), a direct and appropriate connection. The notes correctly explain why no assertions are linked and outline the types of evidence (baptismal records, naturalization papers, etc.) that would bear on the hypothesis.\n\nJunior: (The hypothesis correctly leaves both supporting_assertion_ids and contradicting_assertion_ids as empty arrays, since no assertions in the project yet address Patrick Flynn’s mother. It is properly linked to q_001 (“Who were the parents?”), which covers both father and mother. The notes explicitly explain why no assertions are linked and outline the types of records that could provide supporting or refuting evidence (Irish baptismal records, naturalization papers, census entries, probate, marriage records). This is the correct setup for a lead hypothesis awaiting original-source verification. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_007`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Status was correctly set to 'active' (not 'supported' or 'ruled_out'), which aligns with research-schema-spec.md §5.9 guidance. The hypothesis is unverified; no direct evidence exists; no affirmative refutation exists. The ruled_out field is false and ruled_out_reason is null, consistent with an active lead. The transition is justified: this is a compiled-source lead requiring investigation, not yet ready for support or dismissal.\n\nJunior: (The hypothesis was correctly set to active, which aligns with research schema spec §5.9 guidance. Since no direct evidence supports or refutes the claim yet, marking it as supported or ruled_out would be premature. The ruled_out field is properly set to false with a null ruled_out_reason, consistent with an unverified lead. This transition is justified: the claim originates from a compiled source and requires investigation before any status change. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly created h_003 with accurate claim ('Patrick Flynn's father was James Flynn of Carbon County, Pennsylvania'), correct status (active), appropriate empty arrays for supporting/contradicting assertions (no evidence gathered yet), and correct related_question_ids=['q_001']. The claim is factually grounded in the user's description of the reference found. Tool calls succeeded with no fixture_not_found errors. Schema validation passed.\n\nJunior: (The new hypothesis h_003 was created correctly with the claim “Patrick Flynn's father was James Flynn of Carbon County, Pennsylvania.” The status is set to active, with both supporting_assertion_ids and contradicting_assertion_ids as empty arrays (no evidence yet). It is properly linked to q_001 (the parentage question). The notes clearly explain the lead’s origin, the need for verification, and outline research strategies. Importantly, h_001 and h_002 were not modified — the new hypothesis was added independently as a competing candidate. Tool calls succeeded, schema validation passed, and no unsupported or fabricated claims were introduced. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request to add James Flynn as a third father candidate. It created the new hypothesis with all required fields, did not modify existing h_001 or h_002 (respecting scope rules), provided contextual analysis of the three competing candidates in a summary table, flagged the chronological impossibility in h_002 without inappropriately modifying it, and offered clear next-step research guidance for h_003. All request elements were covered.\n\nJunior: (The skill fully addressed the request by creating h_003 for James Flynn of Carbon County as a third father candidate. It included all required fields (claim, status, assertion arrays, ruled_out fields, notes, related_question_ids), respected scope rules by not modifying h_001 or h_002, and provided a clear contextual summary of all three competing hypotheses in a comparison table. It also flagged the chronological impossibility in h_002 without making inappropriate changes and offered concrete next step research guidance for h_003. Nothing was omitted from the user’s request. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_008`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls used correct arguments. The mcp__genealogy__research_append call passed projectPath, section='hypotheses', op='append', and a well-formed entry object with the required fields (claim, status, supporting_assertion_ids, contradicting_assertion_ids, ruled_out, ruled_out_reason, notes, related_question_ids). The mcp__genealogy__validate_research_schema call correctly used only projectPath. Both calls matched.kind='live' with ok=true responses and no fixture_not_found errors.\n\nJunior: (Both MCP tool calls were correctly structured and executed. The mcp__genealogy__research_append call included the proper parameters: projectPath, section='hypotheses', op='append', and a well formed entry object with all required fields (claim, status, supporting/contradicting assertion arrays, ruled_out fields, notes, related_question_ids). The mcp__genealogy__validate_research_schema call correctly passed only the projectPath. Both calls returned matched.kind='live' with successful responses (ok=true) and no errors. This fully meets the requirements for tool usage and schema validation. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_008`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The claim 'Patrick Flynn's father was James Flynn of Carbon County, Pennsylvania' is highly specific and testable. It names both persons (Patrick Flynn and James Flynn), specifies the relationship (father-son parentage), and includes precise place and time detail (Carbon County, Pennsylvania, 1840s). This claim can be directly tested through census, vital, church, and probate searches that would confirm or refute it.\n\nJunior: (The claim “Patrick Flynn's father was James Flynn of Carbon County, Pennsylvania” is clear, specific, and testable. It names both individuals (Patrick Flynn and James Flynn), defines the relationship (father–son), and provides geographic detail (Carbon County, Pennsylvania, 1840s context). This precision makes the hypothesis actionable: it can be directly tested through census records, vital records, church registers, and probate documents to confirm or refute the parentage. The claim avoids vagueness and is framed in a way that supports targeted genealogical research. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_008`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Evidence linkage is correctly implemented. The supporting_assertion_ids and contradicting_assertion_ids are both empty arrays, which is correct because no assertions about James Flynn exist in the scenario yet—only a secondary reference was provided. The related_question_ids=['q_001'] is properly linked because all three father candidates (h_001, h_002, h_003) bear directly on the same research question about Patrick's parents. No tangential assertions are included.\n\nJunior: (Evidence linkage is correctly implemented for h_003. Both supporting_assertion_ids and contradicting_assertion_ids are empty arrays, which is appropriate since no assertions about James Flynn exist yet — only a secondary reference prompted the hypothesis. The hypothesis is properly tied to q_001 (“Who were the parents?”), ensuring all three father candidates (h_001, h_002, h_003) are tracked under the same research question. The notes explain why no assertions are linked and outline the types of records (census, vital, church, probate) that could provide supporting or refuting evidence. No unrelated or tangential assertions were included. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_008`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> The status transition is correct per research-schema-spec.md §5.9 rules. h_003 is marked as 'active' because it is a new lead from a secondary reference with no original evidence yet gathered. The hypothesis should not be 'supported' (no direct evidence) or 'ruled_out' (no refuting evidence exists yet). Status is appropriately conservative and matches the input state where this is the first mention of James Flynn. ruled_out is correctly set to false with null ruled_out_reason.\n\nJunior: (The status transition for h_003 is correct per research schema spec.md §5.9. It is marked as active because this is a new lead from a secondary reference, with no original evidence yet gathered. The hypothesis is appropriately conservative — not supported (no direct evidence) and not ruled_out (no refuting evidence). The ruled_out field is correctly set to false with ruled_out_reason as null, matching the input state where James Flynn is first introduced as a candidate father. This setup ensures the hypothesis remains open for investigation until evidence is found to confirm or refute it. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_009`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly read the input state, performed the age arithmetic (1835 birth → ~10 years old when Patrick born ~1845), identified this as a biological impossibility, and transitioned h_001 to ruled_out with the baptism assertion (a_006) correctly linked as contradicting evidence. The MCP call and file state both confirm the update succeeded with a comprehensive, accurate ruled_out_reason.\n\nJunior: ( Claude independently performed the age arithmetic: Thomas Flynn’s baptism record (a_006) establishes his birth in 1835, making him only ~10 years old when Patrick was born around 1845. Claude explicitly identified this as a biological impossibility for fatherhood. The hypothesis h_001 was transitioned to ruled_out, with status=\"ruled_out\", ruled_out=true, and a clear ruled_out_reason explaining the impossibility. Assertion a_006 was correctly added to contradicting_assertion_ids, recognizing that the baptism record already existed and was linked to Thomas Flynn via pe_005 at confident level. The file state confirms the update was successful and accurate, with no fabricated evidence or mischaracterization. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_009`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request to check whether the baptism record changes the hypothesis. The skill identified the contradiction, performed necessary arithmetic, updated the hypothesis status, linked the contradicting assertion, populated the ruled_out_reason, and validated the result. No required elements were omitted.\n\nJunior: (Claude fully carried out the requested evaluation of the baptism record against the hypothesis. It independently did the age arithmetic (Patrick born ~1845 vs. Thomas baptized 1835 → Thomas only ~10 years old), identified this as a biological impossibility, and updated h_001 accordingly. The hypothesis was transitioned to ruled_out, the contradicting assertion a_006 was correctly linked, and a clear ruled_out_reason was populated. Schema validation confirmed the update. All required elements — contradiction identification, arithmetic, hypothesis status change, assertion linkage, reason population, and validation — were addressed without omission. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_009`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls passed correct arguments. The research_append call used valid section ('hypotheses'), operation ('update'), entryId ('h_001'), and fields with proper schema structure (status, contradicting_assertion_ids, ruled_out, ruled_out_reason). The validate_research_schema call correctly identified the project path. No fixture_not_found errors occurred; both calls matched the live endpoints successfully.\n\nJunior: (Both MCP tool calls were made with correct arguments. The research_append call used the proper parameters: section='hypotheses', op='update', entryId='h_001', and a well formed fields object containing status, contradicting_assertion_ids, ruled_out, and a detailed ruled_out_reason. The validate_research_schema call correctly passed the projectPath to confirm schema integrity. Both calls executed successfully (matched.kind='live'), with no errors or fixture issues. This confirms the update to h_001 was properly structured and validated. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_009`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis is stated with specific, testable precision: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both individuals, specifies the relationship (father), and includes geographic/temporal context sufficient for follow-up searches. The claim is concrete and falsifiable.\n\nJunior: (The hypothesis “Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania” is expressed with clear, specific, and testable precision. It names both individuals (Patrick Flynn and Thomas Flynn), defines the relationship (father–son), and provides geographic context (Schuylkill County, Pennsylvania). The temporal context (~1845 birth for Patrick vs. Thomas’s 1835 baptism) makes the claim falsifiable through direct evidence checks. This concreteness ensures the hypothesis can be investigated and either confirmed or ruled out using census, baptismal, and other original records. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_009`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> The contradicting assertion (a_006 — baptism record establishing Thomas's birth in 1835) is directly and relevantly linked. It establishes the fact that contradicts the hypothesis: a 10-year-old cannot be a biological father. The supporting assertion (a_003 — census co-enumeration) is retained but contextualized correctly as consistent with sibling or uncle relationships rather than fatherhood. No tangential assertions are linked.\n\nJunior: (The evidence linkage is handled correctly. The contradicting assertion a_006 (Thomas Flynn’s baptism record establishing his 1835 birth) is directly tied to h_001, showing the biological impossibility of fatherhood at age ~10. This is the decisive contradiction. The supporting assertion a_003 (1850 census co enumeration) is retained but properly re contextualized — it may indicate a sibling, uncle, or other family relationship rather than father son. No irrelevant or tangential assertions were linked, ensuring the hypothesis is accurately documented with the appropriate evidence connections. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_009`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> The transition from active to ruled_out is justified by affirmative refutation: the baptism record provides direct primary evidence (contemporaneous parish register) establishing Thomas's birth date at 1835, creating a biological impossibility (age 10 at Patrick's birth). This meets the research-schema-spec.md criterion for ruling out. The ruled_out_reason is fully populated, explaining the contradiction and the confidence in the person-evidence link (pe_005, 0.92) that confirms the baptism record applies to this specific Thomas Flynn.\n\nJunior: (The transition of h_001 from active to ruled_out is fully justified. The baptism record (a_006) is primary information, direct evidence from a contemporaneous parish register, establishing Thomas Flynn’s birth in 1835. With Patrick born ~1845, Thomas would have been only ~10 years old — a biological impossibility for fatherhood. This meets the research schema spec.md §5.9 criteria for ruling out a hypothesis. The ruled_out_reason is thoroughly populated, explaining both the contradiction and the confident person evidence link (pe_005, match_score 0.92) that ties the baptism record to this specific Thomas Flynn. The update is precise, evidence driven, and correctly documented. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_010`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly interpreted the user's instruction that the birth year discrepancy 'doesn't disprove anything' and properly maintained h_001's 'supported' status rather than downgrading it. The linking of a_017 as contradicting evidence is factually correct. The rationale provided (census age rounding norms) is sound and well-documented. The observation about h_002 being overdue for ruling out is accurate but appropriately not acted upon since the user didn't request it. No fabricated material or unsupported claims.\n\nJunior: (Claude handled the update exactly as requested. It correctly interpreted the user’s instruction that the birth year discrepancy “doesn’t disprove anything,” so it maintained h_001’s supported status rather than downgrading it. Assertion a_017 was properly linked as contradicting evidence, reflecting the marriage record’s ~1823 birth year estimate. The rationale provided — census age rounding norms and self reported age variability among Irish immigrants — is sound and well explained. The observation about h_002 being overdue for ruling out was accurate but scope aware: it was mentioned in text only, with no file modification. No unsupported claims or fabricated evidence were introduced. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_010`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request: linked a_017 to h_001's contradicting_assertion_ids, preserved the 'supported' status, provided clear documentation of the discrepancy and its genealogical context in the notes field, and validated the schema. The user's explicit scope was only h_001, which was completely handled. The additional observation about h_002 was appropriately flagged as outside the immediate request without being acted upon.\n\nJunior: (Claude fully carried out the requested update for h_001. It correctly linked a_017 to the contradicting_assertion_ids, preserved the hypothesis’s supported status, and documented the discrepancy in the notes with appropriate genealogical context (census age rounding norms, self reported age variability). Schema validation was run and passed. The scope was respected — only h_001 was modified, while h_002 was flagged in text as problematic but left unchanged in the file. All elements of the user’s instructions were addressed without omission. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_010`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP calls matched expected behavior. The research_append call correctly used operation 'update', targeted h_001, and properly constructed the contradicting_assertion_ids array with a_017 and the notes field with detailed genealogical reasoning. The validate_research_schema call was appropriately invoked with the correct projectPath. Both calls returned successful responses (matched.kind == 'live', validation passed). No fixture_not_found errors or critical argument mismatches.\n\nJunior: (Both MCP calls were correctly structured and executed. The research_append call used the proper operation (update), targeted h_001, and included a well formed fields object:\n•\tcontradicting_assertion_ids correctly added a_017\n•\tnotes field documented the genealogical reasoning and clarified that the discrepancy is within normal census age rounding norms, preserving the hypothesis’s supported status\nThe validate_research_schema call was appropriately invoked with the correct projectPath, ensuring schema integrity. Both calls returned successful responses (matched.kind == 'live'), with no errors or fixture mismatches. This confirms the arguments were valid and the update was properly applied. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_010`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The claim is clear and testable: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' This names specific persons, the specific parent-child relationship, and includes geographic/temporal detail sufficient for follow-up searches. The evidence assessment is concrete (birth year ~1818 vs ~1823, based on specific documents: 1850 census, 1842 marriage record).\n\nJunior: (The hypothesis “Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania” is expressed with clear, specific, and testable detail. It identifies both individuals, defines the parent–child relationship, and situates them in a geographic context (Schuylkill County, Pennsylvania). The evidence assessment is concrete: the ~1818 birth year estimate from the 1850 census versus the ~1823 estimate from the 1842 marriage record (a_017). These are precise, document based facts that can be directly evaluated. The claim is therefore both falsifiable and actionable for genealogical research, while the discrepancy is properly contextualized as a normal census age rounding issue rather than undermining the parentage claim. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_010`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> All supporting and contradicting assertions are directly relevant. a_004, a_010, and a_013 directly support the parent-child hypothesis through census co-enumeration and death certificate naming. a_017 (marriage record birth year ~1823) genuinely contradicts the prior birth year estimate (~1818) derived from census age, making it properly classified as contradicting evidence. No tangential or off-topic links. Reasoning for each link is clear and genealogically sound.\n\nJunior: (All linked assertions are directly relevant to the hypothesis.\n•\tSupporting evidence:\n\ta_004 — 1850 census co enumeration, showing Patrick in Thomas’s household (indirect, indeterminate).\n\ta_010 — 1860 census co enumeration, again placing Patrick in Thomas’s household (indirect, indeterminate).\n\ta_013 — 1908 death certificate naming Thomas as Patrick’s father (direct, secondary informant).\n•\tContradicting evidence:\no\ta_017 — 1842 marriage record with Thomas’s self reported age of 19, implying birth ~1823, which contradicts the ~1818 estimate from census age.\nThe contradiction is genuine but minor, properly classified as contradicting evidence. The reasoning is genealogically sound: census age estimates and self reported ages often vary by several years, especially among 19th century Irish immigrants. No tangential or irrelevant assertions were linked, ensuring the hypothesis remains cleanly documented with only pertinent evidence. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_010`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Status correctly remained 'supported' despite adding contradicting evidence. This aligns with research-schema-spec.md §5.9 rules: the contradiction (5-year birth year discrepancy) is not affirmative refutation of the parent-child claim itself, and falls within normal 19th-century census age-rounding error. Claude did not invoke 'ruled_out' inappropriately. The status transition rule (supported only with direct positive evidence and no unresolved contradictions) is satisfied—the contradiction about birth year precision is minor and does not negate the three supporting assertions about the parent-child relationship.\n\nJunior: (The hypothesis h_001 correctly retained its supported status even after adding the contradicting evidence a_017. This aligns with research schema spec.md §5.9: the contradiction (a 5 year birth year discrepancy between census estimate ~1818 and marriage record ~1823) is not affirmative refutation of the parent child claim. Such discrepancies fall within normal 19th century census age rounding and self reporting error margins, so they do not undermine the direct supporting evidence (death certificate naming Thomas as father, plus census co enumerations). Claude appropriately avoided downgrading or ruling out the hypothesis, ensuring the status transition rules were respected. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_011`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the chronological impossibility (death in 1840, birth ~1845), accurately cited the source evidence (a_016 from src_006 with pe_008 identification), and ruled out h_002 based on sound genealogical reasoning. All factual claims match the provided project state.\n\nJunior: (Claude handled the situation exactly as required. It refused to promote h_002 to supported, correctly identifying that:\n1.\tThe hypothesis had only one weak supporting assertion (a_014, name match).\n2.\tThe Luzerne County death record (a_016) shows Thomas Flynn died in 1840, five years before Patrick’s ~1845 birth — a chronological impossibility.\nClaude explained why promotion was unsound, then took the appropriate corrective action: formally linked a_016 as contradicting evidence and transitioned h_002 to ruled_out, with a clear ruled_out_reason. The reasoning was genealogically sound, citing the confident identification (pe_008) and the death record details.\nIt also respected scope: only h_002 was updated, while h_001 remained unchanged. No fabricated evidence or unsupported claims were introduced. This is a fully correct and appropriate resolution. - Pass) "
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_011`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request by refusing to mark h_002 as supported, explaining the three independent reasons why the supported threshold cannot be met, formally linking the contradicting evidence a_016, and ruling out h_002 with proper rationale. Also contextualized the impact on h_001.\n\nJunior: (Claude fully addressed the request by refusing to promote h_002 to supported, explaining clearly why the threshold could not be met (only one weak supporting assertion, unresolved contradiction, and a chronological impossibility). It then took the correct action: formally linked a_016 as contradicting evidence, transitioned h_002 to ruled_out, and provided a thorough ruled_out_reason. The explanation covered all three independent reasons for refusal and contextualized the impact on h_001, noting that ruling out h_002 strengthens the Schuylkill hypothesis. All required elements were handled, with no omissions. Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_011`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP calls executed successfully (matched.kind == 'live'). The research_append call correctly updated h_002 with proper structure: supporting_assertion_ids (a_014, a_015), contradicting_assertion_ids (a_016), status set to 'ruled_out', ruled_out: true, and detailed ruled_out_reason. The validate_research_schema call was appropriate and returned clean validation.\n\nJunior: (Both MCP calls were executed successfully (matched.kind == 'live).\n•\tThe research_append call correctly updated h_002 with the proper structure:\n\tsupporting_assertion_ids included a_014 and a_015.\n\tcontradicting_assertion_ids properly added a_016 (the Luzerne County death record).\n\tstatus was set to ruled_out, with ruled_out: true.\n\tA detailed ruled_out_reason was provided, explaining the chronological impossibility (death in 1840, five years before Patrick’s ~1845 birth).\n\tnotes field documented both the supporting census evidence and the death record contradiction.\n•\tThe validate_research_schema call was appropriately invoked with the correct projectPath and returned clean validation.\nNo errors, mismatches, or fixture issues occurred. The arguments were precise, schema compliant, and genealogically sound. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_011`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The hypothesis h_002 itself is stated clearly as a specific testable claim (Thomas Flynn of Luzerne County was Patrick Flynn's father), with sufficient place and time details that follow-up searches could test it. Claude articulated the exact reason for rejection: a chronological impossibility (death 15 September 1840 vs. birth ~1845).\n\nJunior: (The hypothesis h_002 is clearly stated: “Patrick Flynn's father was Thomas Flynn of Luzerne County.” It specifies both individuals, the parent–child relationship, and the geographic context (Luzerne County, Pennsylvania), making it a concrete and testable claim. Claude articulated the exact reason for rejection with precision: the Luzerne County death record (a_016) shows Thomas Flynn died on 15 September 1840, while Patrick’s estimated birth was around 1845. This creates a chronological impossibility — a deceased person cannot be a biological parent. The clarity of the claim and the explicit contradiction make the hypothesis easy to evaluate and definitively rule out.  - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_011`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Claude correctly linked a_014 and a_015 as supporting assertions (name match and residence in Luzerne County) and critically linked a_016 (death record) as contradicting evidence. Each link is directly relevant: the name and location support the identification, while the death date directly refutes the paternity claim. No tangential assertions were linked.\n\nJunior: (Claude correctly linked the relevant assertions for h_002:\n•\tSupporting evidence:\no\ta_014 — 1840 Luzerne County census: Thomas Flynn, head of household, age 30, with one male child under 5 (indirect).\no\ta_015 — 1840 Luzerne County census: residence confirmation (direct).\n•\tContradicting evidence:\no\ta_016 — Luzerne County death record: Thomas Flynn died 15 September 1840, age 30, typhoid fever (direct, confident identification pe_008).\nEach link is directly relevant to the hypothesis: the census records support the identification of Thomas Flynn in Luzerne County, while the death record directly refutes the paternity claim by establishing a chronological impossibility (death five years before Patrick’s birth). No tangential or off-topic assertions were included, and the reasoning for each link is genealogically sound. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_011`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Claude refused the user's request to mark h_002 as supported and instead correctly transitioned it to ruled_out, meeting the research-schema-spec.md §5.9 standard: the hypothesis required affirmative refutation (death record establishing chronological impossibility), not merely lack of evidence. The ruled_out_reason field was properly populated with specific evidence (a_016, death date, confident identification pe_008).\n\nJunior: (Claude correctly refused to promote h_002 to supported and instead transitioned it to ruled_out, in line with research schema spec.md §5.9. The death record (a_016) provided affirmative refutation by establishing a chronological impossibility (Thomas Flynn of Luzerne County died in 1840, five years before Patrick’s ~1845 birth). This is direct, primary evidence that eliminates the hypothesis entirely. The ruled_out_reason was properly populated with specific details: the death date, cause, and confident identification (pe_008). The transition was justified, evidence driven, and documented with precision, meeting the schema’s requirements for ruling out a hypothesis. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude's analysis correctly distinguishes between evidence type (direct) and information quality (secondary), accurately reflects the GPS framework, and correctly states that a_013 remains direct evidence despite the secondary informant. The proof summary reference is accurate: ps_001 already rates the conclusion as Probable specifically because of the secondary informant. No factual errors or unsupported claims.\n\nJunior: (Claude’s reasoning was spot on. It refused to downgrade h_001 from supported to active, correctly citing the SKILL.md rule that minor discrepancies (like a secondary informant) do not trigger a downgrade. The analysis clearly distinguished between evidence type (direct vs. indirect) and information quality (primary vs. secondary), explaining that a_013 is still direct evidence because it explicitly names the father, even though the informant was secondary.\nClaude also accurately referenced the proof summary (ps_001) which already accounts for the secondary informant by rating the conclusion as Probable. This shows the proper separation of hypothesis status (threshold met) and proof tier (confidence level). No factual errors, unsupported claims, or misapplications of the GPS framework were present. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full user concern: acknowledged the valid genealogical observation about informant quality, explained the distinction between evidence type and information quality, clarified where informant quality matters (proof tier, not hypothesis status), confirmed the supported threshold is still met, and provided forward research recommendations. All required elements were covered.\n\nJunior: (Claude fully addressed the user’s concern. It acknowledged the valid genealogical observation about informant quality, explained the crucial distinction between evidence type (direct vs. indirect) and information quality (primary vs. secondary), and clarified that informant quality affects the proof tier rather than the hypothesis status. Claude confirmed that h_001 still meets the supported threshold (direct evidence present, no contradictions, consistent timeline), and emphasized why downgrading would be inappropriate. It also provided forward looking research recommendations (probate search, extracting assertions from unworked sources) to strengthen the case. Schema validation was performed as required. All elements of the user’s request were covered thoroughly and correctly. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one tool call to validate_research_schema with the correct projectPath argument matching the test context. The SKILL.md requirement to call validate_research_schema at the end of every interaction (including read-only reviews) was met. Arguments match the expected pattern.\n\nJunior: (Claude made the required single tool call to validate_research_schema with the correct projectPath argument. This matches the test context and fulfills the SKILL.md requirement that schema validation must be invoked at the end of every interaction, even when no file changes are made (read only reviews included). The arguments were properly structured, matched expectations, and validation returned clean. No mismatches, missing parameters, or fixture errors occurred. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> Claude clearly restates the hypothesis: 'Thomas Flynn was Patrick Flynn's father, supported by direct evidence from a secondary informant on Patrick's death certificate.' The claim is specific (names both individuals, names the relationship), testable (could be contradicted or supported by additional evidence), and includes sufficient temporal context. The recommendation is unambiguous: h_001 remains supported.\n\nJunior: (Claude restated the hypothesis clearly: “Thomas Flynn was Patrick Flynn’s father, supported by direct evidence from a secondary informant on Patrick’s death certificate.” The claim is specific (names both individuals and the parent–child relationship), testable (future records could confirm or contradict it), and includes sufficient temporal/geographic context (Patrick’s death certificate, Schuylkill County). Claude also made the recommendation unambiguous: h_001 remains supported. The explanation distinguished between evidence type (direct) and information quality (secondary), ensuring the claim is properly classified and understood. This makes the hypothesis precise, evaluable, and genealogically sound. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> Claude correctly identifies a_013 as the direct evidence supporting h_001, accurately describes the two census placements as corroborating (though not direct) evidence, and explains that no contradicting assertions remain unresolved. All linked assertions bear directly on the parentage hypothesis. The references to existing sources and unworked plans (src_005, src_006, src_008, src_009, pli_006) are contextual illustrations of where additional evidence might come from, not assertions being wrongly linked.\n\nJunior: (: Claude handled the linkage correctly for h_001:\n•\tSupporting evidence:\no\ta_013 — Patrick Flynn’s death certificate explicitly naming Thomas Flynn as father (direct evidence, though secondary informant).\no\tTwo census placements (a_004, a_010) corroborate the parent–child relationship (indirect evidence).\n•\tContradicting evidence:\no\tNone remain unresolved — no contradictions are linked to h_001.\nAll linked assertions are directly relevant to the parentage hypothesis. Claude also referenced unworked sources and plans (src_005, src_006, src_008, src_009, pli_006) as future research opportunities, not as wrongly linked assertions. This distinction was clear and appropriate. The linkage is complete, accurate, and genealogically sound. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_012`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> Claude correctly refuses to downgrade h_001 from supported to active, explicitly grounding the decision in the supported threshold criteria from research-schema-spec.md: (1) at least one direct evidence assertion present, (2) no unresolved contradictions, (3) consistent timeline. Claude explains that secondary informant quality reduces proof confidence (Probable tier), not hypothesis status. No change was made to the file, which is correct: the hypothesis remains supported and no downgrade occurred.\n\nJunior: (Claude correctly refused to downgrade h_001 from supported to active. The decision was explicitly grounded in the supported threshold criteria from research schema spec.md:\n1.\tAt least one direct evidence assertion present (a_013, Patrick’s death certificate naming Thomas Flynn).\n2.\tNo unresolved contradictions (none linked to h_001).\n3.\tConsistent timeline (census placements and death certificate align).\nClaude explained that the secondary informant quality reduces proof confidence (hence the proof tier is Probable), but does not affect hypothesis status. This distinction between evidence type and information quality was made clear. Importantly, no file changes were made — h_001 remains supported, which is correct and compliant with SKILL.md rules. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The new hypothesis h_002 is factually grounded. Claude correctly identified Thomas's age (~27 at Patrick's ~1845 birth) as plausible for unclehood, properly assessed that census records lack relationship statements until 1880, and correctly classified a_013 (death cert naming Thomas as father) as contradicting evidence for the uncle hypothesis. All assertions made are supported by the provided research context. The logic that a secondary informant (son-in-law) might assume the household head was the father rather than uncle is sound and consistent with genealogical standards.\n\nJunior: (Claude created the new hypothesis h_002 exactly as required:\n•\tThe claim is specific and testable: “Thomas Flynn of Schuylkill County, Pennsylvania, was Patrick Flynn’s uncle (not his father).”\n•\tStatus was set to active, with related_question_ids: [\"q_001\"] linking it to the same parentage research question.\n•\tSupporting assertions included a_004 and a_010 (census co residence), which are consistent with both father and uncle interpretations.\n•\tContradicting evidence correctly included a_013 (death certificate naming Thomas as father), since that directly conflicts with the uncle hypothesis.\n•\tThe notes field provided genealogically sound reasoning: census records don’t state relationships before 1880, household co residence is ambiguous, and the secondary informant on the death certificate could have assumed fatherhood.\n•\tImportantly, h_001 was left unchanged — still supported — avoiding a Status Transitions failure.\n•\tSchema validation was called and passed.\nAll factual claims (Thomas’s age, census relationship columns, informant quality) are accurate and consistent with genealogical standards. The logic is sound and the file changes match expectations. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all requirements: created h_002 with a specific, testable claim; set status to active; linked related_question_ids to ['q_001']; included appropriate supporting and contradicting assertion IDs; did not modify h_001; and called validate_research_schema as required. The response included detailed reasoning about evidence evaluation, BCG Standard 45 application, and next steps for testing both hypotheses. No required elements were omitted.\n\nJunior: (Claude met all the requirements for creating the new hypothesis:\n•\tCreated h_002 with a clear, specific, and testable claim: Thomas Flynn of Schuylkill County was Patrick Flynn’s uncle (not his father).\n•\tStatus set to active as appropriate for a competing but unproven hypothesis.\n•\tLinked related_question_ids to [\"q_001\"], ensuring it competes with h_001 for the same parentage research question.\n•\tSupporting assertions: included a_004 and a_010 (census co residence), which are consistent with both father and uncle interpretations.\n•\tContradicting evidence: correctly listed a_013 (death certificate naming Thomas as father), since that directly conflicts with the uncle claim.\n•\tDid not modify h_001 — it remains supported, avoiding a Status Transitions failure.\n•\tCalled validate_research_schema at the end, as required by SKILL.md.\n•\tResponse reasoning: explained the evidentiary logic, referenced BCG Standard 45 about household inference, and outlined next steps (probate search, baptismal record, sibling identification).\nAll required elements were covered thoroughly, with no omissions. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls were executed correctly. The first call (research_append) included all required arguments: projectPath, section ('hypotheses'), op ('append'), and a complete, well-formed entry object with claim, status, assertion IDs, related_question_ids, and comprehensive notes. The second call (validate_research_schema) correctly validated the project. No critical identifiers were wrong, no fixture_not_found errors occurred, and the args matched the expected shape for genealogy research operations.\n\nJunior: (: Claude executed both tool calls correctly:\n•\tresearch_append call:\no\tIncluded all required arguments: projectPath, section: \"hypotheses\", op: \"append\".\no\tThe entry object was complete and well formed, with:\n\tA clear, specific claim (Thomas Flynn of Schuylkill County was Patrick Flynn’s uncle).\n\tstatus: \"active\".\n\tsupporting_assertion_ids: [\"a_004\",\"a_010\"] (census co residence).\n\tcontradicting_assertion_ids: [\"a_013\"] (death certificate naming Thomas as father).\n\trelated_question_ids: [\"q_001\"].\n\tComprehensive notes explaining the evidentiary reasoning and next steps.\n•\tvalidate_research_schema call:\no\tCorrectly invoked with the same projectPath.\no\tValidation passed cleanly, confirming schema compliance.\nNo identifiers were incorrect, no fixture errors occurred, and the arguments matched the expected shape for genealogy research operations. This was a precise and compliant execution. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Claim clarity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `rubric` / `Claim clarity`\nLLM: 3 → Junior: 3\n\n> The claim is highly specific and testable: 'Thomas Flynn of Schuylkill County, Pennsylvania, was Patrick Flynn's uncle (not his father) — Patrick was a nephew raised in Thomas's household.' It names both specific persons (Thomas Flynn, Patrick Flynn), the specific relationship being hypothesized (uncle, not father), includes geographic detail (Schuylkill County, Pennsylvania), and specifies the timeframe context (~1845 birth). A follow-up search for a will, baptism record, or Thomas's siblings could directly test this claim.\n\nJunior: (The new hypothesis h_002 is articulated with precision: “Thomas Flynn of Schuylkill County, Pennsylvania, was Patrick Flynn’s uncle (not his father) — Patrick was a nephew raised in Thomas’s household.”\n•\tSpecific persons named: Thomas Flynn and Patrick Flynn.\n•\tRelationship clearly defined: uncle–nephew, explicitly contrasted with the father–son claim.\n•\tGeographic detail: Schuylkill County, Pennsylvania.\n•\tTemporal context: Patrick’s ~1845 birth, Thomas’s age (~27 at that time).\n•\tTestability: The claim can be directly tested by records such as Thomas Flynn’s will (naming Patrick as son or nephew), Patrick’s baptismal record (naming actual parents), or records of Thomas’s siblings.\nThe hypothesis is concrete, evaluable, and framed in a way that genealogical research can confirm or refute. The recommendation is unambiguous: h_002 remains active until further evidence is gathered. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence linkage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `rubric` / `Evidence linkage`\nLLM: 3 → Junior: 3\n\n> All linked assertions are directly relevant to the uncle hypothesis. a_004 and a_010 (census co-residence) are appropriately included as supporting evidence because co-residence is equally consistent with uncle-nephew as with father-son relationships. a_013 (death cert naming Thomas as father) is correctly placed in contradicting_assertion_ids because it directly states a paternal relationship, which contradicts the uncle claim. Claude explicitly reasoned why each assertion was linked, citing BCG Standard 45 and informant reliability. No tangential evidence was included.\n\nJunior: (Claude linked the assertions appropriately for h_002:\n•\tSupporting evidence:\no\ta_004 — 1850 census, Patrick in Thomas’s household.\no\ta_010 — 1860 census, Patrick in Thomas’s household. These are correctly treated as supporting because household co residence is consistent with both father–son and uncle–nephew relationships. Claude explicitly noted that assuming household position implies fatherhood is an unsound assumption per BCG Standard 45.\n•\tContradicting evidence:\no\ta_013 — Patrick’s death certificate naming Thomas as father. This was correctly placed in contradicting_assertion_ids since it directly conflicts with the uncle hypothesis. Claude explained why the informant’s secondary nature (son in law James Brown) could have led to a mistaken assumption.\nNo tangential or irrelevant assertions were included. Each link was justified with genealogical reasoning, and the distinction between supporting and contradicting evidence was clear and accurate. - Pass)"
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Status transitions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_hypothesis_tracking_013`** — `rubric` / `Status transitions`\nLLM: 3 → Junior: 3\n\n> The status transition is properly justified. h_002 is marked 'active' (not 'supported' or 'ruled_out'), which is correct: there is no direct positive evidence for the uncle hypothesis, and the contradicting death certificate assertion is unresolved. Claude explicitly explained why h_002 remains active despite a_013: the informant is secondary and the assertion does not constitute definitive refutation under genealogical standards. h_001 remains 'supported' and unmodified. The schema-spec.md §5.9 rules are followed: supported requires direct evidence with no unresolved contradictions; ruled_out requires affirmative refutation; h_002 has neither, so active is the correct status.\n\nJunior: (: Claude handled the status assignment correctly:\n•\th_002 was created with status active, which is appropriate because:\no\tThere is no direct positive evidence supporting the uncle hypothesis.\no\tThe death certificate (a_013) directly contradicts the uncle claim, but since the informant was secondary, this contradiction does not rise to the level of affirmative refutation required for ruled_out.\n•\tClaude explicitly explained why the hypothesis remains active despite the contradiction: genealogical standards recognize that secondary informants may misreport relationships, so the contradiction is unresolved rather than definitive.\n•\th_001 remained supported and unmodified, avoiding a downgrade error.\n•\tThe reasoning aligns with research schema spec.md §5.9:\no\tSupported requires direct evidence with no unresolved contradictions.\no\tRuled_out requires affirmative refutation.\no\tActive is correct when neither threshold is met.\nThis was a precise and standards compliant status transition. - Pass)"
+    }
+  ]
+}
