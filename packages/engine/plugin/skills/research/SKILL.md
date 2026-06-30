@@ -1,23 +1,21 @@
 ---
 name: research
 model: claude-sonnet-4-6
-description: Drives the full GPS (Genealogical Proof Standard) research
-  workflow on a research objective, invoking the right sub-skills in
-  the right order based on current research.json state. Iterates from
-  question selection through proof conclusion until all questions are
-  resolved. Use when the user says "research <objective>", "/research
-  <question>", "find <relative>", "investigate <person>", "answer this
-  research question", or wants to hand off a full research objective
-  without driving each step themselves. Especially useful for beginning
-  genealogists who don't yet know which sub-skill to invoke when. Also
-  the entry point for autonomous runs — when the user message contains
-  `--autonomous`, proceed without pausing for clarifying questions and
-  use best judgment for any decisions that would normally prompt the
-  user. Do NOT use when the user wants to drive a specific step
-  directly (use question-selection, research-plan, search-records,
-  etc.), when the user wants only a status summary (use
-  project-status), or when no research.json exists yet (use
-  init-project first).
+description: >-
+  Drives the full GPS research workflow on a research objective, invoking the
+  right sub-skills in the right order based on current research.json state.
+  Iterates from question selection through proof conclusion until all
+  questions are resolved. Use when the user says "research <objective>",
+  "/research <question>", "find <relative>", "investigate <person>", "answer
+  this research question", or wants to hand off a full research objective
+  without driving each step themselves. Especially useful for beginners who
+  don't yet know which sub-skill to invoke. Also the entry point for
+  autonomous runs — when the user message contains `--autonomous`, proceed
+  without pausing for clarifying questions and use best judgment for decisions
+  that would normally prompt the user. Do NOT use when the user wants to drive
+  a specific step directly (use question-selection, research-plan,
+  search-records, etc.), wants only a status summary (use project-status), or
+  when no research.json exists yet (use init-project first).
 allowed-tools:
   - validate_research_schema
 ---
