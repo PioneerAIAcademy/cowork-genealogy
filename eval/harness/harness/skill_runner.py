@@ -22,6 +22,7 @@ Honors the execution caps from unit-test-spec.md §15:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -308,9 +309,12 @@ async def run_skill(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
+    # The query() async generator, hoisted so the finally below can close it
+    # deterministically on every exit path (see that finally for why).
+    iterator: Any = None
 
     async def _consume_messages():
-        nonlocal usage, error, aborted_reason
+        nonlocal usage, error, aborted_reason, iterator
         # Manual iteration so each `__anext__()` can be wrapped in a
         # per-message silence watchdog. The SDK has no internal
         # generation-side timeout — once the control-channel
@@ -400,6 +404,24 @@ async def run_skill(
     except Exception as e:  # pragma: no cover — exercised in e2e
         error = f"{type(e).__name__}: {e}"
         aborted_reason = "error"
+    finally:
+        # Close the query() generator while this event loop is still running.
+        # The SDK's process_query tears down its subprocess transport only
+        # inside the generator's own `finally`, and its own comment warns that
+        # manual iteration / early `return` does NOT trigger it (PEP 533). On
+        # the routing short-circuit, _LimitExceeded, and wall-clock-cancel
+        # paths we abandon the generator mid-stream, so that teardown is left
+        # to GC during asyncio.run()'s loop shutdown — which races
+        # shutdown_asyncgens and prints "aclose(): asynchronous generator is
+        # already running" plus a dangling "Loop ... is closed" from the
+        # subprocess transport. (The subscription-auth flip changed subprocess
+        # timing enough to surface this latent leak.) asyncio.wait_for has
+        # fully settled _consume_messages by now, so no __anext__ is in flight
+        # and this aclose can't race; the bounded wait_for guards a stuck
+        # close from hanging the worker thread.
+        if iterator is not None:
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(iterator.aclose(), timeout=15)
 
     # If the hook denied an MCP call past the limit, surface that as the abort.
     if aborted_reason is None and tool_call_count["n"] > max_tool_calls:
