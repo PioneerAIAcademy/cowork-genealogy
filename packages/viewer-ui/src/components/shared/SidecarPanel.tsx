@@ -99,6 +99,18 @@ export default function SidecarPanel(): React.JSX.Element | null {
     })
   }, [sidecar.status, focusPersonaId])
 
+  // Escape-to-close. Driven by our own listener rather than the trap's
+  // onDeactivate (see the FocusTrap note below): a StrictMode-induced trap
+  // teardown must not be mistaken for a user dismissal.
+  useEffect(() => {
+    if (sidecar.status === 'closed') return
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') closeSidecar()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [sidecar.status, closeSidecar])
+
   if (sidecar.status === 'closed') return null
 
   const handleBodyClick = (): void => {
@@ -114,10 +126,17 @@ export default function SidecarPanel(): React.JSX.Element | null {
       focusTrapOptions={{
         initialFocus: `.${styles.closeButton}`,
         fallbackFocus: `.${styles.drawer}`,
-        escapeDeactivates: true,
+        // Do NOT wire onDeactivate -> closeSidecar. focus-trap-react fires
+        // onDeactivate from componentWillUnmount, which React StrictMode trips
+        // via its mount->unmount->remount probe, slamming the drawer shut the
+        // instant it opens. Closing is driven explicitly instead: the backdrop
+        // (click-outside), the × button, and the Escape handler above.
+        // clickOutsideDeactivates stays true so the trap lets backdrop clicks
+        // reach the backdrop's own onClick (otherwise it would
+        // stopImmediatePropagation on outside clicks). Escape is ours.
+        escapeDeactivates: false,
         clickOutsideDeactivates: true,
-        returnFocusOnDeactivate: true,
-        onDeactivate: closeSidecar
+        returnFocusOnDeactivate: true
       }}
     >
       <div className={styles.overlay}>

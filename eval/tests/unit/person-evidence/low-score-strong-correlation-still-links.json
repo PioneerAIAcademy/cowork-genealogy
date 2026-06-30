@@ -16,5 +16,9 @@
     "same_person returns a low 0.32 because 'Flinn' is a transcription variant, but correlation is strong — age, year, county, and the father's name all match the subject",
     "person-evidence must still create a person_evidence entry for a_003 — the low score is an input, not a veto; correlation analysis carries the decision",
     "The rationale should explain that 'Flinn' is a likely transcription variant of 'Flynn' and that the non-name identifiers all corroborate the match"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
 }

@@ -313,85 +313,43 @@ reach and tree-edit to execute.
 
 ### 4. Create person_evidence entries
 
-Persist all assertion → person links in ONE batched `research_append`
-call — pass an `ops` array with one `append` op per assertion-person
-pair. Each link is still its own op; batching changes only the number
-of *calls*, never the number of links (one `pe_` entry per pair, as
-before). Supply each entry WITHOUT an `id`, `created`, or
-`superseded_by` — the tool assigns each `pe_` id, stamps `created`,
-validates the whole batch once, and writes once. On any per-op failure
-it returns `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes
-NOTHING — surface those errors to the user and fix the offending op
-rather than retrying blindly.
-
-```
-research_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  ops: [
-    {
-      section: "person_evidence",
-      op: "append",
-      entry: {
-        assertion_id: "a_015",
-        person_id: "KWCJ-RN4",
-        confidence: "probable",
-        rationale: "Thomas Flynn, will dated 1881, Schuylkill County. Names match. Location matches (same county as census records). Death date consistent with disappearance from tax records after 1880. Will names 'my son Patrick' — this assertion links the testator role to the Thomas Flynn (I2) in the tree.",
-        match_score: 0.64
-      }
-    }
-    /* …one op per assertion-person pair… */
-  ]
-})
-```
+Persist all assertion → person links in ONE batched `research_append({
+ops: [...] })` call — one `append` op per assertion-person pair (still one
+`pe_` entry per pair; batching changes the call count, not the links).
+Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
+the ids and validates the whole batch, writing NOTHING on a per-op failure
+(`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
+than retrying blindly.
 
 **Field guidance:**
 
 - `assertion_id`: The `a_` ID of the assertion being linked
 - `person_id`: The GedcomX person ID in tree.gedcomx.json
 - `confidence`: `confident`, `probable`, or `speculative` — governed
-  by the match threshold policy
+  by the match threshold policy (Step 3)
 - `rationale`: WHY this assertion's record_role is believed to be
   this person. Must include the specific evidence that supports the
   identification: name match, age compatibility, location match,
   household composition, relationship fit. This is the audit trail
   for identity resolution.
 - `match_score`: The `same_person` `score` (0.0–1.0) when the
-  assertion was `record_search`-sourced and scored. Null for FTS-,
-  image-, and PDF-sourced assertions, for searches with no sidecar, and
-  for any link where no score was obtained. The score is an input to
-  the confidence decision (step 3), not the decision itself.
-- `superseded_by`: the tool sets this null on append. When a link is
-  revised, set it via an `op: "update"` on the old entry (Step 6) —
-  never edit it by hand.
+  assertion was `record_search`-sourced and scored; null for FTS-,
+  image-, and PDF-sourced assertions, searches with no sidecar, and any
+  link where no score was obtained (an input to Step 3, not the verdict).
 
 ### 5. Handle new persons (stub creation)
 
 When an assertion's persona doesn't match any existing GedcomX
 person, create a new **stub person** in tree.gedcomx.json with
-`tree_edit({ operation: "add_person" })`. Supply the person WITHOUT
-ids — the tool allocates the synthetic `I` person id and the `N` name
-id, validates before persisting, and writes nothing on
-`{ ok: false, errors }`:
-
-```
-tree_edit({
-  projectPath: "<absolute-path-to-project-directory>",
-  operation: "add_person",
-  person: {
-    gender: "Male",
-    names: [{ preferred: true, given: "James", surname: "Flynn" }]
-  }
-})
-```
+`tree_edit({ operation: "add_person", person })`. The minimum stub is
+`gender` (may be `Unknown`) plus one name with at least a `surname`
+(`given` may be empty if unknown); `facts` may be omitted —
+proof-conclusion populates them later. Omit ids: the tool allocates the
+synthetic `I`/`N` ids and validates before persisting. **Never use
+FamilySearch IDs for a new stub** — those belong to persons already in
+the tree.
 
 **Stub person rules:**
-- The tool assigns synthetic ids (`I5`/`N5`, etc.) — never supply
-  ids, and never use FamilySearch IDs (those belong to persons
-  already in the tree)
-- Minimum: `gender` (may be `Unknown`), one name with at
-  least a `surname`. `given` may be empty string if unknown.
-- `facts` may be omitted entirely — they'll be populated as
-  proof-conclusion writes confirmed facts
 - Then create the `pe_` entry (Step 4) linking the assertion to the
   new person, using the `I` id the tool returned in its compact summary
 - **Confidence:** a stub rests on the single record that introduced the
@@ -410,26 +368,10 @@ tree_edit({
 ### 6. Handle link revisions
 
 When new evidence shows an assertion was linked to the wrong person,
-make two `research_append` calls — never delete the old entry, it's
-part of the audit trail:
-
-1. **Append** the corrected link (Step 4) to get its new `pe_` id.
-2. **Update** the old entry's `superseded_by` to that new id.
-
-Example: You initially linked a_020 to I3 (speculative). New evidence
-shows it's actually I7 (a different person with the same name). First
-append the corrected `a_020 → I7` link; the tool returns its id (say
-`pe_015`). Then point the old entry at it:
-
-```
-research_append({
-  projectPath: "<absolute-path-to-project-directory>",
-  section: "person_evidence",
-  op: "update",
-  entryId: "pe_010",
-  fields: { superseded_by: "pe_015" }
-})
-```
+**never delete the old entry** — it is the audit trail. Instead:
+**append** the corrected link (Step 4) to get its new `pe_` id, then
+**update** the old entry's `superseded_by` to point at it via
+`research_append({ op: "update", entryId, fields: { superseded_by } })`.
 
 ### 7. Systematic record linking
 
@@ -492,13 +434,12 @@ pairing plainly so proof-conclusion can assemble it from the links.
 
 ### 8. Check warnings and present
 
-`research_append` and `tree_edit` both validate-before-persist — they
-write nothing on `{ ok: false, errors }`, so no separate
+The persistence tools validate before writing, so no separate
 `validate_research_schema` pass is needed. After creating links and any
 stub persons, invoke `check-warnings` on the affected persons to catch
 genealogical impossibilities (married before 12, died after 120, child
-born after a parent's death, etc.). This checks plausibility, which the
-persistence step does not. Surface any warnings to the user.
+born after a parent's death, etc.) — plausibility the persistence step
+does not check. Surface any warnings to the user.
 
 Present the results:
 - Each link created, with the assertion, the person, and the
@@ -573,9 +514,8 @@ When multiple candidates share the same name in the same area:
   conclusion (proof-conclusion) and a data operation (tree-edit).
 - **Enforce the threshold policy.** Weak matches require user
   confirmation. No exceptions.
-- **The match score is an input, not a verdict.** Record the
-  `same_person` score in `match_score` when one was obtained;
-  never let a high score override a qualitative conflict.
+- **The match score is an input, not a verdict** — record it in
+  `match_score` when one was obtained; the full rule is in Step 3.
 - **Transcription variants do not downgrade strength.** When the
   qualitative correlation is strong — age, year, place, household
   composition, and relationships all agree — a low
@@ -596,16 +536,8 @@ When multiple candidates share the same name in the same area:
 
 ## Re-invocation behavior
 
-**Writes:** entries in the `person_evidence` section of `research.json`
-(`pe_` ids linking assertions to GedcomX persons), and their
-`confidence`, `rationale`, and `superseded_by` fields. Mutable in
-place; superseded by marking, never deleted.
-
-**On repeat invocation:** revisits person-identity links. May refine
-`confidence` or `rationale` on existing `pe_` entries as new
-evidence becomes available, or mark old links `superseded_by` a
-new corrected link.
-
-**Do not duplicate:** if a `pe_` entry already links a given assertion to
-a given GedcomX person id, update that entry in place rather than
-adding a second link for the same pair.
+**Writes** `person_evidence` entries (`pe_` links plus their `confidence`,
+`rationale`, `superseded_by`) in `research.json`, and stub `persons` in
+`tree.gedcomx.json`. **On re-invocation,** refine `confidence`/`rationale`
+in place or mark an entry `superseded_by` a correction — never delete, and
+never add a second `pe_` for an assertion-person pair already linked.

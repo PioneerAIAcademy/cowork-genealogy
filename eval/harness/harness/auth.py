@@ -124,16 +124,22 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     For api_key mode: explicitly inject the key (covers the case where it
     lives in eval/.env but isn't in the shell environment).
 
-    For subscription mode: force the subprocess onto the CLI's
-    subscription session by suppressing any inherited ANTHROPIC_API_KEY.
-    The SDK merges os.environ then options.env (see
-    claude_agent_sdk subprocess_cli), so we cannot *delete* an inherited
-    key — but the Claude Code CLI resolves the key with a truthiness
-    check, so an empty string reads as "unset" and the CLI falls back to
-    its OAuth session. Without this, a key in the operator's shell (or one
-    the e2e runner loaded into os.environ for the judge) would silently
+    For subscription mode: force the subprocess onto the CLI's subscription
+    session by suppressing any inherited ANTHROPIC_API_KEY (set to empty
+    string — the Claude Code CLI treats it as unset and falls back to its
+    OAuth session). Without this a key in the operator's shell would silently
     win over the subscription.
+
+    `ENABLE_TOOL_SEARCH=true` eager-loads the genealogy MCP tool schemas at
+    agent start (matches the e2e orchestrator + hosted-web agent). Without
+    this flag the unit-test harness occasionally hits the deferred-tool
+    registry path, where the agent doesn't find `research_append` / `tree_edit`
+    via ToolSearch and falls back to "write JSON directly" — failing the test
+    on Completeness/Tool-Arguments rather than the skill's actual logic.
     """
+    env = {"ENABLE_TOOL_SEARCH": "true"}
     if auth.skill_runner_mode == "api_key" and auth.api_key:
-        return {"ANTHROPIC_API_KEY": auth.api_key}
-    return {"ANTHROPIC_API_KEY": ""}
+        env["ANTHROPIC_API_KEY"] = auth.api_key
+    else:
+        env["ANTHROPIC_API_KEY"] = ""
+    return env
