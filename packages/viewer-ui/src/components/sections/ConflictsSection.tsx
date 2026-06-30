@@ -3,6 +3,7 @@ import type { Assertion } from '../../lib/schema'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
+import Linkify from '../shared/Linkify'
 import styles from './ConflictsSection.module.css'
 
 export default function ConflictsSection(): React.JSX.Element {
@@ -81,21 +82,21 @@ export default function ConflictsSection(): React.JSX.Element {
               {conflict.independence_analysis && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Independence Analysis</div>
-                  <p className={styles.analysis}>{conflict.independence_analysis}</p>
+                  <p className={styles.analysis}><Linkify text={conflict.independence_analysis} /></p>
                 </div>
               )}
 
               {conflict.weighing_analysis && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Weighing Analysis</div>
-                  <p className={styles.analysis}>{conflict.weighing_analysis}</p>
+                  <p className={styles.analysis}><Linkify text={conflict.weighing_analysis} /></p>
                 </div>
               )}
 
               {conflict.resolution_rationale && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Resolution Rationale</div>
-                  <p className={styles.analysis}>{conflict.resolution_rationale}</p>
+                  <p className={styles.analysis}><Linkify text={conflict.resolution_rationale} /></p>
                 </div>
               )}
             </div>

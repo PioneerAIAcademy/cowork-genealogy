@@ -32,6 +32,9 @@ on:
       - 'eval/runlogs/unit/**'
       - 'eval/tests/unit/**'
       - 'packages/engine/plugin/skills/**'
+      # agents/** so the frontmatter lint (check_skill_frontmatter.py) gates
+      # plugin agent descriptions too, not just skills.
+      - 'packages/engine/plugin/agents/**'
       - 'eval/fixtures/**'
       - 'eval/harness/**'
       # MCP source (packages/engine/mcp-server/src/**) is intentionally not a
@@ -101,7 +104,9 @@ jobs:
         run: python eval/harness/scripts/check_tool_coverage.py
 
       # Blocking on hard rules (bad/mismatched name, or a description that
-      # is missing, over 1024 chars, or contains angle brackets); soft rules
-      # (unknown key, unresolvable tool) only warn. The corpus passes today.
-      - name: Lint skill frontmatter
+      # is missing, over 1024 chars, or contains angle brackets) for skills
+      # AND agents; the description checks fold multi-line/block scalars, so
+      # they catch a long or `<bracketed>` value on a continuation line. Soft
+      # rules (unknown key, unresolvable tool) only warn. The corpus passes today.
+      - name: Lint skill + agent frontmatter
         run: python eval/harness/scripts/check_skill_frontmatter.py
