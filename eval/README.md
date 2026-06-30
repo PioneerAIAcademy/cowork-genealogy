@@ -36,6 +36,9 @@ eval/
   ValidateFixture.bat     Windows: e2e stripping linter
   ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
   SeedProject.bat         Windows: seed an editable Cowork project from a fixture (debug /research live)
+  Viewer.bat              Windows: launch the Research Viewer (Electron)
+  BuildMcpb.bat           Windows: build the .mcpb desktop extension (for the Cowork debug loop)
+  BuildPlugin.bat         Windows: build the Cowork plugin .zip (for the Cowork debug loop)
   RunCalibration.bat      Windows: run judge calibration (maintainer only)
 ```
 
@@ -309,10 +312,11 @@ equivalent in parentheses:
 7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
    live run (20–60 min, $3–10).
 8. `/interpret-e2e-result` → read the verdict.
-9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → open
-   `eval\.e2e-view` in the Research Viewer (its **Open Project** button) to
-   inspect the agent's final tree, research log, and each finding's
-   direct/indirect badge. Keep the viewer open — re-running refreshes it live.
+9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
+   the Research Viewer with `eval\Viewer.bat` (`make electron`) and open
+   `eval\e2e-view` in it (its **Open Project** button) to inspect the agent's
+   final tree, research log, and each finding's direct/indirect badge. Keep the
+   viewer open — re-running `ViewE2E.bat` refreshes it live.
 10. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
 
@@ -324,16 +328,25 @@ for debugging *why* the agent did or didn't do something, and it keeps the
 test-improve loop fast: you watch the fix work in minutes instead of waiting
 20–60 min for a headless verdict.
 
+**First time (and after any skill or MCP-server change):** build and install
+the two artifacts so Cowork has the genealogy tools — `eval\BuildMcpb.bat`
+(`make mcpb`), then install the `.mcpb` in Claude Desktop → Settings →
+Extensions; and `eval\BuildPlugin.bat` (`make plugin`), then upload the plugin
+in Cowork → Customize → Browse plugins. **Fully quit and reopen** Claude
+Desktop after installing. The headless `RunE2E.bat` path doesn't use these (it
+runs the compiled engine directly), so this is only for the live Cowork loop.
+
 1. `eval\SeedProject.bat` → enter the slug (`make e2e-project TEST=<slug>`).
-   Copies the fixture's starting state into `eval\.e2e-project\<slug>\` as a
+   Copies the fixture's starting state into `eval\e2e-project\<slug>\` as a
    fresh, editable `research.json` + `tree.gedcomx.json`.
 2. Open that folder in **Claude Cowork** (genealogy plugin installed, logged
    in to FamilySearch) and run `/research`. `init-project` is auto-skipped
    (research.json already exists); question-selection still runs unless the
    fixture seeds a question.
-3. Open the **same folder** in the Research Viewer to watch the research log,
-   assertions, and conflicts appear live — and ask Claude *"why didn't you
-   search X?"*, *"why direct, not indirect?"* as it works.
+3. Launch the Research Viewer — `eval\Viewer.bat` (`make electron`) — and open
+   the **same folder** in it (its **Open Project** button) to watch the
+   research log, assertions, and conflicts appear live — and ask Claude *"why
+   didn't you search X?"*, *"why direct, not indirect?"* as it works.
 
 **For understanding, not scoring.** A live run does **not** block the tree-read
 tools (`person_read` / `person_search` / `person_ancestors`) that the headless

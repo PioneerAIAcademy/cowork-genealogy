@@ -2,7 +2,7 @@
 
 `make e2e-view TEST=<slug>` (Windows: `ViewE2E.bat`) copies the newest run's
 `*.final-research.json` + `*.final-tree.gedcomx.json` for a fixture into one
-stable folder — `eval/.e2e-view/` — renamed to `research.json` +
+stable folder — `eval/e2e-view/` — renamed to `research.json` +
 `tree.gedcomx.json`, the shape the Electron Research Viewer opens and
 live-watches.
 
@@ -24,7 +24,7 @@ from pathlib import Path
 
 from .orchestrator import DEFAULT_RUNLOG_ROOT, REPO_ROOT
 
-VIEW_DIR = REPO_ROOT / "eval" / ".e2e-view"
+VIEW_DIR = REPO_ROOT / "eval" / "e2e-view"
 
 
 def latest_final_pair(slug_dir: Path) -> tuple[Path, Path] | None:
