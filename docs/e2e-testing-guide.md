@@ -535,7 +535,17 @@ The full help text:
 uv run python -m e2e.run_e2e --help
 ```
 
-### Debugging `/research` by hand (scratch workspace)
+### Debugging `/research` by hand (scratch workspace — the Claude Code path)
+
+> **Prefer Cowork + the viewer for live debugging.** The recommended way to
+> watch a run unfold with structured output — research log, assertions,
+> conflicts — is `make e2e-project TEST=<slug>` (Windows: `SeedProject.bat`),
+> which seeds an editable project you open in **Claude Cowork** alongside the
+> **Research Viewer**. See eval/README.md → "Debug a fixture interactively
+> (Cowork + the viewer)". The scratch workspace below is the lighter-weight
+> **Claude Code** alternative — no Cowork needed, handy for developers
+> debugging `/research` routing (and the first-time `/research` validation in
+> the setup checklist above).
 
 A headless harness run can't show you *why* the agent stopped or skipped
 a step — you can't watch it think or nudge it. For that, run `/research`
