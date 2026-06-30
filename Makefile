@@ -296,6 +296,18 @@ e2e-view: ## Load the latest e2e run into the Research Viewer (eval/.e2e-view): 
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-view TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.view --test $(TEST)
 
+.PHONY: e2e-project
+e2e-project: ## Seed an editable Cowork project from a fixture's STARTING state to debug /research live: make e2e-project TEST=kenneth-quass-death
+	# Copies the fixture's starting-research.json + starting-tree.gedcomx.json
+	# into eval/.e2e-project/<slug>/ as research.json + tree.gedcomx.json — a
+	# fresh, editable project you open in Claude Cowork to run /research
+	# step-by-step (init-project auto-skipped) while watching it live in the
+	# Research Viewer. For DEBUGGING the process, NOT scoring: a live run does
+	# not block the tree-read tools the headless `make e2e-run` blocks, so the
+	# agent can read the answer off the live tree. Re-seed (wiping work) with FORCE=1.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-project TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.project --test $(TEST) $(if $(FORCE),--force,)
+
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
