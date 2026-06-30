@@ -1,0 +1,946 @@
+{
+  "project": {
+    "id": "rp_ivyl_greenley_daughter",
+    "objective": "Besides their son Donald, did Ivyl Phylena Greenley and her husband Kenneth Werner Quass have any other children? Identify each additional child and that child's birth and death dates.",
+    "subject_person_ids": [
+      "KWZP-4Q8"
+    ],
+    "status": "active",
+    "created": "2026-06-29T00:00:00Z",
+    "updated": "2026-06-29T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Kenneth Werner Quass (b. 4 Dec 1917, Sumner, Bremer County, Iowa; d. 17 Sep 1982) and Ivyl Phylena Greenley (b. 26 May 1914, Dubuque County, Iowa; d. 24 May 2005) have any children other than Donald Wendell Quass (b. 16 Jan 1940)?",
+      "rationale": "This is the core research objective. The couple married 6 Mar 1938 and Ivyl was of childbearing age through approximately 1964. The 1940 census shows only Donald (newborn) in the household. Census records (1950), obituaries of Kenneth (1982), Ivyl (2005), and Donald (2024), plus Iowa/Minnesota vital records and the existing FamilySearch source (QK2L-WL7) mentioning 'Bernice H Quass Wegner and Ralph Quass,' may reveal additional children. Direct evidence from original records is required to satisfy GPS.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-06-29"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-29",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "newspaper",
+          "jurisdiction": "Watonwan County, Minnesota (Madelia area)",
+          "date_range": "2024",
+          "repository": "FamilySearch",
+          "rationale": "Donald Wendell Quass's April 2024 obituary (already cited in tree as source WWDC-3KV, ark:/61903/1:1:XM5X-SPSB) is a direct source likely naming surviving family members including any siblings. Extract and analyze this record to identify whether any siblings of Donald are named.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "newspaper",
+          "jurisdiction": "United States",
+          "date_range": "2010",
+          "repository": "FamilySearch",
+          "rationale": "Source QK2L-WL7 (GenealogyBank Obituaries 1980\u20132015, ark:/61903/1:1:QKGC-W3S7) is already cited in the tree with the description 'Entry for Mrs Bernice H Quass Wegner and Ralph Quass, 22 Jun 2010.' The surnames Quass Wegner and Quass are highly suggestive of other children of Kenneth. This record must be read and analyzed to determine whether Bernice and Ralph are children of Kenneth and Ivyl or of another Quass family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Watonwan County, Minnesota",
+          "date_range": "1950",
+          "repository": "FamilySearch",
+          "rationale": "The 1950 US Census (released 2022, indexed on FamilySearch) would capture all household members as of April 1, 1950, including any children of Kenneth and Ivyl then living at home. Kenneth and Ivyl were in Madelia, Watonwan County in 1940; searching that county in 1950 should locate the family and show the composition of the household at that time.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Minnesota",
+          "date_range": "1938-1965",
+          "repository": "FamilySearch",
+          "rationale": "Minnesota Birth Index 1935\u20132002 (FS collection 1949334, 4.2M records, indexed) allows searching by parent surname. Searching for births to a Quass father or Greenley/Quass mother in Minnesota during the couple's likely childbearing years (1938\u20131965) would identify any children born and registered in Minnesota.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "newspaper",
+          "jurisdiction": "Minnesota",
+          "date_range": "1982",
+          "repository": "FamilySearch",
+          "rationale": "Kenneth Werner Quass died 17 September 1982 in Grapevine, Tarrant County, Texas. An obituary for him \u2014 searchable in Minnesota Obituaries 1865\u20132006 (FS collection 2469546) or GenealogyBank \u2014 would likely name surviving children. This is a priority source because it predates Ivyl's death and would capture children who survived Kenneth.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "newspaper",
+          "jurisdiction": "San Diego, California",
+          "date_range": "2005",
+          "repository": "other",
+          "rationale": "Ivyl Phylena Greenley Quass died 24 May 2005 in San Diego, California and was buried in Madelia, Watonwan County, Minnesota. Her obituary \u2014 searchable in GenealogyBank, Newspapers.com, or the San Diego Union-Tribune archives \u2014 would name surviving children. This is direct evidence for the research question. The existing source MS62-1FF is only a legacy stub citation, not the full obituary text.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Iowa (Fayette County, Watonwan County area)",
+          "date_range": "1938-1942",
+          "repository": "FamilySearch",
+          "rationale": "Donald Wendell Quass was born 16 January 1940 in Randalia, Fayette County, Iowa, suggesting the family may have briefly resided in Iowa early in their marriage (married March 1938). Iowa County Births records (FS collection for Iowa) should be searched to confirm whether any other children were born in Iowa before or around the time of Donald's birth.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "other",
+          "jurisdiction": "United States",
+          "date_range": "1938-2005",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch person record for Kenneth Werner Quass (FamilySearch ID KNS4-P6W) and Ivyl Phylena Greenley (KWZP-4Q8) may have additional children linked by other FamilySearch contributors. Reading the person_person_matches or searching directly for children attached to this couple on FamilySearch provides a cross-check and may surface leads not captured by vital records searches.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-29T21:46:05.306Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XM5X-SPSB",
+        "description": "Donald Wendell Quass 2024 obituary, source WWDC-3KV, FamilySearch United States Obituary Records 2014-2023"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Obituary for Donald Wendell Quass (b. 16 Jan 1940, d. 25 Apr 2024) lists three siblings who are also children of Kenneth Werner Quass and Phylena Ivyl Greenley: (1) Ken Quass [male, surname Quass, married Bobbi Quass]; (2) Pat Norman [female, born Quass, married Bob Norman \u2014 sibling-in-law relationship]; (3) Jeanette [female, no surname given]. All three named as children of Kenneth Werner Quass (p_306774614787) and Phylena Ivyl Greenley (p_306774614788) via ParentChild relationships. Additionally listed is Linnea, identified as Donald's grandchild via Grandparent relationship. Record ARKs: Ken Quass ark:/61903/1:1:XM5X-SPSP; Jeanette ark:/61903/1:1:XM5X-SPS1; Pat Norman ark:/61903/1:1:XM5X-SPSR."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-06-29T21:46:53.313Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QKGC-W3S7",
+        "description": "GenealogyBank obituary for Bernice H. Quass Wegner (d. 19 Jun 2010), source QK2L-WL7, FamilySearch United States GenealogyBank Obituaries 1980-2015"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Obituary is for Bernice H. Quass Wegner (b. 29 Aug 1926, Buchanan County, Iowa; d. 19 Jun 2010, Waterloo, Iowa), published 22 Jun 2010. Parents: Ralph Quass and Emma Nehls Quass. Husband: Ralph Wegner. Siblings of Bernice include: Kenneth Quass (= Kenneth Werner Quass, our research subject), Norman Quass, Wayne Quass, Lucille Quass Clemens, Dorothy Quass Ostrander. 'Avyl Quass' listed as sibling-in-law = Ivyl Phylena Greenley Quass (variant spelling). This confirms Kenneth Werner Quass is Bernice's brother. This record is about Kenneth's family of origin \u2014 his parents and siblings \u2014 NOT about children of Kenneth and Ivyl. Ralph Quass is Kenneth's father, not a son. Bernice is Kenneth's sister, not a daughter. No new children of Kenneth and Ivyl identified here."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-06-29T21:48:34.414Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "recordCountry": "United States",
+        "recordSubdivision": "Minnesota",
+        "note": "First attempt with Watonwan residencePlace returned 0 results; broadened to all Minnesota"
+      },
+      "outcome": "partial",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 12,
+      "notes": "No 1950 census record found for Kenneth Quass \u2014 results came from Find a Grave, Minnesota Birth Index, death records, and the 2024 Donald Quass obituary. The 1950 census collection may not be indexed under this search profile. Key incidental find: Alice Jeanette Quass (Minnesota Birth Index ark:/61903/1:1:VCF7-BY8, parents Kenneth Warner Quass and Ivyl Phylena Greenley, b. 6 Dec 1940, Watonwan MN) and her death record (Minnesota Death Records 1900-1955 ark:/61903/1:1:FDX7-8MF, d. 3 Feb 1955, Madelia MN). This child is the 'Jeanette' named in Donald's 2024 obituary. Also confirmed 'Kenneth Werner Quass Sr' suffix on Find a Grave (KNS4-P6W tree match). The 1950 census search should be retried with collection-specific filter."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-06-29T21:49:49.651Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1912,
+        "birthYearTo": 1922,
+        "collectionId": "3948617",
+        "description": "US 1950 Census \u2014 collection ID 3948617"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Collection ID 3948617 may be incorrect for the US 1950 Census on FamilySearch, or Kenneth Quass is not yet indexed in it. The family was in Madelia, Watonwan County in 1940; expected to remain there in 1950. 1950 census search is inconclusive \u2014 would require browsing the unindexed images or using a correct collection ID. Will rely on birth/death records and obituaries for household composition evidence."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-29T21:49:59.109Z",
+      "tool": "record_search",
+      "query": {
+        "fatherSurname": "Quass",
+        "motherSurname": "Greenley",
+        "collectionId": "1949334",
+        "recordCountry": "United States",
+        "description": "Minnesota Birth Index 1935-2002, father surname Quass + mother surname Greenley"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1,
+      "notes": "Only one result: Alice Jeanette Quass (b. 6 Dec 1940, Watonwan, Minnesota), father Kenneth Warner Quass, mother Ivyl Phylena Greenley (ark:/61903/1:1:VCF7-BY8). No other children registered in the Minnesota Birth Index under this parent combination. 'Ken Quass' and 'Pat Norman (born Quass)' \u2014 identified as siblings in Donald's 2024 obituary \u2014 do not appear here. They may have been born in Iowa, California, or another state, or their birth records in MN use a different spelling of parent names. Broader search needed."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-29T21:50:32.747Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Kenneth",
+        "fatherSurname": "Quass",
+        "motherGivenName": "Ivyl",
+        "collectionId": "1949334",
+        "description": "Minnesota Birth Index 1935-2002, father Kenneth Quass + mother Ivyl"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 1,
+      "notes": "Again only Alice Jeanette Quass returned (b. 6 Dec 1940, Watonwan MN). No other children of Kenneth and Ivyl found in Minnesota Birth Index regardless of parameter variation. 'Ken Quass' and 'Pat Norman (Quass)' siblings named in Donald's 2024 obituary are not registered as births in MN under these parents. They were likely born in Iowa or another state, or their birth records in MN use different parent name spellings."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-06-29T21:50:36.711Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "deathYearFrom": 1978,
+        "deathYearTo": 1986,
+        "collectionId": "2469546",
+        "description": "Minnesota Obituaries 1865-2006 for Kenneth Quass d. 1982"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No Minnesota obituary found for Kenneth Quass (d. 17 Sep 1982). Expected \u2014 he died in Grapevine, Tarrant County, Texas; his obituary would likely appear in Texas newspapers or GenealogyBank, not Minnesota newspaper obituary collections. Will search external sites (GenealogyBank/Newspapers.com) for his obituary."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-29T21:51:14.602Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Quass",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1941,
+        "birthYearTo": 1952,
+        "fatherSurname": "Quass",
+        "collectionId": "1949334",
+        "description": "MN Birth Index \u2014 Kenneth Quass as child born 1941-1952"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 4,
+      "notes": "All 4 results show 'Kenneth Warner Quass Jr' as FATHER of children born 1965-1974 in Hennepin County MN \u2014 not as a child born in the target range. Ken Quass Jr's own birth record not found in Minnesota Birth Index. Similarly no Iowa birth record for Quass + Greenley parents. Ken's and Pat's birth records not located in indexed collections; may require browsing unindexed county birth registers or searching other states."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-06-29T21:51:18.837Z",
+      "tool": "record_search",
+      "query": {
+        "fatherSurname": "Quass",
+        "motherSurname": "Greenley",
+        "recordCountry": "United States",
+        "recordSubdivision": "Iowa",
+        "recordType": "birth",
+        "description": "Iowa birth records for Quass + Greenley children"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No Iowa birth records found for children of Kenneth Quass and Ivyl Greenley. Donald's 1940 birth was in Randalia, Fayette County, Iowa, but no other children appear registered in Iowa birth indexes. Family moved to Watonwan County, MN by mid-1940. Remaining siblings (Ken, Pat) not located in Iowa or Minnesota birth indexes \u2014 birth dates unknown from vital records searches."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-06-29T21:56:07.376Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Ivyl +Quass",
+        "description": "Fulltext search for Ivyl Quass across all collections, no year filter"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 5,
+      "notes": "5 results. Most significant: (1) Texas Death Certificate 1982 (ark:/61903/3:1:3QS7-8992-XXT, collection M9J1-953) for Kenneth Quass: DoD Sep 17 1982, DoB 12-4-1917, place Tarrant County TX (Grapevine), surviving spouse Ivyl Greenley, residence San Diego CA (5941 Lancaster Drive), informant = Kenneth Quass Jr. (SON \u2014 confirms Ken Jr. is a child), father Ralph K. Quass, mother Emma Nehls, SS# 483-03-9478, buried Madelia Cemetery Watonwan MN. (2) Iowa Marriage 1938 (Buchanan Co.): Kenneth W. Quass + Ivyl P. Greenley married March 5, 1938. (3) Herbert Thomas Greenley obituary 1963: Ivyl Quass was living in Glendale, CA. (4) Watonwan County Death Record Index confirming Alice Jeannette Quass, parents Kenneth Quass and Ivyl Greenley. Family was in San Diego by 1982; moved to California between 1955 and 1963."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-06-29T22:03:49.448Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1202535",
+        "givenName": "Kenneth",
+        "surname": "Quass",
+        "description": "SSDI for Kenneth Quass to find death or birth info for Ken Quass Jr."
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 10,
+      "notes": "10 SSDI results returned; none match Kenneth Quass Jr. (son of Kenneth Werner Quass and Ivyl Greenley). Results are phonetically similar names (Quasney, Kaas) \u2014 no Quass surname matches. Kenneth Quass Jr. is alive as of 2024 (listed as survivor in Donald's April 2024 obituary), so no SSDI entry expected."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-29T22:03:54.275Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1949334",
+        "givenName": "Patricia",
+        "surname": "Quass",
+        "fatherSurname": "Quass",
+        "description": "MN Birth Index for Patricia Quass with father Quass"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 1,
+      "notes": "Only result is Colleen Patrice Kaas (b. 7 Mar 1960, Kanabec MN) \u2014 not relevant. Patricia Quass (later Pat Norman) is not found in Minnesota Birth Index. She is alive as of 2024 per Donald's obituary. Her birth record is likely in Watonwan County unindexed image records (collection 1920099) or possibly in Iowa."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-29T22:04:06.666Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Patricia +\"Quass\"",
+        "description": "Fulltext search for Patricia Quass across all collections"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 69,
+      "notes": "69 total results but none matching Patricia Quass daughter of Kenneth Werner Quass and Ivyl Greenley. Results include: Wisconsin obituary for unrelated Harold J. Quass (second wife Patricia Calhorn), Iowa 1926 birth record containing Quinn/Quass names, Alabama 1991 newspaper (Ann Gabrielle Quass-Little, daughter of Kenneth Warner Quass Jr. of Plymouth MN \u2014 confirms Ken Jr. lived in Plymouth/Hennepin MN in 1991), Minnesota centennial history (unrelated Quass family), Wisconsin obituary for Patricia Quass of Whitewater WI (unrelated, daughter of Palma Keyes). Our target Patricia Quass/Norman not identified. She is alive as of 2024."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-29T22:04:10.168Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Kenneth Quass Jr\" +born",
+        "description": "Fulltext for Kenneth Quass Jr birth information"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. No fulltext document on FamilySearch mentions 'Kenneth Quass Jr' alongside birth information. Birth date for Kenneth Warner Quass Jr. not determinable from indexed FamilySearch records. He is alive as of 2024 per Donald's obituary."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_005",
+      "performed": "2026-06-29T22:04:22.862Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Kenneth +\"Quass Jr\"",
+        "description": "Fulltext search confirming Ken Jr. as informant on Kenneth Sr.'s Texas death cert"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 2,
+      "notes": "2 results. Result 1 (irrelevant): Iowa Buchanan County 1950 obituary pages mentioning 'Ronnie Quass Jr.' \u2014 unrelated. Result 2 (significant): Texas Death Certificate 1982 for Kenneth Quass (ark:/61903/3:1:3QS7-8992-XXT, collection M9J1-953), full text confirmed \u2014 informant signature reads 'Kenneth Quass Jr.' confirming that Kenneth Warner Quass Jr. is a child of Kenneth Werner Quass and Ivyl Greenley. Certificate states: d. Sep 17 1982, Tarrant County TX (Grapevine area), surviving spouse Ivyl Greenley, residence 5941 Lancaster Drive, San Diego CA, father Ralph K. Quass, mother Emma Nehls, buried Madelia Cemetery MN. Note: record_read on this ARK returns 'not found' \u2014 the ARK is accessible only via fulltext, not the record_read endpoint."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_003",
+      "performed": "2026-06-29T22:04:30.030Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Kenneth",
+        "surname": "Quass",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "residencePlace": "Watonwan, Minnesota",
+        "recordCountry": "United States",
+        "description": "1950 census search \u2014 Kenneth Quass, Watonwan County MN"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 23,
+      "notes": "23 results returned, none are a 1950 US Census entry for Kenneth Quass. Top result is Find a Grave (Kenneth Werner Quass Sr., KNS4-P6W); remaining results appear to be death records, birth index entries, and other records. The 1950 census for Watonwan County MN is either not yet indexed on FamilySearch or Kenneth Quass does not appear under this query. Without 1950 census access, household composition in 1950 cannot be confirmed. Family was in Madelia, Watonwan County through at least Feb 1955 (Alice Jeanette's death)."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_006",
+      "performed": "2026-06-29T22:04:37.924Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Ivyl +\"Quass\" +obituary",
+        "description": "Fulltext search for Ivyl Quass obituary on FamilySearch"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Ivyl Phylena Greenley Quass (d. 24 May 2005, San Diego CA) obituary not found in any FamilySearch fulltext collection. Her 2005 San Diego obituary would be in local newspapers (San Diego Union-Tribune) or GenealogyBank, which are external sites not accessible via FamilySearch record_search or fulltext_search. Ivyl's obituary would most likely name her surviving children with birth information. This search should be redirected to search-external-sites."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_004",
+      "performed": "2026-06-29T22:04:44.125Z",
+      "tool": "record_search",
+      "query": {
+        "fatherSurname": "Quass",
+        "collectionId": "1949334",
+        "birthYearFrom": 1941,
+        "birthYearTo": 1962,
+        "recordCountry": "United States",
+        "description": "MN Birth Index \u2014 all Quass children 1941-1962 (broad search)"
+      },
+      "outcome": "negative",
+      "results_examined": 19,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 19,
+      "notes": "19 results, all examined. Results are children of various Quass families across Minnesota. No child with father Kenneth Quass (or Kenneth Warner Quass) and mother Ivyl Greenley found in this range except Alice Jeanette (already logged). Kenneth Warner Quass Jr. and Patricia Quass (later Norman) do not appear as children in the MN Birth Index 1935-2002 for any year. Their birth records are not in any indexed Minnesota collection; they were likely recorded in Watonwan County registers that are image-only on FamilySearch (collection 1920099)."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_006",
+      "performed": "2026-06-29T22:19:31.022Z",
+      "tool": "external_site",
+      "query": {
+        "description": "GenealogyBank search for Ivyl Quass obituary, San Diego CA, 2005",
+        "name": "Ivyl Quass",
+        "keywords": "Ivyl Quass obituary 2005",
+        "site": "GenealogyBank"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "newspapers",
+        "url_generated": "https://genealogybank.com/find/obituaries/name/Ivyl-Quass/from/2005/to/2005/state/California",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "URL generated for GenealogyBank search for Ivyl Phylena Greenley Quass obituary (d. 24 May 2005, San Diego CA). In autonomous mode, capture was not received \u2014 results require human retrieval. Ivyl's obituary would be in the San Diego Union-Tribune (May 2005) and would likely name surviving children (Kenneth Jr., Pat Norman) with possible birth year information. This is the primary remaining source for birth year data on Kenneth Jr. and Patricia Norman. FamilySearch fulltext search (log_017) returned zero results for this obituary, confirming it is not in any indexed FamilySearch collection."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "WWDC-3KV",
+      "citation": "\"Donald Quass Obituary,\" Dignity Memorial (online, April 2024); FamilySearch, United States Obituary Records 2014\u20132023, ark:/61903/1:1:XM5X-SPSB.",
+      "citation_detail": {
+        "who": "Dignity Memorial / Quass family",
+        "what": "Obituary for Donald Wendell Quass (b. 16 Jan 1940, d. 25 Apr 2024)",
+        "when_created": "April 2024",
+        "when_accessed": "2026-06-29",
+        "where": "FamilySearch, United States Obituary Records 2014\u20132023",
+        "where_within": "Record for Donald Wendell Quass; sibling personas ark:/61903/1:1:XM5X-SPS1 (Jeanette), ark:/61903/1:1:XM5X-SPSP (Ken Quass), ark:/61903/1:1:XM5X-SPSR (Pat Norman)"
+      },
+      "source_classification": "authored",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-29",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XM5X-SPSB",
+      "url_archived": null,
+      "notes": "Obituary published by Dignity Memorial funeral home, April 2024. Lists three siblings of Donald Wendell Quass, each shown as child of Kenneth Werner Quass and Phylena Ivyl Greenley via ParentChild relationships encoded in the GedcomX record: (1) Jeanette (deceased), (2) Ken Quass (surviving; married Bobbi Quass), (3) Pat Norman (surviving; n\u00e9e Quass, married Bob Norman). Parents Kenneth Werner Quass (d. 17 Sep 1982) and Ivyl Phylena Greenley (d. 24 May 2005) also confirmed.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Minnesota Birth Index, 1935\u20132002,\" entry for Alice Jeanette Quass (b. 6 Dec 1940, Watonwan, MN); FamilySearch, collection 1949334, ark:/61903/1:1:VCF7-BY8.",
+      "citation_detail": {
+        "who": "Minnesota Department of Health",
+        "what": "Minnesota Birth Index 1935\u20132002",
+        "when_created": "circa December 1940",
+        "when_accessed": "2026-06-29",
+        "where": "FamilySearch, Minnesota Birth Index 1935\u20132002 (collection 1949334)",
+        "where_within": "Entry for Alice Jeanette Quass, b. 6 Dec 1940, Watonwan, Minnesota; father Kenneth Warner Quass, mother Ivyl Phylena Greenley"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-29",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VCF7-BY8",
+      "url_archived": null,
+      "notes": "Index entry derived from the original Minnesota birth certificate. Father listed as Kenneth Warner Quass; mother as Ivyl Phylena Greenley. This Jeanette (Alice Jeanette) is the same individual named as a deceased sibling in Donald's 2024 obituary. Original certificate not yet accessed.",
+      "transcription": null,
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Minnesota Death Records, 1900\u20131955,\" entry for Alice Jeanette Quass (d. 3 Feb 1955, Madelia, MN); FamilySearch, ark:/61903/1:1:FDX7-8MF.",
+      "citation_detail": {
+        "who": "Minnesota Department of Health",
+        "what": "Minnesota Death Records 1900\u20131955",
+        "when_created": "circa February 1955",
+        "when_accessed": "2026-06-29",
+        "where": "FamilySearch, Minnesota Death Records 1900\u20131955",
+        "where_within": "Entry for Alice Jeanette Quass (b. 6 Dec 1940), d. 3 Feb 1955, Madelia, Watonwan County, Minnesota"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-29",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FDX7-8MF",
+      "url_archived": null,
+      "notes": "Index entry from Minnesota Death Records 1900\u20131955. Confirms death of Alice Jeanette Quass, daughter of Kenneth Quass and Ivyl Greenley, at Madelia, Watonwan County, MN on 3 Feb 1955 (aged 14). Corroborated by Watonwan County Death Record Index found via fulltext search (log_010). Original death certificate not yet accessed.",
+      "transcription": null,
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S3",
+      "citation": "Texas Department of Health, Death Certificate for Kenneth Werner Quass, 17 Sep 1982, Tarrant County, Texas; FamilySearch Texas Death Certificates (collection M9J1-953), ark:/61903/3:1:3QS7-8992-XXT.",
+      "citation_detail": {
+        "who": "Texas Department of Health; informant: Kenneth Quass Jr. (son)",
+        "what": "Texas State Death Certificate for Kenneth Werner Quass",
+        "when_created": "17 September 1982",
+        "when_accessed": "2026-06-29",
+        "where": "FamilySearch, Texas Death Certificates (collection M9J1-953)",
+        "where_within": "Certificate for Kenneth Werner Quass, d. 17 Sep 1982, Grapevine, Tarrant County, Texas"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-29",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-8992-XXT",
+      "url_archived": null,
+      "notes": "Texas death certificate for Kenneth Werner Quass (b. 4 Dec 1917, d. 17 Sep 1982, Grapevine TX). Informant: Kenneth Quass Jr. (son), confirming Kenneth Warner Quass Jr. is a son of Kenneth Werner Quass. Surviving spouse: Ivyl Greenley. Residence: 5941 Lancaster Drive, San Diego CA. Parents: Ralph K. Quass, Emma Nehls. Buried Madelia Cemetery, Watonwan MN. NOTE: Accessible via FamilySearch fulltext only (ARK format 3:1:) \u2014 not via record_read endpoint.",
+      "transcription": null,
+      "log_entry_id": "log_010"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:XM5X-SPS1",
+      "record_role": "sibling (deceased)",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Alice Jeanette Quass (Jeanette) named as deceased sibling of Donald Wendell Quass and child of Kenneth Werner Quass and Ivyl Phylena Greenley in Donald's April 2024 obituary",
+      "structured_value": {
+        "relationship_type": "ParentChild",
+        "parents": [
+          "KNS4-P6W",
+          "KWZP-4Q8"
+        ],
+        "child_tree_id": "I1",
+        "child_status": "deceased"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Quass family / Dignity Memorial funeral home",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Family-prepared obituary; reliable for identifying immediate family members but may omit estranged members or contain minor errors in names.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:XM5X-SPSP",
+      "record_role": "sibling (surviving)",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Kenneth Warner Quass Jr. (Ken Quass) named as surviving sibling of Donald Wendell Quass and child of Kenneth Werner Quass and Ivyl Phylena Greenley in Donald's April 2024 obituary; married Bobbi Quass",
+      "structured_value": {
+        "relationship_type": "ParentChild",
+        "parents": [
+          "KNS4-P6W",
+          "KWZP-4Q8"
+        ],
+        "child_tree_id": "I2",
+        "child_status": "surviving_as_of_2024"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Quass family / Dignity Memorial funeral home",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Family-prepared obituary; reliable for identifying immediate family members but may omit estranged members or contain minor errors in names.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:XM5X-SPSR",
+      "record_role": "sibling (surviving)",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Patricia Quass Norman (Pat Norman, n\u00e9e Quass) named as surviving sibling of Donald Wendell Quass and child of Kenneth Werner Quass and Ivyl Phylena Greenley in Donald's April 2024 obituary; married Bob Norman",
+      "structured_value": {
+        "relationship_type": "ParentChild",
+        "parents": [
+          "KNS4-P6W",
+          "KWZP-4Q8"
+        ],
+        "child_tree_id": "I3",
+        "child_status": "surviving_as_of_2024"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "Quass family / Dignity Memorial funeral home",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Family-prepared obituary; reliable for identifying immediate family members but may omit estranged members or contain minor errors in names.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:VCF7-BY8",
+      "record_role": "child (principal)",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "Alice Jeanette Quass born 6 December 1940, Watonwan, Minnesota; father Kenneth Warner Quass, mother Ivyl Phylena Greenley",
+      "structured_value": {
+        "year": 1940,
+        "month": 12,
+        "day": 6,
+        "father": "Kenneth Warner Quass",
+        "mother": "Ivyl Phylena Greenley"
+      },
+      "date": "6 December 1940",
+      "date_certainty": "exact",
+      "place": "Watonwan, Minnesota",
+      "standard_place": "Watonwan, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "Parents (Kenneth Quass and Ivyl Greenley Quass) / Minnesota birth registrar",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:VCF7-BY8",
+      "record_role": "child (principal)",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Alice Jeanette Quass's father is Kenneth Warner Quass and mother is Ivyl Phylena Greenley, per Minnesota Birth Index 1935\u20132002 entry for her 6 Dec 1940 birth in Watonwan, Minnesota",
+      "structured_value": {
+        "relationship_type": "ParentChild",
+        "father": "Kenneth Warner Quass",
+        "mother": "Ivyl Phylena Greenley",
+        "child": "Alice Jeanette Quass"
+      },
+      "date": "6 December 1940",
+      "date_certainty": "exact",
+      "place": "Watonwan, Minnesota",
+      "standard_place": "Watonwan, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "Parents (Kenneth Quass and Ivyl Greenley Quass) / Minnesota birth registrar",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:FDX7-8MF",
+      "record_role": "deceased (principal)",
+      "record_persona_id": null,
+      "fact_type": "death",
+      "value": "Alice Jeanette Quass died 3 February 1955, Madelia, Watonwan County, Minnesota; aged 14",
+      "structured_value": {
+        "year": 1955,
+        "month": 2,
+        "day": 3
+      },
+      "date": "3 February 1955",
+      "date_certainty": "exact",
+      "place": "Madelia, Watonwan County, Minnesota",
+      "standard_place": "Madelia, Watonwan, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "Family members / Minnesota death registrar",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/3:1:3QS7-8992-XXT",
+      "record_role": "informant (son of decedent)",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Kenneth Warner Quass Jr. signed as informant on Kenneth Werner Quass's 17 Sep 1982 Texas death certificate, confirming he is a son of Kenneth Werner Quass; surviving spouse listed as Ivyl Greenley corroborates he is also a son of Ivyl Phylena Greenley Quass",
+      "structured_value": {
+        "relationship_type": "ParentChild",
+        "parent": "Kenneth Werner Quass (KNS4-P6W)",
+        "child": "Kenneth Warner Quass Jr. (I2)",
+        "informant_role": "son"
+      },
+      "date": "17 September 1982",
+      "date_certainty": "exact",
+      "place": "Grapevine, Tarrant County, Texas",
+      "standard_place": "Grapevine, Tarrant, Texas, United States",
+      "information_quality": "primary",
+      "informant": "Kenneth Warner Quass Jr. (son of decedent)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": null,
+      "evidence_type": "indirect",
+      "log_entry_id": "log_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Donald Quass's April 2024 obituary names 'Jeanette' as a deceased sibling and child of Kenneth Werner Quass and Ivyl Phylena Greenley. MN Birth Index (a_004) confirms Alice Jeanette Quass was born 6 Dec 1940 in Watonwan MN to these same parents; MN Death Records (a_006) confirm she died 3 Feb 1955. The obituary's 'Jeanette' (a nickname from her middle name) maps to Alice Jeanette Quass (I1). Name, deceased status, parents, and location all agree.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_001",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "The obituary encodes a ParentChild relationship from Kenneth Werner Quass (p_306774614787) to Jeanette. The GedcomX encoding in the obituary record matches the FamilySearch tree person KNS4-P6W (Kenneth Werner Quass Sr.) on name and established identity. No competing candidates.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_001",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "rationale": "The obituary encodes a ParentChild relationship from Ivyl Phylena Greenley (p_306774614788) to Jeanette. The GedcomX encoding maps to KWZP-4Q8 (Ivyl Phylena Greenley) on name and established identity. No competing candidates.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_002",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Donald Quass's 2024 obituary names 'Ken Quass' (married Bobbi Quass) as a surviving sibling and child of Kenneth Werner Quass and Ivyl Phylena Greenley. Texas death certificate (a_007) independently confirms 'Kenneth Quass Jr.' as a son and informant on Kenneth Sr.'s 1982 death certificate. MN Birth Index (log_008) shows Kenneth Warner Quass Jr. as father of children born 1965-1974 in Hennepin County, consistent with living in Minnesota. Name, role, and corroborating records all identify this persona as I2 Kenneth Warner Quass Jr.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_002",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "The obituary's ParentChild encoding from Kenneth Werner Quass to Ken Quass matches KNS4-P6W by name and established identity.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_002",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "rationale": "The obituary's ParentChild encoding from Ivyl Phylena Greenley to Ken Quass matches KWZP-4Q8 by name and established identity.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_003",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Donald Quass's 2024 obituary names 'Pat Norman' (n\u00e9e Quass, married Bob Norman) as a surviving sibling and child of Kenneth Werner Quass and Ivyl Phylena Greenley. The full-text search (log_013) found a 1991 Alabama newspaper naming Ann Gabrielle Quass-Little as daughter of 'Kenneth Wuass' (= Quass) of Plymouth MN \u2014 the same family cluster. Name, married name, sibling role, and family context identify this persona as I3 Patricia Quass Norman.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_003",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "The obituary's ParentChild encoding from Kenneth Werner Quass to Pat Norman matches KNS4-P6W by name and established identity.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_003",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "rationale": "The obituary's ParentChild encoding from Ivyl Phylena Greenley to Pat Norman matches KWZP-4Q8 by name and established identity.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Minnesota Birth Index (collection 1949334) entry for Alice Jeanette Quass, b. 6 Dec 1940, Watonwan MN, father Kenneth Warner Quass, mother Ivyl Phylena Greenley. Exact name match to I1. Birth year (1940), county (Watonwan), and parents (Quass/Greenley) all match established facts for I1. This is the primary birth record supporting I1's identity.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Same MN Birth Index entry as a_004 \u2014 the parentage fact (father Kenneth Warner Quass, mother Ivyl Phylena Greenley) in the birth record directly identifies I1 Alice Jeanette Quass and establishes her parents.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_005",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "The MN Birth Index entry for Alice Jeanette Quass names Kenneth Warner Quass as father. This is consistent with KNS4-P6W (Kenneth Werner Quass, b. 4 Dec 1917, Iowa), who was residing in Watonwan County MN by 1940. Minor variant spelling 'Warner' vs 'Werner' is consistent with name spelling variation in indexed records.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_005",
+      "person_id": "KWZP-4Q8",
+      "confidence": "confident",
+      "rationale": "The MN Birth Index entry names Ivyl Phylena Greenley as mother, exactly matching KWZP-4Q8 (Ivyl Phylena Greenley, b. 26 May 1914). Name and location (Watonwan County) match the established profile.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "MN Death Records 1900-1955 entry for Alice Jeanette Quass, d. 3 Feb 1955, Madelia, Watonwan County MN. The name, birth year (1940, per MN Birth Index), and location (Watonwan County) are consistent with I1. Death at age 14 is biologically plausible. This record corroborates the obituary's identification of 'Jeanette' as a deceased sibling.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Texas death certificate for Kenneth Werner Quass Sr. (1982) lists informant as 'Kenneth Quass Jr.' The 'Jr.' suffix, same surname, and informant role together identify this person as I2 Kenneth Warner Quass Jr. (son of KNS4-P6W). This is independently corroborated by the obituary (a_002). MN Birth Index (log_008) further confirms a Kenneth Warner Quass Jr. was father of children in Hennepin County MN 1965-1974.",
+      "match_score": null,
+      "created": "2026-06-29"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_007",
+      "person_id": "KNS4-P6W",
+      "confidence": "confident",
+      "rationale": "The Texas death certificate is for Kenneth Werner Quass (KNS4-P6W): DoB 12-4-1917 (vs. 4 Dec 1917 per tree), DoD 17 Sep 1982 (matches), Tarrant County TX (matches), SS# 483-03-9478, parents Ralph K. Quass and Emma Nehls (both match tree). Identity of the decedent as KNS4-P6W is unambiguous.",
+      "match_score": null,
+      "created": "2026-06-29"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "address_first",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-06-29T222000Z.json",
+      "timestamp": "2026-06-29T22:20:00Z",
+      "superseded_by": null
+    }
+  ]
+}
