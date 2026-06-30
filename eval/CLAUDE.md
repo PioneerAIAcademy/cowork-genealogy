@@ -157,6 +157,8 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rewording, typos, comments, formatting). It is **auto-removed on every new push** (the workflow's `synchronize` step), so the bypass can't outlive the commit it was approved for — a later substantive push re-reds the check until the senior re-applies. Only rule 2 is relaxed. Full workflow + one-time `gh label create` setup: `eval/README.md` "Cosmetic-change exemption". The label must exist in the repo and seniors need Triage/Write to apply it.
 
+**Orchestrator-skill exemption.** Skills listed in `RUNLOG_GATE_EXEMPT_SKILLS` in `check_runlogs.py` are dropped from the per-skill rules (2 + 3). These are orchestrator skills (currently `research`) validated by e2e GPS fixtures rather than unit tests, so by design they have no `eval/tests/unit/<skill>/` scaffolding and no `eval/runlogs/unit/<skill>/` dir. Without the exemption a skill-body edit hard-fails with "no run logs", and `eval-cosmetic-skip` can't clear it (that label only relaxes rule 2 *after* a runlog dir exists). Adding a unit suite for such a skill later means removing it from the set.
+
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
 ## Model Pinning
