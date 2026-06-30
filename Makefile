@@ -286,6 +286,16 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
 
+.PHONY: e2e-view
+e2e-view: ## Load the latest e2e run into the Research Viewer (eval/.e2e-view): make e2e-view TEST=kenneth-quass-death
+	# Copies the newest run's final tree + research.json into eval/.e2e-view/
+	# (the shape the viewer opens + live-watches). Open that folder once in
+	# the viewer (its Open Project button, or `make electron`); later runs
+	# refresh it in place. Cheap + instant — and it picks the newest run, so
+	# a failing scratch_ run (what you usually want to inspect) works too.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-view TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.view --test $(TEST)
+
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
