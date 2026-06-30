@@ -199,6 +199,12 @@
     <div><span class="os nix">macOS / Linux</span><pre><code>make install
 echo 'ANTHROPIC_API_KEY=sk-...' &gt;&gt; eval/.env</code></pre></div>
   </div>
+  <h3>Build &amp; install the Cowork tools (once; redo when they change)</h3>
+  <div class="cmds">
+    <div><span class="os win">Windows</span><pre><code>BuildMcpb.bat   &amp;   BuildPlugin.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make mcpb   &amp;&amp;   make plugin</code></pre></div>
+  </div>
+  <p class="sub">Install the <code>.mcpb</code> in Claude Desktop → Settings → Extensions and upload the plugin in Cowork → Customize, then <strong>fully quit + reopen</strong> Desktop. <em>Only the live Cowork loop (next slide) needs these — the headless run uses the compiled engine directly.</em></p>
   <h3>Each day, before running</h3>
   <div class="cmds">
     <div><span class="os win">Windows</span><pre><code>Login.bat        &amp; CheckSetup.bat</code></pre></div>
@@ -228,12 +234,12 @@ echo 'ANTHROPIC_API_KEY=sk-...' &gt;&gt; eval/.env</code></pre></div>
 <section class="slide">
   <h2>Debug live in Cowork — start here</h2>
   <div class="cmds">
-    <div><span class="os win">Windows</span><pre><code>SeedProject.bat</code></pre></div>
-    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-project TEST=&lt;slug&gt;</code></pre></div>
+    <div><span class="os win">Windows</span><pre><code>SeedProject.bat     then     Viewer.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-project TEST=&lt;slug&gt;     then     make electron</code></pre></div>
   </div>
   <ul>
     <li>Seeds an editable project from the fixture's <strong>starting state</strong>. Open it in <strong>Claude Cowork</strong>, run <code>/research</code> — <strong>init-project is auto-skipped</strong>.</li>
-    <li>Open the same folder in the <strong>Research Viewer</strong>: watch the log, assertions, and conflicts appear <strong>live</strong>, and ask Claude <em>"why didn't you search X? why direct, not indirect?"</em></li>
+    <li>Launch the <strong>Research Viewer</strong> (<code>Viewer.bat</code> / <code>make electron</code>) and open the same folder in it: watch the log, assertions, and conflicts appear <strong>live</strong>, and ask Claude <em>"why didn't you search X? why direct, not indirect?"</em></li>
   </ul>
   <div class="card sub"><strong>Watch HOW it gets each answer</strong> — by searching records, not by reading the tree. Live runs don't block tree-reads, so a "find" via the tree won't hold up when you score.</div>
 </section>

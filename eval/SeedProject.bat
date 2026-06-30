@@ -3,7 +3,7 @@ cd %~dp0
 
 echo === Cowork Genealogy E2E — Seed an editable project to debug /research live ===
 echo.
-echo Copies a fixture's STARTING state into eval\.e2e-project\<slug>\ as a fresh,
+echo Copies a fixture's STARTING state into eval\e2e-project\<slug>\ as a fresh,
 echo editable project. Open it in Claude Cowork to run /research step-by-step, and
 echo open the same folder in the Research Viewer to watch it live.
 echo.
