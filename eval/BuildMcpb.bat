@@ -1,28 +1,27 @@
 @echo off
 cd %~dp0
 
-echo === Cowork Genealogy — Build the .mcpb desktop extension ===
+echo === Cowork Genealogy - Build the .mcpb desktop extension ===
 echo.
 echo Compiles the MCP server and packs releases\genealogy-mcp.mcpb, the
 echo Claude Desktop extension. After it builds, install it in Claude Desktop
 echo via Settings -^> Extensions -^> Install Extension, then FULLY QUIT and
 echo reopen Desktop. Rebuild and reinstall whenever the MCP server changes.
 echo.
-echo This runs the same scripts\build-mcpb.sh that "make mcpb" runs, so it
-echo needs a bash environment such as Git Bash or WSL.
+echo This runs scripts\build-mcpb.mjs with Node (same as "make mcpb"). No bash
+echo needed -- just Node, which Setup.bat already installs.
 echo.
 
-where bash >nul 2>nul
+where node >nul 2>nul
 if errorlevel 1 (
-  echo ERROR: 'bash' was not found on PATH. Install Git for Windows
-  echo        ^(it includes Git Bash^) or use WSL -- or just install a
-  echo        released genealogy-mcp.mcpb instead of building it yourself.
+  echo ERROR: 'node' was not found on PATH. Install Node.js, or run Setup.bat
+  echo        first -- the eval setup installs the dependencies this needs.
   pause
   exit /b 1
 )
 
 cd ..
-call bash scripts/build-mcpb.sh
+call node scripts\build-mcpb.mjs
 set RC=%errorlevel%
 
 echo.
