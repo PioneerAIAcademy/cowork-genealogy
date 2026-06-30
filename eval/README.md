@@ -35,6 +35,7 @@ eval/
   ViewE2E.bat             Windows: load the latest e2e run into the Research Viewer
   ValidateFixture.bat     Windows: e2e stripping linter
   ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
+  SeedProject.bat         Windows: seed an editable Cowork project from a fixture (debug /research live)
   RunCalibration.bat      Windows: run judge calibration (maintainer only)
 ```
 
@@ -53,11 +54,11 @@ the e2e benchmark; see
   npm install -g @anthropic-ai/claude-code
   ```
   Then run `claude` once to authenticate (browser login or paste an API key). `Setup.bat` installs the CLI for you on Windows; macOS/Linux users do this step manually. If `claude --version` returns "not recognized," the harness will fail every test with a misleading "Claude Code returned an error result: success" error even though the SKILL.md, fixtures, and tests are fine.
-- **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
+- **Anthropic API key** — required for the LLM judge (the Anthropic SDK has no subscription path). `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
   ```
-  Or set it in your shell. Claude Code subscription auth (`~/.claude/`) is supported as a fallback only when no API key is configured. See `eval/harness/harness/auth.py` for resolution rules.
+  Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
 ## Running manually (macOS / Linux)
 
@@ -314,6 +315,31 @@ equivalent in parentheses:
    direct/indirect badge. Keep the viewer open — re-running refreshes it live.
 10. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
+
+### Debug a fixture interactively (Cowork + the viewer)
+
+Before — or instead of — a headless `RunE2E.bat`, run the fixture **live in
+Claude Cowork** and watch it unfold. This is the recommended starting point
+for debugging *why* the agent did or didn't do something, and it keeps the
+test-improve loop fast: you watch the fix work in minutes instead of waiting
+20–60 min for a headless verdict.
+
+1. `eval\SeedProject.bat` → enter the slug (`make e2e-project TEST=<slug>`).
+   Copies the fixture's starting state into `eval\.e2e-project\<slug>\` as a
+   fresh, editable `research.json` + `tree.gedcomx.json`.
+2. Open that folder in **Claude Cowork** (genealogy plugin installed, logged
+   in to FamilySearch) and run `/research`. `init-project` is auto-skipped
+   (research.json already exists); question-selection still runs unless the
+   fixture seeds a question.
+3. Open the **same folder** in the Research Viewer to watch the research log,
+   assertions, and conflicts appear live — and ask Claude *"why didn't you
+   search X?"*, *"why direct, not indirect?"* as it works.
+
+**For understanding, not scoring.** A live run does **not** block the tree-read
+tools (`person_read` / `person_search` / `person_ancestors`) that the headless
+`make e2e-run` blocks — so confirm the agent found the answer by *searching
+records*, not by reading the live tree. The honest pass/fail is always the
+headless run. Re-seed a fresh project (wiping any work) with `FORCE=1`.
 
 ### Keep the machine awake during a run
 
