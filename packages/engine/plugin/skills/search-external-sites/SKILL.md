@@ -174,7 +174,7 @@ https://www.ancestry.com/search/?name={first}_{last}&birth={year}&birthplace={pl
 
 #### MyHeritage.com
 ```
-https://www.myheritage.com/research?action=query&first={first}&last={last}&birth_year={year}&birth_place={place}&death_year={year}&death_place={place}&father_first={first}&father_last={last}&mother_first={first}&mother_last={last}
+https://www.myheritage.com/research?action=query&first={first}&last={last}&birth_year={year}&birth_place={place}&marriage_year={year}&marriage_place={place}&death_year={year}&death_place={place}&father_first={first}&father_last={last}&mother_first={first}&mother_last={last}
 ```
 
 #### FindMyPast.com
@@ -194,6 +194,9 @@ https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place=
 
 **Parameter strategy** (full guidance in
 `references/search-strategy-external.md`):
+- **Match the parameters to the plan item's event.** A marriage search needs
+  the marriage year window and place; a death search needs death year/place —
+  don't fall back to birth-only fields when the plan item targets another event.
 - Unusual name → start broad (surname + place only).
 - Common name → start narrow (add dates, relatives, a specific collection).
 - Include only parameters you're confident about; omit uncertain ones.
@@ -317,7 +320,9 @@ no-access wall where none did), and `outcome` chosen from your triage:
   was searched, its known coverage gaps, and whether the absence is
   conclusive or whether undigitized/unindexed records may still exist
   ("not found online" ≠ "does not exist"). Never skip the log because
-  "there was nothing to record."
+  "there was nothing to record." If the user *reports* a nil result without a
+  capture, give them the click-capture steps (step 4) so they can confirm the
+  page really was empty before you log the absence as conclusive.
 - **No access** (subscription/login wall the user can't pass) →
   `outcome: "error"` with the reason; suggest the fallback plan item.
 
