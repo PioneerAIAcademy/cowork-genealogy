@@ -287,8 +287,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
 
 .PHONY: e2e-view
-e2e-view: ## Load the latest e2e run into the Research Viewer (eval/.e2e-view): make e2e-view TEST=kenneth-quass-death
-	# Copies the newest run's final tree + research.json into eval/.e2e-view/
+e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
+	# Copies the newest run's final tree + research.json into eval/e2e-view/
 	# (the shape the viewer opens + live-watches). Open that folder once in
 	# the viewer (its Open Project button, or `make electron`); later runs
 	# refresh it in place. Cheap + instant — and it picks the newest run, so
@@ -299,7 +299,7 @@ e2e-view: ## Load the latest e2e run into the Research Viewer (eval/.e2e-view): 
 .PHONY: e2e-project
 e2e-project: ## Seed an editable Cowork project from a fixture's STARTING state to debug /research live: make e2e-project TEST=kenneth-quass-death
 	# Copies the fixture's starting-research.json + starting-tree.gedcomx.json
-	# into eval/.e2e-project/<slug>/ as research.json + tree.gedcomx.json — a
+	# into eval/e2e-project/<slug>/ as research.json + tree.gedcomx.json — a
 	# fresh, editable project you open in Claude Cowork to run /research
 	# step-by-step (init-project auto-skipped) while watching it live in the
 	# Research Viewer. For DEBUGGING the process, NOT scoring: a live run does

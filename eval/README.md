@@ -314,7 +314,7 @@ equivalent in parentheses:
 8. `/interpret-e2e-result` → read the verdict.
 9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
    the Research Viewer with `eval\Viewer.bat` (`make electron`) and open
-   `eval\.e2e-view` in it (its **Open Project** button) to inspect the agent's
+   `eval\e2e-view` in it (its **Open Project** button) to inspect the agent's
    final tree, research log, and each finding's direct/indirect badge. Keep the
    viewer open — re-running `ViewE2E.bat` refreshes it live.
 10. If it passes, commit the fixture (and optionally its run log), and
@@ -337,7 +337,7 @@ Desktop after installing. The headless `RunE2E.bat` path doesn't use these (it
 runs the compiled engine directly), so this is only for the live Cowork loop.
 
 1. `eval\SeedProject.bat` → enter the slug (`make e2e-project TEST=<slug>`).
-   Copies the fixture's starting state into `eval\.e2e-project\<slug>\` as a
+   Copies the fixture's starting state into `eval\e2e-project\<slug>\` as a
    fresh, editable `research.json` + `tree.gedcomx.json`.
 2. Open that folder in **Claude Cowork** (genealogy plugin installed, logged
    in to FamilySearch) and run `/research`. `init-project` is auto-skipped
