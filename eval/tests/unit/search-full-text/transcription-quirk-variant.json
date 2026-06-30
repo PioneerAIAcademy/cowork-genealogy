@@ -8,7 +8,7 @@
     "tags": ["transcription-quirk", "ocr-variant", "variant-handling", "query-construction"]
   },
   "input": {
-    "user_message": "I have seen Schuylkill County 1870s land records where the AI transcript rendered the surname Flynn as 'Flunn' — the cursive 'y' misread as 'u'. Run a full-text search whose keywords field contains the literal string '+Flunn' (the misread form as a required term). Do not use a wildcard query — use the literal 'Flunn' spelling so the underlying tool matches exactly that variant.",
+    "user_message": "I have seen Schuylkill County 1870s land records where the AI transcript rendered the surname Flynn as 'Flunn' — the cursive 'y' misread as 'u'. Run a full-text search whose keywords field contains the literal string '+Flunn' (the misread form as a required term). Do not use a wildcard query — use the literal 'Flunn' spelling so the underlying tool matches exactly that variant. This isn't tied to a plan item — treat it as an ad-hoc search, log the result to the research log, and write the sidecar.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["fulltext-search-flynn-flunn-ocr", "fulltext-search-flynn-witnesses", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant"],
