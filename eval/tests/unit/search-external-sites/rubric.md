@@ -2,6 +2,8 @@
 
 Grading dimensions for search-external-sites unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+**Two kinds of turn.** Most turns **generate** a search (build a pre-filled URL, instruct the capture workflow, log it). But some turns **record a search the user already ran** — a nil-result report ("I searched X, zero results"). On a nil-result-report turn there is no new search to generate, so the URL-generation, Capture-guidance, and Tool-selection dimensions grade the *logging* task: the skill correctly logs the negative result (site, place, date, coverage limits) and may nudge for a confirming capture of the empty results screen. Do **not** mark these dimensions partial/fail on a nil-result-report turn for "no freshly built URL," "no full capture-workflow instructions," or "didn't call place_search/external_links_search" — none of those apply when the user already performed the search. Grade what the nil-report turn requires, not the search-generation flow.
+
 ## URL generation
 
 Did the skill generate a correctly pre-filled search URL for the target site (Ancestry, MyHeritage, etc.)? The URL should include the search parameters from the plan item.
