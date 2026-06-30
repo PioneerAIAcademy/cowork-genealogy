@@ -190,8 +190,9 @@ contract that distinguishes the mentor from a gatekeeper.
 
 Stop when one of:
 
-- `project.status == "completed"` — proof-conclusion has set this
-  after writing summaries for all resolved questions
+- `project.status == "completed"` — the orchestrator writes this
+  via `research_append` once all questions are `resolved` (see
+  routing table)
 - The user explicitly halts you
 - You hit a genuine blocker (no more accessible records, an
   irreducible conflict, missing access to a required repository) —
