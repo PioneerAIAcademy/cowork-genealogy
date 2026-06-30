@@ -1,0 +1,526 @@
+{
+  "run_log": "v1_2026-06-29_19-48-32.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All findings are accurate and supported by the project data. no fabricated or unsupported claims "
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All required GPS elements were covered accurately. No important sections were omitted."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. The response relied only on the provided project files, so there were no tool arguments to evaluate"
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All required GPS elements were covered completely and accurately. No key sections were omitted."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All counts, statutes, and findings are accurate and supported by the project data. No inaccuracies or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The next steps are specific, actionable, and supported by the project state. Recommendations follow logically from the identified evidence and conflicts. "
+    },
+    {
+      "test_id": "ut_project_status_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both summaries were completed and appropriate for their audience. The plain language overview was easy to follow, while the detailed GPS summary accurately covered the full research state."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Most findings are correct, but it incorrectly reports 9 sources instead of 4 documented in research.json"
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both summaries covered all required information with no major omissions"
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. The response was based entirely on the provided project files, so there were no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All GPS elements were covered accurately, including questions, plans, search log, evidence, conflicts, hypotheses, conclusions, timeline gaps, and proof tier. No significant omissions."
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Most findings are accurate, but it incorrectly reports 9 sources instead of  4 documented in research.json, making part of the state summary inaccurate"
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The next step is specific, actionable, and well supported by the search state. The recommendations are concrete and logically follow from the current evidence. "
+    },
+    {
+      "test_id": "ut_project_status_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both summaries are complete, clearly differentiated, and appropriate for their intended audiences."
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " All factual claims are accurate and supported by the project state. No fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all required elements and provided both summaries with no major omissions "
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. The response was based solely on the provided files, so there were no tool arguments to evaluate. "
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All GPS elements were covered accurately with no significant omissions."
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All counts, statuses, and findings are accurate and consistent with the project state. No significant discrepancies."
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The next steps are specific, actionable, and directly supported by the current research state."
+    },
+    {
+      "test_id": "ut_project_status_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both required summaries are present, clearly distinct, and appropriate for their intended audiences"
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately identified both broken foreign key references, correctly distinguished the valid reference, and all reported counts and project state matched the data. No unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all required elements, including both integrity warnings and summaries, the full GPS state report, and actionable next steps. No major omissions."
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. The response was based solely on the provided project files, so there were no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All GPS elements were covered accurately, and no significant sections were omitted."
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All counts and statuses are accurate and consistent with the project state. No discrepancies or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The next step is specific, actionable, and directly supported by the current research state."
+    },
+    {
+      "test_id": "ut_project_status_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both summaries are complete, clearly distinct, and appropriate for their intended audiences."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All factual claims are accurate and supported by the project state. No fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all GPS elements completely and accurately with no significant omissions"
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. The response was made based on the provided project data, so there were no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The summary covered all GPS elements completely and accurately with no significant omissions."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All counts, statuses, and findings are accurate and consistent with the project state. No discrepancies or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The recommendation is appropriate for the completed project. It correctly concludes that no action is required and bases that conclusion on the completed research state and proof reached."
+    },
+    {
+      "test_id": "ut_project_status_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both required summaries are present, clearly distinct, and appropriate for their intended audiences."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported that the project was empty, made no unsupported assumptions, and did not fabricate any project data."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the scenario by identifying the empty project, directing the user to init-project, and requesting the required information to create a new project. No expected elements were omitted."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": " No MCP tool calls were made. The skill correctly handled the empty project scenario without invoking any tools, so no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No GPS summary was required because no research.json existed. The skill correctly identified the empty project and did not empty project and did not attempt to summarise non-existent data."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill accurately reported that no research files were present and made no unsupported claims about the project state."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The next is clear, specific, and actionable. The skill correctly directs the user to init-project and requires the necessary information to begin the project."
+    },
+    {
+      "test_id": "ut_project_status_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly omitted both summaries because no project existed. This is the expected behavior under the empty exception."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All facts, counts, statutes, and citations are accurate and supported by the project state. No fabricated state. No fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all required GPS elements, identified the remaining work, and provided a specific next step with no significant omissions."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. The response was based solely on the provided project data, so there was no tool argument to evaluate. "
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The summary covered all GPS elements completely and accurately with no significant omissions "
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All counts, statutes, and findings are accurate and consistent with the project state: no discrepancies or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The next step is specific, actionable, and directly supported by the current research state. It clearly explains why completing the probate search is critical to advancing the proof."
+    },
+    {
+      "test_id": "ut_project_status_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both required are present, clearly distinct, and appropriate for their intended audiences"
+    },
+    {
+      "test_id": "ut_project_status_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill correctly recognised the request was outside its scope and appropriately routed the user to search records."
+    },
+    {
+      "test_id": "ut_project_status_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill fully addressed the request by correctly routing the user to search records, the appropriate skill for performing the requested census search. "
+    },
+    {
+      "test_id": "ut_project_status_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. The skill correctly routed the request to search records, so there were no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill returned an empty response and did not provide the requested proof statement, so it failed to address the user’s request."
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill did not address the user’s request. It returned no proof statement, routing, or explanation, leaving the request task completely unqualified."
+    },
+    {
+      "test_id": "ut_project_status_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, so there were no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill returned an empty response and did not answer the user’s question, provide guidance, or route to the appropriate skill."
+    },
+    {
+      "test_id": "ut_project_status_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill did not address the user’s request. It returned no answer, routing, or guidance, leaving the requested task completely unfulfilled."
+    },
+    {
+      "test_id": "ut_project_status_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, so there were no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All findings are accurate and supported by the project state. No fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all major GPS elements, accurately summarised the project state, and identified the key gap and next steps with no significant omissions."
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP calls were made. The response was based solely on the provided project state, so there were no tool arguments to evaluate."
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Completeness of summary",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill covered all GPS elements, including partial and income sections, with no significant omissions."
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All counts, statuses, and findings are accurate and consistent with the project state: no discrepancies or unsupported claims."
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The next step is specific, actionable, and directly supported by the current research state. It clearly addresses the stale plan with a concrete follow-up task."
+    },
+    {
+      "test_id": "ut_project_status_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Both summaries present",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both required summaries are present, clearly separated, and appropriate for their intended audiences"
+    }
+  ]
+}
