@@ -71,14 +71,12 @@ From the question's `rationale` and `selection_basis`, determine:
 - **Prior searches** — read the log; don't re-plan a source already
   searched unless using a different repository or parameters
 
-If you already hold this question and its context in memory from the
-same run, work from that — don't re-read `research.json` "to be safe."
-Read it only when you're entering planning cold without the question's
-state in context, or when a sub-skill or the user changed the file since
-you last saw it. (Step 1a's plan-mode decision below still requires
-reading **all plans for the target question** when you don't already
-know their current statuses — that read is about picking the mode, not a
-defensive re-read.)
+If you already hold the question and its context in memory from this
+run, work from that — don't re-read `research.json` "to be safe." Read
+it only when planning cold, or when a sub-skill or the user changed the
+file since. (Step 1a still requires reading **all plans for the target
+question** when you don't know their statuses — that's for picking the
+mode, not a defensive re-read.)
 
 **Verify the starting point (BCG Standard 11).** Before planning,
 check whether starting-point facts are documented or merely assumed.
@@ -213,21 +211,16 @@ the same call blindly.
 id) and omit `items` (the item ops add those). The tool rejects a second
 `active` plan for the same `question_id` (one active plan per question).
 
-**Ops #2…N — the plan items**, in sequence order. Each targets the plan
-from op #1 via `planId`, using the plan's **predicted** assigned id. The
-tool assigns ids as **(highest existing id of that prefix in
-`research.json`) + 1**, zero-padded to 3 — *not* always `_001`. So read
-`research.json`'s `plans[]` and compute op #1's id: if the project already
-has `pl_001`/`pl_002`, this plan becomes `pl_003`. Carry that predicted id
-as `planId` on every item op. **Do NOT hard-code `pl_001`** — that is only
-correct for the very first plan in a fresh project; in any ongoing project
-it would silently attach your items to a *different question's* existing
-plan. Omit each item's `id` (the tool assigns the `pli_` id). Likewise, a
-`fallback_for` references the primary item's predicted `pli_` id — compute
-it as (highest existing `pli_` across **all** plans' `items[]`) + 1,
-advancing by one per item op in this call — so place the primary item's op
-before its fallback's op in the array, and set the fallback's
-`fallback_for` to the primary's predicted `pli_` id:
+**Ops #2…N — the plan items**, in sequence order, each targeting op #1's
+plan via `planId`. The tool assigns each id as **(highest existing id of
+that prefix in `research.json`) + 1**, zero-padded to 3 — so **predict**
+them, don't assume `_001`: if the project already has `pl_001`/`pl_002`,
+op #1's plan is `pl_003`, and that's the `planId` for every item op.
+**Never hard-code `pl_001`** — in an ongoing project it silently attaches
+your items to another question's plan. Omit each item's `id`. A
+`fallback_for` likewise needs the primary's predicted `pli_` id ((highest
+existing `pli_` across all plans) + 1, advancing one per item op), so
+place the primary's op before its fallback's:
 
 ```
 research_append({
@@ -236,8 +229,7 @@ research_append({
     {
       section: "plans",
       op: "append",
-      // assigned pl_ id = (highest existing pl_ in research.json) + 1.
-      // Here the project already has pl_001/pl_002, so this is pl_003.
+      // assigned pl_ id = (highest existing pl_) + 1; pl_001/pl_002 exist → pl_003.
       entry: {
         question_id: "q_003",
         status: "active",
