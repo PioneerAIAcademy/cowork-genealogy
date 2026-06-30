@@ -132,6 +132,13 @@ export async function researchLogAppend(
       | undefined;
     input.query = coerceObjectArg(input.query, "query");
 
+    // 0b. Map the literal string "null" back to null for nullable scalar args.
+    //     Some models emit `planItemId: "null"` (the string) instead of JSON
+    //     null; stored verbatim it becomes a bogus id reference that fails
+    //     validation ("plan_item_id 'null' not found"). "null" is never a
+    //     valid pli_ id, so this coercion is safe.
+    if ((input.planItemId as unknown) === "null") input.planItemId = null;
+
     // 1. Input-consistency checks (external_site ↔ tool, enums).
     const isExternal = input.tool === "external_site";
     if (isExternal && (input.externalSite === undefined || input.externalSite === null)) {
