@@ -2,6 +2,7 @@ import { useResearchData } from '../../contexts/ResearchDataContext'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
+import Linkify from '../shared/Linkify'
 import styles from './HypothesesSection.module.css'
 
 export default function HypothesesSection(): React.JSX.Element {
@@ -70,14 +71,14 @@ export default function HypothesesSection(): React.JSX.Element {
               {hyp.ruled_out_reason && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Ruled Out Reason</div>
-                  <p className={styles.text}>{hyp.ruled_out_reason}</p>
+                  <p className={styles.text}><Linkify text={hyp.ruled_out_reason} /></p>
                 </div>
               )}
 
               {hyp.notes && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Notes</div>
-                  <p className={styles.text}>{hyp.notes}</p>
+                  <p className={styles.text}><Linkify text={hyp.notes} /></p>
                 </div>
               )}
             </div>
