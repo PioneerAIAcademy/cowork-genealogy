@@ -32,6 +32,7 @@ eval/
   Login.bat               Windows: FamilySearch login for e2e (once a day)
   CheckSetup.bat          Windows: e2e preflight (run this first)
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
+  ViewE2E.bat             Windows: load the latest e2e run into the Research Viewer
   ValidateFixture.bat     Windows: e2e stripping linter
   ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
   RunCalibration.bat      Windows: run judge calibration (maintainer only)
@@ -52,11 +53,11 @@ the e2e benchmark; see
   npm install -g @anthropic-ai/claude-code
   ```
   Then run `claude` once to authenticate (browser login or paste an API key). `Setup.bat` installs the CLI for you on Windows; macOS/Linux users do this step manually. If `claude --version` returns "not recognized," the harness will fail every test with a misleading "Claude Code returned an error result: success" error even though the SKILL.md, fixtures, and tests are fine.
-- **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
+- **Anthropic API key** — required for the LLM judge (the Anthropic SDK has no subscription path). `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
   ```
-  Or set it in your shell. Claude Code subscription auth (`~/.claude/`) is supported as a fallback only when no API key is configured. See `eval/harness/harness/auth.py` for resolution rules.
+  Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
 ## Running manually (macOS / Linux)
 
@@ -307,7 +308,11 @@ equivalent in parentheses:
 7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
    live run (20–60 min, $3–10).
 8. `/interpret-e2e-result` → read the verdict.
-9. If it passes, commit the fixture (and optionally its run log), and
+9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → open
+   `eval\.e2e-view` in the Research Viewer (its **Open Project** button) to
+   inspect the agent's final tree, research log, and each finding's
+   direct/indirect badge. Keep the viewer open — re-running refreshes it live.
+10. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
 
 ### Keep the machine awake during a run

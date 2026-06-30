@@ -1,0 +1,18 @@
+{
+  "id": "ivyl-greenley-daughter",
+  "name": "Ivyl Phylena Greenley — second child, daughter Alice Jeannette Quass (1940–1955)",
+  "source_pid": "KWZP-4Q8",
+  "captured": "2026-06-29",
+  "researcher_question": "Besides their son Donald, did Ivyl Phylena Greenley and her husband Kenneth Werner Quass have any other children? Identify each additional child and that child's birth and death dates.",
+  "tags": {
+    "question_type": "children",
+    "era": "1940s",
+    "geography": "US-MN"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "The daughter Alice Jeannette 'Jeannie' Quass (KNXW-Z21) was stripped from the starting tree, along with her two parent-child relationships (to Ivyl and to Kenneth) and the four Minnesota vital-record sources that attested her (1940 birth index, 1955 death records and certificates, 1955 death index, 1955 deaths). The agent starts knowing Ivyl married Kenneth Quass and had a son, Donald, and must discover the second child — a daughter born 6 Dec 1940 in Madelia, Minnesota who died at age 14 on 3 Feb 1955. Recoverable entirely via FamilySearch record search (Minnesota birth index 1935-2002, Minnesota death records and certificates 1900-1955, Minnesota death index 1908-2002); no bundled documents needed. The tree records her under the nickname 'Jeannie' but the records use 'Alice Jeannette Quass.' Note Ivyl's own mother is also named Alice (Alice Ann Wilkinson, b. 1880, d. 1919) and is retained in the starting tree — distinct from the stripped daughter."
+}
