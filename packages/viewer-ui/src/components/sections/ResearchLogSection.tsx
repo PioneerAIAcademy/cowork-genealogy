@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
+import Linkify from '../shared/Linkify'
 import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
 import styles from './ResearchLogSection.module.css'
@@ -113,7 +114,22 @@ export default function ResearchLogSection(): React.JSX.Element {
                         <td>
                           <StatusBadge value={entry.outcome} />
                         </td>
-                        <td>{entry.results_examined}</td>
+                        <td>
+                          {entry.results_ref ? (
+                            <button
+                              type="button"
+                              className={styles.viewResultsInline}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openSidecar(entry.id)
+                              }}
+                            >
+                              {viewResultsLabel(entry)}
+                            </button>
+                          ) : (
+                            entry.results_examined
+                          )}
+                        </td>
                         <td>
                           <div className={styles.linkList}>
                             <span className={styles.count}>{capturedSources.length}</span>
@@ -145,7 +161,9 @@ export default function ResearchLogSection(): React.JSX.Element {
                               {entry.notes && (
                                 <div className={styles.field}>
                                   <div className={styles.fieldLabel}>Notes</div>
-                                  <div className={styles.fieldValue}>{entry.notes}</div>
+                                  <div className={styles.fieldValue}>
+                                    <Linkify text={entry.notes} />
+                                  </div>
                                 </div>
                               )}
 
