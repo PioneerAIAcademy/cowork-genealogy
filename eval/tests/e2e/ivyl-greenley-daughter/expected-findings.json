@@ -1,0 +1,56 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Ivyl Phylena Greenley and Kenneth Werner Quass had a second child besides their son Donald: a daughter, Alice Jeannette 'Jeannie' Quass, born 6 December 1940 in Madelia, Minnesota.",
+      "details": {
+        "subject_person": "Ivyl Phylena Greenley (KWZP-4Q8)",
+        "relation": "child",
+        "target_person": {
+          "name": "Alice Jeannette Quass",
+          "birth": "6 December 1940, Madelia, Watonwan County, Minnesota, United States"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota, Birth Index, 1935-2002 — entry for Alice Jeanette Quass, born 6 Dec 1940, father Kenneth Warner Quass"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Alice Jeannette Quass, daughter of Ivyl and Kenneth, died on 3 February 1955 in Madelia, Minnesota, at age 14.",
+      "details": {
+        "target_person": {
+          "name": "Alice Jeannette Quass"
+        },
+        "fact_type": "Death",
+        "date": "3 February 1955",
+        "place": "Madelia, Watonwan, Minnesota, United States"
+      },
+      "supporting_sources": [
+        "Minnesota, Death Records and Certificates, 1900-1955 — entry for Alice Jeannette Quass, 3 Feb 1955",
+        "Minnesota, Death Index, 1908-2002 — entry for Alice Jeannette Quass, 3 Feb 1955"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Alice Jeannette Quass was buried on 21 February 1955 in Madelia, Minnesota, near her family.",
+      "details": {
+        "target_person": {
+          "name": "Alice Jeannette Quass"
+        },
+        "fact_type": "Burial",
+        "date": "21 February 1955",
+        "place": "Madelia, Watonwan, Minnesota, United States"
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree burial fact — Madelia, Minnesota, 21 Feb 1955"
+      ],
+      "required": false
+    }
+  ]
+}
