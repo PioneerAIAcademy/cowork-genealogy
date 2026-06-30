@@ -238,26 +238,29 @@ echo 'ANTHROPIC_API_KEY=sk-...' &gt;&gt; eval/.env</code></pre></div>
   <p class="sub">Rebuilds the server first if needed. Remember — one run at a time.</p>
 </section>
 
-<!-- 8 DIAGNOSE -->
+<!-- 8 LIVE -->
 <section class="slide">
-  <h2>See what the AI did</h2>
-  <p>Start with <code>/interpret-e2e-result</code> for the headline verdict. Then read the <strong>step-by-step</strong> — every search, result, and skill it used is in <code>run-&lt;ts&gt;.transcript.md</code>.</p>
-  <div class="card">
-    <h3>Ask Claude about the run</h3>
-    <p>"Did it <strong>skip a search</strong> it should have run? Try <strong>maiden-name or spelling variations</strong>? Call a finding <strong>direct</strong> when the evidence is only indirect? <strong>Where and why did it stop?</strong>"</p>
+  <h2>Watch it work live — start here when debugging</h2>
+  <div class="cmds">
+    <div><span class="os win">Windows</span><pre><code>SeedProject.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-project TEST=&lt;slug&gt;</code></pre></div>
   </div>
-  <p class="sub">This is where you catch the missed search or the over-claim — the verdict alone won't show it.</p>
+  <ul>
+    <li>Seeds an editable project from the fixture's <strong>starting state</strong>. Open it in <strong>Claude Cowork</strong>, run <code>/research</code> — <strong>init-project is auto-skipped</strong>.</li>
+    <li>Open the same folder in the <strong>Research Viewer</strong>: watch the log, assertions, and conflicts appear <strong>live</strong>, and ask Claude <em>"why didn't you search X? why direct, not indirect?"</em> as it goes.</li>
+  </ul>
+  <div class="card sub"><strong>To understand, not to score.</strong> Live runs don't block the tree-read tools — so check it found the answer <em>by searching records</em>, not by reading the tree. The honest pass/fail is always <code>make e2e-run</code>.</div>
 </section>
 
-<!-- 9 VIEW -->
+<!-- 9 DIAGNOSE -->
 <section class="slide">
-  <h2>View the result in the app</h2>
-  <div class="cmds">
-    <div><span class="os win">Windows</span><pre><code>ViewE2E.bat</code></pre></div>
-    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-view TEST=&lt;slug&gt;</code></pre></div>
+  <h2>Dig into a finished (headless) run</h2>
+  <p>After a scored <code>make e2e-run</code>: start with <code>/interpret-e2e-result</code> for the verdict, then read the <strong>step-by-step</strong> in <code>run-&lt;ts&gt;.transcript.md</code>.</p>
+  <div class="card">
+    <h3>Ask Claude about the run</h3>
+    <p>"Did it <strong>skip a search</strong> it should have run? Try <strong>maiden-name or spelling variations</strong>? Call a finding <strong>direct</strong> when it's only indirect? Where did it stop?"</p>
   </div>
-  <p>Loads the latest run into the <strong>Research Viewer</strong> — the final tree, the research log, conflicts, and each finding's <strong>direct vs indirect</strong> badge.</p>
-  <div class="card sub">Open <code>eval/.e2e-view</code> in the viewer once (its <strong>Open Project</strong> button) and <strong>keep it open</strong> — every re-run, just run <code>e2e-view</code> again and it refreshes live.</div>
+  <p class="sub">Prefer the viewer? <code>ViewE2E.bat</code> / <code>make e2e-view TEST=&lt;slug&gt;</code> loads that run's final tree + research into the Research Viewer.</p>
 </section>
 
 <!-- 10 GRADE -->
