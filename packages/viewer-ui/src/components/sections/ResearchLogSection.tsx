@@ -45,7 +45,9 @@ export default function ResearchLogSection(): React.JSX.Element {
   const assertions = useMemo<Assertion[]>(() => research?.assertions ?? [], [research?.assertions])
 
   const [sortKey, setSortKey] = useState<SortKey>('performed')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  // Default to oldest-first so the log reads as a forward narrative: a
+  // record_read row follows the search that produced it, not the reverse.
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const sorted = useMemo(
