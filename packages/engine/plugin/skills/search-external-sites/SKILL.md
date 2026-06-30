@@ -114,20 +114,16 @@ to `external_links_search` with the plan item's year window:
 external_links_search({ standardPlace: "<standardPlace>", startYear: <year>, endYear: <year> })
 ```
 
-**What it returns.** A flat `results[]` of `{ url, linkText }` mixing
-*every* curated site for the place (Ancestry, MyHeritage, FindMyPast,
-FindAGrave, Newspapers.com, archives, FS wiki lists). It does not group by
-site, classify by record type, dedupe, or break out collection IDs — the
-collection ID is embedded in the URL path when present.
-
-**Consume it like this:**
+It returns a flat `results[]` of `{ url, linkText }` mixing every curated
+site for the place — ungrouped, unclassified, undeduped. Consume it:
 1. **Filter by host** — keep links for your target site, e.g.
    `result.url.includes("ancestry.com")`.
 2. **Dedupe by URL** — FS repeats the same URL once per record-type
    category. Collapse duplicates.
 3. **Match `linkText` to the plan item's record type.** `linkText` names
    the collection in plain English ("Pennsylvania Wills and Probate
-   Records"). This match is what step 3 acts on.
+   Records"); the collection ID is embedded in the URL path. This match is
+   what step 3 acts on.
 
 **`totalForPlace` vs `results.length`:**
 - `results.length > 0` → a curated URL exists; go to Case A.
@@ -213,9 +209,9 @@ nothing happened: downstream skills, the user's next session, and the
 "reasonably exhaustive" audit trail all go blind. The capture may never
 come back; the log is the proof the search was launched.
 
-Call `research_log_append` — it assigns the `log_NNN` id, stamps
-`performed`, validates the whole project before persisting, and writes
-`research.json` atomically (the log is append-only — see "Re-invocation"):
+Call `research_log_append` (it assigns the `log_NNN` id and
+validates-before-persist; the log is append-only — append a new entry, never
+edit a prior one):
 
 ```
 research_log_append({
@@ -309,12 +305,13 @@ user picks which records are worth examining.
 Every search gets logged in enough detail to reproduce it — site,
 collection, all parameters, filters, results examined. When a capture
 comes back, append a **new** `research_log_append` entry (never edit the
-in-flight one from step 4). Set `query` to the same params, set
-`externalSite.captureReceived: true`, and choose `outcome` from your
-triage:
+in-flight one from step 4) — same `query` params as step 4's call, with
+`externalSite.captureReceived: true` and `externalSite.captureFilename` set to
+the uploaded PDF's filename when a capture arrived (`false` / `null` for a
+no-access wall where none did), and `outcome` chosen from your triage:
 
-- **Results found** → `outcome: "positive"`, `resultsExamined: <n>`,
-  `externalSite.captureFilename` set; `notes` summarize the matches.
+- **Results found** → `outcome: "positive"`, `resultsExamined: <n>`;
+  `notes` summarize the matches.
 - **Nil result** → `outcome: "negative"`. A search that legitimately finds
   nothing is a *finding*, not a failure. In `notes` record what collection
   was searched, its known coverage gaps, and whether the absence is
@@ -324,27 +321,6 @@ triage:
 - **No access** (subscription/login wall the user can't pass) →
   `outcome: "error"` with the reason; suggest the fallback plan item.
 
-```
-research_log_append({
-  projectPath: <absolute path of the current working directory>,
-  planItemId: "<pli_XXX or null>",
-  tool: "external_site",
-  query: { /* the same params you encoded in the URL */ },
-  outcome: "<positive|negative|error>",
-  resultsExamined: <n>,
-  notes: "<one-line summary of what the capture returned>",
-  externalSite: {
-    site: "<ancestry|myheritage|findmypast|findagrave|newspapers>",
-    urlGenerated: "<the URL you generated in step 4>",
-    captureReceived: true,
-    captureFilename: "<the uploaded PDF's filename, or null>"
-  }
-})
-```
-
-If the call returns `{ ok: false, errors }`, surface the errors and
-correct the inputs — nothing was written.
-
 Before calling a site exhausted on zero results, try at least two
 variations (name variant, broader place, dropped parameter) — log each as
 its own entry (`references/search-strategy-external.md`, "Exit criteria").
@@ -353,22 +329,14 @@ in courthouses, parish archives, and historical societies.
 
 ### 7. Update status and suggest the next step
 
-Set the plan item to `completed` once the search is logged, found or not,
-via `research_append` (it validates and writes atomically):
-
-```
-research_append({
-  projectPath: <absolute path of the current working directory>,
-  section: "plan_items",
-  op: "update",
-  planId: "<pl_XXX, the parent plan>",
-  entryId: "<pli_XXX, the plan item you searched>",
-  fields: { status: "completed" }
-})
-```
-
-If it returns `{ ok: false, errors }`, surface the errors rather than
-hand-editing the status. Then offer the natural next move:
+Once the search is logged, found or not, set the plan item to `completed`
+with a one-line `research_append` call (`section: "plan_items"`,
+`op: "update"`, the parent `planId` and the `entryId` you searched,
+`fields: { status: "completed" }`). On `{ ok: false }`, surface the errors
+and fix the inputs — never hand-edit `research.json`. This skill writes only
+`log[]` entries and the plan-item status; record-extraction writes any
+source/assertion entries when you hand it a single-record capture. Then offer
+the natural next move:
 - More plan items → "Shall I continue with the next search?"
 - A record worth examining → "Capture the full record page for result #1?"
 - All done → "All planned searches are complete — evaluate whether
@@ -398,15 +366,3 @@ compiled sources. Apply the nine criteria in
 photographed evidence from contributor-entered text, never cite them as
 primary, and use them as leads — add a plan item to find the originals
 they point to.
-
-## Re-invocation behavior
-
-This skill writes only to `research.json`: a new append-only `log[]` entry
-and the `status` on the matching `plans[].items[]`. It does not write
-source or assertion entries — record-extraction does that when the user
-returns a single-record capture.
-
-Re-running a search is itself a logged event by design (the log is the
-exhaustive-search audit trail), so always append a new `log_` entry and
-update the plan item's status. Never modify or delete a prior `log_`
-entry; two runs of the same search correctly produce two entries.
