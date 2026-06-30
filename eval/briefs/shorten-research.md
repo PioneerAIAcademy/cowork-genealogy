@@ -6,7 +6,8 @@ confirms the routing-table semantics and the mentor-gate logic are preserved)
 **Current size:** 212 lines → **Target:** ~150–165 lines (~25% reduction)
 **Tool migration:** **n/a** — no persistence tool. research is a thin
 orchestrator; its only `allowed-tools` entry is `validate_research_schema`
-(read-only, periodic). It isn't in
+(read-only, and no longer run periodically — only to confirm an external/manual
+edit). It isn't in
 `docs/specs/skill-rewrites-for-persistence-tools-spec.md` §4 — every write is
 delegated to a sub-skill.
 **Still needed as a skill?** **Yes, but it's the riskiest of the three to
@@ -116,7 +117,9 @@ behavior") that restate the routing table's premises.
    routes to sub-skills; no programmatic invocation, so routing is by judgment).
 2. Autonomous mode — the keep-going contract, stated once + audit-logging.
 3. What to do: read state → **routing table (whole)** → iterate (one-line, refers
-   back to Autonomous) → validate periodically.
+   back to Autonomous). (The skill no longer runs periodic
+   `validate_research_schema`; don't reintroduce it — the writer tools validate
+   before persisting.)
 4. Mentor checkpoints — the two tables + verdict rules, prose tightened.
 5. When to stop — the three conditions, no yielding re-argument.
 6. One-line routing-out boundaries (status→project-status, step→sub-skill,
@@ -141,7 +144,10 @@ repetition (the thrice-stated no-yielding rule) and the two boilerplate tails.
 **Developer** does the structural compression; **genealogist** (or whoever owns
 the GPS workflow + the gps-mentor spec) signs off that the routing table and
 mentor protocol are semantically unchanged before merge — because no harness
-will. If the team wants this skill to be unit-shortenable on the same footing as
-the others, the prerequisite is authoring `eval/tests/unit/research/` (routing
-positives + the three routing-out negatives) and a `test_research.py` validator
-asserting read-only — that's a separate task, noted here as the real gap.
+will. The absence of `eval/tests/unit/research/` is **intentional, not a gap**:
+research is a thin orchestrator with no isolatable unit (a routing run in the
+harness cascades through every sub-skill over a `Skill` tool that Cowork
+production lacks), so a unit suite would grade a fictional routing path. The e2e
+GPS fixtures are this skill's floor by design — don't author a unit directory to
+"bring it onto the same footing" as the others. See the deep-dive brief
+(`research.md`) for the full rationale.

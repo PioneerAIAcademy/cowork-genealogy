@@ -7,11 +7,17 @@ docs/plan/criteria-demotion-and-rubric-opt-in.md.
 
 This file holds mechanical checks: source_classification is read-only
 here (Layer 1 is set by record-extraction), no new assertion entries,
-no MCP tools, plus tag-gated assertions for specific verdicts that
-deserve a deterministic check.
+plus tag-gated assertions for specific verdicts that deserve a
+deterministic check.
 
-Universal `test_ownership_table` already enforces that
-assertion-classification only writes the `assertions` section.
+Tool-lane enforcement is handled by the universal `test_tool_allowlist`
+(every MCP call must be in the skill's `allowed-tools` — here
+`research_append` + `person_warnings`) and universal `test_ownership_table`
+(assertion-classification only writes the `assertions` section). There is
+no skill-specific tool check: a former `test_no_mcp_tools_called` forbade
+every tool except `validate_research_schema`, which predated the migration
+to the `research_append` write tool (commit 86c741d) and is now both wrong
+and redundant with the universal allowlist check.
 
 See test_universal.py module docstring for the validator function-
 signature contract.
@@ -20,27 +26,6 @@ signature contract.
 from __future__ import annotations
 
 import pytest
-
-
-# --- Tool-allowlist enforcement ---------------------------------------
-
-def test_no_mcp_tools_called(tool_calls):
-    """assertion-classification must not call any *research* MCP tools — it's
-    a pure analysis skill that reads assertions from research.json and
-    rewrites Layer 2 / Layer 3 classification fields. The universal
-    verification tool `validate_research_schema` is exempted: post
-    commit 861d3c9 it's a built-in schema check every skill is expected
-    to call at the end of its flow, not a research tool."""
-    mcp_calls = [
-        tc for tc in tool_calls
-        if tc.get("tool", "").startswith("mcp__")
-        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
-    ]
-    assert not mcp_calls, (
-        f"assertion-classification should not call MCP tools (other than "
-        f"validate_research_schema), but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
-    )
 
 
 # --- No-new-assertions enforcement ------------------------------------
