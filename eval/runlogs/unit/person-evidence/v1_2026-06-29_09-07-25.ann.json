@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-06-25_21-56-05.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v1_2026-06-29_09-07-25.json",
+  "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
       "test_id": "ut_person_evidence_015",
@@ -68,176 +68,160 @@
     },
     {
       "test_id": "ut_person_evidence_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub-person creation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline (advisory)",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub-person creation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline (advisory)",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub-person creation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub-person creation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub-person creation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The response followed the judge context by surfacing the conflict, avoiding a confident link, and asking the user before proceeding as instructed"
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The response fully completed the requested review by evaluating the confidence, assessing the rationale, and recommending improvements without making changes"
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -248,15 +232,39 @@
       "dimension_name": "Rationale quality",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "The skill evaluated the existing rationale against multiple specific attributes, identified four concrete gaps, and explained what each should include. In review-only mode, diagnosing the rationale and recommending a corrective action is the complete task."
+      "comment": "The response clearly identified the rationale's strengths and missing evidence, providing a thorough assessment without needing to rewrite it"
     },
     {
       "test_id": "ut_person_evidence_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
       "llm_score": 2,
       "corrected_score": 3,
-      "comment": "The skill correctly operated in review-only mode, produced a full written analysis, and asked the user before making any change."
+      "comment": "The response correctly identified the missing Thomas-side link and appropriately treated it as a follow on action in review mode"
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub-person creation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
     },
     {
       "test_id": "ut_person_evidence_002",
@@ -278,16 +286,8 @@
       "test_id": "ut_person_evidence_002",
       "dimension_source": "rubric",
       "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -301,18 +301,10 @@
     {
       "test_id": "ut_person_evidence_002",
       "dimension_source": "rubric",
-      "dimension_name": "Score discipline (advisory)",
+      "dimension_name": "Score discipline",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "The rationale partially acknowledges the inferred nature of the relationship by using the word \"implied\" for the parent-child link, but states the record \"names Thomas Flynn as the head\" treating head of household as a recorded fact. The 1860 census did not record relationships or designate a head of household, that column was not introduced until 1880. This is a recorded designation that should have been flagged as a researcher inference."
     },
     {
       "test_id": "ut_person_evidence_002",
@@ -320,12 +312,60 @@
       "dimension_name": "Rationale quality",
       "llm_score": 3,
       "corrected_score": 2,
-      "comment": "The rationale correctly notes the parent-child relationship is implied but still presents head of household as a recorded fact rather than a researcher inference."
+      "comment": "The rationale incorrectly treats Thomas as explicitly recorded as head of household and Patrick as son, rather than explaining these as researcher inferences from the 1860 census."
+    },
+    {
+      "test_id": "ut_person_evidence_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub-person creation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_person_evidence_013",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -341,13 +381,29 @@
     {
       "test_id": "ut_person_evidence_013",
       "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_010",
       "dimension_source": "rubric",
       "dimension_name": "Confidence calibration",
       "llm_score": 3,
@@ -355,7 +411,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_010",
       "dimension_source": "rubric",
       "dimension_name": "Rationale quality",
       "llm_score": 3,
@@ -363,7 +419,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_010",
       "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
       "llm_score": 3,
@@ -371,7 +427,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_010",
       "dimension_source": "rubric",
       "dimension_name": "Stub-person creation",
       "llm_score": 3,
@@ -379,7 +435,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_010",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": 3,
@@ -395,59 +451,11 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
+      "test_id": "ut_person_evidence_016",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub-person creation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -455,24 +463,16 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 1,
+      "comment": "No response was provided, so the skill did not route the request to record-extraction as required."
     },
     {
       "test_id": "ut_person_evidence_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
+      "corrected_score": 1,
+      "comment": "The user's request was not addressed because the skill returned no response."
     },
     {
       "test_id": "ut_person_evidence_018",
@@ -486,17 +486,33 @@
       "test_id": "ut_person_evidence_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The skill correctly routed to tree-edit and did not activate person-evidence"
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "Failed to route the request to tree edit and instead performed person-evidence linking, incorrectly treating linking as a merge."
     },
     {
       "test_id": "ut_person_evidence_018",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The skill correctly routed to tree-edit and did not activate person-evidence"
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "Did not fulfill the requested behavior of declining and redirecting to tree-edit; instead completed the wrong task."
+    },
+    {
+      "test_id": "ut_person_evidence_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "No response was provided, so the skill did not decline or route the request to conflict-resolution as required"
+    },
+    {
+      "test_id": "ut_person_evidence_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The user's request was not addressed because no response was returned."
     },
     {
       "test_id": "ut_person_evidence_017",
@@ -504,38 +520,6 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_017",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The skill correctly routed to conflict-resolution and did not activate person-evidence"
-    },
-    {
-      "test_id": "ut_person_evidence_017",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "The skill correctly routed to conflict-resolution and did not activate person-evidence"
-    },
-    {
-      "test_id": "ut_person_evidence_003",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
       "comment": null
     },
     {
@@ -547,65 +531,81 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_014",
+      "test_id": "ut_person_evidence_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 1,
+      "comment": "No response was provided, so the skill did not decline or route the request to the search-records skill."
     },
     {
-      "test_id": "ut_person_evidence_014",
+      "test_id": "ut_person_evidence_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub-person creation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 1,
+      "comment": "The user's request was not addressed because no response was returned."
     },
     {
       "test_id": "ut_person_evidence_014",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline (advisory)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub-person creation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

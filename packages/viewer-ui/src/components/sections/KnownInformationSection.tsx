@@ -3,6 +3,7 @@ import type { HoldingType } from '../../lib/schema'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
+import Linkify from '../shared/Linkify'
 import styles from './KnownInformationSection.module.css'
 
 const holdingTypeLabels: Record<HoldingType, string> = {
@@ -72,7 +73,7 @@ export default function KnownInformationSection(): React.JSX.Element {
               {kh.relevant_facts && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Facts it may supply</div>
-                  <p className={styles.text}>{kh.relevant_facts}</p>
+                  <p className={styles.text}><Linkify text={kh.relevant_facts} /></p>
                 </div>
               )}
               {personIds.length > 0 && (
