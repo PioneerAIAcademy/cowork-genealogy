@@ -80,29 +80,46 @@ user as you encounter them.
    |-------------------------|--------|
    | Objective but no questions | `question-selection` (derive first question) |
    | A question with no plan | `research-plan` |
-   | Plan items not yet executed | `search-records` (or `search-external-sites` for non-FS sources) |
+   | Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question | `search-records` (or `search-external-sites` for non-FS sources) |
    | Log entries with no assertions extracted | `record-extraction` |
    | Assertions needing GPS three-layer classification | `assertion-classification` |
    | Assertions not yet linked to persons | `person-evidence` |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `hypothesis-tracking` |
-   | All plan items for a question are `completed` or `skipped`, and analysis above is done | `research-exhaustiveness` |
+   | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | **Mentor gate** (`pre-exhaustiveness` on `<q_id>`), then `research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
+   | All plan items for a question are `completed` or `skipped`, and analysis above is done | **Mentor gate** (`pre-exhaustiveness` on `<q_id>`), then `research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
-   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` (writes the proof and flips the question to `resolved`) |
+   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | **Mentor gate** (`conclusion-readiness` on `<q_id>`), then `proof-conclusion` |
+   | `proof-conclusion` just wrote `<ps_id>` | **Mentor gate** (`proof-critique` on `<ps_id>`) |
+   | All questions are `resolved` and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
-   Exhaustiveness is the last gate before proof. It evaluates a
-   question only after its plan has been executed and the resulting
-   evidence has been extracted, classified, person-linked, and
-   conflict-resolved — the 5 threshold questions and 7-point stop
-   criteria cannot be answered without those upstream artifacts.
+   A front-loaded plan is a **prioritized list, not a checklist to
+   drain.** Consult `research-exhaustiveness` as soon as analyzed
+   evidence plausibly answers the active question — do not reflexively
+   execute the remaining `planned` items first. Exhaustiveness is the
+   stop gate: it weighs the question against the 5 threshold questions
+   and 7-point stop criteria and either declares the search reasonably
+   exhaustive (→ proof) or routes you back to `research-plan` /
+   `question-selection` for the gaps. That round-trip is what lets a
+   simple-recall question stop early **without** weakening a
+   completeness / negative one ("did they have *any other* children?"):
+   finding a single child does not satisfy such a question, so
+   exhaustiveness will send you back for the enumerating sources (the
+   household census, parent-indexed births, obituaries) before it lets
+   you conclude. The gate still requires the evidence to have been
+   extracted, classified, person-linked, and conflict-resolved first —
+   those upstream artifacts are what its criteria read.
 
 3. **Iterate — without yielding.** After each sub-skill returns, route
    to the next step **in the same turn** (under `--autonomous`; see
    "Autonomous mode") from the sub-skill's compact return plus the state
    you already hold — re-read `research.json` only if the sub-skill
    changed state you don't have in context, or you're routing into a
-   phase cold. New evidence may reveal new
+   phase cold. After a plan item completes and its evidence is analyzed,
+   re-assess sufficiency — route to `research-exhaustiveness` once the
+   evidence plausibly answers the active question — before reflexively
+   executing the next `planned` item. New evidence may reveal new
    questions — return to `question-selection`. Resolved conflicts may
    unblock `proof-conclusion`. Do not assume the chain is linear; the
    same sub-skill may be invoked multiple times across the run. Do not
@@ -171,8 +188,9 @@ contract that distinguishes the mentor from a gatekeeper.
 
 Stop when one of:
 
-- `project.status == "completed"` — proof-conclusion has set this
-  after writing summaries for all resolved questions
+- `project.status == "completed"` — the orchestrator writes this
+  via `research_append` once all questions are `resolved` (see
+  routing table)
 - The user explicitly halts you
 - You hit a genuine blocker (no more accessible records, an
   irreducible conflict, missing access to a required repository) —
