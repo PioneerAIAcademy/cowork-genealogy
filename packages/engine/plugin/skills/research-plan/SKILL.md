@@ -1,21 +1,17 @@
 ---
 name: research-plan
 model: claude-sonnet-4-6
-description: Creates, reviews, and revises a sequenced research plan (written to research.json)
-  for a specific genealogy question — which record sets to search, in what order,
-  from which repositories, with fallbacks. GPS Step 1 (Reasonably Exhaustive
-  Research), aligned with BCG Standards 9-18. Use when the user wants to create a
-  plan ("plan research for [question]", "what records should I search?", "where
-  should I look?"), to see or recap an existing plan ("what does the research plan
-  look like?", "review the plan"), or to re-plan because new information
-  invalidated an active plan's assumptions ("revise the plan", "re-plan for
-  [question]"); or after question-selection creates a new question. Do NOT use to
-  execute a search (use search-records or search-external-sites), to select which
-  question to research (use question-selection), to analyze records already found
-  (use record-extraction), or — after a search came back empty or a plan item
-  finished — to judge whether research is exhaustive or what to do next — "are we
-  done", "what's the next step" (use research-exhaustiveness or project-status, and
-  question-selection to pick the next question).
+description: Creates, reviews, and revises a sequenced research plan (in research.json)
+  for a genealogy question — which record sets to search, in what order, from which
+  repositories, with fallbacks. GPS Step 1; BCG Standards 9-18. Use to create a plan
+  ("plan research for [question]", "what records should I search?", "where should I
+  look?"), to see or recap an existing plan ("what does the research plan look like?",
+  "review the plan"), or to re-plan when new information invalidates the active plan
+  ("revise the plan", "re-plan"). Do NOT use to execute a search (use search-records
+  or search-external-sites), to pick which question to research (question-selection),
+  to analyze records already found (record-extraction), or — after a search comes back
+  empty — to judge whether research is done ("are we done", "what's the next step" →
+  research-exhaustiveness or project-status).
 allowed-tools:
   - wiki_search
   - place_search
@@ -86,7 +82,7 @@ and add plan items to verify them before relying on them.
 ### 1a. Decide the planning mode
 
 Read ALL plans for the target question (`plans[]` where
-`question_id == <target>`), regardless of status — read first, decide
+`question_id == the target q_`), regardless of status — read first, decide
 second, write last.
 
 **Review mode** — An `active` plan still has `planned`/`in_progress`
@@ -128,8 +124,8 @@ jurisdiction → call MCP tools directly:
 ```
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-external_links_search({ standardPlace: "<standardPlace from place_search>", startYear: 1875, endYear: 1890 })
-volume_search({ standardPlace: "<standardPlace from place_search>", startYear: 1875, endYear: 1890 })
+external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
+volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
 wiki_search({ query: "Pennsylvania probate records genealogy" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
@@ -224,7 +220,7 @@ place the primary's op before its fallback's:
 
 ```
 research_append({
-  projectPath: "<absolute-path-to-project-directory>",
+  projectPath: "/path/to/project",
   ops: [
     {
       section: "plans",
