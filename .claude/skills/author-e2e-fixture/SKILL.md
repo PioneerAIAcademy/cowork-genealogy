@@ -356,9 +356,18 @@ You should (path 1 — from a PID):
    chosen subset of the `person_read` tree; the stripped tree by
    removing the parents (and their attesting sources) from that tree.
 6. Validate `starting-research.json` against the schema.
-7. Report the files written (in place under `eval/tests/e2e/<slug>/`)
-   and point the user at the linter, the run (`make e2e-run` /
-   `RunE2E.bat`), and `/interpret-e2e-result`.
+7. Report the files written (in place under `eval/tests/e2e/<slug>/`),
+   then point the user at the next steps — give **both** the `make` target
+   and the Windows `.bat` for each:
+   - **Validate the stripping:** `make e2e-validate TEST=<slug>` /
+     `ValidateFixture.bat`.
+   - **Debug `/research` live (recommended next):** seed an editable Cowork
+     project with `make e2e-project TEST=<slug>` / `SeedProject.bat`, then
+     watch it in the Research Viewer with `make electron` / `Viewer.bat`.
+     (A live run does not block the tree-read tools, so the honest pass/fail
+     is always the headless run below.)
+   - **Score it headless:** `make e2e-run TEST=<slug>` / `RunE2E.bat`, then
+     `/interpret-e2e-result` for the verdict.
 
 *Path 2 (convert a finished project)* differs only at the start: instead
 of a PID + `person_read`, detect an open project whose `research.json`
