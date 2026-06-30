@@ -1,29 +1,20 @@
 ---
 name: person-evidence
 model: claude-sonnet-4-6
-description: Links assertions to GedcomX persons — the identity-resolution
-  step. Evaluates whether the person in role X of record Y is the same as
-  GedcomX person Z. Creates person_evidence entries with confidence and
-  rationale, enforces match threshold policy, and creates stub persons when
-  no existing person matches. Also reviews and audits existing
-  person_evidence entries — confirming confidence calibration on a link, or
-  checking whether other roles in a record need their own person_evidence.
-  GPS Step 3 — Analysis and Correlation (identity resolution). Use when
-  the user says "is this the same person?", "link this to [person]", "who
-  is this?", "this record mentions multiple people", "link all roles in
-  this record", "match this person", "review/confirm this identity link",
-  "is the confidence on pe_NNN appropriate?", "should this assertion also
-  link to [other person]", "audit the person_evidence entries", after
-  assertions are extracted and need person assignment, or when the user
-  wants to evaluate whether two records refer to the same individual (using
-  records already in hand — never by searching for new ones). Do
-  NOT use when the user wants to find, search for, or gather more records —
-  including searching to confirm, strengthen, or disprove an identity (use
-  search-records); this skill only evaluates records already gathered and
-  never looks for new ones. Do NOT use when the user
-  wants to extract assertions from a record (use record-extraction), wants
-  to resolve a genuine identity conflict where multiple candidate persons
-  compete (use conflict-resolution), or wants to merge two
+description: >-
+  Links assertions to GedcomX persons — identity resolution. Evaluates whether
+  a record's person is the same as a GedcomX person, creates person_evidence
+  entries with confidence and rationale, and creates stub persons when none
+  match. Also reviews and audits existing person_evidence links. GPS Step 3 —
+  Analysis and Correlation. Use when the user says "is this the same person?",
+  "link this to [person]", "link all roles in this record", "review/confirm
+  this identity link", "audit the person_evidence entries", after assertions
+  are extracted and need person assignment, or to evaluate whether two records
+  refer to the same individual using records already in hand — never searching
+  for new ones. Do NOT use to find or gather more records, including to
+  confirm or disprove an identity (use search-records); to extract assertions
+  (use record-extraction); to resolve a genuine conflict where multiple
+  candidates compete (use conflict-resolution); or to merge
   confirmed-identical persons (use tree-edit after proof-conclusion).
 allowed-tools:
   - research_append
