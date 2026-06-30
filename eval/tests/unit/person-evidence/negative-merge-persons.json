@@ -18,5 +18,9 @@
   "judge_context": [
     "Should route to tree-edit — merging two confirmed-same persons is a tree operation, not identity linking; person-evidence creates links, never merges",
     "Declining and redirecting (to tree-edit, optionally noting proof-conclusion is the place the same-person conclusion is reached) is the correct behavior"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
 }
