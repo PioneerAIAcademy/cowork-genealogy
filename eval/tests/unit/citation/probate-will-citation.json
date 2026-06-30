@@ -27,6 +27,7 @@
     "The formatted citation string must follow the probate template: '[COUNTY] [COURT], [STATE], [DOCUMENT TYPE], [PERSON NAME], [DATE]; [BOOK/VOLUME], [PAGE]; [ARCHIVES], [CITY]'",
     "when_accessed must be populated for an online source",
     "Must NOT change source_classification (original)",
+    "Replication test — apply the rubric's decisive rule: src_006 does not carry the Will Book volume or page, so where_within is genuinely unavailable from the source. The skill flagging it with an unknown-marker AND directing the user to read it from the record image is a PASS on Replication test, not a partial — 'honest about an unavoidable gap' is the top of that scale. Do NOT deduct on Replication for a locator the source cannot supply; partial/fail there are reserved for a locator that WAS on file but uncited, or an invented one",
     "Must call validate_research_schema after writing"
   ]
 }

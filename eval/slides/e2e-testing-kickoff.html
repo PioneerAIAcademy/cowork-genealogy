@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E2E Testing — Create, Run & Evaluate</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --ink: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent2: #fbbf24;
+    --good: #4ade80;
+    --line: #334155;
+  }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 28px;
+    line-height: 1.45;
+    overflow: hidden;
+  }
+  .deck { height: 100vh; width: 100vw; }
+  .slide {
+    display: none;
+    height: 100vh;
+    width: 100vw;
+    padding: 4.5vh 6vw 9vh;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+  .slide.active { display: flex; }
+  h1 { font-size: 2.0em; margin: 0 0 0.3em; line-height: 1.1; }
+  h2 { font-size: 1.35em; margin: 0 0 0.55em; color: var(--accent); line-height: 1.15; }
+  h3 { font-size: 1.0em; margin: 0.6em 0 0.2em; color: var(--accent2); }
+  p { margin: 0.25em 0; }
+  ul, ol { margin: 0.2em 0; padding-left: 1.1em; }
+  li { margin: 0.32em 0; }
+  li ul { margin: 0.1em 0; }
+  .sub { color: var(--muted); }
+  strong { color: #fff; }
+  code {
+    background: #0b1220;
+    color: #e2e8f0;
+    padding: 0.08em 0.35em;
+    border-radius: 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.82em;
+  }
+  pre {
+    background: #0b1220;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.55em 0.8em;
+    margin: 0.2em 0 0;
+    overflow: auto;
+  }
+  pre code { background: none; padding: 0; font-size: 0.74em; line-height: 1.5; }
+  .chip {
+    display: inline-block;
+    font-size: 0.5em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 0.25em 0.7em;
+    border-radius: 999px;
+    vertical-align: middle;
+    margin-left: 0.5em;
+  }
+  .chip.who { background: var(--accent2); }
+  .chip.time { background: var(--good); }
+  .kicker { color: var(--muted); font-size: 0.6em; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4em; }
+  .cols { display: flex; gap: 4%; }
+  .cols > div { flex: 1; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.7em 1em;
+    margin: 0.4em 0;
+  }
+  .lead { justify-content: center; align-items: flex-start; text-align: left; }
+  .lead h1 { font-size: 2.6em; }
+  .center { justify-content: center; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.82em; margin-top: 0.3em; }
+  th, td { border: 1px solid var(--line); padding: 0.45em 0.6em; text-align: left; vertical-align: top; }
+  th { background: var(--panel); color: var(--accent); }
+  .big { font-size: 1.15em; }
+  .pill { display:inline-block; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:0.15em 0.6em; margin:0.15em 0.2em; font-size:0.8em;}
+  /* side-by-side command pair */
+  .cmds { display:flex; gap:3%; margin-top:0.35em; }
+  .cmds > div { flex:1; min-width:0; }
+  .os { display:inline-block; font-size:0.55em; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:0.2em; }
+  .os.win { color:var(--accent); }
+  .os.nix { color:var(--good); }
+  /* horizontal flow diagram */
+  .flow { display:flex; align-items:center; flex-wrap:wrap; gap:0.35em; margin:0.6em 0; }
+  .flow .step { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:0.28em 0.6em; font-size:0.78em; white-space:nowrap; }
+  .flow .step.hot { border-color:var(--accent2); color:#fff; }
+  .flow .arr { color:var(--accent); font-size:0.9em; }
+  .footer {
+    position: fixed; bottom: 2.5vh; left: 6vw; right: 6vw;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: 0.5em; letter-spacing: 0.03em;
+    border-top: 1px solid var(--line); padding-top: 0.7vh;
+  }
+  .score { display:inline-block; width:1.5em; height:1.5em; line-height:1.5em; text-align:center; border-radius:6px; font-weight:700; margin-right:0.2em;}
+  .s1 { background:#7f1d1d; color:#fecaca;}
+  .s2 { background:#78350f; color:#fde68a;}
+  .s3 { background:#14532d; color:#bbf7d0;}
+  kbd { background:#0b1220; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:0.05em 0.4em; font-family:monospace; font-size:0.8em;}
+  .hint { position:fixed; top:2vh; right:2vw; color:var(--muted); font-size:0.42em; opacity:0.6;}
+  @media print {
+    @page { size: 13.333in 7.5in; margin: 0; }
+    html, body { width: 13.333in; height: auto; overflow: visible; background: var(--bg); }
+    .deck { height: auto !important; width: 13.333in !important; display: block !important; }
+    .slide {
+      display: flex !important;
+      width: 13.333in;
+      height: 7.5in;
+      padding: 0.55in 0.8in 0.65in;
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .slide:last-child { page-break-after: avoid; break-after: avoid; }
+    .footer, .hint { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="hint">← → to navigate · F for fullscreen</div>
+<div class="deck" id="deck">
+
+<!-- 1 TITLE -->
+<section class="slide lead">
+  <div class="kicker">Cowork Genealogy · E2E Testing</div>
+  <h1>Creating, Running &amp;<br>Evaluating E2E Tests</h1>
+  <p class="sub big"><strong>E2E means "end-to-end"</strong> — a test that asks the AI to do a whole piece of real research, start to finish. A 30-minute orientation; the step-by-step how-to is the <strong>"E2e tests"</strong> section of <code>eval/README.md</code>.</p>
+</section>
+
+<!-- 2 WHAT IT IS -->
+<section class="slide">
+  <h2>What an e2e test is</h2>
+  <ul>
+    <li><strong>Snapshot</strong> a real, well-researched FamilySearch tree.</li>
+    <li><strong>Hide the answer</strong> — strip a focused fact (e.g. <em>who were the parents?</em>).</li>
+    <li>The AI must <strong>recover it from records</strong>, via <code>/research</code>.</li>
+    <li>A <strong>judge</strong> grades the result: <strong>pass / partial / fail</strong>.</li>
+  </ul>
+  <div class="card">The tree-reading tools are <strong>blocked</strong> during the run, so the AI can't just look the answer up on FamilySearch. A <strong>pass means it researched it</strong> — not that it peeked.</div>
+</section>
+
+<!-- 3 THE LOOP -->
+<section class="slide">
+  <h2>Two speeds: a fast loop, one slow score</h2>
+  <div class="flow">
+    <span class="step">Create</span><span class="arr">→</span>
+    <span class="step hot">Debug live in Cowork</span><span class="arr">⟳</span>
+    <span class="step hot">tweak the skill</span><span class="arr">→</span>
+    <span class="step">Headless run + grade</span><span class="arr">→</span>
+    <span class="step">PR</span>
+  </div>
+  <p><strong>Iterate fast, live:</strong> watch <code>/research</code> in Cowork, tweak the skill, run again — <strong>minutes</strong> per loop, no waiting for a verdict.</p>
+  <div class="card sub"><strong>Score once, at the end.</strong> When it works live, do <em>one</em> headless run — the honest, tree-read-blocked check — then grade that run. A 20–60 min / $3–10 run belongs at the end, not after every tweak.</div>
+</section>
+
+<!-- 4 HOW WE WORK -->
+<section class="slide">
+  <h2>How we work: as a team</h2>
+  <p>The work splits into two flavors — <strong>divide it however your team works best.</strong></p>
+  <div class="cols">
+    <div class="card">
+      <h3>Genealogy judgment</h3>
+      <p>Which person &amp; question, what good research looks like, grading each finding.</p>
+    </div>
+    <div class="card">
+      <h3>Hands-on mechanics</h3>
+      <p>Setup, running tests, Git — plus turning that judgment into skill edits.</p>
+    </div>
+  </div>
+  <p class="sub"><strong>Dallan</strong> handles judge calibration &amp; releases — never you.</p>
+</section>
+
+<!-- 5 SETUP -->
+<section class="slide">
+  <h2>Setup</h2>
+  <h3>Once per machine</h3>
+  <div class="cmds">
+    <div><span class="os win">Windows</span><pre><code>Setup.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make install
+echo 'ANTHROPIC_API_KEY=sk-...' &gt;&gt; eval/.env</code></pre></div>
+  </div>
+  <h3>Each day, before running</h3>
+  <div class="cmds">
+    <div><span class="os win">Windows</span><pre><code>Login.bat        &amp; CheckSetup.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-login   &amp;&amp; make e2e-preflight</code></pre></div>
+  </div>
+  <p class="sub">Log in once a day (~24h FamilySearch token). The ready-check ("preflight") confirms login, server, key &amp; tools <em>before</em> you spend time and money on a run.</p>
+</section>
+
+<!-- 6 CREATE -->
+<section class="slide">
+  <h2>Create — <code>/author-e2e-fixture</code></h2>
+  <p class="sub">Run it in Claude Code at the repo root. Two ways to give it the data — the subject must be <strong>deceased</strong> either way, and it does the writing for you:</p>
+  <div class="cols">
+    <div class="card">
+      <h3>From a FamilySearch PID</h3>
+      <p>Give it a well-researched person ID. It reads the tree, <strong>you pick what to hide</strong>, and writes the files.</p>
+    </div>
+    <div class="card">
+      <h3>From a research document</h3>
+      <p>Alternatively, hand it a report, research log, or proof article — it <strong>builds the starting tree by hand</strong> from the document and uses the document's conclusion as the answer.</p>
+    </div>
+  </div>
+  <p class="sub">Either way, keep it focused (one question, 1–5 findings), then confirm the answer is really gone: <code>ValidateFixture.bat</code> / <code>make e2e-validate TEST=&lt;slug&gt;</code>.</p>
+</section>
+
+<!-- 7 DEBUG LIVE -->
+<section class="slide">
+  <h2>Debug live in Cowork — start here</h2>
+  <div class="cmds">
+    <div><span class="os win">Windows</span><pre><code>SeedProject.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-project TEST=&lt;slug&gt;</code></pre></div>
+  </div>
+  <ul>
+    <li>Seeds an editable project from the fixture's <strong>starting state</strong>. Open it in <strong>Claude Cowork</strong>, run <code>/research</code> — <strong>init-project is auto-skipped</strong>.</li>
+    <li>Open the same folder in the <strong>Research Viewer</strong>: watch the log, assertions, and conflicts appear <strong>live</strong>, and ask Claude <em>"why didn't you search X? why direct, not indirect?"</em></li>
+  </ul>
+  <div class="card sub"><strong>Watch HOW it gets each answer</strong> — by searching records, not by reading the tree. Live runs don't block tree-reads, so a "find" via the tree won't hold up when you score.</div>
+</section>
+
+<!-- 8 TWEAK LIVE -->
+<section class="slide">
+  <h2>Tweak the skill, re-run live — repeat</h2>
+  <p class="sub">A "skill" is a page of <strong>plain-English instructions</strong> telling the AI how to research (a <code>SKILL.md</code> file).</p>
+  <ul>
+    <li><strong>Diagnose</strong> what went wrong, <strong>reword the skill's instructions</strong>, and run <code>/research</code> again in Cowork.</li>
+    <li>Edits are picked up on the next run — <strong>watch the fix work in minutes</strong>, no waiting for a verdict.</li>
+    <li><strong>Loop</strong> until it researches well <em>and gets there by searching records.</em></li>
+  </ul>
+  <div class="card sub">This is the <strong>fast inner loop</strong> — stay here, iterating live, until you're confident. No headless runs yet.</div>
+</section>
+
+<!-- 9 SCORE -->
+<section class="slide">
+  <h2>Score it — once, at the end</h2>
+  <div class="cmds">
+    <div><span class="os win">Windows</span><pre><code>RunE2E.bat</code></pre></div>
+    <div><span class="os nix">macOS / Linux</span><pre><code>make e2e-run TEST=&lt;slug&gt;</code></pre></div>
+  </div>
+  <p>When it works live, do <strong>one</strong> headless run — the honest check that <strong>blocks the tree-read tools</strong>. It writes the result + transcript + final tree to <code>eval/runlogs/e2e/&lt;slug&gt;/</code>; then <code>/interpret-e2e-result</code> for the verdict.</p>
+  <div class="card sub"><strong>If it fails</strong>, the live fix didn't hold — read <code>run-&lt;ts&gt;.transcript.md</code> (or <code>make e2e-view</code>) to see what the blocked run did, then back to live debugging. One run is noisy — re-run a borderline result before trusting it.</div>
+</section>
+
+<!-- 10 GRADE -->
+<section class="slide">
+  <h2>Grade the run</h2>
+  <ul>
+    <li>For the run you'll commit, decide for each finding: <strong>true / partial / false</strong>.</li>
+    <li><strong>Ask Claude Code to grade the run</strong> — it records your labels in <code>run-&lt;ts&gt;.ann.json</code>, beside the run log.</li>
+  </ul>
+  <div class="card">Grading is <strong>squarely genealogy judgment</strong> — and that <code>.ann.json</code> is the grade you commit. Do it <strong>once, on the passing run</strong>, not every iteration.</div>
+</section>
+
+<!-- 11 PR -->
+<section class="slide">
+  <h2>Submit a PR</h2>
+  <p>Commit together:</p>
+  <ul>
+    <li>the <strong>fixture</strong> + a <strong>passing run log</strong></li>
+    <li>your <strong>grade</strong> (<code>run-&lt;ts&gt;.ann.json</code>) + any <strong>skill improvements</strong></li>
+  </ul>
+  <div class="card sub">The maintainers review and merge. You create and push; you don't merge your own.</div>
+</section>
+
+<!-- 12 QUESTIONS -->
+<section class="slide lead center">
+  <h1>Questions?</h1>
+  <p class="big sub">Then hands-on — we author, run, and interpret <strong>Kenneth Quass</strong> together.</p>
+</section>
+
+</div>
+
+<div class="footer">
+  <span>E2E Testing · Cowork Genealogy</span>
+  <span id="counter">1</span>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+  const counter = document.getElementById('counter');
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+    location.hash = i + 1;
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+  let downX = null, downY = null;
+  document.addEventListener('mousedown', (e) => { downX = e.clientX; downY = e.clientY; });
+  document.addEventListener('click', (e) => {
+    // don't advance while selecting or copying text
+    if (window.getSelection && window.getSelection().toString().length > 0) return;
+    if (downX !== null && (Math.abs(e.clientX - downX) > 6 || Math.abs(e.clientY - downY) > 6)) return;
+    if (e.clientX > window.innerWidth * 0.25) next(); else prev();
+  });
+  const start = parseInt(location.hash.replace('#', '')) || 1;
+  show(start - 1);
+</script>
+</body>
+</html>
