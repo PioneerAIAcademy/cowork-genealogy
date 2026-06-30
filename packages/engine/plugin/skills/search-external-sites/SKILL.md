@@ -128,7 +128,9 @@ site for the place — ungrouped, unclassified, undeduped. Consume it:
 1. **Filter by host** — keep links for your target site, e.g.
    `result.url.includes("ancestry.com")`.
 2. **Dedupe by URL** — FS repeats the same URL once per record-type
-   category. Collapse duplicates.
+   category. Collapse duplicates, and say so in one line when it happens
+   ("collection 8800 appeared 3× under different labels — collapsed to one")
+   so the dedup is visible, not silent.
 3. **Match `linkText` to the plan item's record type.** `linkText` names
    the collection in plain English ("Pennsylvania Wills and Probate
    Records"); the collection ID is embedded in the URL path. This match is
