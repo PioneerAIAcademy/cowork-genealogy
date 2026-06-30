@@ -98,3 +98,19 @@ describe('ResearchLogSection — linkified notes (Issue 3)', () => {
     expect(link).toHaveAttribute('href', 'https://www.familysearch.org/ark:/61903/1:1:ABC123')
   })
 })
+
+describe('ResearchLogSection — default sort order', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('defaults to oldest-first (ascending by performed)', () => {
+    mockResearch()
+    render(<ResearchLogSection />)
+    // patrick-flynn fixture: log_001 (2026-05-01) ... log_005 (2026-05-03).
+    const earliest = screen.getByText('2026-05-01T10:15:00Z')
+    const latest = screen.getByText('2026-05-03T10:00:00Z')
+    // The earliest entry must render before the latest one.
+    expect(
+      earliest.compareDocumentPosition(latest) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+})
