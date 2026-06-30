@@ -1,18 +1,19 @@
 ---
 name: hypothesis-tracking
 model: claude-sonnet-4-6
-description: Creates, updates, and reviews hypotheses about person identity,
-  parentage, and relationships. Links supporting and contradicting
-  assertions, manages status transitions (active → supported → ruled_out),
-  tracks competing candidates, and summarizes hypothesis status. GPS
-  Step 3-4 — Analysis, Correlation, and Resolution (hypothesis management).
-  Use when the user says "I think [claim]", "track this hypothesis",
-  "could this be [candidate]?", "are there competing candidates?", "update
-  the hypothesis", "rule this out", "where do hypotheses stand?", "review
-  the hypotheses", "summarize hypothesis status", "add [person] as a
-  candidate", "add a third candidate", when competing identity candidates
-  exist, when a conflict suggests multiple possible explanations, or when
-  the user wants to organize or review evidence for and against a claim. Do NOT use when the user wants to resolve a specific fact conflict
+description: >-
+  Creates, updates, and reviews hypotheses about person identity, parentage,
+  and relationships. Links supporting and contradicting assertions, manages
+  status transitions (active → supported → ruled_out), tracks competing
+  candidates, and summarizes hypothesis status. GPS Step 3-4 — Analysis,
+  Correlation, and Resolution. Use when the user says "I think [claim]",
+  "track this hypothesis", "could this be [candidate]?", "are there competing
+  candidates?", "update the hypothesis", "rule this out", "where do hypotheses
+  stand?", "review the hypotheses", "summarize hypothesis status", "add
+  [person] as a candidate", "add a third candidate", when competing identity
+  candidates exist, when a conflict suggests multiple possible explanations,
+  or when the user wants to organize or review evidence for and against a
+  claim. Do NOT use when the user wants to resolve a specific fact conflict
   (use conflict-resolution), wants to build a timeline (use timeline), or
   wants to write a final conclusion (use proof-conclusion).
 allowed-tools:
