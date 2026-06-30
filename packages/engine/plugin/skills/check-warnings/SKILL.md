@@ -1,6 +1,5 @@
 ---
 name: check-warnings
-model: claude-sonnet-4-6
 description: Checks genealogical data for impossibilities and anomalies --
   married before age 14, died after 120, child born after parent's death,
   events on impossible dates, conflicting birth or death dates,

@@ -30,12 +30,18 @@ it as a self-contained, reproducible artifact.
 
 ## Decisions
 
-1. **Model** lives as `model:` field in SKILL.md frontmatter; "activate"
-   restores it from the run log's snapshot. `model:` is a documented
-   Claude Code skill frontmatter field
-   (`code.claude.com/docs/en/skills`) and part of the Agent Skills open
-   standard. Cowork follows the standard; will verify naturally during
-   end-to-end testing (any skill with `model:` set is the test).
+1. **Model** is a single shared default in `<repo>/default-model.json`
+   (key `skill_model`), read by both the eval harness
+   (`harness/skill_runner.py` `DEFAULT_MODEL`) and the hosted server
+   (`apps/server/app/config.default_model`), so eval and production never
+   run different skill models. Override one eval run with
+   `run_tests.py --model <id>`; the run-log envelope's `model` field records
+   what actually ran. **A SKILL.md `model:` field is NOT used** — it is inert
+   in production (Cowork and the Claude Agent SDK run skills on the session
+   model, never per-skill frontmatter), so the skills carry none. (Revisions
+   of this doc before 2026-06-30 pinned `model:` in SKILL.md frontmatter;
+   that conflated *subagent/agent* frontmatter — which the SDK does honor,
+   e.g. `gps-mentor` — with *skill* frontmatter, which it does not.)
 2. **Snapshot scope (skill-only)**: inline JSON `snapshot` block holds
    `packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/rubric.md`,
    `eval/tests/unit/<skill>/*.json` test files, and the referenced

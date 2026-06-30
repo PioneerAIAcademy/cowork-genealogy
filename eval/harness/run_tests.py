@@ -118,6 +118,17 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--model",
+        default=DEFAULT_MODEL,
+        help=(
+            "Model the skills run on for this invocation. Defaults to the "
+            "shared default-model.json value (same model production uses). "
+            "Override to A/B a new model, e.g. --model claude-sonnet-5; the "
+            "choice is recorded in each run log's `model` field. Does not "
+            "affect the gps-mentor agent (its own frontmatter)."
+        ),
+    )
+    parser.add_argument(
         "--max-cost-usd",
         type=float,
         default=50.0,
@@ -446,6 +457,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     args = parser.parse_args(argv)
+    # One model for the whole invocation: the skill execution AND the run-log
+    # envelope's `model` field both use this, so what we record is what ran.
+    resolved_model = args.model
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
 
@@ -565,8 +579,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # Accumulate test entries grouped by skill. After all tests have run,
     # we write one run log per skill — paths under
-    # eval/runlogs/unit/<skill>/ (no model dir; model lives in the
-    # envelope and the skill's SKILL.md frontmatter).
+    # eval/runlogs/unit/<skill>/ (no model dir; the model the run used is
+    # recorded in the envelope's `model` field, sourced from --model /
+    # default-model.json — skills carry no `model:` frontmatter).
     per_skill_entries: dict[str, list[dict]] = {}
 
     def _avg_cost() -> float:
@@ -646,7 +661,7 @@ def main(argv: list[str] | None = None) -> int:
                 invocation=mode,
                 timestamp=invocation_timestamp,
                 harness_version=HARNESS_VERSION,
-                model=DEFAULT_MODEL,
+                model=resolved_model,
                 judge_prompt_hash=judge_hash,
                 snapshot=_snapshot_for(skill),
                 tests=entries,
@@ -701,6 +716,7 @@ def main(argv: list[str] | None = None) -> int:
                     spec,
                     auth=auth,
                     paths=paths,
+                    model=resolved_model,
                     timestamp=invocation_timestamp,
                 )
                 inflight[fut] = (idx, spec)
@@ -841,7 +857,7 @@ def main(argv: list[str] | None = None) -> int:
             invocation=mode,
             timestamp=invocation_timestamp,
             harness_version=HARNESS_VERSION,
-            model=DEFAULT_MODEL,
+            model=resolved_model,
             judge_prompt_hash=judge_hash,
             snapshot=_snapshot_for(skill),
             tests=entries,

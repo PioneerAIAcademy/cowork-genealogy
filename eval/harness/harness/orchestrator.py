@@ -192,14 +192,13 @@ async def _run_one_test_async(
     skill_frontmatter = load_skill_frontmatter(
         paths.skills_dir / spec.skill / "SKILL.md"
     )
-    # Honor the `model:` field in SKILL.md frontmatter when set (matches
-    # Claude Code skill-frontmatter semantics: turn-scoped model override
-    # per code.claude.com/docs/en/skills). Falls back to the CLI-provided
-    # `model` arg (which defaults to DEFAULT_MODEL) when the field is
-    # absent or empty.
-    skill_model = skill_frontmatter.get("model")
-    if isinstance(skill_model, str) and skill_model.strip():
-        model = skill_model.strip()
+    # All skills run on the harness `model` (CLI --model, else DEFAULT_MODEL,
+    # itself read from <repo>/default-model.json — the single source shared
+    # with the hosted server's config.default_model). A SKILL.md `model:`
+    # field is intentionally NOT honored: it is inert in production (Cowork
+    # and the Agent SDK run skills on the session model, never per-skill
+    # frontmatter), so honoring it here would let eval diverge from prod.
+    # (`skill_frontmatter` is still used below — allowed-tools, snapshot.)
     scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
     skill_baseline = compute_allowed_tools(spec.skill, paths.skills_dir)
 

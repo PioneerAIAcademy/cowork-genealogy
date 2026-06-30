@@ -1,0 +1,4 @@
+{
+  "_comment": "Single source of truth for the model the genealogy SKILLS run on. Read by both the eval harness (eval/harness/harness/skill_runner.py -> DEFAULT_MODEL) and the hosted web server (apps/server/app/config.py -> default_model). Change the model in ONE place here. Override per-run without editing this file: --model (eval run_tests.py) or the DEFAULT_MODEL env var (server). Does NOT govern: the gps-mentor AGENT (its own `model:` frontmatter, which the Agent SDK honors) or Claude Cowork (runs skills on the user-selected session model; a SKILL.md `model:` field is inert there).",
+  "skill_model": "claude-sonnet-4-6"
+}

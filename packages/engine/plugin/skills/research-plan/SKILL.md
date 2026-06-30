@@ -1,6 +1,5 @@
 ---
 name: research-plan
-model: claude-sonnet-4-6
 description: Creates a sequenced research plan (written to research.json) for answering a specific
   genealogy question — which record sets to search, in what order, from
   which repositories, with fallbacks. GPS Step 1 — Reasonably Exhaustive
