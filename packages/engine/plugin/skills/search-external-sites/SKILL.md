@@ -9,13 +9,11 @@ description: Generates search URLs for external genealogy sites (Ancestry,
   "search Ancestry", "search MyHeritage", "search FindMyPast", "search
   FindAGrave", "search Newspapers.com", when a plan item targets a
   non-FamilySearch repository, or when the user uploads a PDF capture from
-  an external genealogy site — i.e. when a specific search has already been
-  chosen and a URL needs generating. Do NOT use when the target is
-  FamilySearch (use search-records); when the user is still deciding what or
-  where to search — questions like "what should I search next?", "which
-  external sites should I try?", or "where should I look for X?" — which is
-  planning, not execution (use research-plan); or when the user wants to
-  analyze a single record already in context (use record-extraction).
+  an external genealogy site. Do NOT use when the target is
+  FamilySearch (use search-records); when the user is still choosing what or
+  where to search — e.g. "what should I search next?" — which is planning,
+  not execution (use research-plan); or when the user wants to analyze a
+  single record already in context (use record-extraction).
 allowed-tools:
   - place_search
   - external_links_search
