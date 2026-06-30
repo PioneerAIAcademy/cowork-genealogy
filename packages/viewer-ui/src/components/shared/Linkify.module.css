@@ -1,0 +1,11 @@
+.link {
+  color: var(--accent-gold-strong);
+  text-decoration: underline;
+  cursor: pointer;
+  /* Long FamilySearch arks must wrap inside narrow panels rather than overflow. */
+  overflow-wrap: anywhere;
+}
+
+.link:hover {
+  text-decoration: none;
+}

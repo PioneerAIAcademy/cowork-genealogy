@@ -137,3 +137,26 @@
   outline: 2px solid var(--accent-gold-strong);
   outline-offset: 1px;
 }
+
+/* Compact, link-styled affordance shown inline in the collapsed row's Results
+   cell when the entry has a viewable sidecar. */
+.viewResultsInline {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--accent-gold-strong);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.viewResultsInline:hover {
+  text-decoration: underline;
+}
+
+.viewResultsInline:focus-visible {
+  outline: 2px solid var(--accent-gold-strong);
+  outline-offset: 1px;
+}
