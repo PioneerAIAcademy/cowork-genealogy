@@ -9,21 +9,25 @@ import pytest
 from harness import auth
 
 
-def test_api_key_preferred_when_both_available(monkeypatch, tmp_path):
-    """Policy: when both an API key and a subscription are available,
-    the API key wins. Eval runs should bill the project's key, not the
-    operator's personal Claude subscription."""
+def test_subscription_preferred_when_both_available(monkeypatch, tmp_path):
+    """Policy: when both a subscription and an API key are available, the
+    subscription wins for the skill runner — eval runs should bill the
+    operator's flat-rate subscription, not the project's metered key. The
+    key is still carried on the config so the judge can use it."""
     fake_home = tmp_path / "home" / ".claude"
     fake_home.mkdir(parents=True)
     monkeypatch.setattr(auth, "SUBSCRIPTION_DIRS", [fake_home])
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-deadbeef")
     monkeypatch.setattr(auth, "ENV_FILE", tmp_path / "not-a-real-env-file")
     cfg = auth.resolve_auth()
-    assert cfg.skill_runner_mode == "api_key"
+    assert cfg.skill_runner_mode == "subscription"
+    # The judge still needs the key, so it rides along on the config.
     assert cfg.api_key == "sk-test-deadbeef"
 
 
-def test_subscription_only_when_no_key(monkeypatch, tmp_path):
+def test_subscription_with_no_key_leaves_judge_keyless(monkeypatch, tmp_path):
+    """Subscription present, no key: skill runner uses the subscription and
+    the judge has no key (run_tests warns; the judge errors when reached)."""
     fake_home = tmp_path / "home" / ".claude"
     fake_home.mkdir(parents=True)
     monkeypatch.setattr(auth, "SUBSCRIPTION_DIRS", [fake_home])
@@ -62,14 +66,11 @@ def test_raises_when_no_auth_available(monkeypatch, tmp_path):
         auth.resolve_auth()
 
 
-def test_env_for_sdk_returns_tool_search_in_subscription_mode():
-    """Subscription mode injects no API key (the CLI session handles
-    auth) but still sets ENABLE_TOOL_SEARCH=true to match the e2e
-    orchestrator + hosted-web agent — without it the SDK occasionally
-    hits the deferred-tool registry and the agent falls back to direct
-    file writes."""
+def test_env_for_sdk_subscription_mode_sets_tool_search_and_suppresses_key():
+    """Subscription mode sets ENABLE_TOOL_SEARCH=true and suppresses any
+    inherited ANTHROPIC_API_KEY="" so the CLI falls back to its OAuth session."""
     cfg = auth.AuthConfig(skill_runner_mode="subscription", api_key=None, detail="x")
-    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true"}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
 
 
 def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
@@ -80,12 +81,11 @@ def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
     }
 
 
-def test_env_for_sdk_subscription_mode_omits_key_even_if_present():
-    """Subscription mode means the skill runner uses the CLI session; we
-    do NOT inject the API key into the SDK subprocess (the os.environ
-    inheritance caveat is documented in auth.py module docstring).
-    ENABLE_TOOL_SEARCH is still set (it's not an auth secret)."""
+def test_env_for_sdk_subscription_mode_suppresses_key_even_if_present():
+    """Even when a key is available (carried for the judge), subscription
+    mode suppresses it with "" so the CLI OAuth session wins, and still
+    sets ENABLE_TOOL_SEARCH=true."""
     cfg = auth.AuthConfig(
         skill_runner_mode="subscription", api_key="sk-x", detail="x"
     )
-    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true"}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}

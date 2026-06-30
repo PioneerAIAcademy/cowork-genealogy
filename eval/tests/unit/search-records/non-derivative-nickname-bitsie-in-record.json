@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_search_records_nickname_bitsie_in_record",
+    "skill": "search-records",
+    "name": "Non-derivative nickname IN the record — formal-name search under-matches; retry with the documented Nickname",
+    "type": "positive",
+    "description": "The inverse direction of ut_search_records_nickname_bitsie. There: the user typed the nickname and the skill resolved to the formal name. HERE (per Clorinda's PR #442 follow-up): the user supplies the formal name 'Mary Jackson', but the RECORD ITSELF is indexed under the community nickname 'Bitsie Jackson' because the 1900 enumerator recorded what a neighbor-informant said. The formal-name search returns zero. The skill must recognize this as a signal to retry using the documented Nickname on tree person I1 — 'Bitsie' — at which point the record surfaces.",
+    "tags": ["search-records", "nickname", "non-derivative-nickname", "record-side-nickname", "informant-driven", "clorinda-review", "nickname-fallback"]
+  },
+  "input": {
+    "user_message": "Search the 1900 Lancaster County, Pennsylvania census for Mary Jackson, per plan item pli_002. Log the result and write the sidecar.",
+    "scenario": "mid-research-jackson-nickname"
+  },
+  "mcp_fixtures": [
+    "record-search-jackson-1900-mary-no-results",
+    "record-search-jackson-1900-bitsie-record"
+  ],
+  "judge_context": [
+    "Should first try the formal name: issue a record_search with surname='Jackson', givenName='Mary' against the 1900 collection. This returns zero results per the fixture",
+    "On the empty formal-name search, the skill should NOT declare the search negative. Instead, it should consult tree.gedcomx.json — person I1 carries a Nickname entry 'Bitsie Jackson' — and recognize that the record may have been filed under the community nickname (a neighbor or non-family informant may have given the names to the enumerator)",
+    "Should retry the search with givenName='Bitsie' (still 1900 collection, still surname='Jackson'). This returns the matched record per the fixture (Bitsie Jackson in William Jackson's household, Lancaster County)",
+    "Should report the match back to the user and EXPLAIN the reasoning: 'The 1900 record was filed under Mary's community nickname Bitsie rather than her formal BirthName — likely because a non-family informant gave the names to the enumerator. Searching by the documented Nickname on I1 recovered the record.'",
+    "Should explicitly link the recovered record back to I1 in the response (e.g., as a same-person candidate), even though the record's `personName` differs from I1's preferred BirthName",
+    "FOCUS GRADING NOTE for the judge: this test verifies the NICKNAME-FALLBACK behavior when the record-side carries the nickname. General search-records hygiene dimensions (Log quality, Sidecar correctness, exhaustive log-entry shape) are covered by the existing positive tests and should NOT drag this test below pass purely on description-vs-actual-write or shape concerns — score those dimensions `pass` if the skill correctly executed both queries and recovered the record via the nickname retry. The differentiator for THIS test is the retry-on-empty-formal-search behavior driven by the tree's Nickname alias"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}
