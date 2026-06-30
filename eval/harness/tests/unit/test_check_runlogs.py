@@ -136,3 +136,33 @@ def test_rule2_skip_zero_does_not_bypass(monkeypatch, capsys):
     rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
     assert rc == 1
     assert "NOT active" in capsys.readouterr().out
+
+
+# --- Orchestrator-skill exemption (RUNLOG_GATE_EXEMPT_SKILLS) --------------
+
+
+def test_exempt_orchestrator_skill_passes(monkeypatch, capsys):
+    """Touching an exempt skill's body (no unit suite by design) must not
+    fail with 'no run logs' — the per-skill rules are skipped for it."""
+    assert "research" in check_runlogs.RUNLOG_GATE_EXEMPT_SKILLS
+    monkeypatch.setattr(
+        check_runlogs,
+        "git_diff_changes",
+        lambda: [("A", "packages/engine/plugin/skills/research/SKILL.md")],
+    )
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "research" not in capsys.readouterr().out
+
+
+def test_non_exempt_skill_without_runlogs_still_fails(monkeypatch, capsys):
+    """The gate still bites for a non-exempt skill with no runlog dir — proof
+    the exemption didn't widen into a blanket pass."""
+    monkeypatch.setattr(
+        check_runlogs,
+        "git_diff_changes",
+        lambda: [("A", "packages/engine/plugin/skills/__no_such_skill__/SKILL.md")],
+    )
+    rc = check_runlogs.main()
+    assert rc == 1
+    assert "no run logs" in capsys.readouterr().out
