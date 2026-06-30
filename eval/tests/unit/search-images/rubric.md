@@ -8,11 +8,13 @@ search-images browses FamilySearch digitized image volumes page-by-page when a r
 
 Did the skill identify the right image group to browse, and recognize when image browsing is (or is not) the right tool?
 
-This dimension grades the volume the skill *actually targeted*. When the user supplies an `imageGroupNumber` directly, the skill may call `image_search` without `volume_search` — that is correct, not a gap.
+This dimension grades the volume(s) the skill *actually targeted*. When the user supplies an `imageGroupNumber` directly, the skill may call `image_search` without `volume_search` — that is correct, not a gap.
 
-- **pass:** The skill either (a) called `volume_search` with the place/date the prompt supplies and picked the image group whose coverage matches, preferring an unindexed/non-full-text volume; or (b) used the `imageGroupNumber` the user gave directly. When `volume_search` shows the target is already record- or full-text-searchable, noting that a faster path (search-records / search-full-text) exists is a pass, not a miss.
-- **partial:** The skill found a plausible volume but mis-scoped `volume_search` (wrong place/date), or browsed a clearly searchable volume without noting the faster indexed/full-text path.
-- **fail:** The skill browsed an unrelated volume, invented an `imageGroupNumber`, or could not identify a volume to browse when the prompt supplied a clear place and record type.
+"The right volume" is not always a single volume. Two cases must be selected correctly: (1) **the target spans several films** — when two or more browse-only volumes each cover part of the target's place + type + era (a record set split across films, or a date window crossing a film boundary), they jointly cover it and **all** must be browsed; (2) **one film bundles several record sets** — when the chosen group's `coverages[]` lists multiple record types (a will book, land records, and loose probate filmed together), the target is one item-section within a mixed film, which the skill should recognize and scope toward. `image_search` has no in-volume filter, so within-film navigation is manual — do not penalize the skill for not isolating the exact pages.
+
+- **pass:** The skill either (a) called `volume_search` with the place/date the prompt supplies and targeted the matching coverage, OR (b) used the `imageGroupNumber` the user gave directly. When several volumes *jointly* cover the target (split run / era spanning films), it browsed or queued **all** of them. When the chosen film is mixed (multiple `coverages[]` record types), it recognized the bundle and scoped the browse to the right item-section. Preferring an unindexed/non-full-text volume, and noting that a faster path (search-records / search-full-text) exists when the target is already searchable, are both passes.
+- **partial:** The skill found a plausible volume but mis-scoped `volume_search` (wrong place/date); browsed only one film when two or more jointly covered the target; treated a mixed film as if it held only the target record type without acknowledging the other sections; or browsed a clearly searchable volume without noting the faster indexed/full-text path.
+- **fail:** The skill browsed an unrelated volume (wrong place or wrong record type), invented an `imageGroupNumber`, or could not identify a volume to browse when the prompt supplied a clear place and record type.
 
 ## Browse execution
 

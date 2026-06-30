@@ -8,7 +8,7 @@
     "tags": ["browse", "negative-result-log", "no-volume"]
   },
   "input": {
-    "user_message": "I want to page through the digitized images for Alabama territorial land records around 1815 — find the volume and browse it.",
+    "user_message": "I want to look through the digitized images for Alabama territorial land records around 1815 — find the volume and browse it.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["volume-search-alabama-empty"],

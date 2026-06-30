@@ -8,7 +8,7 @@
     "tags": ["browse", "unindexed", "probate"]
   },
   "input": {
-    "user_message": "The Schuylkill County probate books aren't indexed on FamilySearch. Find the digitized probate volume and pull up its images so I can browse them for Thomas Flynn's will.",
+    "user_message": "The Schuylkill County probate books aren't indexed on FamilySearch. Find the digitized probate volume and list its images so I can browse it for Thomas Flynn's will.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["volume-search-schuylkill-probate-only", "image-search-schuylkill-probate"],

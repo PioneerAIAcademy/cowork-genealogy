@@ -9,7 +9,7 @@
     "holdout": true
   },
   "input": {
-    "user_message": "Page through the Schuylkill County, Pennsylvania marriage record images to find the Flynns' marriages.",
+    "user_message": "Browse the Schuylkill County, Pennsylvania marriage record images to find the Flynns' marriages.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["volume-search-schuylkill-indexed"],

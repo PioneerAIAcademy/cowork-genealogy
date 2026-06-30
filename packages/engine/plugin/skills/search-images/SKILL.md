@@ -77,43 +77,26 @@ volume and page through the images. This skill is the image-browse
 counterpart to search-records (indexed search) and search-full-text
 (transcript search).
 
-## When image browsing is the right tool
-
-Browse images when the target volume is **digitized but not searchable**:
-`volume_search` reports `recordSearchablePercent: 0` (or very low) and
-`fulltextSearchable: false`. If the collection is indexed, use
-search-records; if it is full-text transcribed, use search-full-text. Both
-are faster than reading pages one by one — browse only when neither covers
-the record.
-
 ## MCP tools
 
-This skill chains three search tools plus the research-log writer:
+Browse only when the volume is **digitized but not searchable** —
+`volume_search` reports `recordSearchablePercent: 0` (or very low) and
+`fulltextSearchable: false`. If it's indexed use search-records; if full-text
+transcribed use search-full-text (both are faster than reading pages).
 
-| MCP tool | Purpose |
-|----------|---------|
-| `volume_search` | Find digitized volumes (image groups) covering a `standardPlace` and year range; returns coverage metadata (`imageGroupNumber`, `imageCount`, `recordSearchablePercent`, `fulltextSearchable`) |
-| `image_search` | List every image ID inside ONE image group, given its `imageGroupNumber` |
-| `image_read` | View a single image, given an `imageId` from `image_search` |
+| MCP tool | Input | Purpose |
+|----------|-------|---------|
+| `volume_search` | `standardPlace`, year range | Find image groups covering a place/period; returns `imageGroupNumber`, `imageCount`, `recordSearchablePercent`, `fulltextSearchable`, `coverages[]` |
+| `image_search` | `imageGroupNumber` (a volume id) | List every image ID inside ONE group |
+| `image_read` | `imageId` (one image from the list) | View a single page |
 
-`image_search` returns image IDs only — there are no in-volume filters yet,
-so it lists the **whole** volume and you page through it with `image_read`.
-
-**The two image tools take DIFFERENT inputs — do not confuse them:**
-
-| Tool | The ONE argument it takes | Example |
-|------|---------------------------|---------|
-| `image_search` | `imageGroupNumber` (a volume id) | `image_search({ imageGroupNumber: "007936749" })` |
-| `image_read` | `imageId` (one image from the list) | `image_read({ imageId: "007936749_00058" })` |
-
-- An **`imageId`** (e.g. `007936749_00058`) goes ONLY to `image_read`. Never
-  call `image_search({ imageId })` — that is the single most common mistake;
-  to view a page you want `image_read`.
-- `image_search` returns the entire volume in one call. It has **no**
-  `offset`, `limit`, `imageIndex`, or `imageId` parameter — never re-call it
-  with paging or index arguments to "get more."
-- If `image_read` returns no viewable content, note that and move on to log
-  the browse — do **not** loop trying alternate parameters.
+**The two image tools take DIFFERENT inputs — do not confuse them.** An
+`imageId` (e.g. `007936749_00058`) goes ONLY to `image_read`. Never call
+`image_search({ imageId })` — that is the single most common mistake; to view
+a page you want `image_read`. `image_search` lists the **whole** group in one
+call — it has no `offset`, `limit`, `imageIndex`, or `imageId` parameter, so
+never re-query to "get more," and if `image_read` returns no viewable content,
+note that and move on to log the browse rather than looping.
 
 ## Steps
 
@@ -135,21 +118,30 @@ volume wastes effort — route those to search-records / search-full-text).
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 ```
 
-If `volume_search` returns no volumes, that is a normal, expected result —
-the record set is simply not digitized for that place and period. It is **not**
-a sign the tool is broken or unauthenticated: an empty volume list is data, not
-an error. This is a completed nil browse: you searched and found nothing, which
-is itself a GPS-relevant event.
+**"The right volume" is not always a single volume.** Match every candidate on
+all three axes — place, record type, *and* era — then, instead of stopping at
+the first match:
 
-**Log it before you do anything else.** The reflex here is to skip straight to
-"want me to try search-records / search-external-sites instead?" — but a nil
-browse that suggests an alternative *without logging* leaves no audit trail and
-is the most common way this skill fails. So, in order: (1) call
-`research_log_append` to record the negative browse (step 6 — `outcome:
-"negative"`, place/date/record type searched, "no digitized volume exists"),
-**then** (2) suggest an alternative repository. Do not offer the alternative
-until the log entry is written, and never ask the user to troubleshoot the tools
-just because the list came back empty.
+- **If the target spans several films** — a record set split across films, or
+  a date window crossing a film boundary (e.g. probate filmed as 1851–1890 and
+  1891–1930 with a death around 1890) — the films **jointly** cover it. Browse
+  (or queue) **all** of them and `image_search` each; picking one risks missing
+  the record on the film you skipped. Name the films you're covering and why.
+- **If one film bundles several record sets** — `coverages[]` is an array, and
+  a single group can carry several record types filmed together (a will book,
+  land/deed records, loose probate papers as separate item sections). When the
+  chosen group's `coverages[]` lists more than the record type you want, say so:
+  the target is **one item-section within a mixed film**, not the whole volume.
+  Orient the browse toward that section (read a register/table of contents
+  first; within-film navigation is manual). Don't treat the film as the will
+  book alone, or dismiss the other sections if they bear on the question.
+
+If `volume_search` returns no volumes, that is normal — the set simply isn't
+digitized for that place/period (data, not a tool error). It's a completed nil
+browse. **Log it before anything else:** call `research_log_append` for the
+negative browse (step 6 — `outcome: "negative"`, place/date/record type, "no
+digitized volume exists") *then* suggest an alternative repository. Offering the
+alternative without first logging is the most common way this skill fails.
 
 ### 3. List the images with `image_search`
 
@@ -260,29 +252,16 @@ browse was nil — try search-records, search-full-text, or another repository.
 
 ## Important rules
 
-- **Browse only unindexed, non-full-text volumes.** If `volume_search`
-  shows the volume is record- or full-text-searchable, route to
-  search-records / search-full-text — they are faster than reading pages.
-- **`image_search` lists the whole group.** There are no in-volume filters;
-  narrow by reading a register/index page, not by re-querying.
-- **`imageGroupNumber` comes from `volume_search`** (or the user). Pass it
-  through verbatim — split natural-group name or bare number.
-- **Log every browse, including nil.** The log is the GPS audit trail; a
-  negative browse must record whatever scope was available (see step 6's
-  nil-browse note contract — place/date/record type always, plus volume id and
-  image range only once a volume was actually opened).
-- **Do NOT write to `sources` or `assertions`.** Adding a found image as a
-  source and extracting its facts is record-extraction's job — hand the
-  image off, don't extract here.
-- **Do NOT add extra fields to plan items.** Plan items have a fixed schema;
-  only `status` may be updated here.
+- **`imageGroupNumber` comes from `volume_search`** (or the user) — pass it
+  through verbatim, split natural-group name or bare number.
 - **Never fabricate image contents.** Report only what you actually read via
   `image_read`.
+- **Stay in your lane.** Don't write to `sources` or `assertions` (hand found
+  images to record-extraction), and don't add fields to plan items beyond
+  `status`.
 
 ## Re-invocation behavior
 
-Appends a new `log` entry per browse via `research_log_append` (append-only;
-no sidecar, since `image_search` does not stage), and updates the executed
-plan item's `status` via `research_append`. Two browses of the same volume
-produce two log entries — that is correct; re-running a browse is itself a
-logged event. Never writes to `sources` or `assertions`.
+Append-only: one new `log` entry per browse (no sidecar — `image_search`
+doesn't stage), plus the executed plan item's `status` via `research_append`.
+Two browses of one volume produce two log entries — that is correct.
