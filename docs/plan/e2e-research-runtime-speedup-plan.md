@@ -191,11 +191,18 @@ atomic — the persisted content is identical.
 - **Drop the standalone `validate_research_schema` passes**
   (`research/SKILL.md:107-109`). Every writer tool already validates-before-
   persist, so the periodic orchestrator validate is pure redundancy. Risk: low.
-- **Defer the `gps-mentor` gates** (`research/SKILL.md:121-136`) — for a
-  single-question autonomous objective, run the mentor review **once at
-  conclusion** rather than at each transition (each gate is a cold-context
-  subagent read of the whole project). Risk: medium — these are the quality
-  backstop, so *defer, don't delete*; keep the final gate to protect the PASS.
+- **~~Defer the `gps-mentor` gates~~ — DROPPED from this plan.** The mentor is
+  **not staged into the e2e sandbox at all**: `build_workspace`
+  (`eval/harness/e2e/orchestrator.py`) copies only `plugin/skills/`, never
+  `plugin/agents/`, so both passing e2e runs recorded `evaluations: []` with
+  zero mentor invocations. Deferring the gates therefore saves the benchmark
+  **0 min** and would ship a quality-affecting change to the GPS workflow's only
+  production proof-quality backstop with no test coverage. The mentor is
+  decoupled from this speedup work; the "stage → measure → then decide" sequence
+  for reducing its cost (a production, not benchmark, concern) is recorded in
+  `docs/specs/gps-mentor-agent-spec.md` §17.1. **2b's remaining savings below are
+  unchanged** — they were always attributed to narration / re-reads / redundant
+  validates / the handoff retry loop, not the mentor.
 - **Fix the record-extraction handoff** so it doesn't re-run `record_search` to
   recover persona IDs / the `record_id` it was already handed
   (`search-records:441-447` context-only handoff; `record-extraction` then
@@ -272,14 +279,113 @@ Structural floor ~51 min → projected ~15–20 min after 1+2; with 3b capping t
 stalls, total wall-clock projects to **~12–18 min**. Reaching the 10–15 target
 reliably needs **both** the batch tool change and the stall cap.
 
-## 6. Open questions for review
+## 6. Open questions — resolved
 
-- **Batch shape:** heterogeneous `ops` (proposed — enables one-call-per-record)
-  vs. a simpler homogeneous `entries` (covers the observed streaks). Heterogeneous
-  costs the same to implement; do we want the generality?
-- **gps-mentor deferral (2b):** acceptable to run the mentor gates once at
-  conclusion for single-question autonomous runs, or keep per-transition for
-  safety? (Quality-vs-speed call for the senior reviewer.)
-- **Idea 3 ownership:** the tool-deferral and stall behavior also affect
-  production Cowork, not just the eval harness — should 3a/3b be solved in the
-  harness, raised upstream, or both?
+Resolved 2026-06-23 after a code/skills/harness research pass (parallel readers +
+adversarial verification). Each decision below cites the deciding evidence.
+
+### Q1 — Batch shape: **heterogeneous `ops`** ✅
+
+Adopt the heterogeneous shape (each op names its own `section`/`operation`); keep
+`research_append` and `tree_edit` as two separate batched tools.
+
+- **It is not more expensive than homogeneous.** Per-op dispatch already exists in
+  the single-call form (`research-append.ts` resolves `SECTIONS[section]` per call;
+  `tree-edit.ts` switches on `operation` per call), and both id allocators rescan
+  the live in-memory document, so intra-batch sequencing is automatic in either
+  shape. Homogeneous would only *add* an "all entries share one section" constraint
+  for no saving.
+- **The real run decides it.** In the spriggs run, 5 of 6 large write-blocks **mix
+  sections** (the two record-extraction blocks most of all). Whole-run write calls:
+  **111 today → ~25 homogeneous → ~17 heterogeneous.** Heterogeneous saves ~8 more
+  turns, concentrated in the record hot path (`record-extraction/SKILL.md` step 5
+  fans one record across source + assertions + tree `add_source` + sibling stubs).
+
+**Correction to Idea 1's framing:** `research_append`'s single-op body returns
+`{ok:false}` inline **~17 times** (not "~10") and the `project` singleton has its
+**own** validate+write+early-return tail (`research-append.ts:184-226`) — both must
+be folded into the shared `applyOne` + validate-once/write-once path. `tree_edit`'s
+`applyOperation` is already a clean throwing per-op helper, so it is near-free.
+
+**Batch contract the implementation must honor (shape-independent, but the het hot
+path makes it load-bearing):**
+1. **All-or-nothing:** apply every op to one in-memory doc, validate the whole doc
+   **once**, write **once**; on any per-op failure write nothing.
+2. **Per-op error indexing:** `ops[i]: <message>` so the agent can fix one row.
+3. **Result array:** `research_append` → `results: [{section, op, entryId}]`;
+   `tree_edit` → `results: [{operation, assignedIds}]`.
+4. **Intra-batch id rule:** an op MAY reference an id it *creates* earlier in the
+   same batch via that id's predictable `<prefix>NNN` (the allocator assigns
+   sequentially — e.g. an assertion's `source_id: "src_001"` after appending the
+   source as op #1, exactly as the sequential run already does). An op MAY NOT
+   `update` or otherwise depend on an id created earlier in the same batch (append
+   assigns the id internally; the caller cannot pre-name it for update).
+5. **Cross-tool ordering stays two calls:** `tree_edit add_person` assigns the
+   `I`-ids that the `research_append` `person_evidence` batch references, so the
+   tree batch commits first; do not merge or reorder the two.
+6. **Single-op form is byte-identical** to today (zero risk to existing callers);
+   persisted shapes are unchanged, so no schema/validator/web-mirror/fixture churn.
+
+### Q2 — gps-mentor: **decoupled from this plan** ✅
+
+Not a speedup lever for e2e — the mentor is never staged into the sandbox (see the
+struck bullet in Idea 2b). No production change is made here. The conditions and
+the staged "(a) land conformance PR → (b) stage + measure in e2e → (c) then decide
+gating" sequence for ever reducing mentor cost are recorded durably in
+`docs/specs/gps-mentor-agent-spec.md` §17.1.
+
+### Q3 — Ownership: **both, harness-first** ✅ (separate follow-ups, not this PR)
+
+- **3a (pin schemas):** the lever is the bundled-CLI env var **`ENABLE_TOOL_SEARCH`**
+  (`true | auto | auto:N`, keyed off tool-definition token weight) — **not** a
+  `ClaudeAgentOptions` field; set it via the SDK `env=` pass-through. The genealogy
+  server advertises **38 tools** (over the ~30 / ~10K-token guidance), which is why
+  ~20 get deferred and re-discovered 17×. Cheapest probe: add
+  `env={"ENABLE_TOOL_SEARCH": "true"}` to the orchestrator and re-run one fixture,
+  counting ToolSearch calls. **Hosted-web production (`apps/server/app/agent/real_agent.py`)
+  uses the same SDK + bundled CLI + stdio MCP config with no override**, so the same
+  env must also land there or real users get nothing. Raise upstream for (i) a
+  surgical "pin a named tool set" / `auto:N` end-state and (ii) the Cowork *desktop*
+  runtime, which the env may not reach. **Structural alternative worth evaluating:**
+  cut the tool count below the token threshold (CLAUDE.md already mandates generic
+  tools with provider params) — removes deferral everywhere without eager-loading 38.
+- **3b (stall resume): DEFERRED — not implemented (evidence too thin).** The two
+  stalls are real (measured from the spriggs transcript), but that is **n=1** — one
+  run with timing forensics, no frequency data. Building resume plumbing plus a
+  correctness-risky double-apply mitigation behind a flag, to insure against a
+  variance seen once, is premature — and the batching (shorter runs) reduces
+  cold-cache exposure on its own, possibly shrinking 3b's value before it is
+  measured. **Trigger to revisit:** the e2e re-runs (validating Idea 1/2a/2b/3a) show
+  stalls *recurring* across runs. Only then build it, with real frequency data. The
+  design below stands for that point. Ownership when built: harness, behind a flag,
+  two ordered steps. Step 1 (safe,
+  first): capture `session_id` (currently discarded — `SystemMessage` branch is a
+  bare `pass`) and lower the inactivity cap (the 15–23 min stalls currently trip the
+  3600 s wall-clock cap, not the 600 s inactivity cap, so lowering inactivity is what
+  makes a stall *detectable*). **Correction:** the "cheaper fail-fast probe" the plan
+  hoped for does **not exist** — there is no per-request Anthropic timeout / max-retries
+  knob; `CLAUDE_CODE_STREAM_CLOSE_TIMEOUT` covers only the init handshake (≥60 s floor).
+  Step 2 (off-by-default flag): resume-on-stall, gated by the **double-apply hazard** —
+  all three writers are non-idempotent on create (`max+1` ids; `tree_edit` even rejects
+  caller-supplied create ids), so a replayed already-landed turn **duplicates** rather
+  than overwrites; the "resume only if no create pending" gate narrows but does not
+  close the window (the write commits in the MCP server before the `tool_result`
+  returns). Raise the stall variance upstream regardless. **Correction:** the "5-min
+  cache-TTL cliff" parallel in §1/§3b is a misread — the cited doc's "5-min timeout" is
+  the E2B sandbox idle-pause lifecycle, not an Anthropic prompt-cache TTL; drop it.
+
+### Scope of the immediate PR
+
+This PR implements **Ideas 1, 2a, 2b, and 3a**:
+- **1** — heterogeneous-`ops` batch tools (`research_append`, `tree_edit`) + spec + vitest.
+- **2a** — the four skills rewritten to emit batched `ops` calls.
+- **2b** — prompt-only efficiency cleanups (per-phase narration, stop redundant
+  re-reads, drop standalone validates, fix the record-extraction handoff).
+- **3a** — `ENABLE_TOOL_SEARCH=true` on the e2e orchestrator **and** the hosted-web
+  `real_agent.py`, to stop the ToolSearch re-discovery loop.
+
+**Deferred:** **3b** (stall resume — n=1 evidence; see above) and the **gps-mentor**
+change (decoupled; a production concern recorded in
+`gps-mentor-agent-spec.md` §17.1). End-to-end validation of the whole set is **one
+e2e re-run** (the plan's measurement method); the unit tests cover only the tool
+batching's correctness.

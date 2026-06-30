@@ -67,9 +67,15 @@ The simplified GedcomX should carry `persons[].ark` (the persistent FS
 ARK, canonical `ark:/61903/...` form) on every person — added to the
 simplifier in commit `e44a6dd`. The tool relies on this: if a person has
 `ark`, `toGedcomX()` rebuilds the `identifiers["http://gedcomx.org/Persistent"]`
-field — **reduced to the bare 8-character persona id**, which is what the
-matchTwoExamples API wants — and the FS API response carries real ARKs
-instead of `MMMM-MMM` placeholders.
+field, and `buildRawWithAnchor` then sets it to the **full canonical ARK
+(`ark:/61903/n:n:<id>`)**. matchTwoExamples **requires** that prefix and
+rejects a bare id with `400 "M2E Invalid Feed supplied"` (confirmed with FS,
+2026-06-23); it does **not** require the id to be a real persona — a
+well-formed but fabricated ARK is accepted. The general `toGedcomX()`
+converter intentionally emits the bare id (it stays API-agnostic); this
+prefix restoration is matchTwoExamples-specific and therefore lives in this
+tool, not the shared converter. With a real ARK present, the FS API response
+carries real ARKs instead of `MMMM-MMM` placeholders.
 
 If the LLM's simplified GedcomX doesn't have `ark` on the primary
 persons, the API response will still match (the algorithm uses
@@ -267,6 +273,9 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │     - Simplifier handles: URI prefix re-addition, nameForms rebuild,
   │       persons[].identifiers from each persona's `ark` field
   │       (when present), and all the standard inverse mappings.
+  │     - buildRawWithAnchor then rewrites each Persistent identifier to the
+  │       FULL canonical ARK (`ark:/61903/n:n:<id>`) from the simplified `ark`;
+  │       matchTwoExamples rejects the converter's bare id as "Invalid Feed".
   │     - We do NOT pre-structure or re-assemble the persons. Whatever
   │       was in the simplified GedcomX (focus + parents + relationships)
   │       comes through into the raw GedcomX as-is.

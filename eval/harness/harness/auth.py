@@ -113,7 +113,15 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
     CLI's session. See module docstring for the os.environ-inheritance
     caveat — if the operator has ANTHROPIC_API_KEY in their shell, the
     subprocess may still see and prefer it over the subscription session.
+
+    `ENABLE_TOOL_SEARCH=true` eager-loads the genealogy MCP tool schemas
+    at agent start (matches the e2e orchestrator + hosted-web agent). Without
+    this flag the unit-test harness occasionally hits the deferred-tool
+    registry path, where the agent doesn't find `research_append` / `tree_edit`
+    via ToolSearch and falls back to "write JSON directly" — failing the test
+    on Completeness/Tool-Arguments rather than the skill's actual logic.
     """
+    env = {"ENABLE_TOOL_SEARCH": "true"}
     if auth.skill_runner_mode == "api_key" and auth.api_key:
-        return {"ANTHROPIC_API_KEY": auth.api_key}
-    return {}
+        env["ANTHROPIC_API_KEY"] = auth.api_key
+    return env

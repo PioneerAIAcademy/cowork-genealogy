@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Westmoreland County, Pennsylvania (bituminous coal region; formed 1773 from Bedford).",
+  "args": {
+    "placeName": "~Westmoreland"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Westmoreland, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1773/",
+        "latitude": 40.31,
+        "longitude": -79.47,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Westmoreland%2C%20Pennsylvania"
+      }
+    ]
+  }
+}

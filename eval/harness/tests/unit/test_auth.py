@@ -62,21 +62,30 @@ def test_raises_when_no_auth_available(monkeypatch, tmp_path):
         auth.resolve_auth()
 
 
-def test_env_for_sdk_returns_empty_in_subscription_mode():
+def test_env_for_sdk_returns_tool_search_in_subscription_mode():
+    """Subscription mode injects no API key (the CLI session handles
+    auth) but still sets ENABLE_TOOL_SEARCH=true to match the e2e
+    orchestrator + hosted-web agent — without it the SDK occasionally
+    hits the deferred-tool registry and the agent falls back to direct
+    file writes."""
     cfg = auth.AuthConfig(skill_runner_mode="subscription", api_key=None, detail="x")
-    assert auth.env_for_sdk(cfg) == {}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true"}
 
 
-def test_env_for_sdk_returns_key_in_api_mode():
+def test_env_for_sdk_returns_key_and_tool_search_in_api_mode():
     cfg = auth.AuthConfig(skill_runner_mode="api_key", api_key="sk-x", detail="x")
-    assert auth.env_for_sdk(cfg) == {"ANTHROPIC_API_KEY": "sk-x"}
+    assert auth.env_for_sdk(cfg) == {
+        "ENABLE_TOOL_SEARCH": "true",
+        "ANTHROPIC_API_KEY": "sk-x",
+    }
 
 
 def test_env_for_sdk_subscription_mode_omits_key_even_if_present():
     """Subscription mode means the skill runner uses the CLI session; we
     do NOT inject the API key into the SDK subprocess (the os.environ
-    inheritance caveat is documented in auth.py module docstring)."""
+    inheritance caveat is documented in auth.py module docstring).
+    ENABLE_TOOL_SEARCH is still set (it's not an auth secret)."""
     cfg = auth.AuthConfig(
         skill_runner_mode="subscription", api_key="sk-x", detail="x"
     )
-    assert auth.env_for_sdk(cfg) == {}
+    assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true"}
