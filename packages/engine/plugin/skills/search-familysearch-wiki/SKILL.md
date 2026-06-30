@@ -2,23 +2,20 @@
 name: search-familysearch-wiki
 model: claude-sonnet-4-6
 description: >-
-  Search the FamilySearch Research Wiki for genealogy research guidance and save
-  the findings as a markdown file in the user's working folder. Use when the
-  user asks to "search the FamilySearch wiki", "check the FS research wiki", OR
-  asks any how-to genealogy research question such as "how do I find marriage
-  records", "how do I find death records", "how do I find census records",
-  "how do I find military records", "how do I find land records",
-  "how do I find probate records", "how do I find church records",
-  "how do I find immigration records", or asks how to research ancestors from a
-  specific country or region, or how to use a FamilySearch resource. Always use
-  this skill for any "how do I find [record type]" question even when the user
-  does not explicitly name the FamilySearch wiki — do not answer from training
-  knowledge. Do NOT use when the user explicitly names Wikipedia
-  (use search-wikipedia), wants a comprehensive locality records-availability
-  guide (use locality-guide — typical phrasings: "what records exist for
-  [place]", "where are records held for [place]", "what genealogy records
-  are available for [county/state/country]"), or wants narrative historical
-  background such as migration patterns or boundary changes (use historical-context).
+  Search the FamilySearch Research Wiki for genealogy research guidance and
+  save the findings as a markdown file in the user's working folder. Use when
+  the user asks to "search the FamilySearch wiki", "check the FS research
+  wiki", OR asks any how-to genealogy research question such as "how do I find
+  marriage records", "how do I find census records", or similar "how do I find
+  [record type]" questions (death, military, land, probate, church,
+  immigration, etc.), or asks how to research ancestors from a specific
+  country or region, or how to use a FamilySearch resource. Always use this
+  skill for any "how do I find [record type]" question even when the user does
+  not name the FamilySearch wiki — do not answer from training knowledge. Do
+  NOT use when the user explicitly names Wikipedia (use search-wikipedia),
+  wants a comprehensive locality records-availability guide (use
+  locality-guide), or wants narrative historical background such as migration
+  patterns or boundary changes (use historical-context).
 allowed-tools:
   - wiki_search
 ---
