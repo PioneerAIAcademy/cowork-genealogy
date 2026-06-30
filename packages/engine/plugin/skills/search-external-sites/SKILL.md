@@ -9,10 +9,13 @@ description: Generates search URLs for external genealogy sites (Ancestry,
   "search Ancestry", "search MyHeritage", "search FindMyPast", "search
   FindAGrave", "search Newspapers.com", when a plan item targets a
   non-FamilySearch repository, or when the user uploads a PDF capture from
-  an external genealogy site. Do NOT use when the target is FamilySearch
-  (use search-records), when the user wants to plan what to search (use
-  research-plan), or when the user wants to analyze a single record already
-  in context (use record-extraction).
+  an external genealogy site — i.e. when a specific search has already been
+  chosen and a URL needs generating. Do NOT use when the target is
+  FamilySearch (use search-records); when the user is still deciding what or
+  where to search — questions like "what should I search next?", "which
+  external sites should I try?", or "where should I look for X?" — which is
+  planning, not execution (use research-plan); or when the user wants to
+  analyze a single record already in context (use record-extraction).
 allowed-tools:
   - place_search
   - external_links_search
@@ -36,6 +39,14 @@ browser supplies the access.
 Getting the search **parameters** right is the core of the task: a URL
 with the wrong name encoding, a missing date window, or the wrong
 collection sends the user to a dead end.
+
+**This skill executes a search that has already been chosen — it does not
+choose searches.** If the user's message is a planning question — *which*
+sites or record types to search, or in what order ("what should I search
+next?", "where should I look for Patrick's parents?") — don't generate
+URLs. In one line, say that picking and prioritizing searches is planning,
+and hand off to `research-plan`. Only proceed below once a specific
+external-site search is named (by the user or a plan item).
 
 References to load when the moment arrives:
 - `references/repository-types.md` — before your first search, so you
@@ -320,9 +331,14 @@ no-access wall where none did), and `outcome` chosen from your triage:
   was searched, its known coverage gaps, and whether the absence is
   conclusive or whether undigitized/unindexed records may still exist
   ("not found online" ≠ "does not exist"). Never skip the log because
-  "there was nothing to record." If the user *reports* a nil result without a
-  capture, give them the click-capture steps (step 4) so they can confirm the
-  page really was empty before you log the absence as conclusive.
+  "there was nothing to record" — **log the nil now, in this turn**, even when
+  the user says "nothing came up, there's nothing to save." If the user
+  *reports* a nil without a capture, still append the `negative` entry
+  immediately, and in `notes` mark the absence **unconfirmed pending a
+  capture**; then give them the click-capture steps (step 4) so a PDF of the
+  empty results page can later upgrade it from "unconfirmed" to "conclusive."
+  Logging the search is not the same as declaring the record absent — never
+  defer the log entry while you wait for the capture.
 - **No access** (subscription/login wall the user can't pass) →
   `outcome: "error"` with the reason; suggest the fallback plan item.
 

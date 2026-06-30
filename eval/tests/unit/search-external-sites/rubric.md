@@ -20,19 +20,19 @@ Did the skill provide clear instructions for the click-capture workflow? The use
 
 ## Result triage
 
-After receiving a capture, did the skill correctly identify relevant records and distinguish them from false positives?
+Did the skill handle results correctly **for the phase this turn actually reached**? Triage runs only *after* the user uploads a capture (PDF). Most tests end at URL generation, before any capture exists — so there is nothing to triage yet, and the correct behavior is to **defer**: don't fabricate or pre-judge results you haven't received, and signal what you'll evaluate once the capture arrives. On a no-capture turn, grade the deferral, not the absence of triage — a clean deferral is a **pass**, never a partial, because waiting for the capture is exactly what the workflow asks for. Only when a capture is actually present in the turn do you grade the per-record triage itself. (Scoring this dimension `null` / N-A on a no-capture turn is also acceptable; what must never happen is a partial or fail for correctly waiting.)
 
-- **pass:** Each result in the capture is categorized (relevant / needs review / not relevant) with reasoning that cites specific matching or non-matching attributes.
-- **partial:** Most results triaged correctly but one near-match is mis-categorized as either relevant or irrelevant without justification.
-- **fail:** Results are bulk-accepted or bulk-rejected without per-record reasoning, or relevant records are silently dropped.
+- **pass:** No capture in the turn → the skill defers triage without fabricating matches, ideally naming the criteria it will apply (name, age/birth-year, jurisdiction). Capture present → every result is categorized (relevant / needs review / not relevant) with reasoning that cites specific matching or non-matching attributes.
+- **partial:** A capture is present and most results are triaged correctly, but one near-match is mis-categorized without justification. (A correct deferral on a no-capture turn is **not** a partial.)
+- **fail:** The skill fabricates results or claims matches from a capture that was never provided; or, with a capture present, bulk-accepts or bulk-rejects without per-record reasoning, or silently drops relevant records.
 
 ## Tool selection
 
 Did the skill use its MCP tools per the documented flow — resolve the place, fetch curated links, and consume the response correctly?
 
-- **pass:** `place_search` resolves the place first and the returned `standardPlace` (not a guessed string) feeds `external_links_search` with the plan item's year window; the response is consumed per the rules (filter to the target site's host, dedupe repeated URLs, fall back to the site-wide template only when the site has no curated URL); the search is persisted via `research_log_append` (which validates before persisting).
-- **partial:** Right tools but a consumption slip — e.g. guessed the standardPlace, ignored `totalForPlace` semantics, or built the URL without filtering/deduping the curated links.
-- **fail:** Skipped `external_links_search` entirely and hand-built a URL when curated links existed, or called tools with fabricated arguments.
+- **pass:** `place_search` runs first and the **`standardPlace` it returns** (not a guessed string) feeds `external_links_search` with the plan item's year window — using that returned value is correct even when it resolves to a broader administrative level (e.g. state) than the place named in the request. The response is consumed per the rules: keep links whose host matches the target site, dedupe repeated URLs, confirm a kept link's record type fits the plan item, and **fall back to the site-wide template whenever no curated link matches the target site or record type** (a correct, expected fallback — not a slip). The search is persisted via `research_log_append` (which validates before persisting).
+- **partial:** Right tools, but a genuine consumption slip — fabricated or guessed a `standardPlace` that `place_search` did not return, presented a curated link for the wrong record type as if it fit, or failed to dedupe duplicate curated URLs.
+- **fail:** Skipped `external_links_search` entirely and hand-built a URL when a *matching* curated link existed, or called tools with fabricated arguments.
 
 ## Log entry
 
