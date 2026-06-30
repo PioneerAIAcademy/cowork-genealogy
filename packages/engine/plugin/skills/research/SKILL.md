@@ -5,8 +5,8 @@ description: >-
   Drives the full GPS research workflow on a research objective, invoking the
   right sub-skills in the right order based on current research.json state.
   Iterates from question selection through proof conclusion until all
-  questions are resolved. Use when the user says "research <objective>",
-  "/research <question>", "find <relative>", "investigate <person>", "answer
+  questions are resolved. Use when the user says "research [objective]",
+  "/research [question]", "find [relative]", "investigate [person]", "answer
   this research question", or wants to hand off a full research objective
   without driving each step themselves. Especially useful for beginners who
   don't yet know which sub-skill to invoke. Also the entry point for
