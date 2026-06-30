@@ -17,5 +17,9 @@
     "It must NOT force a_005 onto Patrick, Thomas, or Mary, and must NOT skip the link or merely recommend creating the person later — James (a son named in his father's will) is clearly research-relevant family",
     "a_005 is full-text-sourced (record_persona_id null), so same_person cannot run and the new entry's match_score must be null — the link rests on correlation (the will names James Flynn as a son/heir of Thomas)",
     "probable confidence is appropriate — a brand-new stub rests on the single will record with no independent corroboration yet; confident would over-claim (both the skill's stub-confidence rule and the rubric cap a single-source link at probable)"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
 }
