@@ -8,7 +8,7 @@
     "tags": ["browse", "volume-selection", "multi-candidate", "scoping"]
   },
   "input": {
-    "user_message": "Several Schuylkill County, Pennsylvania record sets are digitized but not indexed. Find the right unindexed volume to browse for Thomas Flynn's will and pull up its images so I can start paging through them.",
+    "user_message": "Several Schuylkill County, Pennsylvania record sets are digitized but not indexed. Find the right unindexed volume to browse for Thomas Flynn's will and list its images so I can see what's covered.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["volume-search-schuylkill-multi-browse", "image-search-schuylkill-probate"],
