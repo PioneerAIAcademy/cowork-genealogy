@@ -44,44 +44,19 @@ proof_summaries (element 5).
 
 ## Two summaries
 
-This skill produces two outputs:
+This skill produces two outputs, presented user-friendly first:
 
-### 1. Detailed summary (for experienced genealogists)
+1. **Detailed summary** (for experienced genealogists) — the GPS state
+   of the project: objective, per-question status and which of the 5
+   GPS elements are met, plan progress, log statistics and diversity,
+   evidence classification, conflicts, hypotheses, timeline gaps,
+   exhaustiveness level, conclusion readiness, and proof conclusions.
+2. **User-friendly summary** (for casual users) — the story so far in
+   plain language: who we're researching and why, what we've found,
+   what the evidence says, what we're unsure about, and the next step.
 
-Shows the GPS state of the project:
-- Research objective
-- Question status (open, in_progress, exhaustive_declared, resolved)
-- GPS element progress per question (which of the 5 elements are met)
-- Plan progress (active plans, completed/remaining items)
-- Log statistics (total searches, positive/negative outcomes)
-- Log diversity (record types searched, repositories consulted)
-- Assertion count and classification breakdown
-- Conflict status (unresolved, resolved)
-- Hypothesis status (active, supported, ruled_out)
-- Timeline gaps (high-severity)
-- Exhaustiveness level (not assessable / preliminary / substantial / reasonably exhaustive)
-- Conclusion readiness and recommended proof conclusion form
-- Proof conclusions written and their tiers
-
-### 2. User-friendly summary (for casual users)
-
-Tells the story of the research so far:
-- Who we're researching and why
-- What we've found (in plain language)
-- What the evidence says (conversational, not GPS jargon)
-- What we're not sure about
-- What the recommended next step is
-
-Example: "We're looking for Patrick Flynn's parents. We've found
-strong evidence that his father was Thomas Flynn — Patrick is
-listed in Thomas's household in both the 1850 and 1860 censuses
-(those censuses don't actually state relationships, so we infer
-Patrick is Thomas's son from his age and place in the household;
-the relationship column wasn't added until the 1880 census), and
-his 1908 death certificate names Thomas as his father directly.
-The main gap is that we haven't found records between 1860 and
-1908. Our next step should be searching for Patrick in the 1870
-census."
+The literal output shapes for both are in
+`references/output-formats.md` — read it before presenting (step 5).
 
 ## Steps
 
@@ -141,20 +116,11 @@ found information may be pursuing outdated leads.
 
 ### 3b. Assess exhaustiveness level
 
-Assign one of four levels based on the criteria in
-`references/project-exhaustiveness.md`:
-
-- **Not yet assessable**: Fewer than 3 searches, or plan < 25% executed
-- **Preliminary**: Some searching done but major record types or
-  time periods unexplored
-- **Substantial**: Most planned searches complete, multiple record
-  types consulted, but gaps remain
-- **Reasonably exhaustive**: All planned searches complete, multiple
-  record types and repositories consulted, nil results documented,
-  no obvious avenues left unexplored
-
-Base the assessment on log diversity (record types, repositories,
-time periods) and whether nil results were documented.
+Assign one of four levels — not assessable / preliminary / substantial
+/ reasonably exhaustive — using the level definitions and the
+five-dimension criteria in `references/project-exhaustiveness.md`. Base
+it on log diversity (record types, repositories, time periods) and
+whether nil results were documented.
 
 ### 3c. Assess conclusion readiness
 
@@ -225,95 +191,13 @@ Apply this decision tree:
 
 ### 5. Present both summaries
 
-**Format for the detailed summary:**
-
-```
-PROJECT STATUS: Identify the parents of Patrick Flynn (KWCJ-RN4)
-Status: active | Created: 2026-05-01 | Updated: 2026-05-04
-
-QUESTIONS (2)
-  q_001  Who were Patrick's parents?           in_progress
-         GPS: [x] search  [x] citations  [x] analysis  [x] conflicts  [ ] conclusion
-  q_002  Where was Patrick in 1850 census?     resolved ✓
-         GPS: [x] search  [x] citations  [x] analysis  [x] conflicts  [x] conclusion
-
-PLANS
-  pl_002  For q_001: 3 items, 2 completed, 1 in_progress
-
-RESEARCH LOG
-  5 searches performed (3 positive, 1 negative, 1 partial)
-  Record types: census (3), vital records (1), cemetery (1)
-  Repositories: FamilySearch, Ancestry, FindAGrave
-
-EXHAUSTIVENESS: Substantial
-  Searched: census, vital records, cemetery records
-  Not yet searched: church records, land/probate, newspapers
-
-EVIDENCE
-  13 assertions | 4 sources
-  Classification: 2 primary, 4 secondary, 7 indeterminate
-  Person links: 5 confident, 1 probable, 0 speculative
-
-CONFLICTS
-  c_001  Birthplace (Ireland vs. Pennsylvania)  resolved ✓
-
-HYPOTHESES
-  h_001  Father = Thomas Flynn, Schuylkill Co.  supported
-         Conclusion readiness: ready → proof summary recommended
-  h_002  Father = Thomas Flynn, Luzerne Co.     ruled_out
-
-TIMELINE GAPS
-  1860–1908 (HIGH) — Missing: marriage, 1870-1900 censuses
-
-PROOF CONCLUSIONS
-  ps_001  q_001 parentage  tier: probable  vehicle: summary
-
-WARNINGS: None
-
-RECOMMENDED NEXT STEP:
-  The timeline has a high-severity gap (1860-1908). Select a
-  research question to investigate Patrick's life during this
-  period. → question-selection
-```
-
-**Format for the user-friendly summary:**
-
-Use confidence phrasing that matches the evidence strength (see
-`references/conclusion-readiness.md`). Avoid GPS jargon like
-"primary source" or "indirect evidence" — instead explain
-reliability in plain language (e.g., "the census taker recorded
-this at the time" rather than "this is primary information").
-
-```
-Here's where we stand on Patrick Flynn's research:
-
-We're trying to identify Patrick's parents. The strongest
-evidence points to Thomas Flynn of Schuylkill County as his
-father — three different records support this:
-
-• The 1850 census shows 5-year-old Patrick in Thomas's household (relationship inferred from position — the relationship column wasn't introduced until the 1880 census)
-• The 1860 census shows 15-year-old Patrick in Thomas's household (relationship also inferred — same reason)
-• Patrick's 1908 death certificate names Thomas as his father directly
-
-We resolved one conflict: the death certificate says Patrick was
-born in Pennsylvania, but the census records say Ireland. We
-concluded Ireland is correct because the census informants were
-closer to the event than the death certificate's informant
-(Patrick's son-in-law, reporting 63 years after the birth).
-
-What's still missing: We have nothing on Patrick between 1860 and
-his death in 1908 — no marriage record, no 1870/1880/1900 census
-appearances. This is a big gap. We also haven't checked church
-records, land records, or probate — any of these could provide
-additional confirmation or new leads.
-
-Our conclusion so far: Patrick was PROBABLY Thomas Flynn's son.
-To upgrade this to PROVED, we need the 1870-1900 census records
-and ideally Thomas Flynn's will or probate records.
-
-Recommended next step: Search for Patrick in the 1870 census
-for Schuylkill County, Pennsylvania.
-```
+Render both using the literal skeletons in
+`references/output-formats.md` — the detailed GPS-state block and the
+plain-language story. Present the user-friendly summary first, then the
+detailed one. In the user-friendly summary, match confidence phrasing
+to evidence strength (see `references/conclusion-readiness.md`) and
+avoid GPS jargon — explain reliability plainly ("the census taker
+recorded this at the time," not "this is primary information").
 
 ### 6. Note about the research log viewer
 
@@ -325,47 +209,34 @@ interactive exploration.
 
 ## Important rules
 
-- **Always produce both summaries.** The detailed summary is for
-  the GPS-aware user; the user-friendly summary is for everyone.
-  Present the user-friendly one first, then the detailed one
-  (which the user can expand or skip).
-- **Never modify project files.** This skill is read-only. It
-  reports state but doesn't change it.
+- **Always produce both summaries**, user-friendly first, then the
+  detailed one (which the user can expand or skip).
+- **Never modify project files.** This skill is read-only — it reports
+  state but doesn't change it.
 - **Surface warnings prominently.** Broken foreign keys and other
-  integrity issues should be visible at the top, not buried.
-- **Be specific about next steps.** Don't just say "continue
-  researching." Name the specific skill, the specific action, and
-  ideally the specific record type or repository. Vague
-  recommendations violate the GPS principle that research should
-  be systematic and planned.
-- **Recognize completed projects.** When all research questions
-  are resolved AND proof conclusions have been written, status
-  reporting is about what *is*, not what's next. Do not propose
-  follow-up searches, re-examination of existing conclusions, or
-  skill invocations. Replace the next-step section with a brief
+  integrity issues belong at the top, not buried.
+- **Recognize completed projects.** When all questions are resolved AND
+  proof conclusions are written, status reporting is about what *is*,
+  not what's next. Don't propose follow-up searches, re-examination, or
+  skill invocations — replace the next-step section with a brief
   completion confirmation naming the final proof tier. A closed
-  project's status report should read as a satisfying summary,
-  not a to-do list.
+  project's report should read as a satisfying summary, not a to-do
+  list.
 - **Don't assume the user remembers the last session.** Cowork
-  conversations start fresh. This skill provides the continuity
-  between sessions via the project files.
-- **Evaluate exhaustiveness honestly.** Do not claim research is
-  exhaustive simply because all planned items are complete — the
-  plan itself may have been too narrow. Cross-reference the log
-  against what records actually exist for the locality and period.
-- **Match confidence language to evidence.** In the user-friendly
-  summary, use definitive phrasing ("proves," "establishes") only
-  when the GPS is fully met. Use conditional phrasing ("strongly
-  suggests," "highly probable") when evidence is good but gaps
-  remain. Use tentative phrasing ("some evidence," "working
-  hypothesis") when support is limited.
-- **Distinguish clues from conclusions.** Information found in
-  compiled genealogies, family trees, or user-contributed databases
-  should be flagged as leads to verify, not as established facts.
+  conversations start fresh; this skill provides the cross-session
+  continuity via the project files.
+- **Evaluate exhaustiveness honestly.** Don't claim research is
+  exhaustive just because all planned items are complete — the plan
+  itself may have been too narrow. Cross-reference the log against what
+  records actually exist for the locality and period (see
+  `references/project-exhaustiveness.md`).
+- **Distinguish clues from conclusions.** Information from compiled
+  genealogies, family trees, or user-contributed databases is a lead to
+  verify, not an established fact.
 - **Identify what would change the conclusion.** When presenting a
   hypothesis as "supported," note what evidence — if found — would
-  strengthen, weaken, or overturn it. This helps the user
-  understand what is at stake in the remaining research.
+  strengthen, weaken, or overturn it, so the user sees what's at stake
+  in the remaining research.
 
 ## Re-invocation behavior
 
