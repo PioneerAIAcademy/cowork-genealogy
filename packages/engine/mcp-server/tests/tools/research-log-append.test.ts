@@ -199,6 +199,25 @@ describe("research_log_append", () => {
     expect(result.errors[0]).toMatch(/externalSite must be an object/);
   });
 
+  it('coerces a literal "null" planItemId string back to null', async () => {
+    // Some models emit planItemId as the string "null" instead of JSON null;
+    // stored verbatim it fails id-reference validation
+    // ("plan_item_id 'null' not found"). The tool should persist it as null.
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: 0,
+      planItemId: "null" as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].plan_item_id).toBeNull();
+    expect((await validateProject(dir)).valid).toBe(true);
+  });
+
   it("assigns the next id as max + 1, not count + 1", async () => {
     // log_001..log_003 then a gap to log_009 → next is log_010.
     const log = [logEntry(1), logEntry(2), logEntry(3), logEntry(9)];
