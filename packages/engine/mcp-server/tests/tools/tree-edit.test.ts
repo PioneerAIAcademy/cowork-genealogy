@@ -437,4 +437,44 @@ describe("tree_edit (batch ops)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/non-empty/);
   });
+
+  // ── String-coercion: the model sometimes serializes a large `ops` batch (or a
+  // single-op nested object) as a JSON *string* (see coerce-json-arg.ts). The
+  // tool recovers it rather than rejecting it into a slow one-op-per-call fallback.
+  it("(coerce) applies an ops batch that arrives as a JSON string", async () => {
+    await writeProject(onePerson());
+    const opsArray = [
+      { operation: "add_source", source: { title: "1850 Census" } }, // → S1
+      { operation: "add_person", person: { gender: "Female", names: [{ given: "Mary", surname: "Smith" }] } }, // → I2
+      { operation: "add_fact", personId: "I1", fact: { type: "Death", date: "1899" } }, // → F2
+    ];
+    const r = await treeEdit({ projectPath: dir, ops: JSON.stringify(opsArray) as any });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => x.operation)).toEqual(["add_source", "add_person", "add_fact"]);
+    expect(r.results[1].assignedIds?.person).toBe("I2");
+    expect((await readTree()).persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);
+  });
+
+  it("(coerce) applies a single-op whose nested object arrives as a JSON string", async () => {
+    await writeProject(onePerson());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_source",
+      source: JSON.stringify({ title: "Stringified source" }) as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect((await readTree()).sources.map((s: any) => s.title)).toEqual(["Stringified source"]);
+  });
+
+  it("(coerce) leaves a non-JSON ops string alone → the existing non-empty-array error, writes nothing", async () => {
+    await writeProject(onePerson());
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await treeEdit({ projectPath: dir, ops: "not valid json" as any });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/non-empty/);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
+  });
 });
