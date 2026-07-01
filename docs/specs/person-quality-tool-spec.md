@@ -43,18 +43,18 @@ Example:
 GET {HOST}/service/tree/tree-data/quality/person/{personId}/scores
 ```
 
-**Host: `sg30p0.familysearch.org`** (beta — per review decision). Verified
-2026-06-29: returns the response shape below. A clean captured sample lives
-at `personal/person-quality/sample-response-KD96-TV2.json` (developer
-reference; not shipped).
+**Host: `sg30p0.familysearch.org`** — used in **all environments**, including
+production (review decision). Verified 2026-06-29: returns the response shape
+below. A clean captured sample lives at
+`personal/person-quality/sample-response-KD96-TV2.json` (developer reference;
+not shipped).
 
-> **NEEDS VALIDATION:** `getValidToken()` issues real `familysearch.org`
-> (production) OAuth tokens. Confirm the beta host `sg30p0` accepts those
-> tokens — or whether the tool needs a different token source for beta.
-> (In design testing, a beta bearer token worked against both hosts; the
-> production-token-against-beta path is unconfirmed.)
+> Note: dev testing exercised the beta-bearer-token path against `sg30p0`. The
+> tool uses `getValidToken()` (production `familysearch.org` OAuth tokens) at
+> runtime; a full production-token run through OAuth login was not exercised in
+> design, but `sg30p0` is the sanctioned host per review.
 
-> **OPEN QUESTION 5 — query params:** the PDF shows variants
+> **OPEN — query params:** the PDF shows variants
 > (`?limitScope=false`, `?scoresToCalculate=…`). The verified call used none
 > and returned all four categories; confirm no params are needed in production.
 
@@ -77,23 +77,21 @@ Status codes (verified 2026-06-29) are documented in *Error Handling*.
 ### Response shape
 
 The **structure and field names** here are observed from the live
-`KD96-TV2` response. The notes on *what the tool does with each field*
-(keep / drop / use as a template key) are **proposed**, not observed —
-they track the Output open questions. One field row (flagged below) is
-sourced from the PDF, **not** seen in this sample.
+`KD96-TV2` response. One field row (flagged below) is sourced from the PDF,
+**not** seen in this sample.
 
 Top level: `{ isValid, personScores, visibility }`. All data is under
 `personScores`:
 
 | Path | Meaning |
 |------|---------|
-| `personScores.issues[]` | Live (non-dismissed) issues. *(Proposed: the source of the sentences.)* |
+| `personScores.issues[]` | Live (non-dismissed) issues — the source of the sentences. |
 | `personScores.dismissedIssues[]` | Issues the user dismissed. **Excluded from output** (decided in review) — only `issues[]` is rendered. |
 | `personScores.completenessScore` / `verifiabilityScore` / `consistencyScore` / `coherenceScore` | Per-category score `{ rawNumerator, displayNumerator, denominator, displayScore, rawScore }`. |
 | `personScores.overallDisplayScore` / `overallRawScore` | Overall 0–1 score (e.g. `0.97`). |
 | `personScores.segment` | Cohort the score benchmarks against (e.g. `"Norway 1816 - 1920"`). |
-| `personScores.pid`, `lang`, `visibility` | Person ID, language, and visibility (`PUBLIC` for a normal visible person). Dropped by the proposed output. |
-| `personScores.conclusionScores[]` | A **per-fact score breakdown**: one entry per conclusion (each NAME, BIRTH, BURIAL, …) giving that single fact's four sub-scores, plus `affectingIssueIds` = which issues are dragging that fact's score down (e.g. the BURIAL conclusion's completeness is lowered by its `MISSING_EVENT_DATE` issue). It's the granular "why" behind the category scores. **Dropped by the proposed output.** |
+| `personScores.pid`, `lang`, `visibility` | Person ID, language, and visibility (`PUBLIC` for a normal visible person). Not included in the output. |
+| `personScores.conclusionScores[]` | A **per-fact score breakdown**: one entry per conclusion (each NAME, BIRTH, BURIAL, …) giving that single fact's four sub-scores, plus `affectingIssueIds` = which issues are dragging that fact's score down (e.g. the BURIAL conclusion's completeness is lowered by its `MISSING_EVENT_DATE` issue). It's the granular "why" behind the category scores. **Not included in the output.** |
 | `personScores.sourceClusters[]` | The **attached-sources list**: each source (title + ark URI) and which of the person's conclusions it touches, with `agreesWithSource` true/false. It's the evidence behind consistency scoring (does this census/record agree with the tree?). **Excluded from output (decided in review — not important to include).** |
 
 Each `issues[]` element carries the fields below. The first six rows were
@@ -187,25 +185,12 @@ not throw on an unknown issueType.
 
 ---
 
-## Output (PROPOSED — pick one shape)
+## Output
 
-The English **sentence** is the core of every option below — it is what gets
-sent to the LLM in all three; they differ only in how much (if anything)
-wraps it. **Three shapes are proposed (A / B / C); we'd like one chosen.**
-If the call is "send the LLM only the sentences," that is Option B — a
-perfectly fine outcome. **Recommended: Option A.** (This is Open Question 1.)
-
-> **OPEN QUESTION 2 — is a bare sentence enough to be useful?**
-> "The burial date is missing." names the *kind* of problem but not *which*
-> conclusion it's on. If a person has more than one burial-related fact, the
-> LLM can't tell them apart and has no handle to act on. Options A and C keep
-> `conclusionType` + `conclusionId` on each issue, making every sentence
-> traceable to its exact fact; Option B drops them and accepts the ambiguity.
-
-### Option A (recommended) — sentences + compact summary, traceable issues
-
-Option A is **one object** with two nested arrays — `categories[]` and
-`issues[]`. For `KD96-TV2` it looks like:
+The tool returns the shape below (**decided in review**): the per-issue
+English **sentences** plus a compact score summary, with each issue traceable
+to its exact fact. It is one object with two nested arrays — `categories[]`
+and `issues[]`. For `KD96-TV2`:
 
 ```json
 {
@@ -232,40 +217,21 @@ Where the values come from: `segment`, `overallScore`, and each issue's
 `conclusionType` / `conclusionId` / `scoreType` come straight from the API;
 `issueCount` and the per-category `count` are derived (counted from
 `issues`); `score` is the API category `displayScore`; `sentence` is the
-interpolated PDF template. `qualityBand` is derived from `overallScore` —
-**Open Question 3:** the band thresholds are unknown and it may be dropped.
-Each issue keeps `conclusionType` + `conclusionId` so the sentence is
-traceable to its fact (Open Question 2).
+interpolated PDF template. Each issue keeps `conclusionType` + `conclusionId`
+so the sentence is traceable to its exact fact.
 
-### Option B — sentences only
+`qualityBand` is derived from `overallScore` using **provisional** thresholds
+(≥ 0.95 High Quality, ≥ 0.80 Good Quality, ≥ 0.60 Fair Quality, else Low
+Quality). **OPEN:** the real UI thresholds are unknown — the band may be
+adjusted or dropped once confirmed.
 
-The minimal shape: just the interpolated sentences, nothing else. No summary,
-no per-issue handles, so issues are **not** traceable (Open Question 2). A
-fine choice if the LLM only needs to *read* the problems, not act on a
-specific fact.
+*Alternatives considered, not chosen:* sentences-only (a flat `string[]`, no
+summary or traceability) and this shape + every raw numeric score.
 
-```json
-{
-  "personId": "KD96-TV2",
-  "sentences": [
-    "The burial date is missing.",
-    "A marriage place is missing a city.",
-    "A residence has no tagged sources."
-  ]
-}
-```
-
-### Option C — Option A + full numeric scores
-
-Everything in Option A, plus every numeric score from the API (each
-category's `rawNumerator` / `denominator` / `displayScore`, and
-`overallRawScore`). Most complete, largest payload — use only if the LLM
-needs the raw numbers.
-
-**Open Question 4 — include friendly category labels?** The API returns
-only `scoreType`. FamilySearch's UI shows friendlier names. If we decide to
-include them, they'd be a hardcoded constant using this mapping (read off
-the screenshot — *not* from the API). Default: omit, return `scoreType`.
+**OPEN — include friendly category labels?** The API returns only
+`scoreType`. FamilySearch's UI shows friendlier names. Current behavior:
+omit them, return `scoreType`. If we later decide to include them, they'd be
+a hardcoded constant using this mapping (read off the UI — *not* from the API):
 
 | scoreType (API) | friendly label (screenshot, not in API) |
 |-----------------|------------------------------------------|
