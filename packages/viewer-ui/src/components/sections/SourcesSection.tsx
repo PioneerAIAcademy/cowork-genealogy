@@ -3,6 +3,7 @@ import { useResearchData } from '../../contexts/ResearchDataContext'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
+import Linkify from '../shared/Linkify'
 import type { Source } from '../../lib/schema'
 import { openExternal } from '../../lib/external'
 import styles from './SourcesSection.module.css'
@@ -109,7 +110,7 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
       {source.notes && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Notes</div>
-          <div className={styles.notes}>{source.notes}</div>
+          <div className={styles.notes}><Linkify text={source.notes} /></div>
         </div>
       )}
 
