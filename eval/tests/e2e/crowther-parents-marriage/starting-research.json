@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_crowther_parents_marriage",
+    "objective": "Who were the parents of Mary Crowther, born 10 July 1854 in Baltimore, Maryland, and whom did she marry?",
+    "subject_person_ids": ["218N-WSD"],
+    "status": "active",
+    "created": "2026-07-01T00:00:00Z",
+    "updated": "2026-07-01T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
