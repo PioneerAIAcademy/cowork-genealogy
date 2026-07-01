@@ -221,10 +221,10 @@ describe("personQualityTool", () => {
     vi.useRealTimers();
   });
 
-  it("throws a deleted/merged message on TOMBSTONED", async () => {
+  it("throws a tombstoned message when TOMBSTONED", async () => {
     mockOk({ isValid: true, visibility: "TOMBSTONED" });
     await expect(personQualityTool({ personId: "KD96-TV5" })).rejects.toThrow(
-      /deleted or merged.*tombstoned/,
+      /tombstoned/,
     );
   });
 
