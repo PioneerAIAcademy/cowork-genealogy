@@ -26,6 +26,16 @@ export type {
 // production familysearch.org tokens; confirm sg30p0 accepts them (see spec).
 const HOST = "https://sg30p0.familysearch.org";
 
+// The score service computes asynchronously. A cold request returns
+// `{ visibility: "CALCULATING", isValid: false }` with no personScores; the
+// score lands on a subsequent request. Poll a few times before giving up.
+const CALC_MAX_ATTEMPTS = 5; // total attempts, including the first
+const CALC_RETRY_DELAY_MS = 2000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Score categories in UI order, with each one's key on personScores.
 const CATEGORY_ORDER: Array<{
   scoreType: string;
@@ -59,6 +69,62 @@ function numOrNull(value: number | undefined): number | null {
 
 function categoryScore(block: FSCategoryScore | undefined): number | null {
   return numOrNull(block?.displayScore);
+}
+
+// Fetch the score, handling error statuses and polling through the
+// CALCULATING state until the score is ready (or attempts run out).
+async function fetchScores(
+  token: string,
+  url: string,
+  personId: string,
+): Promise<FSQualityResponse> {
+  for (let attempt = 1; attempt <= CALC_MAX_ATTEMPTS; attempt++) {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "User-Agent": BROWSER_USER_AGENT,
+        Accept: "application/json",
+      },
+    });
+
+    if (res.status === 401) {
+      throw new Error(
+        "FamilySearch rejected the access token (401). The session may have " +
+          "expired or been revoked — call the login tool to re-authenticate.",
+      );
+    }
+    if (res.status === 400) {
+      // Malformed ID: the body is empty; the detail is in a `warning` header.
+      const warning = res.headers.get("warning");
+      throw new Error(
+        `FamilySearch rejected the person ID '${personId}' (400): ${
+          warning ?? "invalid identifier"
+        }.`,
+      );
+    }
+    if (!res.ok) {
+      throw new Error(`FamilySearch quality API error: ${res.status}.`);
+    }
+
+    const body = (await res.json()) as FSQualityResponse;
+
+    // Score not ready yet — the service computes it asynchronously. Wait and
+    // retry; the score lands on a later request (as it did for the boss).
+    if (body.visibility === "CALCULATING") {
+      if (attempt < CALC_MAX_ATTEMPTS) {
+        await sleep(CALC_RETRY_DELAY_MS);
+        continue;
+      }
+      throw new Error(
+        `FamilySearch is still calculating the quality score for ${personId}. ` +
+          "Try again in a few seconds.",
+      );
+    }
+
+    return body;
+  }
+  // Unreachable: the loop returns or throws on every path.
+  throw new Error(`FamilySearch quality API error for ${personId}.`);
 }
 
 export const personQualityToolSchema = {
@@ -99,40 +165,14 @@ export async function personQualityTool(
     personId,
   )}/scores`;
 
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "User-Agent": BROWSER_USER_AGENT,
-      Accept: "application/json",
-    },
-  });
-
-  if (res.status === 401) {
-    throw new Error(
-      "FamilySearch rejected the access token (401). The session may have " +
-        "expired or been revoked — call the login tool to re-authenticate.",
-    );
-  }
-  if (res.status === 400) {
-    // Malformed ID: the body is empty; the detail is in a `warning` header.
-    const warning = res.headers.get("warning");
-    throw new Error(
-      `FamilySearch rejected the person ID '${personId}' (400): ${
-        warning ?? "invalid identifier"
-      }.`,
-    );
-  }
-  if (!res.ok) {
-    throw new Error(`FamilySearch quality API error: ${res.status}.`);
-  }
-
-  const body = (await res.json()) as FSQualityResponse;
+  const body = await fetchScores(token, url, personId);
   const scores = body.personScores;
 
-  // NOT_FOUND (or any response with no personScores) is a not-found/not-visible
-  // person — NOT a clean zero-issue person (that case has personScores present).
+  // No personScores and not CALCULATING (handled in fetchScores) means the
+  // person was not found / not visible — NOT a clean zero-issue person (that
+  // case has personScores present with issues: []).
   if (!scores) {
-    const visibility = body.visibility ?? scores;
+    const visibility = body.visibility;
     throw new Error(
       `No quality scores found for person ${personId} ` +
         `(not found or not visible${

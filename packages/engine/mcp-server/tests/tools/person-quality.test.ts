@@ -198,6 +198,29 @@ describe("personQualityTool", () => {
     );
   });
 
+  it("retries while CALCULATING, then returns the score", async () => {
+    vi.useFakeTimers();
+    mockOk({ isValid: false, visibility: "CALCULATING" });
+    mockOk({ isValid: true, personScores: { overallDisplayScore: 1, issues: [] } });
+    const promise = personQualityTool({ personId: "KD96-TV2" });
+    await vi.runAllTimersAsync();
+    const result = await promise;
+    expect(result.issueCount).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it("gives up after the max attempts if it never stops CALCULATING", async () => {
+    vi.useFakeTimers();
+    for (let i = 0; i < 5; i++) mockOk({ isValid: false, visibility: "CALCULATING" });
+    const promise = personQualityTool({ personId: "KD96-TV2" });
+    const assertion = expect(promise).rejects.toThrow(/still calculating/);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(mockFetch).toHaveBeenCalledTimes(5);
+    vi.useRealTimers();
+  });
+
   it("throws a re-auth message on 401", async () => {
     mockStatus(401);
     await expect(personQualityTool({ personId: "KD96-TV2" })).rejects.toThrow(
