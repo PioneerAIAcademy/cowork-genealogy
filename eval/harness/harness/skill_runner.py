@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import re
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -103,6 +105,39 @@ def _check_sdk_version() -> str | None:
     except (ValueError, TypeError):
         pass
     return None
+
+
+# When the harness abandons a run mid-stream (wall-clock / silence abort or
+# a routing short-circuit), the SDK tears down the CLI subprocess while it may
+# still be mid-hook. The CLI's hook callback then tries a control-channel
+# `sendRequest` on the already-closed stream, throws "Stream closed", and bun
+# dumps a minified JS stack + code frame to the subprocess's stderr. It is pure
+# teardown noise — the outcome is already recorded — but on any suite with
+# aborts it floods the console (see the `record-extraction` run: four aborts,
+# dozens of stack-trace lines). Registering a `stderr` callback is also the
+# only way to intercept it at all: with `stderr=None` the SDK leaves the
+# subprocess stderr attached to our own fd (subprocess_cli.py pipes it only
+# when a callback is set), so we could not filter it from Python. This callback
+# drops the known-noise lines and forwards everything else, so a genuine CLI
+# diagnostic still reaches the console.
+_CLI_NOISE_PATTERNS = (
+    re.compile(r"Error in hook callback"),
+    re.compile(r"Stream closed"),
+    re.compile(r"^\s*at\s"),  # JS stack frames ("at sendRequest (...)")
+    re.compile(r"^\s*\d+\s*\|"),  # bun code-frame lines ("9403 | ...")
+    re.compile(r"/\$bunfs/"),  # bun bundled-path frames
+)
+
+
+def _filter_cli_stderr(line: str) -> None:
+    """SDK `stderr` callback: swallow CLI teardown noise, forward the rest.
+
+    The SDK strips the trailing newline and skips blank lines before calling
+    us, so `line` is a non-empty, right-stripped string.
+    """
+    if any(p.search(line) for p in _CLI_NOISE_PATTERNS):
+        return
+    sys.stderr.write(line + "\n")
 
 
 class _LimitExceeded(Exception):
@@ -302,6 +337,10 @@ async def run_skill(
         max_turns=max_turns,
         env=env_for_sdk(auth),
         hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
+        # Intercept the CLI subprocess stderr so we can drop teardown noise
+        # (see _filter_cli_stderr) instead of letting it flood the console on
+        # aborted runs. Setting this is also what makes the SDK pipe stderr.
+        stderr=_filter_cli_stderr,
     )
 
     text_chunks: list[str] = []

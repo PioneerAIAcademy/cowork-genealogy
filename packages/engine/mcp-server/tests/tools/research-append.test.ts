@@ -808,4 +808,69 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(false);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
+
+  // ── String-coercion: the model sometimes serializes a large `ops` batch as a
+  // JSON *string* (see coerce-json-arg.ts). The tool recovers it rather than
+  // rejecting it and driving the model into slow one-op-per-call writes.
+  it("(coerce) applies an ops batch that arrives as a JSON string", async () => {
+    await writeProject(); // seeded with sources [src_001]
+    const opsArray = [
+      { section: "sources", op: "append", entry: noId(validSource("x")) },
+      { section: "sources", op: "append", entry: noId(validSource("y")) },
+    ];
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: JSON.stringify(opsArray) as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => x.entryId)).toEqual(["src_002", "src_003"]);
+    expect((await readResearch()).sources.map((s: any) => s.id)).toEqual(["src_001", "src_002", "src_003"]);
+  });
+
+  it("(coerce) recovers a stringified ops batch even with redundant top-level section/op (the observed record-extraction failure)", async () => {
+    await writeProject();
+    const opsArray = [
+      { section: "sources", op: "append", entry: noId(validSource("x")) }, // → src_002
+      { section: "assertions", op: "append", entry: noId(validAssertion("x", "src_002")) }, // forward ref
+    ];
+    // Exactly what Sonnet emitted: ops as a JSON string AND leftover top-level
+    // section/op (ignored once ops is present).
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      ops: JSON.stringify(opsArray) as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => `${x.section}:${x.entryId}`)).toEqual(["sources:src_002", "assertions:a_002"]);
+    expect((await readResearch()).assertions[1].source_id).toBe("src_002");
+  });
+
+  it("(coerce) applies a single-op append whose entry arrives as a JSON string", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: JSON.stringify(noId(validSource("x"))) as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect((await readResearch()).sources.map((s: any) => s.id)).toEqual(["src_001", "src_002"]);
+  });
+
+  it("(coerce) leaves a non-JSON ops string alone → the existing non-empty-array error, writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: "not valid json" as any,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/non-empty/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
 });
