@@ -32,7 +32,9 @@
     "The plan should NOT repeat record types already covered in the first plan (1850 census, death certificate). New plan items must add new evidence pathways.",
     "Sequencing: FAN searches that require a prior source to complete (e.g., finding a witness name from a death certificate before searching for that witness) should reflect that dependency in their rationale or sequence."
   ],
+  "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
   }
 }
