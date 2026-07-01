@@ -158,6 +158,66 @@ describe("research_log_append", () => {
     expect(result.ok).toBe(false);
   });
 
+  it("coerces a stringified externalSite and query back into objects", async () => {
+    // Some models emit nested-object args as JSON strings; the tool should
+    // parse them rather than fail with "externalSite.site 'undefined'".
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_site",
+      query: JSON.stringify({ surname: "Flynn", birthplace: "Pennsylvania" }) as any,
+      outcome: "partial",
+      resultsExamined: 0,
+      externalSite: JSON.stringify({
+        site: "ancestry",
+        urlGenerated: "https://ancestry.com/search?name=Flynn",
+        captureReceived: false,
+      }) as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].external_site).toEqual({
+      site: "ancestry",
+      url_generated: "https://ancestry.com/search?name=Flynn",
+      capture_received: false,
+    });
+    expect(research.log[0].query).toEqual({ surname: "Flynn", birthplace: "Pennsylvania" });
+  });
+
+  it("returns a clear error when a stringified externalSite is not valid JSON", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_site",
+      query: {},
+      outcome: "partial",
+      resultsExamined: 0,
+      externalSite: "site=ancestry" as any,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors[0]).toMatch(/externalSite must be an object/);
+  });
+
+  it('coerces a literal "null" planItemId string back to null', async () => {
+    // Some models emit planItemId as the string "null" instead of JSON null;
+    // stored verbatim it fails id-reference validation
+    // ("plan_item_id 'null' not found"). The tool should persist it as null.
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: 0,
+      planItemId: "null" as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].plan_item_id).toBeNull();
+    expect((await validateProject(dir)).valid).toBe(true);
+  });
+
   it("assigns the next id as max + 1, not count + 1", async () => {
     // log_001..log_003 then a gap to log_009 → next is log_010.
     const log = [logEntry(1), logEntry(2), logEntry(3), logEntry(9)];

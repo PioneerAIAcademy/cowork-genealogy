@@ -1,0 +1,18 @@
+#!/bin/sh
+# post-checkout — link shared gitignored dev files into a newly-added worktree.
+#
+# Args: <old-HEAD> <new-HEAD> <is-branch-checkout>. On `git worktree add` (and
+# `git clone`) <old-HEAD> is the null SHA; on an ordinary branch switch it is a
+# real SHA. We act only on the null-SHA case, and link-worktree.sh itself
+# no-ops in the primary worktree — so this hook is inert for clones and normal
+# checkouts and does real work only for a fresh linked worktree.
+#
+# Installed into the shared .git/hooks/ by `make install-hooks` (NOT via
+# core.hooksPath, so it cannot disable husky or other hook tooling). The source
+# of truth is this file, scripts/git-hooks/post-checkout, tracked in the repo.
+[ "$1" = "0000000000000000000000000000000000000000" ] || exit 0
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+if [ -x "$root/scripts/link-worktree.sh" ]; then
+  "$root/scripts/link-worktree.sh" || true   # never fail the checkout
+fi
+exit 0
