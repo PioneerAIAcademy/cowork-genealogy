@@ -43,12 +43,18 @@ Example:
 GET {HOST}/service/tree/tree-data/quality/person/{personId}/scores
 ```
 
-**Host: `www.familysearch.org`** (production, verified 2026-06-29; bare
-`familysearch.org` 301s to `www`). A clean captured sample lives at
-`personal/person-quality/sample-response-KD96-TV2.json` (developer
+**Host: `sg30p0.familysearch.org`** (beta — per review decision). Verified
+2026-06-29: returns the response shape below. A clean captured sample lives
+at `personal/person-quality/sample-response-KD96-TV2.json` (developer
 reference; not shipped).
 
-> **OPEN QUESTION 6 — query params:** the PDF shows variants
+> **NEEDS VALIDATION:** `getValidToken()` issues real `familysearch.org`
+> (production) OAuth tokens. Confirm the beta host `sg30p0` accepts those
+> tokens — or whether the tool needs a different token source for beta.
+> (In design testing, a beta bearer token worked against both hosts; the
+> production-token-against-beta path is unconfirmed.)
+
+> **OPEN QUESTION 5 — query params:** the PDF shows variants
 > (`?limitScope=false`, `?scoresToCalculate=…`). The verified call used none
 > and returned all four categories; confirm no params are needed in production.
 
@@ -82,11 +88,13 @@ Top level: `{ isValid, personScores, visibility }`. All data is under
 | Path | Meaning |
 |------|---------|
 | `personScores.issues[]` | Live (non-dismissed) issues. *(Proposed: the source of the sentences.)* |
-| `personScores.dismissedIssues[]` | Issues the user dismissed. *(**Open Question 5:** proposed to exclude these from output, matching the UI which hides them — confirm.)* |
+| `personScores.dismissedIssues[]` | Issues the user dismissed. **Excluded from output** (decided in review) — only `issues[]` is rendered. |
 | `personScores.completenessScore` / `verifiabilityScore` / `consistencyScore` / `coherenceScore` | Per-category score `{ rawNumerator, displayNumerator, denominator, displayScore, rawScore }`. |
 | `personScores.overallDisplayScore` / `overallRawScore` | Overall 0–1 score (e.g. `0.97`). |
 | `personScores.segment` | Cohort the score benchmarks against (e.g. `"Norway 1816 - 1920"`). |
-| `personScores.pid`, `lang`, `visibility`, `sourceClusters`, `conclusionScores[]` | Dropped by the proposed output (see *Output* — Open Question 1). `conclusionScores` is per-conclusion sub-scoring; `sourceClusters` is the source-agreement graph. Both are available if we decide to surface more. |
+| `personScores.pid`, `lang`, `visibility` | Person ID, language, and visibility (`PUBLIC` for a normal visible person). Dropped by the proposed output. |
+| `personScores.conclusionScores[]` | A **per-fact score breakdown**: one entry per conclusion (each NAME, BIRTH, BURIAL, …) giving that single fact's four sub-scores, plus `affectingIssueIds` = which issues are dragging that fact's score down (e.g. the BURIAL conclusion's completeness is lowered by its `MISSING_EVENT_DATE` issue). It's the granular "why" behind the category scores. **Dropped by the proposed output.** |
+| `personScores.sourceClusters[]` | The **attached-sources list**: each source (title + ark URI) and which of the person's conclusions it touches, with `agreesWithSource` true/false. It's the evidence behind consistency scoring (does this census/record agree with the tree?). **Excluded from output (decided in review — not important to include).** |
 
 Each `issues[]` element carries the fields below. The first six rows were
 **observed** in the `KD96-TV2` sample; the *Use* column is the proposed
@@ -290,6 +298,14 @@ inferred from the schema.
 | API returns other non-OK | Throw: `"FamilySearch quality API error: ${status}."` |
 | `personScores` present, `issues` empty | Not an error — return `issueCount: 0` and an empty `issues` array (a clean, high-quality person). *(Not yet observed on a live person; inferred from the schema.)* |
 | Unknown `issueType` (no template) | Use the missing-template fallback; do not throw. |
+
+**`NOT_FOUND` does *not* mean "no issues."** Two different states, easy to
+confuse:
+- **No issues (clean person):** a real, visible person with `personScores`
+  present and `issues: []`. The person scored well — render zero issues.
+- **`NOT_FOUND`:** `visibility: "NOT_FOUND"` and **no `personScores` at all**
+  — the person ID doesn't exist or isn't visible to this user. Nothing was
+  scored; this is an error, not a clean person.
 
 ---
 
