@@ -587,7 +587,8 @@ async def _execute_skill_with_retry(
     after_snapshot: dict[str, Any] = {}
     for attempt in range(attempts):
         with tempfile.TemporaryDirectory(
-            prefix=f"eval-{spec.id}-{run_index}-{attempt}-"
+            prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
+            ignore_cleanup_errors=True,
         ) as tmp:
             workspace = Path(tmp)
             try:
