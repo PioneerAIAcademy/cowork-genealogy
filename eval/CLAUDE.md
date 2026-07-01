@@ -79,7 +79,7 @@ Skill evals include tool-usage rubric dimensions, so there is no separate MCP to
 
 ## Run log naming
 
-Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is **no model directory** — the model the run executed against is stored in the run-log JSON's `model` field and in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter. Activating a run log restores the `model:` frontmatter alongside the rest of the snapshot.
+Run logs live at `eval/runlogs/unit/<skill>/<filename>`. There is **no model directory** — the model the run executed against is stored in the run-log JSON's `model` field (sourced from `run_tests.py --model`, defaulting to `<repo>/default-model.json`). Skills do **not** carry a `model:` frontmatter field (it is inert in production — see "Model selection" below).
 
 Filenames classify into three kinds:
 
@@ -161,9 +161,11 @@ The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rew
 
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
-## Model Pinning
+## Model & effort selection
 
-The skill harness pins a specific model per skill via `model:` in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.
+All skills run on **one** model + effort per invocation. **Model** resolves as `run_tests.py --model <id>` → else the shared default in `<repo>/default-model.json` (key `skill_model`). **Effort** resolves as `run_tests.py --effort <low|medium|high|xhigh|max>` → else key `skill_effort` (default `high`). That same file backs the hosted server's `config.default_model` / `config.default_effort` (injected into each sandbox as the `MODEL` / `EFFORT` env vars), so **eval and production run the same skill model + effort** by construction. The run-log envelope records both (`model`, `effort`) — what actually ran. Lower effort = fewer thinking tokens = lower cost, often at some quality cost; sweep `--effort` to find the balance.
+
+A SKILL.md `model:` field is **not** honored, and the skills carry none: it is inert in production (Cowork and the Claude Agent SDK run skills on the user/session model, never per-skill frontmatter — only *subagents/agents* like `gps-mentor` honor `model:`). To A/B a new model across the suite, run `--model claude-sonnet-5`; to ship it, change `default-model.json` (the server picks it up via `default_model`).
 
 `judge_model` is project-global, not per-run-versioned — bumping the judge model is a separate decision that invalidates historical comparisons.
 

@@ -38,6 +38,7 @@ from harness.runlog import (
 from harness.runnability import RunnabilityResult, check_runnable
 from harness.skill_runner import (
     DEFAULT_MODEL,
+    DEFAULT_EFFORT,
     DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     SkillRunResult,
     run_skill,
@@ -133,6 +134,7 @@ def run_one_test(
     auth: AuthConfig,
     paths: OrchestratorPaths | None = None,
     model: str = DEFAULT_MODEL,
+    effort: str = DEFAULT_EFFORT,
     judge_model: str = DEFAULT_JUDGE_MODEL,
     timestamp: str | None = None,
 ) -> dict[str, Any]:
@@ -153,6 +155,7 @@ def run_one_test(
             auth=auth,
             paths=paths,
             model=model,
+            effort=effort,
             judge_model=judge_model,
             timestamp=ts,
         )
@@ -165,6 +168,7 @@ async def _run_one_test_async(
     auth: AuthConfig,
     paths: OrchestratorPaths,
     model: str,
+    effort: str,
     judge_model: str,
     timestamp: str,
 ) -> dict[str, Any]:
@@ -192,14 +196,13 @@ async def _run_one_test_async(
     skill_frontmatter = load_skill_frontmatter(
         paths.skills_dir / spec.skill / "SKILL.md"
     )
-    # Honor the `model:` field in SKILL.md frontmatter when set (matches
-    # Claude Code skill-frontmatter semantics: turn-scoped model override
-    # per code.claude.com/docs/en/skills). Falls back to the CLI-provided
-    # `model` arg (which defaults to DEFAULT_MODEL) when the field is
-    # absent or empty.
-    skill_model = skill_frontmatter.get("model")
-    if isinstance(skill_model, str) and skill_model.strip():
-        model = skill_model.strip()
+    # All skills run on the harness `model` (CLI --model, else DEFAULT_MODEL,
+    # itself read from <repo>/default-model.json — the single source shared
+    # with the hosted server's config.default_model). A SKILL.md `model:`
+    # field is intentionally NOT honored: it is inert in production (Cowork
+    # and the Agent SDK run skills on the session model, never per-skill
+    # frontmatter), so honoring it here would let eval diverge from prod.
+    # (`skill_frontmatter` is still used below — allowed-tools, snapshot.)
     scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
     skill_baseline = compute_allowed_tools(spec.skill, paths.skills_dir)
 
@@ -241,6 +244,7 @@ async def _run_one_test_async(
             skill_baseline=skill_baseline,
             auth=auth,
             model=model,
+            effort=effort,
             judge_model=judge_model,
         )
         runs.append(single)
@@ -293,6 +297,7 @@ async def _execute_single_run(
     skill_baseline: list[str],
     auth: AuthConfig,
     model: str,
+    effort: str,
     judge_model: str,
 ) -> SingleRun:
     """One run of the skill + validators + judge. Returned to the caller for
@@ -315,6 +320,7 @@ async def _execute_single_run(
         skill_baseline=skill_baseline,
         auth=auth,
         model=model,
+        effort=effort,
         routing_short_circuit_skills=routing_short_circuit,
     )
 
@@ -541,6 +547,7 @@ async def _execute_skill_with_retry(
     skill_baseline: list[str],
     auth: AuthConfig,
     model: str,
+    effort: str,
     routing_short_circuit_skills: set[str] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
@@ -605,6 +612,7 @@ async def _execute_skill_with_retry(
                     fixtures_dir=paths.fixtures_dir,
                     auth=auth,
                     model=model,
+                    effort=effort,
                     max_turns=spec.execution.get("max_turns", 20),
                     max_wall_clock_seconds=spec.execution.get(
                         "max_wall_clock_seconds", 300

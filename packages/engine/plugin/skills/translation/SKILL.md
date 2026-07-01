@@ -1,6 +1,5 @@
 ---
 name: translation
-model: claude-sonnet-4-6
 description: Genealogy-specific translation and paleography assistance for
   historical records in German, French, Spanish, Italian, Dutch, Latin, and
   Portuguese. Covers period handwriting (Kurrentschrift, Sütterlin), Latin

@@ -53,7 +53,7 @@ from harness.runlog import (
     write_partial_runlog,
     write_run_log,
 )
-from harness.skill_runner import DEFAULT_MODEL
+from harness.skill_runner import DEFAULT_EFFORT, DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
 from harness.versioning import (
     is_releasable_invocation,
@@ -115,6 +115,28 @@ def _build_parser() -> argparse.ArgumentParser:
             "Override the run-log output root (default: <repo>/eval/runlogs). "
             "Useful for ephemeral runs that shouldn't pollute the checked-in "
             "tree."
+        ),
+    )
+    parser.add_argument(
+        "--model",
+        default=DEFAULT_MODEL,
+        help=(
+            "Model the skills run on for this invocation. Defaults to the "
+            "shared default-model.json value (same model production uses). "
+            "Override to A/B a new model, e.g. --model claude-sonnet-5; the "
+            "choice is recorded in each run log's `model` field. Does not "
+            "affect the gps-mentor agent (its own frontmatter)."
+        ),
+    )
+    parser.add_argument(
+        "--effort",
+        default=DEFAULT_EFFORT,
+        choices=["low", "medium", "high", "xhigh", "max"],
+        help=(
+            "Reasoning effort the skills run at (low|medium|high|xhigh|max). "
+            "Defaults to the shared default-model.json value. Lower effort = "
+            "fewer thinking tokens = lower cost, possibly lower quality — sweep "
+            "it to find the sweet spot. Recorded in each run log's `effort` field."
         ),
     )
     parser.add_argument(
@@ -446,6 +468,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     args = parser.parse_args(argv)
+    # One model + effort for the whole invocation: the skill execution AND the
+    # run-log envelope both use these, so what we record is what ran.
+    resolved_model = args.model
+    resolved_effort = args.effort
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
 
@@ -565,8 +591,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # Accumulate test entries grouped by skill. After all tests have run,
     # we write one run log per skill — paths under
-    # eval/runlogs/unit/<skill>/ (no model dir; model lives in the
-    # envelope and the skill's SKILL.md frontmatter).
+    # eval/runlogs/unit/<skill>/ (no model dir; the model the run used is
+    # recorded in the envelope's `model` field, sourced from --model /
+    # default-model.json — skills carry no `model:` frontmatter).
     per_skill_entries: dict[str, list[dict]] = {}
 
     def _avg_cost() -> float:
@@ -646,7 +673,8 @@ def main(argv: list[str] | None = None) -> int:
                 invocation=mode,
                 timestamp=invocation_timestamp,
                 harness_version=HARNESS_VERSION,
-                model=DEFAULT_MODEL,
+                model=resolved_model,
+                effort=resolved_effort,
                 judge_prompt_hash=judge_hash,
                 snapshot=_snapshot_for(skill),
                 tests=entries,
@@ -701,6 +729,8 @@ def main(argv: list[str] | None = None) -> int:
                     spec,
                     auth=auth,
                     paths=paths,
+                    model=resolved_model,
+                    effort=resolved_effort,
                     timestamp=invocation_timestamp,
                 )
                 inflight[fut] = (idx, spec)
@@ -841,7 +871,8 @@ def main(argv: list[str] | None = None) -> int:
             invocation=mode,
             timestamp=invocation_timestamp,
             harness_version=HARNESS_VERSION,
-            model=DEFAULT_MODEL,
+            model=resolved_model,
+            effort=resolved_effort,
             judge_prompt_hash=judge_hash,
             snapshot=_snapshot_for(skill),
             tests=entries,

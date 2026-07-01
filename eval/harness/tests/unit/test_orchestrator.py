@@ -72,7 +72,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
 
     entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
-        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-4-6", effort="medium", judge_model="claude-haiku-4-5-20251001",
         timestamp="2026-05-18_10-30-00",
     ))
 
@@ -137,7 +137,7 @@ def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
 
     entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
-        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-4-6", effort="medium", judge_model="claude-haiku-4-5-20251001",
         timestamp="2026-05-20_10-30-00",
     ))
 
@@ -452,7 +452,7 @@ def test_skill_retry_recovers_after_transient_error(tmp_path, monkeypatch):
     monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
     result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
         run_index=0, spec=_positive_spec(), paths=paths,
-        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6", effort="medium",
         base_delay=0,
     ))
     assert calls["n"] == 3
@@ -475,7 +475,7 @@ def test_skill_retry_gives_up_after_attempts(tmp_path, monkeypatch):
     monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
     result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
         run_index=0, spec=_positive_spec(), paths=paths,
-        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6", effort="medium",
         attempts=3, base_delay=0,
     ))
     assert calls["n"] == 3
@@ -497,7 +497,7 @@ def test_skill_retry_does_not_retry_execution_cap_abort(tmp_path, monkeypatch):
     monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
     result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
         run_index=0, spec=_positive_spec(), paths=paths,
-        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6", effort="medium",
         base_delay=0,
     ))
     assert calls["n"] == 1
@@ -675,7 +675,7 @@ def test_type_2_unmatched_tool_call_continues_to_judge(tmp_path, monkeypatch):
 
     entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
-        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-4-6", effort="medium", judge_model="claude-haiku-4-5-20251001",
         timestamp="2026-05-20_10-30-00",
     ))
     # Type 2: no abort, continues to judge which fails it
@@ -747,7 +747,7 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
 
     entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
-        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-4-6", effort="medium", judge_model="claude-haiku-4-5-20251001",
         timestamp="2026-05-20_10-30-00",
     ))
     assert entry["runs"][0]["aborted_reason"] is None

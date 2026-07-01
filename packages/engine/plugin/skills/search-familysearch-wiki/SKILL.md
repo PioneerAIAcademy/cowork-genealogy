@@ -1,6 +1,5 @@
 ---
 name: search-familysearch-wiki
-model: claude-sonnet-4-6
 description: >-
   Search the FamilySearch Research Wiki for genealogy research guidance and
   save the findings as a markdown file in the user's working folder. Use when

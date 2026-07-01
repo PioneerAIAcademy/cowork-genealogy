@@ -52,6 +52,7 @@ def build_options(project_dir: Path, resume: str | None = None):
         cwd=str(project_dir),
         add_dirs=[str(project_dir)],
         model=os.environ.get("MODEL") or None,
+        effort=os.environ.get("EFFORT") or None,  # low|medium|high|xhigh|max; None → SDK default
         permission_mode="bypassPermissions",  # operator-controlled, headless
         system_prompt={"type": "preset", "preset": "claude_code", "append": project_note},
         setting_sources=["user", "project"],

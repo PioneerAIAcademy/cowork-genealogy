@@ -1,6 +1,5 @@
 ---
 name: convert-dates
-model: claude-sonnet-4-6
 description: Use when a genealogist asks to convert a date "to the
   Gregorian calendar," asks what a Quaker numbered-month date means in
   modern terms, wonders if an unusual historical date is valid under the

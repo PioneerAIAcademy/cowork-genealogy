@@ -1,6 +1,5 @@
 ---
 name: author-e2e-fixture
-model: claude-sonnet-4-6
 description: Authors an end-to-end test fixture for the GPS research benchmark. Produces the five files an e2e fixture needs (fixture.json, starting-research.json, starting-tree.gedcomx.json, expected-findings.json, README.md) in the user's working folder, ready to be moved into a per-test directory under eval/tests/e2e/. Primary path starts from a FamilySearch person ID — reads the well-researched tree via person_read, strips a focused subset (the "answer"), and records what was stripped as expected findings. Two secondary paths: convert a just-completed research project, or — when there is no FamilySearch access — build PID-less from a bundled research document (report, research log, proof article), constructing the starting tree from the document and using a placeholder source_pid the author resolves before landing. Use when the user says "save this as an e2e test", "make a benchmark from this PID/research/report", "create an e2e fixture", or "author an e2e test". Do NOT use to interpret the result of an e2e run (use interpret-e2e-result), to run a new research project (use init-project), or to interpret the result of a unit-test run (those are developer-facing JSON files).
 allowed-tools:
   - person_read
