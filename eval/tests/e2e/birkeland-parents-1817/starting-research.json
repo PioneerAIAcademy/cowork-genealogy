@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_birkeland_parents_1817",
+    "objective": "Who were the parents of Kristian Fredrik Tollefsen Birkeland (born 1817, of Stavanger, Rogaland)?",
+    "subject_person_ids": ["K87G-T89"],
+    "status": "active",
+    "created": "2026-07-01T00:00:00Z",
+    "updated": "2026-07-01T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
