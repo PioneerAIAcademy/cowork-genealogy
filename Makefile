@@ -94,6 +94,32 @@ clean-deps: ## Remove all node_modules (force a from-scratch install; use after 
 reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
 	$(MAKE) install
 
+# ── Worktrees ────────────────────────────────────────────────────
+# Git worktrees don't share gitignored files, so a freshly-added worktree lacks
+# the shared secrets (eval/.env) and installed deps (node_modules). These link
+# them to the primary worktree's copies. `install-hooks` makes new worktrees
+# self-link on `git worktree add`; `worktree-link` does it for an existing one.
+.PHONY: worktree-link
+worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
+	@scripts/link-worktree.sh
+
+# Symlink our post-checkout hook into the shared .git/hooks (covers every
+# worktree of this clone). Opt-in and per-clone: it touches only local .git
+# state, never core.hooksPath, so it can't disable husky/other hook tooling and
+# is invisible to teammates who don't run it. Refuses to clobber a pre-existing
+# non-symlink hook.
+.PHONY: install-hooks
+install-hooks: ## Install the post-checkout hook so new worktrees auto-link shared files (opt-in, per-clone)
+	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
+	 main=$$(dirname "$$common"); \
+	 dst="$$common/hooks/post-checkout"; \
+	 if [ -e "$$dst" ] && [ ! -L "$$dst" ]; then \
+	   echo "install-hooks: $$dst already exists and is not a symlink — not overwriting. Merge manually." >&2; exit 1; \
+	 fi; \
+	 mkdir -p "$$common/hooks"; \
+	 ln -sfn "$$main/scripts/git-hooks/post-checkout" "$$dst"; \
+	 echo "✓ installed post-checkout hook -> $$dst"
+
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
 # port — `web` ↔ :1837 (server / server-e2b, real FamilySearch login), `web-dev`
