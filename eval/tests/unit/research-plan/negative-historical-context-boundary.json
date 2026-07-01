@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_research_plan_012",
+    "skill": "research-plan",
+    "name": "Historical background question should not trigger research-plan",
+    "type": "negative",
+    "description": "The user asks for historical context about Irish immigration to Pennsylvania coal country — not for a research plan. research-plan creates GPS-compliant search strategies; historical-context provides narrative background. Generating a list of record types to search is the wrong response to 'what was life like.' Tests the boundary between research planning and historical context enrichment.",
+    "tags": ["near-miss", "historical-context-boundary", "background-vs-planning", "skill-routing"]
+  },
+  "input": {
+    "user_message": "Can you give me some historical background on Irish immigration to Pennsylvania coal country in the 1840s through 1880s? I want to understand the community Patrick Flynn lived in.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["historical-context"],
+    "explanation": "The user is requesting historical narrative about the community context, not a research plan. historical-context explains the social, economic, and migration patterns relevant to the subject's life; research-plan determines which records to search. Producing a plan here — listing census collections and probate indexes — misses the intent entirely and doesn't answer the user's actual question."
+  },
+  "judge_context": [
+    "Should route to historical-context rather than producing a plan of record sets to search",
+    "Should not call collections_search or place_search to survey record availability — that is planning behavior, not needed here"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

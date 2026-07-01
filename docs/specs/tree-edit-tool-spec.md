@@ -216,6 +216,18 @@ Semantics (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
 
 The persisted tree shape is unchanged — `ops` changes only the number of write calls.
 
+**Stringified-argument tolerance.** The model occasionally serializes a large or
+deeply nested argument as a JSON **string** rather than inline JSON. Since the input
+schema declares `ops` as an array and the single-op payloads (`fact`, `name`,
+`person`, `relationship`, `source`) as objects, a string value is unambiguously a
+mis-serialization. The tool JSON-parses a string-valued `ops` (and those single-op
+nested objects) before any shape check (`src/utils/coerce-json-arg.ts`); an
+unparseable string falls through to the normal error (e.g. ``` `ops` must be a
+non-empty array ```). Not a supported call form — callers should pass real JSON — but
+it stops a correct-but-stringified batch from being rejected into a slow
+one-op-per-call fallback. `research_append` applies the same tolerance to its
+`ops`/`entry`/`fields`; see that spec (§3.3) for the originating rationale.
+
 ---
 
 ## 5. Persistence — validate-before-persist, atomic, tree-only
