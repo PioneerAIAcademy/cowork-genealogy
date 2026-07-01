@@ -1,5 +1,5 @@
 {
-  "run_log": "v1_2026-06-24_09-37-57.json",
+  "run_log": "v1_2026-07-01_17-14-57.json",
   "annotator": "edmondoware70@gmail.com",
   "corrections": [
     {
@@ -283,62 +283,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wiki_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_014",
-      "dimension_source": "rubric",
-      "dimension_name": "File saved correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Sources cited correctly",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Summary faithful to wiki content",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_wiki_014",
-      "dimension_source": "rubric",
-      "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
       "test_id": "ut_search_wiki_015",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -363,6 +307,62 @@
       "comment": null
     },
     {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
       "test_id": "ut_search_wiki_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -582,8 +582,8 @@
       "test_id": "ut_search_wiki_010",
       "dimension_source": "rubric",
       "dimension_name": "No-result handling (negative path)",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -742,8 +742,8 @@
       "test_id": "ut_search_wiki_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -798,8 +798,8 @@
       "test_id": "ut_search_wiki_011",
       "dimension_source": "rubric",
       "dimension_name": "No-result handling (negative path)",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     }
   ]
