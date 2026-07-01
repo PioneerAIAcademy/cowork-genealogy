@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Ralph Kennedy Quass (born 23 Feb 1891 in Palo, Linn, Iowa; died 27 Apr 1968 in Shell Rock, Butler, Iowa) was Kenneth Werner Quass's biological father.",
+      "details": {
+        "subject_person": "Kenneth Werner Quass (KNS4-P6W)",
+        "relation": "father",
+        "target_person": {
+          "name": "Ralph Kennedy Quass",
+          "pid": "KFYQ-1Y2",
+          "birth": "23 Feb 1891, Palo, Linn, Iowa"
+        }
+      },
+      "supporting_sources": [
+        "Iowa, County Births, 1880-1935 — lists Ralph Kennedy Quass as father of Kenneth Werner Quass, born 4 December 1917, Sumner, Bremer, Iowa",
+        "United States Census, 1920 — Kenneth (transcribed 'Ovass') in household of Ralph K Ovass and Emma Ovass, Sumner Township, Buchanan, Iowa",
+        "United States Census, 1930 — Kenneth Quass in household of Ralph K Quass and Emma W Quass, Sumner Township, Buchanan, Iowa"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Emma Wilhelmina Nehls (born 9 Nov 1894 in Middlefield, Buchanan, Iowa; died 13 Jan 1991 in Sumner, Bremer, Iowa) was Kenneth Werner Quass's biological mother.",
+      "details": {
+        "subject_person": "Kenneth Werner Quass (KNS4-P6W)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Emma Wilhelmina Nehls",
+          "pid": "KNSY-35C",
+          "birth": "9 Nov 1894, Middlefield, Buchanan, Iowa"
+        }
+      },
+      "supporting_sources": [
+        "United States Census, 1920 — Kenneth in household of Ralph and Emma Quass (née Nehls), Sumner Township, Buchanan, Iowa",
+        "United States Census, 1930 — Kenneth Quass in household of Ralph K and Emma W Quass, Sumner Township, Buchanan, Iowa"
+      ],
+      "required": true
+    }
+  ]
+}
