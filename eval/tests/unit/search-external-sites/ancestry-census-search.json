@@ -11,9 +11,9 @@
     "user_message": "Search for Patrick Flynn on Ancestry's 1870 census.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-schuylkill"],
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-schuylkill-1870-census"],
   "judge_context": [
-    "Generated URL should target Ancestry.com (or the appropriate ancestry.{tld}) and include search parameters derived from the subject: name 'Patrick Flynn', birth year ~1845, birthplace Pennsylvania (per the project objective)",
+    "Generated URL should target Ancestry.com (or the appropriate ancestry.{tld}) and include search parameters derived from the subject: name 'Patrick Flynn', birth year ~1845, and birthplace Ireland. NOTE: the scenario's birthplace conflict is RESOLVED to Ireland (conflicts[0]: the 1850/1860 censuses are accepted; the 1908 death certificate's 'Pennsylvania' — which the project objective still echoes — was rejected as son-in-law informant error). Using 'Ireland' is therefore correct and matches the resolved state; using 'Pennsylvania' would contradict it. Do not penalize 'Ireland' as an unsupported claim",
     "Should provide capture-workflow instructions: tell the user to save matching results as a PDF and paste back the file path or content, with named record-type expectations (1870 census household entry — Patrick would be ~25 by then, possibly head of household if married)",
     "Should not invent record content or pre-fill captured results — the analyze phase happens only after the user returns the capture"
   ]
