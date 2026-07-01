@@ -1,4 +1,5 @@
 {
-  "_comment": "Single source of truth for the model the genealogy SKILLS run on. Read by both the eval harness (eval/harness/harness/skill_runner.py -> DEFAULT_MODEL) and the hosted web server (apps/server/app/config.py -> default_model). Change the model in ONE place here. Override per-run without editing this file: --model (eval run_tests.py) or the DEFAULT_MODEL env var (server). Does NOT govern: the gps-mentor AGENT (its own `model:` frontmatter, which the Agent SDK honors) or Claude Cowork (runs skills on the user-selected session model; a SKILL.md `model:` field is inert there).",
-  "skill_model": "claude-sonnet-4-6"
+  "_comment": "Single source of truth for how the genealogy SKILLS run — the model AND the effort level. Read by the eval harness (eval/harness/harness/skill_runner.py -> DEFAULT_MODEL / DEFAULT_EFFORT) and the hosted web server (apps/server/app/config.py -> default_model / default_effort, injected into each sandbox as the MODEL / EFFORT env vars). Change these in ONE place. Override per-run without editing this file: --model / --effort (eval run_tests.py), or the DEFAULT_MODEL / DEFAULT_EFFORT env vars (server). skill_effort is one of low|medium|high|xhigh|max. Does NOT govern: the gps-mentor AGENT (its own `model:` frontmatter, honored by the Agent SDK) or Claude Cowork (runs skills on the user-selected session model; a SKILL.md `model:` field is inert there).",
+  "skill_model": "claude-sonnet-4-6",
+  "skill_effort": "high"
 }

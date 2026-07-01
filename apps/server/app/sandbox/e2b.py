@@ -179,7 +179,7 @@ class E2BProvider(SandboxProvider):
 
     def _agent_env(self, model: str) -> dict[str, str]:
         s = get_settings()
-        env = {"AGENT_MODE": s.agent_mode, "MODEL": model}
+        env = {"AGENT_MODE": s.agent_mode, "MODEL": model, "EFFORT": s.default_effort}
         if s.anthropic_api_key:
             env["ANTHROPIC_API_KEY"] = s.anthropic_api_key
         return env

@@ -179,9 +179,9 @@ A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`
 
 The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **not** the CRUD UI — see the "never hand-write" note above, which is scoped to *unit* annotations.
 
-## Model selection
+## Model & effort selection
 
-All skills run on **one** model per invocation, resolved as `run_tests.py --model <id>` → else the shared default in `<repo>/default-model.json` (key `skill_model`). That same file backs the hosted server's `apps/server/app/config.default_model`, so **eval and production run the same skill model** by construction. The run-log envelope's `model` field records what actually ran.
+All skills run on **one** model + effort per invocation. **Model** resolves as `run_tests.py --model <id>` → else the shared default in `<repo>/default-model.json` (key `skill_model`). **Effort** resolves as `run_tests.py --effort <low|medium|high|xhigh|max>` → else key `skill_effort` (default `high`). That same file backs the hosted server's `config.default_model` / `config.default_effort` (injected into each sandbox as the `MODEL` / `EFFORT` env vars), so **eval and production run the same skill model + effort** by construction. The run-log envelope records both (`model`, `effort`) — what actually ran. Lower effort = fewer thinking tokens = lower cost, often at some quality cost; sweep `--effort` to find the balance.
 
 A SKILL.md `model:` field is **not** honored, and the skills carry none: it is inert in production (Cowork and the Claude Agent SDK run skills on the user/session model, never per-skill frontmatter — only *subagents/agents* like `gps-mentor` honor `model:`). To A/B a new model across the suite, run `--model claude-sonnet-5`; to ship it, change `default-model.json` (the server picks it up via `default_model`).
 

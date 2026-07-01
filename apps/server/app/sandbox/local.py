@@ -200,6 +200,7 @@ class LocalProvider(SandboxProvider):
             "HOME": home_dir,
             "AGENT_MODE": settings.agent_mode,
             "MODEL": model,
+            "EFFORT": settings.default_effort,
             "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
         }
         if settings.anthropic_api_key:

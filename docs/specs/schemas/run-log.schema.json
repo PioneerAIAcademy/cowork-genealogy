@@ -52,6 +52,7 @@
     },
     "harness_version": { "type": "string" },
     "model": { "type": "string" },
+    "effort": { "type": ["string", "null"] },
     "judge_prompt_hash": {
       "type": "string",
       "pattern": "^([a-f0-9]{64})?$",
