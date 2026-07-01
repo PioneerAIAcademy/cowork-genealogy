@@ -53,7 +53,7 @@ from harness.runlog import (
     write_partial_runlog,
     write_run_log,
 )
-from harness.skill_runner import DEFAULT_MODEL
+from harness.skill_runner import DEFAULT_EFFORT, DEFAULT_MODEL
 from harness.snapshot import build_snapshot, hash_file
 from harness.versioning import (
     is_releasable_invocation,
@@ -126,6 +126,17 @@ def _build_parser() -> argparse.ArgumentParser:
             "Override to A/B a new model, e.g. --model claude-sonnet-5; the "
             "choice is recorded in each run log's `model` field. Does not "
             "affect the gps-mentor agent (its own frontmatter)."
+        ),
+    )
+    parser.add_argument(
+        "--effort",
+        default=DEFAULT_EFFORT,
+        choices=["low", "medium", "high", "xhigh", "max"],
+        help=(
+            "Reasoning effort the skills run at (low|medium|high|xhigh|max). "
+            "Defaults to the shared default-model.json value. Lower effort = "
+            "fewer thinking tokens = lower cost, possibly lower quality — sweep "
+            "it to find the sweet spot. Recorded in each run log's `effort` field."
         ),
     )
     parser.add_argument(
@@ -457,9 +468,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     args = parser.parse_args(argv)
-    # One model for the whole invocation: the skill execution AND the run-log
-    # envelope's `model` field both use this, so what we record is what ran.
+    # One model + effort for the whole invocation: the skill execution AND the
+    # run-log envelope both use these, so what we record is what ran.
     resolved_model = args.model
+    resolved_effort = args.effort
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
 
@@ -662,6 +674,7 @@ def main(argv: list[str] | None = None) -> int:
                 timestamp=invocation_timestamp,
                 harness_version=HARNESS_VERSION,
                 model=resolved_model,
+                effort=resolved_effort,
                 judge_prompt_hash=judge_hash,
                 snapshot=_snapshot_for(skill),
                 tests=entries,
@@ -717,6 +730,7 @@ def main(argv: list[str] | None = None) -> int:
                     auth=auth,
                     paths=paths,
                     model=resolved_model,
+                    effort=resolved_effort,
                     timestamp=invocation_timestamp,
                 )
                 inflight[fut] = (idx, spec)
@@ -858,6 +872,7 @@ def main(argv: list[str] | None = None) -> int:
             timestamp=invocation_timestamp,
             harness_version=HARNESS_VERSION,
             model=resolved_model,
+            effort=resolved_effort,
             judge_prompt_hash=judge_hash,
             snapshot=_snapshot_for(skill),
             tests=entries,

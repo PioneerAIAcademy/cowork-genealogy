@@ -32,6 +32,18 @@ def default_skill_model() -> str:
     )["skill_model"]
 
 
+def default_skill_effort() -> str:
+    """The effort level the genealogy skills run at, shared with the eval
+    harness. Single source of truth: <repo>/default-model.json (key
+    `skill_effort`, one of low|medium|high|xhigh|max). Override per-deploy
+    with the DEFAULT_EFFORT env var. Injected into each sandbox as the EFFORT
+    env var (see the sandbox providers); real_agent passes it to the Agent SDK.
+    """
+    return json.loads(
+        (REPO_ROOT / "default-model.json").read_text(encoding="utf-8")
+    )["skill_effort"]
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -41,8 +53,9 @@ class Settings(BaseSettings):
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
     # Single source of truth: <repo>/default-model.json. Override with the
-    # DEFAULT_MODEL env var. See default_skill_model() above.
+    # DEFAULT_MODEL / DEFAULT_EFFORT env vars. See the helpers above.
     default_model: str = Field(default_factory=default_skill_model)
+    default_effort: str = Field(default_factory=default_skill_effort)
 
     # ── Sandbox provider ─────────────────────────────────────────
     # "local" → LocalProvider (subprocess + local dir; the POC default).

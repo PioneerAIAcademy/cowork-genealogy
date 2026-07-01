@@ -61,6 +61,19 @@ def _read_default_skill_model() -> str:
 
 
 DEFAULT_MODEL = _read_default_skill_model()
+
+
+def _read_default_skill_effort() -> str:
+    """Effort level, shared with the hosted server (config.default_effort).
+    Single source: <repo>/default-model.json (key `skill_effort`, one of
+    low|medium|high|xhigh|max). Override one run with `run_tests.py --effort`."""
+    repo_root = Path(__file__).resolve().parents[3]
+    return json.loads(
+        (repo_root / "default-model.json").read_text(encoding="utf-8")
+    )["skill_effort"]
+
+
+DEFAULT_EFFORT = _read_default_skill_effort()
 DEFAULT_MAX_TURNS = 20
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 300
 DEFAULT_MAX_TOOL_CALLS = 50
@@ -181,6 +194,7 @@ async def run_skill(
     fixtures_dir: Path,
     auth: AuthConfig,
     model: str = DEFAULT_MODEL,
+    effort: str | None = DEFAULT_EFFORT,
     max_turns: int = DEFAULT_MAX_TURNS,
     max_wall_clock_seconds: int = DEFAULT_MAX_WALL_CLOCK_SECONDS,
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
@@ -313,6 +327,7 @@ async def run_skill(
         # path-level approval prompts that Write/Edit require.
         permission_mode="bypassPermissions",
         model=model,
+        effort=effort,
         max_turns=max_turns,
         env=env_for_sdk(auth),
         hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
