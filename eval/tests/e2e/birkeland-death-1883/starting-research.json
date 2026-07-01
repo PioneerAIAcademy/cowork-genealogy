@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_birkeland_death_1883",
+    "objective": "When and where did Kristian Fredrik Tollefsen Birkeland (born 1817, Stavanger) die, and where was he buried?",
+    "subject_person_ids": ["K87G-T89"],
+    "status": "active",
+    "created": "2026-07-01T00:00:00Z",
+    "updated": "2026-07-01T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
