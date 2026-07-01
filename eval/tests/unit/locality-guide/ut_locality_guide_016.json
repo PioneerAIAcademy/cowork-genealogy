@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_locality_guide_016",
+    "skill": "locality-guide",
+    "name": "Locality guide for Chicago, 1871 \u2014 Great Fire records",
+    "type": "positive",
+    "description": "Checks if the skill recognizes the impact of the Great Fire on record survival and directs researchers to substitutes like church registers, insurance records, and reconstructed deeds.",
+    "tags": [
+      "Chicago",
+      "Great Fire",
+      "disaster records",
+      "reconstruction",
+      "archives",
+      "volume-search"
+    ]
+  },
+  "input": {
+    "user_message": "I\u2019m researching ancestors in Chicago during the Great Fire of 1871. What records or repositories would help trace families affected by the disaster?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 720
+  },
+  "mcp_fixtures": [
+    "place-search-chicago",
+    "collections-search-chicago",
+    "wikipedia-search-chicago-great-fire",
+    "wiki-search-chicago-great-fire",
+    "wiki-search-illinois-vital-records",
+    "volume-search-chicago",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id",
+    "wiki-search-any",
+    "wikipedia-search-any",
+    "place-search-cook-county"
+  ],
+  "judge_context": [
+    "Must mention record loss due to the fire. Must highlight substitutes (church registers, insurance claims, reconstructed deeds). Newspaper collections documented the fire and its aftermath and are a valuable source for this period. Must not suggest uninterrupted civil records.",
+    "volume_search returns only two small image groups (38 and 112 images) covering pre- and post-fire court/property records, far smaller than typical county collections. Credit the skill for surfacing these volume_search results and conveying that digitized coverage for this period is unusually thin \u2014 consistent with the fire's destruction of records. Citing the specific image counts is a plus but not required; a vague restatement of the numbers should not by itself fail the response."
+  ]
+}

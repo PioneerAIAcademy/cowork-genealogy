@@ -24,7 +24,7 @@ ranked by FamilySearch's relevance score.
 Two FamilySearch endpoints serve persona search: the documented
 `api.familysearch.org/platform/records/personas` and the lower-level
 `www.familysearch.org/service/search/hr/v2/personas` that the
-`place_collections` tool uses. Both work; we use the documented one
+`collections_search` tool uses. Both work; we use the documented one
 because it has a stable contract, does **not** require the
 browser-User-Agent WAF workaround, and returns richer per-entry
 data (`title`, `links.person`, `matchInfo`) that simplifies mapping.
@@ -74,7 +74,7 @@ endpoint does **not** support this. Probed April 2026 against
 
 **Substitute for v1:** scope geographically via `birthLikePlace` /
 `deathLikePlace` / `marriagePlace` (e.g., `birthPlace: "Alabama"`).
-The `place_collections` tool remains useful for *discovery* (which
+The `collections_search` tool remains useful for *discovery* (which
 collections cover a place, with record counts) even though their IDs
 cannot be passed back into `record_search`.
 
@@ -313,7 +313,7 @@ Accept: application/json
 
 **Important:** This endpoint does **not** require a browser-style
 User-Agent. A plain `User-Agent: genealogy-mcp-server/0.0.1` works.
-This is different from the `place_collections` tool's endpoint, which is
+This is different from the `collections_search` tool's endpoint, which is
 WAF-protected.
 
 **Query parameters:**
@@ -555,13 +555,13 @@ are added.
 
 ## Files
 
-### `mcp-server/src/types/search.ts`
+### `packages/engine/mcp-server/src/types/search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 `FSFact`, `FSSourceDescription`) and tool I/O types (`SearchInput`,
 `SearchResult`, `SearchEvent`, `SearchToolResponse`).
 
-### `mcp-server/src/tools/search.ts`
+### `packages/engine/mcp-server/src/tools/search.ts`
 
 - `searchToolSchema` — MCP tool schema
 - `searchTool(input)` — main function (validate, authenticate, fetch, map)
@@ -572,7 +572,7 @@ API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
 - `formatDate(value)` — number → `YYYY` or string passthrough; rejects invalid formats
 - `parseUpstreamWarning(headerValue)` — extracts the inner-JSON `errors[]` from a 400 response's `Warning` header. Returns `null` when header is missing or unparseable.
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
@@ -613,7 +613,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 ### Smoke-test script
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx scripts/try-search.ts Lincoln Abraham                # surname + given
 npx tsx scripts/try-search.ts Lincoln Abraham 1809 Kentucky  # full filters (single date)
 npx tsx scripts/try-search.ts Lincoln Abraham --range 1800 1820  # date-range filter
@@ -628,7 +628,7 @@ npx tsx scripts/try-search.ts Lincoln --spouse "Mary Todd"   # kin-anchored
 
 ### Automated
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)

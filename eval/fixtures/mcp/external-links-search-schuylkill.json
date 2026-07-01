@@ -1,0 +1,23 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FS-curated third-party genealogy links for the Schuylkill County / Pennsylvania area. totalForPlace is the pre-filter count for the place; results is the returned set. This is the catch-all external-links fixture for the Flynn tests: the predicate matches any standardPlace because each of these tests loads exactly one external-links fixture, and the Pennsylvania-level tests (e.g. the FindAGrave search) resolve to a state-level place. response.query echoes only the place — the live tool echoes the caller's startYear/endYear back, but a single static fixture cannot match every test's window. The curated collections here pre-date most tests' target windows, which is exactly why those tests correctly fall back to a site-wide template.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "totalForPlace": 2,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/7667/",
+        "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "1850 United States Federal Census - Schuylkill County"
+      }
+    ]
+  }
+}

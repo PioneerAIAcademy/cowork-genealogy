@@ -10,6 +10,7 @@ import asyncio
 import json
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ from harness.judge import (
     DEFAULT_JUDGE_MODEL,
     JudgeError,
     JudgeOutput,
+    _summarize_response,
     grade,
 )
 from harness.loader import TestSpec
@@ -47,7 +49,7 @@ from harness.workspace import build_workspace, cleanup_session_store, snapshot_f
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
 DEFAULT_FIXTURES = REPO_ROOT / "eval/fixtures/mcp"
-DEFAULT_SKILLS = REPO_ROOT / "plugin/skills"
+DEFAULT_SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 DEFAULT_TESTS = REPO_ROOT / "eval/tests/unit"
 DEFAULT_VALIDATORS = REPO_ROOT / "eval/harness/validators"
 DEFAULT_RUNLOGS = REPO_ROOT / "eval/runlogs"
@@ -77,7 +79,7 @@ def _read_harness_version() -> str:
         except ImportError:  # pragma: no cover — Python < 3.11
             return "unknown"
         try:
-            data = tomllib.loads(pyproject.read_text())
+            data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
             return data.get("project", {}).get("version", "unknown")
         except Exception:  # noqa: BLE001 — best-effort
             return "unknown"
@@ -95,6 +97,34 @@ class OrchestratorPaths:
     tests_dir: Path = DEFAULT_TESTS
     validators_dir: Path = DEFAULT_VALIDATORS
     runlogs_root: Path = DEFAULT_RUNLOGS
+
+
+# Validators that assert the persisted project files are valid (schema-
+# conformant, references resolve). A test that declares its scenario broken
+# on purpose (`intentionally_invalid: true`) expects these to fail — the
+# invalid input is the whole point — so they are not counted against such a
+# test. Behavioural validators (allowlist, append-only, …) still apply.
+FILE_VALIDITY_VALIDATORS = frozenset(
+    {
+        "test_research_json_validates_schema",
+        "test_tree_gedcomx_json_validates_schema",
+        "test_id_references_resolve",
+    }
+)
+
+
+def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
+    """True when no validator failed.
+
+    When the test's scenario is intentionally invalid, the file-validity
+    validators are expected to fail and are ignored; every other validator
+    still counts.
+    """
+    return all(
+        r.passed
+        for r in validator_results
+        if not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
+    )
 
 
 def run_one_test(
@@ -157,7 +187,7 @@ async def _run_one_test_async(
     rubric_path = paths.tests_dir / spec.skill / "rubric.md"
     rubric = parse_rubric_or_empty(
         spec.skill,
-        rubric_path.read_text() if rubric_path.exists() else None,
+        rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else None,
     )
     skill_frontmatter = load_skill_frontmatter(
         paths.skills_dir / spec.skill / "SKILL.md"
@@ -184,21 +214,48 @@ async def _run_one_test_async(
         skill_baseline = list(set(skill_baseline) | fixture_tools)
 
     runs: list[SingleRun] = []
-    for run_index in range(spec.runs_per_test):
-        runs.append(
-            await _execute_single_run(
-                run_index=run_index,
-                spec=spec,
-                paths=paths,
-                rubric=rubric,
-                skill_frontmatter=skill_frontmatter,
-                scenario_readme=scenario_readme,
-                skill_baseline=skill_baseline,
-                auth=auth,
-                model=model,
-                judge_model=judge_model,
+    n_runs = spec.runs_per_test
+    # Per-run progress. Only emitted for multi-run tests (runs_per_test > 1).
+    # Policy pins runs_per_test to 1, so in the normal path this stays silent
+    # and the suite's per-test completion line (run_tests.py) is the live
+    # signal — that line is the one that stays readable when the thread pool
+    # interleaves output from concurrent tests. The detail here (which sub-run,
+    # skill vs. judge/validators split) is retained for any future multi-run
+    # variance work. Transient retries within a run still log to stderr from
+    # _execute_skill_with_retry.
+    for run_index in range(n_runs):
+        if n_runs > 1:
+            print(
+                f"      {spec.id} run {run_index + 1}/{n_runs} (cap "
+                f"{spec.execution.get('max_wall_clock_seconds', 300)}s) ...",
+                flush=True,
             )
+        _run_start = time.perf_counter()
+        single = await _execute_single_run(
+            run_index=run_index,
+            spec=spec,
+            paths=paths,
+            rubric=rubric,
+            skill_frontmatter=skill_frontmatter,
+            scenario_readme=scenario_readme,
+            skill_baseline=skill_baseline,
+            auth=auth,
+            model=model,
+            judge_model=judge_model,
         )
+        runs.append(single)
+        if n_runs > 1:
+            _elapsed = time.perf_counter() - _run_start
+            _skill_s = single.duration_ms / 1000.0
+            # Remainder is judge + validators + diffing (all post-skill work).
+            _post_s = max(0.0, _elapsed - _skill_s)
+            _tag = single.aborted_reason or single.outcome
+            print(
+                f"      {spec.id} run {run_index + 1}/{n_runs} -> {_tag} "
+                f"({_elapsed:.0f}s = {_skill_s:.0f}s skill + "
+                f"{_post_s:.0f}s judge/validators)",
+                flush=True,
+            )
 
     return assemble_test_entry(
         test_id=spec.id,
@@ -209,6 +266,20 @@ async def _run_one_test_async(
         runs=runs,
         timestamp_for_run_id=timestamp,
     )
+
+
+def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
+    """The skills whose invocation seals a negative test's routing verdict.
+
+    Once any of these is invoked via the Skill tool, run_skill stops the run
+    (the downstream skill never executes) — see skill_runner. Returns None for
+    positive tests and for out-of-scope negatives (`correct_skill: []`), which
+    must run normally to be graded.
+    """
+    if spec.type != "negative":
+        return None
+    correct = (spec.negative or {}).get("correct_skill", [])
+    return set(correct) or None
 
 
 async def _execute_single_run(
@@ -227,7 +298,16 @@ async def _execute_single_run(
     """One run of the skill + validators + judge. Returned to the caller for
     multi-run aggregation in assemble_test_entry."""
 
+    # Epoch bracket for the whole single run (skill + validators + judge),
+    # so the run log can report true per-skill makespan under concurrency.
+    _started_at = time.time()
+
     # --- Workspace + skill execution ------------------------------------
+    # Negative tests are graded on the routing decision, not on the routed-to
+    # skill's execution (see _compute_outcome). Tell run_skill to stop as soon
+    # as the correct alternative skill is invoked, so the suite doesn't pay for
+    # that skill's full (often very expensive) workload.
+    routing_short_circuit = _routing_short_circuit_skills(spec)
     result, before_snapshot, after_snapshot = await _execute_skill_with_retry(
         run_index=run_index,
         spec=spec,
@@ -235,6 +315,7 @@ async def _execute_single_run(
         skill_baseline=skill_baseline,
         auth=auth,
         model=model,
+        routing_short_circuit_skills=routing_short_circuit,
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -290,7 +371,7 @@ async def _execute_single_run(
         file_changes["tree.gedcomx.json"] = tree_diff
     file_changes = file_changes or None
 
-    # Set of every *other* skill name in the plugin/skills/ directory —
+    # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
     # used by rule 4 to detect "routing to another skill" patterns in
     # short responses without false-flagging legitimate concise outputs.
     other_skill_names = {
@@ -329,10 +410,13 @@ async def _execute_single_run(
         skill_frontmatter=skill_frontmatter,
         test=spec.raw.get("test", {}),
     )
-    validators_passed = all(r.passed for r in validator_results)
+    validators_passed = compute_validators_passed(
+        validator_results, intentionally_invalid=spec.intentionally_invalid
+    )
 
     # --- Judge ----------------------------------------------------------
     if validators_passed and result.aborted_reason is None:
+        _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
                 spec=spec,
@@ -365,6 +449,9 @@ async def _execute_single_run(
                 cached_input_tokens=judge_output.cached_input_tokens,
                 output_tokens=judge_output.output_tokens,
             )
+        # Records judge wall-clock on every attempted branch (success or
+        # error). The skipped branch below leaves the 0.0 default.
+        judge_result.duration_ms = (time.perf_counter() - _judge_start) * 1000.0
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
@@ -387,11 +474,21 @@ async def _execute_single_run(
     skill_input = int(sdk_usage.get("input_tokens") or 0)
     skill_cached = int(sdk_usage.get("cache_read_input_tokens") or 0)
     skill_output = int(sdk_usage.get("output_tokens") or 0)
+    # SDK timing (present only when a ResultMessage arrived — i.e. not on a
+    # wall-clock / stream-silence abort, where these stay 0).
+    skill_duration_api_ms = float(usage.get("duration_api_ms") or 0.0)
+    skill_num_turns = int(usage.get("num_turns") or 0)
+    _ended_at = time.time()
 
     return SingleRun(
         outcome=outcome,
         aborted_reason=result.aborted_reason,
         duration_ms=result.duration_ms,
+        duration_api_ms=skill_duration_api_ms,
+        num_turns=skill_num_turns,
+        started_at=_started_at,
+        ended_at=_ended_at,
+        skill_attempts=result.attempts,
         # Run-level tokens are SKILL ONLY. Judge tokens live on the
         # judge block so the spec §11 cache-hit-rate diagnostic
         # (cached/input on the skill side) stays meaningful.
@@ -444,6 +541,7 @@ async def _execute_skill_with_retry(
     skill_baseline: list[str],
     auth: AuthConfig,
     model: str,
+    routing_short_circuit_skills: set[str] | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -520,6 +618,7 @@ async def _execute_skill_with_retry(
                         DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
                     ),
                     allowed_tools_override=skill_baseline,
+                    routing_short_circuit_skills=routing_short_circuit_skills,
                 )
                 after_snapshot = snapshot_files(workspace)
             finally:
@@ -531,6 +630,9 @@ async def _execute_skill_with_retry(
             result.aborted_reason not in RETRYABLE_ABORT_REASONS
             or attempt + 1 >= attempts
         ):
+            # Record how many attempts this run took so the stall tax is
+            # visible per-run in the log (1 = clean first try).
+            result.attempts = attempt + 1
             return result, before_snapshot, after_snapshot
 
         print(
@@ -769,7 +871,9 @@ def _run_judge(
         user_message=spec.user_message,
         skills_invoked=result.skills_invoked,
         text_response=result.text_response,
-        file_changes_summary=_summarize_changes(file_changes, result.tool_calls),
+        file_changes_summary=_summarize_changes(
+            file_changes, result.tool_calls, include_content=spec.judge_reads_files
+        ),
         tool_calls=result.tool_calls,
         auth=auth,
         model=judge_model,
@@ -808,7 +912,14 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
     ]
 
 
-def _summarize_changes(file_changes, tool_calls) -> str:
+# Caps for the opt-in content block (test.judge_reads_files). The per-field
+# cap is generous enough to carry a full proof narrative including its
+# citations; the overall cap bounds the judge prompt against many large writes.
+_CHANGES_STRING_MAX = 12_000
+_CHANGES_MAX_CHARS = 50_000
+
+
+def _summarize_changes(file_changes, tool_calls, *, include_content: bool = False) -> str:
     if not file_changes:
         return "(no research.json or tree.gedcomx.json changes)"
     lines = []
@@ -822,7 +933,51 @@ def _summarize_changes(file_changes, tool_calls) -> str:
             lines.append(
                 f"  {section}: +{added} added, ~{modified} modified, -{deleted} deleted"
             )
-    return "\n".join(lines)
+    if not include_content:
+        # Default for every test/skill: counts only, unchanged legacy behavior.
+        return "\n".join(lines)
+
+    # Opt-in (test.judge_reads_files): append the actual written content so the
+    # judge can grade a deliverable persisted to a file rather than echoed in
+    # the chat reply (e.g. proof-conclusion's narrative_markdown). Per-field and
+    # overall truncation bound the judge prompt.
+    content_lines = [
+        "",
+        "Content written to files (the persisted artifact — grade this, not just the chat reply):",
+    ]
+    for fname, fdiff in file_changes.items():
+        for section, sdiff in fdiff.get("diff", {}).items():
+            for entry in sdiff.get("added", []):
+                summarized = _summarize_response(entry, string_max=_CHANGES_STRING_MAX)
+                content_lines.append(
+                    f"  {fname} / {section} (added): "
+                    f"{json.dumps(summarized, ensure_ascii=False)}"
+                )
+            for entry in sdiff.get("modified", []):
+                eid = entry.get("id")
+                after_values = {
+                    field: change.get("after")
+                    for field, change in entry.get("changed_fields", {}).items()
+                }
+                summarized = _summarize_response(
+                    after_values, string_max=_CHANGES_STRING_MAX
+                )
+                content_lines.append(
+                    f"  {fname} / {section} (modified {eid}, new values): "
+                    f"{json.dumps(summarized, ensure_ascii=False)}"
+                )
+            deleted_ids = [e.get("id") for e in sdiff.get("deleted", [])]
+            if deleted_ids:
+                content_lines.append(f"  {fname} / {section} (deleted): {deleted_ids}")
+
+    content_block = "\n".join(content_lines)
+    if len(content_block) > _CHANGES_MAX_CHARS:
+        content_block = (
+            content_block[:_CHANGES_MAX_CHARS]
+            + f"\n  [content truncated by harness for prompt size; "
+            f"full length {len(content_block)} chars]"
+        )
+    return "\n".join(lines) + "\n" + content_block
 
 
 def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
@@ -831,7 +986,7 @@ def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
     readme = scenarios_dir / scenario / "README.md"
     if not readme.exists():
         return ""
-    return readme.read_text()
+    return readme.read_text(encoding="utf-8")
 
 
 def _aborted_entry(

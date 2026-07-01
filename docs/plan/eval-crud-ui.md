@@ -57,7 +57,7 @@ shape directly.
 - **Change detection:** the per-view `refetchOnWindowFocus` above.
   No server-side file watcher, no SSE. `git pull` becomes visible on
   the next alt-tab back to a read view.
-- **Testing:** Vitest (matches `mcp-server/`) for unit tests on the
+- **Testing:** Vitest (matches `packages/engine/mcp-server/`) for unit tests on the
   data layer. No Playwright; UI rendering breaks loudly and is
   smoke-tested manually per release. Critical-path test commitments
   the plan locks in (everything else is implementer's discretion):
@@ -129,7 +129,7 @@ eval/app/
       unit-test.ts
       run-log.ts
       annotation.ts
-    skills.ts                Scan plugin/skills/, parse SKILL.md + rubric.md
+    skills.ts                Scan packages/engine/plugin/skills/, parse SKILL.md + rubric.md
     identity.ts              Resolve current user (git email or prompt)
   scripts/
     gen-zod.ts               Reads docs/specs/schemas/*.json → writes lib/schema/*.ts
@@ -258,7 +258,7 @@ data — the unit test coverage in `tests/fs/` exists for this reason.
 
 ## Skills introspection
 
-`lib/skills.ts` scans `plugin/skills/<name>/` on every request:
+`lib/skills.ts` scans `packages/engine/plugin/skills/<name>/` on every request:
 
 - `SKILL.md` frontmatter → name, description, `allowed-tools`.
 - `rubric.md` → parsed dimensions per `unit-test-spec.md §7`.

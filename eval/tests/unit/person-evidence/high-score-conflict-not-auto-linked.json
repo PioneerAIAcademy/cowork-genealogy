@@ -4,16 +4,16 @@
     "skill": "person-evidence",
     "name": "A high score must not auto-link past a qualitative conflict",
     "type": "positive",
-    "description": "Link assertion a_002 — a baptism record for a 'Patrick Flynn' whose birthplace is recorded as Germany, contradicting the Ireland birthplace in every other source. match_two_examples returns a high score (0.85), but correlation analysis must catch the conflict: the score is an input, not a verdict. person-evidence must NOT create a confident link — confidence is capped and the user is asked.",
-    "tags": ["person-evidence", "match-two-examples", "score-conflict", "safety"]
+    "description": "Link assertion a_002 — a baptism record for a 'Patrick Flynn' whose birthplace is recorded as Germany, contradicting the Ireland birthplace in every other source. same_person returns a high score (0.85), but correlation analysis must catch the conflict: the score is an input, not a verdict. person-evidence must NOT create a confident link — confidence is capped and the user is asked.",
+    "tags": ["person-evidence", "same-person", "score-conflict", "safety"]
   },
   "input": {
     "user_message": "Link assertion a_002 — the Patrick Flynn baptism record — to the right person in the tree.",
     "scenario": "flynn-record-matching"
   },
-  "mcp_fixtures": ["match-two-examples-flynn-conflict"],
+  "mcp_fixtures": ["same-person-flynn-conflict"],
   "judge_context": [
-    "match_two_examples returns 0.85, but the record's birthplace (Germany) contradicts the subject's birthplace (Ireland) attested by every other source — a core-identifier conflict",
+    "same_person returns 0.85, but the record's birthplace (Germany) contradicts the subject's birthplace (Ireland) attested by every other source — a core-identifier conflict",
     "person-evidence must NOT create a `confident` person_evidence entry for a_002 — the qualitative conflict caps confidence regardless of the score; the link, if any, is `speculative` and the user is asked",
     "The rationale must surface the birthplace conflict explicitly rather than deferring to the high score"
   ]

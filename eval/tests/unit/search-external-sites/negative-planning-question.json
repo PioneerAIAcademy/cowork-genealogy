@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_011",
+    "skill": "search-external-sites",
+    "name": "Planning question should route to research-plan, not generate URLs",
+    "type": "negative",
+    "description": "\"What should I search next?\" is a planning question — deciding which repositories and record types to target is research-plan's job. search-external-sites executes a chosen external-site search; it should not fire on a request to choose the searches. The skill's own description carves this boundary out ('Do NOT use when the user wants to plan what to search').",
+    "tags": ["near-miss", "external-vs-research-plan", "boundary", "planning"]
+  },
+  "input": {
+    "user_message": "What external sites should I search next to find Patrick's parents?",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["research-plan"],
+    "explanation": "Choosing what to search — which sites, which record types, in what order — is planning, owned by research-plan. search-external-sites is the execution arm: it fires when a specific external-site search has been chosen (by the user or a plan item) and a URL needs generating. Answering a 'what next' question with generated URLs skips the prioritization, fallback, and rationale that planning produces."
+  },
+  "judge_context": [
+    "Should route to research-plan (or recommend planning) rather than immediately generating external-site search URLs for sites the user never chose"
+  ]
+}

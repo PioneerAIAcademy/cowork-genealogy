@@ -26,7 +26,7 @@ Three files are involved:
 ### 1. Make sure the server builds
 
 ```bash
-cd ~/cowork-genealogy/mcp-server
+cd ~/cowork-genealogy/packages/engine/mcp-server
 npm run build
 npm test
 ```
@@ -118,7 +118,7 @@ correctly at each stage — no config, dummy config, real config?
 2. Run:
 
    ```bash
-   cd ~/cowork-genealogy/mcp-server
+   cd ~/cowork-genealogy/packages/engine/mcp-server
    npx @modelcontextprotocol/inspector node build/index.js
    ```
 
@@ -343,7 +343,7 @@ Move to Layer 2 when Part C works end-to-end: you can log in, see
 3. Register the server with Claude Code:
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /home/<your-wsl-user>/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /home/<your-wsl-user>/cowork-genealogy/packages/engine/mcp-server/build/index.js
    ```
 
 4. Start Claude Code:
@@ -398,7 +398,7 @@ arguments, and explains the results in plain language.
 
 If you change the server code:
 
-1. Rebuild: `cd ~/cowork-genealogy/mcp-server && npm run build`
+1. Rebuild: `cd ~/cowork-genealogy/packages/engine/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try your request again.
 
@@ -490,7 +490,7 @@ see the troubleshooting note below.
          "command": "wsl.exe",
          "args": [
            "-d", "<distro>",
-           "--cd", "/home/<your-wsl-user>/cowork-genealogy/mcp-server",
+           "--cd", "/home/<your-wsl-user>/cowork-genealogy/packages/engine/mcp-server",
            "--",
            "/home/<your-wsl-user>/.nvm/versions/node/<node-version>/bin/node",
            "build/index.js"
@@ -609,7 +609,7 @@ Install Node.js on Windows (not WSL2):
 3. Install and build from PowerShell, **in the Windows copy**:
 
    ```powershell
-   cd C:\Users\<your-windows-user>\cowork-genealogy\mcp-server
+   cd C:\Users\<your-windows-user>\cowork-genealogy\packages\engine\mcp-server
    npm install
    npm run build
    ```
@@ -636,7 +636,7 @@ Install Node.js on Windows (not WSL2):
      "mcpServers": {
        "genealogy-native": {
          "command": "node",
-         "args": ["C:\\Users\\<your-windows-user>\\cowork-genealogy\\mcp-server\\build\\index.js"]
+         "args": ["C:\\Users\\<your-windows-user>\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"]
        }
      }
    }
@@ -645,7 +645,7 @@ Install Node.js on Windows (not WSL2):
    Use double backslashes or forward slashes. If pointing at WSL2
    files instead:
    ```
-   "\\\\wsl$\\<distro>\\home\\<your-wsl-user>\\cowork-genealogy\\mcp-server\\build\\index.js"
+   "\\\\wsl$\\<distro>\\home\\<your-wsl-user>\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"
    ```
 
    **If you already have a `genealogy-dev` (WSL2) entry,** comment it
@@ -715,7 +715,7 @@ and the config + tokens files show up in
 
 The refresh path (where an expired token gets renewed behind the
 scenes) isn't directly callable from the MCP tools yet — it only
-kicks in when an **authenticated** tool like `place_collections` calls
+kicks in when an **authenticated** tool like `collections_search` calls
 `getValidToken()`. The unit tests cover it thoroughly. To verify it
 end-to-end against the live FamilySearch token endpoint:
 
@@ -730,7 +730,7 @@ end-to-end against the live FamilySearch token endpoint:
 3. Run a one-shot call to `getValidToken`:
 
    ```bash
-   cd ~/cowork-genealogy/mcp-server
+   cd ~/cowork-genealogy/packages/engine/mcp-server
    npx tsx -e 'import("./src/auth/refresh.js").then(m => m.getValidToken().then(t => console.log("got:", t.slice(0,8)+"…"), e => console.error("err:", e.message)))'
    ```
 
@@ -752,8 +752,8 @@ If the refresh call fails with a "re-authenticate" message or
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
-| Run tests | `cd mcp-server && npm test` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
+| Run tests | `cd packages/engine/mcp-server && npm test` |
 | Run Inspector | `npx @modelcontextprotocol/inspector node build/index.js` |
 | Check port 1837 | `lsof -i :1837` |
 | Wipe stored config + tokens | `rm -rf ~/.familysearch-mcp` |

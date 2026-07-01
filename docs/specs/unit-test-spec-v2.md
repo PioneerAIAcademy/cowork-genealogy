@@ -63,7 +63,7 @@ A working Python harness at `eval/harness/`:
 
 - `pyproject.toml` + uv; deps with a tightened `claude-agent-sdk>=0.1.81,<0.2`
   bound so the session-cleanup contract can't silently regress.
-- `run_tests.py` — CLI with `--test`, `--skill`, `--all`, `--tag` (repeatable),
+- `run_tests.py` — CLI with `--test`, `--skill`, `--tag` (repeatable),
   `--max-cost-usd`, `--max-wall-clock-seconds`, `--runlogs-root`,
   `--tests-dir`. Exit codes 0/1/2/3 (and `2` for empty selections so CI
   gates don't silently green on typos).
@@ -142,8 +142,8 @@ Features added since v1.6 (the seventh-pass review):
   offending turn is billed before abort.
 - **`eval/CLAUDE.md` parity list adds serial execution** — production
   may run skills concurrently; eval runs sequentially. Suite latency
-  is ~30s/test today; gate CI on specific `--skill` / `--tag` rather
-  than `--all`.
+  is ~30s/test today; gate CI on specific `--skill` / `--tag` (the
+  full corpus is only ever traversed via a shell loop at release time).
 - **Tree.gedcomx.json schema-validation runnability test added** —
   paralleling the research.json test that already existed; the
   runnability code handled both files but only research.json was
@@ -185,11 +185,11 @@ Features added since v1.5 (the sixth-pass review):
   accept null; the v1.5 `passed=True` (vacuous) and the original
   `passed=False` (misleading) both misrepresented the not-run case.
 - **runnability validates `negative.correct_skill`** against
-  `plugin/skills/` — a typo no longer silently produces an unsatisfiable
+  `packages/engine/plugin/skills/` — a typo no longer silently produces an unsatisfiable
   test.
-- **CLI variance warning**: when running `--all` over 20+ tests, prints a
-  stderr note about temperature=0 not being enforceable and suggesting
-  `runs_per_test` bumping for optimizer / golden-set work.
+- **CLI variance warning**: when any selection resolves to 20+ tests,
+  prints a stderr note about temperature=0 not being enforceable and
+  suggesting `runs_per_test` bumping for optimizer / golden-set work.
 - **`eval/CLAUDE.md` parity section**: documents the deliberate
   divergences from production Cowork (setting_sources, no temperature,
   mock MCP, sandboxed workspace) so operators don't expect identical
@@ -239,7 +239,7 @@ Features added since v1.4 (the fifth-pass review):
 - `validators/conftest.py` added so `pytest eval/harness/validators/`
   works standalone (spec §8). Default fixtures are empty;
   validator-author overrides them per test file.
-- `OWNERSHIP_TABLE` reconciled with `plugin/skills/` directory names
+- `OWNERSHIP_TABLE` reconciled with `packages/engine/plugin/skills/` directory names
   (spec used "init" shorthand, harness sees "init-project"); spec
   updated, and `search-full-text` added to the log writers row.
 - Per-skill ownership checks (in `test_conflict_resolution.py` and
@@ -488,14 +488,14 @@ hits the live MCP server with a URL/argument set and saves the response as
 a fixture. Not implemented in v1.
 
 **v2:** Add `python run_tests.py --capture <tool> <url-or-args> --out <fixture-name>`.
-Calls the configured upstream (`mcp-server/` or the live API), saves the
+Calls the configured upstream (`packages/engine/mcp-server/` or the live API), saves the
 response into `eval/fixtures/mcp/<fixture-name>.json` with the
 appropriate `tool` and a placeholder `description`. Operator edits the
 description and adds the fixture to a test's `mcp_fixtures` array.
 
 **Integration point:** `eval/harness/run_tests.py::_build_parser` for the
 flag; new `harness/capture.py` for the live-call logic (uses the same
-HTTP client paths as `mcp-server/dev/try-*.ts` does in Node — port the
+HTTP client paths as `packages/engine/mcp-server/dev/try-*.ts` does in Node — port the
 minimum needed).
 
 ---

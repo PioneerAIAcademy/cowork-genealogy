@@ -1,0 +1,100 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Locate records for Sarah Ann Mullen Price (b. 1875, Dodge County, WI) to confirm she is the daughter of James Price and Sarah Ann (Mullen) Price, not a daughter of a Mullen family",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Is Sarah Ann Mullen Price (b. 1875) the daughter of James Price and Sarah Ann Mullen, with 'Mullen' being a middle given name honoring her mother's maiden surname?",
+      "rationale": "The child's full name 'Sarah Ann Mullen Price' is ambiguous: 'Mullen' could be a middle given name (honoring her mother's maiden surname) or it could indicate she was born a Mullen and married into the Price family. Birth or baptismal records naming her parents would resolve this.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-06-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Dodge County, Wisconsin",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 census should show Sarah (age ~5) in a household, with the head of household confirming whether her surname is Price (father's family) or Mullen (mother's maiden family). The 1880 census also records relationship to head.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Dodge County, Wisconsin",
+          "date_range": "1875",
+          "repository": "FamilySearch",
+          "rationale": "A birth record would name both parents, definitively resolving whether Mullen is a middle name or a birth surname.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+
+  "log": [],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1880 U.S. Census, Dodge County, Wisconsin, population schedule, James Price household; digital image, FamilySearch.org, accessed 1 June 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1880 U.S. Federal Census, population schedule",
+        "when_created": "1880",
+        "when_accessed": "2026-06-01",
+        "where": "FamilySearch.org",
+        "where_within": "Dodge County, James Price household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MXPR-001",
+      "url_archived": null,
+      "notes": "Source of the initial family composition; Sarah listed as 'Sarah M. Price', age 5, daughter. The 'M' initial likely stands for Mullen.",
+      "transcription": null,
+      "log_entry_id": null
+    }
+  ],
+
+  "assertions": [],
+
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

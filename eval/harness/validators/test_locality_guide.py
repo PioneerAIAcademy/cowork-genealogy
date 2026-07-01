@@ -1,7 +1,7 @@
 """Skill-specific validators for the locality-guide skill.
 
 locality-guide is a read-only display skill: it consults the place_search,
-place_collections, place_external_links, wiki, and wikipedia MCP tools and outputs
+collections_search, external_links_search, wiki, and wikipedia MCP tools and outputs
 the locality research guide directly to the user. It does NOT write
 to research.json or tree.gedcomx.json — that rule is enforced
 universally by `test_universal.py::test_ownership_table` and

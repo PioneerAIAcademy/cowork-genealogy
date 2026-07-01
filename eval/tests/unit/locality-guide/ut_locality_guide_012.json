@@ -1,0 +1,51 @@
+{
+  "test": {
+    "id": "ut_locality_guide_012",
+    "skill": "locality-guide",
+    "name": "Locality guide for Oklahoma, mid\u20111800s \u2014 Native American tribal records",
+    "type": "positive",
+    "description": "Verifies that the skill recognizes Oklahoma was Indian Territory in the mid\u20111800s and directs researchers to tribal rolls, treaty records, and missionary church registers. Ensures jurisdiction\u2011aware guidance by highlighting repositories such as the National Archives, tribal offices, and denominational archives, while avoiding anachronistic references to statewide vital registration.",
+    "tags": [
+      "Oklahoma",
+      "Indian Territory",
+      "Native American records",
+      "tribal rolls",
+      "treaties",
+      "archives",
+      "jurisdiction-awareness",
+      "volume-search"
+    ]
+  },
+  "input": {
+    "user_message": "I\u2019m researching ancestors connected to Native American tribes in Oklahoma during the mid\u20111800s. What records or repositories would help trace families through tribal rolls and treaties?",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "mcp_fixtures": [
+    "place-search-oklahoma",
+    "place-search-indian-territory",
+    "collections-search-oklahoma",
+    "wikipedia-search-oklahoma",
+    "wikipedia-search-indian-territory",
+    "wikipedia-search-dawes-rolls",
+    "wiki-search-oklahoma-tribal-records",
+    "wiki-search-five-civilized-tribes",
+    "wiki-search-dawes-rolls",
+    "volume-search-oklahoma",
+    "wiki-place-page-any",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-any",
+    "collection-read-by-id",
+    "wiki-search-any",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "Recognize Oklahoma was Indian Territory in the mid\u20111800s. Mention tribal rolls, treaty records, missionary registers, and agency records. Highlight repositories like the National Archives, tribal offices, missionary archives, and Oklahoma Historical Society. Avoid Oklahoma state archives or statewide vital registration (didn\u2019t exist yet).",
+    "volume_search returns one image group of tribal enrollment cards (1840-1870) that is 99% indexed and full-text searchable. The skill should note that this volume is highly name-searchable on FamilySearch, contrasting it with the typically harder-to-search treaty and agency records discussed elsewhere in the guide."
+  ]
+}

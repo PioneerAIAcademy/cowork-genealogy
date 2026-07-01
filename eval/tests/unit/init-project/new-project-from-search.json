@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_init_project_004",
+    "skill": "init-project",
+    "name": "Initialize project by searching FamilySearch tree when no person ID provided",
+    "type": "positive",
+    "description": "User wants to start a project for Patrick Flynn but does not have his FamilySearch ID. The skill should call person_search to find candidates, select the top match (LZNY-BRF), call person_read with that ID, then create both project files normally.",
+    "tags": ["initialization", "person-search", "no-id", "single-turn-decomposition"]
+  },
+  "input": {
+    "user_message": "init-project: Start a new research project. I want to find the parents of Patrick Flynn, born around 1845 in Ireland, who lived in Schuylkill County, Pennsylvania. I don't have his FamilySearch ID.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-search-flynn", "person-read-flynn", "validate-research-schema"],
+  "judge_context": [
+    "Should call person_search (not person_read) first — no FamilySearch ID was provided",
+    "Should include surname 'Flynn' and given name 'Patrick' in the person_search arguments",
+    "Should select LZNY-BRF as the top candidate (score 4.85, confidence 3, birth 1845 Ireland matching the user's description) and then call person_read with LZNY-BRF",
+    "Should create both research.json and tree.gedcomx.json using the person_read data",
+    "Should set the project objective to something like 'Identify the parents of Patrick Flynn'"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 480
+  }
+}

@@ -17,7 +17,7 @@ This tool is a **thin HTTP wrapper**. The actual retrieval pipeline
 separate FastAPI server called `wiki-query-api`. The MCP tool just
 POSTs the query to that server and returns the JSON unchanged.
 
-Unlike `place_collections`, this tool **does not require FamilySearch
+Unlike `collections_search`, this tool **does not require FamilySearch
 authentication** in v1. It does, however, require:
 
 1. The `wiki-query-api` FastAPI server running locally (or wherever
@@ -37,7 +37,7 @@ Claude: wiki_search({ query: "How do I find Italian birth records?" })
 ### 1. Make sure the server builds and all tests pass
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm run build
 npm test
 ```
@@ -114,7 +114,7 @@ or config problems.
 2. Run the smoke test:
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx tsx dev/try-wiki-search.ts "How do I find Italian birth records?"
    ```
 
@@ -184,7 +184,7 @@ through the MCP protocol?
 ### Start the Inspector
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -271,7 +271,7 @@ happen — fill the fields in manually:
 |-------|-------|
 | Transport Type | `STDIO` |
 | Command | `node` |
-| Arguments | the **absolute path** to your built server, e.g. `/home/you/cowork-genealogy/mcp-server/build/index.js` (Windows: `C:\path\to\cowork-genealogy\mcp-server\build\index.js`) |
+| Arguments | the **absolute path** to your built server, e.g. `/home/you/cowork-genealogy/packages/engine/mcp-server/build/index.js` (Windows: `C:\path\to\cowork-genealogy\packages\engine\mcp-server\build\index.js`) |
 
 Use an absolute path. Relative paths are evaluated against the
 Inspector's working directory, which isn't always the terminal you
@@ -289,7 +289,7 @@ Look at the tools list. You should see **seven** tools:
 - `login`
 - `logout`
 - `auth_status`
-- `place_collections`
+- `collections_search`
 - `wiki_search` ← the new one
 
 If `wiki_search` is missing, check that `src/index.ts` imports and
@@ -430,10 +430,10 @@ wiki_search tool from natural language?
    file and `claude mcp list` will show `✗ Failed to connect`:
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node <ABSOLUTE_PATH_TO_REPO>/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node <ABSOLUTE_PATH_TO_REPO>/packages/engine/mcp-server/build/index.js
    ```
    
-   /home/promise/familysearch/genealogy/cowork-genealogy/mcp-server
+   /home/promise/familysearch/genealogy/cowork-genealogy/packages/engine/mcp-server
 
    Verify with:
 
@@ -464,7 +464,7 @@ wiki_search tool from natural language?
      snippets, and source URLs.
    - Claude should NOT call `wikipedia_search` — that's the wrong
      tool for FamilySearch Wiki guidance.
-   - Claude should NOT call `place_search` or `place_collections` first — this
+   - Claude should NOT call `place_search` or `collections_search` first — this
      question is about *how* to find records, not which collections
      exist.
 
@@ -494,7 +494,7 @@ wiki_search tool from natural language?
 
     > "Show me FamilySearch collections for Alabama."
 
-    Claude should pick `place_collections`, NOT `wiki_search`.
+    Claude should pick `collections_search`, NOT `wiki_search`.
 
 ### What success looks like
 
@@ -521,7 +521,7 @@ question types to the correct tool.
 
 If you change the server code:
 
-1. Rebuild: `cd mcp-server && npm run build`
+1. Rebuild: `cd packages/engine/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try again.
 
@@ -575,7 +575,7 @@ entry. Example `claude_desktop_config.json`:
       "command": "wsl.exe",
       "args": [
         "-d", "Ubuntu-22.04",
-        "--cd", "/mnt/c/path/to/cowork-genealogy/mcp-server",
+        "--cd", "/mnt/c/path/to/cowork-genealogy/packages/engine/mcp-server",
         "--",
         "/usr/bin/node",
         "build/index.js"
@@ -660,7 +660,7 @@ server entry:
     "genealogy-native": {
       "command": "node",
       "args": [
-        "C:\\path\\to\\cowork-genealogy\\mcp-server\\build\\index.js"
+        "C:\\path\\to\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"
       ]
     }
   }
@@ -685,7 +685,7 @@ testing this layer.
 2. Make sure the native Windows build is up to date:
 
    ```powershell
-   cd C:\path\to\cowork-genealogy\mcp-server
+   cd C:\path\to\cowork-genealogy\packages\engine\mcp-server
    npm run build
    ```
 
@@ -722,12 +722,12 @@ The wiki_search workflow works in Cowork on native Windows.
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
-| Run tests | `cd mcp-server && npm test` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
+| Run tests | `cd packages/engine/mcp-server && npm test` |
 | Start FastAPI server | `cd /path/to/wiki-query-api && python scripts/wiki/30_serve.py` |
-| Smoke test (default query) | `cd mcp-server && npx tsx dev/try-wiki-search.ts` |
-| Smoke test (custom query) | `cd mcp-server && npx tsx dev/try-wiki-search.ts "your question"` |
-| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Smoke test (default query) | `cd packages/engine/mcp-server && npx tsx dev/try-wiki-search.ts` |
+| Smoke test (custom query) | `cd packages/engine/mcp-server && npx tsx dev/try-wiki-search.ts "your question"` |
+| Run Inspector | `cd packages/engine/mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Edit config (Linux/WSL) | `nano ~/.familysearch-mcp/config.json` |
 | Edit config (PowerShell) | `notepad $env:USERPROFILE\.familysearch-mcp\config.json` |
 | Reconnect in Claude Code | `/mcp` |
@@ -744,7 +744,7 @@ The wiki_search workflow works in Cowork on native Windows.
 | 1A - Inspector (no config) | Config-missing error path | Wrong/cryptic error message |
 | 1B - Inspector (no server) | Network-error error path | Wrong/cryptic error message |
 | 1C - Inspector (happy path) | Tool through MCP protocol | Schema errors, serialization bugs |
-| 2 - Claude Code | LLM tool selection + presentation | Bad descriptions, tool overlap with `wikipedia_search` / `place_collections` |
+| 2 - Claude Code | LLM tool selection + presentation | Bad descriptions, tool overlap with `wikipedia_search` / `collections_search` |
 | 3a - Cowork WSL2 | Full path through WSL2 | WSL2 bridge + localhost reachability inside WSL2 |
 | 3b - Cowork Native | Full path on native Windows | Cross-platform bugs |
 

@@ -11,9 +11,10 @@
     "user_message": "Start a new research project to identify the parents of Patrick Flynn, born around 1845 in Pennsylvania and died 1908 in Schuylkill County. His FamilySearch person ID is LZNY-BRF.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-read-flynn"],
+  "mcp_fixtures": ["person-read-flynn", "validate-research-schema"],
   "judge_context": [
-    "Should set `project.objective` to a paraphrase of the user's stated goal — not the literal user_message; the objective should be a clean research statement",
+    "Should set `project.objective` to a paraphrase of the user's stated goal using the user's stated facts. The user said 'born around 1845 in Pennsylvania' — the objective should reflect that, not FamilySearch's Ireland birthplace. The objective is the user's research question, not the FamilySearch data.",
+    "The person-read-flynn fixture returns Ireland as the birthplace. The stub in tree.gedcomx.json should use Ireland (FamilySearch is the source being surveyed). The discrepancy between the user's Pennsylvania and FamilySearch's Ireland must be flagged — this is correct and expected behavior, not an error.",
     "Should create a stub person in tree.gedcomx.json from the person-read-flynn fixture data, with only known fields populated and unknown fields omitted (not filled with placeholders)",
     "Should mark facts derived from FamilySearch tree data as UNVERIFIED — e.g., source them to FamilySearch-tree-as-source rather than treating user-tree data as primary evidence"
   ]

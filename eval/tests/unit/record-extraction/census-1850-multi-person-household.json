@@ -13,9 +13,13 @@
   },
   "judge_context": [
     "Should extract assertions for every named person in the household, not just Patrick — the other household members are part of his FAN network and relevant to future research questions",
-    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (this distinguishes 1850 from 1860, which does)"
+    "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (the 1860 census is similarly structured — explicit relationship columns were not introduced until 1880)",
+    "Occupation assertions should only exist for persons who have an occupation listed in the census table — Patrick is the only person with 'Laborer' listed. Do not create occupation assertions for persons with blank occupation fields",
+    "Each relationship assertion should be atomic — one relationship per assertion (e.g., 'Mary is likely wife of Patrick' is one assertion, 'Thomas is likely child of Patrick' is another). Do not combine relationship inferences into compound assertions",
+    "Informant identification: the census enumerator is the recorder, not the informant. For name/age/birthplace facts, informant should be 'unknown household member' with reasoning (e.g., 'likely self or spouse' for adults, 'likely a parent' for children) and proximity 'household_member'. For residence facts, informant_proximity 'witness' is acceptable (the enumerator physically visited the dwelling). Use informant_bias_notes to explain reasoning."
   ],
   "execution": {
+    "max_turns": 40,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
   }

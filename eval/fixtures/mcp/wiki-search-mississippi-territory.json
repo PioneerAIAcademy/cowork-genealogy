@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Mississippi Territory records",
+  "args": {
+    "query": "~Mississippi Territory"
+  },
+  "response": {
+    "query": "Mississippi Territory census land records genealogy",
+    "total_chunks_searched": 12800,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.89,
+        "chunk_text": "The Mississippi Territory (1798–1817) encompassed present-day Mississippi and Alabama. The territorial government maintained land records, court files, militia rolls, and tax lists. Territorial census enumerations were taken in 1801, 1805, 1808, 1810, and 1816. These are held at the Mississippi Department of Archives and History (Jackson) and the Alabama Department of Archives and History (Montgomery). Federal land sales began in 1803 through the St. Stephens and Huntsville land offices. Entry files are at the National Archives (Record Group 49) and indexed on the BLM GLO website.",
+        "page_title": "Mississippi Territory Genealogy",
+        "section_heading": "Territorial Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Mississippi_Territory_Genealogy#Territorial_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "County formation in the Mississippi Territory began with Adams and Pickering counties in 1799. Washington County (1800) covered most of present-day Alabama. As settlement expanded, counties subdivided rapidly — Baldwin (1809), Madison (1808), and Mobile (1812) were carved from the Alabama portion. Researchers must trace county boundary changes to locate court, probate, and land records in the correct county courthouse.",
+        "page_title": "Mississippi Territory Genealogy",
+        "section_heading": "County Formation",
+        "source_url": "https://www.familysearch.org/en/wiki/Mississippi_Territory_Genealogy#Counties"
+      }
+    ],
+    "query_time_ms": 395,
+    "timing": {
+      "embed_ms": 50,
+      "search_ms": 228,
+      "rerank_ms": 117
+    }
+  }
+}

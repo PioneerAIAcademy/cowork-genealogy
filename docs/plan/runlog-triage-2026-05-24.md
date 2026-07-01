@@ -23,12 +23,12 @@ For each item: **affected test(s)**, **signature** (validator failure, judge dim
 
 ## Routing / activation issues (description-level)
 
-These tests fail because the skill that should have handled the prompt didn't, or the wrong skill did. Fixes belong in `plugin/skills/<skill>/SKILL.md` frontmatter `description` blocks, occasionally in the user_message wording of the test JSON.
+These tests fail because the skill that should have handled the prompt didn't, or the wrong skill did. Fixes belong in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter `description` blocks, occasionally in the user_message wording of the test JSON.
 
-### search-wiki `_003` (positive, fail)
-- Signature: `skills_invoked=['locality-guide']` — routed away from search-wiki.
-- Cause: prompt "build me a useful locality guide… for Germany" lexically matches `locality-guide`'s trigger phrases more strongly than search-wiki's.
-- Suggested: tighten the test prompt to lean on search-wiki's actual capability (querying the FamilySearch wiki for a specific topic), or extend search-wiki's description to claim "country-level wiki overview" explicitly.
+### search-familysearch-wiki `_003` (positive, fail)
+- Signature: `skills_invoked=['locality-guide']` — routed away from search-familysearch-wiki.
+- Cause: prompt "build me a useful locality guide… for Germany" lexically matches `locality-guide`'s trigger phrases more strongly than search-familysearch-wiki's.
+- Suggested: tighten the test prompt to lean on search-familysearch-wiki's actual capability (querying the FamilySearch wiki for a specific topic), or extend search-familysearch-wiki's description to claim "country-level wiki overview" explicitly.
 
 ### tree-edit `_001` (positive, fail)
 - Signature: `skills_invoked=['project-status']` — routed to project-status instead of tree-edit.
@@ -59,7 +59,7 @@ These tests fail because the skill that should have handled the prompt didn't, o
 
 ## Model-output quality (judge fails)
 
-These tests have the right skill activated, validators pass, but the judge marks output below the rubric. Fixes belong in `plugin/skills/<skill>/SKILL.md` body (prompting / examples / explicit rules), occasionally in the test rubric itself.
+These tests have the right skill activated, validators pass, but the judge marks output below the rubric. Fixes belong in `packages/engine/plugin/skills/<skill>/SKILL.md` body (prompting / examples / explicit rules), occasionally in the test rubric itself.
 
 ### record-extraction `_010` (positive, fail)
 - Signature: Correctness=1, Assertion atomicity=1, Informant identification=2, Evidence type accuracy=2.

@@ -21,11 +21,12 @@ Two new optional fields on timeline events in `research.json`
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `place_search` tool. Null if unresolvable or `place` is null. |
-| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place. Null for the first event, or when either event lacks a resolved `place_id`. |
+| `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. Null if unresolvable or `place` is null. |
+| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, via `place_distance` on the two `standard_place` names. Null for the first event, or when either event lacks a resolved `standard_place`. |
 
 Both fields are additive and optional. Existing timelines without these
-fields remain valid.
+fields remain valid. (The earlier `place_id` field was replaced by
+`standard_place` in step 5 of the standard-place standardization.)
 
 ## SKILL.md Changes
 
@@ -42,22 +43,30 @@ gaps).
 **Phase 1 — Resolve places:**
 
 1. Collect all unique non-null `place` strings from the built events.
-2. For each unique place string, call the `place_search` MCP tool to resolve
-   it to a place ID.
-3. If the tool returns one or more results, use the first (best) match
-   and write its `place_id` onto all events sharing that place string.
-4. If it returns no results, leave `place_id` null. Do not retry or
+2. For each unique place string, call the `place_search` MCP tool to
+   standardize it.
+3. If the tool returns one or more results, use the first (best) match's
+   `standardPlace` field and write it as `standard_place` onto all events
+   sharing that place string.
+4. If it returns no results, leave `standard_place` null. Do not retry or
    error.
 
 **Phase 2 — Compute distances:**
 
 1. Walk events in chronological order as consecutive pairs.
-2. For each pair where both events have a non-null `place_id`:
-   - If the two `place_id` values are the same, set
-     `distance_from_previous_km` to `0` (no API call needed).
-   - If they differ, call `place_distance` with the two IDs and write
-     the result onto the later event's `distance_from_previous_km`.
-3. Skip (leave null) when either event lacks a `place_id`.
+2. For each pair where both events have a non-null place:
+   - If both resolve to the same standard place (or the raw `place`
+     strings match), set `distance_from_previous_km` to `0` (no API call).
+   - Otherwise call `place_distance({ standardPlace1, standardPlace2 })`
+     with the two standard place names and write its `kilometers` onto the
+     later event's `distance_from_previous_km`.
+3. Skip (leave null) when either event's place is missing or unresolved.
+
+> **Note (standard-place standardization):** `place_distance` now takes
+> `standardPlace` names, not place IDs, and the timeline skill resolves
+> places to `standardPlace` transiently rather than persisting a `place_id`.
+> Replacing the persisted `place_id` event field with `standard_place` is
+> tracked as Step 5 of `docs/plan/standard-place-standardization.md`.
 
 **MCP call count:** at most (number of unique place strings) +
 (number of consecutive pairs with two distinct resolved place IDs).
@@ -77,8 +86,8 @@ Generated: 2026-05-04
 1850   CENSUS       Schuylkill County, PA — age 5 in Thomas Flynn
                     household, dwelling 84 [a_003, a_004]
                                                     ── 0 km ──
-1860   CENSUS       Schuylkill County, PA — age 15, listed as "son"
-                    in Thomas Flynn household [a_008, a_010]
+1860   CENSUS       Schuylkill County, PA — age 15 in Thomas Flynn
+                    household [a_008, a_010]
                                                     ── 0 km ──
 1908   DEATH        Schuylkill County, PA — death certificate names
                     Thomas Flynn as father [a_011, a_013]
@@ -103,7 +112,7 @@ confirm the person stayed in the same location.
 
 ## Files Modified
 
-1. `plugin/skills/timeline/SKILL.md` — add `allowed-tools`, new
+1. `packages/engine/plugin/skills/timeline/SKILL.md` — add `allowed-tools`, new
    Step 3.5, updated display format.
 2. `docs/specs/research-schema-spec.md` — add `place_id` and
    `distance_from_previous_km` to the timeline events table in

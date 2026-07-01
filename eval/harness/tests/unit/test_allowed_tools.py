@@ -8,7 +8,7 @@ from harness.allowed_tools import compute_allowed_tools
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PLUGIN_SKILLS = REPO_ROOT / "plugin/skills"
+PLUGIN_SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 
 
 def test_search_wikipedia_includes_wikipedia_search():

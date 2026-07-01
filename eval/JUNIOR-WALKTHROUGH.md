@@ -54,6 +54,8 @@ You'll install three things outside the repo, then run a single batch file insid
 
    **First — get your Anthropic API key.** `Setup.bat` asks for it partway through, so have it ready before you start. Get it from <https://console.anthropic.com/settings/keys> — use an existing key, or create a new one. It looks like `sk-ant-...`. ⚠️ A newly created key is shown **only once** — copy it right away and save it somewhere private (a password manager is ideal). If you lose it, you'll have to create another.
 
+   > **For your current assessment, you don't need a real API key.** When Setup gets to the "Paste your Anthropic API key" prompt, you can simply close the Command Prompt window — everything you need for the assessment was installed in the earlier steps.
+
    **Then — run the script.** Use **either** Option A (clickable) **or** Option B (terminal) — not both.
 
    **Option A — Explorer** (recommended if you don't use a terminal)
@@ -70,8 +72,35 @@ You'll install three things outside the repo, then run a single batch file insid
    Either way, the script will:
    - Install `uv` (the Python package manager) via PowerShell.
    - Run `npm install` in `eval/app/` (installs the CRUD UI's dependencies).
+   - Run `npm install` and `npm run build` in `packages/engine/mcp-server/` (compiles the MCP server the harness loads).
    - Run `uv sync` in `eval/harness/` (installs Python dependencies and Python itself if needed).
    - Prompt you for your **Anthropic API key** — paste it in when asked. It gets saved to `eval/.env`.
+
+   ### If Setup.bat stops with `'uv' is not recognized`
+
+   You may see output like this near the end:
+
+   ```
+   Installing Python dependencies...
+   'uv' is not recognized as an internal or external command,
+   operable program or batch file.
+   ERROR: uv sync failed. Setup aborted.
+   Press any key to continue . . .
+   Terminate batch job (Y/N)?
+   ```
+
+   This is a known Windows quirk: the installer just added `uv` to your user `PATH`, but the current Command Prompt window started *before* that change, so it can't see `uv` yet. The fix is two steps:
+
+   1. Press any key to dismiss the prompt, then type `Y` and press Enter to terminate the batch job.
+   2. **Close the Command Prompt window entirely.** Open a fresh Command Prompt (or just double-click `Setup.bat` again from Explorer) and re-run Setup. The previously-completed steps (uv install, `npm install`) are no-ops the second time, and `uv sync` will now find `uv` and finish the job.
+
+   If a fresh window still says "not recognized," the installer didn't update your user PATH for some reason. Run this in the new window before re-running Setup:
+
+   ```
+   set Path=%USERPROFILE%\.local\bin;%Path%
+   ```
+
+   That prepends uv's install location for this one session. Then re-run Setup.bat.
 
 You only do all this once per machine. After this point, daily work uses `Start.bat` and `RunTests.bat` — see below.
 

@@ -1,0 +1,25 @@
+{
+  "tool": "person_person_matches",
+  "description": "Possible-duplicate tree-person matches for Patrick Flynn (LZNY-BRF): 1 pending candidate",
+  "args": { "id": "LZNY-BRF" },
+  "response": {
+    "queryArk": "ark:/61903/4:1:LZNY-BRF",
+    "resultCount": 1,
+    "returned": 1,
+    "title": "Possible duplicates for ark:/61903/4:1:LZNY-BRF",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": [
+      {
+        "ark": "https://familysearch.org/ark:/61903/4:1:LZNY-QRS",
+        "pid": "LZNY-QRS",
+        "arkType": "4:1:",
+        "confidence": 3,
+        "score": 0.71,
+        "title": "Patrick Flynn (1845–1908)",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-01-10T08:00:00.000Z"
+      }
+    ]
+  }
+}

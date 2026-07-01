@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_record_extraction_005",
+    "skill": "record-extraction",
+    "name": "Extract assertions by fetching record via ARK using record_read",
+    "type": "positive",
+    "description": "When the user provides a FamilySearch record ARK, the skill should call record_read to fetch the full simplified GEDCOMX, then extract assertions from the returned data. Tests that the skill uses record_read as the data-fetch path when given a bare record ID or ARK rather than inline record text.",
+    "tags": ["record-read", "ark", "gedcomx", "1850-census"]
+  },
+  "input": {
+    "user_message": "Extract the assertions from FamilySearch record ark:/61903/1:1:68Q9-K34P.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": ["record-read-68Q9-K34P"],
+  "judge_context": [
+    "The skill MUST call record_read with recordId '68Q9-K34P' (or the full ARK) — not hallucinate record contents",
+    "Should extract assertions for Patrick Flynn (primary person): name, birth date ~1845, birthplace Ireland, residence 1850 Branch Township Schuylkill Pennsylvania",
+    "Should extract the ParentChild relationship between Thomas Flynn (parent) and Patrick Flynn (child) as an indirect-evidence assertion — the census doesn't explicitly state relationships",
+    "Should create a source entry pointing to the United States Census 1850 collection",
+    "Should NOT invent facts not present in the record_read response",
+    "Informant: for name/age/birthplace, use 'unknown household member' with reasoning (e.g., 'likely a parent' for a child) and proximity 'household_member'. For residence, 'census enumerator' with proximity 'witness' is acceptable. Use informant_bias_notes to explain reasoning.",
+    "Birthplace stated in the record is DIRECT evidence. Birth year computed from stated age is INDIRECT evidence. Relationships inferred from household position (1850 census has no relationship column) are INDIRECT evidence."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

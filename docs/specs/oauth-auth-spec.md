@@ -2,9 +2,9 @@
 
 ## Context
 
-Milestone A is complete — `wikipedia_search` and `place_search` tools work through all 4 testing layers. The next milestone is **OAuth authentication**, which unblocks all remaining tools (`place_collections`, `record_search`, `person_read`, `cets`). The team selected **Pattern B** (login tool built into MCP server) from the project guide at `project_guide/project-goal.md`.
+Milestone A is complete — `wikipedia_search` and `place_search` tools work through all 4 testing layers. The next milestone is **OAuth authentication**, which unblocks all remaining tools (`collections_search`, `record_search`, `person_read`, `cets`). The team selected **Pattern B** (login tool built into MCP server) from the project guide at `project_guide/project-goal.md`.
 
-**Prerequisite (already done, baked into the repo):** the FamilySearch `client_id` is committed at `mcp-server/config/familysearch.json` and read at runtime by `getClientId()`. The redirect URI `http://127.0.0.1:1837/callback` is registered against that key. Users (and the LLM) never see, configure, or supply the client ID — it ships with the MCP server.
+**Prerequisite (already done, baked into the repo):** the FamilySearch `client_id` is committed at `packages/engine/mcp-server/config/familysearch.json` and read at runtime by `getClientId()`. The redirect URI `http://127.0.0.1:1837/callback` is registered against that key. Users (and the LLM) never see, configure, or supply the client ID — it ships with the MCP server.
 
 ---
 
@@ -93,7 +93,7 @@ Constants + two distinct config sources.
 - Expiry buffer: 5 minutes (treat token as expired 5 min early)
 - Per-user token storage: `path.join(os.homedir(), ".familysearch-mcp", "tokens.json")`
 - Per-user config storage: `path.join(os.homedir(), ".familysearch-mcp", "config.json")`
-- Bundled client config: `mcp-server/config/familysearch.json` resolved via `fileURLToPath(import.meta.url)` to `<install-root>/config/familysearch.json`. Shipped inside the `.mcpb`. Read fresh on each `getClientId()` call.
+- Bundled client config: `packages/engine/mcp-server/config/familysearch.json` resolved via `fileURLToPath(import.meta.url)` to `<install-root>/config/familysearch.json`. Shipped inside the `.mcpb`. Read fresh on each `getClientId()` call.
 
 **Functions:**
 
@@ -274,7 +274,7 @@ Build leaf-first, test each step:
 
 ### Automated (no FS credentials needed)
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm run build          # Compiles clean
 npm test               # All 57 tests pass
 ```

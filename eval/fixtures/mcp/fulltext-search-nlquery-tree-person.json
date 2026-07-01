@@ -1,0 +1,93 @@
+{
+  "tool": "fulltext_search",
+  "description": "Full-text search using the natural-language nlQuery parameter with a FamilySearch tree person ID. The skill is graded on whether it uses nlQuery (rather than constructing keywords/name terms) when the user supplies a tree person ID — per references/query-syntax.md and the SKILL.md example, nlQuery is the right entry point for tree-ID searches because the upstream resolves the ID to the person's facts and runs an internal expansion.",
+  "args": { "nlQuery": "~KWCJ-RN4" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": { "type": "string" },
+      "name": { "type": "string" },
+      "place": { "type": "string" },
+      "nlQuery": { "type": "string" },
+      "collectionId": { "type": "string" },
+      "imageGroupNumber": { "type": "string" },
+      "recordPlace0": { "type": "string" },
+      "recordPlace1": { "type": "string" },
+      "recordPlace2": { "type": "string" },
+      "recordPlace3": { "type": "string" },
+      "yearFrom": { "type": "integer" },
+      "yearTo": { "type": "integer" },
+      "recordType": { "type": "string" },
+      "count": { "type": "integer" },
+      "offset": { "type": "integer" },
+      "includeFacets": { "type": "boolean" },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "totalResults": 2,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:Q8M1-2F4A",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed of Conveyance — Cornelius Sheridan to Patrick Flynn (parcel transfer)",
+        "recordDate": "1869",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Know all men by these presents that Cornelius Sheridan of Branch Township Schuylkill County Pennsylvania for and in consideration of the sum of one hundred and twenty five dollars to him paid by Patrick Flynn of the same place has granted bargained and sold a certain parcel of land situate in Branch Township bounded northerly by lands of John McGrath easterly by the township road southerly by the lands of the heirs of Thomas Flynn deceased containing seven acres more or less. Signed sealed and delivered this twelfth day of November one thousand eight hundred and sixty nine in the presence of James Dempsey and Owen Reilly.",
+        "names": [
+          "Cornelius Sheridan",
+          "Patrick Flynn",
+          "John McGrath",
+          "Thomas Flynn",
+          "James Dempsey",
+          "Owen Reilly"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County",
+          "Pennsylvania"
+        ],
+        "dates": [
+          "1869"
+        ],
+        "highlightTerms": [
+          "Patrick Flynn"
+        ]
+      },
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:Q8M1-9C7H",
+        "collectionId": "2334571",
+        "collectionTitle": "Pennsylvania Probate Records, 1683-1994",
+        "title": "Inventory and Appraisement — Estate of Cornelius Sheridan",
+        "recordDate": "1885",
+        "recordType": "Probate",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Inventory and appraisement of the goods chattels and credits of Cornelius Sheridan late of Branch Township Schuylkill County deceased. Appraisers Patrick Flynn and Edward McNally being duly sworn according to law did make true and just appraisement of the personal estate to wit one horse one cart farm implements household furniture sundry small items and notes due totalling the sum of three hundred and forty seven dollars and fifty cents. Subscribed and sworn this third day of October eighteen hundred and eighty five.",
+        "names": [
+          "Cornelius Sheridan",
+          "Patrick Flynn",
+          "Edward McNally"
+        ],
+        "places": [
+          "Branch Township",
+          "Schuylkill County",
+          "Pennsylvania"
+        ],
+        "dates": [
+          "1885"
+        ],
+        "highlightTerms": [
+          "Patrick Flynn"
+        ]
+      }
+    ]
+  }
+}

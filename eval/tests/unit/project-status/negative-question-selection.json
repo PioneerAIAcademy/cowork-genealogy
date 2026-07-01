@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_project_status_010",
+    "skill": "project-status",
+    "name": "Choosing the next research question should route to question-selection",
+    "type": "negative",
+    "description": "User asks the skill to choose/formulate the next research question. That is question-selection's job. project-status reports on the state of research (and may recommend that a question be selected), but formulating the actual next question — with proper depends_on/unblocks linkage — is question-selection, not a status report.",
+    "tags": ["near-miss", "status-vs-question-selection", "boundary"]
+  },
+  "input": {
+    "user_message": "What should the next research question be? Pick one and set it up for me.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["question-selection"],
+    "explanation": "Formulating or choosing the next research question is question-selection's authoritative job — it creates the new q_ entry with proper depends_on / unblocks linkage. project-status only reports state and may *recommend* that a question be selected (decision-tree branch 5 points at question-selection); it does not itself choose or author the question. The user here is asking for the question to be picked and set up, which is question-selection's output, not a status summary. project-status's own description is explicit: 'Do NOT use ... when the user wants to choose or formulate the next research question (use question-selection).'"
+  },
+  "judge_context": [
+    "Should route to question-selection rather than producing a status report",
+    "Should NOT author a new q_ entry itself — that is question-selection's contract"
+  ]
+}

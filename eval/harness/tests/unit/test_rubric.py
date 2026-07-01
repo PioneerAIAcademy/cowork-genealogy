@@ -14,7 +14,7 @@ from harness.rubric import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-# Use citation/ as the real-rubric fixture. search-wiki's rubric is
+# Use citation/ as the real-rubric fixture. search-familysearch-wiki's rubric is
 # being deleted as part of the criteria-demotion rollout; citation
 # stays because it encodes Evidence Explained craft.
 CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
@@ -67,9 +67,9 @@ Gamma description.
 
 
 def test_parse_real_citation_rubric():
-    r = parse_rubric(CITATION_RUBRIC.read_text())
+    r = parse_rubric(CITATION_RUBRIC.read_text(encoding="utf-8"))
     assert r.skill == "Citation Rubric"
-    assert len(r.dimensions) == 3
+    assert len(r.dimensions) == 5
     names = [d.name for d in r.dimensions]
     assert "Evidence Explained compliance" in names
     for d in r.dimensions:

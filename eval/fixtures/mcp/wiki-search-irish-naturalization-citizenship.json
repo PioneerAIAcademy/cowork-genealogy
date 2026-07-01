@@ -1,0 +1,29 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about citizenship/naturalization process for Irish immigrants, phrased without the word 'naturalization'",
+  "args": { "query": "~citizenship" },
+  "response": {
+    "query": "Irish immigrant citizenship process Pennsylvania 19th century",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.84,
+        "chunk_text": "Before 1906, the path to U.S. citizenship for an immigrant ran through any court of record — county courts of common pleas, district courts, or circuit courts — not a centralized federal process. An immigrant filed a declaration of intention (first papers), then after a residency period a petition for naturalization (second papers) that granted citizenship. These court-filed citizenship records often state the immigrant's birthplace, age, and date of arrival.",
+        "page_title": "Pennsylvania Naturalization Records",
+        "section_heading": "Pre-1906 Naturalization",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Naturalization_Records#Pre-1906_Naturalization"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.78,
+        "chunk_text": "FamilySearch has digitized and indexed many Pennsylvania citizenship/naturalization records through 1906. Search FamilySearch under 'Pennsylvania Naturalizations' or by county. Schuylkill County's records include many Irish coal miners from the 1840s-1870s, and some name the county or townland of origin in Ireland, providing a bridge back to Irish records.",
+        "page_title": "Pennsylvania Naturalization Records",
+        "section_heading": "Finding Naturalization Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Naturalization_Records#Finding_Records"
+      }
+    ],
+    "query_time_ms": 391,
+    "timing": { "embed_ms": 50, "search_ms": 222, "rerank_ms": 119 }
+  }
+}

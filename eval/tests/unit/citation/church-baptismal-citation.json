@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_citation_005",
+    "skill": "citation",
+    "name": "Refine a rough church baptismal citation (src_005)",
+    "type": "positive",
+    "description": "src_005 is a church baptismal record from St. Mary's Catholic Church, Pottsville, for Patrick Flynn's 1845 baptism. The working citation is vague — no access date, no volume/page locator, and the where field just says 'FamilySearch.org' with no repository chain. The skill must apply the church-records template from SKILL.md and fill all six citation_detail fields.",
+    "tags": ["church", "baptismal", "1845", "src_005", "vital-records"]
+  },
+  "input": {
+    "user_message": "Refine the citation for src_005, the St. Mary's baptismal record for Patrick Flynn.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "who should name the church as creator — 'St. Mary's Catholic Church, Pottsville, Pennsylvania' — not the repository (FamilySearch)",
+    "what should be specific: 'baptismal register, 1845, Patrick Flynn entry' — not just 'Baptismal register, 1845'",
+    "when_accessed should use the access date already on file (2026-05-10) — not an invented one",
+    "where should follow the layered path: 'FamilySearch.org' then the physical repository (diocesan archive or church itself)",
+    "where_within must flag the gap to the user — the register volume/page/entry number is not in the source entry, so the skill must ask the user to check the record image rather than inventing a volume or page value",
+    "The formatted citation string must follow the church-records template: '[CHURCH NAME], [CITY/TOWN], [STATE], [RECORD TYPE], [DATE], [PERSON NAME]; [VOLUME/PAGE]; [REPOSITORY]'",
+    "Must NOT create a new source entry — refine src_005 in place",
+    "Replication test — apply the rubric's decisive rule: src_005 does not carry the register volume/page/entry number, so where_within is genuinely unavailable from the source. The skill flagging it with an unknown-marker AND directing the user to read it from the record image is a PASS on Replication test, not a partial — 'honest about an unavoidable gap' is the top of that scale. Do NOT deduct on Replication for a locator the source cannot supply; partial/fail there are reserved for a locator that WAS on file but uncited, or an invented one",
+    "Must call validate_research_schema after writing"
+  ]
+}

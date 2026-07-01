@@ -1,0 +1,77 @@
+name: Eval harness tests
+
+# Runs the eval harness's own pytest suite on PRs that touch anything the
+# suite covers. This is the gate that enforces, among other things:
+#   - the skill re-invocation-section lint
+#     (docs/specs/feedback-case-spec.md §5 + §9 step 7),
+#   - research.json schema-stub / scenario-fixture validity against
+#     docs/specs/schemas/research.schema.json.
+# Both previously drifted onto main because no CI job ran these tests —
+# §9 step 7 assumed a harness-test gate existed, but only the runlog
+# discipline check (check-runlogs.yml) was wired up.
+#
+# The single live-API end-to-end test (eval/harness/tests/e2e/, marked
+# `e2e` and additionally guarded by skipif on ANTHROPIC_API_KEY) is
+# excluded here via `-m 'not e2e'`: CI has no API key and must never bill
+# the Anthropic API.
+#
+# The CLI tests (test_cli.py) import run_tests.py, which refuses to run
+# against a missing/stale packages/engine/mcp-server/build/ (run_tests.py
+# _check_mcp_build_fresh). So we compile the MCP server first — that's
+# also why packages/engine/mcp-server/src/** and test_tool_catalog.py (which reads
+# packages/engine/mcp-server/src/tools/*.ts) make mcp-server a real dependency of this
+# suite.
+
+on:
+  pull_request:
+    paths:
+      - 'eval/harness/**'
+      - 'packages/engine/plugin/skills/**'
+      - 'eval/fixtures/**'
+      - 'eval/tests/**'
+      - 'docs/specs/schemas/**'
+      - 'packages/engine/mcp-server/**'
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        run: |
+          # Node 22 bundles npm 10.x; the engine's .npmrc sets engine-strict with
+          # an npm >=11.12 bound, so install the pinned npm before any engine
+          # `npm ci`. Version comes from packageManager (single source of truth).
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+          echo "Using npm $(npm --version)"
+
+      - name: Build mcp-server (harness CLI loads compiled JS from build/)
+        working-directory: packages/engine/mcp-server
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install uv (+ pinned Python)
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.11'
+          enable-cache: true
+          cache-dependency-glob: 'eval/harness/pyproject.toml'
+
+      - name: Sync dependencies
+        working-directory: eval/harness
+        run: uv sync
+
+      - name: Run harness unit tests (excludes live-API e2e)
+        working-directory: eval/harness
+        run: uv run pytest -m 'not e2e'

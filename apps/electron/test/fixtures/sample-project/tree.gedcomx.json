@@ -1,0 +1,215 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland",
+          "sources": [{ "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84" }]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1908-03-12",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [{ "ref": "S3", "page": "Death cert. no. 4521" }]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [{ "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84" }]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [{ "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112" }]
+        },
+        {
+          "id": "F8",
+          "type": "Occupation",
+          "date": "1860",
+          "place": "Schuylkill County, Pennsylvania"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1818",
+          "place": "Ireland"
+        },
+        {
+          "id": "F6",
+          "type": "Occupation",
+          "date": "1850",
+          "place": "Schuylkill County, Pennsylvania"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Bridget",
+          "surname": "Flynn",
+          "type": "MarriedName"
+        },
+        {
+          "id": "N4",
+          "given": "Bridget",
+          "surname": "Carey",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1820",
+          "place": "Ireland"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Flynn",
+          "type": "MarriedName"
+        },
+        {
+          "id": "N6",
+          "given": "Mary",
+          "surname": "Sullivan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F9",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1848",
+          "place": "Ireland"
+        },
+        {
+          "id": "F10",
+          "type": "Marriage",
+          "date": "1870",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [{ "ref": "S5", "page": "Marriage record, St. Patrick's Church" }]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        { "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84", "quality": 2 },
+        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 2 },
+        { "ref": "S3", "page": "Death cert. no. 4521", "quality": 2 }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "subtype": "Step",
+      "notes": [
+        "Bridget appears as Thomas's wife in the 1850 census but Patrick (age 5) is listed without a maternal indicator. Family lore preserved in a 1955 descendant interview holds that Patrick's birth mother died during the passage from Ireland and that Bridget — Thomas's second wife — raised him as her own."
+      ],
+      "sources": [
+        { "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84", "quality": 1 }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3",
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Marriage",
+          "date": "before 1845",
+          "place": "Ireland"
+        }
+      ],
+      "notes": [
+        "Marriage place 'Ireland' is inferred from the family origin; no civil or parish record has been located."
+      ],
+      "sources": [
+        { "ref": "S1", "page": "1850 Census, co-enumerated as household head and wife" }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I4",
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Marriage",
+          "date": "1870",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [{ "ref": "S5", "page": "Marriage record, St. Patrick's Church" }]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "1860 U.S. Federal Census", "author": "U.S. Census Bureau" },
+    { "id": "S3", "title": "Pennsylvania Death Certificates", "author": "Pennsylvania Dept. of Health" },
+    { "id": "S4", "title": "Schuylkill County Probate Records", "author": "Schuylkill County Register of Wills" },
+    { "id": "S5", "title": "St. Patrick's Church Marriage Records", "author": "Diocese of Allentown" },
+    { "id": "S6", "title": "1870 U.S. Federal Census", "author": "U.S. Census Bureau" }
+  ]
+}

@@ -1,23 +1,20 @@
 {
   "tool": "place_search",
-  "description": "FamilySearch place lookup by placeRepId (catch-all for any ID-based place lookup in this test)",
-  "args": { "placeRepId": "~" },
+  "description": "FamilySearch place data for Schuylkill County — variant matching an ID-based `placeRepId` arg (non-canonical; the real parameter is `placeName`). Same response shape as place-search-schuylkill-county so the run grades rather than aborts; the Tool Arguments dimension surfaces the wrong arg name.",
+  "args": {
+    "placeRepId": "~"
+  },
   "response": {
-    "placeId": "326",
-    "name": "Schuylkill",
-    "fullName": "Schuylkill, Pennsylvania, United States",
-    "type": "County",
-    "latitude": 40.7,
-    "longitude": -76.2,
-    "dateRange": "1811-01-01 to present",
-    "parentPlaceId": "50",
-    "wikipedia": {
-      "title": "Schuylkill County, Pennsylvania",
-      "extract": "Schuylkill County is a county in the U.S. state of Pennsylvania, known historically as a center of anthracite coal mining.",
-      "url": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania"
-    },
-    "urls": {
-      "familysearch": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy"
-    }
+    "results": [
+      {
+        "standardPlace": "Schuylkill, Pennsylvania, United States",
+        "type": "County",
+        "dateRange": "+1811/",
+        "latitude": 40.7,
+        "longitude": -76.2,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=7042",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Schuylkill_County,_Pennsylvania"
+      }
+    ]
   }
 }

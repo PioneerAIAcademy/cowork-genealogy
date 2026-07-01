@@ -14,11 +14,11 @@
 
 | File                                                | Purpose                                                                                     |
 |-----------------------------------------------------|---------------------------------------------------------------------------------------------|
-| `mcp-server/src/types/match-by-id.ts`               | Input / output / raw-API types shared by all four tools.                                    |
-| `mcp-server/src/tools/match-by-id.ts`               | Shared `matchById()` helper + four exported tool functions + four exported MCP schemas.     |
-| `mcp-server/dev/try-match-by-id.ts`                 | After-the-fact smoke test against live FS.                                                  |
-| `mcp-server/src/index.ts`                           | Add 4 imports, 4 schemas to the list, 4 dispatch branches.                                  |
-| `mcp-server/tests/tools/match-by-id.test.ts`        | Mocked-fetch vitest suite covering validation, URL construction, response parsing, errors.  |
+| `packages/engine/mcp-server/src/types/match-by-id.ts`               | Input / output / raw-API types shared by all four tools.                                    |
+| `packages/engine/mcp-server/src/tools/match-by-id.ts`               | Shared `matchById()` helper + four exported tool functions + four exported MCP schemas.     |
+| `packages/engine/mcp-server/dev/try-match-by-id.ts`                 | After-the-fact smoke test against live FS.                                                  |
+| `packages/engine/mcp-server/src/index.ts`                           | Add 4 imports, 4 schemas to the list, 4 dispatch branches.                                  |
+| `packages/engine/mcp-server/tests/tools/match-by-id.test.ts`        | Mocked-fetch vitest suite covering validation, URL construction, response parsing, errors.  |
 | `README.md`                                         | Add the 4 tools to the catalog.                                                             |
 
 Existing artifacts being kept untouched: `dev/probe-match-by-id.ts`, `dev/probe-match-status.ts`, `dev/probe-match-misc.ts` (the evidence trail for the spec).
@@ -27,7 +27,7 @@ Existing artifacts being kept untouched: `dev/probe-match-by-id.ts`, `dev/probe-
 
 ### Task 1: Types
 
-**Files:** Create `mcp-server/src/types/match-by-id.ts`
+**Files:** Create `packages/engine/mcp-server/src/types/match-by-id.ts`
 
 - [ ] **Step 1: Write the file**
 
@@ -106,14 +106,14 @@ export interface MatchApiResponse {
 
 - [ ] **Step 2: typecheck**
 
-Run: `cd mcp-server && npx tsc --noEmit`
+Run: `cd packages/engine/mcp-server && npx tsc --noEmit`
 Expected: no errors.
 
 ---
 
 ### Task 2: Tool module — failing test scaffolding first
 
-**Files:** Create `mcp-server/tests/tools/match-by-id.test.ts`
+**Files:** Create `packages/engine/mcp-server/tests/tools/match-by-id.test.ts`
 
 - [ ] **Step 1: Write the failing test (initial — URL construction)**
 
@@ -203,14 +203,14 @@ describe("URL construction", () => {
 
 - [ ] **Step 2: Run, verify FAIL**
 
-Run: `cd mcp-server && npx vitest run tests/tools/match-by-id.test.ts`
+Run: `cd packages/engine/mcp-server && npx vitest run tests/tools/match-by-id.test.ts`
 Expected: FAIL with "Cannot find module ../../src/tools/match-by-id.js" or undefined function — file does not exist yet.
 
 ---
 
 ### Task 3: Tool module — minimal implementation
 
-**Files:** Create `mcp-server/src/tools/match-by-id.ts`
+**Files:** Create `packages/engine/mcp-server/src/tools/match-by-id.ts`
 
 - [ ] **Step 1: Write the tool module**
 
@@ -556,7 +556,7 @@ export const recordRecordMatchesSchema = {
 
 - [ ] **Step 2: Re-run URL-construction tests, verify they pass**
 
-Run: `cd mcp-server && npx vitest run tests/tools/match-by-id.test.ts`
+Run: `cd packages/engine/mcp-server && npx vitest run tests/tools/match-by-id.test.ts`
 Expected: 4/4 tests PASS.
 
 ---
@@ -784,14 +784,14 @@ describe("Error handling", () => {
 
 - [ ] **Step 2: Run, verify all PASS**
 
-Run: `cd mcp-server && npx vitest run tests/tools/match-by-id.test.ts`
+Run: `cd packages/engine/mcp-server && npx vitest run tests/tools/match-by-id.test.ts`
 Expected: all tests pass.
 
 ---
 
 ### Task 5: Wire into index.ts
 
-**Files:** Modify `mcp-server/src/index.ts`
+**Files:** Modify `packages/engine/mcp-server/src/index.ts`
 
 - [ ] **Step 1: Add the import** (after the existing validate-research-schema import block)
 
@@ -868,14 +868,14 @@ Copy the standard 11-line shape (try / fetch / JSON-stringify / catch / isError)
 
 - [ ] **Step 4: typecheck**
 
-Run: `cd mcp-server && npx tsc --noEmit`
+Run: `cd packages/engine/mcp-server && npx tsc --noEmit`
 Expected: no errors.
 
 ---
 
 ### Task 6: Dev smoke script
 
-**Files:** Create `mcp-server/dev/try-match-by-id.ts`
+**Files:** Create `packages/engine/mcp-server/dev/try-match-by-id.ts`
 
 - [ ] **Step 1: Write the script**
 
@@ -940,7 +940,7 @@ if (which && id) {
 
 - [ ] **Step 2: Run live smoke**
 
-Run: `cd mcp-server && npx tsx dev/try-match-by-id.ts`
+Run: `cd packages/engine/mcp-server && npx tsx dev/try-match-by-id.ts`
 Expected:
 - `pr` (KNDX-MKG → records): non-empty entries (Washington has 1 accepted + 2 rejected = 3 matches).
 - `rp`, `pp`, `rr`: may be empty for the default ids but must NOT error.
@@ -970,22 +970,22 @@ Expected: ≥ 4
 
 - [ ] **Step 1: Full mcp-server test suite**
 
-Run: `cd mcp-server && npm test 2>&1 | tail -20`
+Run: `cd packages/engine/mcp-server && npm test 2>&1 | tail -20`
 Expected: all previous tests still PASS + new match-by-id tests PASS, zero failures.
 
 - [ ] **Step 2: Live smoke (re-run)**
 
-Run: `cd mcp-server && npx tsx dev/try-match-by-id.ts pr KNDX-MKG`
+Run: `cd packages/engine/mcp-server && npx tsx dev/try-match-by-id.ts pr KNDX-MKG`
 Expected: returned ≥ 1 match with confidence 5, status "accepted".
 
 - [ ] **Step 3: Build the MCP server**
 
-Run: `cd mcp-server && npm run build 2>&1 | tail -10`
+Run: `cd packages/engine/mcp-server && npm run build 2>&1 | tail -10`
 Expected: no errors.
 
 - [ ] **Step 4: Repo grep for orphan refs**
 
-Run: `grep -rn "person_record_matches\|record_person_matches\|person_person_matches\|record_record_matches" mcp-server/src/ mcp-server/tests/ mcp-server/dev/ docs/ README.md | wc -l`
+Run: `grep -rn "person_record_matches\|record_person_matches\|person_person_matches\|record_record_matches" packages/engine/mcp-server/src/ packages/engine/mcp-server/tests/ packages/engine/mcp-server/dev/ docs/ README.md | wc -l`
 Expected: many hits; spot-check that each is intentional.
 
 ---
@@ -998,14 +998,14 @@ Expected: many hits; spot-check that each is intentional.
 cd /home/chris/fs-agent/cowork-genealogy
 git add docs/specs/match-by-id-tools-spec.md \
         docs/plan/match-by-id-tools.md \
-        mcp-server/src/types/match-by-id.ts \
-        mcp-server/src/tools/match-by-id.ts \
-        mcp-server/src/index.ts \
-        mcp-server/tests/tools/match-by-id.test.ts \
-        mcp-server/dev/probe-match-by-id.ts \
-        mcp-server/dev/probe-match-status.ts \
-        mcp-server/dev/probe-match-misc.ts \
-        mcp-server/dev/try-match-by-id.ts \
+        packages/engine/mcp-server/src/types/match-by-id.ts \
+        packages/engine/mcp-server/src/tools/match-by-id.ts \
+        packages/engine/mcp-server/src/index.ts \
+        packages/engine/mcp-server/tests/tools/match-by-id.test.ts \
+        packages/engine/mcp-server/dev/probe-match-by-id.ts \
+        packages/engine/mcp-server/dev/probe-match-status.ts \
+        packages/engine/mcp-server/dev/probe-match-misc.ts \
+        packages/engine/mcp-server/dev/try-match-by-id.ts \
         README.md
 ```
 

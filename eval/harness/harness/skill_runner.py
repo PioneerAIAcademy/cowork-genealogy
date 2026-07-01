@@ -22,6 +22,7 @@ Honors the execution caps from unit-test-spec.md §15:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -70,11 +71,11 @@ DEFAULT_MAX_INPUT_TOKENS_PER_TURN = 200_000
 DEFAULT_SDK_MESSAGE_SILENCE_SECONDS = 180
 
 
-# Spec §15 "Known risks": permission_mode="dontAsk" must actually block
-# unlisted tools — verify on every SDK version bump. We pin a known-good
-# version range and warn loudly if the installed SDK is outside it.
+# Spec §15 "Known risks": disallowed_tools must actually block unlisted
+# tools — verify on every SDK version bump. We pin a known-good version
+# range and warn loudly if the installed SDK is outside it.
 # Update _KNOWN_GOOD_SDK_RANGE after running the e2e against a newer
-# version and confirming dontAsk still denies unlisted tools.
+# version and confirming disallowed_tools still denies unlisted tools.
 _KNOWN_GOOD_SDK_RANGE = (">=0.1.81", "<0.2")
 
 
@@ -95,8 +96,8 @@ def _check_sdk_version() -> str | None:
                 f"claude-agent-sdk version {installed} is outside the "
                 f"harness's tested-known-good range "
                 f"{_KNOWN_GOOD_SDK_RANGE[0]},{_KNOWN_GOOD_SDK_RANGE[1]}. "
-                f"Spec §15 known-risks: verify permission_mode='dontAsk' "
-                f"still denies unlisted tools, then update "
+                f"Spec §15 known-risks: verify disallowed_tools "
+                f"still blocks unlisted tools, then update "
                 f"_KNOWN_GOOD_SDK_RANGE in skill_runner.py."
             )
     except (ValueError, TypeError):
@@ -150,6 +151,12 @@ class SkillRunResult:
     # unmatched-tool-call gate to distinguish Type 1 (tool doesn't exist,
     # abort) from Type 2 (wrong args to existing tool, continue to judge).
     registered_mcp_tools: set[str] = field(default_factory=set)
+    # How many skill-execution attempts this result took (1 = clean first
+    # try; >1 means transient stalls/errors forced a retry in
+    # _execute_skill_with_retry). The keystone stall-tax signal: a suite
+    # with many >1 runs is paying the cold-cache / API-stall cost the e2e
+    # perf analysis flagged. Set by the retry wrapper, not run_skill.
+    attempts: int = 1
 
 
 async def run_skill(
@@ -166,6 +173,7 @@ async def run_skill(
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     allowed_tools_override: list[str] | None = None,
+    routing_short_circuit_skills: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
@@ -191,9 +199,9 @@ async def run_skill(
 
     # Compute disallowed_tools as the fixed dangerous-tool backstop PLUS
     # every mcp__genealogy__* mock tool the skill is NOT allowed to call.
-    # Belt + suspenders against the spec §15 known risk: if
-    # `permission_mode="dontAsk"` ever regresses, the explicit disallow
-    # list still rejects out-of-allowlist MCP calls at call time.
+    # Belt + suspenders against the spec §15 known risk: the explicit
+    # disallow list rejects out-of-allowlist MCP calls at call time,
+    # independent of the permission_mode setting.
     allowed_set = set(allowed_tools)
     all_mock_mcp = {f"mcp__genealogy__{name}" for name in tools_by_name}
     extra_disallowed = sorted(all_mock_mcp - allowed_set)
@@ -204,6 +212,14 @@ async def run_skill(
     # over-limit calls without raising (the SDK swallows hook exceptions
     # in some paths).
     tool_call_count = {"n": 0}
+    # Set by the hook when a negative test routes to its `correct_skill`:
+    # the verdict is sealed the moment that skill is invoked (orchestrator
+    # `_compute_outcome` grades negatives on routing, not on downstream
+    # execution), so we deny the sub-skill launch and stop the run instead
+    # of paying for the routed-to skill's full workload. The loop reads
+    # this after consuming to force a clean (non-aborted) termination.
+    routing_resolved = {"v": False}
+    _short_circuit = routing_short_circuit_skills or set()
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
@@ -221,6 +237,25 @@ async def run_skill(
                 _observed_skill_keys.add(
                     "skill" if "skill" in tool_input else "name"
                 )
+                # Negative-test routing short-circuit: the correct skill was
+                # invoked, so the routing verdict is decided. skills_invoked
+                # already holds it (recorded just above), so denying the
+                # launch and stopping loses no grading signal while skipping
+                # the routed-to skill's (often very expensive) execution.
+                if skill_name in _short_circuit:
+                    routing_resolved["v"] = True
+                    return {
+                        "hookSpecificOutput": {
+                            "hookEventName": "PreToolUse",
+                            "permissionDecision": "deny",
+                            "permissionDecisionReason": (
+                                f"negative-test routing to {skill_name!r} "
+                                f"observed; verdict decided, stopping"
+                            ),
+                        },
+                        "continue_": False,
+                        "stopReason": "routing_resolved",
+                    }
         # Count MCP tool calls toward max_tool_calls. Block over-limit calls
         # with a permission deny so the SDK doesn't actually execute them; the
         # outer loop reads tool_call_count after the iteration ends and sets
@@ -255,10 +290,14 @@ async def run_skill(
         mcp_servers={"genealogy": mock_server},
         allowed_tools=allowed_tools,
         disallowed_tools=disallowed_tools,
-        # dontAsk = "don't prompt; deny if not pre-approved." This makes
-        # `allowed_tools` actually enforced at call time. bypassPermissions
-        # would auto-approve everything and defeat the per-skill allowlist.
-        permission_mode="dontAsk",
+        # bypassPermissions auto-approves all path-level permission checks.
+        # Tool-level access control is still enforced by allowed_tools /
+        # disallowed_tools — dangerous tools (Bash, WebFetch, etc.) and
+        # out-of-allowlist MCP tools remain blocked. The original "dontAsk"
+        # mode denied Write/Edit in Claude Code >=2.1 even when those tools
+        # were listed in allowed_tools, because dontAsk also blocks
+        # path-level approval prompts that Write/Edit require.
+        permission_mode="bypassPermissions",
         model=model,
         max_turns=max_turns,
         env=env_for_sdk(auth),
@@ -270,9 +309,12 @@ async def run_skill(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
+    # The query() async generator, hoisted so the finally below can close it
+    # deterministically on every exit path (see that finally for why).
+    iterator: Any = None
 
     async def _consume_messages():
-        nonlocal usage, error, aborted_reason
+        nonlocal usage, error, aborted_reason, iterator
         # Manual iteration so each `__anext__()` can be wrapped in a
         # per-message silence watchdog. The SDK has no internal
         # generation-side timeout — once the control-channel
@@ -292,6 +334,14 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            # Negative-test routing short-circuit: the hook denied the
+            # correct-skill launch and set this flag. The SDK does NOT honor
+            # the hook's `continue_: False` to end the run (it just retries
+            # other tools), so we stop consuming here — the routing verdict
+            # is already captured in skills_invoked. This is the early-exit
+            # the hook's stopReason alone can't deliver.
+            if routing_resolved["v"]:
+                return
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
@@ -354,11 +404,37 @@ async def run_skill(
     except Exception as e:  # pragma: no cover — exercised in e2e
         error = f"{type(e).__name__}: {e}"
         aborted_reason = "error"
+    finally:
+        # Close the query() generator while this event loop is still running.
+        # The SDK's process_query tears down its subprocess transport only
+        # inside the generator's own `finally`, and its own comment warns that
+        # manual iteration / early `return` does NOT trigger it (PEP 533). On
+        # the routing short-circuit, _LimitExceeded, and wall-clock-cancel
+        # paths we abandon the generator mid-stream, so that teardown is left
+        # to GC during asyncio.run()'s loop shutdown — which races
+        # shutdown_asyncgens and prints "aclose(): asynchronous generator is
+        # already running" plus a dangling "Loop ... is closed" from the
+        # subprocess transport. (The subscription-auth flip changed subprocess
+        # timing enough to surface this latent leak.) asyncio.wait_for has
+        # fully settled _consume_messages by now, so no __anext__ is in flight
+        # and this aclose can't race; the bounded wait_for guards a stuck
+        # close from hanging the worker thread.
+        if iterator is not None:
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(iterator.aclose(), timeout=15)
 
     # If the hook denied an MCP call past the limit, surface that as the abort.
     if aborted_reason is None and tool_call_count["n"] > max_tool_calls:
         aborted_reason = "max_tool_calls"
         error = f"max_tool_calls ({max_tool_calls}) exceeded"
+
+    # A routing short-circuit is a deliberate, successful early stop — not a
+    # failure. The SDK may surface the hook-initiated stop as an error/abort
+    # on the trailing ResultMessage, so clear any such state and keep the
+    # run clean. The downstream skill never ran; that's the whole point.
+    if routing_resolved["v"]:
+        aborted_reason = None
+        error = None
 
     duration_ms = (time.perf_counter() - start) * 1000.0
 

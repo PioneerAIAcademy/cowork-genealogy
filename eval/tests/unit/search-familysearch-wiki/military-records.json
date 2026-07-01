@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_search_wiki_009",
+    "skill": "search-familysearch-wiki",
+    "name": "FamilySearch wiki — military records Civil War",
+    "type": "positive",
+    "description": "User asks how to find military service records for a Civil War ancestor. Tests that the skill handles a conflict-scoped military query.",
+    "tags": ["fs-wiki", "how-to", "military"]
+  },
+  "input": {
+    "user_message": "Search the FamilySearch wiki for how to find military service records for a Civil War ancestor",
+    "scenario": null
+  },
+  "mcp_fixtures": ["wiki-search-military-records"],
+  "judge_context": [
+    "Should call wiki_search with a query about finding Civil War military service records",
+    "Summary should explain what military records exist and where to find them",
+    "No fabricated details about specific regiments, repositories, or record dates beyond what the wiki returned",
+    "SOURCES GRADING NOTE: per the rubric's existing grading note on 'Sources cited correctly', the file contents are not visible to the judge. Score the dimension `pass` if the skill called the file-write or Edit tool with a Sources block (visible in the tool-call transcript or the file_changes diff), even if the formatted bullet list does not appear verbatim in the text response. Do NOT score partial purely because the URLs/bullets aren't echoed in the response text."
+  ]
+}

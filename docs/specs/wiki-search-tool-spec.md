@@ -106,7 +106,7 @@ the `wiki-query-api/` repo.
 
 ## Files to Create
 
-### 1. `mcp-server/src/types/wiki-search.ts`
+### 1. `packages/engine/mcp-server/src/types/wiki-search.ts`
 
 Define two types:
 
@@ -115,7 +115,7 @@ Define two types:
   `WikiSearchAPIResponse` for v1; separate type leaves room for trimming
   later if context size becomes an issue).
 
-### 2. `mcp-server/src/tools/wiki-search.ts`
+### 2. `packages/engine/mcp-server/src/tools/wiki-search.ts`
 
 Contains:
 
@@ -123,12 +123,12 @@ Contains:
 - `wikiSearch(input)` — async function that reads URL from config, POSTs
   to `/search`, returns parsed JSON.
 
-### 3. `mcp-server/dev/try-wiki-search.ts`
+### 3. `packages/engine/mcp-server/dev/try-wiki-search.ts`
 
 One-shot smoke script matching `try-wikipedia.ts`. Bypasses the MCP
 harness for fast iteration.
 
-### 4. `mcp-server/tests/tools/wiki-search.test.ts`
+### 4. `packages/engine/mcp-server/tests/tools/wiki-search.test.ts`
 
 Vitest unit tests with mocked `fetch`. Covers happy path, missing URL,
 non-2xx response, and network failure.
@@ -137,7 +137,7 @@ non-2xx response, and network failure.
 
 ## Files to Modify
 
-### `mcp-server/src/types/auth.ts`
+### `packages/engine/mcp-server/src/types/auth.ts`
 
 Add one optional field to `AppConfig`:
 
@@ -145,7 +145,7 @@ Add one optional field to `AppConfig`:
 wikiApiUrl?: string;
 ```
 
-### `mcp-server/src/auth/config.ts`
+### `packages/engine/mcp-server/src/auth/config.ts`
 
 Add a `getWikiApiUrl()` helper modeled on `getClientId()`:
 
@@ -157,7 +157,7 @@ Throws an LLM-instruction error if the field is missing. This is the
 single source of wiki-query-api connection info — `wikiSearch()` must use
 it instead of hardcoding the URL.
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Three additions, mirroring `wikipedia_search`:
 
@@ -195,7 +195,7 @@ else.
 
 ## Patterns to Follow
 
-Match the style of `mcp-server/src/tools/wikipedia.ts`:
+Match the style of `packages/engine/mcp-server/src/tools/wikipedia.ts`:
 
 - `const` for constants where applicable.
 - POST with `Content-Type: application/json`.
@@ -217,7 +217,7 @@ from `~/.familysearch-mcp/config.json`, no env-var fallbacks.
   later if needed.
 - **A `provider` parameter.** `CLAUDE.md` recommends generic tools
   (e.g. `search`) with a `provider` field, but this v1 ships a dedicated
-  `wiki_search` matching the `wikipedia_search` / `place_collections`
+  `wiki_search` matching the `wikipedia_search` / `collections_search`
   precedent. Consolidate when a second search provider exists.
 - **Response caching at the MCP layer.** The upstream FastAPI already has
   an in-memory query embed cache.

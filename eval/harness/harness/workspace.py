@@ -2,7 +2,7 @@
 
 A workspace is the temp directory the harness sets as cwd for the SDK
 session. It contains the scenario's research.json and tree.gedcomx.json
-(if any) plus a .claude/skills/ tree mirroring plugin/skills/.
+(if any) plus a .claude/skills/ tree mirroring packages/engine/plugin/skills/.
 
 Snapshots capture the state of the workspace before and after the skill
 runs. The .claude/ directory is excluded — it's harness scaffolding, not
@@ -67,6 +67,25 @@ def build_workspace(
         if skill_dir.is_dir() and not skill_dir.name.startswith("."):
             shutil.copytree(skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True)
 
+    # Write a CLAUDE.md so the base model knows it is operating as a
+    # genealogy research assistant. Without this, the model defaults to
+    # general-purpose assistant behavior and answers out-of-scope requests
+    # (e.g. programming questions) rather than declining — which causes
+    # out-of-scope negative tests (correct_skill: []) to fail even though
+    # no skill fired.
+    (target / "CLAUDE.md").write_text(
+        "# Genealogy Research Assistant\n\n"
+        "You are a genealogy research assistant. Help users with genealogy-related\n"
+        "tasks: looking up Wikipedia articles, searching historical records, building\n"
+        "family trees, analyzing genealogical documents, converting calendar dates,\n"
+        "and other genealogy research work.\n\n"
+        "If the user asks for something unrelated to genealogy — such as general\n"
+        "programming help, mathematics, or unrelated everyday questions — respond\n"
+        "with one brief sentence declining and explaining you handle genealogy\n"
+        "research only.\n",
+        encoding="utf-8",
+    )
+
     return target
 
 
@@ -121,14 +140,14 @@ def snapshot_files(workspace: Path) -> dict[str, Any]:
     research = workspace / "research.json"
     if research.exists():
         try:
-            snap["research_json"] = json.loads(research.read_text())
+            snap["research_json"] = json.loads(research.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             snap["research_json"] = None
 
     tree = workspace / "tree.gedcomx.json"
     if tree.exists():
         try:
-            snap["tree_gedcomx_json"] = json.loads(tree.read_text())
+            snap["tree_gedcomx_json"] = json.loads(tree.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             snap["tree_gedcomx_json"] = None
 
@@ -142,7 +161,7 @@ def snapshot_files(workspace: Path) -> dict[str, Any]:
         if rel in ("research.json", "tree.gedcomx.json"):
             continue
         try:
-            snap["files"][rel] = path.read_text()
+            snap["files"][rel] = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             snap["files"][rel] = "<binary>"
 

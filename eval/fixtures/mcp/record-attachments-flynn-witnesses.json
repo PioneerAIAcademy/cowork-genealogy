@@ -1,0 +1,24 @@
+{
+  "tool": "source_attachments",
+  "description": "Attachment check for full-text search results mentioning Flynn family as witnesses. All results come back unattached — typical for FAN (Family/Associates/Neighbors) evidence which is rarely pre-attached to tree persons.",
+  "args": {
+    "uris": "~"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "uris": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "List of historical record persona ARK URLs to check. These come from the arkUrl or id field of search results."
+      }
+    },
+    "required": ["uris"]
+  },
+  "response": {
+    "attachments": {},
+    "unattached": [
+      "https://familysearch.org/ark:/61903/1:1:QV9N-YS37"
+    ]
+  }
+}

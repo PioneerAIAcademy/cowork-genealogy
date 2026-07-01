@@ -12,7 +12,7 @@ from harness.runnability import check_runnable
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
 FIXTURES = REPO_ROOT / "eval/fixtures/mcp"
-SKILLS = REPO_ROOT / "plugin/skills"
+SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 TESTS = REPO_ROOT / "eval/tests/unit"
 
 
@@ -231,7 +231,8 @@ def test_blocks_when_scenario_tree_gedcomx_json_fails_schema(tmp_path):
         ' "created": "2026-01-01", "updated": "2026-01-01"},'
         ' "questions": [], "plans": [], "log": [], "sources": [],'
         ' "assertions": [], "person_evidence": [], "conflicts": [],'
-        ' "hypotheses": [], "timelines": [], "proof_summaries": []}'
+        ' "hypotheses": [], "timelines": [], "proof_summaries": [],'
+        ' "evaluations": []}'
     )
     # Parseable JSON but missing the required `persons` array.
     (fake_scenarios / "treebad" / "tree.gedcomx.json").write_text(
@@ -261,3 +262,32 @@ def test_blocks_when_scenario_research_json_invalid(tmp_path):
     result = check_runnable(spec, scenarios_dir=fake_scenarios, fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS)
     assert result.runnable is False
     assert "research.json" in result.reason or "scenario" in result.reason
+
+
+def test_intentionally_invalid_flag_bypasses_schema_gate(tmp_path):
+    """A test that opts in with `intentionally_invalid` runs against a
+    schema-invalid scenario instead of being aborted. The flag is the only
+    difference from test_blocks_when_scenario_research_json_fails_schema, so
+    this also proves the flag — not a blanket bypass — is what unblocks it."""
+    fake_scenarios = tmp_path / "scenarios"
+    (fake_scenarios / "schemabad").mkdir(parents=True)
+    # Same broken-on-purpose scenario as the blocking test above.
+    (fake_scenarios / "schemabad" / "research.json").write_text(
+        '{"project": {"id": "rp_1"}, "questions": [], "plans": [],'
+        ' "log": [], "sources": [], "assertions": [], "person_evidence": [],'
+        ' "conflicts": [], "hypotheses": [], "timelines": [],'
+        ' "proof_summaries": []}'
+    )
+    (fake_scenarios / "schemabad" / "tree.gedcomx.json").write_text(
+        '{"persons":[],"relationships":[],"sources":[]}'
+    )
+    d = _runnable_test_dict()
+    d["input"]["scenario"] = "schemabad"
+    d["intentionally_invalid"] = True
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=fake_scenarios, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is True
+    assert result.reason is None

@@ -42,6 +42,16 @@ JUDGE_PROMPT_PATH = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
 RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 
 
+# Orchestrator skills exempt from the per-skill runlog rules (2 + 3). These
+# skills are validated by e2e GPS fixtures, not unit tests, so by design they
+# have no `eval/tests/unit/<skill>/` scaffolding and no
+# `eval/runlogs/unit/<skill>/` dir. Without this exemption, any edit to the
+# skill body hard-fails with "no run logs" and the `eval-cosmetic-skip` label
+# can't clear it — that escape hatch only relaxes rule 2 once a runlog dir
+# already exists.
+RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research"})
+
+
 def gh_error(message: str, *, file: str | None = None) -> None:
     """Emit a GitHub error annotation (also fails the step)."""
     prefix = f"::error file={file}::" if file else "::error::"
@@ -117,21 +127,41 @@ def latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict] | None:
         filename = candidates[0][2]
     else:
         return None
-    return filename, json.loads((skill_dir / filename).read_text())
+    return filename, json.loads((skill_dir / filename).read_text(encoding="utf-8"))
 
 
 def rule2_active(skill: str, log: dict, filename: str) -> int:
-    """Rule 2 (blocking): latest run log's snapshot matches disk."""
+    """Rule 2 (blocking): latest run log's snapshot matches disk.
+
+    Cosmetic-skip escape hatch: when `COSMETIC_SKIP=1` (set by the workflow
+    because a senior applied the `eval-cosmetic-skip` label on this PR), a
+    snapshot mismatch is downgraded to a warning instead of a block — the
+    prior run log + its already-complete annotations stand without a re-run.
+    The label is auto-removed on every new push (see check-runlogs.yml), so
+    the bypass can never outlive the commit it was approved for. Only rule 2
+    is relaxed: rules 1 and 3 still run, so an unannotated baseline can't be
+    waved through.
+    """
     snapshot = log.get("snapshot") or {}
     diffs = diff_snapshot_vs_disk(snapshot, REPO_ROOT)
     if not diffs:
+        return 0
+    diff_lines = "\n".join(f"  - {p}: {kind}" for p, kind in sorted(diffs.items()))
+    if os.environ.get("COSMETIC_SKIP") == "1":
+        gh_warning(
+            f"skill `{skill}`: latest run log `{filename}` differs from the working "
+            f"tree in {len(diffs)} file(s), but the `eval-cosmetic-skip` label "
+            f"bypasses rule 2 for this PR — no re-run required. Confirm the change "
+            f"is behavior-neutral before approving.\n" + diff_lines,
+        )
         return 0
     gh_error(
         f"skill `{skill}`: latest full-skill run log `{filename}` is NOT active — "
         f"{len(diffs)} snapshot file(s) differ from the working tree. Re-run the "
         f"harness (`uv run python eval/harness/run_tests.py --skill {skill}`) so "
-        f"the run log reflects the PR-branch state.\n"
-        + "\n".join(f"  - {p}: {kind}" for p, kind in sorted(diffs.items())),
+        f"the run log reflects the PR-branch state. If the change is purely "
+        f"cosmetic (no behavior change), a senior can instead apply the "
+        f"`eval-cosmetic-skip` label to this PR.\n" + diff_lines,
     )
     return 1
 
@@ -160,10 +190,34 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
             f"the PR.",
         )
         return 1
-    ann = json.loads(ann_path.read_text())
+    ann = json.loads(ann_path.read_text(encoding="utf-8"))
+    corrections = ann.get("corrections") or []
+    # Guard against malformed / hand-written corrections before building the
+    # reviewed-set. Annotations must come from the CRUD UI; a hand-edited or
+    # stale-tool file can omit the required keys (notably the deprecated
+    # `run_index`/`dimension`/`source` shape Claude tends to emit when asked
+    # to write a .ann.json directly). Without this guard the set-comprehension
+    # below dies with an opaque `KeyError: 'dimension_source'` instead of a
+    # reviewable error. See the eval/CLAUDE.md note: never hand-write .ann.json.
+    REQUIRED_KEYS = ("test_id", "dimension_source", "dimension_name")
+    malformed = [
+        c
+        for c in corrections
+        if not (isinstance(c, dict) and all(k in c for k in REQUIRED_KEYS))
+    ]
+    if malformed:
+        gh_error(
+            f"skill `{skill}`: annotation `{ann_filename}` has {len(malformed)} "
+            f"of {len(corrections)} correction(s) missing required keys "
+            f"{REQUIRED_KEYS} — likely hand-written or in the deprecated "
+            f"run_index/dimension/source shape. Annotations must be produced by "
+            f"the CRUD UI, not written by hand. Delete the file and re-review "
+            f"every dimension in the UI.",
+        )
+        return 1
     have = {
         (c["test_id"], c["dimension_source"], c["dimension_name"])
-        for c in ann.get("corrections") or []
+        for c in corrections
     }
     missing: list[tuple[str, str, str]] = []
     for t in log.get("tests") or []:
@@ -206,9 +260,14 @@ def main() -> int:
     for _, path in changes:
         if path is None:
             continue
-        m = re.match(r"^(?:plugin/skills|eval/tests/unit)/([^/]+)/", path)
+        m = re.match(r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/", path)
         if m:
             touched_skills.add(m.group(1))
+
+    # Drop orchestrator skills with no unit suite by design (see
+    # RUNLOG_GATE_EXEMPT_SKILLS) so a skill-body edit doesn't hard-fail the
+    # per-skill rules with no way to clear them.
+    touched_skills -= RUNLOG_GATE_EXEMPT_SKILLS
 
     fails = rule1_max_one_released(touched_releases)
 

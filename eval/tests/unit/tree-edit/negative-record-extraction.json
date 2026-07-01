@@ -16,6 +16,7 @@
     "explanation": "Facts from a newly-found record should be extracted as assertions in research.json (record-extraction's job), not written directly to tree.gedcomx.json. The tree is updated via proof-conclusion once an assertion is part of a `probable`-tier conclusion — not directly from extraction. Skipping that path would put unverified facts into the deliverable file."
   },
   "judge_context": [
-    "Should route to record-extraction rather than write 1880 census facts directly to tree.gedcomx.json"
+    "Should route to record-extraction rather than write 1880 census facts directly to tree.gedcomx.json",
+    "NEGATIVE-TEST GRADING NOTE for the judge: the success criterion for this test is that tree-edit DOES NOT activate (no write to tree.gedcomx.json from a raw record). When activated=False and skills_invoked does not include tree-edit, the negative routing succeeded — score Correctness and Completeness as `pass` on that basis. The main session may either (a) hand off directly to record-extraction, OR (b) ask the user for the record's content before invoking record-extraction (a defensible mid-step when the prompt doesn't include the raw transcription). Both are acceptable; neither should drop the grade. Judges must NOT score down because the conversational handoff isn't phrased as an explicit 'I decline'"
   ]
 }

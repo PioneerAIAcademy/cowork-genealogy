@@ -1,19 +1,17 @@
 {
   "tool": "place_search",
   "description": "FamilySearch place data for Schuylkill County, Pennsylvania",
-  "args": { "query": "~Schuylkill" },
+  "args": {
+    "placeName": "~Schuylkill"
+  },
   "response": {
     "results": [
       {
-        "placeId": "326",
-        "placeRepId": "7042",
-        "name": "Schuylkill",
-        "fullName": "Schuylkill, Pennsylvania, United States",
+        "standardPlace": "Schuylkill, Pennsylvania, United States",
         "type": "County",
+        "dateRange": "+1811/",
         "latitude": 40.7,
         "longitude": -76.2,
-        "dateRange": "+1811/",
-        "score": 100.0,
         "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Schuylkill&focusedId=7042"
       }
     ]

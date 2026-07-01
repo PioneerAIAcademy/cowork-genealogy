@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 failed=0
 
 echo "=== MCP server tests (vitest) ==="
-(cd "$ROOT/mcp-server" && npm test) || failed=1
+(cd "$ROOT/packages/engine/mcp-server" && npm test) || failed=1
 
 echo ""
 echo "=== Eval app tests (vitest) ==="

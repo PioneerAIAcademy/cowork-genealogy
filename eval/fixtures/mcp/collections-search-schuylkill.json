@@ -1,0 +1,25 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search — FamilySearch record collections for Schuylkill County, Pennsylvania. The tool derives the state-level scope (\"Pennsylvania\") from the standardPlace and matches collection titles at that scope, returning it as `scope`.",
+  "args": {
+    "standardPlace": "~Schuylkill"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "scope": "Pennsylvania",
+    "totalForPlace": 1,
+    "results": [
+      {
+        "id": "1401638",
+        "title": "Pennsylvania, Church and Town Records, 1708-1985",
+        "dateRange": "1708-1985",
+        "recordCount": 1245830,
+        "personCount": 982415,
+        "imageCount": 607220,
+        "url": "https://www.familysearch.org/search/collection/1401638"
+      }
+    ]
+  }
+}

@@ -19,14 +19,24 @@
           "primary": true,
           "date": "~1845",
           "place": "Ireland",
-          "sources": [{ "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84" }]
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "1850 Census, Schuylkill Co., dwelling 84"
+            }
+          ]
         },
         {
           "id": "F2",
           "type": "Death",
           "date": "1908-03-12",
           "place": "Schuylkill County, Pennsylvania",
-          "sources": [{ "ref": "S3", "page": "Death cert. no. 4521" }]
+          "sources": [
+            {
+              "ref": "S3",
+              "page": "Death cert. no. 4521"
+            }
+          ]
         }
       ]
     },
@@ -51,6 +61,32 @@
           "place": "Ireland"
         }
       ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "James",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -60,16 +96,90 @@
       "parent": "I2",
       "child": "I1",
       "sources": [
-        { "ref": "S1", "page": "1850 Census, Schuylkill Co., dwelling 84", "quality": 2 },
-        { "ref": "S2", "page": "1860 Census, Schuylkill Co., dwelling 112", "quality": 3 },
-        { "ref": "S3", "page": "Death cert. no. 4521", "quality": 2 }
+        {
+          "ref": "S1",
+          "page": "1850 Census, Schuylkill Co., dwelling 84",
+          "quality": 2
+        },
+        {
+          "ref": "S2",
+          "page": "1860 Census, Schuylkill Co., dwelling 112",
+          "quality": 2
+        },
+        {
+          "ref": "S3",
+          "page": "Death cert. no. 4521",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1850 Census, Schuylkill Co., dwelling 84",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1850 Census, Schuylkill Co., dwelling 84",
+          "quality": 2
+        }
       ]
     }
   ],
   "sources": [
-    { "id": "S1", "title": "1850 U.S. Federal Census", "author": "U.S. Census Bureau" },
-    { "id": "S2", "title": "1860 U.S. Federal Census", "author": "U.S. Census Bureau" },
-    { "id": "S3", "title": "Pennsylvania Death Certificates", "author": "Pennsylvania Dept. of Health" },
-    { "id": "S4", "title": "Schuylkill County Probate Records", "author": "Schuylkill County Register of Wills" }
+    {
+      "id": "S1",
+      "title": "1850 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S2",
+      "title": "1860 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S3",
+      "title": "Pennsylvania Death Certificates",
+      "author": "Pennsylvania Department of Health"
+    },
+    {
+      "id": "S4",
+      "title": "Schuylkill County Probate Records",
+      "author": "Schuylkill County Register of Wills"
+    },
+    {
+      "id": "S5",
+      "title": "St. Mary's Catholic Church (Pottsville) Baptismal Registers",
+      "author": "St. Mary's Catholic Church, Pottsville"
+    },
+    {
+      "id": "S6",
+      "title": "Pennsylvania Birth Certificates",
+      "author": "Pennsylvania Department of Health"
+    },
+    {
+      "id": "S7",
+      "title": "Schuylkill County Deed Books",
+      "author": "Schuylkill County Recorder of Deeds"
+    },
+    {
+      "id": "S8",
+      "title": "Pottsville Republican (newspaper)",
+      "author": "Pottsville Republican"
+    }
   ]
 }

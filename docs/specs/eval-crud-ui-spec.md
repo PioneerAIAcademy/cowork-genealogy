@@ -49,7 +49,7 @@ Three primary CRUD interfaces plus supporting views:
 
 A junior creating a new test moves through these steps in the Create view:
 
-1. Pick the skill from the dropdown (populated from `plugin/skills/`).
+1. Pick the skill from the dropdown (populated from `packages/engine/plugin/skills/`).
 2. Choose positive or negative test type.
 3. Write a short name, 1-2 sentence description, and tags.
 4. Pick a scenario from the dropdown (skipped for stateless skills). If no scenario matches:
@@ -87,11 +87,12 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 
 | Field | UI control | Notes |
 |-------|-----------|-------|
-| skill | Dropdown | Populated from plugin/skills/ directory listing |
+| skill | Dropdown | Populated from packages/engine/plugin/skills/ directory listing |
 | name | Text input | |
 | type | Toggle: positive / negative | Controls which fields are shown |
 | description | Text area | |
 | tags | Tag input (autocomplete from existing tags) | |
+| holdout | Switch | Reserves the test as a skill-improver generalization check (schema default `false`). Off by default; only persisted when on. See `docs/skill-lifecycle.md`. |
 | user_message | Text area | |
 | scenario | Dropdown + "Create new" button | Shows scenario README description on hover/select |
 | scenario_notes | Text area (collapsible) | Shown when scenario doesn't exactly match |
@@ -102,7 +103,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 
 The form displays the skill's rubric dimensions (from rubric.md) in a sidebar or info panel so the genealogist knows what's already covered and can write additional_criteria that don't duplicate the rubric.
 
-**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
+**Hash-change warning on edit.** When the junior edits an existing test and changes a grading-relevant field (`user_message`, `scenario`, `mcp_fixtures`, `additional_criteria`, `negative`, `holdout`), the UI shows an inline warning: "This edit changes the test's content hash — it will be excluded from cross-PR comparison for one PR. Continue?" Cosmetic edits (`name`, `description`, `tags`) don't trigger the warning. The warning is advisory only — the junior may proceed. The senior reviewing the PR sees the diff and decides whether to ask for a revert. Per plan §2.4.
 
 ### Validation
 
@@ -269,7 +270,7 @@ Resolved (covered above):
 - `docs/specs/unit-test-spec.md` — Unit test JSON format, JSON Schema, harness behavior, runnability gate, integer grade scale
 - `docs/specs/schemas/ann.schema.json` — `.ann` file schema (the annotation view writes against this)
 - `docs/specs/schemas/run-log.schema.json` — Run log schema (the Results section reads against this; includes `test_content_hash`)
-- `docs/specs/e2e-test-spec.md` — E2e test format
+- `docs/specs/gps-test-spec.md` — Published-proof-driven e2e test format (the test format this UI was originally designed around)
 - `eval/CLAUDE.md` — Directory layout, naming conventions, annotation file conventions
 - `docs/specs/research-schema-spec.md` — Research.json schema (for scenario builder)
 - `docs/specs/simplified-gedcomx-spec.md` — GedcomX schema (for scenario builder)

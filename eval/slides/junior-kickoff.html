@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Junior Genealogist Kickoff</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --ink: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent2: #fbbf24;
+    --good: #4ade80;
+    --line: #334155;
+  }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 28px;
+    line-height: 1.45;
+    overflow: hidden;
+  }
+  .deck { height: 100vh; width: 100vw; }
+  .slide {
+    display: none;
+    height: 100vh;
+    width: 100vw;
+    padding: 4.5vh 6vw 9vh;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+  .slide.active { display: flex; }
+  h1 { font-size: 2.0em; margin: 0 0 0.3em; line-height: 1.1; }
+  h2 { font-size: 1.35em; margin: 0 0 0.55em; color: var(--accent); line-height: 1.15; }
+  h3 { font-size: 1.0em; margin: 0.6em 0 0.2em; color: var(--accent2); }
+  p { margin: 0.25em 0; }
+  ul { margin: 0.2em 0; padding-left: 1.1em; }
+  li { margin: 0.32em 0; }
+  li ul { margin: 0.1em 0; }
+  .sub { color: var(--muted); }
+  strong { color: #fff; }
+  code {
+    background: #0b1220;
+    color: #e2e8f0;
+    padding: 0.08em 0.35em;
+    border-radius: 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.82em;
+  }
+  .chip {
+    display: inline-block;
+    font-size: 0.5em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 0.25em 0.7em;
+    border-radius: 999px;
+    vertical-align: middle;
+    margin-left: 0.5em;
+  }
+  .chip.who { background: var(--accent2); }
+  .chip.time { background: var(--good); }
+  .kicker { color: var(--muted); font-size: 0.6em; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4em; }
+  .cols { display: flex; gap: 4%; }
+  .cols > div { flex: 1; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.7em 1em;
+    margin: 0.4em 0;
+  }
+  .lead { justify-content: center; align-items: flex-start; text-align: left; }
+  .lead h1 { font-size: 2.6em; }
+  .center { justify-content: center; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.82em; margin-top: 0.3em; }
+  th, td { border: 1px solid var(--line); padding: 0.45em 0.6em; text-align: left; vertical-align: top; }
+  th { background: var(--panel); color: var(--accent); }
+  .big { font-size: 1.15em; }
+  .pill { display:inline-block; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:0.15em 0.6em; margin:0.15em 0.2em; font-size:0.8em;}
+  .footer {
+    position: fixed; bottom: 2.5vh; left: 6vw; right: 6vw;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: 0.5em; letter-spacing: 0.03em;
+    border-top: 1px solid var(--line); padding-top: 0.7vh;
+  }
+  .score { display:inline-block; width:1.5em; height:1.5em; line-height:1.5em; text-align:center; border-radius:6px; font-weight:700; margin-right:0.2em;}
+  .s1 { background:#7f1d1d; color:#fecaca;}
+  .s2 { background:#78350f; color:#fde68a;}
+  .s3 { background:#14532d; color:#bbf7d0;}
+  kbd { background:#0b1220; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:0.05em 0.4em; font-family:monospace; font-size:0.8em;}
+  .hint { position:fixed; top:2vh; right:2vw; color:var(--muted); font-size:0.42em; opacity:0.6;}
+  @media print {
+    @page { size: 13.333in 7.5in; margin: 0; }
+    html, body { width: 13.333in; height: auto; overflow: visible; background: var(--bg); }
+    .deck { height: auto !important; width: 13.333in !important; display: block !important; }
+    .slide {
+      display: flex !important;
+      width: 13.333in;
+      height: 7.5in;
+      padding: 0.55in 0.8in 0.65in;
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .slide:last-child { page-break-after: avoid; break-after: avoid; }
+    .footer, .hint { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="hint">← → to navigate · F for fullscreen</div>
+<div class="deck" id="deck">
+
+<!-- 1 TITLE -->
+<section class="slide lead">
+  <div class="kicker">Cowork Genealogy · Kickoff</div>
+  <h1>Junior Genealogist<br>Assessment Kickoff</h1>
+  <p class="sub big">Welcome — thanks for being here. Today we get you set up; tomorrow you do the work.</p>
+</section>
+
+<!-- 2 AGENDA -->
+<section class="slide">
+  <h2>Agenda — about one hour</h2>
+  <table>
+    <tr><th>Topic</th><th>Who</th><th>~Time</th></tr>
+    <tr><td>The project — what we're building</td><td>Dallan</td><td>5 min</td></tr>
+    <tr><td>The assessment — what you'll do &amp; how you're measured</td><td>Dallan</td><td>10 min</td></tr>
+    <tr><td>One-time install &amp; the daily flow</td><td>Promise / Israel</td><td>~15 min</td></tr>
+    <tr><td>Reviewing scores in the app</td><td>Dallan</td><td>~10 min</td></tr>
+    <tr><td>Commit &amp; push — submitting your PR</td><td>Promise / Israel</td><td>~10 min</td></tr>
+    <tr><td>Questions</td><td>Everyone</td><td>5–10 min</td></tr>
+  </table>
+</section>
+
+<!-- ===== SECTION 1: PROJECT (Dallan, 5 min) ===== -->
+<section class="slide lead">
+  <div class="kicker"><span class="chip who">Dallan</span> <span class="chip time">5 min</span></div>
+  <h1>The Project</h1>
+</section>
+
+<!-- 3 GOAL -->
+<section class="slide center">
+  <h2>What we're building</h2>
+  <p class="big">An <strong>AI family history consultant</strong> — a research assistant that helps people do real genealogy.</p>
+  <div class="card">
+    <p>It runs inside <strong>Claude Cowork</strong>, a desktop app for Claude.</p>
+    <p>We make it good at genealogy by adding two things…</p>
+  </div>
+</section>
+
+<!-- 4 SKILLS & TOOLS -->
+<section class="slide">
+  <h2>Skills &amp; Tools</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>~2 dozen Tools</h3>
+      <p>Connect to outside data — search records, read a person's tree, look up places, query the FamilySearch wiki.</p>
+    </div>
+    <div class="card">
+      <h3>~2 dozen Skills</h3>
+      <p>Do the genealogy <em>work</em> — research planning, record extraction, locality guides, conflict resolution, and more.</p>
+    </div>
+  </div>
+  <p class="sub">The skills are where the genealogical expertise lives. Making them better is the whole game.</p>
+</section>
+
+<!-- 5 HOW WE IMPROVE -->
+<section class="slide">
+  <h2>How we make the AI better</h2>
+  <p>To improve a skill, we first have to <strong>measure how well it works</strong> in many different situations.</p>
+  <p>So we built a set of <strong>“tests.”</strong> Each test captures one realistic moment and asks: <em>did the AI do this well?</em></p>
+  <div class="card sub">A test is graded by <strong>another AI</strong> (the “judge”) — fast, but not reliable on genealogical judgment. That's where you come in: your corrections fix the grades <em>and</em> teach the judge to grade better over time.</div>
+</section>
+
+<!-- 6 WHAT'S IN A TEST -->
+<section class="slide">
+  <h2>What's inside one test</h2>
+  <ul>
+    <li><strong>A research scenario</strong> — what's been found so far in this project</li>
+    <li><strong>The user's input</strong> — what the person asks the AI to do</li>
+    <li><strong>Tool responses</strong> — what the tools returned</li>
+    <li><strong>The AI's response</strong> — what the skill actually produced</li>
+    <li><strong>Judge context</strong> — instructions for how to grade the response</li>
+    <li><strong>Response grades</strong> — the judge AI's scores, which <strong>you review</strong></li>
+  </ul>
+</section>
+
+<!-- ===== SECTION 2: ASSESSMENT (Dallan, 10 min) ===== -->
+<section class="slide lead">
+  <div class="kicker"><span class="chip who">Dallan</span> <span class="chip time">10 min</span></div>
+  <h1>The Assessment</h1>
+</section>
+
+<!-- 7 THE PLAN -->
+<section class="slide">
+  <h2>The plan for the next several months</h2>
+  <p>Working alongside our developers, we will repeatedly:</p>
+  <ol>
+    <li>Run the tests for each skill</li>
+    <li><strong>Correct the grades the AI judge assigned</strong></li>
+    <li>Improve existing tests and create new ones</li>
+    <li>Improve the skills themselves</li>
+  </ol>
+  <p class="sub">Correcting grades (step 2) is your core contribution — and you'll also work with the developers to improve and create tests (step 3) and improve the skills themselves (step 4).</p>
+</section>
+
+<!-- 8 WHERE ASSESSMENT FITS -->
+<section class="slide">
+  <h2>Where this assessment fits</h2>
+  <ul>
+    <li><strong>Step 1 is already done</strong> — the tests have been run for you.</li>
+    <li><strong>Our senior genealogists have already done step 2</strong> — they corrected the grades.</li>
+    <li><strong>Your task:</strong> redo step 2 for <strong>4 skills</strong> — independently correct the grades.</li>
+  </ul>
+  <div class="card">We then compare your corrections to the seniors' to see how well-aligned your judgment is.</div>
+  <p class="sub">Developers are here to help you get set up if you get stuck.</p>
+</section>
+
+<!-- 9 SUCCESS -->
+<section class="slide">
+  <h2>How we measure success</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>1 · Aligned grades</h3>
+      <p>How close are your score corrections to the <strong>senior genealogists'</strong> corrections?</p>
+    </div>
+    <div class="card">
+      <h3>2 · Low support needs</h3>
+      <p>How much technical help do you need vs. working through the tasks <strong>on your own</strong>?</p>
+    </div>
+  </div>
+  <p class="big">The people we hire will meet <strong>both</strong>: well-aligned scores <em>and</em> low support needs.</p>
+</section>
+
+<!-- 10 SCHEDULE -->
+<section class="slide">
+  <h2>Schedule</h2>
+  <table>
+    <tr><th>When</th><th>What</th></tr>
+    <tr><td><strong>Today (Mon)</strong></td><td>Get all the software installed — that's what the rest of this session is for.</td></tr>
+    <tr><td><strong>Tomorrow (Tue)</strong></td><td>Correct grades on <strong>4 skills</strong>. We'll tell you <em>which</em> 4 first thing in the morning.</td></tr>
+    <tr><td><strong>Tue night</strong></td><td>Submit a pull request with your grade corrections for those 4 skills.</td></tr>
+  </table>
+  <p class="sub">We're finalizing the skill list tonight — you'll get it first thing tomorrow morning.</p>
+</section>
+
+<!-- 11 TIME / PAY -->
+<section class="slide center">
+  <h2>Time &amp; pay</h2>
+  <p class="big">You'll be paid for <strong>5 hours</strong> to complete the assessment.</p>
+  <p class="sub">Today's setup + tomorrow's grading + submitting the PR all fit inside that.</p>
+</section>
+
+<!-- 12 GRADING VOCAB -->
+<section class="slide">
+  <h2>The grading vocabulary</h2>
+  <p>Every test is graded on several <strong>dimensions</strong>:</p>
+  <ul>
+    <li><strong>Base dimensions</strong> (always): Correctness, Completeness, Tool Arguments</li>
+    <li><strong>Rubric dimensions</strong>: 3–5 skill-specific checks</li>
+  </ul>
+  <p>Each dimension gets one score:</p>
+  <p class="big"><span class="score s1">1</span> fail &nbsp;&nbsp; <span class="score s2">2</span> partial &nbsp;&nbsp; <span class="score s3">3</span> pass</p>
+  <p class="sub">(Tool Arguments can also be <strong>N/A</strong> when the skill made no tool calls.)</p>
+</section>
+
+<!-- 13 GRADING WELL -->
+<section class="slide">
+  <h2>Grading well</h2>
+  <ul>
+    <li>Read the <strong>full trace</strong> before scoring — input, tool calls, output.</li>
+    <li>Judge against the <strong>rubric</strong>, not your overall gut feeling about the skill.</li>
+    <li>Use <strong>2 (partial)</strong> honestly — it isn't all-or-nothing.</li>
+    <li>When you disagree with the AI, write <strong>one line saying why</strong>.</li>
+    <li>No trick questions — grade the way your expertise tells you.</li>
+  </ul>
+</section>
+
+<!-- MEET THE DEVELOPERS (slide shared while the team introduces themselves) -->
+<section class="slide center">
+  <h2>Meet the developers</h2>
+  <p class="big">The team that built the harness and this review app — and your <strong>technical support</strong> throughout the assessment.</p>
+  <div class="card sub">Next, the developers will walk you through the one-time install and the daily flow — live, hands-on.</div>
+</section>
+
+<!-- ===== SECTION 3: REVIEWING SCORES (Dallan) ===== -->
+<section class="slide lead">
+  <div class="kicker"><span class="chip who">Dallan</span> <span class="chip time">~10 min</span></div>
+  <h1>Reviewing Scores<br>in the App</h1>
+</section>
+
+<!-- 14 THE UI -->
+<section class="slide">
+  <h2>The review app</h2>
+  <ul>
+    <li>A small web app that runs on your own machine.</li>
+    <li>Launch it with <code>Start.bat</code> — a browser tab opens automatically.</li>
+    <li>Go to <code>localhost:3000/results</code> — run logs grouped by skill.</li>
+    <li>Click your skill's latest run to open it.</li>
+  </ul>
+  <p class="sub">Keep the black command window open the whole time — closing it stops the app.</p>
+</section>
+
+<!-- 15 WHAT YOU SEE -->
+<section class="slide">
+  <h2>Each test shows two blocks</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>① The Trace</h3>
+      <ul>
+        <li>The skill's input</li>
+        <li>The scenario (what's been found so far)</li>
+        <li>Tool calls + what the tools returned</li>
+        <li>Claude's final output</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>② The Grades</h3>
+      <ul>
+        <li>One row per dimension</li>
+        <li>The judge's score <span class="score s1">1</span><span class="score s2">2</span><span class="score s3">3</span></li>
+        <li>The judge's rationale</li>
+        <li>A picker for <strong>your correction</strong></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 16 THREE PATTERNS -->
+<section class="slide">
+  <h2>Three things you'll do per dimension</h2>
+  <table>
+    <tr><th>Situation</th><th>What to do</th></tr>
+    <tr><td>You <strong>agree</strong> with the judge</td><td>Pick the same score; leave the comment empty.</td></tr>
+    <tr><td>You <strong>disagree</strong></td><td>Pick a different score + write a one-line reason.</td></tr>
+    <tr><td>The whole test is <strong>right</strong></td><td>Click <strong>“Agree with all”</strong> on the test header — marks every dimension reviewed in one click.</td></tr>
+  </table>
+  <p class="sub">Agreeing still counts as reviewing — you must touch <em>every</em> dimension.</p>
+</section>
+
+<!-- 17 SHORTCUTS + COUNTER -->
+<section class="slide">
+  <h2>Speeding up &amp; finishing</h2>
+  <div class="cols">
+    <div>
+      <h3>Keyboard (when a picker is focused)</h3>
+      <ul>
+        <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> — set the score</li>
+        <li><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd> — move between dimensions</li>
+        <li><kbd>?</kbd> — show shortcut help</li>
+      </ul>
+    </div>
+    <div>
+      <h3>The completeness counter</h3>
+      <ul>
+        <li>Header shows e.g. <code>8 / 12 reviewed</code></li>
+        <li>You're done when it reads <strong>N / N</strong></li>
+        <li>Your PR won't pass until <strong>every dimension</strong> is reviewed</li>
+      </ul>
+    </div>
+  </div>
+  <p class="sub">Corrections save automatically — you'll see “saved” in the header.</p>
+</section>
+
+<!-- 18 REVIEW TIPS -->
+<section class="slide">
+  <h2>A fast, honest review pattern</h2>
+  <ul>
+    <li>Scan the trace first — understand what the skill was asked and what it did.</li>
+    <li>For each dimension, check the judge's rationale against the <strong>rubric</strong>.</li>
+    <li>“Agree with all” on tests that look clearly right…</li>
+    <li>…and spend your attention on the ones you actually <strong>disagree</strong> with.</li>
+  </ul>
+  <div class="card sub">Quality over speed — but you don't have to re-justify every correct grade.</div>
+</section>
+
+<!-- SUBMITTING YOUR WORK (handoff back to developers for commit + PR) -->
+<section class="slide center">
+  <h2>Submitting your work</h2>
+  <p class="big">Now back to the developers — they'll show you how to <strong>commit your corrections and create a pull request</strong>.</p>
+  <div class="card sub">That's how your graded work gets submitted for the assessment.</div>
+</section>
+
+<!-- IF YOU'RE SELECTED -->
+<section class="slide">
+  <h2>If you're selected</h2>
+  <p>The full three-month project is a real commitment — here's what it looks like:</p>
+  <ul>
+    <li><strong>20 hours / week</strong>, starting <strong>next week</strong>.</li>
+    <li>A <strong>1-hour daily meeting at 12:30pm WAT</strong>, every day <strong>Monday–Friday</strong>.</li>
+    <li>You'll be assigned to a <strong>developer team</strong> — you'll work closely together, so you'll need to agree on <strong>core hours when you're all online at the same time</strong>.</li>
+  </ul>
+</section>
+
+<!-- QUESTIONS -->
+<section class="slide lead center">
+  <div class="kicker"><span class="chip time">5–10 min</span></div>
+  <h1>Questions?</h1>
+  <p class="big sub">Tomorrow morning we announce the 4 skills. Tomorrow night you submit your PR.</p>
+  <p class="sub">Thanks for participating!</p>
+  <p class="sub">We'll let you know by the end of the week whether you'll be hired for the full three-month project.</p>
+</section>
+
+</div>
+
+<div class="footer">
+  <span>Junior Genealogist Kickoff</span>
+  <span id="counter">1</span>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+  const counter = document.getElementById('counter');
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+    location.hash = i + 1;
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+  document.addEventListener('click', (e) => { if (e.clientX > window.innerWidth * 0.25) next(); else prev(); });
+  const start = parseInt(location.hash.replace('#', '')) || 1;
+  show(start - 1);
+</script>
+</body>
+</html>

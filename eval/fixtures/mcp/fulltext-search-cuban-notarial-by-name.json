@@ -1,0 +1,99 @@
+{
+  "tool": "fulltext_search",
+  "description": "Mirrors fulltext-search-cuban-notarial but matches the `name` field. Returns the same 1834 Habana protocolo when the skill issues the query through the Name field instead of Keywords.",
+  "args": {
+    "name": "~Garc\u00eda"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "place": {
+        "type": "string"
+      },
+      "nlQuery": {
+        "type": "string"
+      },
+      "collectionId": {
+        "type": "string"
+      },
+      "imageGroupNumber": {
+        "type": "string"
+      },
+      "recordPlace0": {
+        "type": "string"
+      },
+      "recordPlace1": {
+        "type": "string"
+      },
+      "recordPlace2": {
+        "type": "string"
+      },
+      "recordPlace3": {
+        "type": "string"
+      },
+      "yearFrom": {
+        "type": "integer"
+      },
+      "yearTo": {
+        "type": "integer"
+      },
+      "recordType": {
+        "type": "string"
+      },
+      "count": {
+        "type": "integer"
+      },
+      "offset": {
+        "type": "integer"
+      },
+      "includeFacets": {
+        "type": "boolean"
+      },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:K5M9-P3WT",
+        "collectionId": "3072910",
+        "collectionTitle": "Cuba, Protocolos notariales, 1578-1968",
+        "title": "Protocolo notarial \u2014 Poder otorgado por Don Francisco de Quesada",
+        "recordDate": "1834",
+        "recordType": "Notarial",
+        "recordPlace": "Habana, Cuba",
+        "textDocument": "En la siempre fid\u00edl\u00edsima ciudad de la Habana \u00e1 los catorce d\u00edas del mes de agosto del a\u00f1o mil ochocientos treinta y cuatro ante m\u00ed el escribano y testigos comparec\u00edo don Francisco de Quesada vecino de esta plaza y dijo que otorga\u00ba\u00ban poder a don Jos\u00e9 Maria Garc\u00eda vecino tambi\u00e9n de la Habana para que en su nombre y representaci\u00f3n pueda cobrar y percibir las cantidades que se le adeudan en la villa de Matanzas y dar de ellas los recibos y cartas de pago necesarias. Por testigos don Antonio P\u00e9rez y don Ignacio Su\u00e1rez vecinos de esta ciudad.",
+        "names": [
+          "Francisco de Quesada",
+          "Jos\u00e9 Maria Garc\u00eda",
+          "Antonio P\u00e9rez",
+          "Ignacio Su\u00e1rez"
+        ],
+        "places": [
+          "Habana",
+          "Matanzas",
+          "Cuba"
+        ],
+        "dates": [
+          "1834"
+        ],
+        "highlightTerms": [
+          "Garc\u00eda"
+        ]
+      }
+    ]
+  }
+}

@@ -42,10 +42,10 @@ cd /home/gennesis/cowork-genealogy
 ### What failure looks like
 
 - A manifest validation error → the manifest violates the 0.3 schema; fix
-  it and re-run. The unit guard `mcp-server/tests/packaging/manifest.test.ts`
+  it and re-run. The unit guard `packages/engine/mcp-server/tests/packaging/manifest.test.ts`
   catches most of these earlier.
 - `npm ci` fails in the stage → `package-lock.json` is out of sync; run
-  `npm install` in `mcp-server/` and retry.
+  `npm install` in `packages/engine/mcp-server/` and retry.
 
 ---
 
@@ -59,7 +59,7 @@ archive has no surprises.
 ### Steps
 
 ```bash
-cd /home/gennesis/cowork-genealogy/mcp-server
+cd /home/gennesis/cowork-genealogy/packages/engine/mcp-server
 npx mcpb validate manifest.json
 npx mcpb info ../releases/genealogy-mcp.mcpb
 ```
@@ -97,7 +97,7 @@ cd /home/gennesis/cowork-genealogy
 
 - A missing prod dependency → the unpacked server can't start; check that
   the dep is in `dependencies` (not `devDependencies`) in
-  `mcp-server/package.json`.
+  `packages/engine/mcp-server/package.json`.
 - A forbidden path present (e.g. `node_modules/typescript`) → the staging
   step or `.mcpbignore` regressed.
 - Tool mismatch → `manifest.tools` drifted from the registry; the script
@@ -168,16 +168,15 @@ written — proving host → MCP server → SDK bridge → VM → skill → file
 
 ## Known limitation: wiki-page tools need a local corpus
 
-Five tools — `wiki_read`, `wiki_country_home`,
-`wiki_country_getting_started`, `wiki_country_online_records`,
-`wiki_country_research_tips` — register and are callable, but read a
-pre-crawled markdown corpus via `wikiMarkdownDir` in
-`~/.familysearch-mcp/config.json`. That corpus is **not bundled in the
-`.mcpb`**, so on a stock install those tools throw a config-missing error
-at runtime. Shipping/hosting the corpus is tracked separately. The other
-16 tools work out of the box (the bundled FamilySearch clientId covers the
-authenticated tools; `wiki_search` and `place_population` use hosted
-services).
+Two tools — `wiki_read` and `wiki_place_page` (all four sections:
+`home`, `getting_started`, `online_records`, `research_tips`) — register
+and are callable, but read a pre-crawled markdown corpus via
+`wikiMarkdownDir` in `~/.familysearch-mcp/config.json`. That corpus is
+**not bundled in the `.mcpb`**, so on a stock install those tools throw a
+config-missing error at runtime. Shipping/hosting the corpus is tracked
+separately. The other 17 tools work out of the box (the bundled
+FamilySearch clientId covers the authenticated tools; `wiki_search` and
+`place_population` use hosted services).
 
 ---
 

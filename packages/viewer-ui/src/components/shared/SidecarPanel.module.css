@@ -1,0 +1,201 @@
+/* Overlay covers the entire viewport. Pointer-events on backdrop only so
+   clicks on the drawer body propagate to its own handlers. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(44, 36, 25, 0.32);
+  backdrop-filter: blur(1px);
+}
+
+.drawer {
+  position: relative;
+  width: min(600px, 90vw);
+  height: 100vh;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 32px rgba(44, 36, 25, 0.18);
+  overflow: hidden;
+}
+
+/* Narrow Electron windows: drawer eats the full viewport so the table
+   behind isn't squeezed into an unusable strip. */
+@media (max-width: 1100px) {
+  .drawer {
+    width: 100vw;
+  }
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.drawerTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.headerMeta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.logId {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-code);
+  padding: 1px 6px;
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm);
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.closeButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--accent-gold-strong);
+  outline-offset: 2px;
+}
+
+.summary {
+  padding: var(--spacing-xs) var(--spacing-xl);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.body {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.loadingStrip {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-gold-strong), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+  flex-shrink: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.loadingMessage {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: var(--spacing-xl) 0;
+}
+
+.emptyMessage {
+  font-style: italic;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin: var(--spacing-xl) 0;
+  font-size: 14px;
+}
+
+.statusTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-md);
+}
+
+.statusBody {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-lg);
+  line-height: 1.5;
+}
+
+.errorBlock {
+  background: var(--bg-code);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  margin: 0 0 var(--spacing-lg);
+}
+
+.statusActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.button {
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.button:hover {
+  background: var(--bg-hover);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--accent-gold-strong);
+  outline-offset: 1px;
+}

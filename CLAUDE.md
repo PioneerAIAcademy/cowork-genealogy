@@ -51,25 +51,59 @@ instance); end users do not need to set this for normal operation.
 
 ## Repository layout
 
-- `mcp-server/` — TypeScript source for the MCP server. Compiles to
-  `mcp-server/build/`. The `.mcpb` is built from this.
-- `plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
+- `packages/engine/` — non-package container for the two engine dirs
+  below (no `package.json` of its own; not a pnpm workspace member).
+- `packages/engine/mcp-server/` — TypeScript source for the MCP server. Compiles to
+  `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
+- `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
 - `scripts/` — Build scripts for both artifacts.
-- `mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
+- `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
   smoke tests that invoke a tool directly against live APIs (no MCP
   harness; useful for debugging a tool in isolation), plus
   `probe-*.ts` and `explore-*.ts` scripts that document the live-API
   evidence trail behind each spec. Not shipped in any artifact.
-- `mcp-server/scripts/` — Reserved for future user-facing scripts.
+- `packages/engine/mcp-server/scripts/` — Reserved for future user-facing scripts.
   Currently empty. Do not put internal/developer scripts here; they
-  belong in `mcp-server/dev/`.
-- `mcp-server/src/utils/` — Shared utility modules consumed by multiple
-  MCP tools. Currently houses `gedcomx-convert.ts` (round-trip between
+  belong in `packages/engine/mcp-server/dev/`.
+- `packages/engine/mcp-server/src/utils/` — Shared utility modules consumed by multiple
+  MCP tools. Houses `gedcomx-convert.ts` (round-trip between
   full GedcomX and the simplified format defined in
   `docs/specs/simplified-gedcomx-spec.md`; implementation spec at
-  `docs/specs/gedcomx-convert-spec.md`).
+  `docs/specs/gedcomx-convert-spec.md`) and `search-helpers.ts` (shared
+  input validators and error parsing used by the search tools
+  `record_search` and `person_search`; `parseUpstreamErrorBody` is also
+  reused by `person_ancestors`).
 - `releases/` — Build output. Gitignored except for `.gitkeep`.
+
+### Hosted web workbench (monorepo overlay)
+
+This repo is also a **pnpm + turborepo monorepo** for the hosted web product
+(POC; see `docs/plan/hosted-web-workbench-POC-status.md`). The engine
+(`packages/engine/{mcp-server,plugin}`) is deliberately **kept out of the pnpm
+workspace** via the `!packages/engine/**` negation in `pnpm-workspace.yaml`,
+and stays npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.
+The web side depends on `packages/schema`, never on the engine.
+
+- `packages/schema/` — single source of `research.json` + simplified-GedcomX TS
+  types + JSON Schemas (seeded from the viewer). Consumed by viewer-ui, web, server.
+- `packages/viewer-ui/` — the extracted renderer (App, 11 sections, shared
+  components, `ResearchDataProvider`), transport-agnostic via a
+  `ResearchTransport` (see `src/transport.ts`). Runs in Electron (IPC) and web (WS).
+- `apps/electron/` — the former `cowork-genealogy-ui` Electron viewer, now an
+  app package consuming `viewer-ui` via an IPC transport. `main/`/`preload/` as-is.
+- `apps/web/` — React+Vite client: login, session list, chat sidebar + the
+  shared viewer. WebSocket + REST transport.
+- `apps/server/` — **FastAPI control plane** (Python/uv): auth + allowlist,
+  session/sandbox orchestration via a vendor-neutral `SandboxProvider`
+  (`LocalProvider` for local dev, `E2BProvider` for the hosted E2B path —
+  `make server-e2b` and the Fly deploy run `SANDBOX_PROVIDER=e2b`), the viewer/chat
+  WebSocket, and `app/agent/` (the in-sandbox `agent_runner` — mock + real modes).
+
+Memorable commands live in the **`Makefile`** (`make install`, `make server`,
+`make web`, `make test`, `make mcpb`, `make plugin`). The POC runs fully on
+mocks (no E2B/Anthropic/OAuth needed).
+
 - `docs/plan/` — Implementation plans for tools (how we intend to build).
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
@@ -84,19 +118,44 @@ catalog (descriptions, workflow), see `README.md`. This file is the
 agent operating manual — it covers architecture, conventions, and how
 to make changes, not what each individual tool/skill does.
 
-Tool implementations live in `mcp-server/src/tools/`. Their schemas are
-listed in `mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
+Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their schemas are
+listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
 source of truth for the advertised tool list); `src/index.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
-`docs/specs/<tool>-tool-spec.md`. Implementation plans (including for
-tools not yet built, such as `tree_attachments`) are in `docs/plan/`.
-Skills live in `plugin/skills/<skill>/SKILL.md`.
+`docs/specs/<tool>-tool-spec.md` — a spec can land before the tool
+does (e.g. `merge_gedcomx`, specced in `docs/specs/merge-gedcomx-spec.md`,
+is not yet implemented). Implementation plans and design notes are in
+`docs/plan/`.
+Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
+skill uses `person_search` to find a person in the FamilySearch tree
+when the user doesn't have a FamilySearch ID to provide.
 
 The host artifact is the `.mcpb` desktop extension, built from
-`mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
+`packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
 install contract — including a `tools` array that must stay in sync with
 `allToolSchemas` (enforced by `tests/packaging/manifest.test.ts`). See
 `docs/specs/mcpb-package-spec.md`.
+
+### Cowork plugin agents
+
+Cowork plugin agents live in `packages/engine/plugin/agents/`. These are agent `.md` files
+consumed by the Cowork runtime — they are distinct from Claude Code
+subagents (`.claude/agents/`). Each plugin agent has YAML frontmatter
+(`name`, `description`, `model`, `tools`) followed by the full agent
+system prompt. The `description` field determines when the Cowork
+orchestrator auto-delegates to the agent. Agents run in fresh context
+(no main-session state bleeds in) and are read-only by convention unless
+explicitly specced otherwise. The first such agent is `gps-mentor`
+(spec: `docs/specs/gps-mentor-agent-spec.md`).
+
+## Handling user feedback submissions
+
+When a user submits a feedback zip via the Cowork viewer, the workflow
+to triage it lives at `docs/feedback-workflow.md`. The underlying spec
+(rationale, contracts, lints) is at
+`docs/specs/feedback-case-spec.md`. Point the user at the workflow
+doc first; only reach for the spec when they're modifying the
+workflow itself or building one of its skills.
 
 ## Researcher profile in `research.json`
 
@@ -120,30 +179,50 @@ Three architectural rules made this design necessary:
 - **No shared SKILL.md reference loading.** Claude Code's relative-
   path resolution from SKILL.md is unreliable (issue #17741). Shared
   reference docs across skills are duplicated, not linked from a
-  `plugin/references/` location.
+  `packages/engine/plugin/references/` location.
 - **No plugin-level CLAUDE.md auto-load.** Anthropic's plugin docs are
   explicit that `<plugin>/CLAUDE.md` is not loaded as context.
   Cross-cutting instructions go in each `SKILL.md`, not in a single
   plugin-level file.
 
-Net effect: shared per-project state goes in `research.json`. Schema
-extensions (new `researcher_profile` fields, new project sections)
-require updates to three places: `docs/specs/schemas/research.schema.json`,
-the prose table in `docs/specs/research-schema-spec.md`, and the
-validator in the TypeScript MCP tool `validate_research_schema` at `mcp-server/src/validation/validator.ts`.
+Net effect: shared per-project state goes in `research.json`. Its schema is
+specified as JSON Schema under `docs/specs/schemas/` and mirrored independently
+in `packages/schema/` (JSON Schema + hand-maintained TypeScript types in
+`src/index.ts`, consumed by viewer-ui/web/server). The engine's runtime check is
+the hand-maintained `validate_research_schema` (`validator.ts`) — it does **not**
+load the JSON Schema, so it must be edited too. There are two kinds of schema
+change, with two different (and easy-to-undercount) site lists:
+
+- **New field or section:** `docs/specs/schemas/research.schema.json`, the prose
+  table in `docs/specs/research-schema-spec.md`, the validator
+  (`packages/engine/mcp-server/src/validation/validator.ts`), **and** the web
+  mirror (`packages/schema/schemas/research.schema.json` + the matching `interface`
+  in `packages/schema/src/index.ts`). A *required* field additionally breaks
+  `eval/fixtures/scenarios/*/research.json` and the eval Python stubs, which fail
+  validation until backfilled.
+- **New value on a closed enum** (e.g. `evidence_type`): the enum lives in
+  `enums.schema.json` (`$defs`), **not** `research.schema.json` (which only
+  `$ref`s it). Edit `enums.schema.json` in *both* schema trees (`docs/specs/schemas/`
+  and `packages/schema/schemas/`), the matching TS union in
+  `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
+  prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
+  rationale: `docs/plan/no-evidence-evidence-type-decision.md`.
+
 The interview lives in `init-project/SKILL.md`.
 
-## Auth architecture (`mcp-server/src/auth/`)
+## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
-All authenticated tools (`place_collections`, `record_search`,
-`person_read`, and `fulltext_search`) must go through this module — do not
-re-implement token plumbing.
+All authenticated tools (`collections_search`, `collection_read`, `record_search`,
+`record_read`, `person_search`, `person_read`, `person_ancestors`, `fulltext_search`,
+`image_search`, `image_read`, `volume_search`, `same_person`, `person_record_matches`,
+`record_person_matches`, `person_person_matches`, `record_record_matches`, and
+`source_attachments`) must go through this module — do not re-implement token plumbing.
 
 - `config.ts` — OAuth URLs, callback port, scopes, a per-user
   config store at `~/.familysearch-mcp/config.json` (`loadConfig` /
   `saveConfig`, used only for tunables like `wikiApiUrl`), and
   `getClientId()` which reads the bundled
-  `mcp-server/config/familysearch.json` at runtime. The bundled file
+  `packages/engine/mcp-server/config/familysearch.json` at runtime. The bundled file
   is the **sole** source of the FS client ID — no env-var fallback,
   no per-user override. On missing/corrupt bundled file it throws an
   installation-framed error (not an LLM-actionable one), since the
@@ -165,7 +244,7 @@ re-implement token plumbing.
 Two distinct config sources:
 
 1. **Bundled, shipped with the MCP server:**
-   `mcp-server/config/familysearch.json`. Holds the FamilySearch
+   `packages/engine/mcp-server/config/familysearch.json`. Holds the FamilySearch
    OAuth `clientId`. Committed to git, packaged into the `.mcpb`,
    read at runtime by `getClientId()`. Users and the LLM never see
    it. To rotate, edit the file and re-ship.
@@ -183,7 +262,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
 | `wikiApiUrl` | `wiki_search` | When using `wiki_search` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
-| `wikiMarkdownDir` | `wiki_read`, `wiki_country_*` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
+| `wikiMarkdownDir` | `wiki_read`, `wiki_place_page` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 | `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 
@@ -193,9 +272,45 @@ file so end users can be guided to fix it.
 
 ## Important conventions
 
+### Identifier casing: API surfaces vs. persisted documents
+
+There are two casing conventions in this repo, split on a deliberate
+line — not an inconsistency to "fix":
+
+- **API/wire surfaces use camelCase.** MCP tool parameters
+  (`birthPlace`, `personId`, `collectionId`), `~/.familysearch-mcp/config.json`
+  keys (`wikiApiUrl`, `wikiMarkdownDir`), and the upstream **full**
+  GedcomX returned by FamilySearch (`sourceDescriptions`, `resourceId`)
+  are all camelCase.
+- **Persisted project documents use snake_case.** `research.json` and
+  the **simplified** GedcomX (`tree.gedcomx.json`) use snake_case
+  throughout (`assertion_id`, `couple_relationship`, `standard_date`).
+
+The MCP tool boundary is the seam between the two, and it is exactly
+where every payload gets validated — MCP input schemas on the way in,
+`validate_research_schema` (with `additionalProperties: false`) on the
+persisted side. That strict validation is what makes the split safe: a
+casing slip fails loudly and immediately instead of silently corrupting
+state.
+
+Rules that follow from this:
+
+- A new MCP tool parameter is **camelCase**. A new field on
+  `research.json` or simplified GedcomX is **snake_case**.
+- `gedcomx-convert.ts` renames upstream camelCase to simplified
+  snake_case; that rename cost is paid once, in tested code behind a
+  spec, and is the reason simplified GedcomX stays snake_case rather
+  than mirroring its upstream parent — it must match `research.json`,
+  which the agent co-edits in the same skill.
+- Python skill scripts read snake_case JSON natively, which is the
+  other reason persisted documents are snake_case.
+- The thing to avoid is mixing both conventions **within a single
+  co-edited document** — never mixing them across the repo, which is
+  intentional.
+
 ### MCP server tools
 
-Tools are defined in `mcp-server/src/tools/`. Each tool exports a
+Tools are defined in `packages/engine/mcp-server/src/tools/`. Each tool exports a
 single function and its schema. Add the schema to `allToolSchemas` in
 `src/tool-schemas.ts` (the list `src/index.ts` advertises and the
 packaging drift test checks), add the call dispatch to `src/index.ts`,
@@ -208,7 +323,7 @@ This keeps the tool count low and Claude's context window lean.
 
 ### Skills
 
-Skills live in `plugin/skills/<skill-name>/`. Each skill has:
+Skills live in `packages/engine/plugin/skills/<skill-name>/`. Each skill has:
 
 - `SKILL.md` — The instructions Claude reads. Includes frontmatter
   with `name`, `description`, and (if needed) `allowed-tools`.
@@ -220,6 +335,26 @@ Skills live in `plugin/skills/<skill-name>/`. Each skill has:
 The `description` in SKILL.md frontmatter is critical — it determines
 when Claude triggers the skill. Be specific about what kinds of user
 requests should activate it.
+
+### Python file I/O: always pass `encoding="utf-8"`
+
+Every Python `read_text()` / `write_text()` / `open()` on a text file
+**must** pass `encoding="utf-8"`. A bare call uses the platform default —
+cp1252 on Windows — and crashes with `UnicodeDecodeError` on the em-dashes
+and smart quotes that SKILL.md, the test JSON, and `research.json`
+routinely contain. It works on macOS/Linux (utf-8 default) but breaks for
+the Windows-based genealogist team, and it has bitten us repeatedly (the
+eval-harness scripts, `eval/triggering/`). This applies to **every** Python
+call with no exceptions — harness/dev scripts, GH-action checks, stdlib-only
+skill `scripts/`, the `apps/server/` FastAPI control plane, **and test files**
+(`tests/`, `*_test.py`, `test_*.py`) alike. It applies even when the result is
+immediately handed to `json.loads(...)` — `read_text()` decodes before
+`json` ever sees the bytes, so `json.loads(p.read_text(encoding="utf-8"))`,
+never `json.loads(p.read_text())`. Pass it as a keyword (`encoding="utf-8"`),
+not positionally, so a `read_text(` / `open(` grep that excludes `encoding=`
+reliably finds every offender. For a vendored third-party script, apply the
+patch and record it under a "Local divergences from upstream" note so it
+survives re-vendoring.
 
 ## Code reuse
 
@@ -248,14 +383,26 @@ Where to look first:
   send. FS sits behind Imperva, which 403s non-browser UAs
   (including `fs-search-agent` from the FS-internal API
   examples). Import this constant instead of hardcoding the
-  string — `place_collections`, `record_search`, `place_external_links`,
-  `image_read`, and `fulltext_search` already do.
-- **Exported helpers in `src/tools/`** — for example, `place-search.ts`
-  exports `searchPlace`, `getPlaceById`, and `getWikipediaSummary`,
-  and `place-collections.ts` exports `fetchAllCollections`,
-  `filterByQuery`, and `filterByPlaceIds`. A new tool that needs
-  place lookup or Wikipedia enrichment should call these, not
-  re-fetch.
+  string — `collections_search`, `record_search`, `external_links_search`,
+  `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
+- **`src/utils/place-resolver.ts`** — the shared resolver between a
+  `standardPlace` name and FamilySearch IDs: `resolveStandardPlace`,
+  `standardPlaceToRepId`, `repIdToStandardPlace`, `standardPlaceToPlaceId`
+  (null when candidates disagree), `placeIdToRepIds` (anonymous, `string[]`),
+  `standardPlaceToCoords`, plus `withRetry` / `mapWithConcurrency`. Tools that
+  take a `standardPlace` at the LLM boundary resolve IDs through this module
+  (e.g. `volume_search`, `place_population`, `external_links_search`,
+  `place_distance`, `wiki_place_page`); skills/persisted artifacts use only the
+  name. It builds on the low-level fetchers in `src/utils/place-api.ts`.
+- **`src/utils/place-api.ts`** — the low-level FamilySearch Places API
+  fetchers (raw HTTP, no caching): `searchPlace`, `getPlaceById`,
+  `getPlaceByPrimaryId`, `getPlaceRepIds`, `getPlaceCandidateNames`,
+  `getPlaceWikipediaUrl` (the place's curated `WIKIPEDIA_LINK` attribute),
+  `extractPrimaryId`. Both `place-resolver.ts` and `place-search.ts` build on
+  these (no util→tool dependency). A new tool needing a place fetcher imports
+  from here (or, for resolution, from the resolver above) — don't re-fetch.
+  `place-search.ts` re-exports them for back-compat; `collections-search.ts`
+  exports `fetchAllCollections` and `filterByQuery`.
 
 Soft caveat: don't pre-extract for hypothetical reuse. Wait for the
 second concrete need before factoring code into a shared module —
@@ -279,7 +426,7 @@ request, or you can call them explicitly with the Agent tool.
   `src/tool-schemas.ts`, `src/index.ts`, and `manifest.json`. Follows
   `wikipedia.ts` as the canonical template. Requires the spec exist first.
 - **`cowork-skill-builder`** — generates a Cowork skill that wraps
-  an existing MCP tool, following `plugin/skills/search-wikipedia/` as
+  an existing MCP tool, following `packages/engine/plugin/skills/search-wikipedia/` as
   the reference. Refuses to put network code in skills (architectural
   rule: skills run in the VM with no egress).
 
@@ -297,13 +444,13 @@ Each agent's `description` field tells Claude when to invoke it.
   down skill execution.
 - Don't create one MCP tool per provider/endpoint. Use generic tools
   with parameters to keep the tool count manageable.
-- Don't reference files across the `mcp-server/` and `plugin/`
+- Don't reference files across the `packages/engine/mcp-server/` and `packages/engine/plugin/`
   directories at runtime. Build-time references via the build scripts
   are fine, runtime references are not.
 
 ## Working reference skill
 
-The `search-wikipedia` skill in `plugin/` is the canonical minimal
+The `search-wikipedia` skill in `packages/engine/plugin/` is the canonical minimal
 example of the full plugin pipeline — it calls the `wikipedia_search`
 MCP tool, populates a markdown template, and saves the result to a
 file. Copy this structure when wiring a new skill to one of the other

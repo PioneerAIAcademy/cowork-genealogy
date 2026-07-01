@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for New Orleans early 1800s",
+  "args": {
+    "query": "~New Orleans"
+  },
+  "response": {
+    "title": "New Orleans",
+    "extract": "New Orleans is a city in Louisiana, founded by the French in 1718. It passed to Spanish control in 1763 and back to France briefly before the Louisiana Purchase in 1803. The city's unique civil law tradition (Napoleonic Code rather than English common law) affects record-keeping — Louisiana uses parishes instead of counties, and notarial records are central to legal documentation. The city suffered devastating fires in 1788 and 1794 that destroyed much of the colonial-era built environment and many records. Repeated yellow fever epidemics, hurricanes, and floods further damaged archival holdings.",
+    "url": "https://en.wikipedia.org/wiki/New_Orleans"
+  }
+}

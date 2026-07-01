@@ -14,14 +14,14 @@ from harness.rubric import parse_rubric
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-# Use citation/ as the rubric fixture — it stays after the search-wiki
+# Use citation/ as the rubric fixture — it stays after the search-familysearch-wiki
 # rubric deletion (citation is pure GPS craft, see phase-2 triage).
 CITATION_RUBRIC = REPO_ROOT / "eval/tests/unit/citation/rubric.md"
 
 
 @pytest.fixture
 def sample_rubric():
-    return parse_rubric(CITATION_RUBRIC.read_text())
+    return parse_rubric(CITATION_RUBRIC.read_text(encoding="utf-8"))
 
 
 def test_prompt_hash_is_sha256_hex():
@@ -36,7 +36,7 @@ def test_render_prompt_includes_all_slots(sample_rubric):
         judge_context=["Should save to a file"],
         scenario_readme="(stateless test)",
         user_message="Look up Ohio.",
-        skills_invoked=["search-wiki"],
+        skills_invoked=["search-familysearch-wiki"],
         text_response="I saved the summary to ohio.md.",
         file_changes_summary="(no research.json changes)",
         tool_calls=[
@@ -49,7 +49,7 @@ def test_render_prompt_includes_all_slots(sample_rubric):
         ],
     )
     assert "Look up Ohio." in prompt
-    assert "search-wiki" in prompt
+    assert "search-familysearch-wiki" in prompt
     assert "Should save to a file" in prompt
     assert "wikipedia_search" in prompt
     assert "Evidence Explained compliance" in prompt  # from citation rubric.md

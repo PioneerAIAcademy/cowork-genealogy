@@ -4,8 +4,8 @@
     "skill": "proof-conclusion",
     "name": "Write a probable-tier proof for the Flynn parentage question",
     "type": "positive",
-    "description": "Write a GPS proof conclusion for q_001 (parentage). Evidence supports `probable` — three independent original sources (1850 census co-residence indirect, 1860 census 'son' direct, 1908 death cert direct-with-secondary-informant) — but research is not yet exhaustive (post-1860 censuses + probate not yet searched). The skill must justify the tier choice by naming what's missing for `proved`.",
-    "tags": ["proof", "parentage", "probable", "GPS-step-5", "tier-justification", "tier-probable-q001"]
+    "description": "Write a GPS proof conclusion for q_001 (parentage). Evidence supports `probable` — three independent original sources (1850 census co-residence indirect, 1860 census co-residence indirect, 1908 death cert direct-with-secondary-informant) — but research is not yet exhaustive (post-1860 censuses + probate not yet searched). The skill must justify the tier choice by naming what's missing for `proved`.",
+    "tags": ["proof", "parentage", "probable", "GPS-step-5", "tier-justification", "tier-probable-q001", "tree-write-expected"]
   },
   "input": {
     "user_message": "Write the proof conclusion for the parentage question.",
@@ -13,11 +13,13 @@
   },
   "judge_context": [
     "Should justify the probable tier by contrasting with the adjacent tiers — what is missing for `proved` (e.g., reasonably-exhaustive search; specific additional records still pending) and why this is stronger than `possible` (three independent sources already converge)",
-    "Should cite all three lines of evidence with their evidence classification: 1850 co-residence (indirect, informant unknown), 1860 explicit 'son' (direct, primary information), 1908 death certificate (direct, secondary informant)",
+    "Should cite all three lines of evidence with their evidence classification: 1850 co-residence (indirect, informant unknown), 1860 co-residence (indirect, informant unknown), 1908 death certificate (direct, secondary informant)",
     "Should address the resolved birthplace conflict c_001 within the narrative — proof conclusions don't omit resolved conflicts; they're part of the audit trail",
     "`narrative_markdown` should read as a standalone document with inline citations — a reviewer with no access to research.json should be able to follow it"
   ],
+  "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
   }
 }

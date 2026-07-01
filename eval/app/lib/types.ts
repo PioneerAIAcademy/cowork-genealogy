@@ -20,6 +20,7 @@ export interface UnitTestFile {
     type: UnitTestType;
     description: string;
     tags: string[];
+    holdout?: boolean;
     expected_outcome?: ExpectedOutcome;
     xfail_reason?: string;
   };
@@ -41,6 +42,7 @@ export interface UnitTestFile {
     max_tool_calls?: number;
     max_input_tokens_per_turn?: number;
   };
+  judge_reads_files?: boolean;
 }
 
 export type DimensionSource = 'base' | 'rubric';
@@ -76,6 +78,8 @@ export interface RunLogJudgeResults {
   skipped: boolean;
   dimensions: RunLogDimension[];
   judge_cost_usd: number;
+  /** Wall-clock of the judge LLM call, ms. Absent in pre-instrumentation logs. */
+  duration_ms?: number;
   input_tokens?: number;
   cached_input_tokens?: number;
   output_tokens?: number;
@@ -87,7 +91,17 @@ export interface RunLogRun {
   run_id: string;
   outcome: 'pass' | 'partial' | 'fail' | 'aborted';
   aborted_reason: string | null;
+  /** Harness wall-clock of the skill run (message-consume loop), ms. */
   duration_ms: number;
+  /** SDK API/network time, ms. Absent in pre-instrumentation logs. */
+  duration_api_ms?: number;
+  /** SDK turn count. Absent in pre-instrumentation logs. */
+  num_turns?: number;
+  /** Skill-execution attempts; >1 means transient stall/error retries. */
+  skill_attempts?: number;
+  /** Epoch seconds bracketing the whole run. Absent for never-executed runs. */
+  started_at?: number;
+  ended_at?: number;
   judge: RunLogJudgeResults;
   // The orchestrator also writes output/validators/tokens; not all UI
   // surfaces need them, so they're tracked via index signature.
@@ -104,6 +118,14 @@ export type TestOutcome =
 
 export interface RunLogTotals {
   duration_ms: number;
+  /** Sum of per-run SDK API/network time, ms. Absent in pre-instrumentation logs. */
+  duration_api_ms?: number;
+  /** Sum of per-run judge LLM call wall-clock, ms. Absent in pre-instrumentation logs. */
+  judge_duration_ms?: number;
+  /** Sum of per-run SDK turn counts. Absent in pre-instrumentation logs. */
+  num_turns?: number;
+  /** True makespan max(ended_at)-min(started_at), ms. Absent in pre-instrumentation logs. */
+  wall_clock_ms?: number;
   input_tokens: number;
   cached_input_tokens: number;
   output_tokens: number;
@@ -135,7 +157,7 @@ export interface TestEntry {
   runs: RunLogRun[];
 }
 
-export type RunInvocation = 'skill' | 'test' | 'all' | 'tag';
+export type RunInvocation = 'skill' | 'test' | 'tag';
 
 /**
  * Run-log envelope (schema v2). Wraps a list of per-test entries with
@@ -249,6 +271,7 @@ export interface UnitTestListEntry {
   type: UnitTestType;
   description: string;
   tags: string[];
+  holdout: boolean;
   scenario: string | null;
   mcpFixtures: string[];
   filePath: string;

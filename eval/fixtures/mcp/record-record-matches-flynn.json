@@ -1,0 +1,36 @@
+{
+  "tool": "record_record_matches",
+  "description": "Collateral record matches for 1850 census Patrick Flynn persona (MXHY-TP4): 2 pending matches",
+  "args": { "id": "MXHY-TP4" },
+  "response": {
+    "queryArk": "ark:/61903/1:1:MXHY-TP4",
+    "resultCount": 2,
+    "returned": 2,
+    "title": "Matches for ark:/61903/1:1:MXHY-TP4",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": [
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:MABC",
+        "pid": "MABC",
+        "arkType": "1:1:",
+        "confidence": 4,
+        "score": 0.88,
+        "title": "1860 United States Federal Census",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      },
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:MDEF",
+        "pid": "MDEF",
+        "arkType": "1:1:",
+        "confidence": 3,
+        "score": 0.65,
+        "title": "Pennsylvania Death Certificates, 1906-1967",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      }
+    ]
+  }
+}

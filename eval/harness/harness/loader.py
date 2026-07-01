@@ -40,6 +40,8 @@ class TestSpec:
     xfail_reason: str | None
     runs_per_test: int
     execution: dict[str, int]
+    intentionally_invalid: bool = False
+    judge_reads_files: bool = False
     source_path: Path | None = None
     raw: dict[str, Any] = field(default_factory=dict)
 
@@ -48,13 +50,13 @@ class TestSpec:
 def _schema() -> dict[str, Any]:
     if not SCHEMA_PATH.exists():
         raise InvalidTestError(f"unit-test schema not found at {SCHEMA_PATH}")
-    return json.loads(SCHEMA_PATH.read_text())
+    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
 def load_test(path: Path) -> TestSpec:
     """Load a unit-test JSON file from disk and return a validated TestSpec."""
     try:
-        raw = json.loads(Path(path).read_text())
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         raise InvalidTestError(f"test file not found: {path}") from e
     except json.JSONDecodeError as e:
@@ -90,5 +92,7 @@ def load_test_from_dict(raw: dict[str, Any]) -> TestSpec:
         xfail_reason=test.get("xfail_reason"),
         runs_per_test=int(raw.get("runs_per_test", 1)),
         execution=dict(raw.get("execution", {})),
+        intentionally_invalid=bool(raw.get("intentionally_invalid", False)),
+        judge_reads_files=bool(raw.get("judge_reads_files", False)),
         raw=raw,
     )

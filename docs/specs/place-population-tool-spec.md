@@ -6,7 +6,7 @@ An MCP tool that returns historical population data and indexed record counts
 for a FamilySearch place. No authentication required — it calls the Pop Stats
 API, which is a separate service running on the host.
 
-The tool takes a FamilySearch `place_id` and optional year filters, and returns
+The tool takes a standard place name (`standardPlace`, from place_search) and optional year filters, and returns
 population data from multiple sources (populstat, gapminder) and FamilySearch
 indexed birth record counts.
 
@@ -16,10 +16,10 @@ indexed birth record counts.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `place_id` | string | Yes | FamilySearch place ID (e.g., `"1927069"` for Nigeria) |
+| `standardPlace` | string | Yes | Standard place name from place_search (e.g., `"Nigeria"`) |
 | `year` | number | No | Specific year to query |
-| `year_start` | number | No | Start of year range |
-| `year_end` | number | No | End of year range |
+| `startYear` | number | No | Start of year range (inclusive) |
+| `endYear` | number | No | End of year range (inclusive) |
 
 If no year parameters are provided, all available data for the place is returned.
 When `year` is specified, a nearest-year fallback finds the closest available
@@ -27,12 +27,12 @@ data point if no exact match exists.
 
 Example (single year):
 ```json
-{ "place_id": "1927069", "year": 1960 }
+{ "standardPlace": "Nigeria", "year": 1960 }
 ```
 
 Example (year range):
 ```json
-{ "place_id": "1927069", "year_start": 1900, "year_end": 1950 }
+{ "standardPlace": "Nigeria", "startYear": 1900, "endYear": 1950 }
 ```
 
 ---
@@ -108,28 +108,28 @@ Example:
 ```typescript
 {
   name: "place_population",
-  description: "Get historical population data and indexed record counts for a FamilySearch place. Pass a FamilySearch place ID (from the places tool) and optionally filter by year or year range. Returns population data from multiple sources and FamilySearch indexed birth record coverage. No authentication required.",
+  description: "Get historical population data and indexed record counts for a FamilySearch place. Pass a standard place name (the `standardPlace` field from place_search) and optionally filter by year or year range. Returns population data from multiple sources and FamilySearch indexed birth record coverage. No authentication required.",
   inputSchema: {
     type: "object",
     properties: {
-      place_id: {
+      standardPlace: {
         type: "string",
-        description: "FamilySearch place ID (e.g., \"1927069\" for Nigeria). Use the places tool first to find the place ID."
+        description: "The standard place name (the `standardPlace` field from place_search, e.g. \"Nigeria\"). Call place_search first to get this name."
       },
       year: {
         type: "number",
         description: "Specific year to query. If no exact match exists, returns the nearest available year."
       },
-      year_start: {
+      startYear: {
         type: "number",
-        description: "Start of year range filter."
+        description: "Start of year range filter (inclusive)."
       },
-      year_end: {
+      endYear: {
         type: "number",
-        description: "End of year range filter."
+        description: "End of year range filter (inclusive)."
       }
     },
-    required: ["place_id"]
+    required: ["standardPlace"]
   }
 }
 ```
@@ -146,20 +146,22 @@ None required. The Pop Stats API is an internal service with no auth.
 
 **Endpoint:**
 ```
-GET {POP_STATS_BASE_URL}/population
+GET {popStatsUrl}/population
 ```
 
-The base URL defaults to `http://localhost:8000` and can be overridden via
-the `POP_STATS_BASE_URL` environment variable.
+The base URL is read from `loadConfig().popStatsUrl` and defaults to the
+hosted Pop Stats service (`https://malachi.taild68f1b.ts.net/pop-stats`). It
+can be overridden per-user via the `popStatsUrl` field in
+`~/.familysearch-mcp/config.json`.
 
 **Query parameters:**
 
 | Parameter | Type | Required | Purpose |
 |-----------|------|----------|---------|
-| `place_id` | string | Yes | FamilySearch place ID |
+| `place_id` | string | Yes | FamilySearch place ID (upstream Pop Stats id-space; the tool resolves `standardPlace` to this via place_search internally) |
 | `year` | number | No | Specific year |
-| `year_start` | number | No | Start of range |
-| `year_end` | number | No | End of range |
+| `year_start` | number | No | Start of range. The tool maps the camelCase MCP input `startYear` onto this wire param. |
+| `year_end` | number | No | End of range. The tool maps the camelCase MCP input `endYear` onto this wire param. |
 
 **Key API behaviors:**
 
@@ -178,7 +180,8 @@ the `POP_STATS_BASE_URL` environment variable.
 
 | Condition | Behavior |
 |-----------|----------|
-| `place_id` not provided | Throw error: `"place_id is required"` |
+| `standardPlace` not provided | Throw error: `"standardPlace is required"` |
+| `standardPlace` unresolvable / ambiguous | Throw error: `"Could not resolve \"<name>\" to a single FamilySearch place. Use place_search ..."` |
 | Pop Stats API unreachable | Throw error: `"Population data service is unavailable. Is the Pop Stats API running?"` |
 | API returns non-OK status | Throw error: `"Population API error: {status} {statusText}"` |
 | API returns 404 / no data | Return the API's response as-is (place info with no population/indexed_records sections) |
@@ -187,26 +190,28 @@ the `POP_STATS_BASE_URL` environment variable.
 
 ## Configuration
 
-The Pop Stats API base URL is read from the `POP_STATS_BASE_URL` environment
-variable, defaulting to `http://localhost:8000`. This allows deployment
-flexibility — the API may run on the same host or a remote server.
+The Pop Stats API base URL is read from `loadConfig().popStatsUrl` (the
+`popStatsUrl` field in `~/.familysearch-mcp/config.json`), defaulting to the
+hosted Pop Stats service `https://malachi.taild68f1b.ts.net/pop-stats`. This
+allows deployment flexibility — the API may run on the same host or a remote
+server.
 
 ---
 
 ## Files
 
-### `mcp-server/src/types/population.ts`
+### `packages/engine/mcp-server/src/types/place-population.ts`
 
 Input and output types for the population tool:
 - `PopulationToolInput` — tool input shape
 - `PopulationResponse` — API response shape (place, population, indexed_records)
 
-### `mcp-server/src/tools/population.ts`
+### `packages/engine/mcp-server/src/tools/place-population.ts`
 
 - `populationToolSchema` — MCP tool schema
-- `populationTool(input)` — main function (builds query string, fetches, returns)
+- `populationTool(input)` — main function (resolves `standardPlace` to a placeId, builds query string, fetches, returns)
 
-### `mcp-server/src/index.ts`
+### `packages/engine/mcp-server/src/index.ts`
 
 Registered following the existing tool pattern (import, ListTools, CallTool).
 
@@ -214,16 +219,16 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 
 ## Testing
 
-### `tests/tools/population.test.ts`
+### `tests/tools/place-population.test.ts`
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns population data for a valid place_id | Happy path |
+| 1 | Returns population data for a valid standardPlace | Happy path |
 | 2 | Returns data filtered by specific year | Year filter |
 | 3 | Returns data filtered by year range | Year range filter |
 | 4 | Returns nearest-year data when exact year has no match | Fallback behavior |
 | 5 | Returns parent-level data for province/town queries | Parent resolution |
-| 6 | Throws error when place_id is missing | Input validation |
+| 6 | Throws error when standardPlace is missing | Input validation |
 | 7 | Throws error when API is unreachable | Service availability |
 | 8 | Handles API error responses | HTTP error handling |
 | 9 | Omits empty sections from response | Response structure |
@@ -231,10 +236,10 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 ### Smoke-test script
 
 ```bash
-cd mcp-server
-npx tsx dev/try-population.ts 1927069              # Nigeria (country)
-npx tsx dev/try-population.ts 1927069 --year 1960  # Nigeria, specific year
-npx tsx dev/try-population.ts 399 --year 1900      # Abia (province), parent resolution
+cd packages/engine/mcp-server
+npx tsx dev/try-population.ts "Nigeria"              # Nigeria (country)
+npx tsx dev/try-population.ts "Nigeria" --year 1960  # Nigeria, specific year
+npx tsx dev/try-population.ts "Abia, Nigeria" --year 1900  # province, parent resolution
 ```
 
 ---
@@ -243,18 +248,19 @@ npx tsx dev/try-population.ts 399 --year 1900      # Abia (province), parent res
 
 ### Automated
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual Layer 1 (MCP Inspector)
 ```bash
 npx @modelcontextprotocol/inspector node build/index.js
 ```
-- Call `population({ place_id: "1927069" })` — returns Nigeria population data
-- Call `population({ place_id: "1927069", year: 1960 })` — returns 1960 data
-- Call `population({ place_id: "399" })` — returns Abia data with parent resolution
-- Call `population({})` — returns validation error
+- Call `place_population({ standardPlace: "Nigeria" })` — returns Nigeria population data
+- Call `place_population({ standardPlace: "Nigeria", year: 1960 })` — returns 1960 data
+- Call `place_population({ standardPlace: "Abia, Nigeria" })` — returns Abia data with parent resolution
+- Call `place_population({})` — returns validation error
 
 ### Manual Layer 2 (Claude Code)
 - "What was the population of Nigeria in 1960?" — Claude should call `place_search`
-  to find Nigeria's place ID, then call `place_population` with that ID and year
+  to get Nigeria's standard place name, then call `place_population` with that
+  `standardPlace` and year

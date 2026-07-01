@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ann.schema.json",
+  "title": "Cowork Genealogy Run-Log Annotation",
+  "description": "Human corrections to LLM judge grades for one run log. Written by the team submitting the PR; revised in response to senior PR comments. One .ann file per run log per PR. See docs/plan/per-pr-review-workflow.md §2.3.",
+  "type": "object",
+  "required": ["run_log", "annotator", "corrections"],
+  "additionalProperties": false,
+  "properties": {
+    "run_log": {
+      "type": "string",
+      "description": "Filename of the run log this annotation grades, relative to the same directory. Matches the run log's `<timestamp>.json` filename so the pair sorts adjacent in ls."
+    },
+    "annotator": {
+      "type": "string",
+      "description": "Team identifier or GitHub username of the team that authored the corrections. Plain string — no validation of the value because organizations vary in how they identify teams."
+    },
+    "corrections": {
+      "type": "array",
+      "description": "One entry per dimension per test in the run log. Every dimension gets an entry; `agreed` is computed as `corrected_score == llm_score` (no separate field).",
+      "items": { "$ref": "#/$defs/correction" }
+    }
+  },
+  "$defs": {
+    "correction": {
+      "type": "object",
+      "required": ["test_id", "dimension_source", "dimension_name", "llm_score", "corrected_score"],
+      "additionalProperties": false,
+      "properties": {
+        "test_id": {
+          "type": "string",
+          "pattern": "^ut_",
+          "description": "The test this dimension belongs to. References test_id in the run log."
+        },
+        "dimension_source": {
+          "enum": ["base", "rubric"],
+          "description": "Where the dimension comes from. Matches the run log's `judge_dimension.source`."
+        },
+        "dimension_name": {
+          "type": "string",
+          "description": "The dimension name as it appears in the run log's `judge.dimensions[].name` (or `outcome_summary.aggregated_dimensions[].name`). Plain text — must match the run log exactly so the monthly review can join across files."
+        },
+        "llm_score": {
+          "$ref": "#/$defs/score",
+          "description": "The LLM judge's score on this dimension, read directly from the run log (3 = pass, 2 = partial, 1 = fail, null = N/A — currently only on the Tool Arguments base dimension)."
+        },
+        "corrected_score": {
+          "$ref": "#/$defs/score",
+          "description": "The team's score after review. Equal to llm_score means they agreed with the judge. Null = N/A."
+        },
+        "comment": {
+          "type": ["string", "null"],
+          "description": "Optional free-text rationale. Expected when corrected_score != llm_score, omitted (or null) when they agree."
+        }
+      }
+    },
+    "score": {
+      "anyOf": [
+        { "type": "integer", "minimum": 1, "maximum": 3 },
+        { "type": "null" }
+      ],
+      "description": "1 = fail, 2 = partial, 3 = pass, null = N/A (Tool Arguments only when zero MCP tool calls). Plan §2.1."
+    }
+  }
+}

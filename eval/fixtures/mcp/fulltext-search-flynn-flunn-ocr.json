@@ -1,0 +1,66 @@
+{
+  "tool": "fulltext_search",
+  "description": "Full-text search that returns a deed where the surname 'Flynn' was OCR-transcribed as 'Flunn' (the y/u confusion is one of the patterns documented in transcription-quirks.md). The skill only finds this record by searching the misread form explicitly — FTS does not phonetically or visually expand surnames.",
+  "args": { "keywords": "~Flunn" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": { "type": "string" },
+      "name": { "type": "string" },
+      "place": { "type": "string" },
+      "nlQuery": { "type": "string" },
+      "collectionId": { "type": "string" },
+      "imageGroupNumber": { "type": "string" },
+      "recordPlace0": { "type": "string" },
+      "recordPlace1": { "type": "string" },
+      "recordPlace2": { "type": "string" },
+      "recordPlace3": { "type": "string" },
+      "yearFrom": { "type": "integer" },
+      "yearTo": { "type": "integer" },
+      "recordType": { "type": "string" },
+      "count": { "type": "integer" },
+      "offset": { "type": "integer" },
+      "includeFacets": { "type": "boolean" },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:N8R3-MK5J",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed of Conveyance — Owen Boyle to Edward McNally",
+        "recordDate": "1872",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Know all men by these presents that Owen Boyle of Cass Township in the County of Schuylkill and State of Pennsylvania in consideration of the sum of three hundred and fifty dollars to him paid by Edward McNally of the same place has granted bargained and sold a certain piece of land in Cass Township bounded northerly by lands of Patrick Flunn easterly by the public road containing twenty acres. Signed sealed and delivered in the presence of witnesses Edward Gallagher and Hugh O'Donnell this fourth day of June in the year of our Lord one thousand eight hundred and seventy two.",
+        "names": [
+          "Owen Boyle",
+          "Edward McNally",
+          "Patrick Flunn",
+          "Edward Gallagher",
+          "Hugh O'Donnell"
+        ],
+        "places": [
+          "Cass Township",
+          "Schuylkill County",
+          "Pennsylvania"
+        ],
+        "dates": [
+          "1872"
+        ],
+        "highlightTerms": [
+          "Flunn"
+        ]
+      }
+    ]
+  }
+}

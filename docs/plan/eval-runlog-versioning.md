@@ -37,7 +37,7 @@ it as a self-contained, reproducible artifact.
    standard. Cowork follows the standard; will verify naturally during
    end-to-end testing (any skill with `model:` set is the test).
 2. **Snapshot scope (skill-only)**: inline JSON `snapshot` block holds
-   `plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/rubric.md`,
+   `packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/rubric.md`,
    `eval/tests/unit/<skill>/*.json` test files, and the referenced
    scenarios + MCP fixtures. **`judge/prompt.md` is NOT in the
    snapshot** — it's tracked via a separate `judge_prompt_hash` field
@@ -45,9 +45,8 @@ it as a self-contained, reproducible artifact.
    warning, not a blocking error (§C6 Rule 2).
 3. **Release** = move (rename `v{N}_<ts>.json` → `v{N}.json`).
 4. **Releasable**: only full `--skill` runs are releasable. Other
-   invocations (`--test`, `--all`, `--tag`) produce **scratch runs**
-   that are gitignored, never released, never compared, never
-   activated.
+   invocations (`--test`, `--tag`) produce **scratch runs** that are
+   gitignored, never released, never compared, never activated.
 5. **`.ann.json` is sparse**: entries only for dimensions the junior
    has explicitly reviewed. GH Action enforces the latest full-skill
    run's `.ann.json` has an entry for every dimension before merge.
@@ -70,8 +69,8 @@ it as a self-contained, reproducible artifact.
 
 ### A1. Invocation modes
 
-Keep all existing modes (`--test`, `--skill`, `--all`, `--tag`). Only
-full `--skill` runs produce versioned, releasable run logs in
+Modes are `--test`, `--skill`, `--tag`. Only full `--skill` runs
+produce versioned, releasable run logs in
 `eval/runlogs/unit/<skill>/v{N}[_<ts>].json`. All other modes produce
 **scratch runs** in `eval/runlogs/unit/<skill>/scratch_<ts>.json`
 which are **gitignored** — never committed, never released, never
@@ -92,11 +91,11 @@ One file per invocation, containing all tests run. Run log shape:
   "harness_version": "0.4.2",
   "model": "claude-sonnet-4-6",
   "judge_prompt_hash": "sha256-...",   // not embedded; see below
-  "invocation": "skill",                // "skill" | "test" | "all" | "tag"
+  "invocation": "skill",                // "skill" | "test" | "tag"
   "releasable": true,                   // false unless invocation == "skill"
   "snapshot": {
-    "plugin/skills/locality-guide/SKILL.md": "...",
-    "plugin/skills/locality-guide/template.md": "...",
+    "packages/engine/plugin/skills/locality-guide/SKILL.md": "...",
+    "packages/engine/plugin/skills/locality-guide/template.md": "...",
     "eval/tests/unit/locality-guide/rubric.md": "...",
     "eval/tests/unit/locality-guide/ut_001.json": "...",
     "eval/fixtures/scenarios/mid-research-flynn/research.json": "...",
@@ -306,7 +305,7 @@ version was tested; re-running the harness against this version will
 produce different scores than the historical ones."
 
 Only full-skill run logs (candidates or releases) are activatable.
-Scratch runs (`--test`, `--all`, `--tag`) lack a complete snapshot.
+Scratch runs (`--test`, `--tag`) lack a complete snapshot.
 
 ### B5. Release
 
@@ -447,8 +446,8 @@ eval/runlogs/unit/*/scratch_*.json
 eval/runlogs/unit/*/scratch_*.ann.json
 ```
 
-Scratch runs (`--test`, `--all`, `--tag`) live on disk for local
-debugging but never enter version control.
+Scratch runs (`--test`, `--tag`) live on disk for local debugging
+but never enter version control.
 
 **Candidate iterations (`v{N}_<ts>.json`) are not auto-pruned.**
 When the senior releases the final candidate via the CRUD UI, only

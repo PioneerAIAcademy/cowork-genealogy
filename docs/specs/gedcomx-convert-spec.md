@@ -162,8 +162,10 @@ export type SimplifiedFact = {
   id?: string;
   type?: string;             // PascalCase, e.g. "Birth"
   primary?: boolean;         // Present only when GedcomX set it to true
-  date?: string;
-  place?: string;
+  date?: string;             // Verbatim from GedcomX date.original
+  standard_date?: string;    // GEDCOM-canonical form of `date` (set by toSimplified when parseable)
+  place?: string;            // Verbatim from GedcomX place.original
+  standard_place?: string;   // Standardized place name (snake_case form of standardPlace). See Rule 7.
   sources?: SimplifiedSourceReference[];
 };
 
@@ -216,13 +218,16 @@ once. The same logic applies to `preferred` on names.
 ### 1. URI prefix
 
 Strip `http://gedcomx.org/` from `type` values on simplification; re-add it
-on `toGedcomX`. Applies to `person.gender.type`, `name.type`, `fact.type`,
+on `toGedcomX`. Applies to `person.gender.type`, `name.type`,
 `relationship.type`, `namePart.type`. URIs without that prefix are passed
 through unchanged.
 
 ```
 "http://gedcomx.org/Birth"  ↔  "Birth"
 ```
+
+**`fact.type` gets extra cleanup** because FS emits non-standard URIs for
+custom fact types — see Rule 5.5 below.
 
 ### 2. Gender
 
@@ -303,26 +308,94 @@ it does **not** reorder by `primary`.
 `primary: true` on the GedcomX fact; otherwise omit. Never emit
 `primary: false`.
 
+### 5.5 `fact.type` — extra cleanup beyond Rule 1
+
+FS does not always emit the canonical `http://gedcomx.org/X` URI for fact
+types. Custom fact types come back as `data:,X` URIs, and the trailing
+segment may carry URL-encoded characters. The converter normalizes all of
+these to clean PascalCase / space-separated names:
+
+```
+"http://gedcomx.org/Birth"                  →  "Birth"
+"data:,Baptism"                             →  "Baptism"
+"data:,Military%20Draft%20Registration"     →  "Military Draft Registration"
+"http://familysearch.org/v1/Foo"            →  "Foo"
+"Foo" (already a short name)                →  "Foo"
+```
+
+Algorithm:
+1. If the value starts with `http://gedcomx.org/`, strip that prefix.
+2. Else if it starts with `data:,`, strip that prefix.
+3. Else if it contains `://`, take the trailing path segment.
+4. Otherwise pass through.
+5. URL-decode the result (`decodeURIComponent`). If decoding throws on a
+   malformed percent sequence, the undecoded value is returned.
+
+`toGedcomX` re-prepends `http://gedcomx.org/` on the reverse path. Custom
+fact types that originated as `data:,X` round-trip to
+`http://gedcomx.org/X`; this is acceptable because FS treats them as
+equivalent.
+
 ### 6. Dates on facts
 
 ```
-{ "original": "1900", "formal": "+1900" }  →  "1900"
-{ "original": "15 June 1850" }             →  "15 June 1850"
-{ "formal": "+1900" } (no original)        →  date omitted
+{ "original": "15 June 1850" }              →  date: "15 June 1850", standard_date: "15 Jun 1850"
+{ "original": "1900", "formal": "+1900" }   →  date: "1900",         standard_date: "1900"
+{ "original": "garbled junk" }              →  date: "garbled junk"  (standard_date omitted)
+{ "formal": "+1900" } (no original)         →  date omitted, standard_date omitted
 ```
 
-Only `date.original` survives. `date.formal` is dropped. `toGedcomX` writes
-`{ original: dateString }` with no `formal` field.
+`date` is `fact.date.original` verbatim — whatever a contributor typed. `standard_date` is the GEDCOM-canonical form produced by `stdDate(date.original)`; it is omitted when the standardizer cannot parse the input.
+
+`date.formal` is dropped — the standardized sidecar replaces its role. `toGedcomX` writes only `{ original: dateString }` from `date`; `standard_date` is ignored on the reverse path (it is a simplified-format-only sidecar).
 
 ### 7. Places on facts
 
 ```
-{ "original": "Denver, Colorado, USA", "description": "#place1" }  →  "Denver, Colorado, USA"
+{ "original": "Denver, Colorado, USA", "description": "#place1" }  →  place: "Denver, Colorado, USA"
+{ "original": "Denver", "normalized": [{ "value": "Denver, Colorado, United States", "lang": "en" }] }
+                                                  →  place: "Denver", standard_place: "Denver, Colorado, United States"
 ```
 
-The `description` reference is dropped; richer place data lives in the
-top-level `places[]` array (Rule 12). `toGedcomX` writes
-`{ original: placeString }` with no `description`.
+`place` is `place.original` verbatim. `standard_place` is the standardized
+name: `toSimplified` (pure) takes it from `place.normalized` — preferring the
+`lang === "en"` entry, else the first. The `description` reference is dropped;
+richer place data lives in the top-level `places[]` array (Rule 12).
+
+`standard_place` is a simplified-format-only sidecar (like `standard_date`):
+`toGedcomX` writes only `{ original: placeString }` and ignores
+`standard_place` on the reverse path.
+
+Free-text places with no `normalized` value are left without a
+`standard_place` by the pure converter. The async wrapper
+`toSimplifiedStandardized` fills them by resolving `place` through
+`place_search` (network) — deduping identical strings, resolving ≤8 in
+parallel, best-effort (never throws, leaves the field empty on failure). Tools
+that return facts to the model call `toSimplifiedStandardized` (single doc) or
+run `standardizePlaces` over the flattened facts of a multi-result response
+(`record_search` / `person_search`). The pure `toSimplified` remains for
+callers that want no I/O.
+
+### 7.5 `value` on facts
+
+For fact types whose meaning isn't fully captured by `type + date + place`,
+FS carries an extra qualifier in `fact.value`. The converter preserves it
+verbatim on both directions.
+
+```
+{ "type": "http://gedcomx.org/Occupation",
+  "date": { "original": "about 1940" },
+  "value": "Newpaper Editor" }                →  value: "Newpaper Editor"
+
+{ "type": "data:,Elected",
+  "value": "Continental Congress" }            →  value: "Continental Congress"
+
+{ "type": "http://gedcomx.org/Birth",
+  "date": { "original": "1900" } }             →  value omitted (raw has none)
+```
+
+`toGedcomX` passes `value` through unchanged when set. The field is omitted
+when the simplified fact has no `value`.
 
 ### 8. Relationships — `ParentChild`
 
@@ -525,20 +598,30 @@ outside `CitationDetail` / `fsmcp:quality`.
   "http://gedcomx.org/Primary":    ["KGS8-LY1"]
 }
 ↓
-"ark": "https://familysearch.org/ark:/61903/4:1:KGS8-LY1"
+"ark": "ark:/61903/4:1:KGS8-LY1"
 ```
 
 - `toSimplified`: read `person.identifiers["http://gedcomx.org/Persistent"][0]`.
-  If it is a non-empty string, set `out.ark` to that value. All other entries
-  in the `identifiers` map are dropped. If the Persistent entry is missing,
-  empty, or the first value is not a non-empty string, omit `ark`.
-- `toGedcomX`: when `person.ark` is a non-empty string, write
-  `out.identifiers = { "http://gedcomx.org/Persistent": [person.ark] }`. When
-  `ark` is missing or an empty string, omit `identifiers`.
+  If it is a non-empty string, set `out.ark` to it **normalized to canonical
+  `ark:/61903/...` form** (the resolver-URL prefix `https://[www.]familysearch.org/`
+  is stripped; a value with no recognizable ARK passes through unchanged). All
+  other entries in the `identifiers` map are dropped. If the Persistent entry is
+  missing, empty, or the first value is not a non-empty string, omit `ark`.
+- `toGedcomX`: when `person.ark` is a non-empty string, **reduce it to the bare
+  8-character persona id** (the segment after the ARK's last colon, e.g.
+  `ark:/61903/4:1:KGS8-LY1` → `KGS8-LY1`) and write
+  `out.identifiers = { "http://gedcomx.org/Persistent": [<bareId>] }`.
+  FamilySearch APIs that consume the round-tripped GedcomX (e.g. matchTwoExamples)
+  want the bare id, not an ARK or resolver URL. A value with no recognizable ARK
+  passes through unchanged. When `ark` is missing or an empty string, omit
+  `identifiers`.
 
 **Documented losses.** Round-tripping through this rule loses:
 1. Identifier types other than `Persistent` (input → output).
 2. Persistent values beyond the first one in the array (multiple-value collapse).
+3. The ARK form itself on `toGedcomX`: the `n:n:` type prefix is dropped when
+   reducing `ark:/61903/...` to the bare id, so `simplified → raw → simplified`
+   does not preserve `ark` (the raw side carries only the bare id).
 
 ---
 
@@ -605,12 +688,12 @@ nullish coalescing throughout.
 
 ## Files
 
-### `mcp-server/src/types/gedcomx.ts`
+### `packages/engine/mcp-server/src/types/gedcomx.ts`
 
 All `GedcomX*` and `Simplified*` type definitions from the **Input types** and
 **Output types** sections above. Export each type.
 
-### `mcp-server/src/utils/gedcomx-convert.ts`
+### `packages/engine/mcp-server/src/utils/gedcomx-convert.ts`
 
 New file in a new `src/utils/` directory.
 
@@ -621,11 +704,11 @@ Exports:
 Internal helpers (not exported) for repeated logic — URI strip/restore, name
 part extraction with fullText fallback, source reference round-tripping.
 
-### `mcp-server/tests/utils/gedcomx-convert.test.ts`
+### `packages/engine/mcp-server/tests/utils/gedcomx-convert.test.ts`
 
 Vitest suite. See **Testing** section below.
 
-### `mcp-server/dev/try-gedcomx-convert.ts`
+### `packages/engine/mcp-server/dev/try-gedcomx-convert.ts`
 
 Smoke script that runs the worked example below through `toSimplified` and
 then `toGedcomX`, printing both results to stdout. Follows the pattern of
@@ -731,6 +814,7 @@ fall into the `fullText` fallback path and emit a warning.
         {
           "type": "Birth",
           "date": "15 June 1850",
+          "standard_date": "15 Jun 1850",
           "place": "Liverpool, England"
         }
       ],
@@ -750,6 +834,7 @@ fall into the `fullText` fallback path and emit a warning.
         {
           "type": "Birth",
           "date": "3 March 1855",
+          "standard_date": "3 Mar 1855",
           "place": "Manchester, England"
         }
       ],
@@ -764,7 +849,8 @@ fall into the `fullText` fallback path and emit a warning.
       "facts": [
         {
           "type": "Marriage",
-          "date": "20 April 1875"
+          "date": "20 April 1875",
+          "standard_date": "20 Apr 1875"
         }
       ]
     }
@@ -836,7 +922,7 @@ fall into the `fullText` fallback path and emit a warning.
 ### Smoke-test script
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx tsx dev/try-gedcomx-convert.ts
 ```
 
@@ -851,13 +937,13 @@ quick visual inspection during development.
 ### Automated
 
 ```bash
-cd mcp-server && npm run build && npm test
+cd packages/engine/mcp-server && npm run build && npm test
 ```
 
 ### Manual
 
 ```bash
-cd mcp-server && npx tsx dev/try-gedcomx-convert.ts
+cd packages/engine/mcp-server && npx tsx dev/try-gedcomx-convert.ts
 ```
 
 Inspect that the simplified output matches the **Expected output** above and

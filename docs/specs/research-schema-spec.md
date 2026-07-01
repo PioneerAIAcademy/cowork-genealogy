@@ -30,6 +30,7 @@ A project often starts with a question about a person who does not yet exist in 
 {
   "project": { },
   "researcher_profile": { },
+  "known_holdings": [ ],
   "questions": [ ],
   "plans": [ ],
   "log": [ ],
@@ -39,13 +40,17 @@ A project often starts with a question about a person who does not yet exist in 
   "conflicts": [ ],
   "hypotheses": [ ],
   "timelines": [ ],
-  "proof_summaries": [ ]
+  "proof_summaries": [ ],
+  "evaluations": [ ]
 }
 ```
 
 All arrays start empty. The file is created at project initialization.
 `researcher_profile` is optional and populated by `init-project` from a
-short two-question interview.
+short two-question interview. `known_holdings` is optional and populated
+by `init-project` from the holdings survey (what the researcher already
+has — documents, prior research, living-relative knowledge — before any
+new research begins).
 
 ---
 
@@ -74,6 +79,8 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, `unknown` | assertions |
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
+| `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
+| `holding_confidence` | `confident`, `unsure` | known_holdings — how settled the researcher is about the item, so research prioritizes shaky holdings over settled ones |
 
 The following are **open enums** — recommended values that skills should prefer, but new values may be added when existing values don't fit. Document new values in the assertion/plan/timeline entry's notes.
 
@@ -96,6 +103,7 @@ All IDs are strings with a prefix indicating the section. IDs are immutable once
 | Prefix | Section | Example |
 |--------|---------|---------|
 | `rp_` | project | `rp_001` |
+| `kh_` | known_holdings | `kh_001` |
 | `q_` | questions | `q_001` |
 | `pl_` | plans | `pl_001` |
 | `pli_` | plan items | `pli_001` |
@@ -107,6 +115,7 @@ All IDs are strings with a prefix indicating the section. IDs are immutable once
 | `h_` | hypotheses | `h_001` |
 | `t_` | timelines | `t_001` |
 | `ps_` | proof_summaries | `ps_001` |
+| `ev_` | evaluations | `ev_001` |
 
 GedcomX IDs (person IDs like `I1`, source description IDs like `S1`) use their own conventions from `tree.gedcomx.json` and are referenced as foreign keys.
 
@@ -119,7 +128,8 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
 | `project` | init-project, proof-conclusion (status, updated) | all | Mutable (status, updated) |
-| `questions` | question-selection | research-plan, all downstream | Mutable; never delete, supersede with status |
+| `known_holdings` | init-project (survey at creation); record-extraction, citation (`promoted` flag when an item is turned into a real source) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete |
+| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete, supersede with status |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
@@ -134,21 +144,28 @@ Each skill writes to its own section and reads from others. Skills must never wr
 
 ### Ownership for `tree.gedcomx.json`
 
-Three sections (`persons`, `relationships`, `sources`) are owned by the same set of skills:
+Three sections (`persons`, `relationships`, `sources`) carry overlapping writer sets:
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
-| `relationships` | init-project, tree-edit, proof-conclusion | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion | (terminal) | Mutable; preserve IDs |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, record-extraction | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `relationships` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
+| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` promotes
 research conclusions to the tree when a proof summary reaches
 `probable` or higher (see Section 8 "tree.gedcomx.json update timing"
 and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
-The harness's `test_tree_ownership_table` universal validator enforces
-this.
+`person-evidence` mints a stub `person` when a newly discovered persona
+matches no one in the tree (see Section 8). `record-extraction` writes
+`sources` (the GedcomX `S` entry that mirrors each `src_` it appends to
+`research.json`); it additionally writes `persons` and `relationships`
+under the §5d trigger — when the subject appears as a child on a
+household record, it creates minimal person stubs for the subject's
+siblings and `ParentChild` edges from the existing in-tree parent to
+each new sibling, so downstream skills can discover them. The harness's
+`test_tree_ownership_table` universal validator enforces this.
 
 ---
 
@@ -166,6 +183,7 @@ Single object (not an array).
 | `status` | `project_status` | yes | Current status |
 | `created` | string | yes | ISO 8601 date |
 | `updated` | string | yes | ISO 8601 date |
+| `title` | string | no | Agent-written concise session name (3-6 words), like a Claude chat title — summarizes the objective for the session list. Absent on legacy projects, where the control plane derives one from `objective`. |
 
 ### 5.1.1 `researcher_profile`
 
@@ -182,6 +200,32 @@ directly.
 | `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
 | `subscriptions` | string[] | no | Sites the researcher subscribes to. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. |
 | `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
+
+### 5.1.2 `known_holdings`
+
+Optional array. Captures what the researcher already has on hand —
+documents, prior research, knowledge from living relatives — surveyed by
+`init-project` before any new research begins. This is the "gather what
+you already know" part of GPS Step 2's preliminary survey, alongside the
+FamilySearch tree fetch.
+
+Entries are intentionally lightweight: a free-text description plus a
+type tag and a confidence flag. They are **not** sources or assertions.
+When the researcher later brings the actual document, `record-extraction`
+and `citation` extract it into proper sources/assertions and set
+`promoted` to `true` on the originating holding (the entry is never
+deleted, preserving the survey record).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | Holding ID (`kh_` prefix) |
+| `holding_type` | `holding_type` | yes | Kind of item: `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` |
+| `description` | string | yes | What the researcher reported having, in their words (e.g., "grandmother's death certificate", "a binder of notes from a 2008 courthouse trip") |
+| `relevant_facts` | string or null | no | Facts or leads the item may supply, if the researcher described them (e.g., "lists her parents' names"). Null when not stated |
+| `relates_to_person_ids` | string[] | no | GedcomX person IDs the holding concerns (may be empty) |
+| `confidence` | `holding_confidence` | yes | How settled the researcher is about the item: `confident` or `unsure`. Lets downstream skills prioritize verifying shaky holdings over re-confirming settled ones |
+| `promoted` | boolean | yes | Whether the item has been extracted into proper sources/assertions yet. `false` at survey time; set `true` by record-extraction/citation when promoted. Never delete the entry |
+| `created` | string | yes | ISO 8601 date |
 
 ### 5.2 `questions`
 
@@ -271,7 +315,7 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, or `familysearch_web` |
+| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, or `familysearch_web` |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
 | `capture_filename` | string or null | no | Filename of the returned capture |
@@ -338,13 +382,14 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
-| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `match_two_examples` receive the right focus person. Set by record-extraction for `record_search`-sourced assertions; for the focus role it equals the result's `primaryId`. Null for FTS-, image-, and PDF-sourced assertions (no structured GedcomX persona). |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. Set by record-extraction for `record_search`-sourced assertions; for the focus role it equals the result's `primaryId`. Null for FTS-, image-, and PDF-sourced assertions (no structured GedcomX persona). |
 | `fact_type` | string | yes | The type of fact: `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
 | `date` | string or null | no | Date of the event/fact |
 | `date_certainty` | string or null | no | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, or `between` |
-| `place` | string or null | no | Place description |
+| `place` | string or null | no | Place description (as recorded) |
+| `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. Copied from the source record's fact when available, else resolved via `place_search`; null if unresolvable or `place` is null. |
 | `information_quality` | `information_quality` | yes | Primary, Secondary, or Indeterminate — classified at the assertion level |
 | `informant` | string | yes | Who provided this specific information (e.g., "census enumerator", "attending physician", "son-in-law James Brown", "unknown household member") |
 | `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, or `unknown` |
@@ -371,7 +416,7 @@ Recommended shapes by `fact_type`. The shape is not strictly enforced — it is 
 
 **Authority:** `structured_value` is derived from `value`, `date`, and `place` — not the other way around. If they disagree, the human-readable fields (`value`, `date`, `place`) govern. This follows the same authority pattern as `narrative_markdown` vs. structured fields in proof summaries.
 
-**`_inferred` suffix convention:** Use `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record. This distinguishes the 1850 census (no relationship column) from the 1860 census (explicit relationship column). This convention is specific to `relationship_type` — other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
+**`_inferred` suffix convention:** Use `_inferred` suffix on `relationship_type` (e.g., `child_inferred`) when the relationship is deduced from household position rather than explicitly stated in the record. This applies to the 1790–1870 censuses (no relationship column); the explicit relationship column was introduced in 1880. This convention is specific to `relationship_type` — other fact types handle uncertainty through the assertion's `evidence_type` (indirect) and `informant_bias_notes` rather than through the structured value itself.
 
 ### 5.7 `person_evidence`
 
@@ -384,7 +429,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
 | `confidence` | `person_evidence_confidence` | yes | How confident is this link |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
-| `match_score` | number or null | no | Match score (0.0-1.0) from the `match_two_examples` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
+| `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
 
@@ -456,10 +501,10 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `date_certainty` | string | yes | `exact`, `approximate`, `estimated`, or `calculated` |
 | `event_type` | string | yes | `birth`, `baptism`, `marriage`, `death`, `burial`, `residence`, `census`, `military`, `immigration`, `emigration`, `land_transaction`, `probate`, `other` |
 | `place` | string or null | no | Place description |
-| `place_id` | string or null | no | FamilySearch place ID resolved from `place` via the `place_search` tool. Null if unresolvable or `place` is null. |
+| `standard_place` | string or null | no | Standardized place name (the `standardPlace` field from the `place_search` tool) for `place`. Null if unresolvable or `place` is null. |
 | `description` | string | yes | Human-readable event description |
 | `assertion_ids` | string[] | yes | `a_` references backing this event |
-| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place. Null for the first event, or when either event lacks a resolved `place_id`. |
+| `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, via `place_distance` on the two `standard_place` names. Null for the first event, or when either event lacks a resolved `standard_place`. |
 | `conflict_ids` | string[] or null | no | `c_` references to open conflicts this event relates to. Provides bidirectional traceability between timeline events and conflict entries. |
 | `conflict_note` | string or null | no | Brief note about how this event relates to the conflicts (e.g., "contradicts birth year in c_002"). |
 
@@ -499,6 +544,25 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 **Timing:** Proof summaries may be written for questions at any status. A summary for an `in_progress` question represents a preliminary conclusion; its tier should reflect the incomplete state of research (typically `probable` or `possible`, not `proved`). Writing preliminary conclusions is encouraged — it forces the skill to articulate the current state of evidence and identify what's missing.
 
 The `narrative_markdown` is the authoritative GPS conclusion — the written proof per GPS Step 5. The structured fields (`tier`, `vehicle`, `supporting_assertion_ids`, `resolved_conflict_ids`) are metadata about it, not replacements for it. If the narrative and the structured fields disagree, the narrative governs; the skill should update the structured fields to match. The narrative must be readable as a standalone document without reference to the rest of the JSON, written in a form uploadable to FamilySearch as a Memory/Document. It includes inline citations, the evidence summary, conflict resolution rationale, and the confidence tier declaration. It cannot include images (it lives inside a JSON string field); image references should be described by citation.
+
+### 5.12 `evaluations`
+
+Array of evaluation pointer records — a lightweight index of mentor reviews performed in the project. The full verdict content lives in `evaluations/<file>.json` on the filesystem; the entry here is a pointer, not a duplicate. Written exclusively by the `gps-mentor` plugin agent (see `docs/specs/gps-mentor-agent-spec.md`); never edited by any other skill.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | Evaluation ID (`ev_` prefix). Immutable once created |
+| `focus` | `evaluation_focus` | yes | Which rubric was applied: `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, or `on-demand` |
+| `target_id` | string | yes | The `q_` ID, `ps_` ID, or literal `"project"` evaluated |
+| `target_type` | `evaluation_target_type` | yes | Resolved type of `target_id`: `question`, `proof_summary`, or `project` |
+| `verdict` | `evaluation_verdict` | yes | Result of the evaluation: `looks_solid`, `consider_addressing`, `address_first`, or `refused` |
+| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder (e.g. `evaluations/pre-exhaustiveness-q_001-2026-06-02T14-30-00.json`) |
+| `timestamp` | string | yes | UTC ISO 8601 timestamp of when the evaluation was written |
+| `superseded_by` | string \| null | yes | `ev_` ID of a later evaluation for the same `focus` + `target_id` combination, or null when this entry is the latest |
+
+**Append-only ownership.** The `gps-mentor` agent is the sole writer of this array. Entries are never deleted. When a re-evaluation runs for the same `focus` + `target_id`, the prior entry's `superseded_by` field is updated to point at the new entry's `id`, and the new entry is appended with `superseded_by: null`. This preserves the full audit trail without overwriting history. No other skill should mutate `evaluations`, and `gps-mentor` itself never modifies any other section of `research.json`.
+
+**Filename convention.** The agent writes verdict files to `evaluations/<focus>-<target_id>-<short_iso>.json` where `<short_iso>` is the UTC timestamp in `YYYY-MM-DDTHH-MM-SS` format (colons replaced with hyphens for filesystem safety).
 
 ---
 
@@ -551,6 +615,11 @@ proof_summaries
   ├─ question_id ────────────────────────────────► questions[].id
   ├─ supporting_assertion_ids ───────────────────► assertions[].id
   └─ resolved_conflict_ids ─────────────────────► conflicts[].id
+
+evaluations
+  ├─ target_id (when target_type == "question") ─► questions[].id
+  ├─ target_id (when target_type == "proof_summary") ► proof_summaries[].id
+  └─ superseded_by ──────────────────────────────► evaluations[].id
 ```
 
 ---
@@ -1153,16 +1222,16 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "record_id": "ark:/61903/1:1:MABC",
       "record_role": "child_2",
       "fact_type": "relationship",
-      "value": "Listed as 'son' in household of Thomas Flynn (head)",
-      "structured_value": { "relationship_type": "son", "related_person_role": "head_of_household" },
+      "value": "Listed in household of Thomas Flynn (head), position and age consistent with son",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
       "date": "1860",
       "date_certainty": "exact",
       "place": "Schuylkill County, Pennsylvania",
-      "information_quality": "primary",
-      "informant": "Household member (likely Thomas Flynn or wife) reporting to census enumerator",
-      "informant_proximity": "household_member",
-      "informant_bias_notes": "1860 census states relationships explicitly, unlike 1850. The informant is the household member who answered the enumerator's questions, not the enumerator himself — the enumerator is the recorder, not the informant. The household member (likely Thomas or wife) is a direct witness to the relationship, so primary information is defensible.",
-      "evidence_type": "direct",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
+      "evidence_type": "indirect",
       "log_entry_id": "log_004",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1270,7 +1339,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "assertion_id": "a_010",
       "person_id": "I1",
       "confidence": "confident",
-      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. 1860 census explicitly states relationship as 'son'.",
+      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. Relationship inferred from household position and shared surname (1860 census does not state relationships explicitly).",
       "match_score": null,
       "created": "2026-05-02",
       "superseded_by": null
@@ -1313,7 +1382,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "contradicting_assertion_ids": [],
       "ruled_out": false,
       "ruled_out_reason": null,
-      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census explicit 'son' relationship (direct), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
       "related_question_ids": ["q_001"]
     }
   ],
@@ -1347,7 +1416,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
           "date_certainty": "exact",
           "event_type": "census",
           "place": "Schuylkill County, Pennsylvania",
-          "description": "Enumerated age 15 as son in Thomas Flynn household, dwelling 112",
+          "description": "Enumerated age 15 in Thomas Flynn household, dwelling 112",
           "assertion_ids": ["a_008", "a_009", "a_010"]
         },
         {
@@ -1380,7 +1449,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "supporting_assertion_ids": ["a_004", "a_010", "a_013"],
       "resolved_conflict_ids": ["c_001"],
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
-      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears as \"son\" in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Unlike the 1850 census, the 1860 census explicitly states the relationship. The household member who answered the enumerator's questions — likely Thomas Flynn or his wife — was a direct witness to the parent-child relationship, making this primary information. This constitutes direct evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) the 1850 census evidence is indirect (relationships not stated), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
+      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
     }
   ]
 }

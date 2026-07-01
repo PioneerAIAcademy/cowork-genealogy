@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_007",
+    "skill": "proof-conclusion",
+    "name": "Assess whether an existing proof meets the GPS",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario already has ps_001 (parentage, probable). The user asks whether the proof meets the Genealogical Proof Standard. The skill should deliver a substantive assessment across the five GPS components (reasonably exhaustive research, complete citations, analysis and correlation, conflict resolution, soundly written conclusion) — not collapse into a bare schema-validity report. Running validate_research_schema downstream is expected, not a failure.",
+    "tags": ["proof", "parentage", "gps-review", "GPS-step-5", "no-new-proof-expected"]
+  },
+  "input": {
+    "user_message": "Does my proof for the parentage question (ps_001) meet the Genealogical Proof Standard? Assess the EXISTING ps_001 against the five GPS components — judge it on the evidence it actually cites. Any sources or assertions that exist in research.json but are NOT cited in ps_001 are evidence GAPS for the next round of work (after they're extracted/classified) — flag them and say whether they would change the tier, but do NOT frame them as defects, failures, or premature reasoning of the current proof. Treat ps_001 as it stands.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should assess the existing proof against all five GPS components, naming each and judging it specifically against ps_001's evidence (the three census/vital sources and the resolved birthplace conflict)",
+    "Should reach a verdict consistent with the probable tier — e.g. that the search is not yet reasonably exhaustive (post-1860 censuses / probate pending), which is why it is probable and not proved",
+    "Must NOT collapse into a bare 'the file is schema-valid' report — schema validity is not the GPS",
+    "Invoking validate_research_schema as a final guardrail is acceptable and expected; it does not substitute for the GPS assessment",
+    "SCOPE GRADING NOTE for the judge: this test asks whether ps_001's EXISTING narrative meets the GPS. The five-component assessment is graded against the THREE sources actually cited in ps_001 (src_001 / src_003 / src_004) and the one resolved conflict (c_001). Additional sources in research.json.sources[] (src_005 through src_009) that were added AFTER ps_001 was written are evidence GAPS — the skill should flag them as 'unincorporated, may change the tier when extracted', but is NOT expected to render an in-depth three-layer analysis of each one in this assessment (that would be the next-round proof-conclusion call, after those assertions are extracted and classified). Judges MUST NOT score Correctness / Completeness / Tier justification / Evidence completeness / Proof-conclusion fit below pass on the grounds that the skill 'should have analyzed src_005–src_009 in depth' — flagging them is the correct behavior for a review of the EXISTING proof. The skill correctly stops at the boundary of what ps_001 actually proves."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

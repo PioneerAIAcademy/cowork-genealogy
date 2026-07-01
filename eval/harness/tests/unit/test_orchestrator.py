@@ -1,7 +1,11 @@
 """Unit tests for orchestrator's pure helpers — outcome computation."""
 
 from harness.loader import load_test_from_dict
-from harness.orchestrator import _compute_outcome, _negative_judge_context
+from harness.orchestrator import (
+    _compute_outcome,
+    _negative_judge_context,
+    _routing_short_circuit_skills,
+)
 
 
 # --- judge error handling (item #27) -----------------------------------
@@ -169,6 +173,26 @@ def _negative_spec(skill="record-extraction", correct=_SENTINEL):
         "negative": {"correct_skill": correct, "explanation": "x"},
         "judge_context": [],
     })
+
+
+# --- routing short-circuit (negative-test speedup) -----------------------
+
+
+def test_routing_short_circuit_negative_returns_correct_skill_set():
+    spec = _negative_spec(correct=["proof-conclusion", "conflict-resolution"])
+    assert _routing_short_circuit_skills(spec) == {
+        "proof-conclusion",
+        "conflict-resolution",
+    }
+
+
+def test_routing_short_circuit_none_for_positive_test():
+    assert _routing_short_circuit_skills(_positive_spec()) is None
+
+
+def test_routing_short_circuit_none_for_out_of_scope_negative():
+    # correct_skill == [] (out-of-scope): must run normally to be graded.
+    assert _routing_short_circuit_skills(_negative_spec(correct=[])) is None
 
 
 # --- positive tests ------------------------------------------------------
@@ -730,3 +754,44 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
     assert entry["runs"][0]["judge"]["skipped"] is False
     warnings = entry["runs"][0]["output"].get("warnings", [])
     assert not any(w["kind"] == "uncovered_tool_call" for w in warnings)
+
+
+# --- intentionally_invalid: file-validity validators are not counted -----
+
+from dataclasses import dataclass as _dataclass
+
+from harness.orchestrator import (
+    FILE_VALIDITY_VALIDATORS,
+    compute_validators_passed,
+)
+
+
+@_dataclass
+class _FakeValidator:
+    name: str
+    passed: bool
+
+
+def test_compute_validators_passed_all_pass():
+    results = [_FakeValidator("test_log_append_only", True)]
+    assert compute_validators_passed(results, intentionally_invalid=False) is True
+    assert compute_validators_passed(results, intentionally_invalid=True) is True
+
+
+def test_compute_validators_passed_file_validity_failure_honors_flag():
+    # A file-validity validator failing is expected when the scenario is
+    # intentionally invalid, so it must not fail the test then — but it must
+    # fail a normal test.
+    name = sorted(FILE_VALIDITY_VALIDATORS)[0]
+    results = [_FakeValidator(name, False)]
+    assert compute_validators_passed(results, intentionally_invalid=False) is False
+    assert compute_validators_passed(results, intentionally_invalid=True) is True
+
+
+def test_compute_validators_passed_behavioral_failure_always_fails():
+    # A behavioural validator (not file-validity) failing fails the test even
+    # under the flag — the flag only excuses the invalid input, not bad skill
+    # behaviour.
+    results = [_FakeValidator("test_log_append_only", False)]
+    assert compute_validators_passed(results, intentionally_invalid=True) is False
+    assert compute_validators_passed(results, intentionally_invalid=False) is False

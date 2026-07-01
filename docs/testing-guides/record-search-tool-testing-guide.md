@@ -13,7 +13,7 @@ records that might describe that person, with the key facts on
 each record (name, dates, places, family) plus links the user can
 click.
 
-Like `place_collections`, it requires a valid FamilySearch login session
+Like `collections_search`, it requires a valid FamilySearch login session
 (obtained via the `login` tool). Under the hood it calls the
 lower-level service endpoint
 `/service/search/hr/v2/personas`, which exposes a much larger
@@ -53,7 +53,7 @@ they're expensive.
 ### 1. Make sure the server builds and all tests pass
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npm run build
 npm test
 ```
@@ -93,7 +93,7 @@ mismatches.
    call). If not:
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx @modelcontextprotocol/inspector node build/index.js
    ```
 
@@ -103,7 +103,7 @@ mismatches.
 2. Run the smoke test:
 
    ```bash
-   cd mcp-server
+   cd packages/engine/mcp-server
    npx tsx dev/try-record-search.ts Lincoln Abraham
    ```
 
@@ -150,7 +150,7 @@ mismatches.
    receives a properly paired alternate-name set.
 
 7. Try a collection-scoped search (use a collection ID you got
-   from the `place_collections` tool — e.g. `1743384` is Alabama
+   from the `collections_search` tool — e.g. `1743384` is Alabama
    marriages, but check first):
 
    ```bash
@@ -200,7 +200,7 @@ work through the MCP protocol?
 ### Start the Inspector
 
 ```bash
-cd mcp-server
+cd packages/engine/mcp-server
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
@@ -211,7 +211,7 @@ Look at the tools list. You should see **seven** tools:
 - `login`
 - `logout`
 - `auth_status`
-- `place_collections`
+- `collections_search`
 - `place_population`
 - `record_search`
 
@@ -343,7 +343,7 @@ Validation should fail before authentication is even checked.
    Results should include records under both surnames.
 
 6. Try a collection-scoped search (replace `<id>` with one from
-   the `place_collections` tool):
+   the `collections_search` tool):
 
    ```json
    {
@@ -403,7 +403,7 @@ the search tool from natural language?
 2. Register the server with Claude Code (if not already):
 
    ```bash
-   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/mcp-server/build/index.js
+   claude mcp add --transport stdio genealogy-dev -- node /path/to/cowork-genealogy/packages/engine/mcp-server/build/index.js
    ```
 
 3. Start Claude Code:
@@ -479,7 +479,7 @@ person name, birth/death info, collection, and the clickable
 
 If you change the server code:
 
-1. Rebuild: `cd mcp-server && npm run build`
+1. Rebuild: `cd packages/engine/mcp-server && npm run build`
 2. In Claude Code, type `/mcp` to reconnect.
 3. Try again.
 
@@ -519,7 +519,7 @@ entry. Example `claude_desktop_config.json`:
       "command": "wsl.exe",
       "args": [
         "-d", "Ubuntu-22.04",
-        "--cd", "/mnt/c/path/to/cowork-genealogy/mcp-server",
+        "--cd", "/mnt/c/path/to/cowork-genealogy/packages/engine/mcp-server",
         "--",
         "/usr/bin/node",
         "build/index.js"
@@ -567,7 +567,7 @@ being used.
 
 ### What success looks like
 
-Claude calls `record_search` (and where appropriate, `place_collections`
+Claude calls `record_search` (and where appropriate, `collections_search`
 first) and returns ranked records, running through the full
 Cowork → Claude Desktop → WSL2 → MCP server pipeline.
 
@@ -601,7 +601,7 @@ MCP server entry:
     "genealogy-native": {
       "command": "node",
       "args": [
-        "C:\\path\\to\\cowork-genealogy\\mcp-server\\build\\index.js"
+        "C:\\path\\to\\cowork-genealogy\\packages\\engine\\mcp-server\\build\\index.js"
       ]
     }
   }
@@ -616,7 +616,7 @@ testing this layer.
 1. Make sure the native Windows build is up to date:
 
    ```powershell
-   cd C:\path\to\cowork-genealogy\mcp-server
+   cd C:\path\to\cowork-genealogy\packages\engine\mcp-server
    npm run build
    ```
 
@@ -667,14 +667,14 @@ Windows.
 
 | What | Command |
 |------|---------|
-| Build server | `cd mcp-server && npm run build` |
-| Run tests | `cd mcp-server && npm test` |
-| Smoke test (Lincoln) | `cd mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham` |
-| Smoke test (with year+place) | `cd mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809 --birth-place Kentucky` |
-| Smoke test (collection-scoped) | `cd mcp-server && npx tsx dev/try-record-search.ts Smith --collection <id> --marriage-year 1830 1850` |
-| Smoke test (country anchor) | `cd mcp-server && npx tsx dev/try-record-search.ts --given Mary --country "United States"` |
-| Smoke test (alt-name UNION) | `cd mcp-server && npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary` |
-| Run Inspector | `cd mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
+| Build server | `cd packages/engine/mcp-server && npm run build` |
+| Run tests | `cd packages/engine/mcp-server && npm test` |
+| Smoke test (Lincoln) | `cd packages/engine/mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham` |
+| Smoke test (with year+place) | `cd packages/engine/mcp-server && npx tsx dev/try-record-search.ts Lincoln Abraham --birth-year 1809 --birth-place Kentucky` |
+| Smoke test (collection-scoped) | `cd packages/engine/mcp-server && npx tsx dev/try-record-search.ts Smith --collection <id> --marriage-year 1830 1850` |
+| Smoke test (country anchor) | `cd packages/engine/mcp-server && npx tsx dev/try-record-search.ts --given Mary --country "United States"` |
+| Smoke test (alt-name UNION) | `cd packages/engine/mcp-server && npx tsx dev/try-record-search.ts Lincoln --alt Todd --given Mary` |
+| Run Inspector | `cd packages/engine/mcp-server && npx @modelcontextprotocol/inspector node build/index.js` |
 | Wipe session (Linux/WSL) | `rm -f ~/.familysearch-mcp/tokens.json` |
 | Wipe session (PowerShell) | `Remove-Item $env:USERPROFILE\.familysearch-mcp\tokens.json` |
 | Reconnect in Claude Code | `/mcp` |

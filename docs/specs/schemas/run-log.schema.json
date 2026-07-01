@@ -42,7 +42,7 @@
       "description": "True iff the invocation was a full --skill run with no --tag or --test filter."
     },
     "invocation": {
-      "enum": ["skill", "test", "all", "tag"],
+      "enum": ["skill", "test", "tag"],
       "description": "The CLI selection mode that produced this run log."
     },
     "timestamp": {
@@ -60,7 +60,7 @@
     "snapshot": {
       "type": "object",
       "additionalProperties": { "type": "string" },
-      "description": "{repo-relative-path: normalized-content} of all skill-side files needed to reproduce this run. Includes plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
+      "description": "{repo-relative-path: normalized-content} of all skill-side files needed to reproduce this run. Includes packages/engine/plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
     },
     "tests": {
       "type": "array",
@@ -136,7 +136,11 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "duration_ms": { "type": "number", "minimum": 0 },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run skill durations." },
+        "duration_api_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run SDK API/network time. Optional." },
+        "judge_duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run judge LLM call wall-clock. Optional." },
+        "num_turns": { "type": "integer", "minimum": 0, "description": "Sum of per-run SDK turn counts. Optional." },
+        "wall_clock_ms": { "type": "number", "minimum": 0, "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
@@ -164,7 +168,11 @@
       ],
       "additionalProperties": false,
       "properties": {
-        "duration_ms": { "type": "number", "minimum": 0 },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run skill durations." },
+        "duration_api_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run SDK API/network time. Optional." },
+        "judge_duration_ms": { "type": "number", "minimum": 0, "description": "Sum of per-run judge LLM call wall-clock. Optional." },
+        "num_turns": { "type": "integer", "minimum": 0, "description": "Sum of per-run SDK turn counts. Optional." },
+        "wall_clock_ms": { "type": "number", "minimum": 0, "description": "True elapsed span max(ended_at)-min(started_at) — over this test's runs (test_totals) or all runs in the envelope (totals). Reflects real makespan under concurrency, unlike the summed duration_ms. Optional." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
@@ -214,7 +222,12 @@
             { "type": "null" }
           ]
         },
-        "duration_ms": { "type": "number", "minimum": 0 },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Harness wall-clock around the SDK message-consume loop (skill execution only)." },
+        "duration_api_ms": { "type": "number", "minimum": 0, "description": "SDK-reported API/network time (ResultMessage.duration_api_ms). duration_ms - duration_api_ms approximates local overhead; small here with large duration_ms signals an upstream stall. 0 on aborts without a ResultMessage. Optional (absent in pre-instrumentation run logs)." },
+        "num_turns": { "type": "integer", "minimum": 0, "description": "SDK-reported turn count (ResultMessage.num_turns). 0 on aborts without a ResultMessage. Optional." },
+        "skill_attempts": { "type": "integer", "minimum": 1, "description": "Skill-execution attempts (1 = clean first try; >1 = transient stall/error retries in _execute_skill_with_retry). Per-run stall-tax signal. Optional (defaults to 1 in pre-instrumentation logs)." },
+        "started_at": { "type": "number", "minimum": 0, "description": "Epoch seconds at run start (skill+validators+judge). Omitted for runs that never executed (e.g. runnability-gate aborts). Optional." },
+        "ended_at": { "type": "number", "minimum": 0, "description": "Epoch seconds at run end. Omitted for runs that never executed. Optional." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
@@ -413,6 +426,7 @@
           "items": { "$ref": "#/$defs/judge_dimension" }
         },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 when the judge was skipped. Optional (absent in pre-instrumentation run logs)." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },

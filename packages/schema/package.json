@@ -1,0 +1,19 @@
+{
+  "name": "@genealogy/schema",
+  "version": "0.0.0",
+  "description": "Single source of truth for research.json + simplified-GedcomX TypeScript types and JSON Schemas. Consumed by viewer-ui, the web client, and the control plane.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas/*": "./schemas/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

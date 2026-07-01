@@ -4,16 +4,16 @@
     "skill": "person-evidence",
     "name": "Relationship assertion should link to BOTH persons",
     "type": "positive",
-    "description": "Per research-schema-spec.md §5.7, an assertion implying a relationship bears on BOTH persons — the child and the parent. The mid-research-flynn scenario has a_010 ('Patrick listed as son of Thomas in 1860 census') linked via pe_004 to Patrick (I1). Tests whether the skill recognizes the assertion also bears on Thomas (I2) and creates the matching second link, OR confirms one already exists.",
+    "description": "Per research-schema-spec.md §5.7, an assertion implying a relationship bears on BOTH persons — the child and the parent. The mid-research-flynn scenario has a_010 ('Patrick enumerated in the same 1860 census household as Thomas') linked via pe_004 to Patrick (I1). The 1860 census records only co-residence in a household; it does not state relationships or designate a head — both the head-of-household role and the parent-child relationship are inferred (like the 1850 census; the relationship column was not introduced until 1880). Tests whether the skill recognizes the assertion also bears on Thomas (I2) and creates the matching second link, OR confirms one already exists.",
     "tags": ["person-evidence", "multi-person-awareness", "relationship-assertion", "pe_004", "a_010"]
   },
   "input": {
-    "user_message": "The 1860 census assertion a_010 (Patrick listed as son of Thomas) is currently linked to Patrick via pe_004. Should Thomas also have a person_evidence link to this assertion?",
+    "user_message": "Assertion a_010 (the 1860 census placing Patrick in Thomas's household) is linked to Patrick via pe_004 but not to Thomas. Add the missing person_evidence link from a_010 to Thomas, or confirm one already exists.",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
     "Should recognize that a_010 is a relationship-implying assertion that bears on BOTH persons named in the relationship",
     "The new entry's confidence should match or be no higher than pe_004's confidence (cannot be more confident about Thomas's identity than about Patrick's, since they're tied to the same assertion)",
-    "Should populate the new entry's `rationale` to explain why the assertion bears on Thomas: the 1860 census names Thomas as head of household with Patrick listed as his son — the assertion is direct evidence of Thomas's parental role too"
+    "Should populate the new entry's `rationale` to explain why the assertion bears on Thomas: the 1860 census enumerates Patrick in the same household as Thomas, with Thomas inferred (not explicitly stated) to be the head of household — the assertion is indirect evidence of Thomas's parental role too (household position, age, and shared surname imply a parent-child relationship). The 1860 census does not state relationships or designate a head of household explicitly — like the 1850 census, both are inferred by the researcher; the relationship column was not introduced until 1880. The rationale should not assert as recorded fact that the census lists Thomas as head or Patrick as son."
   ]
 }

@@ -1,0 +1,235 @@
+/* ═══════════════════════════════════════════════════════
+   Research Viewer — Warm Scholarly Editorial Theme
+   Typography: Cormorant (display) + IBM Plex Sans (body)
+   Palette: Warm paper, ink text, amber/gold accents
+   ═══════════════════════════════════════════════════════ */
+
+/* Light theme (default) */
+:root {
+  /* Typography */
+  --font-display: 'Cormorant', 'Georgia', 'Times New Roman', serif;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Paper & ink */
+  --bg-primary: #faf8f4;
+  --bg-secondary: #f3efe8;
+  --bg-card: #fefdfb;
+  --bg-hover: #f0ece4;
+  --bg-sidebar: #f5f1eb;
+  --bg-header: #faf8f4;
+  --bg-welcome: #f7f4ee;
+  --bg-code: #f0ece4;
+
+  /* Ink tones */
+  --text-primary: #2c2419;
+  --text-secondary: #6b6055;
+  --text-tertiary: #9a9188;
+  --text-link: #8b5e34;
+
+  /* Warm borders */
+  --border-color: #e2dbd0;
+  --border-color-strong: #cfc6b8;
+  --border-radius: 6px;
+  --border-radius-sm: 3px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 32px;
+  --spacing-3xl: 48px;
+
+  /* Status badges — warm, muted tones */
+  --badge-green-bg: #dce8d4;
+  --badge-green-text: #3d6b2e;
+  --badge-amber-bg: #f0e0c0;
+  --badge-amber-text: #8b6914;
+  --badge-red-bg: #ebd4d0;
+  --badge-red-text: #963b30;
+  --badge-blue-bg: #d4dde8;
+  --badge-blue-text: #3d5f8b;
+  --badge-gray-bg: #e5e0d8;
+  --badge-gray-text: #7a7267;
+  --badge-purple-bg: #ddd4e8;
+  --badge-purple-text: #6b4f8b;
+
+  /* Pipeline */
+  --stage-completed: #6b8f58;
+  --stage-active: #c4943c;
+  --stage-pending: #d4cfc6;
+
+  /* Conflict highlight */
+  --conflict-unresolved-bg: #f5ece8;
+  --conflict-unresolved-border: #d4a898;
+
+  /* Card */
+  --card-shadow: 0 1px 3px rgba(44, 36, 25, 0.06), 0 0 0 1px rgba(44, 36, 25, 0.04);
+  --card-shadow-hover: 0 2px 8px rgba(44, 36, 25, 0.1), 0 0 0 1px rgba(44, 36, 25, 0.06);
+
+  /* Sidebar */
+  --sidebar-width: 240px;
+  --sidebar-active-bg: #ebe5db;
+
+  /* Header */
+  --header-height: 52px;
+
+  /* Decorative */
+  --accent-gold: #b8860b;
+  --accent-gold-soft: rgba(184, 134, 11, 0.12);
+  /* AA-compliant variant for small text on warm paper (~6.0:1 vs #faf8f4) */
+  --accent-gold-strong: #8a6608;
+  --accent-burgundy: #7b2d3b;
+  --divider-ornament: #cfc6b8;
+}
+
+/* Dark theme — rich, warm dark */
+[data-theme='dark'] {
+  --bg-primary: #1a1714;
+  --bg-secondary: #211e1a;
+  --bg-card: #252118;
+  --bg-hover: #2e2a22;
+  --bg-sidebar: #1e1b17;
+  --bg-header: #1a1714;
+  --bg-welcome: #1c1915;
+  --bg-code: #2a2620;
+
+  --text-primary: #e8e0d4;
+  --text-secondary: #a89e90;
+  --text-tertiary: #706860;
+  --text-link: #d4a060;
+
+  --border-color: #3a342c;
+  --border-color-strong: #4a4238;
+
+  --badge-green-bg: #2a3822;
+  --badge-green-text: #8bb878;
+  --badge-amber-bg: #3a3018;
+  --badge-amber-text: #d4a84c;
+  --badge-red-bg: #3a2220;
+  --badge-red-text: #d48878;
+  --badge-blue-bg: #1e2a38;
+  --badge-blue-text: #78a0c8;
+  --badge-gray-bg: #2e2a24;
+  --badge-gray-text: #908878;
+  --badge-purple-bg: #2a2238;
+  --badge-purple-text: #a890c8;
+
+  --stage-completed: #6b8f58;
+  --stage-active: #c4943c;
+  --stage-pending: #3a342c;
+
+  --conflict-unresolved-bg: #2e2018;
+  --conflict-unresolved-border: #5a3828;
+
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --card-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  --sidebar-active-bg: #2e2a22;
+
+  --accent-gold: #d4a040;
+  --accent-gold-soft: rgba(212, 160, 64, 0.15);
+  /* AA-compliant variant for small text on dark paper (~7.2:1 vs #1a1714) */
+  --accent-gold-strong: #e8b75c;
+  --accent-burgundy: #c85060;
+  --divider-ornament: #3a342c;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Reset & Base
+   ═══════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 15px;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  height: 100vh;
+  letter-spacing: -0.01em;
+}
+
+#root {
+  display: flex;
+  height: 100vh;
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--accent-gold);
+}
+
+button {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+/* Selection color */
+::selection {
+  background: var(--accent-gold-soft);
+  color: var(--text-primary);
+}
+
+/* Scrollbar — thin, warm, unobtrusive */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color-strong);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Utility: Section titles (used by all 11 sections)
+   ═══════════════════════════════════════════════════════ */
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--divider-ornament);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}

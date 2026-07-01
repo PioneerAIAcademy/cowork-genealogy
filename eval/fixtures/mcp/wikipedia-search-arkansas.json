@@ -1,0 +1,12 @@
+{
+  "tool": "wikipedia_search",
+  "description": "Wikipedia article summary for Arkansas",
+  "args": {
+    "query": "~"
+  },
+  "response": {
+    "title": "Arkansas",
+    "extract": "Arkansas is a state in the south-central United States. The area was explored by Hernando de Soto in 1541 and later claimed by France as part of La Louisiane. After the Treaty of Paris in 1763, Spain controlled the territory until secretly ceding it back to France in 1800. The Louisiana Purchase in 1803 brought the region under American control. Arkansas Post, established by the French in 1686, served as the first European settlement. Spanish colonial administration left records in land grants, church registers, and military post records.",
+    "url": "https://en.wikipedia.org/wiki/Arkansas"
+  }
+}

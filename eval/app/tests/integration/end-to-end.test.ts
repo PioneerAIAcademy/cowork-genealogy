@@ -24,17 +24,17 @@ import type { AnnotationFile, RunLogFile } from '../../lib/types';
 
 function makeSkillSnapshot(skill: string, skillBody: string): Record<string, string> {
   return {
-    [`plugin/skills/${skill}/SKILL.md`]: normalize(`plugin/skills/${skill}/SKILL.md`, Buffer.from(skillBody)),
+    [`packages/engine/plugin/skills/${skill}/SKILL.md`]: normalize(`packages/engine/plugin/skills/${skill}/SKILL.md`, Buffer.from(skillBody)),
     [`eval/tests/unit/${skill}/rubric.md`]: normalize(`eval/tests/unit/${skill}/rubric.md`, Buffer.from('# rubric\n')),
   };
 }
 
 describe('end-to-end flow: candidate → review → release → activate', () => {
   let handle: FixtureTreeHandle;
-  const SKILL = 'search-wiki';
+  const SKILL = 'search-familysearch-wiki';
 
   beforeEach(async () => {
-    const skillBody = '---\nname: search-wiki\n---\nbody\n';
+    const skillBody = '---\nname: search-familysearch-wiki\n---\nbody\n';
     handle = await makeFixtureTree({
       skills: [{ name: SKILL, skillMd: skillBody, rubricMd: '# rubric\n' }],
       judgePrompt: 'judge prompt v1\n',
@@ -117,14 +117,14 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
 
     // Step 6: edit the skill on disk → no active version.
     await fs.writeFile(
-      path.join(handle.repoRoot, 'plugin', 'skills', SKILL, 'SKILL.md'),
-      '---\nname: search-wiki\n---\nedited body\n',
+      path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', SKILL, 'SKILL.md'),
+      '---\nname: search-familysearch-wiki\n---\nedited body\n',
     );
     active = await detectActiveRunLog(SKILL);
     expect(active).toBeNull();
 
     // Step 7: "run the harness" → write a candidate v2 with the new snapshot.
-    const editedBody = '---\nname: search-wiki\n---\nedited body\n';
+    const editedBody = '---\nname: search-familysearch-wiki\n---\nedited body\n';
     const editedSnapshot = makeSkillSnapshot(SKILL, editedBody);
     const v2Body = buildRunLog({
       skill: SKILL,
@@ -157,10 +157,10 @@ describe('end-to-end flow: candidate → review → release → activate', () =>
     );
     await activateRunLog(v1Log);
     const skillOnDisk = await fs.readFile(
-      path.join(handle.repoRoot, 'plugin', 'skills', SKILL, 'SKILL.md'),
+      path.join(handle.repoRoot, 'packages', 'engine', 'plugin', 'skills', SKILL, 'SKILL.md'),
       'utf8',
     );
-    expect(skillOnDisk).toBe('---\nname: search-wiki\n---\nbody\n');
+    expect(skillOnDisk).toBe('---\nname: search-familysearch-wiki\n---\nbody\n');
 
     // Step 9: v1 is active again now that disk matches its snapshot.
     active = await detectActiveRunLog(SKILL);

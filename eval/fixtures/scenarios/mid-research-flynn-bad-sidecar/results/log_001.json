@@ -1,0 +1,16 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-05-01T10:00:00Z",
+  "returned_count": 5,
+  "payload": {
+    "results": [
+      {
+        "recordId": "r1"
+      },
+      {
+        "recordId": "r2"
+      }
+    ]
+  }
+}

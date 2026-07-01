@@ -1,0 +1,12 @@
+{
+  "tool": "place_search_all",
+  "description": "Catch-all place_search_all fixture — returns jurisdiction history for any placeName",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "query": "",
+    "totalResults": 0,
+    "results": []
+  }
+}

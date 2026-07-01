@@ -1,0 +1,13 @@
+{
+  "tool": "place_population",
+  "description": "Catch-all place_population fixture — returns generic population statistics for any standardPlace",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "standardPlace": "",
+    "years_requested": [],
+    "data_points": [],
+    "notes": "No population data available for this fixture."
+  }
+}

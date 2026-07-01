@@ -39,7 +39,7 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 REPO_ROOT = HARNESS_DIR.parents[1]
 
-SKILLS_DIR = REPO_ROOT / "plugin" / "skills"
+SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 FIXTURES_DIR = REPO_ROOT / "eval" / "fixtures" / "mcp"
 
@@ -54,8 +54,21 @@ EXEMPT_TOOLS: dict[str, str] = {
         "block and cannot emit an `image` content block, so image_read — "
         "which returns the image itself for the model to read — cannot be "
         "exercised in-harness. Tool-code correctness is covered by Vitest "
-        "(mcp-server/tests/); transcription behavior is verified via the "
+        "(packages/engine/mcp-server/tests/); transcription behavior is verified via the "
         "layered manual testing playbooks (docs/testing-guides/)."
+    ),
+    "research_log_append": (
+        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
+        "implementation rather than matching a fixture. The tool handles id "
+        "assignment, timestamping, camelCase-to-snake_case field renaming, "
+        "and validation. No fixture needed; it is always available."
+    ),
+    "research_append": (
+        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
+        "implementation against the workspace research.json rather than "
+        "matching a fixture. It validates-before-persist and enforces "
+        "supersede-not-delete, so its result reflects the actual file the "
+        "skill wrote. No fixture needed; it is always available."
     ),
 }
 
@@ -70,7 +83,7 @@ def declared_tools(skill_md: Path) -> list[str]:
     """Parse the `allowed-tools` block-list from a SKILL.md frontmatter.
 
     Stdlib only — no yaml dependency (the CI workflow installs none).
-    Handles the block style used throughout plugin/skills/:
+    Handles the block style used throughout packages/engine/plugin/skills/:
     `allowed-tools:` followed by `  - name` lines. Bare names and
     `mcp__server__`-qualified names both normalize to the bare tool name.
 
@@ -86,7 +99,7 @@ def declared_tools(skill_md: Path) -> list[str]:
     """
     if not skill_md.exists():
         return []
-    text = skill_md.read_text()
+    text = skill_md.read_text(encoding="utf-8")
     if not text.startswith("---"):
         return []
     parts = text.split("---", 2)
@@ -122,7 +135,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
         return refs
     for test_path in sorted(skill_tests.glob("*.json")):
         try:
-            test = json.loads(test_path.read_text())
+            test = json.loads(test_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
         for fixture_name in test.get("mcp_fixtures") or []:
@@ -130,7 +143,7 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
             if not fixture_path.exists():
                 continue
             try:
-                fixture = json.loads(fixture_path.read_text())
+                fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
                 continue
             tool = fixture.get("tool")
@@ -169,7 +182,7 @@ def main() -> int:
                 f"test corpus has no fixture for: {missing}. No eval test can "
                 f"exercise {plural} — add a test with an mcp_fixture for each, "
                 f"or drop the tool from allowed-tools.",
-                file=f"plugin/skills/{skill}/SKILL.md",
+                file=f"packages/engine/plugin/skills/{skill}/SKILL.md",
             )
 
         # Reverse: a test references a fixture for a tool the skill's

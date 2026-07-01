@@ -1,5 +1,16 @@
 node_modules/
-mcp-server/build/
+packages/engine/mcp-server/build/
+
+# Local Claude Code MCP-server registration. Machine-specific: it hardcodes
+# an absolute path to the local build output, so it's never portable across
+# checkouts. Per-developer dev config, not project state.
+packages/engine/mcp-server/.mcp.json
+
+# Stale top-level mcp-server/ left over from before the monorepo refactor
+# (PR #293 moved mcp-server to packages/engine/mcp-server). The leading slash
+# anchors this to the repo root so it does NOT match packages/engine/mcp-server.
+/mcp-server/
+
 releases/*
 !releases/.gitkeep
 *.log
@@ -8,9 +19,11 @@ releases/*
 .claude/*
 !.claude/commands/
 !.claude/agents/
+!.claude/skills/
 local/
 .local/
 personal/
+.tool-versions
 
 # Eval CRUD UI (eval/app/) — populated by step 1 of the plan
 eval/app/lib/schema/
@@ -20,6 +33,36 @@ eval/app/lib/schema/
 # docs/plan/eval-runlog-versioning.md §A1, §A3.
 eval/runlogs/unit/*/scratch_*.json
 eval/runlogs/unit/*/scratch_*.ann.json
+
+# In-progress partial run logs — rewritten after each completed test so a
+# Ctrl-C or crash mid-run keeps the tests that finished. Deleted on a clean
+# finish; promoted to scratch_* on interrupt. The .tmp is the atomic-write
+# staging file. See docs/plan/eval-harness-stop-early.md.
+eval/runlogs/unit/*/.partial_*.json
+eval/runlogs/unit/*/.partial_*.json.tmp
+
+# Non-passing e2e runs write as scratch_* — only a passing run validates a
+# fixture and is committed (e2e-test-spec.md §14). Keeps a failed run from
+# being committed as if it had validated the fixture.
+eval/runlogs/e2e/*/scratch_*
+
+# `make e2e-view` staging folder — the latest run's final state copied in as
+# research.json + tree.gedcomx.json for the Research Viewer to open. Throwaway.
+eval/e2e-view/
+
+# `make e2e-project` seeds editable Cowork projects from fixtures' starting
+# state here — debugging workspaces, not committed artifacts.
+eval/e2e-project/
+
+# Raw SDK session transcripts copied next to each e2e runlog. Multi-MB forensic
+# data (per-turn timestamps/tokens/thinking) for local latency+cost analysis —
+# not a fixture validity artifact, so kept out of git to avoid repo bloat.
+eval/runlogs/e2e/*/*.session.jsonl
+
+# Description-optimizer output (make optimize-skill). Regenerable; runlogs/optimizer
+# is excluded from the release gate + comparisons (eval/CLAUDE.md).
+eval/runlogs/optimizer/*
+!eval/runlogs/optimizer/.gitkeep
 
 # Playwright test artifacts.
 eval/app/test-results/
@@ -32,3 +75,27 @@ eval/app/playwright-report/
 .next/
 *.tsbuildinfo
 coverage/
+
+# Web capture evaluation (local research, not committed).
+docs/web-capture-eval/
+
+# ── Hosted web workbench (monorepo) ──────────────────────────────
+.turbo/
+dist/
+out/
+apps/web/dist/
+packages/*/dist/
+# FastAPI control plane: venv, SQLite DB, local env, bytecode
+apps/server/.venv/
+apps/server/*.db
+apps/server/*.db-journal
+apps/server/.env
+__pycache__/
+*.pyc
+# LocalProvider mock sandbox project dirs + local viewer backup mirror
+.workbench-data/
+# Local marker for the last `make sandbox-image` build (deploy-preflight staleness check)
+apps/server/sandbox/.last-image-build
+
+# FamilySearch-internal warnings reference (do NOT commit — see match-merge plan Prerequisites)
+warnings.java

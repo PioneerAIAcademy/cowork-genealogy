@@ -1,0 +1,65 @@
+appId: com.pioneeracademy.researchviewer
+productName: Research Viewer
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asarUnpack:
+  - resources/**
+
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+dmg:
+  sign: false
+  artifactName: ${name}-${version}-${arch}.${ext}
+
+win:
+  executableName: research-viewer
+  target:
+    - target: nsis
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Research Viewer
+  artifactName: ${name}-${version}-setup.${ext}
+
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+  category: Utility
+  synopsis: Genealogy research file viewer
+  description: |
+    View research.json and tree.gedcomx.json files from the genealogy
+    research assistant. Offline-first. No telemetry.
+  icon: build/icon.png
+
+appImage:
+  artifactName: ${name}-${version}.${ext}
+
+npmRebuild: false
+
+publish:
+  provider: github
+  owner: PioneerAIAcademy
+  repo: cowork-genealogy

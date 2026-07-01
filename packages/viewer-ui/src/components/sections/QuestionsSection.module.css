@@ -1,0 +1,64 @@
+.section {
+  padding: var(--spacing-xl);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.field {
+  margin-bottom: var(--spacing-md);
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.fieldValue {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.linkList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.stopCriteria {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.stopCriteria dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-sm);
+}
+
+.stopCriteria dt:first-child {
+  margin-top: 0;
+}
+
+.stopCriteria dd {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-left: 0;
+}
+
+.empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}

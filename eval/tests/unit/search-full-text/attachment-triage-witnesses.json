@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_search_full_text_011",
+    "skill": "search-full-text",
+    "name": "Check attachment status for full-text witness search results",
+    "type": "positive",
+    "description": "Full-text search for Flynn family as witnesses in Schuylkill County records. After fulltext_search returns results, the skill should call source_attachments to check attachment status. All results are unattached — the skill should note this and prioritize them for extraction as new FAN evidence.",
+    "tags": ["fulltext", "FAN", "witnesses", "attachment-check", "triage"]
+  },
+  "input": {
+    "user_message": "Run separate full-text searches for Thomas Flynn AND for Patrick Flynn appearing as witnesses in Schuylkill County records — both names must be queried. Then check whether any returned records are already attached to tree persons.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["fulltext-search-flynn-witnesses", "fulltext-search-flynn-witnesses-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant", "record-attachments-flynn-witnesses"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "After fulltext_search returns results, the skill should call source_attachments with the ARK URLs to check attachment status",
+    "Since all results come back unattached, the skill should note this and prioritize all results for extraction as new evidence",
+    "The triage presentation should include attachment status alongside match quality and document context",
+    "QUERY-CONSTRUCTION GRADING NOTE: this test's focus is the attachment-triage flow, NOT the search itself. Canonical-spelling phrase queries (+\"Thomas Flynn\" / +\"Patrick Flynn\") that return the witness record are sufficient — per rubric Query construction, this dimension grades queries the skill ACTUALLY EXECUTED, not a wishlist. Variants like Thos/Patk are valuable but NOT required when the canonical query already recovers the record. Judges MUST NOT score Query construction partial on the grounds that variants could have been tried"
+  ]
+}

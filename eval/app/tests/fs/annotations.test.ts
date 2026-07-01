@@ -2,6 +2,8 @@
  * Tests for lib/fs/annotations.ts — sparse annotation read/write + helpers.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { makeFixtureTree, buildRunLog, type FixtureTreeHandle } from '../helpers/fixtureTree';
 import {
   deleteCorrection,
@@ -12,6 +14,7 @@ import {
   upsertCorrection,
   writeAnnotation,
 } from '../../lib/fs/annotations';
+import { runlogsUnitDir } from '../../lib/paths';
 import type { AnnotationFile, RunLogFile } from '../../lib/types';
 
 describe('annotations — read/write', () => {
@@ -21,9 +24,9 @@ describe('annotations — read/write', () => {
     handle = await makeFixtureTree({
       runlogs: [
         {
-          skill: 'search-wiki',
+          skill: 'search-familysearch-wiki',
           filename: 'v1.json',
-          body: buildRunLog({ skill: 'search-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
+          body: buildRunLog({ skill: 'search-familysearch-wiki', version: 1, released: true, timestamp: '2026-05-13_09-30-52' }),
         },
       ],
     });
@@ -35,7 +38,7 @@ describe('annotations — read/write', () => {
   });
 
   it('returns null when no annotation file exists', async () => {
-    expect(await readAnnotation('search-wiki/v1')).toBeNull();
+    expect(await readAnnotation('search-familysearch-wiki/v1')).toBeNull();
   });
 
   it('writes then reads an annotation', async () => {
@@ -53,9 +56,38 @@ describe('annotations — read/write', () => {
         },
       ],
     };
-    await writeAnnotation('search-wiki/v1', ann);
-    const loaded = await readAnnotation('search-wiki/v1');
+    await writeAnnotation('search-familysearch-wiki/v1', ann);
+    const loaded = await readAnnotation('search-familysearch-wiki/v1');
     expect(loaded).toEqual(ann);
+  });
+
+  it('writeAnnotation rejects the deprecated run_index/dimension/source shape', async () => {
+    const bad = {
+      run_log: 'v1.json',
+      annotator: 'team-a',
+      corrections: [
+        // legacy per-run shape Claude emits when asked to hand-write a .ann.json
+        { test_id: 'ut_001', run_index: 0, dimension: 'Correctness', source: 'base', llm_score: 3, corrected_score: 3 },
+      ],
+    } as unknown as AnnotationFile;
+    await expect(writeAnnotation('search-familysearch-wiki/v1', bad)).rejects.toThrow(/Invalid annotation/);
+    // Nothing should have been persisted.
+    expect(await readAnnotation('search-familysearch-wiki/v1')).toBeNull();
+  });
+
+  it('readAnnotation throws on an existing but off-schema file', async () => {
+    // Simulate a hand-written file landing on disk (bypassing writeAnnotation).
+    const bad = {
+      run_log: 'v1.json',
+      annotator: 'team-a',
+      corrections: [
+        { test_id: 'ut_001', run_index: 0, dimension: 'Correctness', source: 'base', llm_score: 3, corrected_score: 3 },
+      ],
+    };
+    const dir = path.join(runlogsUnitDir(), 'search-familysearch-wiki');
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, 'v1.ann.json'), JSON.stringify(bad), 'utf8');
+    await expect(readAnnotation('search-familysearch-wiki/v1')).rejects.toThrow(/Invalid annotation/);
   });
 });
 

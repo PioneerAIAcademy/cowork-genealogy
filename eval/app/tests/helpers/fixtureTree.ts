@@ -81,7 +81,7 @@ export async function makeFixtureTree(spec: FixtureTreeSpec): Promise<FixtureTre
   await fs.mkdir(path.join(repoRoot, 'eval', 'fixtures', 'mcp'), { recursive: true });
   await fs.mkdir(path.join(repoRoot, 'eval', 'runlogs', 'unit'), { recursive: true });
   await fs.mkdir(path.join(repoRoot, 'eval', 'harness', 'judge'), { recursive: true });
-  await fs.mkdir(path.join(repoRoot, 'plugin', 'skills'), { recursive: true });
+  await fs.mkdir(path.join(repoRoot, 'packages', 'engine', 'plugin', 'skills'), { recursive: true });
 
   for (const t of spec.tests ?? []) {
     await writeJson(path.join(repoRoot, 'eval', 'tests', 'unit', t.skill, t.filename), t.body);
@@ -111,7 +111,7 @@ export async function makeFixtureTree(spec: FixtureTreeSpec): Promise<FixtureTre
     await writeJson(path.join(repoRoot, 'eval', 'fixtures', 'mcp', `${f.name}.json`), f.body);
   }
   for (const s of spec.skills ?? []) {
-    const dir = path.join(repoRoot, 'plugin', 'skills', s.name);
+    const dir = path.join(repoRoot, 'packages', 'engine', 'plugin', 'skills', s.name);
     if (s.skillMd !== undefined) await writeText(path.join(dir, 'SKILL.md'), s.skillMd);
     if (s.rubricMd !== undefined) {
       await writeText(path.join(repoRoot, 'eval', 'tests', 'unit', s.name, 'rubric.md'), s.rubricMd);
@@ -136,7 +136,7 @@ export function buildRunLog(opts: {
   version: number | null;
   released?: boolean;
   releasable?: boolean;
-  invocation?: 'skill' | 'test' | 'all' | 'tag';
+  invocation?: 'skill' | 'test' | 'tag';
   timestamp: string;
   model?: string;
   judgePromptHash?: string;

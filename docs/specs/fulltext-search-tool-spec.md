@@ -51,9 +51,9 @@ descriptions distinct so Claude picks the right one.
       "type": "string",
       "description": "Filter to a specific FamilySearch collection by ID."
     },
-    "dgsNumber": {
+    "imageGroupNumber": {
       "type": "string",
-      "description": "Filter to a specific digitized volume by DGS (Image Group Number)."
+      "description": "Filter to a specific digitized volume by Image Group Number."
     },
     "yearFrom": {
       "type": "number",
@@ -112,7 +112,7 @@ The tool maps its input to the upstream API query parameters:
 | `name` | `q.fullName` |
 | `place` | `q.recordPlace` |
 | `collectionId` | `f.collectionId` |
-| `dgsNumber` | `q.groupName` |
+| `imageGroupNumber` | `q.groupName` |
 | `yearFrom` | `f.recordYear0` |
 | `yearTo` | `f.recordYear1` |
 | `recordType` | `f.recordType0` |
@@ -130,7 +130,8 @@ Additionally, `m.queryRequireDefault=on` is always sent.
 
 ```typescript
 interface FulltextSearchResult {
-  /** Unique record/person ID */
+  /** The record's ARK in canonical form (a 3:1: or 3:2: entry, e.g.
+   *  "ark:/61903/3:1:3Q9M-CSNL-S98H-M"). Feed to source_attachments' uris. */
   id: string;
   /** Relevance score */
   score?: number;

@@ -3,7 +3,7 @@
 A mid-research project for Patrick Flynn's parentage, in the state **after
 candidate records have been gathered but before identity resolution**.
 Built for the research-log result-retention eval cases — it exercises the
-`results/` sidecar files and the `match_two_examples` wiring.
+`results/` sidecar files and the `same_person` wiring.
 
 ## State
 
@@ -27,7 +27,7 @@ Built for the research-log result-retention eval cases — it exercises the
 ## What it exercises
 
 - person-evidence resolving an assertion through its sidecar and scoring the
-  match with `match_two_examples` — including the score-as-input threshold
+  match with `same_person` — including the score-as-input threshold
   policy: a high score must not auto-link past the `log_002` birthplace
   conflict, and the low score on the `log_003` variant must not dismiss a
   strong qualitative match.

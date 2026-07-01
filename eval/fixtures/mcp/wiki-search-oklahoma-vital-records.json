@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Oklahoma census, vital records, and church records",
+  "args": {
+    "query": "~vital"
+  },
+  "response": {
+    "query": "Oklahoma census vital records church records genealogy",
+    "total_chunks_searched": 10800,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.88,
+        "chunk_text": "Oklahoma statewide vital registration began in October 1908, but compliance was poor until the 1930s. For the territorial period (1890–1907), researchers must rely on substitute sources: church registers (Baptist, Methodist, and Catholic congregations established in the 1890s), territorial census schedules (1890 Oklahoma Territory census, 1900 and 1910 federal censuses), cemetery records, and newspaper notices. Indian Territory (eastern Oklahoma) had separate record-keeping — the Dawes Commission rolls (1898–1914) documented tribal citizenship, while missionaries kept church records for the Five Civilized Tribes.",
+        "page_title": "Oklahoma Vital Records",
+        "section_heading": "Registration History",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Vital_Records#Registration_History"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.81,
+        "chunk_text": "The Oklahoma Historical Society (Oklahoma City) holds the largest collection of territorial-era records including the 1890 Oklahoma Territory census, land run claim files, town lot records, and early county records. The Oklahoma State Archives maintains birth and death records from 1908 onward. For church records, the Oklahoma Conference of the United Methodist Church Archives and the Diocese of Oklahoma City maintain historical parish registers. Federal census records for Indian Territory and Oklahoma Territory are available through NARA and FamilySearch.",
+        "page_title": "Oklahoma Vital Records",
+        "section_heading": "Repositories",
+        "source_url": "https://www.familysearch.org/en/wiki/Oklahoma_Vital_Records#Repositories"
+      }
+    ],
+    "query_time_ms": 382,
+    "timing": {
+      "embed_ms": 48,
+      "search_ms": 222,
+      "rerank_ms": 112
+    }
+  }
+}

@@ -6,10 +6,10 @@ validators) is also implemented — see
 `docs/plan/research-log-retention-eval-coverage.md`.
 **Date:** 2026-05-21
 **Related:** `docs/specs/research-schema-spec.md`, `docs/specs/schemas/research.schema.json`,
-`docs/specs/match-two-examples-tool-spec.md`, `mcp-server/src/types/record-search.ts`,
-`plugin/skills/person-evidence/SKILL.md`, `plugin/skills/record-extraction/SKILL.md`,
-`plugin/skills/search-records/SKILL.md`, `plugin/skills/search-full-text/SKILL.md`,
-`plugin/skills/validate-schema/scripts/validate_project.py`,
+`docs/specs/match-two-examples-tool-spec.md`, `packages/engine/mcp-server/src/types/record-search.ts`,
+`packages/engine/plugin/skills/person-evidence/SKILL.md`, `packages/engine/plugin/skills/record-extraction/SKILL.md`,
+`packages/engine/plugin/skills/search-records/SKILL.md`, `packages/engine/plugin/skills/search-full-text/SKILL.md`,
+`packages/engine/plugin/skills/validate-schema/scripts/validate_project.py`,
 `eval/harness/harness/workspace.py`, `TODOS.md`.
 
 ## Context
@@ -207,7 +207,7 @@ the match path specifically.
 
 ## `record_search` payload shape (resolved)
 
-From `mcp-server/src/types/record-search.ts`:
+From `packages/engine/mcp-server/src/types/record-search.ts`:
 `RecordSearchToolResponse.results: RecordSearchResult[]`, where each
 `RecordSearchResult` carries:
 

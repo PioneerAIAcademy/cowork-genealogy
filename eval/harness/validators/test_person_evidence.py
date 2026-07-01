@@ -206,7 +206,7 @@ def test_a010_has_second_side_link(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: match_two_examples score wiring ----------------------
+# --- Tag-gated: same_person score wiring ----------------------
 
 def _new_pe_for_assertion(before, after, assertion_id):
     """New person_evidence entries (in after, not before) for an assertion."""
@@ -219,7 +219,7 @@ def _new_pe_for_assertion(before, after, assertion_id):
 
 def test_match_score_persisted(before_state, after_state, test):
     """Tag-gated (match-score): a record_search-sourced link must persist the
-    match_two_examples score — the new person_evidence entry for a_001
+    same_person score — the new person_evidence entry for a_001
     carries a non-null match_score."""
     if "match-score" not in test.get("tags", []):
         pytest.skip("not a match-score scenario")
@@ -238,7 +238,7 @@ def test_match_score_persisted(before_state, after_state, test):
 
 def test_fts_assertion_no_score(before_state, after_state, test):
     """Tag-gated (no-score-fallback): a full-text-sourced assertion has no
-    record_persona_id, so match_two_examples cannot run — the new
+    record_persona_id, so same_person cannot run — the new
     person_evidence entry for a_004 must leave match_score null."""
     if "no-score-fallback" not in test.get("tags", []):
         pytest.skip("not a no-score-fallback scenario")
@@ -288,4 +288,79 @@ def test_low_score_variant_still_links(before_state, after_state, test):
     assert new, (
         "a low score must not dismiss a strong qualitative match — "
         "expected a new person_evidence entry linking a_003"
+    )
+
+
+# --- Tag-gated: stub-person creation -------------------------------
+
+def test_stub_person_created_and_linked(before_state, after_state, test):
+    """Tag-gated (stub-creation): when an assertion's persona matches no
+    existing tree person, person-evidence must mint a NEW stub person in
+    tree.gedcomx.json and link a_005 to it — not force a bad match onto an
+    existing person and not skip the role.
+
+    The schema authorizes this write (research-schema-spec.md §8 line 656);
+    TREE_OWNERSHIP_TABLE in test_universal.py grants person-evidence the
+    `persons` write so a correct stub run isn't failed for ownership.
+    """
+    if "stub-creation" not in test.get("tags", []):
+        pytest.skip("not a stub-creation scenario")
+    before_r = before_state.get("research_json")
+    after_r = after_state.get("research_json")
+    before_t = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after_t = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if any(x is None for x in (before_r, after_r, before_t, after_t)):
+        pytest.skip("Missing research.json or tree.gedcomx.json for diff")
+
+    before_pids = {p.get("id") for p in before_t.get("persons", [])}
+    after_pids = {p.get("id") for p in after_t.get("persons", [])}
+    new_pids = after_pids - before_pids
+    assert new_pids, (
+        "expected a new stub person in tree.gedcomx.json for the un-matched "
+        f"persona; persons unchanged (before={sorted(before_pids)})"
+    )
+
+    new_pe = _new_pe_for_assertion(before_r, after_r, "a_005")
+    assert new_pe, "expected a new person_evidence entry linking a_005"
+
+    linked_to_new = [e for e in new_pe if e.get("person_id") in new_pids]
+    assert linked_to_new, (
+        "a_005 must link to the newly created stub person, not an existing "
+        f"one; new pe person_ids={[e.get('person_id') for e in new_pe]}, "
+        f"new stub ids={sorted(new_pids)}"
+    )
+
+    # a_005 is full-text-sourced — no same_person score, so match_score null.
+    scored = [e for e in linked_to_new if e.get("match_score") is not None]
+    assert not scored, (
+        "a_005 is full-text-sourced — its link must leave match_score null; "
+        f"got {[(e.get('id'), e.get('match_score')) for e in linked_to_new]}"
+    )
+
+    # The new stub must be minimally well-formed (gender + a name).
+    for pid in {e.get("person_id") for e in linked_to_new}:
+        person = next((p for p in after_t.get("persons", []) if p.get("id") == pid), None)
+        assert person and person.get("gender") and person.get("names"), (
+            f"new stub person {pid} must have a gender and at least one name"
+        )
+
+
+# --- Tag-gated: audit / review-only makes no writes ----------------
+
+def test_audit_review_makes_no_writes(before_state, after_state, test):
+    """Tag-gated (audit-review): a review/audit request is analysis-only.
+
+    The skill flags gaps (e.g., a relationship assertion missing its
+    other-side link) and asks before writing — it must not modify the
+    person_evidence section during the review itself.
+    """
+    if "audit-review" not in test.get("tags", []):
+        pytest.skip("not an audit-review scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    assert after.get("person_evidence") == before.get("person_evidence"), (
+        "an audit/review must not modify person_evidence — it produces "
+        "analysis and asks the user before making any change"
     )

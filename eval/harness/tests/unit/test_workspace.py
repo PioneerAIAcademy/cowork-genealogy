@@ -13,7 +13,7 @@ from harness.workspace import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PLUGIN_SKILLS = REPO_ROOT / "plugin/skills"
+PLUGIN_SKILLS = REPO_ROOT / "packages/engine/plugin/skills"
 SCENARIOS = REPO_ROOT / "eval/fixtures/scenarios"
 
 
@@ -64,7 +64,7 @@ def test_scenario_workspace_copies_results_sidecars(tmp_path):
     )
     sidecar = ws / "results" / "log_001.json"
     assert sidecar.exists()
-    assert json.loads(sidecar.read_text())["log_id"] == "log_001"
+    assert json.loads(sidecar.read_text(encoding="utf-8"))["log_id"] == "log_001"
 
 
 def test_missing_scenario_raises(tmp_path):

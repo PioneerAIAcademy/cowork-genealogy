@@ -1,0 +1,65 @@
+{
+  "tool": "fulltext_search",
+  "description": "Full-text search of FamilySearch's Latin American notarial protocolos collection. Returns a single 1834 Cuban notarial entry recording a power of attorney granted to a witness named in the user's query. The skill is graded on whether it knows that FTS is the right tool for thin-index pre-1850 Latin American notarial sources — and whether it constructs a query using the recorder's likely spelling rather than an Anglicised form.",
+  "args": { "keywords": "~García" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": { "type": "string" },
+      "name": { "type": "string" },
+      "place": { "type": "string" },
+      "nlQuery": { "type": "string" },
+      "collectionId": { "type": "string" },
+      "imageGroupNumber": { "type": "string" },
+      "recordPlace0": { "type": "string" },
+      "recordPlace1": { "type": "string" },
+      "recordPlace2": { "type": "string" },
+      "recordPlace3": { "type": "string" },
+      "yearFrom": { "type": "integer" },
+      "yearTo": { "type": "integer" },
+      "recordType": { "type": "string" },
+      "count": { "type": "integer" },
+      "offset": { "type": "integer" },
+      "includeFacets": { "type": "boolean" },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:K5M9-P3WT",
+        "collectionId": "3072910",
+        "collectionTitle": "Cuba, Protocolos notariales, 1578-1968",
+        "title": "Protocolo notarial — Poder otorgado por Don Francisco de Quesada",
+        "recordDate": "1834",
+        "recordType": "Notarial",
+        "recordPlace": "Habana, Cuba",
+        "textDocument": "En la siempre fidílísima ciudad de la Habana á los catorce días del mes de agosto del año mil ochocientos treinta y cuatro ante mí el escribano y testigos comparecío don Francisco de Quesada vecino de esta plaza y dijo que otorgaººn poder a don José Maria García vecino también de la Habana para que en su nombre y representación pueda cobrar y percibir las cantidades que se le adeudan en la villa de Matanzas y dar de ellas los recibos y cartas de pago necesarias. Por testigos don Antonio Pérez y don Ignacio Suárez vecinos de esta ciudad.",
+        "names": [
+          "Francisco de Quesada",
+          "José Maria García",
+          "Antonio Pérez",
+          "Ignacio Suárez"
+        ],
+        "places": [
+          "Habana",
+          "Matanzas",
+          "Cuba"
+        ],
+        "dates": [
+          "1834"
+        ],
+        "highlightTerms": [
+          "García"
+        ]
+      }
+    ]
+  }
+}

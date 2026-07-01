@@ -1,0 +1,32 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering New Orleans / Louisiana, early 1800s. Records survived as browse-only microfilm despite flood/fire losses to original civil registers.",
+  "args": {
+    "standardPlace": "~Louisiana"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Orleans, Louisiana, United States",
+      "startYear": 1800,
+      "endYear": 1820
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "004990115",
+        "imageGroupPrefix": "004990115",
+        "imageCount": 167,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["fr", "en"],
+        "coverages": [
+          {
+            "place": "Orleans, Louisiana, United States",
+            "dateRange": "1803-1820",
+            "recordType": "Notarial Acts (surviving microfilm copies)"
+          }
+        ]
+      }
+    ]
+  }
+}

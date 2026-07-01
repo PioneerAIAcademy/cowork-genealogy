@@ -2,7 +2,7 @@
 
 This document captures the architectural decisions and design rationale
 behind the GPS genealogy skill system. For the actual skill definitions,
-see the SKILL.md files in `plugin/skills/*/`. For the skill catalog and
+see the SKILL.md files in `packages/engine/plugin/skills/*/`. For the skill catalog and
 workflow, see the root `README.md`.
 
 ---
@@ -39,17 +39,15 @@ Names follow a `noun_verb` convention, with `search` (not `query`) as the verb f
 | `wikipedia_search` | Search Wikipedia |
 | `place_search` | Look up place information and jurisdictional hierarchy |
 | `place_population` | Get population statistics for a place/time |
-| `place_collections` | Find FamilySearch collections covering a place (list mode), or get detail for a single collection (detail mode, via `id`) |
-| `place_external_links` | Get external record collection links for a place |
+| `collections_search` | Find FamilySearch collections covering a place (list mode) |
+| `collection_read` | Get detail for a single collection by `id` |
+| `external_links_search` | Get external record collection links for a place |
 | `place_distance` | Calculate distance between two places |
-| `wiki_country_home` | Get the FamilySearch wiki country home page for a place id |
-| `wiki_country_getting_started` | Get the "getting started" wiki section for a place id |
-| `wiki_country_online_records` | List online record sources for a place id |
-| `wiki_country_research_tips` | Get country-specific research tips for a place id |
-| `match_two_examples` | Compare two record extractions for whether they describe the same person |
+| `wiki_place_page` | Get a FamilySearch wiki page section for a place id, selected via the `section` parameter (`home`, `getting_started`, `online_records`, `research_tips`) |
+| `same_person` | Compare two record extractions for whether they describe the same person |
 | `convert_calendar` | Convert between Julian/Gregorian/Quaker date systems |
 
-The four `wiki_country_*` tools are distinct from `wiki_read` because they accept a place id (not a wiki page title) and resolve the place to the right wiki page server-side.
+The `wiki_place_page` tool is distinct from `wiki_read` because it accepts a place id (not a wiki page title) and resolves the place to the right wiki page server-side; the `section` parameter selects which section to return.
 
 **Infrastructure tools** — not called by skills directly. Called by Claude when authenticated tools return an auth error, or by the user to manage their session.
 
@@ -66,13 +64,12 @@ The four `wiki_country_*` tools are distinct from `wiki_read` because they accep
 | `search` | `record_search` |
 | `tree` | `person_read` |
 | `places` | `place_search` |
-| `collections` | `place_collections` (also absorbs the detail-mode behavior previously specced as a separate `collection-detail` tool) |
-| `external_links` | `place_external_links` |
+| `collections` | `collections_search` (list mode) + `collection_read` (detail mode, previously specced as a separate `collection-detail` tool) |
+| `external_links` | `external_links_search` |
 | `search_wiki` | `wiki_search` |
 | `wiki_fetch_page` | `wiki_read` |
-| `wiki_country_records` | `wiki_country_online_records` |
 
-Tools whose current names already match canonical (no rename needed): `fulltext_search`, `match_two_examples`, `image_read`, `wikipedia_search`, `place_distance`, `place_population`, `wiki_country_home`, `wiki_country_getting_started`, `wiki_country_research_tips`, `login`, `logout`, `auth_status`.
+Tools whose current names already match canonical (no rename needed): `fulltext_search`, `same_person`, `image_read`, `wikipedia_search`, `place_distance`, `place_population`, `wiki_place_page`, `login`, `logout`, `auth_status`.
 
 Tools not yet implemented: `image_search`, `convert_calendar`.
 

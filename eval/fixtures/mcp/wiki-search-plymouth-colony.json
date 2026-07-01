@@ -1,0 +1,35 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about Plymouth Colony records and Mayflower genealogy",
+  "args": {
+    "query": "~Plymouth Colony"
+  },
+  "response": {
+    "query": "Plymouth Colony records genealogy 1620 Mayflower",
+    "total_chunks_searched": 10200,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.92,
+        "chunk_text": "Plymouth Colony (1620–1691) maintained its own court, land, and vital records before merging into the Province of Massachusetts Bay. The Plymouth Colony Records (published in 12 volumes by Nathaniel B. Shurtleff and David Pulsifer, 1855–1861) include court orders, land grants, wills, and vital events. Original manuscripts are at the Plymouth County Registry of Deeds and the Massachusetts Archives. The Mayflower Society maintains extensive genealogical files on Mayflower passengers and their descendants. The General Society of Mayflower Descendants has published the 'Silver Books' series documenting lineages through five generations.",
+        "page_title": "Plymouth Colony Genealogy",
+        "section_heading": "Colony Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Plymouth_Colony_Genealogy#Colony_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.85,
+        "chunk_text": "Key sources for Plymouth Colony genealogy include William Bradford's 'Of Plymouth Plantation' (the governor's journal covering 1620–1647), the 1623 and 1627 division of land lists, the 1643 list of males able to bear arms, church records from the First Parish Church of Plymouth, and probate records from Plymouth County. The New England Historic Genealogical Society (NEHGS) and the Pilgrim Hall Museum in Plymouth hold significant manuscript collections. Robert Charles Anderson's 'The Great Migration' series covers many early Plymouth settlers.",
+        "page_title": "Plymouth Colony Genealogy",
+        "section_heading": "Key Sources",
+        "source_url": "https://www.familysearch.org/en/wiki/Plymouth_Colony_Genealogy#Key_Sources"
+      }
+    ],
+    "query_time_ms": 365,
+    "timing": {
+      "embed_ms": 46,
+      "search_ms": 210,
+      "rerank_ms": 109
+    }
+  }
+}

@@ -2,19 +2,39 @@
   "test": {
     "id": "ut_locality_guide_002",
     "skill": "locality-guide",
-    "name": "Locality guide for 1840s rural Ireland — different jurisdiction shape",
+    "name": "Locality guide for 1840s rural Ireland \u2014 different jurisdiction shape",
     "type": "positive",
-    "description": "Different locality from the seed test (Schuylkill County). Tests whether the skill produces jurisdiction-aware guidance for a place with very different record availability — pre-Famine rural Ireland, where civil registration didn't exist (it began 1864 for non-Catholic marriages and 1845 for all marriages, 1864 for births and deaths). Tests recognizing that 'records' for this place/period means church records, not civil records.",
-    "tags": ["locality", "ireland", "pre-famine", "no-civil-registration", "1840s"]
+    "description": "Different locality from the seed test (Schuylkill County). Tests whether the skill produces jurisdiction-aware guidance for a place with very different record availability \u2014 pre-Famine rural Ireland, where civil registration didn't exist (it began 1864 for non-Catholic marriages and 1845 for all marriages, 1864 for births and deaths). Tests recognizing that 'records' for this place/period means church records, not civil records.",
+    "tags": [
+      "locality",
+      "ireland",
+      "pre-famine",
+      "no-civil-registration",
+      "1840s"
+    ]
   },
   "input": {
     "user_message": "I'm researching an ancestor who lived in County Cork, Ireland in the 1830s-1840s before emigrating. What records would be available for that locality and period?",
     "scenario": null
   },
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
   "judge_context": [
-    "Should identify that Irish civil registration didn't exist for births/deaths in the 1830s-1840s (it began 1864) — research must rely on church (Catholic parish) records, surviving estate records, and emigrant lists",
+    "Should identify that Irish civil registration didn't exist for births/deaths in the 1830s-1840s (it began 1864) \u2014 research must rely on church (Catholic parish) records, surviving estate records, and emigrant lists",
     "Should name specific record classes available for 1830s-1840s Ireland: Catholic parish baptismal/marriage/burial registers (variable survival), Tithe Applotment Books (1823-1837, tax records), Griffith's Valuation (begins 1847, just after), Famine-era emigration manifests for departures from Cork ports",
+    "When mentioning emigration manifests or passenger lists, should note that these records list all passengers including infants and young children (ages 0-5) traveling with parents \u2014 the whole manifest should be examined for complete family groups, not just individual adult names",
     "Should warn about specific pitfalls: parish boundary changes, Catholic parish registers held by the National Library of Ireland (microfilm) rather than local courthouses, and that pre-Famine records often perished in the 1922 Four Courts fire for civil/estate documents",
-    "Should NOT recommend American-style record classes (county courthouse vital records, statewide vital registration) — those don't apply to 1840s Ireland; using them as the answer would indicate jurisdiction-blindness"
+    "Should NOT recommend American-style record classes (county courthouse vital records, statewide vital registration) \u2014 those don't apply to 1840s Ireland; using them as the answer would indicate jurisdiction-blindness"
+  ],
+  "mcp_fixtures": [
+    "wiki-place-page-ireland",
+    "wiki-place-page-any",
+    "wiki-read-ireland",
+    "wiki-read-any",
+    "external-links-search-any",
+    "place-population-any",
+    "place-search-all-cork",
+    "place-search-all-any"
   ]
 }
