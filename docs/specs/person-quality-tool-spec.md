@@ -197,7 +197,6 @@ and `issues[]`. For `KD96-TV2`:
   "personId": "KD96-TV2",
   "segment": "Norway 1816 - 1920",
   "overallScore": 0.97,
-  "qualityBand": "High Quality",
   "issueCount": 7,
   "categories": [
     { "scoreType": "COMPLETENESS",  "count": 2, "score": 0.91 },
@@ -220,10 +219,10 @@ Where the values come from: `segment`, `overallScore`, and each issue's
 interpolated PDF template. Each issue keeps `conclusionType` + `conclusionId`
 so the sentence is traceable to its exact fact.
 
-`qualityBand` is derived from `overallScore` using **provisional** thresholds
-(≥ 0.95 High Quality, ≥ 0.80 Good Quality, ≥ 0.60 Fair Quality, else Low
-Quality). **OPEN:** the real UI thresholds are unknown — the band may be
-adjusted or dropped once confirmed.
+No human "quality band" (e.g. "High Quality") is emitted: the real
+`overallScore` (0–1) is returned so the LLM can describe it, and FamilySearch's
+band thresholds are unknown — synthesizing a label risked passing a guessed
+value off as official. Add a band later if the true thresholds are confirmed.
 
 *Alternatives considered, not chosen:* sentences-only (a flat `string[]`, no
 summary or traceability) and this shape + every raw numeric score.

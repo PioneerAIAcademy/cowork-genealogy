@@ -22,7 +22,7 @@ console.log("---");
 try {
   const result = await personQualityTool({ personId });
   console.log(
-    `${result.personId}  overall=${result.overallScore} (${result.qualityBand})  ` +
+    `${result.personId}  overall=${result.overallScore}  ` +
       `segment=${result.segment}  issues=${result.issueCount}`,
   );
   for (const c of result.categories) {
