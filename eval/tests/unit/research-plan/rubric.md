@@ -25,3 +25,11 @@ Are the jurisdictions correct for the time period? County boundaries, state form
 - **pass:** Jurisdictions match what existed in the target period (county-level when records were kept at county; pre-statehood jurisdictions for territorial periods).
 - **partial:** Modern jurisdictions named correctly but historical boundary changes that affect record location are missed.
 - **fail:** Jurisdictions don't exist in the target period, or the skill recommends searching in a state before it had statehood records.
+
+## Plan mode and lifecycle
+
+Did the skill choose the correct plan mode for the project's current state — review an existing active plan, add a new plan after the prior one is completed, or supersede an active plan when new information invalidates it — and preserve the audit trail? Completed and superseded plans (and their items) are the record of what was done and must never be edited in place; at most one plan may be `active` per research question. When there is no prior plan to act on (a first plan for the question) or the skill correctly declines to plan, this dimension is N/A.
+
+- **pass:** The mode matches the project state — review when an active plan still has unfinished items and the request is a recap or ambiguous; add-new when the most recent plan is fully completed but the question isn't yet proved; supersede when new information invalidates an active plan's assumptions. Prior plan items are left intact as the audit trail, and exactly one plan stays `active` for the question (an old active plan is set to `superseded` before a new active plan is written).
+- **partial:** The right mode is chosen but a lifecycle step is mishandled — e.g., a new plan is created without setting the prior active plan's `status` to `superseded`, or review mode narrates correctly but also edits an existing item.
+- **fail:** The wrong mode is chosen — a duplicate plan is created alongside a still-usable active one, an existing or superseded plan's items are modified in place, or two `active` plans are left for the same question.

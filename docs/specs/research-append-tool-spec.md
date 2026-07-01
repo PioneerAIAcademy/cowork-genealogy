@@ -181,6 +181,19 @@ The **persisted shape is byte-identical** to the single-op form; `ops` changes o
 the number of write calls, so no `research.json` schema, validator, web-mirror, or
 fixture change is required (the reason batching is low-risk).
 
+**Stringified-argument tolerance.** The model occasionally serializes a large or
+deeply nested argument as a JSON **string** rather than inline JSON — the ~25 KB
+`ops` batch of a full record is exactly the size that triggers it. Because the input
+schema declares `ops` as an array and `entry`/`fields` as objects, a string value is
+unambiguously a mis-serialization. The tool therefore JSON-parses a string-valued
+`ops`/`entry`/`fields` before any shape check (`src/utils/coerce-json-arg.ts`); an
+unparseable string falls through to the normal, specific error (e.g. ``` `ops` must
+be a non-empty array ```). This is not a supported call form — callers should still
+pass real JSON — but it stops a correct-but-stringified batch from being rejected and
+driving the model into a slow one-op-per-call fallback (the root cause of the
+`record-extraction` eval wall-clock timeouts, 2026-06-30). `tree_edit` applies the
+same tolerance to its `ops` and single-op nested objects.
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic, single-file
