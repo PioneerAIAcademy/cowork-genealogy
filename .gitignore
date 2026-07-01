@@ -1,4 +1,6 @@
-node_modules/
+# Bare (no trailing slash) so it also ignores a node_modules *symlink* — the
+# form `make worktree-link` creates to share deps from the primary worktree.
+node_modules
 packages/engine/mcp-server/build/
 
 # Local Claude Code MCP-server registration. Machine-specific: it hardcodes
