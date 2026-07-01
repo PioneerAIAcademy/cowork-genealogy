@@ -174,9 +174,13 @@ export async function personQualityTool(
   // clean zero-issue person — that case has personScores present with issues: [].
   if (!scores) {
     if (body.visibility === "TOMBSTONED") {
+      // NOTE: exact meaning of TOMBSTONED is unconfirmed for this endpoint.
+      // Inferred (general FS usage + the NOT_FOUND contrast) to mean a PID
+      // that no longer resolves to a live person — likely merged or deleted.
       throw new Error(
-        `Person ${personId} has been deleted or merged in the FamilySearch ` +
-          "tree (tombstoned) and has no quality score.",
+        `Person ${personId} is tombstoned in the FamilySearch tree, so it has ` +
+          "no quality score (the ID no longer resolves to a live person — " +
+          "likely merged or deleted).",
       );
     }
     const visibility = body.visibility;
