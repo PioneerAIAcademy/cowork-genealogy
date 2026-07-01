@@ -336,9 +336,9 @@ OWNERSHIP_TABLE: dict[str, set[str]] = {
     # co-own plans only to update items[].status after executing or
     # extracting from an item (see spec §4).
     "plans": {"research-plan", "search-records", "search-external-sites",
-              "search-full-text", "record-extraction"},
+              "search-full-text", "search-images", "record-extraction"},
     "log": {"search-records", "search-external-sites", "record-extraction",
-            "search-full-text"},
+            "search-full-text", "search-images"},
     "sources": {"record-extraction", "citation"},
     "assertions": {"record-extraction", "assertion-classification",
                     "convert-dates"},
