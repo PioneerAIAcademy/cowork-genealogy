@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_research_plan_013",
+    "skill": "research-plan",
+    "name": "Ambiguous prompt defaults to review mode when active plan exists",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario has pl_002 active with pli_006 (probate, in_progress). The user asks a vague question that could mean 'tell me the plan' or 'make a plan.' Per the skill's ambiguity heuristic, the skill should default to review mode: narrate the existing plan and identify pli_006 as the next step. It must NOT create a duplicate plan alongside the usable active one. Tests the 'when in doubt, review' heuristic from Step 1a.",
+    "tags": ["planning", "review-mode", "ambiguous-prompt", "no-duplicate-plan", "in-progress-plan", "heuristic"]
+  },
+  "input": {
+    "user_message": "What does the research plan look like for the parentage question?",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill"
+  ],
+  "judge_context": [
+    "Should narrate the existing plan pl_002 and its items without creating a new plan — the active plan has pli_006 still in_progress",
+    "Should identify pli_006 (probate, in_progress) as the current next step; should not skip past it to propose new work",
+    "Must NOT write a new plan entry to research.json — adding a second active plan alongside pl_002 would contradict the one-active-plan rule",
+    "May consult collections_search to verify probate availability in Schuylkill County, but this is explanatory only, not to create new plan items"
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
