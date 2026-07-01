@@ -3,6 +3,7 @@ import { useResearchData } from '../../contexts/ResearchDataContext'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
+import Linkify from '../shared/Linkify'
 import type { Assertion } from '../../lib/schema'
 import styles from './AssertionsSection.module.css'
 
@@ -92,7 +93,7 @@ function AssertionCard({ assertion }: { assertion: Assertion }): React.JSX.Eleme
       {assertion.informant_bias_notes && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Informant Bias Notes</div>
-          <div className={styles.fieldValue}>{assertion.informant_bias_notes}</div>
+          <div className={styles.fieldValue}><Linkify text={assertion.informant_bias_notes} /></div>
         </div>
       )}
     </Card>

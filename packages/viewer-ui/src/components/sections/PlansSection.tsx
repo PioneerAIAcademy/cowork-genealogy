@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
+import Linkify from '../shared/Linkify'
 import type { Plan, Question } from '../../lib/schema'
 import styles from './PlansSection.module.css'
 
@@ -67,7 +68,7 @@ export default function PlansSection(): React.JSX.Element {
                           <span className={styles.fallbackLabel}>(fallback)</span>
                         )}
                         {item.rationale && (
-                          <div className={styles.itemRationale}>{item.rationale}</div>
+                          <div className={styles.itemRationale}><Linkify text={item.rationale} /></div>
                         )}
                       </li>
                     ))}
