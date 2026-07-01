@@ -15,6 +15,7 @@ import { readFile } from "fs/promises";
 import { validateParsed } from "../validation/validator.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson } from "../utils/project-io.js";
+import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -358,6 +359,14 @@ export async function researchAppend(
   input: ResearchAppendInput,
 ): Promise<ResearchAppendResult> {
   const { projectPath } = input;
+
+  // Recover object/array args the model serialized as JSON strings (see
+  // coerceJsonArg) before any shape checks, so a correct-but-stringified batch
+  // isn't rejected as "`ops` must be a non-empty array" and driven into a slow
+  // one-op-per-call fallback.
+  input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
+  input.entry = coerceJsonArg(input.entry) as Record<string, unknown> | undefined;
+  input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
 
   try {
     const research = await readJson(projectPath, "research.json");
