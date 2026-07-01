@@ -9,7 +9,7 @@
       "standardPlace": "Schuylkill, Pennsylvania, United States"
     },
     "scope": "Pennsylvania",
-    "totalForPlace": 1,
+    "totalForPlace": 2,
     "results": [
       {
         "id": "1401638",
@@ -19,6 +19,15 @@
         "personCount": 982415,
         "imageCount": 607220,
         "url": "https://www.familysearch.org/search/collection/1401638"
+      },
+      {
+        "id": "1417683",
+        "title": "Pennsylvania, Probate Records, 1683-1994",
+        "dateRange": "1683-1994",
+        "recordCount": 2304118,
+        "personCount": 0,
+        "imageCount": 2304118,
+        "url": "https://www.familysearch.org/search/collection/1417683"
       }
     ]
   }

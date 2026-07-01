@@ -1,0 +1,27 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FS-curated third-party links for Schuylkill County, Pennsylvania, INCLUDING a curated Ancestry 1870 U.S. Federal Census collection that matches the 1870-census test (ut_search_external_sites_001). This is the Case-A fixture: a curated link fits the plan item's record type, so the skill should consume the returned URL directly — filter to ancestry.com, match the '1870 ... Census' linkText, dedupe, and append search params — rather than hand-building a collection ID from memory. The 1768-1801 tax list and 1850 census entries are realistic non-matching neighbours the skill must filter past. Contrast with external-links-search-schuylkill, the Case-B fixture whose collections all pre-date the tests' target windows. The predicate matches any standardPlace because each test loads exactly one external-links fixture.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "totalForPlace": 3,
+    "results": [
+      {
+        "url": "https://www.ancestry.com/search/collections/7667/",
+        "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "1850 United States Federal Census - Schuylkill County"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7163/",
+        "linkText": "1870 United States Federal Census"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_research_plan_011",
+    "skill": "research-plan",
+    "name": "Plan sequences free/indexed sources before paid for multi-year census search",
+    "type": "positive",
+    "description": "The flynn-census-exhausted scenario has two completed plans: pl_001 (1850 census) and pl_002 (1860 census, plus an 1908 vital record and an 1870-1900 probate search), so the 1850 and 1860 censuses are already searched and logged as completed. The user asks for a plan covering the 1870, 1880, and 1900 censuses. For each census year, FamilySearch (free, indexed) must sequence before Ancestry (paid). Fallbacks must be identified for years where the primary index might be incomplete. Tests BCG Standard 15 (efficient sequence: free before paid, fallbacks explicit via fallback_for).",
+    "tags": ["planning", "sequencing", "free-before-paid", "census", "fallback-for", "multi-year"]
+  },
+  "input": {
+    "user_message": "Create a plan for searching the post-1860 federal censuses — 1870, 1880, and 1900 — to track Patrick Flynn as an adult and look for Thomas Flynn in the same household.",
+    "scenario": "flynn-census-exhausted"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "collections-search-us-national",
+    "external-links-search-pa-census",
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "For each census year (1870, 1880, 1900), the FamilySearch item must appear at a lower sequence number than any Ancestry item for the same year — free before paid",
+    "At least one fallback_for chain must appear: an Ancestry item should link back (via fallback_for) to the corresponding FamilySearch item for the same year",
+    "Rationale for each item should explain what the census year would reveal (e.g., 1870 shows Patrick as an adult, 1880 might still show him in Thomas's household if Thomas was alive)",
+    "Plan should not re-search 1850 or 1860 census — those are already logged as completed in pl_001 and pl_002"
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
