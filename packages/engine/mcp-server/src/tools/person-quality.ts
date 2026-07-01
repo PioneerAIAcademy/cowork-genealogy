@@ -168,10 +168,17 @@ export async function personQualityTool(
   const body = await fetchScores(token, url, personId);
   const scores = body.personScores;
 
-  // No personScores and not CALCULATING (handled in fetchScores) means the
-  // person was not found / not visible — NOT a clean zero-issue person (that
-  // case has personScores present with issues: []).
+  // No personScores (and not CALCULATING — handled in fetchScores). Two known
+  // states reach here, both `isValid: true`: TOMBSTONED (the record was deleted
+  // or merged away) and NOT_FOUND (doesn't exist / not visible). Neither is a
+  // clean zero-issue person — that case has personScores present with issues: [].
   if (!scores) {
+    if (body.visibility === "TOMBSTONED") {
+      throw new Error(
+        `Person ${personId} has been deleted or merged in the FamilySearch ` +
+          "tree (tombstoned) and has no quality score.",
+      );
+    }
     const visibility = body.visibility;
     throw new Error(
       `No quality scores found for person ${personId} ` +
