@@ -8,7 +8,7 @@
     "tags": ["planning", "plan-review", "parentage", "in-progress-plan", "research-plan-no-new-plan", "pli-006-status-unchanged"]
   },
   "input": {
-    "user_message": "Create or review the research plan for the parentage question.",
+    "user_message": "Review the research plan for the parentage question and confirm the next step.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -23,6 +23,7 @@
     "Should consult the collections-search-schuylkill fixture to verify probate records for Schuylkill County 1870-1890 are actually available (and through which collection / repository)",
     "Should mention what would follow probate: post-1860 censuses (1870, 1880, 1900) to track Patrick into adulthood and establish residence continuity"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   }
