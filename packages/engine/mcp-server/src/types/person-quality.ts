@@ -69,12 +69,11 @@ export interface QualityCategoryOut {
   score: number | null;
 }
 
-// Option A output (spec Output §): sentences + compact summary + traceable issues.
+// Output (spec Output §): sentences + compact summary + traceable issues.
 export interface PersonQualityResult {
   personId: string;
   segment: string | null;
   overallScore: number | null;
-  qualityBand: string | null;
   issueCount: number;
   categories: QualityCategoryOut[];
   issues: QualityIssueOut[];

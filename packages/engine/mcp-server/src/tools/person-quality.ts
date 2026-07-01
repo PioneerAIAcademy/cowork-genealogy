@@ -53,16 +53,6 @@ const CATEGORY_ORDER: Array<{
   { scoreType: "COHERENCE", key: "coherenceScore" },
 ];
 
-// PROVISIONAL band mapping — the exact UI thresholds are unknown (spec Open
-// Question 3); these are a reasonable stand-in and may change.
-function qualityBand(overall: number | null): string | null {
-  if (overall === null) return null;
-  if (overall >= 0.95) return "High Quality";
-  if (overall >= 0.8) return "Good Quality";
-  if (overall >= 0.6) return "Fair Quality";
-  return "Low Quality";
-}
-
 function numOrNull(value: number | undefined): number | null {
   return typeof value === "number" ? value : null;
 }
@@ -211,13 +201,10 @@ export async function personQualityTool(
     }),
   );
 
-  const overallScore = numOrNull(scores.overallDisplayScore);
-
   return {
     personId,
     segment: typeof scores.segment === "string" ? scores.segment : null,
-    overallScore,
-    qualityBand: qualityBand(overallScore),
+    overallScore: numOrNull(scores.overallDisplayScore),
     issueCount: issues.length,
     categories,
     issues,

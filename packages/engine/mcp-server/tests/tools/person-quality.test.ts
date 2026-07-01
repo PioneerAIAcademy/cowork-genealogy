@@ -160,7 +160,6 @@ describe("personQualityTool", () => {
     expect(result.personId).toBe("KD96-TV2");
     expect(result.segment).toBe("Norway 1816 - 1920");
     expect(result.overallScore).toBe(0.97);
-    expect(result.qualityBand).toBe("High Quality");
     expect(result.issueCount).toBe(2);
     expect(result.issues[0].sentence).toBe("The burial date is missing.");
     expect(result.issues[0].conclusionId).toBe("d57d443f");
@@ -188,7 +187,7 @@ describe("personQualityTool", () => {
     const result = await personQualityTool({ personId: "CLEAN-1" });
     expect(result.issueCount).toBe(0);
     expect(result.issues).toEqual([]);
-    expect(result.qualityBand).toBe("High Quality");
+    expect(result.overallScore).toBe(1);
   });
 
   it("throws on NOT_FOUND (no personScores) — not a clean person", async () => {
