@@ -23,6 +23,7 @@ import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace } from "../utils/place-resolver.js";
+import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
 export type TreeEditOperation =
   | "add_fact"
@@ -301,6 +302,18 @@ async function applyOperation(
 
 export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
   const { projectPath } = input;
+
+  // Recover object/array args the model serialized as JSON strings (see
+  // coerceJsonArg) before any shape checks — the batch `ops` array most
+  // importantly, plus the single-op nested objects — so a correct-but-
+  // stringified payload isn't rejected and driven into a slow fallback.
+  input.ops = coerceJsonArg(input.ops) as TreeEditOp[] | undefined;
+  input.fact = coerceJsonArg(input.fact) as SimplifiedFact | undefined;
+  input.name = coerceJsonArg(input.name) as SimplifiedName | undefined;
+  input.person = coerceJsonArg(input.person) as SimplifiedPerson | undefined;
+  input.relationship = coerceJsonArg(input.relationship) as SimplifiedRelationship | undefined;
+  input.source = coerceJsonArg(input.source) as SimplifiedSourceDescription | undefined;
+
   try {
     const tree = (await readJson(projectPath, "tree.gedcomx.json")) as SimplifiedGedcomX;
     const research = await readJson(projectPath, "research.json");
