@@ -85,15 +85,18 @@ def test_write_result_files_handles_missing_tree_and_research(tmp_path: Path):
     assert not paths["research"].exists()
 
 
-def test_is_committable_run_only_pass():
-    assert is_committable_run("pass") is True
-    for v in ("partial", "fail", "skipped", "aborted", ""):
+def test_is_committable_run_graded_verdicts():
+    for v in ("pass", "partial", "fail"):
+        assert is_committable_run(v) is True
+    for v in ("skipped", "aborted", ""):
         assert is_committable_run(v) is False
 
 
-def test_runlog_prefix_pass_vs_scratch():
+def test_runlog_prefix_graded_vs_scratch():
     assert runlog_prefix("pass") == "run-"
-    assert runlog_prefix("fail") == "scratch_"
+    assert runlog_prefix("partial") == "run-"
+    assert runlog_prefix("fail") == "run-"
+    assert runlog_prefix("skipped") == "scratch_"
 
 
 def test_passing_run_uses_committable_run_prefix(tmp_path: Path):
@@ -109,10 +112,10 @@ def test_passing_run_uses_committable_run_prefix(tmp_path: Path):
     assert paths["result"].exists()
 
 
-def test_non_passing_run_uses_gitignored_scratch_prefix(tmp_path: Path):
-    """A non-passing run is named scratch_* so .gitignore keeps it out of
-    version control — it can't be committed as a fixture's validity run."""
-    for verdict in ("partial", "fail", "skipped"):
+def test_gradeable_non_pass_run_uses_committable_run_prefix(tmp_path: Path):
+    """partial and fail produced a tree, so they commit as run-<ts>.* (retained
+    signal, and gradeable) — not scratch."""
+    for verdict in ("partial", "fail"):
         result = E2eResult(
             test_id="t", captured_at="2026-05-26_14-30-45",
             verdict=verdict, stop_reason="natural_end",
@@ -121,8 +124,22 @@ def test_non_passing_run_uses_gitignored_scratch_prefix(tmp_path: Path):
             result=result, runlog_dir=tmp_path, transcript="",
             final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
         )
-        assert paths["result"].name == "scratch_2026-05-26_14-30-45.json", verdict
-        assert paths["transcript"].name == "scratch_2026-05-26_14-30-45.transcript.md"
+        assert paths["result"].name == "run-2026-05-26_14-30-45.json", verdict
+
+
+def test_skipped_run_uses_gitignored_scratch_prefix(tmp_path: Path):
+    """A skipped run (judge never ran, no tree to grade) is named scratch_* so
+    .gitignore keeps it out of version control."""
+    result = E2eResult(
+        test_id="t", captured_at="2026-05-26_14-30-45",
+        verdict="skipped", stop_reason="error",
+    )
+    paths = write_result_files(
+        result=result, runlog_dir=tmp_path, transcript="",
+        final_tree=None, final_research=None, timestamp="2026-05-26_14-30-45",
+    )
+    assert paths["result"].name == "scratch_2026-05-26_14-30-45.json"
+    assert paths["transcript"].name == "scratch_2026-05-26_14-30-45.transcript.md"
 
 
 def test_write_result_files_creates_runlog_dir(tmp_path: Path):
