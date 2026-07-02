@@ -1,0 +1,1020 @@
+{
+  "project": {
+    "id": "rp_zuniga_rojas_parents",
+    "objective": "Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?",
+    "subject_person_ids": [
+      "2DTG-7MK"
+    ],
+    "status": "completed",
+    "created": "2026-07-02T00:00:00Z",
+    "updated": "2026-07-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the baptismal record for Adri\u00e1n Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia, record about his parents?",
+      "rationale": "Catholic parish baptismal registers are the primary vital records for late-19th-century Bolivia. Arani, Cochabamba was an established parish town; records for 1889 are likely to survive and to name the godparents and biological parents. This is the gatekeeper question \u2014 finding the baptismal entry would directly answer the objective and determine whether additional corroboration questions are needed.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-02",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Although Adri\u00e1n Zu\u00f1iga Rojas's own baptism record was not found in any indexed collection (pli_001 nil, pli_002 produced the 1913 marriage instead), the parentage question is answered by two independent original Catholic parish records from San Bartolom\u00e9, Arani: (1) Adri\u00e1n's 1913 marriage record (src_001, QL7X-VBXX) in which he named his father Pedro Su\u00f1iga and mother Polonia Rojas, and (2) the 1887 baptism of his sibling Ram\u00f3n Su\u00f1iga Rojas (src_002, 7KQQ-L5N2) which independently names the same parents from a different informant and event 26 years earlier. The compound surname Su\u00f1iga Rojas in both records is consistent with Bolivian naming convention (paternal Su\u00f1iga + maternal Rojas). Bolivia Marriages (pli_004) returned no marriage record for the parents, but this is absence of evidence in a partially-indexed collection, not contradicting evidence. Browse-only volumes (pli_003) and Ancestry (pli_005) are documented limitations with explicit rationales in log_009 and log_010.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES. Two independent records from San Bartolom\u00e9 parish, Arani name Pedro Su\u00f1iga and Polonia Rojas as parents of children with compound surname Su\u00f1iga Rojas. The parentage question is answered.",
+          "repository_breadth": "YES with documented limitations. FamilySearch collections 1520550, 1922463, and 1520564 all searched. Browse-only San Bartolom\u00e9 volumes (imageGroupPrefixes 005091539-41) documented as requiring manual browsing (log_009). Ancestry collection 9795 documented as inaccessible due to no subscription (log_010). All accessible digitized sources for this jurisdiction were searched.",
+          "original_substitution": "YES. Both src_001 (1913 marriage) and src_002 (1887 Ram\u00f3n baptism) are original Catholic parish registers accessed via FamilySearch digitization. No derivative-only evidence relied upon.",
+          "independent_verification": "YES. src_001 (1913 marriage: Adri\u00e1n stating his own parentage) and src_002 (1887 baptism: parents presenting Ram\u00f3n for baptism) are truly independent \u2014 different events, different years, different informants, different circumstances. Two distinct informant units per GPS Standard 46.",
+          "evidence_class": "YES. src_001 is an original Catholic register with primary information (parties to the marriage self-reported). src_002 is an original Catholic register with primary information (parents presented child for baptism). Both meet the highest evidence-class standard.",
+          "conflict_resolution": "YES. No contradicting evidence was found across any of the 10 logged searches. All evidence agrees on the same parents.",
+          "overturn_risk": "LOW. Two independent original records from the same parish name the same parents. No search produced evidence pointing to alternative parents. The unsearched avenues (browse-only images, Ancestry) would be most likely to produce Adri\u00e1n's baptism confirming the same parents, not contradicting them. A finding of different parents would require explaining both the marriage record and the Ram\u00f3n baptism."
+        }
+      },
+      "created": "2026-07-02"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Arani, Cochabamba, Bolivia",
+          "date_range": "1889",
+          "repository": "FamilySearch",
+          "rationale": "Bolivia, Baptisms, 1560\u20131938 (collection 1520550) is the primary indexed source for Catholic baptisms in Bolivia. Arani parish (San Bartolom\u00e9) records are included; volumes show 93\u2013100% indexed coverage. The baptismal entry for Adri\u00e1n Zu\u00f1iga Rojas on or around 8 September 1889 would name both parents by their full compound surnames \u2014 directly answering the research question.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Arani, Cochabamba, Bolivia",
+          "date_range": "1885-1895",
+          "repository": "FamilySearch",
+          "rationale": "Bolivia, Catholic Church Records, 1566\u20132020 (collection 1922463) is a broader collection (9.8M records vs 1.87M in the Baptisms-only set) that may contain images or index entries not captured in the dedicated baptisms collection. Search this if pli_001 yields no result \u2014 it is the most complete Bolivia church record set on FamilySearch.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+          "date_range": "1885-1895",
+          "repository": "FamilySearch",
+          "rationale": "Multiple browse-only image groups for San Bartolom\u00e9, Arani parish (imageGroupPrefixes 005091539, 005091540, 005091541) exist on FamilySearch with no explicit date range shown in the volume metadata. If the indexed searches (pli_001, pli_002) fail to surface the 1889 baptism, direct image browsing of these volumes may locate the entry. All volumes are 93\u2013100% indexed, but index gaps could cause the record to be missed in keyword search.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+          "date_range": "1865-1892",
+          "repository": "FamilySearch",
+          "rationale": "Bolivia, Marriages, 1630\u20131940 (collection 1520564) \u2014 searching for the marriage of Adri\u00e1n's parents (a man surnamed Zu\u00f1iga marrying a woman surnamed Rojas in or near Arani, probably 1865\u20131892). A marriage record would corroborate the parentage found in the baptism and may supply additional identifying details (parents' birthplaces, ages, or their own parents). Also serves as an independent line of evidence in case the baptism is missing or ambiguous.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Bolivia",
+          "date_range": "1889",
+          "repository": "other",
+          "rationale": "Ancestry Bolivia Select Baptisms, 1560\u20131938 (https://www.ancestry.com/search/collections/9795/) indexes the same underlying records as the FamilySearch baptisms collection but uses an independent indexing and name-matching algorithm. Searching Ancestry separately accounts for name-variant matching differences and any records indexed by Ancestry but not by FamilySearch. Use if pli_001 and pli_002 are unproductive.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+          "date_range": "1870-1892",
+          "repository": "FamilySearch",
+          "rationale": "FAN pivot: siblings of Adri\u00e1n Zu\u00f1iga Rojas baptized in Arani before and after 1889 would share the same parents and corroborate who they were. Searching Bolivia, Baptisms (collection 1520550) for other children with surname Zu\u00f1iga Rojas (or Zu\u00f1iga + Rojas) in Arani from roughly 1870\u20131892 tests whether additional records independently name the same father and mother \u2014 strengthening the proof argument and potentially surfacing variant spellings.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T14:13:36.302Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zu\u00f1iga",
+        "givenName": "Adrian",
+        "birthYearFrom": 1884,
+        "birthYearTo": 1894,
+        "birthPlace": "Arani, Cochabamba, Bolivia",
+        "collectionId": "1520550",
+        "collection": "Bolivia, Baptisms, 1560-1938"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Collection 1520550 (Bolivia, Baptisms) returned zero results for Zu\u00f1iga/Adrian with birthplace Arani and birth year 1884\u20131894. Tilde variant attempted next."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T14:13:43.812Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zuniga",
+        "givenName": "Adrian",
+        "birthYearFrom": 1884,
+        "birthYearTo": 1894,
+        "recordCountry": "Bolivia",
+        "collectionId": "1520550",
+        "collection": "Bolivia, Baptisms, 1560-1938"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Retry without tilde (Zuniga) and without birthPlace field \u2014 still zero results in collection 1520550. The dedicated baptisms collection does not appear to index Arani parish baptisms for 1889 under this name. Proceeding to pli_002 (broader Bolivia, Catholic Church Records collection)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-02T14:13:53.322Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zuniga",
+        "givenName": "Adrian",
+        "birthYearFrom": 1884,
+        "birthYearTo": 1894,
+        "recordCountry": "Bolivia",
+        "count": 10,
+        "note": "All Bolivia collections, birth year range"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 29,
+      "notes": "29 matches across Bolivia Catholic Church Records (collection 1922463). Key find: result QL7X-VBXX \u2014 marriage record 'Registro para Adrian Su\u00f1iga y Gregoria Pe\u00f1arrieta', 29 Nov 1913, San Bartolom\u00e9, Arani \u2014 names parents of Adrian as Pedro Su\u00f1iga (father) and Polonia Rojas (mother). Separate result QL7X-G24S is a duplicate marriage index entry (no parents). Results QL7X-K1JW, QL7X-KXN9, QL7X-KFZN are children's baptisms already linked in tree. QL7X-GHBV is a child's death record. Q2H1-7LPF is a different Adrian (El Trigal, Santa Cruz). Collection 1520550 not holding these records explains prior nils."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-02T14:31:06.953Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520564",
+        "surname": "Zu\u00f1iga",
+        "spouseSurname": "Rojas",
+        "residencePlace": "Arani, Cochabamba, Bolivia",
+        "marriageYearFrom": 1865,
+        "marriageYearTo": 1892
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Bolivia Marriages 1520564: Zu\u00f1iga \u00d7 Rojas in Arani 1865\u20131892 \u2014 zero results."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-02T14:31:11.800Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520564",
+        "surname": "Su\u00f1iga",
+        "spouseSurname": "Rojas",
+        "residencePlace": "Arani, Cochabamba, Bolivia",
+        "marriageYearFrom": 1865,
+        "marriageYearTo": 1892
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Retry with spelling variant Su\u00f1iga \u2014 still zero results."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-02T14:31:17.950Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520564",
+        "surname": "Zuniga",
+        "residencePlace": "Arani, Cochabamba, Bolivia",
+        "marriageYearFrom": 1860,
+        "marriageYearTo": 1895
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "3 results returned (Hilario Zuniga\u00d7Maria Velarde 1875 Punata; Amelia Zuniga\u00d7Julian Ferrufino 1892 Punata; Juan Suniga\u00d7Cirilo Bustamante 1889 Punata). All in Punata, none matching Pedro Zu\u00f1iga\u00d7Polonia Rojas."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-02T14:31:24.715Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1520564",
+        "givenName": "Pedro",
+        "surname": "Zuniga",
+        "marriageYearFrom": 1860,
+        "marriageYearTo": 1895
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1 result: Pedro Suniga as father of Yldifonza Suniga (spouse Donisia Loaisa), Agustin Duarte marriage 1871 \u2014 wrong family, different wife and child. Bolivia Marriages collection 1520564 does not appear to contain Arani parish marriage records for Pedro Zu\u00f1iga \u00d7 Polonia Rojas. Collection may have incomplete coverage for Arani in this period."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-02T14:32:41.332Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1922463",
+        "surname": "Zuniga",
+        "fatherGivenName": "Pedro",
+        "motherSurname": "Rojas",
+        "residencePlace": "Arani, Cochabamba, Bolivia",
+        "birthYearFrom": 1870,
+        "birthYearTo": 1895,
+        "count": 10
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 477,
+      "notes": "Strong corroboration: Ram\u00f3n Su\u00f1iga Rojas baptized 30 Aug 1887 at San Bartolom\u00e9, Arani \u2014 parents Pedro Su\u00f1iga \u00d7 Polonia Rojas \u2014 compound surname Su\u00f1iga Rojas confirms naming convention. Also Leonidas Su\u00f1iga (born/died 1886, Arani; father Pedro Su\u00f1iga, mother Rojas), Benita Zu\u00f1iga (1895, Arani; Pedro Zu\u00f1iga \u00d7 Polonia Rojas), Cecilia Z\u00fa\u00f1iga (1890, Arani; Pedro Zu\u00f1iga \u00d7 Polonia Rojas). Multiple siblings independently name the same parents."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-02T14:40:20.943Z",
+      "tool": "record_search",
+      "query": {
+        "action": "volume_search",
+        "standardPlace": "Arani, Cochabamba, Bolivia",
+        "startYear": 1880,
+        "endYear": 1900,
+        "purpose": "Verify San Bartolom\u00e9 parish image groups for browse-only 1889 baptism search"
+      },
+      "outcome": "partial",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 34,
+      "notes": "SKIP RATIONALE (pli_003): volume_search confirms 6 image volumes for San Bartolom\u00e9, Arani parish (imageGroupPrefixes 005091539, 005091540, 005091541; ~1,323 images total) but ALL volumes lack explicit date-range metadata and have fulltextSearchable: false. Without date metadata, it is impossible to identify which volume(s) cover 1889 without manually browsing every image. Autonomous research cannot perform undated image browsing. This is a known limitation requiring human researcher access to FamilySearch to manually locate the 1889 baptism page. Recommending this as a follow-up action for the researcher. The existing indexed evidence (1913 marriage + 1887 Ramon baptism) provides a two-record independent basis for the parentage conclusion; image browsing would strengthen it further if Adrian's own baptism entry can be located."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-02T14:40:29.592Z",
+      "tool": "record_search",
+      "query": {
+        "site": "Ancestry",
+        "collection": "Bolivia Select Baptisms 1560-1938 (collection 9795)",
+        "givenName": "Adrian",
+        "surname": "Zuniga",
+        "birthYear": "1889",
+        "birthPlace": "Arani, Cochabamba, Bolivia"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "SKIP RATIONALE (pli_005): researcher_profile.subscriptions is empty ([]). No Ancestry subscription is available for this project. Ancestry Bolivia Select Baptisms (collection 9795) cannot be searched without an active subscription. This is a documented access limitation, not a search failure. Recommending as a follow-up action: if the researcher obtains Ancestry access, search for Adrian Zuniga/Su\u00f1iga born 1889 in Arani, Cochabamba in collection 9795 as an independent-index check."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX : accessed 2 July 2026), entry for Adrian Su\u00f1iga and Gregoria Pe\u00f1arrieta, marriage 29 Nov 1913, San Bartolom\u00e9, Arani, Cochabamba, Bolivia; digital image of original parish marriage register.",
+      "citation_detail": {
+        "who": "Archivo Parroquial de San Bartolom\u00e9, Arani, Cochabamba, Bolivia",
+        "what": "Parish marriage register entry for Adrian Su\u00f1iga and Gregoria Pe\u00f1arrieta, listing both parties\u2019 parents",
+        "when_created": "29 November 1913",
+        "when_accessed": "2 July 2026",
+        "where": "FamilySearch, Bolivia, Catholic Church Records, 1566\u20132020 (collection 1922463), https://www.familysearch.org/search/collection/1922463",
+        "where_within": "San Bartolom\u00e9 parish, Arani, Cochabamba; image ARK ark:/61903/1:2:QPQ2-V4FR"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QPQ2-V4FR",
+      "notes": "FamilySearch digitized image of the San Bartolom\u00e9 (Arani) Catholic parish marriage register. Entry explicitly names Pedro Su\u00f1iga as father of groom and Polonia Rojas as mother of groom. Also names Ciriaco Pe\u00f1arrieta and Adriana Obando as parents of the bride. Persona QL7X-VBXX already attached to tree person 2DTG-7MK (5-star); parent personas QL7X-VBXV and QL7X-VBXL attached to FS tree persons K86B-8HV and KCGW-CLJ respectively.",
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2 : accessed 2 Jul 2026), entry for Ram\u00f3n Su\u00f1iga Rojas and Pedro Su\u00f1iga, 30 Aug 1887; image, https://www.familysearch.org/ark:/61903/1:2:7HRV-RMZM.",
+      "citation_detail": {
+        "who": "Parish priest of San Bartolom\u00e9, Arani",
+        "what": "Baptism record of Ram\u00f3n Su\u00f1iga Rojas, son of Pedro Su\u00f1iga and Polonia Rojas",
+        "when_created": "30 Aug 1887",
+        "when_accessed": "2026-07-02",
+        "where": "FamilySearch, Bolivia, Catholic Church Records, 1566-2020, collection 1922463",
+        "where_within": "Entry for Ram\u00f3n Su\u00f1iga Rojas and Pedro Su\u00f1iga, 30 Aug 1887"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:7HRV-RMZM",
+      "log_entry_id": "log_008"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351634",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Adrian Su\u00f1iga",
+      "structured_value": {
+        "given": "Adrian",
+        "surname": "Su\u00f1iga"
+      },
+      "information_quality": "primary",
+      "informant": "Adrian Su\u00f1iga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351634",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born 1889",
+      "structured_value": {
+        "year": 1889
+      },
+      "date": "1889",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Adrian Su\u00f1iga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "A person cannot provide primary information about their own birth \u2014 not cognitively aware at the event. Adrian stated his birth year (1889) at the 1913 marriage, 24 years after the fact. This is a secondhand recollection of what he was told, not first-hand awareness."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351634",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married 29 November 1913, San Bartolom\u00e9, Arani, Cochabamba, Bolivia",
+      "date": "29 Nov 1913",
+      "date_certainty": "exact",
+      "place": "San Bartolom\u00e9, Arani, Cochabamba, Bolivia",
+      "standard_place": "San Bartolom\u00e9, Arani, Arani, Arani, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish officiant (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "The parish officiant performed and witnessed the marriage ceremony, making them a direct witness to the event (date, place, parties). GPS table classifies 'Clergyman' as proximity 'witness' for church marriage registers."
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351634",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "father named as Pedro Su\u00f1iga in marriage record",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Adrian Su\u00f1iga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Groom (Adrian) stating his father's name at his 1913 marriage. All four parentage assertions (a_004-a_007) share the same informant and form one evidential unit per GPS Standard 46. NOTE: the 1887 baptism of sibling Ramon (a_014/a_016) independently confirms Pedro Su\u00f1iga as father from a different informant and event \u2014 independence gap resolved."
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351634",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "mother named as Polonia Rojas in marriage record",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Adrian Su\u00f1iga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Groom (Adrian) stating his mother's name at his 1913 marriage. Forms one evidential unit with a_004/a_006/a_007 (same informant). NOTE: independently corroborated by Ramon's 1887 baptism (a_015/a_017) \u2014 same mother named by a different informant 26 years earlier. Independence gap resolved."
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351638",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Pedro Su\u00f1iga",
+      "structured_value": {
+        "given": "Pedro",
+        "surname": "Su\u00f1iga"
+      },
+      "information_quality": "primary",
+      "informant": "Adrian Su\u00f1iga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Pedro Su\u00f1iga named in father_of_groom role in 1913 marriage record. Forms one evidential unit with a_004/a_005/a_007. NOTE: independently corroborated by Ramon's 1887 baptism (a_016) where Pedro Su\u00f1iga appears as father_of_child. Independence gap resolved."
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351641",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Polonia Rojas",
+      "structured_value": {
+        "given": "Polonia",
+        "surname": "Rojas"
+      },
+      "information_quality": "primary",
+      "informant": "Adrian Su\u00f1iga (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Polonia Rojas named in mother_of_groom role in 1913 marriage record. Forms one evidential unit with a_004/a_005/a_006. NOTE: independently corroborated by Ramon's 1887 baptism (a_017) where Polonia Rojas appears as mother_of_child. Independence gap resolved."
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351644",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Gregoria Pe\u00f1arrieta",
+      "structured_value": {
+        "given": "Gregoria",
+        "surname": "Pe\u00f1arrieta"
+      },
+      "information_quality": "primary",
+      "informant": "Gregoria Pe\u00f1arrieta (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351644",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born 1893",
+      "structured_value": {
+        "year": 1893
+      },
+      "date": "1893",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Gregoria Pe\u00f1arrieta (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "A person cannot provide primary information about their own birth. Gregoria stated her birth year (1893) at the 1913 marriage, 20 years after the fact. This is secondhand recollection of what she was told, not first-hand awareness of the birth event."
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351646",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Ciriaco Pe\u00f1arrieta",
+      "structured_value": {
+        "given": "Ciriaco",
+        "surname": "Pe\u00f1arrieta"
+      },
+      "information_quality": "primary",
+      "informant": "Gregoria Pe\u00f1arrieta (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX",
+      "record_persona_id": "p_102922351647",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Adriana Obando",
+      "structured_value": {
+        "given": "Adriana",
+        "surname": "Obando"
+      },
+      "information_quality": "primary",
+      "informant": "Gregoria Pe\u00f1arrieta (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2",
+      "record_role": "child",
+      "record_persona_id": "p_123302029100",
+      "fact_type": "name",
+      "value": "Ram\u00f3n Su\u00f1iga Rojas",
+      "structured_value": {
+        "given": "Ram\u00f3n",
+        "surname": "Su\u00f1iga Rojas"
+      },
+      "information_quality": "primary",
+      "informant": "parents (father Pedro Su\u00f1iga and/or mother Polonia Rojas)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2",
+      "record_role": "child",
+      "record_persona_id": "p_123302029100",
+      "fact_type": "baptism",
+      "value": "baptized 30 Aug 1887 at San Bartolom\u00e9, Arani, Cochabamba, Bolivia",
+      "date": "1887-08-30",
+      "date_certainty": "exact",
+      "place": "San Bartolom\u00e9, Arani, Cochabamba, Bolivia",
+      "standard_place": "San Bartolom\u00e9, Arani, Arani, Arani, Cochabamba, Bolivia",
+      "information_quality": "primary",
+      "informant": "parish priest of San Bartolom\u00e9, Arani",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2",
+      "record_role": "child",
+      "record_persona_id": "p_123302029100",
+      "fact_type": "relationship",
+      "value": "father named Pedro Su\u00f1iga",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "parents (father Pedro Su\u00f1iga and/or mother Polonia Rojas)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parents presented child for baptism; father's name recorded from self-report or household member. Independent of the 1913 marriage record \u2014 different informant, different event, different year.",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2",
+      "record_role": "child",
+      "record_persona_id": "p_123302029100",
+      "fact_type": "relationship",
+      "value": "mother named Polonia Rojas",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_child"
+      },
+      "information_quality": "primary",
+      "informant": "parents (father Pedro Su\u00f1iga and/or mother Polonia Rojas)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Same as a_014. Parents presented child for baptism; mother's name recorded from household member report. Independent of the 1913 marriage record.",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2",
+      "record_role": "father_of_child",
+      "record_persona_id": "p_123302029200",
+      "fact_type": "name",
+      "value": "Pedro Su\u00f1iga",
+      "structured_value": {
+        "given": "Pedro",
+        "surname": "Su\u00f1iga"
+      },
+      "information_quality": "primary",
+      "informant": "parent presenting Ram\u00f3n for baptism at San Bartolom\u00e9, Arani (identity of presenting parent unknown)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "A baptism typically has one presenting-parent/godparent informant unit. It is not established that Pedro Su\u00f1iga personally reported his own name separately from the mother; the presenting parent(s) reported both parents' names as a unit. Consistent with a_014/a_015 informant coding for this record."
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2",
+      "record_role": "mother_of_child",
+      "record_persona_id": "p_123302029300",
+      "fact_type": "name",
+      "value": "Polonia Rojas",
+      "structured_value": {
+        "given": "Polonia",
+        "surname": "Rojas"
+      },
+      "information_quality": "primary",
+      "informant": "parent presenting Ram\u00f3n for baptism at San Bartolom\u00e9, Arani (identity of presenting parent unknown)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "Same presenting-parent informant unit as a_016. Polonia Rojas's name was reported by the presenting parent(s) at the baptism ceremony; it is not established she was separately present and self-reported. Consistent with a_014/a_015 informant coding for this record."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "2DTG-7MK",
+      "confidence": "confident",
+      "match_score": 0.9998,
+      "rationale": "The groom's name 'Adrian Su\u00f1iga' is a spelling variant of 'Adrian Zu\u00f1iga Rojas' (\u00f1/s substitution common in Bolivian records). Birth year 1889 and location Arani, Cochabamba match exactly. same_person score 0.9998. Strong match on name, birth year, and place.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "2DTG-7MK",
+      "confidence": "confident",
+      "match_score": 0.9998,
+      "rationale": "Birth year 'born 1889' matches tree person Adrian Zu\u00f1iga Rojas born 8 Sep 1889. Same record as a_001; same_person score 0.9998 establishes the groom is 2DTG-7MK.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "2DTG-7MK",
+      "confidence": "confident",
+      "match_score": 0.9998,
+      "rationale": "Marriage event on 29 Nov 1913 at San Bartolom\u00e9, Arani matches the couple relationship in tree.gedcomx.json for 2DTG-7MK and 2DTG-7XD. same_person score 0.9998 for the groom.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "2DTG-7XD",
+      "confidence": "confident",
+      "match_score": 0.9999,
+      "rationale": "The same marriage event bears on the bride Gregoria Pe\u00f1arrieta Obando (2DTG-7XD). matchRelatives score 0.9999 for the bride persona p_102922351644 matched to 2DTG-7XD. Name, birth year 1893, and place all consistent.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "2DTG-7MK",
+      "confidence": "confident",
+      "match_score": 0.9998,
+      "rationale": "Assertion records Adrian (the groom, 2DTG-7MK) stating his father's name. This assertion bears on Adrian as the child who provided the information. Established identity of groom via same_person score 0.9998.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Pedro Su\u00f1iga is named as father of the groom in the 1913 marriage record. This is the sole source introducing this person; no independent corroboration yet. Stub created from this record. Name and relationship role are consistent with the Zu\u00f1iga surname pattern (Zu\u00f1iga Rojas = Zu\u00f1iga father + Rojas mother). Probable pending corroborating evidence.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "2DTG-7MK",
+      "confidence": "confident",
+      "match_score": 0.9998,
+      "rationale": "Assertion records Adrian (the groom, 2DTG-7MK) stating his mother's name. This assertion bears on Adrian as the child providing maternal information. same_person score 0.9998 establishes groom identity.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Polonia Rojas is named as mother of the groom in the 1913 marriage record. The surname 'Rojas' is the second surname component of Adrian Zu\u00f1iga Rojas, consistent with Bolivian naming convention (paternal + maternal surname). Stub created from this record; no independent corroboration yet. Probable pending further evidence.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Pedro Su\u00f1iga appears in the father_of_groom role in the 1913 marriage record. Name 'Pedro Su\u00f1iga' matches the stub I1 introduced by a_004. Same record and informant as a_004 \u2014 one evidential unit. Probable as sole-source stub.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Polonia Rojas appears in the mother_of_groom role in the 1913 marriage record. Name 'Polonia Rojas' matches stub I2 introduced by a_005. Same record and informant as a_005 \u2014 one evidential unit. Probable as sole-source stub.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "2DTG-7XD",
+      "confidence": "confident",
+      "match_score": 0.9999,
+      "rationale": "Bride name 'Gregoria Pe\u00f1arrieta' matches tree person Gregoria Pe\u00f1arrieta Obando (2DTG-7XD). matchRelatives score 0.9999. Name, birth year 1893, and Arani location all consistent.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "2DTG-7XD",
+      "confidence": "confident",
+      "match_score": 0.9999,
+      "rationale": "Bride birth year 'born 1893' matches tree person 2DTG-7XD born 1893. Same record persona as a_008; matchRelatives score 0.9999 establishes bride identity.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Ciriaco Pe\u00f1arrieta named as father_of_bride (Gregoria Pe\u00f1arrieta Obando) in the 1913 marriage record. Stub created from this sole source. Consistent with bride's compound surname Pe\u00f1arrieta Obando (Pe\u00f1arrieta = father's surname). Probable pending further evidence.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Adriana Obando named as mother_of_bride in the 1913 marriage record. Stub created from this sole source. Consistent with bride's compound surname Pe\u00f1arrieta Obando (Obando = mother's surname). Probable pending further evidence.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Ram\u00f3n Su\u00f1iga Rojas' in child role in the 1887 Arani baptism record. Stub I5 introduced from this sole source. Compound surname Su\u00f1iga Rojas identifies him as a child of Pedro Su\u00f1iga and Polonia Rojas, consistent with Bolivian naming convention.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Baptism event at San Bartolom\u00e9, Arani 30 Aug 1887 is the sole dated fact for stub I5. Consistent with a sibling of Adri\u00e1n born 1889 in the same parish.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion records Ram\u00f3n (I5) as the child who has father Pedro Su\u00f1iga named in this baptism record. Bears on I5 as child.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Pedro Su\u00f1iga is named as father in Ram\u00f3n's 1887 baptism at San Bartolom\u00e9, Arani \u2014 the same name, spelling, and location as the father named in Adri\u00e1n's 1913 marriage record (a_004/a_006). Two independent records from the same parish naming the same person as father of children with compound surname Su\u00f1iga Rojas. Name, role, place, and time period are all consistent. Confident.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion records Ram\u00f3n (I5) as the child who has mother Polonia Rojas named in this baptism record. Bears on I5 as child.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Polonia Rojas is named as mother in Ram\u00f3n's 1887 baptism at San Bartolom\u00e9, Arani \u2014 the same name and location as the mother named in Adri\u00e1n's 1913 marriage record (a_005/a_007). Two independent records from the same parish 26 years apart both name Polonia Rojas as mother of Su\u00f1iga Rojas children. Confident.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Pedro Su\u00f1iga appears as father_of_child in Ram\u00f3n's 1887 baptism at San Bartolom\u00e9, Arani. Second independent record naming this person; first was Adri\u00e1n's 1913 marriage record (pe_006, pe_009). Name matches exactly. Same spelling, same parish. Corroboration across two records separated by 26 years establishes identity as confident.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Polonia Rojas appears as mother_of_child in Ram\u00f3n's 1887 baptism at San Bartolom\u00e9, Arani. Second independent record naming this person; first was Adri\u00e1n's 1913 marriage record (pe_008, pe_010). Name matches exactly. Same parish. Corroboration across two records confirms identity as confident.",
+      "created": "2026-07-02"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch Bolivia Baptisms (collection 1520550) searched \u2014 nil for Adri\u00e1n Zu\u00f1iga/Su\u00f1iga 1889 (log_001, log_002). FamilySearch Bolivia Catholic Church Records (collection 1922463) searched \u2014 returned Adri\u00e1n's 1913 marriage record naming parents Pedro Su\u00f1iga and Polonia Rojas (log_003). Bolivia Marriages (collection 1520564) searched with four variant queries for Pedro Zu\u00f1iga/Su\u00f1iga \u00d7 Polonia Rojas \u2014 nil (log_004\u2013log_007). FAN sibling search in collection 1922463 \u2014 found Ram\u00f3n Su\u00f1iga Rojas baptism 1887 naming same parents (log_008). Browse-only San Bartolom\u00e9 volumes (imageGroupPrefixes 005091539\u201341, ~1,323 images) confirmed by volume_search but require manual browsing; documented in log_009 as an autonomous-research limitation. Ancestry Bolivia Baptisms (collection 9795) not accessible \u2014 no subscription; documented in log_010. Adri\u00e1n's own baptism record was not found in any indexed collection; the parentage answer comes from his 1913 marriage record and his sibling's 1887 baptism.",
+      "narrative_markdown": "## The Parents of Adri\u00e1n Zu\u00f1iga Rojas of Arani, Cochabamba, Bolivia\n\n### Conclusion\n\nThe evidence establishes that **Adri\u00e1n Zu\u00f1iga Rojas** (born 8 September 1889, Arani, Cochabamba, Bolivia; died 21 April 1928, Arani) was the son of **Pedro Su\u00f1iga (Zu\u00f1iga)** and **Polonia Rojas**, both of Arani, Cochabamba, Bolivia.\n\n### Primary Evidence: Adri\u00e1n's 1913 Marriage Record\n\nThe strongest and most direct evidence is Adri\u00e1n's own Catholic marriage record at San Bartolom\u00e9 parish, Arani, dated 29 November 1913.\u00b9 In this record the groom is identified as \"Adri\u00e1n Su\u00f1iga\" (born 1889), and both parents are explicitly named: his father as **Pedro Su\u00f1iga** and his mother as **Polonia Rojas**. The bride is Gregoria Pe\u00f1arrieta (born 1893), daughter of Ciriaco Pe\u00f1arrieta and Adriana Obando.\n\nThis record is an original Catholic parish register (source classification: *original*). The information regarding the parents' names is primary \u2014 Adri\u00e1n, as an adult participant at his own marriage, self-reported his parentage to the recording priest. The evidence is direct: the record explicitly names Pedro Su\u00f1iga and Polonia Rojas in the father-of-groom and mother-of-groom roles (assertions a_004\u2013a_007). There is no known incentive for Adri\u00e1n to misrepresent his parents at his own marriage ceremony.\n\nAll four parentage assertions from this record share a single informant (Adri\u00e1n himself) and therefore constitute one evidential unit per GPS Standard 46 \u2014 they receive no more combined weight than the strongest single item.\n\n### Corroborating Evidence: 1887 Baptism of Ram\u00f3n Su\u00f1iga Rojas\n\nIndependent corroboration comes from a Catholic baptism record at San Bartolom\u00e9 parish, Arani, dated 30 August 1887 \u2014 twenty-six years before the marriage record and two years before Adri\u00e1n's birth.\u00b2 This record documents the baptism of **Ram\u00f3n Su\u00f1iga Rojas**, a male child, naming his father as **Pedro Su\u00f1iga** and his mother as **Polonia Rojas** (assertions a_014\u2013a_017).\n\nThis source is also an original Catholic parish register. The information is primary \u2014 the parent(s) presenting Ram\u00f3n for baptism reported both parents' names to the priest. The evidence is indirect with respect to Adri\u00e1n's parentage, requiring the inference that Ram\u00f3n was Adri\u00e1n's sibling sharing the same parents. That inference is supported by three converging lines: (1) the same parish and overlapping time period, (2) the compound surname of the baptized child, and (3) Adri\u00e1n's own compound surname encoding the same parentage (discussed below).\n\nThese two records are genuinely independent informant units. The 1913 informant is Adri\u00e1n himself at his marriage; the 1887 informant is the presenting parent(s) at Ram\u00f3n's baptism two and a half decades earlier. Different event, different year, different informant circumstances.\n\n### Bolivian Compound-Surname Convention as Corroborating Structure\n\nUnder the Catholic Bolivian naming convention of the late nineteenth century, a child's compound surname consists of the father's first (paternal) surname followed by the mother's first (paternal) surname. The name \"Adri\u00e1n Zu\u00f1iga Rojas\" (or \"Su\u00f1iga Rojas\" in the spelling variant prevalent in Arani records) directly encodes the parentage: Zu\u00f1iga/Su\u00f1iga from the father, Rojas from the mother. Ram\u00f3n's full compound surname \"Su\u00f1iga Rojas\" in his 1887 baptism record reflects precisely the same structure. Both the marriage record and the baptism record are therefore internally consistent with each other and with the naming convention.\n\n### Additional Siblings (Supporting Context)\n\nA FAN search of FamilySearch collection 1922463 identified additional apparent children of Pedro Zu\u00f1iga/Su\u00f1iga \u00d7 Polonia Rojas recorded at San Bartolom\u00e9 and Arani: Leonidas Su\u00f1iga (born and died 1886, San Bartolom\u00e9), Benita Zu\u00f1iga (born ~1895, San Bartolom\u00e9; died 1921), and Cecilia Z\u00fa\u00f1iga (born ~1889\u20131890, Arani). These records were not formally extracted into the evidence base but are consistent with the identified parents and the same parish.\n\n### Negative Evidence and Research Limitations\n\nAdri\u00e1n's own baptism record was not found in any searched indexed collection. Bolivia Baptisms (FamilySearch collection 1520550) and the broader Bolivia Catholic Church Records (collection 1922463) were both searched without locating a baptism entry for Adri\u00e1n in 1889 or nearby years. This absence likely reflects an indexing gap rather than the non-existence of the record: browse-only image volumes for San Bartolom\u00e9 parish exist on FamilySearch (imageGroupPrefixes 005091539\u2013005091541, approximately 1,323 images across six volumes) but require manual browsing, which was not possible in this research session. Locating Adri\u00e1n's own baptism entry remains a recommended follow-up action.\n\nNo marriage record for Pedro Zu\u00f1iga \u00d7 Polonia Rojas was found in Bolivia Marriages (collection 1520564) after four variant searches. This absence does not contradict the parentage conclusion; it may reflect indexing gaps for Arani parish in the relevant period.\n\nNo evidence naming different parents for Adri\u00e1n was found in any of the ten searched and documented sources.\n\n### Summary\n\nTwo independent original Catholic parish registers from San Bartolom\u00e9, Arani, Cochabamba, Bolivia \u2014 Adri\u00e1n's 1913 marriage record and his sibling Ram\u00f3n's 1887 baptism \u2014 both name **Pedro Su\u00f1iga (Zu\u00f1iga)** and **Polonia Rojas** as the parents of a Su\u00f1iga Rojas child from Arani. The compound-surname structure of Adri\u00e1n's own name is consistent with this parentage. No contradicting evidence was found across ten logged searches. Research was declared reasonably exhaustive.\n\nDocuments prove and verify that **Adri\u00e1n Zu\u00f1iga Rojas**, born 8 September 1889 in Arani, Cochabamba, Bolivia, was the son of **Pedro Su\u00f1iga (Zu\u00f1iga)** and **Polonia Rojas** of Arani, Cochabamba, Bolivia.\n\n---\n\n\u00b9 \"Bolivia, registros parroquiales, 1566\u20132020,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX : accessed 2 Jul 2026), entry for Adri\u00e1n Su\u00f1iga and Gregoria Pe\u00f1arrieta, 29 Nov 1913.\n\n\u00b2 \"Bolivia, registros parroquiales, 1566\u20132020,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:7KQQ-L5N2 : accessed 2 Jul 2026), entry for Ram\u00f3n Su\u00f1iga Rojas and Pedro Su\u00f1iga, 30 Aug 1887."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "address_first",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-02T14-35-00.json",
+      "timestamp": "2026-07-02T14:35:00Z",
+      "superseded_by": null
+    },
+    {
+      "id": "ev_002",
+      "focus": "conclusion-readiness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/conclusion-readiness-q_001-2026-07-02T15-30-00.json",
+      "timestamp": "2026-07-02T15:30:00Z",
+      "superseded_by": null
+    },
+    {
+      "id": "ev_003",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-02T16-00-00.json",
+      "timestamp": "2026-07-02T16:00:00Z",
+      "superseded_by": "ev_004"
+    },
+    {
+      "id": "ev_004",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "looks_solid",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-02T16-30-00.json",
+      "timestamp": "2026-07-02T16:30:00Z",
+      "superseded_by": null
+    }
+  ]
+}
