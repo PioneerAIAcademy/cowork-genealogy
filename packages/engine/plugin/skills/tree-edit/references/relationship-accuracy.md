@@ -32,8 +32,7 @@ Marriage, divorce, and other couple events are facts of the **`Couple`
 relationship**, not of either spouse. Record them in the relationship's
 `facts` array — supplied when you create the relationship — never as a
 person-level fact. A marriage stored on a person record misplaces the
-event and can trigger birth-order warnings; the couple relationship is
-its only correct home.
+event; the couple relationship is its only correct home.
 
 ## When to create relationships
 
