@@ -16,6 +16,6 @@
     "Should call person_warnings with personId 'I1'",
     "Should NOT call person_quality -- 'I1' is a synthetic id, not a FamilySearch ID (XXXX-XXX), so there is no profile to score",
     "Should report the person_warnings result (no impossibilities)",
-    "May note that a FamilySearch quality score is not available because this person has no FamilySearch ID; must not treat that as an error"
+    "Should NOT mention FamilySearch quality at all — the id is synthetic, so quality does not apply and a note would just be noise"
   ]
 }

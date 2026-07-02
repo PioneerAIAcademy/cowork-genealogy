@@ -5,8 +5,8 @@ description: Checks genealogical data for impossibilities and anomalies --
   married before age 14, died after 120, child born after parent's death,
   events on impossible dates, conflicting birth or death dates,
   burial dated before death. Also reports FamilySearch's own data-quality
-  score (missing dates, places, and sources; consistency and coherence) for
-  people with a FamilySearch ID. Surfaces both to the user without
+  score -- missing dates, places, and untagged sources -- for people with a
+  FamilySearch ID. Surfaces both to the user without
   modifying project files; a guardrail skill invoked after
   assertions or person_evidence are added. Use when
   another skill's validation-protocol says "invoke check-warnings", when
@@ -44,6 +44,8 @@ Full tag catalog: `references/warning-checks.md`.
 
 ## Steps
 
+**Before anything — is this a warnings task?** If the user is describing a **disagreement between two or more sources** about the same fact (e.g. "one census says Ireland, the death cert says County Cork"), that is a **conflict**, not a warning: do **not** run the warning checks (`person_warnings`/`person_quality`) — instead **hand off by invoking the `conflict-resolution` skill** (see Handoff rules). Warnings are about a *single person's own data* violating physical/biological/temporal limits; source-vs-source disagreements are not this skill's job. Only run the steps below when the request is genuinely about such impossibilities/anomalies.
+
 ### 1. Identify the person(s) to check
 
 - **Triggered by a writing skill** -- check every person whose assertions or person_evidence changed in that skill's run.
@@ -54,10 +56,10 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 
 ### 2. Call the tools
 
-For each person:
+Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
-1. **Always** call `person_warnings({ projectPath, personId })`. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
-2. **When `personId` is a FamilySearch ID** -- four characters, a hyphen, three characters (e.g. `KWCJ-RN4`, `KD96-TV2`) -- also call `person_quality({ personId })`. In projects built from FamilySearch the tree id *is* the FS ID, so the same id feeds both tools. **Skip** this call when the id is synthetic (e.g. `I1`): there is no FamilySearch profile to score.
+1. Call `person_warnings({ projectPath, personId })` — the offline impossibility check that runs for every person you check. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+2. **Additionally, when `personId` is a FamilySearch ID** -- four characters, a hyphen, three characters (e.g. `KWCJ-RN4`, `KD96-TV2`) -- also call `person_quality({ personId })`. In projects built from FamilySearch the tree id *is* the FS ID, so the same id feeds both tools. **When the id is synthetic (e.g. `I1`), skip this call silently** -- there is no FamilySearch profile to score, so do not call the tool and do not mention FamilySearch quality at all for that person.
 
 `person_quality` needs the user logged in and calls FamilySearch's live quality service. Handle it gracefully -- it must **never** suppress the offline warnings, which are the guardrail and always appear:
 
@@ -132,7 +134,8 @@ When `person_quality` returned data, add a separate **FamilySearch quality** sec
 - These are FamilySearch's *suggestions to improve the profile*, not impossibilities. Phrase next steps as optional improvements ("adding the burial date would raise the completeness score"), never as urgent errors.
 - **Don't invent a quality label or verdict** (no "High Quality" band) -- report the `overallScore` and the sentences as-is. The tool deliberately omits a band.
 - When `issueCount` is 0: "FamilySearch quality: no issues flagged (overall {overallScore})."
-- When quality was skipped or unavailable (per step 2), add one line: "FamilySearch quality: not available (no FamilySearch ID)" or "…(not logged in)."
+- **Synthetic id (quality not applicable):** the person has no FamilySearch profile, so `person_quality` was never called. Say **nothing** about FamilySearch quality -- do not add a "not available" note. (This is the common case for hand-built or record-derived persons; a quality remark there is just noise.)
+- **Quality attempted but failed** (the tool returned an error -- tombstoned/merged, not found, still calculating, or not logged in): add one brief note in the quality section using the tool's message. Never let it abort or suppress the warnings report.
 
 **Example:**
 
