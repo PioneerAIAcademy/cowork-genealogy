@@ -593,8 +593,9 @@ There is **no `verdict` field** — the per-run verdict is derived from `per_fin
 
 Three integrity rules make the agreement number trustworthy:
 
-- **Never auto-created.** A run does not emit an annotation; a human grades the
-  runs worth grading.
+- **Never auto-created.** A run does not emit an annotation; a human grades it
+  with the `/grade-e2e-run` skill (which reads the fixture + the two `final-*`
+  siblings, writes the `.ann.json`, and self-checks it before commit).
 - **Graded blind.** The grade flow reads the fixture and the run's two `final-*`
   siblings, **never `run-<ts>.json`** (where the judge's own labels live), so the
   human label is independent of the judge under test.
@@ -607,8 +608,13 @@ calibration-case directory. `calibrate_judge` discovers every
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
 (advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
 no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. Run
-`uv run python -m e2e.calibrate_judge` (`--dry-run` lints without API calls).
+edited after grading) is a hard error: re-grade or delete it. Grading is
+**same-PR**: every committed run is graded in the PR that commits it (all
+gradeable runs — pass/partial/fail — are committed; §8), enforced by the blocking
+`check-e2e-fixtures`
+grading gate (§14). Contributors run only `/grade-e2e-run`; the **maintainer**
+runs `uv run python -m e2e.calibrate_judge` periodically (`--dry-run` lints
+without API calls) — contributors never do.
 
 ---
 
@@ -624,11 +630,14 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
 
-A **passing** run is the fixture's validity artifact and is committed under the
-`run-<timestamp>.*` names above; any other outcome (partial / fail / skipped) is
-written with a `scratch_<timestamp>.*` prefix that `.gitignore` keeps out of
-version control, so a non-passing run can't be committed as if it validated the
-fixture (§14). The `.ann.json` is committed when a run is graded. To investigate
+Any **gradeable** run — verdict `pass`, `partial`, or `fail` — is committed
+under the `run-<timestamp>.*` names above and must be graded (§7.4). A committed
+`fail` is deliberately retained signal: a capability gap to retry later, exactly
+as a failing unit test is committed. Only a `skipped` run (the judge never ran —
+no tree to grade) is written with a `scratch_<timestamp>.*` prefix that
+`.gitignore` keeps out of version control. Fixture *validity* is a separate axis
+(§14): only a `pass` validates a fixture, so a committed `fail` does not count as
+validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
 — diff the old and new `tool_calls` arrays: each entry's `response_summary`
 captures the FS result inline, so collection-hit changes, hint-count shifts, or
@@ -689,7 +698,8 @@ acting.
   axis (§7) is a single rubric-graded score, not the multi-layer
   human-verified grading of `gps-test-spec.md`
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (A cheap advisory artifact check runs in CI — non-blocking; see §14.)
+  PRs. (Cheap artifact checks do run in CI — a blocking grading gate plus an
+  advisory fixture-validity report; see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -737,15 +747,15 @@ This is surfaced two ways:
 - **Documentation requirement** — the author runs the fixture for real
   and commits the passing run log alongside it (testing guide §5,
   first-time-setup step 6).
-- **CI artifact report** (cheap, no live run, **advisory / non-blocking**)
-  — the `check-e2e-fixtures` workflow flags any committed
-  `eval/tests/e2e/<slug>/` lacking a committed
-  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a warning
-  annotation. It reads only committed files and does **not** trigger a
-  live e2e run (those stay out of CI per §12). It **does not block merge**
-  — unlike the unit-test runlog discipline check (`check_runlogs.py`,
-  `check-runlogs.yml`), which is blocking. The advisory framing lets draft
-  fixtures land — notably PID-less fixtures authored without FamilySearch
-  access (`author-e2e-fixture` Path 3) whose validity run can only happen
-  on an FS-enabled host — while still surfacing the owed run. Run the
-  check with `--strict` to restore a hard non-zero exit for local gating.
+- **CI artifact report** (cheap, no live run) — the `check-e2e-fixtures`
+  workflow runs two checks. Its **fixture-validity** check is **advisory /
+  non-blocking**: it flags any committed `eval/tests/e2e/<slug>/` lacking a
+  committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
+  warning annotation, so a draft fixture can land with its validity run still
+  owed — notably PID-less fixtures authored without FamilySearch access
+  (`author-e2e-fixture` Path 3) whose validity run can only happen on an
+  FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
+  workflow also runs a blocking grading gate** (§7.4): a run log *added in the
+  PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same
+  PR (a treeless crash/skip run is exempt). Both checks read only committed
+  files and do **not** trigger a live e2e run (those stay out of CI per §12).
