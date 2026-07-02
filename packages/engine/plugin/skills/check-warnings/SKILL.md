@@ -4,7 +4,9 @@ model: claude-sonnet-4-6
 description: Checks genealogical data for impossibilities and anomalies --
   married before age 14, died after 120, child born after parent's death,
   events on impossible dates, conflicting birth or death dates,
-  burial dated before death. Surfaces warnings to the user without
+  burial dated before death. Also reports FamilySearch's own data-quality
+  score (missing dates, places, and sources; consistency and coherence) for
+  people with a FamilySearch ID. Surfaces both to the user without
   modifying project files; a guardrail skill invoked after
   assertions or person_evidence are added. Use when
   another skill's validation-protocol says "invoke check-warnings", when
@@ -14,13 +16,19 @@ description: Checks genealogical data for impossibilities and anomalies --
   or for resolving conflicts between sources (use conflict-resolution).
 allowed-tools:
   - person_warnings
+  - person_quality
 ---
 
 # Check Warnings
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-`person_warnings` detects impossibilities deterministically -- same person, same warnings, every time. Your job is to decide *whom* to check, present the results clearly, and interpret what they mean for the research.
+This skill runs two complementary checks and reports both, in separate sections:
+
+- **`person_warnings`** (offline, deterministic) -- logical *impossibilities* in your **local** `tree.gedcomx.json`: death before birth, event after death, impossible ages. Same person, same warnings, every time.
+- **`person_quality`** (online, FamilySearch) -- FamilySearch's own *data-quality score* for the live profile: missing dates/places, untagged sources, consistency and coherence issues, returned as ready-made English sentences.
+
+They mean different things and must not be merged into one list: warnings are impossibilities in local data; quality issues are FamilySearch's assessment of the live tree profile (suggestions to improve it, not errors). Your job is to decide *whom* to check, run both, present the results clearly, and interpret them.
 
 **Warnings ≠ conflicts:** Warnings are logical impossibilities in a single person's data. Conflicts are disagreements between two or more sources about the same fact. Use `conflict-resolution` for the latter.
 
@@ -44,9 +52,19 @@ Full tag catalog: `references/warning-checks.md`.
 
 The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` or `KWCJ-RN4`).
 
-### 2. Call the tool
+### 2. Call the tools
 
-Call `person_warnings({ projectPath, personId })` once per person. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+For each person:
+
+1. **Always** call `person_warnings({ projectPath, personId })`. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+2. **When `personId` is a FamilySearch ID** -- four characters, a hyphen, three characters (e.g. `KWCJ-RN4`, `KD96-TV2`) -- also call `person_quality({ personId })`. In projects built from FamilySearch the tree id *is* the FS ID, so the same id feeds both tools. **Skip** this call when the id is synthetic (e.g. `I1`): there is no FamilySearch profile to score.
+
+`person_quality` needs the user logged in and calls FamilySearch's live quality service. Handle it gracefully -- it must **never** suppress the offline warnings, which are the guardrail and always appear:
+
+- **Not logged in / auth error** -- skip quality and note it once: "FamilySearch quality score unavailable -- log in to include it." Still report the warnings.
+- **Tool error** (person tombstoned/merged, not found, still calculating, network) -- surface the tool's message as a one-line note in that person's quality section; do not block the warnings report.
+
+The tool returns `{ personId, segment, overallScore, issueCount, categories: [{ scoreType, count, score }], issues: [{ sentence, conclusionType, conclusionId, scoreType }] }`.
 
 ### 3. Report warnings
 
@@ -105,6 +123,30 @@ WARNINGS FOR: Patrick Flynn (I1)
 (2 warnings total)
 ```
 
+### 3b. Report the FamilySearch quality score
+
+When `person_quality` returned data, add a separate **FamilySearch quality** section for the person -- kept apart from the impossibilities above, because it's a different source and a different meaning.
+
+- Lead with the overall picture: `overallScore` (0--1) and the per-category counts from `categories` (Completeness / Verifiability / Consistency / Coherence).
+- List each issue's `sentence` **verbatim** -- they are already user-ready English ("The burial date is missing.", "A residence has no tagged sources."). Group them by `scoreType`. Collapse identical repeats with a count (e.g. `(x5)`).
+- These are FamilySearch's *suggestions to improve the profile*, not impossibilities. Phrase next steps as optional improvements ("adding the burial date would raise the completeness score"), never as urgent errors.
+- **Don't invent a quality label or verdict** (no "High Quality" band) -- report the `overallScore` and the sentences as-is. The tool deliberately omits a band.
+- When `issueCount` is 0: "FamilySearch quality: no issues flagged (overall {overallScore})."
+- When quality was skipped or unavailable (per step 2), add one line: "FamilySearch quality: not available (no FamilySearch ID)" or "…(not logged in)."
+
+**Example:**
+
+```
+FAMILYSEARCH QUALITY: Patrick Flynn (KD96-TV2)   overall 0.97
+  Completeness 2 - Source tagging 5 - Consistency 0 - Coherence 0
+
+  Completeness
+    - The burial date is missing.
+    - A marriage place is missing a city.
+  Source tagging
+    - A residence has no tagged sources.  (x5)
+```
+
 ### 4. Interpret and recommend
 
 - **`severity: "error"`** -- Investigate immediately. Almost always indicates data errors or conflated identities (records from two people merged into one profile).
@@ -122,6 +164,7 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 - **Warnings are informational, not gates.** They don't block further work.
 - **Don't auto-correct.** Report the warning; let the user or other skills investigate.
 - **The tool is the arbiter; don't re-derive.** The tool's output is ground truth. Do not read the tree to verify whether the tool's verdict is correct. Do not perform your own date arithmetic to explain a warning the tool already explained -- the number "208 years" was never in the tool's response; do not invent it. Cite only the `factIds`, sources, and persons the tool's response actually mentions.
+- **Quality issues are improvements, not impossibilities.** A missing date or untagged source lowers FamilySearch's quality score but is not an error -- never escalate a `person_quality` issue the way you would a `severity: "error"` warning. Report its `sentence` verbatim; don't re-derive, re-score, or invent a band.
 - **Historical exceptions exist.** A 13-year-old bride or a 105-year-old death is unusual by modern standards but documented historically. Present warnings with appropriate context.
 - **Surface tool errors verbatim.** If the tool returns an error (e.g. `personId` not found in `tree.gedcomx.json`), surface it as-is. Do not fall back to manual reasoning -- the whole point is determinism.
 
@@ -134,7 +177,10 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 
 ## Re-invocation behavior
 
-This skill writes no project state -- it reads `tree.gedcomx.json` via
-`person_warnings` and surfaces the results to the user. Safe to
-re-invoke at any time; the result depends only on the current tree
-state, not on prior invocations.
+This skill writes no project state. It reads `tree.gedcomx.json` via
+`person_warnings` (offline, deterministic) and, for FamilySearch-ID
+persons, fetches the live score via `person_quality` (online). Safe to
+re-invoke at any time. The warnings depend only on the current tree
+state; the quality score reflects the live FamilySearch profile at call
+time and requires login, so -- unlike the warnings -- it can change
+between runs or be temporarily unavailable.
