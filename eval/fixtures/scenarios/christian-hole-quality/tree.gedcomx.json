@@ -1,0 +1,65 @@
+{
+  "persons": [
+    {
+      "id": "KD96-TV2",
+      "gender": "Male",
+      "names": [
+        { "id": "n1", "preferred": true, "given": "Christian P.", "surname": "Hole", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "f1", "type": "Birth", "primary": true, "date": "1875", "place": "Norway", "sources": [ { "ref": "S1", "page": "1900 census, Polk Co., ED 112" } ] },
+        { "id": "f2", "type": "Marriage", "date": "1 May 1898", "place": "Polk, Minnesota, United States", "sources": [ { "ref": "S1", "page": "1900 census, Polk Co., ED 112" } ] },
+        { "id": "f3", "type": "Residence", "date": "1895", "place": "Reis, Polk, Minnesota, United States" },
+        { "id": "f4", "type": "Residence", "date": "1900", "place": "Fairview, Polk, Minnesota, United States" },
+        { "id": "f5", "type": "Residence", "date": "1910", "place": "Fairview, Polk, Minnesota, United States" },
+        { "id": "f6", "type": "Residence", "date": "1920", "place": "Erskine, Polk, Minnesota, United States" },
+        { "id": "f7", "type": "Residence", "date": "1930", "place": "Erskine, Polk, Minnesota, United States" },
+        { "id": "f8", "type": "Burial", "place": "Fairview Cemetery, Erskine, Polk County, Minnesota, United States" },
+        { "id": "f9", "type": "Death", "date": "1945-06-10", "place": "Erskine, Polk, Minnesota, United States", "sources": [ { "ref": "S2", "page": "MN death index no. 8841" } ] }
+      ]
+    },
+    {
+      "id": "KD96-TV3",
+      "gender": "Female",
+      "names": [
+        { "id": "n2", "preferred": true, "given": "Inger", "surname": "Hole", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "f10", "type": "Birth", "primary": true, "date": "1878", "place": "Norway", "sources": [ { "ref": "S1", "page": "1900 census, Polk Co., ED 112" } ] },
+        { "id": "f11", "type": "Marriage", "date": "1 May 1898", "place": "Fisher, Polk, Minnesota, United States", "sources": [ { "ref": "S1", "page": "1900 census, Polk Co., ED 112" } ] },
+        { "id": "f12", "type": "Death", "date": "1950-02-14", "place": "Erskine, Polk, Minnesota, United States", "sources": [ { "ref": "S2", "page": "MN death index no. 12002" } ] }
+      ]
+    },
+    {
+      "id": "KD96-TV4",
+      "gender": "Male",
+      "names": [
+        { "id": "n3", "preferred": true, "given": "Ole C.", "surname": "Hole", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "f13", "type": "Birth", "primary": true, "date": "1905", "place": "Polk, Minnesota, United States", "sources": [ { "ref": "S1", "page": "1910 census, Polk Co., ED 118" } ] },
+        { "id": "f14", "type": "Death", "date": "1960-08-03", "place": "Crookston, Polk, Minnesota, United States", "sources": [ { "ref": "S2", "page": "MN death index no. 33417" } ] },
+        { "id": "f15", "type": "Residence", "date": "1975", "place": "Crookston, Polk, Minnesota, United States" }
+      ]
+    },
+    {
+      "id": "KD96-TV5",
+      "gender": "Male",
+      "names": [
+        { "id": "n4", "preferred": true, "given": "Ole", "surname": "Hole", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "f16", "type": "Birth", "date": "1905", "place": "Polk, Minnesota, United States" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "rt1", "type": "Couple", "person1": "KD96-TV2", "person2": "KD96-TV3" },
+    { "id": "r1", "type": "ParentChild", "parent": "KD96-TV2", "child": "KD96-TV4" },
+    { "id": "r2", "type": "ParentChild", "parent": "KD96-TV3", "child": "KD96-TV4" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "United States Census, 1900 & 1910", "author": "U.S. Census Bureau" },
+    { "id": "S2", "title": "Minnesota Death Index", "author": "Minnesota Department of Health" }
+  ]
+}

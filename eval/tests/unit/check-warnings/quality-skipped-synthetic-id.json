@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_check_warnings_018",
+    "skill": "check-warnings",
+    "name": "Skip person_quality when the id is synthetic (no FamilySearch ID)",
+    "type": "positive",
+    "description": "User asks to check Patrick Flynn, whose local id is the synthetic 'I1' (not a FamilySearch ID). person_warnings runs offline as usual. Because there is no FamilySearch profile to score, the skill should NOT call person_quality; it should run the warnings check and note that a FamilySearch quality score is not available (no FamilySearch ID).",
+    "tags": ["positive", "person-quality", "skip", "synthetic-id"]
+  },
+  "input": {
+    "user_message": "Check Patrick Flynn for any warnings.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["person-warnings-no-warnings"],
+  "judge_context": [
+    "Should call person_warnings with personId 'I1'",
+    "Should NOT call person_quality -- 'I1' is a synthetic id, not a FamilySearch ID (XXXX-XXX), so there is no profile to score",
+    "Should report the person_warnings result (no impossibilities)",
+    "May note that a FamilySearch quality score is not available because this person has no FamilySearch ID; must not treat that as an error"
+  ]
+}
