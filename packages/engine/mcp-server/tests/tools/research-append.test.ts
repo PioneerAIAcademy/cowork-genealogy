@@ -294,6 +294,24 @@ describe("research_append (Phase 2)", () => {
     expect(second.errors.join(" ")).toMatch(/already has an active plan/);
   });
 
+  it("rejects an update that flips a superseded plan back to active when one is already active", async () => {
+    const research = phase2Research();
+    research.plans = [validPlan("pl_001", "q_001", "active"), validPlan("pl_002", "q_001", "superseded")];
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "plans",
+      op: "update",
+      entryId: "pl_002",
+      fields: { status: "active" }, // would create a second active plan for q_001
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/already has an active plan/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
   it("appends a plan_item into the named plan", async () => {
     const research = phase2Research();
     research.plans = [validPlan("pl_001", "q_001", "active")];
@@ -611,5 +629,248 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/requires a .?fields/);
+  });
+});
+
+// ─── Batch ops ───────────────────────────────────────────────────────────────
+
+const noId = (o: any) => {
+  const { id: _omit, ...rest } = o;
+  return rest;
+};
+
+describe("research_append (batch ops)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-batch-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  it("(a/c) applies a homogeneous batch, returns ordered ids, sequences intra-batch", async () => {
+    await writeProject(); // seeded with sources [src_001]
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: noId(validSource("x")) },
+        { section: "sources", op: "append", entry: noId(validSource("y")) },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => x.entryId)).toEqual(["src_002", "src_003"]); // op #2 sees op #1's append
+    expect(r.filesWritten).toEqual(["research.json"]);
+    expect((await readResearch()).sources.map((s: any) => s.id)).toEqual(["src_001", "src_002", "src_003"]);
+  });
+
+  it("(d) applies a heterogeneous record in one write; assertion references a source from the same batch", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: noId(validSource("x")) }, // → src_002
+        { section: "assertions", op: "append", entry: noId(validAssertion("x", "src_002")) }, // forward ref to op #0
+        { section: "assertions", op: "append", entry: noId(validAssertion("y", "src_002")) },
+        {
+          section: "person_evidence",
+          op: "append",
+          entry: { assertion_id: "a_002", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => `${x.section}:${x.entryId}`)).toEqual([
+      "sources:src_002",
+      "assertions:a_002",
+      "assertions:a_003",
+      "person_evidence:pe_001",
+    ]);
+    const research = await readResearch();
+    expect(research.sources).toHaveLength(2);
+    expect(research.assertions.map((a: any) => a.id)).toEqual(["a_001", "a_002", "a_003"]);
+    expect(research.assertions[1].source_id).toBe("src_002"); // intra-batch forward ref persisted + validated
+    expect(research.person_evidence).toHaveLength(1);
+  });
+
+  it("(d2) appends a plan + its items in one batch, referencing the predicted plan id pl_001", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_001
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // → pli_001
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // → pli_002
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => x.entryId)).toEqual(["pl_001", "pli_001", "pli_002"]);
+    const out = await readResearch();
+    expect(out.plans[0].id).toBe("pl_001");
+    expect(out.plans[0].items.map((i: any) => i.id)).toEqual(["pli_001", "pli_002"]);
+  });
+
+  it("(b) rolls back the whole batch on a mid-batch validation failure — writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: noId(validSource("x")) }, // valid on its own
+        { section: "assertions", op: "append", entry: noId(validAssertion("y", "src_999")) }, // dangling → whole-project validation fails
+      ],
+    });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before); // including the valid op #0
+  });
+
+  it("(b2) indexes a per-op precondition failure as ops[i] and writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: noId(validSource("x")) }, // op 0 ok
+        { section: "assertions", op: "append", entry: validAssertion("z", "src_001") }, // op 1 carries an id → throws
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/^ops\[1\]:/);
+    expect(r.errors.join(" ")).toMatch(/must not carry an id/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(b3) enforces section invariants across the batch (second active plan → ops[1])", async () => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) },
+        { section: "plans", op: "append", entry: noId(validPlan("y", "q_001", "active")) }, // same question, second active plan
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/^ops\[1\]:.*already has an active plan/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("rejects an empty ops array", async () => {
+    await writeProject();
+    const r = await researchAppend({ projectPath: dir, ops: [] });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/non-empty/);
+  });
+
+  it("(d3) applies a project-singleton update inside a batch and writes once", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: noId(validSource("x")) },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results).toContainEqual({ section: "project", op: "update", entryId: "project" });
+    expect(r.filesWritten).toEqual(["research.json"]);
+    const research = await readResearch();
+    expect(research.project.status).toBe("completed");
+    expect(research.project.updated).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(research.sources).toHaveLength(2);
+  });
+
+  it("(d3b) fails the whole batch on an invalid project status — writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: noId(validSource("x")) }, // valid op #0
+        { section: "project", op: "update", fields: { status: "done" } }, // invalid enum → whole batch fails
+      ],
+    });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // ── String-coercion: the model sometimes serializes a large `ops` batch as a
+  // JSON *string* (see coerce-json-arg.ts). The tool recovers it rather than
+  // rejecting it and driving the model into slow one-op-per-call writes.
+  it("(coerce) applies an ops batch that arrives as a JSON string", async () => {
+    await writeProject(); // seeded with sources [src_001]
+    const opsArray = [
+      { section: "sources", op: "append", entry: noId(validSource("x")) },
+      { section: "sources", op: "append", entry: noId(validSource("y")) },
+    ];
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: JSON.stringify(opsArray) as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => x.entryId)).toEqual(["src_002", "src_003"]);
+    expect((await readResearch()).sources.map((s: any) => s.id)).toEqual(["src_001", "src_002", "src_003"]);
+  });
+
+  it("(coerce) recovers a stringified ops batch even with redundant top-level section/op (the observed record-extraction failure)", async () => {
+    await writeProject();
+    const opsArray = [
+      { section: "sources", op: "append", entry: noId(validSource("x")) }, // → src_002
+      { section: "assertions", op: "append", entry: noId(validAssertion("x", "src_002")) }, // forward ref
+    ];
+    // Exactly what Sonnet emitted: ops as a JSON string AND leftover top-level
+    // section/op (ignored once ops is present).
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      ops: JSON.stringify(opsArray) as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results.map((x) => `${x.section}:${x.entryId}`)).toEqual(["sources:src_002", "assertions:a_002"]);
+    expect((await readResearch()).assertions[1].source_id).toBe("src_002");
+  });
+
+  it("(coerce) applies a single-op append whose entry arrives as a JSON string", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: JSON.stringify(noId(validSource("x"))) as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect((await readResearch()).sources.map((s: any) => s.id)).toEqual(["src_001", "src_002"]);
+  });
+
+  it("(coerce) leaves a non-JSON ops string alone → the existing non-empty-array error, writes nothing", async () => {
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: "not valid json" as any,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/non-empty/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 });

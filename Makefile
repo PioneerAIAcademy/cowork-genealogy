@@ -94,6 +94,32 @@ clean-deps: ## Remove all node_modules (force a from-scratch install; use after 
 reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
 	$(MAKE) install
 
+# ── Worktrees ────────────────────────────────────────────────────
+# Git worktrees don't share gitignored files, so a freshly-added worktree lacks
+# the shared secrets (eval/.env) and installed deps (node_modules). These link
+# them to the primary worktree's copies. `install-hooks` makes new worktrees
+# self-link on `git worktree add`; `worktree-link` does it for an existing one.
+.PHONY: worktree-link
+worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
+	@scripts/link-worktree.sh
+
+# Symlink our post-checkout hook into the shared .git/hooks (covers every
+# worktree of this clone). Opt-in and per-clone: it touches only local .git
+# state, never core.hooksPath, so it can't disable husky/other hook tooling and
+# is invisible to teammates who don't run it. Refuses to clobber a pre-existing
+# non-symlink hook.
+.PHONY: install-hooks
+install-hooks: ## Install the post-checkout hook so new worktrees auto-link shared files (opt-in, per-clone)
+	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
+	 main=$$(dirname "$$common"); \
+	 dst="$$common/hooks/post-checkout"; \
+	 if [ -e "$$dst" ] && [ ! -L "$$dst" ]; then \
+	   echo "install-hooks: $$dst already exists and is not a symlink — not overwriting. Merge manually." >&2; exit 1; \
+	 fi; \
+	 mkdir -p "$$common/hooks"; \
+	 ln -sfn "$$main/scripts/git-hooks/post-checkout" "$$dst"; \
+	 echo "✓ installed post-checkout hook -> $$dst"
+
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
 # port — `web` ↔ :1837 (server / server-e2b, real FamilySearch login), `web-dev`
@@ -224,11 +250,16 @@ harness-test: ## Eval harness tests — eval/harness (pytest, excludes e2e; uv a
 	cd eval/harness && uv run pytest -m 'not e2e' -q
 
 .PHONY: eval-skill
-eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
 	# source/deps changed, so the harness's "mcp-server build is stale" check
 	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
 	# candidate. uv auto-syncs the harness venv on invocation.
+	#
+	# SKILL may name several skills (quote them): make eval-skill SKILL="tree-edit timeline".
+	# They share one bounded pool — the safe way to cover multiple skills — and
+	# each writes its own releasable run log. Do NOT instead launch several
+	# `make eval-skill` processes at once; concurrent SDK subprocesses SIGKILL.
 	#
 	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
 	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
@@ -236,6 +267,13 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness for one skill, rebuild
 	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
+
+.PHONY: eval-timings
+eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
+	# Reads the timing instrumentation already in the run logs — does NOT
+	# re-run anything. Use it to spot makespan long poles and the stall tax
+	# week over week. TOP overrides how many slowest tests to list.
+	cd eval/harness && uv run python -m scripts.timing_report $(if $(TOP),--top $(TOP),)
 
 .PHONY: optimize-skill
 optimize-skill: ## Tune a skill's SKILL.md description from its tests' trigger queries (on-demand; needs claude CLI + network): make optimize-skill SKILL=tree-edit
@@ -268,8 +306,33 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
 	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	# Keep the machine awake for the whole run — see eval/README.md "Keep the
+	# machine awake" (a sleep inflates real-clock time; the harness flags it).
+	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
+
+.PHONY: e2e-view
+e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
+	# Copies the newest run's final tree + research.json into eval/e2e-view/
+	# (the shape the viewer opens + live-watches). Open that folder once in
+	# the viewer (its Open Project button, or `make electron`); later runs
+	# refresh it in place. Cheap + instant — and it picks the newest run, so
+	# a failing scratch_ run (what you usually want to inspect) works too.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-view TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.view --test $(TEST)
+
+.PHONY: e2e-project
+e2e-project: ## Seed an editable Cowork project from a fixture's STARTING state to debug /research live: make e2e-project TEST=kenneth-quass-death
+	# Copies the fixture's starting-research.json + starting-tree.gedcomx.json
+	# into eval/e2e-project/<slug>/ as research.json + tree.gedcomx.json — a
+	# fresh, editable project you open in Claude Cowork to run /research
+	# step-by-step (init-project auto-skipped) while watching it live in the
+	# Research Viewer. For DEBUGGING the process, NOT scoring: a live run does
+	# not block the tree-read tools the headless `make e2e-run` blocks, so the
+	# agent can read the answer off the live tree. Re-seed (wiping work) with FORCE=1.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-project TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.project --test $(TEST) $(if $(FORCE),--force,)
 
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
@@ -297,15 +360,16 @@ eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
-# build-mcpb.sh and build-image.sh already self-install + self-build the engine,
-# so these stay as thin wrappers (no hidden dep to surface here).
+# The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
+# BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
+# the engine, so these stay thin wrappers (no hidden dep to surface here).
 .PHONY: mcpb
 mcpb: ## Build the .mcpb desktop extension
-	bash scripts/build-mcpb.sh
+	node scripts/build-mcpb.mjs
 
 .PHONY: plugin
 plugin: ## Build the Cowork plugin .zip
-	bash scripts/package-plugin.sh
+	node scripts/package-plugin.mjs
 
 # Marker recording the commit `make sandbox-image` last built the E2B template
 # from, so `deploy-preflight` can warn when in-sandbox agent code changed since.

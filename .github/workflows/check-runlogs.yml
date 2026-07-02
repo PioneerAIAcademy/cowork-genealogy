@@ -23,20 +23,66 @@ name: Check runlog discipline
 
 on:
   pull_request:
+    # `labeled`/`unlabeled` added so the cosmetic-skip escape hatch (below)
+    # re-evaluates the moment a senior applies/removes the label. The default
+    # types (opened, synchronize, reopened) are listed explicitly because
+    # naming any type replaces the defaults.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - 'eval/runlogs/unit/**'
       - 'eval/tests/unit/**'
       - 'packages/engine/plugin/skills/**'
+      # agents/** so the frontmatter lint (check_skill_frontmatter.py) gates
+      # plugin agent descriptions too, not just skills.
+      - 'packages/engine/plugin/agents/**'
       - 'eval/fixtures/**'
       - 'eval/harness/**'
       # MCP source (packages/engine/mcp-server/src/**) is intentionally not a
       # trigger: it is no longer embedded in the run-log snapshot, so a
       # src-only change cannot affect run-log activeness (rule 2).
 
+# `issues: write` lets the auto-strip step remove the bypass label from the PR.
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+# Cosmetic-skip escape hatch (rule 2 only). A senior applies the
+# `eval-cosmetic-skip` label on a PR whose only skill-side change is
+# behavior-neutral (rewording, typo) to keep the prior run log active without
+# a re-run + re-grade. Safety: any NEW commit auto-removes the label (the
+# strip step below runs on `synchronize`), so the bypass can never outlive the
+# commit it was approved for — the senior must re-apply after each push. The
+# label must exist in the repo once: `gh label create eval-cosmetic-skip`.
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - name: Drop stale cosmetic-skip label on new commits
+        if: github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --remove-label "eval-cosmetic-skip" || true
+
+      - name: Resolve cosmetic-skip state
+        id: cosmetic
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Read labels FRESH (post-strip), not from the event payload, so a
+          # `synchronize` run that just removed the label sees skip=0.
+          labels=$(gh pr view "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" --json labels --jq '.labels[].name')
+          if echo "$labels" | grep -qx "eval-cosmetic-skip"; then
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+            echo "::notice::eval-cosmetic-skip label present — rule 2 will be bypassed for this PR."
+          else
+            echo "skip=0" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check out PR with full history
         uses: actions/checkout@v4
         with:
@@ -51,13 +97,16 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          COSMETIC_SKIP: ${{ steps.cosmetic.outputs.skip }}
         run: python eval/harness/scripts/check_runlogs.py
 
       - name: Check skill tool-coverage drift (warn-only)
         run: python eval/harness/scripts/check_tool_coverage.py
 
       # Blocking on hard rules (bad/mismatched name, or a description that
-      # is missing, over 1024 chars, or contains angle brackets); soft rules
-      # (unknown key, unresolvable tool) only warn. The corpus passes today.
-      - name: Lint skill frontmatter
+      # is missing, over 1024 chars, or contains angle brackets) for skills
+      # AND agents; the description checks fold multi-line/block scalars, so
+      # they catch a long or `<bracketed>` value on a continuation line. Soft
+      # rules (unknown key, unresolvable tool) only warn. The corpus passes today.
+      - name: Lint skill + agent frontmatter
         run: python eval/harness/scripts/check_skill_frontmatter.py

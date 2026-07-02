@@ -1,16 +1,8 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-cd "$(dirname "$0")/.."
-
-echo "Packaging Cowork plugin..."
-mkdir -p releases
-rm -f releases/genealogy-plugin.zip
-cd packages/engine/plugin
-zip -r ../../../releases/genealogy-plugin.zip \
-  .claude-plugin/ \
-  agents/ \
-  skills/
-cd ..
-
-echo "Done. Created releases/genealogy-plugin.zip"
+# Shim. The packaging logic moved to Node (scripts/package-plugin.mjs) so it
+# runs on Windows without bash or a `zip` binary. This wrapper keeps
+# `./scripts/package-plugin.sh` working on macOS/Linux for existing docs and
+# muscle memory; `make plugin` and the Windows BuildPlugin.bat call node
+# directly. The .mjs is the single source of truth (it also runs the same
+# frontmatter validation gate before zipping).
+exec node "$(dirname "$0")/package-plugin.mjs" "$@"

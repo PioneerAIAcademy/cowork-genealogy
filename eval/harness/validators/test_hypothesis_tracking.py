@@ -31,7 +31,7 @@ from validators_lib import (
 
 def test_hypotheses_no_deletions(before_state, after_state):
     """Existing hypotheses must not be deleted. Status changes (ruled
-    out, supported, proved) supersede deletion."""
+    out, supported) supersede deletion."""
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:

@@ -1,6 +1,12 @@
 # E2E judge calibration via run-log annotations
 
-**Status:** proposed (for review)
+**Status:** implemented. `calibrate_judge` loads per-run `.ann.json` grades; the
+`/grade-e2e-run` skill produces them (blind); a blocking `check-e2e-fixtures`
+grading gate enforces one per committed run (same-PR). This doc is the original
+design — where it says "ask Claude Code to grade," that is now the
+`/grade-e2e-run` skill, and the deferred "CI `--dry-run` check" shipped as a
+presence gate. Current guidance: `docs/e2e-testing-guide.md` "Judge calibration"
+and `docs/specs/e2e-test-spec.md` §7.4 / §14.
 **Branch:** `e2e-annotation-calibration`
 
 ## Summary

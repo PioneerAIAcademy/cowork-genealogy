@@ -124,6 +124,76 @@ camelCase convenience fields the same way `research_log_append` does.
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
 
+### 3.3 Batch form (`ops`) — persist a whole record in one call
+
+To persist many entries at once (e.g. a record's source + every assertion + its
+person-evidence links), pass an optional `ops` array instead of the top-level
+`section`/`op`/`entry`/`entryId`/`fields`/`planId` (which are ignored when `ops`
+is present). Each op is the same per-op shape the single form takes:
+
+```typescript
+research_append({
+  projectPath,
+  ops: [
+    { section: "sources",         op: "append", entry: {...} },
+    { section: "assertions",      op: "append", entry: {...} },   // one op per assertion/persona
+    { section: "person_evidence", op: "append", entry: {...} },   // one op per link
+    { section: "assertions",      op: "update", entryId: "a_012", fields: {...} },
+    { section: "plan_items",      op: "append", entry: {...}, planId: "pl_001" },
+  ],
+})
+// → { ok: true, results: [{ section, op, entryId }, ...], filesWritten: ["research.json"], validation }
+// on failure: { ok: false, errors: ["ops[<i>]: <msg>"] } — nothing written
+```
+
+Semantics — heterogeneous ops chosen over a homogeneous `entries` array because the
+skills' natural unit of work (one record / household / plan) spans multiple sections,
+and the single-call form already dispatches per-op on `section`, so heterogeneity is
+no more expensive (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
+
+- **All-or-nothing.** Every op is applied to one in-memory `research`, the **whole
+  document is validated once**, and `research.json` is written **once**. Any op's
+  precondition failure (§5) or a final validation failure writes **nothing** and
+  returns `{ ok: false, errors }`.
+- **Per-op error indexing.** A precondition failure on op *i* (an `applyOne` check —
+  bad section, missing field, the §5 invariants enforced in-loop) returns its
+  message(s) prefixed `ops[<i>]: …`, so the caller can fix one row without losing the
+  rest. A failure caught only by the **final whole-document validation** (e.g. a
+  cross-section reference, or a §5 rule the validator owns such as the fact-conflict
+  competing-count) is reported with its `research.json/…` path instead, since it is
+  not attributable to a single op in the loop.
+- **Intra-batch id assignment.** Ids are assigned in array order, each scanning the
+  live in-memory document, so consecutive appends to a section get consecutive ids.
+  A later op **may reference an id created by an earlier op** via that id's
+  predictable `<prefix>NNN` (e.g. append the source as op #1, then an assertion op
+  carries `source_id: "src_001"`). A later op **may NOT `update`** an id created
+  earlier in the same batch — `append` assigns the id internally, so it cannot be
+  named for an in-batch update; do that update in a follow-up call.
+- **No-op ops** (e.g. re-declaring an already-exhaustive question) do not mutate; a
+  batch of only no-ops writes nothing (`filesWritten: []`). `results` still echoes a
+  row for every op (no-ops included), and any per-op no-op note is surfaced in
+  `validation.warnings`; the `results` rows do not themselves flag which op was a no-op.
+- **Section invariants (§5) hold across the batch** — e.g. two `append`s of an active
+  plan for the same question in one batch are rejected at the second op, because the
+  first is already in the live `research.plans` when the second's invariant runs.
+
+The **persisted shape is byte-identical** to the single-op form; `ops` changes only
+the number of write calls, so no `research.json` schema, validator, web-mirror, or
+fixture change is required (the reason batching is low-risk).
+
+**Stringified-argument tolerance.** The model occasionally serializes a large or
+deeply nested argument as a JSON **string** rather than inline JSON — the ~25 KB
+`ops` batch of a full record is exactly the size that triggers it. Because the input
+schema declares `ops` as an array and `entry`/`fields` as objects, a string value is
+unambiguously a mis-serialization. The tool therefore JSON-parses a string-valued
+`ops`/`entry`/`fields` before any shape check (`src/utils/coerce-json-arg.ts`); an
+unparseable string falls through to the normal, specific error (e.g. ``` `ops` must
+be a non-empty array ```). This is not a supported call form — callers should still
+pass real JSON — but it stops a correct-but-stringified batch from being rejected and
+driving the model into a slow one-op-per-call fallback (the root cause of the
+`record-extraction` eval wall-clock timeouts, 2026-06-30). `tree_edit` applies the
+same tolerance to its `ops` and single-op nested objects.
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic, single-file

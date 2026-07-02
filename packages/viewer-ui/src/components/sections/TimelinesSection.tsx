@@ -3,6 +3,7 @@ import type { GedcomxPerson } from '../../lib/schema'
 import { getPreferredName } from '../../lib/schema'
 import Card from '../shared/Card'
 import CrossLink from '../shared/CrossLink'
+import Linkify from '../shared/Linkify'
 import styles from './TimelinesSection.module.css'
 
 export default function TimelinesSection(): React.JSX.Element {
@@ -87,7 +88,7 @@ export default function TimelinesSection(): React.JSX.Element {
                               </span>
                             )}
                             {gapBefore.notes && (
-                              <span className={styles.gapNotes}>{gapBefore.notes}</span>
+                              <span className={styles.gapNotes}><Linkify text={gapBefore.notes} /></span>
                             )}
                           </div>
                         </div>
@@ -114,7 +115,7 @@ export default function TimelinesSection(): React.JSX.Element {
                           <div className={styles.eventType}>{event.event_type}</div>
                           {event.place && <div className={styles.eventPlace}>{event.place}</div>}
                           {event.description && (
-                            <div className={styles.eventDesc}>{event.description}</div>
+                            <div className={styles.eventDesc}><Linkify text={event.description} /></div>
                           )}
                           {event.assertion_ids.length > 0 && (
                             <div className={styles.eventLinks}>
@@ -131,7 +132,7 @@ export default function TimelinesSection(): React.JSX.Element {
                               {event.conflict_note && (
                                 <span className={styles.conflictNote}>
                                   {' — '}
-                                  {event.conflict_note}
+                                  <Linkify text={event.conflict_note} />
                                 </span>
                               )}
                               <div className={styles.conflictLinks}>
@@ -147,7 +148,7 @@ export default function TimelinesSection(): React.JSX.Element {
                       {impossibility && (
                         <div className={styles.impossibility}>
                           <div className={styles.impossibilityDesc}>
-                            {impossibility.description}
+                            <Linkify text={impossibility.description} />
                           </div>
                           <div className={styles.impossibilityLinks}>
                             <CrossLink id={impossibility.event_1_assertion_id} label="Event 1" />

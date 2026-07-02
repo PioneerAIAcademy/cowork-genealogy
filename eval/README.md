@@ -32,8 +32,13 @@ eval/
   Login.bat               Windows: FamilySearch login for e2e (once a day)
   CheckSetup.bat          Windows: e2e preflight (run this first)
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
+  ViewE2E.bat             Windows: load the latest e2e run into the Research Viewer
   ValidateFixture.bat     Windows: e2e stripping linter
   ScratchResearch.bat     Windows: set up a throwaway dir to debug /research by hand
+  SeedProject.bat         Windows: seed an editable Cowork project from a fixture (debug /research live)
+  Viewer.bat              Windows: launch the Research Viewer (Electron)
+  BuildMcpb.bat           Windows: build the .mcpb desktop extension (for the Cowork debug loop)
+  BuildPlugin.bat         Windows: build the Cowork plugin .zip (for the Cowork debug loop)
   RunCalibration.bat      Windows: run judge calibration (maintainer only)
 ```
 
@@ -52,11 +57,11 @@ the e2e benchmark; see
   npm install -g @anthropic-ai/claude-code
   ```
   Then run `claude` once to authenticate (browser login or paste an API key). `Setup.bat` installs the CLI for you on Windows; macOS/Linux users do this step manually. If `claude --version` returns "not recognized," the harness will fail every test with a misleading "Claude Code returned an error result: success" error even though the SKILL.md, fixtures, and tests are fine.
-- **Anthropic API key** — required. The skill runner and the LLM judge both use it. `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
+- **Anthropic API key** — required for the LLM judge (the Anthropic SDK has no subscription path). `Setup.bat` will prompt for the key and save it to `eval/.env`; you can also put it there directly:
   ```
   ANTHROPIC_API_KEY=sk-ant-...
   ```
-  Or set it in your shell. Claude Code subscription auth (`~/.claude/`) is supported as a fallback only when no API key is configured. See `eval/harness/harness/auth.py` for resolution rules.
+  Or set it in your shell. The **skill runner** prefers your Claude Code subscription (`~/.claude/`) when one is available, billing it rather than the metered key, and only falls back to the API key when no subscription session is found. The judge always uses the key regardless. See `eval/harness/harness/auth.py` for resolution rules.
 
 ## Running manually (macOS / Linux)
 
@@ -203,6 +208,57 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.
 
+## Cosmetic-change exemption (skip the re-run for a minor wording change)
+
+A PR reviewer asks for a one-word rewording or a typo fix in a `SKILL.md`.
+That edit changes the skill-side snapshot, which flips the latest run log
+**inactive** — so by default the gate (rule 2) demands a full harness re-run
+(~$1–3) *and* a complete re-grade, even though the behavior can't have
+changed. A senior can waive that for a genuinely behavior-neutral edit by
+applying a **PR label** — no branch checkout, no commands, nothing to install.
+
+**It exempts the PR from both:** no harness re-run, and no re-correcting
+scores. The prior run log stays the active one, and its already-complete
+`.ann.json` satisfies the completeness rule as-is. (Only rule 2 is relaxed —
+rules 1 and 3 still run, so an *unannotated* baseline can't be waved through.)
+
+**Use it only for genuinely behavior-neutral edits** — rewording, typos,
+comments, formatting. If a change *could* alter what Claude does (a new
+instruction, a reordered step, a changed tool argument, an edited fixture or
+scenario), it is **not** cosmetic: re-run the harness.
+
+### How a senior sets the flag (entirely in the GitHub web UI)
+
+1. Open the PR on github.com.
+2. In the right-hand sidebar, under **Labels**, add **`eval-cosmetic-skip`**.
+3. (Recommended) leave a one-line comment saying *why* it's behavior-neutral —
+   e.g. "Reworded step 3 'Look for' → 'Search for'; no behavior change." The
+   label records *who* and *when*; the comment records *why*.
+
+The `Check runlog discipline` check re-runs automatically when the label is
+added and turns green, with a warning noting the bypass so reviewers see it.
+
+### Safety: the label auto-expires on every new push
+
+The label is **removed automatically whenever a new commit is pushed** to the
+PR. So a waiver can never silently cover a *later* substantive change — if more
+commits land, the check goes red again and the senior must re-apply the label
+(after confirming the new commits are still cosmetic). This is the same
+"voids on any further edit" guarantee a re-run would give, with none of the
+work.
+
+### One-time repo setup
+
+The label has to exist before anyone can apply it. An admin creates it once:
+
+```bash
+gh label create eval-cosmetic-skip \
+  --description "Senior waiver: skill change is behavior-neutral; skip the eval re-run" \
+  --color FBCA04
+```
+
+Seniors need **Triage** or **Write** access on the repo to apply labels.
+
 ## Windows users
 
 `Setup.bat` performs the one-time setup. Then `Start.bat` launches the CRUD UI and `RunTests.bat` runs the harness against the current corpus.
@@ -220,7 +276,7 @@ run on demand.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
 - **Code:** `harness/e2e/` — orchestrator, judge, CLI.
 - **Fixtures:** `tests/e2e/<test-id>/` (added incrementally).
-- **Runlogs:** a passing run commits as `runlogs/e2e/<test-id>/run-<timestamp>.*`; non-passing runs write as gitignored `scratch_<timestamp>.*`.
+- **Runlogs:** a gradeable run (pass/partial/fail) commits as `runlogs/e2e/<test-id>/run-<timestamp>.*` and must be graded (`/grade-e2e-run`); only a skipped run (no tree) writes as gitignored `scratch_<timestamp>.*`. A committed fail is retained signal; only a pass validates the fixture (spec §14).
 
 ### Authoring a new fixture
 
@@ -256,8 +312,70 @@ equivalent in parentheses:
 7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
    live run (20–60 min, $3–10).
 8. `/interpret-e2e-result` → read the verdict.
-9. If it passes, commit the fixture (and optionally its run log), and
+9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
+   the Research Viewer with `eval\Viewer.bat` (`make electron`) and open
+   `eval\e2e-view` in it (its **Open Project** button) to inspect the agent's
+   final tree, research log, and each finding's direct/indirect badge. Keep the
+   viewer open — re-running `ViewE2E.bat` refreshes it live.
+10. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
+
+### Debug a fixture interactively (Cowork + the viewer)
+
+Before — or instead of — a headless `RunE2E.bat`, run the fixture **live in
+Claude Cowork** and watch it unfold. This is the recommended starting point
+for debugging *why* the agent did or didn't do something, and it keeps the
+test-improve loop fast: you watch the fix work in minutes instead of waiting
+20–60 min for a headless verdict.
+
+**First time (and after any skill or MCP-server change):** build and install
+the two artifacts so Cowork has the genealogy tools — `eval\BuildMcpb.bat`
+(`make mcpb`), then install the `.mcpb` in Claude Desktop → Settings →
+Extensions; and `eval\BuildPlugin.bat` (`make plugin`), then upload the plugin
+in Cowork → Customize → Browse plugins. **Fully quit and reopen** Claude
+Desktop after installing. The headless `RunE2E.bat` path doesn't use these (it
+runs the compiled engine directly), so this is only for the live Cowork loop.
+
+1. `eval\SeedProject.bat` → enter the slug (`make e2e-project TEST=<slug>`).
+   Copies the fixture's starting state into `eval\e2e-project\<slug>\` as a
+   fresh, editable `research.json` + `tree.gedcomx.json`.
+2. Open that folder in **Claude Cowork** (genealogy plugin installed, logged
+   in to FamilySearch) and run `/research`. `init-project` is auto-skipped
+   (research.json already exists); question-selection still runs unless the
+   fixture seeds a question.
+3. Launch the Research Viewer — `eval\Viewer.bat` (`make electron`) — and open
+   the **same folder** in it (its **Open Project** button) to watch the
+   research log, assertions, and conflicts appear live — and ask Claude *"why
+   didn't you search X?"*, *"why direct, not indirect?"* as it works.
+
+**For understanding, not scoring.** A live run does **not** block the tree-read
+tools (`person_read` / `person_search` / `person_ancestors`) that the headless
+`make e2e-run` blocks — so confirm the agent found the answer by *searching
+records*, not by reading the live tree. The honest pass/fail is always the
+headless run. Re-seed a fresh project (wiping any work) with `FORCE=1`.
+
+### Keep the machine awake during a run
+
+A run is long (20–60 min) and the machine must **not sleep** partway through.
+If it does, the work pauses until the machine wakes — the result is still
+valid, but the run takes much longer in real time. The harness measures
+**active** time (so a sleep does not corrupt the wall-clock metric) and prints
+a `machine slept ~N min` note when it detects one — treat that note as your cue
+to set one of these up:
+
+- **Windows:** there's no per-command keep-awake tool, so set the power plan
+  once — `powercfg /change standby-timeout-ac 0` (add `powercfg /change
+  monitor-timeout-ac 0` to keep the display on), or Settings → System → Power →
+  "When plugged in, put my device to sleep → Never".
+- **macOS:** prefix the run with `caffeinate` — `caffeinate -i make e2e-run
+  TEST=<slug>` (holds off idle sleep until the run exits). On an always-on
+  machine (e.g. a Mac mini) set System Settings → Energy → "Prevent automatic
+  sleeping when the display is off" once instead.
+- **Linux:** prefix with `systemd-inhibit --what=idle:sleep make e2e-run
+  TEST=<slug>`, or disable sleep in your desktop's power settings.
+
+A closed laptop lid can still sleep regardless of the above (clamshell) — keep
+the lid open unless you're on power with an external display.
 
 ## Related specs
 

@@ -22,6 +22,9 @@ Honors the execution caps from unit-test-spec.md §15:
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import re
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -104,6 +107,39 @@ def _check_sdk_version() -> str | None:
     return None
 
 
+# When the harness abandons a run mid-stream (wall-clock / silence abort or
+# a routing short-circuit), the SDK tears down the CLI subprocess while it may
+# still be mid-hook. The CLI's hook callback then tries a control-channel
+# `sendRequest` on the already-closed stream, throws "Stream closed", and bun
+# dumps a minified JS stack + code frame to the subprocess's stderr. It is pure
+# teardown noise — the outcome is already recorded — but on any suite with
+# aborts it floods the console (see the `record-extraction` run: four aborts,
+# dozens of stack-trace lines). Registering a `stderr` callback is also the
+# only way to intercept it at all: with `stderr=None` the SDK leaves the
+# subprocess stderr attached to our own fd (subprocess_cli.py pipes it only
+# when a callback is set), so we could not filter it from Python. This callback
+# drops the known-noise lines and forwards everything else, so a genuine CLI
+# diagnostic still reaches the console.
+_CLI_NOISE_PATTERNS = (
+    re.compile(r"Error in hook callback"),
+    re.compile(r"Stream closed"),
+    re.compile(r"^\s*at\s"),  # JS stack frames ("at sendRequest (...)")
+    re.compile(r"^\s*\d+\s*\|"),  # bun code-frame lines ("9403 | ...")
+    re.compile(r"/\$bunfs/"),  # bun bundled-path frames
+)
+
+
+def _filter_cli_stderr(line: str) -> None:
+    """SDK `stderr` callback: swallow CLI teardown noise, forward the rest.
+
+    The SDK strips the trailing newline and skips blank lines before calling
+    us, so `line` is a non-empty, right-stripped string.
+    """
+    if any(p.search(line) for p in _CLI_NOISE_PATTERNS):
+        return
+    sys.stderr.write(line + "\n")
+
+
 class _LimitExceeded(Exception):
     """Internal sentinel for execution-limit aborts."""
 
@@ -150,6 +186,12 @@ class SkillRunResult:
     # unmatched-tool-call gate to distinguish Type 1 (tool doesn't exist,
     # abort) from Type 2 (wrong args to existing tool, continue to judge).
     registered_mcp_tools: set[str] = field(default_factory=set)
+    # How many skill-execution attempts this result took (1 = clean first
+    # try; >1 means transient stalls/errors forced a retry in
+    # _execute_skill_with_retry). The keystone stall-tax signal: a suite
+    # with many >1 runs is paying the cold-cache / API-stall cost the e2e
+    # perf analysis flagged. Set by the retry wrapper, not run_skill.
+    attempts: int = 1
 
 
 async def run_skill(
@@ -166,6 +208,7 @@ async def run_skill(
     max_input_tokens_per_turn: int = DEFAULT_MAX_INPUT_TOKENS_PER_TURN,
     sdk_message_silence_seconds: int = DEFAULT_SDK_MESSAGE_SILENCE_SECONDS,
     allowed_tools_override: list[str] | None = None,
+    routing_short_circuit_skills: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
@@ -204,6 +247,14 @@ async def run_skill(
     # over-limit calls without raising (the SDK swallows hook exceptions
     # in some paths).
     tool_call_count = {"n": 0}
+    # Set by the hook when a negative test routes to its `correct_skill`:
+    # the verdict is sealed the moment that skill is invoked (orchestrator
+    # `_compute_outcome` grades negatives on routing, not on downstream
+    # execution), so we deny the sub-skill launch and stop the run instead
+    # of paying for the routed-to skill's full workload. The loop reads
+    # this after consuming to force a clean (non-aborted) termination.
+    routing_resolved = {"v": False}
+    _short_circuit = routing_short_circuit_skills or set()
 
     async def pretool_hook(input_data, tool_use_id, ctx):
         tool_name = input_data.get("tool_name", "")
@@ -221,6 +272,25 @@ async def run_skill(
                 _observed_skill_keys.add(
                     "skill" if "skill" in tool_input else "name"
                 )
+                # Negative-test routing short-circuit: the correct skill was
+                # invoked, so the routing verdict is decided. skills_invoked
+                # already holds it (recorded just above), so denying the
+                # launch and stopping loses no grading signal while skipping
+                # the routed-to skill's (often very expensive) execution.
+                if skill_name in _short_circuit:
+                    routing_resolved["v"] = True
+                    return {
+                        "hookSpecificOutput": {
+                            "hookEventName": "PreToolUse",
+                            "permissionDecision": "deny",
+                            "permissionDecisionReason": (
+                                f"negative-test routing to {skill_name!r} "
+                                f"observed; verdict decided, stopping"
+                            ),
+                        },
+                        "continue_": False,
+                        "stopReason": "routing_resolved",
+                    }
         # Count MCP tool calls toward max_tool_calls. Block over-limit calls
         # with a permission deny so the SDK doesn't actually execute them; the
         # outer loop reads tool_call_count after the iteration ends and sets
@@ -267,6 +337,10 @@ async def run_skill(
         max_turns=max_turns,
         env=env_for_sdk(auth),
         hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
+        # Intercept the CLI subprocess stderr so we can drop teardown noise
+        # (see _filter_cli_stderr) instead of letting it flood the console on
+        # aborted runs. Setting this is also what makes the SDK pipe stderr.
+        stderr=_filter_cli_stderr,
     )
 
     text_chunks: list[str] = []
@@ -274,9 +348,12 @@ async def run_skill(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
+    # The query() async generator, hoisted so the finally below can close it
+    # deterministically on every exit path (see that finally for why).
+    iterator: Any = None
 
     async def _consume_messages():
-        nonlocal usage, error, aborted_reason
+        nonlocal usage, error, aborted_reason, iterator
         # Manual iteration so each `__anext__()` can be wrapped in a
         # per-message silence watchdog. The SDK has no internal
         # generation-side timeout — once the control-channel
@@ -296,6 +373,14 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            # Negative-test routing short-circuit: the hook denied the
+            # correct-skill launch and set this flag. The SDK does NOT honor
+            # the hook's `continue_: False` to end the run (it just retries
+            # other tools), so we stop consuming here — the routing verdict
+            # is already captured in skills_invoked. This is the early-exit
+            # the hook's stopReason alone can't deliver.
+            if routing_resolved["v"]:
+                return
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
@@ -358,11 +443,37 @@ async def run_skill(
     except Exception as e:  # pragma: no cover — exercised in e2e
         error = f"{type(e).__name__}: {e}"
         aborted_reason = "error"
+    finally:
+        # Close the query() generator while this event loop is still running.
+        # The SDK's process_query tears down its subprocess transport only
+        # inside the generator's own `finally`, and its own comment warns that
+        # manual iteration / early `return` does NOT trigger it (PEP 533). On
+        # the routing short-circuit, _LimitExceeded, and wall-clock-cancel
+        # paths we abandon the generator mid-stream, so that teardown is left
+        # to GC during asyncio.run()'s loop shutdown — which races
+        # shutdown_asyncgens and prints "aclose(): asynchronous generator is
+        # already running" plus a dangling "Loop ... is closed" from the
+        # subprocess transport. (The subscription-auth flip changed subprocess
+        # timing enough to surface this latent leak.) asyncio.wait_for has
+        # fully settled _consume_messages by now, so no __anext__ is in flight
+        # and this aclose can't race; the bounded wait_for guards a stuck
+        # close from hanging the worker thread.
+        if iterator is not None:
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(iterator.aclose(), timeout=15)
 
     # If the hook denied an MCP call past the limit, surface that as the abort.
     if aborted_reason is None and tool_call_count["n"] > max_tool_calls:
         aborted_reason = "max_tool_calls"
         error = f"max_tool_calls ({max_tool_calls}) exceeded"
+
+    # A routing short-circuit is a deliberate, successful early stop — not a
+    # failure. The SDK may surface the hook-initiated stop as an error/abort
+    # on the trailing ResultMessage, so clear any such state and keep the
+    # run clean. The downstream skill never ran; that's the whole point.
+    if routing_resolved["v"]:
+        aborted_reason = None
+        error = None
 
     duration_ms = (time.perf_counter() - start) * 1000.0
 

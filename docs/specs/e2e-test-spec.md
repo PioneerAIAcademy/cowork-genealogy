@@ -297,8 +297,8 @@ here:
    | Signal | `stop_reason` value | Condition |
    |--------|---------------------|-----------|
    | Project completed | `completed` | `research.json::project.status == "completed"` |
-   | Inactivity | `inactivity` | No tool calls or messages for `caps.inactivity_seconds` |
-   | Wall-clock cap | `timeout` | Elapsed time > `caps.wall_clock_seconds` |
+   | Inactivity | `inactivity` | No SDK message at all for `caps.inactivity_seconds` (silence), OR no *progress* — no assistant text and no tool call/result — for `caps.progress_stall_seconds` while the stream stays alive (the **progress watchdog**: a stall can keep emitting non-progress messages, so a plain silence timer misses it) |
+   | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
    | Cost cap | `cost_cap` | Cumulative cost > `caps.max_cost_usd` |
@@ -326,6 +326,22 @@ here:
    `usage.continue_nudges`, so a run that needed many pokes reads as weaker
    signal. The decision logic is `should_continue_run` in
    `eval/harness/e2e/stop_checker.py`.
+
+   **Stall-detect + resume.** The progress watchdog above doesn't only abort:
+   with `--resume-on-stall` (default ON; `RESUME_ON_STALL=0` to disable) the
+   harness tears down the hung `query()` and **resumes the same session**
+   (`fork_session=False`), bounded to 2 attempts — but only in a provably-safe
+   state (no in-flight tool call), else it fails fast. The safe-state gate means
+   a resume can't double-apply a non-idempotent write. Resumes are recorded in
+   `usage.resumes`; the captured `usage.session_id` is what resume reloads.
+
+   **Clocks.** The wall-clock cap, the inactivity/progress timers, and the
+   reported `usage.wall_clock_seconds` all use `time.monotonic()`, which on
+   macOS/Linux does **not** advance while the machine sleeps — so a sleeping
+   laptop can't masquerade as a stall and can't inflate the metric. The literal
+   elapsed `time.time()` is recorded separately as `usage.real_clock_seconds`,
+   and their gap as `usage.slept_seconds` (≈ time asleep). See eval/README.md
+   "Keep the machine awake during a run".
 
 6. **Regardless of which signal fired**, the harness reads the final
    `tree.gedcomx.json` and `research.json` from the temp dir.
@@ -577,8 +593,9 @@ There is **no `verdict` field** — the per-run verdict is derived from `per_fin
 
 Three integrity rules make the agreement number trustworthy:
 
-- **Never auto-created.** A run does not emit an annotation; a human grades the
-  runs worth grading.
+- **Never auto-created.** A run does not emit an annotation; a human grades it
+  with the `/grade-e2e-run` skill (which reads the fixture + the two `final-*`
+  siblings, writes the `.ann.json`, and self-checks it before commit).
 - **Graded blind.** The grade flow reads the fixture and the run's two `final-*`
   siblings, **never `run-<ts>.json`** (where the judge's own labels live), so the
   human label is independent of the judge under test.
@@ -591,8 +608,13 @@ calibration-case directory. `calibrate_judge` discovers every
 reports **per-finding agreement (the ≥80% gate)**, proof-quality agreement
 (advisory), and a per-slug breakdown. A drifted annotation (its `per_finding` keys
 no longer match the fixture's finding ids — i.e. `expected-findings.json` was
-edited after grading) is a hard error: re-grade or delete it. Run
-`uv run python -m e2e.calibrate_judge` (`--dry-run` lints without API calls).
+edited after grading) is a hard error: re-grade or delete it. Grading is
+**same-PR**: every committed run is graded in the PR that commits it (all
+gradeable runs — pass/partial/fail — are committed; §8), enforced by the blocking
+`check-e2e-fixtures`
+grading gate (§14). Contributors run only `/grade-e2e-run`; the **maintainer**
+runs `uv run python -m e2e.calibrate_judge` periodically (`--dry-run` lints
+without API calls) — contributors never do.
 
 ---
 
@@ -602,17 +624,20 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage` (tokens / cost / wall-clock), a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1) |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
 
-A **passing** run is the fixture's validity artifact and is committed under the
-`run-<timestamp>.*` names above; any other outcome (partial / fail / skipped) is
-written with a `scratch_<timestamp>.*` prefix that `.gitignore` keeps out of
-version control, so a non-passing run can't be committed as if it validated the
-fixture (§14). The `.ann.json` is committed when a run is graded. To investigate
+Any **gradeable** run — verdict `pass`, `partial`, or `fail` — is committed
+under the `run-<timestamp>.*` names above and must be graded (§7.4). A committed
+`fail` is deliberately retained signal: a capability gap to retry later, exactly
+as a failing unit test is committed. Only a `skipped` run (the judge never ran —
+no tree to grade) is written with a `scratch_<timestamp>.*` prefix that
+`.gitignore` keeps out of version control. Fixture *validity* is a separate axis
+(§14): only a `pass` validates a fixture, so a committed `fail` does not count as
+validation. The `.ann.json` is committed when a run is graded. To investigate
 a regression — a test that previously passed and now fails
 — diff the old and new `tool_calls` arrays: each entry's `response_summary`
 captures the FS result inline, so collection-hit changes, hint-count shifts, or
@@ -673,7 +698,8 @@ acting.
   axis (§7) is a single rubric-graded score, not the multi-layer
   human-verified grading of `gps-test-spec.md`
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (A cheap advisory artifact check runs in CI — non-blocking; see §14.)
+  PRs. (Cheap artifact checks do run in CI — a blocking grading gate plus an
+  advisory fixture-validity report; see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -721,15 +747,15 @@ This is surfaced two ways:
 - **Documentation requirement** — the author runs the fixture for real
   and commits the passing run log alongside it (testing guide §5,
   first-time-setup step 6).
-- **CI artifact report** (cheap, no live run, **advisory / non-blocking**)
-  — the `check-e2e-fixtures` workflow flags any committed
-  `eval/tests/e2e/<slug>/` lacking a committed
-  `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a warning
-  annotation. It reads only committed files and does **not** trigger a
-  live e2e run (those stay out of CI per §12). It **does not block merge**
-  — unlike the unit-test runlog discipline check (`check_runlogs.py`,
-  `check-runlogs.yml`), which is blocking. The advisory framing lets draft
-  fixtures land — notably PID-less fixtures authored without FamilySearch
-  access (`author-e2e-fixture` Path 3) whose validity run can only happen
-  on an FS-enabled host — while still surfacing the owed run. Run the
-  check with `--strict` to restore a hard non-zero exit for local gating.
+- **CI artifact report** (cheap, no live run) — the `check-e2e-fixtures`
+  workflow runs two checks. Its **fixture-validity** check is **advisory /
+  non-blocking**: it flags any committed `eval/tests/e2e/<slug>/` lacking a
+  committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
+  warning annotation, so a draft fixture can land with its validity run still
+  owed — notably PID-less fixtures authored without FamilySearch access
+  (`author-e2e-fixture` Path 3) whose validity run can only happen on an
+  FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
+  workflow also runs a blocking grading gate** (§7.4): a run log *added in the
+  PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same
+  PR (a treeless crash/skip run is exempt). Both checks read only committed
+  files and do **not** trigger a live e2e run (those stay out of CI per §12).

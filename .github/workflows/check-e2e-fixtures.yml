@@ -1,16 +1,18 @@
-name: Report e2e fixture validity (advisory)
+name: Check e2e fixtures + grading
 
-# Reports the e2e fixture-validity gate (docs/specs/e2e-test-spec.md §14):
-# every committed fixture under eval/tests/e2e/<slug>/ should have at least
-# one committed run log under eval/runlogs/e2e/<slug>/run-*.json with
-# verdict=pass, proving the fixture is solvable against live FamilySearch
-# (stripping completeness alone does not).
+# Two e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py):
 #
-# This check is ADVISORY and NON-BLOCKING: fixtures missing a passing run
-# log are surfaced as warning annotations, but the job still passes so a
-# draft fixture (e.g. a PID-less fixture authored without FamilySearch
-# access, validity run still owed) can land. Only the unit-test runlog
-# discipline check (check-runlogs.yml) blocks merge.
+# 1. Grading gate (BLOCKING): every run log ADDED in this PR that produced a
+#    final tree must ship its run-<ts>.ann.json in the same PR. Grading is
+#    same-PR (the developer + genealogist teams grade every run they commit).
+#    Treeless runs (crashed/skipped before a tree) are exempt. Scoped to
+#    PR-added run logs via `git diff --diff-filter=A` (needs BASE_SHA/HEAD_SHA
+#    and full history).
+#
+# 2. Fixture-validity gate (ADVISORY, docs/specs/e2e-test-spec.md §14): every
+#    committed fixture under eval/tests/e2e/<slug>/ should have a committed
+#    run log with verdict=pass. Missing ones are warning annotations only, so a
+#    draft fixture (validity run still owed) can land.
 #
 # This check only reads committed files; it does NOT run a live e2e test
 # (those are too expensive to gate PRs — see spec §12).
@@ -26,13 +28,18 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out PR
+      - name: Check out PR with full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Report e2e fixture validity (advisory, non-blocking)
+      - name: Check e2e grading gate (blocking) + fixture validity (advisory)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: python eval/harness/scripts/check_e2e_fixtures.py
