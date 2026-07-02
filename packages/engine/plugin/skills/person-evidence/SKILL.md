@@ -507,13 +507,6 @@ When multiple candidates share the same name in the same area:
   from a different record matches the same person, still evaluate it
   independently. Consistency across records strengthens the case, but
   each link needs its own rationale.
-- **Degenerate `same_person` score on an unresolvable id:** When the tree
-  candidate is a local stub, or a tree id `same_person` cannot resolve to a
-  full FamilySearch ARK, the tool may return a near-zero score (e.g. `0.005`)
-  that reflects the missing ARK, not a real mismatch. Treat that as **no
-  score available** — fall back to qualitative correlation (Step 3), and do
-  not let the degenerate number drop a match the identifiers otherwise
-  support. Note in the rationale that the score was uninformative and why.
 
 ## Important rules
 
