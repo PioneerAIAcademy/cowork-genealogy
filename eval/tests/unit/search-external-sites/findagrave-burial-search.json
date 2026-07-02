@@ -14,7 +14,7 @@
   },
   "mcp_fixtures": ["place-search-pennsylvania", "place-search-pennsylvania-by-name", "place-search-pennsylvania-by-place", "external-links-search-schuylkill"],
   "judge_context": [
-    "Generated URL should target findagrave.com/memorial/search with name and location parameters (firstname Patrick, lastname Flynn, location Pennsylvania; death-year bound if used should reflect 'after 1880', not a fabricated exact year)",
+    "Generated URL should target findagrave.com/memorial/search with name and location parameters (first name Patrick, last name Flynn, location Pennsylvania). NOTE: Patrick's death year (1908) is KNOWN from the research state (project objective: died 1908 in Schuylkill County). Using death year 1908 is therefore correct — it is the known fact and satisfies 'after 1880'; do NOT penalize it as a fabricated exact year or as over-narrowing. An open 'after 1880' bound is also acceptable. The user's vague 'sometime after 1880' does not override the known 1908.",
     "Must include a compiled-source caution: FindAGrave memorials are user-contributed; photographed headstone evidence carries more weight than contributor-entered dates/family links; findings are leads needing verification against original records",
     "FindAGrave basic search is free — there should be no subscription/paywall warning",
     "A research-log entry must be written in the same turn the URL is generated: site findagrave, outcome partial, capture_received false"

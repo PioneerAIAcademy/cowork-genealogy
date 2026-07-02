@@ -250,6 +250,12 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
             "required": ["projectPath"],
         }
     if tool_name == "research_log_append":
+        # Mirror the production tool's input schema (research-log-append.ts).
+        # externalSite MUST be a typed nested object here — production advertises
+        # it, so omitting it makes the eval model omit/stringify the field on its
+        # first call (a fidelity gap, not a skill defect). The tool-side coercion
+        # is a backstop for stringification; this declaration prevents the
+        # first-call omission so eval behaviour matches production.
         return {
             "type": "object",
             "properties": {
@@ -261,6 +267,26 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
                 "planItemId": {"type": ["string", "null"]},
                 "resultsAvailable": {"type": ["number", "null"]},
                 "notes": {"type": ["string", "null"]},
+                "externalSite": {
+                    "type": ["object", "null"],
+                    "properties": {
+                        "site": {
+                            "type": "string",
+                            "enum": [
+                                "ancestry",
+                                "myheritage",
+                                "findmypast",
+                                "findagrave",
+                                "newspapers",
+                                "familysearch_web",
+                            ],
+                        },
+                        "urlGenerated": {"type": "string"},
+                        "captureReceived": {"type": "boolean"},
+                        "captureFilename": {"type": ["string", "null"]},
+                    },
+                    "required": ["site", "urlGenerated", "captureReceived"],
+                },
                 "stagedResultsRef": {"type": ["string", "null"]},
             },
             "required": ["projectPath", "tool", "query", "outcome", "resultsExamined"],
