@@ -209,7 +209,8 @@ Code in this checkout), alongside the other dev skills `compare-state` and
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
-| **interpret-e2e-result** | Reads an e2e run log and explains the verdict, stop reason, expected-vs-found gaps, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.), pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+| **grade-e2e-run** | Grades an e2e run into its calibration annotation: presents each expected finding + the agent's evidence (blind to the judge's grades), collects the genealogist's true/partial/false labels, and writes `run-<ts>.ann.json`. | "Grade this e2e run" / "Annotate this run for calibration" |
 
 ## Agents
 
@@ -453,9 +454,9 @@ What's shipped:
 - **26 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
-  and guardrails (validate-schema, check-warnings, convert-dates). The two
-  e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result) are
-  repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
+  and guardrails (validate-schema, check-warnings, convert-dates). The three
+  e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
+  are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
 - **1 Cowork agent.** `gps-mentor` — a BCG-style senior-genealogist
   review, invoked by `/research` at GPS checkpoints and on demand.
 - **Researcher profile.** `init-project` captures experience level and
