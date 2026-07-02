@@ -37,6 +37,17 @@ Current live tools:
   registered live, the migrated skills' write calls return `fixture_not_found`
   and the model silently fails to persist (it analyzes in text but never
   writes), which the validators and judge then grade as a write failure.
+- tree_edit: calls the compiled TS tool to mutate tree.gedcomx.json (add/update
+  fact, add person, add relationship, remove, etc.). Like research_append it is
+  a deterministic function of local workspace state, so a fixture cannot stand
+  in for it — the tree-edit skill's write-tests need a real write to grade.
+  Without it registered live, `tree_edit` is absent from the mock's tool list
+  entirely (it is in no test's fixtures and was not live), so the model reports
+  the tool "isn't available", falls back to editing the file directly, and the
+  write-tests fail on Correctness/Completeness for reasons unrelated to the
+  skill body. Place resolution inside the tool is best-effort (it no-ops when
+  the caller supplies standard_place, and swallows a resolution miss as a
+  warning), so a live tree_edit does not require network in the offline harness.
 """
 
 from __future__ import annotations
@@ -54,7 +65,7 @@ from harness.tool_catalog import default_tools_dir, load_tool_catalog
 
 # Bare tool names that are always registered as live handlers rather than
 # fixture-backed mocks. See module docstring for the rationale.
-LIVE_TOOLS: set[str] = {"validate_research_schema", "research_log_append", "research_append"}
+LIVE_TOOLS: set[str] = {"validate_research_schema", "research_log_append", "research_append", "tree_edit"}
 
 # Path to the compiled MCP server build output, used by live tool handlers.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -305,6 +316,22 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
             },
             "required": ["projectPath", "section", "op"],
         }
+    if tool_name == "tree_edit":
+        # tree_edit has many operations (add_fact, update_fact, add_person,
+        # add_relationship, remove, merge, …) each with a different payload
+        # shape. Rather than mirror the full production schema here, keep it
+        # permissive — the compiled tool validates its own input and the
+        # project on every call. projectPath + operation are the only always-
+        # present fields.
+        return {
+            "type": "object",
+            "properties": {
+                "projectPath": {"type": "string"},
+                "operation": {"type": "string"},
+            },
+            "required": ["projectPath", "operation"],
+            "additionalProperties": True,
+        }
     return {"type": "object", "properties": {}, "additionalProperties": True}
 
 
@@ -320,6 +347,8 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "tree_edit":
+        return _make_tree_edit_handler(workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -521,6 +550,73 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
             "response_fixture": "live:research_append",
+            "response": response,
+        }
+        call_log.append(entry)
+        return {"content": [{"type": "text", "text": json.dumps(response)}]}
+
+    return handler
+
+
+def _make_tree_edit_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """Build the live handler for tree_edit.
+
+    Mirrors _make_research_append_handler: calls the compiled TS tool via
+    `node --input-type=module` against the workspace path, piping the full
+    input via stdin (so no value needs JS-string escaping) and overriding
+    projectPath with the workspace tempdir. tree_edit validates the whole
+    project before persisting and writes only tree.gedcomx.json, so its
+    result reflects the actual file the skill produced.
+    """
+    tree_edit_js = _MCP_BUILD / "tools" / "tree-edit.js"
+
+    async def handler(args, _ws=workspace, _tjs=tree_edit_js):
+        if _ws is None or not _tjs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
+            response: dict[str, Any] = {
+                "ok": False,
+                "errors": [f"tree_edit: {reason}"],
+            }
+        else:
+            tjs_posix = str(_tjs).replace("\\", "/").replace("'", "\\'")
+            tree_edit_url = ("file:///" + tjs_posix) if sys.platform == "win32" else tjs_posix
+
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+
+            script = (
+                f"import {{ treeEdit }} from '{tree_edit_url}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const r = await treeEdit(input);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = subprocess.run(
+                    ["node", "--input-type=module", "--eval", script],
+                    input=json.dumps(input_obj),
+                    capture_output=True, text=True, timeout=30,
+                )
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"tree_edit: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {
+                    "ok": False,
+                    "errors": [f"tree_edit: {e}"],
+                }
+
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__tree_edit",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:tree_edit",
             "response": response,
         }
         call_log.append(entry)
