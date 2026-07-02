@@ -1,0 +1,123 @@
+{
+  "persons": [
+    {
+      "id": "GM4P-TYS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Rivanette",
+          "surname": "Florencio de Araujo"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c08d1d69-1b1e-46b5-a342-d636fdb3be96",
+          "type": "Birth",
+          "date": "30 de novembro de 1936",
+          "standard_date": "30 Nov 1936",
+          "place": "Pernambuco, Brazil",
+          "standard_place": "Pernambuco, Brazil"
+        },
+        {
+          "id": "3c985754-b63b-4bb3-a8e4-8d8723f05ddf",
+          "type": "Death",
+          "date": "20 de outubro de 2000",
+          "standard_date": "20 Oct 2000",
+          "place": "Santo Antônio, Recife, Pernambuco, Brasil",
+          "standard_place": "Santo Antônio, Recife, Pernambuco, Brazil"
+        },
+        {
+          "id": "aa66c1b7-c391-4aef-ba53-3410dce8ac4d",
+          "type": "Birth Registration",
+          "place": "Recife, Pernambuco, Brasil",
+          "standard_place": "Recife, Pernambuco, Brazil"
+        },
+        {
+          "id": "730ae17f-6180-4ac2-8263-14f0092f4243",
+          "type": "Burial",
+          "place": "Santo Antônio, Recife, Pernambuco, Brasil",
+          "standard_place": "Santo Antônio, Recife, Pernambuco, Brazil"
+        }
+      ]
+    },
+    {
+      "id": "GM45-SDX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Amaro",
+          "surname": "Gomes de Melo"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0ff7e082-fc7d-4479-b47c-f7d045905496",
+          "type": "Birth",
+          "date": "1936",
+          "standard_date": "1936",
+          "place": "Pernambuco, Brazil",
+          "standard_place": "Pernambuco, Brazil"
+        },
+        {
+          "id": "96c9f637-44b2-4e1a-8637-35bbd83b3575",
+          "type": "Death",
+          "date": "2015",
+          "standard_date": "2015",
+          "place": "Brasil",
+          "standard_place": "Brazil"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "GM45-SDX",
+      "person2": "GM4P-TYS",
+      "facts": [
+        {
+          "id": "e5fbca63-fe50-4f0c-825b-e699f52587e7",
+          "type": "Marriage",
+          "date": "22 Aug 1957",
+          "standard_date": "22 Aug 1957",
+          "place": "Recife, Pernambuco, Brasil",
+          "standard_place": "Recife, Pernambuco, Brazil"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "QJQL-HQS",
+      "title": "Rivanete de Araujo Melo, \"Brasil, Pernambuco, Registro Civil, 1804-2023\"",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLWZ-YN4J : Wed Jun 10 20:47:45 UTC 2026), Entry for Claudia Maria de Araujo Melo and Amaro Gomes de Melo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLWZ-YN45"
+    },
+    {
+      "id": "SSLL-6JM",
+      "title": "Rivaneta Florencio de Araujo, \"Brasil, Pernambuco, Registro Civil, 1804-2023\"",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7 : Mon Jun 29 20:55:14 UTC 2026), Entry for Amaro Gomes de Melo and Amaro Gomes de Melo, 22 8.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLWC-Y4MM"
+    },
+    {
+      "id": "QJQL-ZR5",
+      "title": "Rivanete de Araujo Melo, \"Brasil, Pernambuco, Registro Civil, 1804-2023\"",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLWC-8B2Q : Wed Jun 10 11:16:11 UTC 2026), Entry for Roberto de Araujo Melo and Amaro Gomes de Melo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLWC-8B2H"
+    },
+    {
+      "id": "3GHR-PWZ",
+      "title": "Rivanete de Araujo Melo, \"Brasil, Pernambuco, Registro Civil, 1804-2023\"",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLWG-3DKS : Thu Jun 11 00:26:00 UTC 2026), Entry for Alexandre de Araujo Melo and Amaro Gomes de Melo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLW2-RL3Z"
+    },
+    {
+      "id": "79VQ-B53",
+      "title": "Rivanete de Araujo Melo, \"Brasil, Pernambuco, Registro Civil, 1804-2023\"",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLWZ-VNS1 : Thu Jun 11 00:20:40 UTC 2026), Entry for Paulo Roberto de Araujo Melo and Amaro Gomes de Melo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLWZ-VN33"
+    }
+  ]
+}
