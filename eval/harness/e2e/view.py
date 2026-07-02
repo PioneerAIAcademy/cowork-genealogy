@@ -11,8 +11,8 @@ viewer with `make electron`); every later `make e2e-view` overwrites the two
 files in place, so an already-open viewer refreshes live across the
 run -> interpret -> grade -> improve -> re-run loop.
 
-Picks the newest run by mtime, so it works on a failing `scratch_*` run (the
-usual thing to inspect) as well as a committed passing `run-*` one.
+Picks the newest run by mtime across both prefixes, so it works on a gitignored
+`scratch_*` skipped run as well as a committed `run-*` (pass/partial/fail) one.
 """
 
 from __future__ import annotations

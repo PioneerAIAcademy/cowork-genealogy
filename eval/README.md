@@ -276,7 +276,7 @@ run on demand.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
 - **Code:** `harness/e2e/` — orchestrator, judge, CLI.
 - **Fixtures:** `tests/e2e/<test-id>/` (added incrementally).
-- **Runlogs:** a passing run commits as `runlogs/e2e/<test-id>/run-<timestamp>.*`; non-passing runs write as gitignored `scratch_<timestamp>.*`.
+- **Runlogs:** a gradeable run (pass/partial/fail) commits as `runlogs/e2e/<test-id>/run-<timestamp>.*` and must be graded (`/grade-e2e-run`); only a skipped run (no tree) writes as gitignored `scratch_<timestamp>.*`. A committed fail is retained signal; only a pass validates the fixture (spec §14).
 
 ### Authoring a new fixture
 
