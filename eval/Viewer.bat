@@ -1,7 +1,7 @@
 @echo off
 cd %~dp0
 
-echo === Cowork Genealogy — Research Viewer ===
+echo === Cowork Genealogy - Research Viewer ===
 echo.
 echo Launches the Electron Research Viewer. Use its "Open Project" button to
 echo open a project folder:

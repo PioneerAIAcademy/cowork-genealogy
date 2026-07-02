@@ -360,15 +360,16 @@ eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
-# build-mcpb.sh and build-image.sh already self-install + self-build the engine,
-# so these stay as thin wrappers (no hidden dep to surface here).
+# The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
+# BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
+# the engine, so these stay thin wrappers (no hidden dep to surface here).
 .PHONY: mcpb
 mcpb: ## Build the .mcpb desktop extension
-	bash scripts/build-mcpb.sh
+	node scripts/build-mcpb.mjs
 
 .PHONY: plugin
 plugin: ## Build the Cowork plugin .zip
-	bash scripts/package-plugin.sh
+	node scripts/package-plugin.mjs
 
 # Marker recording the commit `make sandbox-image` last built the E2B template
 # from, so `deploy-preflight` can warn when in-sandbox agent code changed since.

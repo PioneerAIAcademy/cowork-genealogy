@@ -56,6 +56,8 @@ import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
 import { personWarningsTool } from "./tools/person-warnings.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
+import { personQualityTool } from "./tools/person-quality.js";
+import type { PersonQualityInput } from "./types/person-quality.js";
 import { mergeWarnings } from "./tools/merge-warnings.js";
 import type { MergeWarningsInput } from "./types/merge-warnings.js";
 import { volumeSearchTool } from "./tools/volume-search.js";
@@ -515,6 +517,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as PersonWarningsInput;
       const result = await personWarningsTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "person_quality") {
+    try {
+      const args = request.params.arguments as unknown as PersonQualityInput;
+      const result = await personQualityTool(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
