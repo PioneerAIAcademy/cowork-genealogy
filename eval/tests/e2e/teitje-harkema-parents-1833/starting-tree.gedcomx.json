@@ -1,0 +1,120 @@
+{
+  "persons": [
+    {
+      "id": "LHZM-TR7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHZM-TR7-name-1",
+          "given": "Teitje",
+          "surname": "Harkema"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "31 July 1833",
+          "standard_date": "31 Jul 1833",
+          "place": "Veenhuizen, Norg, Drenthe, Netherlands",
+          "standard_place": "Veenhuizen, Norg, Drenthe, Netherlands"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "17 January 1899",
+          "standard_date": "17 Jan 1899",
+          "place": "Vries, Vries, Drenthe, Netherlands",
+          "standard_place": "Vries, Vries, Drenthe, Netherlands"
+        }
+      ]
+    },
+    {
+      "id": "LH56-BC2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LH56-BC2-name-1",
+          "given": "Roelf Meerten",
+          "surname": "Huisman"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 May 1818",
+          "standard_date": "11 May 1818",
+          "place": "Slochteren, Groningen, Netherlands",
+          "standard_place": "Slochteren, Groningen, Netherlands"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 January 1881",
+          "standard_date": "17 Jan 1881",
+          "place": "Norg, Drenthe, Netherlands",
+          "standard_place": "Norg, Drenthe, Netherlands"
+        },
+        {
+          "id": "14608977-25f1-4b28-8c98-23c489b656bc",
+          "type": "Burial",
+          "place": "Veenhuizen, Drenthe, Nederland",
+          "standard_place": "Veenhuizen, Dalen, Drenthe, Netherlands"
+        },
+        {
+          "id": "466258b4-9189-4d1e-8ede-e5979b4eb55c",
+          "type": "Occupation",
+          "place": "Norg, Drenthe, Netherlands",
+          "standard_place": "Norg, Drenthe, Netherlands",
+          "value": "wijkmeester"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "LH56-BC2",
+      "person2": "LHZM-TR7",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "30 June 1876",
+          "standard_date": "30 Jun 1876",
+          "place": "Norg, Drenthe, Netherlands",
+          "standard_place": "Norg, Drenthe, Netherlands"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "35NY-8LC",
+      "title": "Feitje Harkema, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MM-SQLS : Tue Mar 25 15:40:35 UTC 2025), Entry for Feitje Harkema and Feitje Harkema, 18 Jan 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68MM-SQLS"
+    },
+    {
+      "id": "M9LV-28H",
+      "title": "Legacy NFS Source: Teitje Harkema - Government record: Birth record or certificate: birth: 31 July 1833; Veenhuizen, Drente, Netherlands",
+      "citation": "Paper, Archive, Drents Archief, Brink 4, Assen, Nederland, 9401 HS"
+    },
+    {
+      "id": "35N5-R4J",
+      "title": "Teitje Harkema, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLNQ-H9HK : Tue Mar 25 04:22:05 UTC 2025), Entry for Roelof Huisman and Meerten Kornelis Huisman, 16 Jan 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLNQ-H9C4"
+    },
+    {
+      "id": "S1PK-67W",
+      "title": "Teitje Harkema, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL5P-H1KC : Tue Mar 25 07:52:43 UTC 2025), Entry for Roelf Huisman and Meerten Kornelis Huisman, 30 Jun 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL5P-3YZL"
+    }
+  ]
+}

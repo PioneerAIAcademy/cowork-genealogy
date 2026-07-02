@@ -1,0 +1,18 @@
+{
+  "id": "teitje-harkema-parents-1833",
+  "name": "Teitje Harkema — parents (1830s)",
+  "source_pid": "LHZM-TR7",
+  "captured": "2026-07-02",
+  "researcher_question": "Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1830s",
+    "geography": "NL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Parentage is attested by entries in FamilySearch's \"Netherlands, Archival Indexes, Vital Records, 1600-2000\" collection, which name the father, Jan Roelfs Harkema, alongside Teitje's birth (1833) and death (1899) index entries. The subject's given name is transcribed inconsistently across the source index as \"Teitje\" and \"Feitje\" — the agent must recognize these as the same person. Source citations are in Dutch; place names should resolve consistently to Veenhuizen, Norg, Drenthe, Netherlands."
+}
