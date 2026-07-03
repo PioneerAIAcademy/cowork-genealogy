@@ -1,0 +1,117 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Elena Asmundsdotter was born about 1681 at Henckelstorp, a farm belonging to Västra Karaby parish, Malmöhus, Sweden.",
+      "details": {
+        "target_person": {
+          "name": "Elena Asmundsdotter"
+        },
+        "fact_type": "Birth",
+        "date": "about 1681",
+        "place": "Henckelstorp, Västra Karaby parish, Malmöhus, Sweden"
+      },
+      "supporting_sources": [
+        "Barsebäck parish death register, Elena Asmundsdotter died 23 April 1745, age approximately 64 (born c. 1681), recorded as \"barnfödd i Henckelstorp\" (born as a child in Henckelstorp).",
+        "Svensk Ortförteckning (Swedish gazetteer): Henckelstorp is a farm area belonging to Västra Karaby parish, Malmöhus county."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Elena Asmundsdotter was the daughter of Asmund Torsson of Henckelstorp.",
+      "details": {
+        "subject_person": {
+          "name": "Elena Asmundsdotter",
+          "pid": "PID-TODO"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Asmund Torsson",
+          "birth": "about 1643, Henckelstorp, Västra Karaby, Malmöhus, Sweden"
+        }
+      },
+      "supporting_sources": [
+        "Västra Karaby parish register, 11 June 1712 christening of Boel, illegitimate daughter of \"Asmun Tors(son's) dotter Elena from Henckelstorp\" — names Elena's father as Asmund Torsson.",
+        "Västra Karaby / Henckelstorp tax lists (Mantalslängder) 1680–1709 and catechism lists (1696, 1699, 1701) placing Asmund Torsson's household at Henckelstorp across the period Elena was born and raised."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Elena Asmundsdotter was the daughter of Pernilla Jönsdotter, Asmund Torsson's wife.",
+      "details": {
+        "subject_person": {
+          "name": "Elena Asmundsdotter",
+          "pid": "PID-TODO"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Pernilla Jönsdotter",
+          "birth": "about 1651"
+        }
+      },
+      "supporting_sources": [
+        "Västra Karaby catechism list 1696: \"Asmun Torson … wife Pernilla Jönsdtr\" (only record listing her maiden name); 1700 tax list lists wife Pernilla in Asmund Torsson's household.",
+        "Västra Karaby parish death register: Pernilla, widow of Asmun Torson, died 18 April 1719, buried 24 April 1719, age 68 (born c. 1651)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "fact",
+      "description": "Jöns Jönsson married Elena Asmundsdotter on 29 December 1712 in Västra Karaby parish (her home parish).",
+      "details": {
+        "target_person": {
+          "name": "Elena Asmundsdotter"
+        },
+        "fact_type": "Marriage",
+        "date": "29 December 1712",
+        "place": "Västra Karaby parish, Malmöhus, Sweden"
+      },
+      "supporting_sources": [
+        "Västra Karaby parish marriage register: \"the 4th Christmas Day (29 December 1712) married the farm hand and bachelor Jöns Jönsson of Henckelstorp and the female person Elena Asmundsdotter.\""
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Elena Asmundsdotter's paternal grandfather (Asmund Torsson's father) was Tor Andersson of Henckelstorp.",
+      "details": {
+        "subject_person": {
+          "name": "Asmund Torsson"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Tor Andersson",
+          "birth": "Henckelstorp, Västra Karaby, Malmöhus, Sweden (wife Hanna, per 1663 tax list)"
+        }
+      },
+      "supporting_sources": [
+        "Västra Karaby / Henckelstorp tax lists (Mantalslängder) 1658–1663 list Tor Andersson (wife Hanna, named 1663) in the same farm as his sons Jöns and Asmund Torsson, extending the line one generation beyond the parish registers."
+      ],
+      "required": false
+    },
+    {
+      "id": "f6",
+      "type": "fact",
+      "description": "Elena's father Asmund Torsson was buried 11 January 1711 in Västra Karaby, age 67 (born about 1643).",
+      "details": {
+        "target_person": {
+          "name": "Asmund Torsson"
+        },
+        "fact_type": "Burial",
+        "date": "11 January 1711",
+        "place": "Västra Karaby parish, Malmöhus, Sweden"
+      },
+      "supporting_sources": [
+        "Västra Karaby parish death register: Asmon Torsson died between 4 and 5 January 1711, buried 11 January 1711, age 67 (born c. 1643/44)."
+      ],
+      "required": false
+    }
+  ]
+}
