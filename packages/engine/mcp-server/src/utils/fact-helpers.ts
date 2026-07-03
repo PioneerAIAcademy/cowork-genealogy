@@ -87,6 +87,32 @@ function collectFactDayRanges(
   return out;
 }
 
+// ─── Fact-id collection (for PersonWarning.factIds highlighting) ──────────
+
+/**
+ * Ids of a person's facts whose `type` matches the (factTypes, antiFactTypes)
+ * selection — `factTypes = null` means any type; `antiFactTypes = null` means
+ * no exclusion. Skips facts with no `id`, preserves source order, and drops
+ * duplicate ids. Pure; used by the warning emitters to attach the specific
+ * facts a check examined (`PersonWarning.factIds`). Works for the anchor
+ * (`mob.getPerson()`) or any relative/child `SimplifiedPerson`.
+ */
+export function factIdsOfPersonFacts(
+  person: SimplifiedPerson,
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const f of person.facts ?? []) {
+    if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+    if (f.id === undefined || seen.has(f.id)) continue;
+    seen.add(f.id);
+    out.push(f.id);
+  }
+  return out;
+}
+
 // ─── Self-fact (anchor) aggregations ──────────────────────────────────────
 
 /** Earliest possible day across all matching facts on the anchor, or null. */
@@ -308,6 +334,32 @@ export function latestDayOfPersonFacts(
     if (ranges[i].max > latest) latest = ranges[i].max;
   }
   return latest;
+}
+
+/**
+ * Earliest possible day across all matching facts on a single SimplifiedPerson.
+ * Day-level analog of `earliestYearOfPersonFacts` / mirror of
+ * `latestDayOfPersonFacts`. Used by the warning emitters to identify which
+ * child contributed the earliest birth day a check keyed on.
+ */
+export function earliestDayOfPersonFacts(
+  person: SimplifiedPerson,
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+  imperfectDateFudgeDays = 0,
+): number | null {
+  const ranges = collectFactDayRanges(
+    person.facts ?? [],
+    factTypes,
+    antiFactTypes,
+    imperfectDateFudgeDays,
+  );
+  if (ranges.length === 0) return null;
+  let earliest = ranges[0].min;
+  for (let i = 1; i < ranges.length; i++) {
+    if (ranges[i].min < earliest) earliest = ranges[i].min;
+  }
+  return earliest;
 }
 
 /**

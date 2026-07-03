@@ -1,7 +1,9 @@
 {
   "tool": "person_warnings",
   "description": "person_warnings on Ole C. Hole (KD96-TV4) -- fires hasEventAfterDeath1 (a 1975 Residence recorded after his 1960 death). Paired with the son's quality fixture so warnings AND quality both have content. Used by ut_check_warnings_015.",
-  "args": { "personId": "KD96-TV4" },
+  "args": {
+    "personId": "KD96-TV4"
+  },
   "response": {
     "warningCount": 1,
     "warnings": [
@@ -11,7 +13,12 @@
         "severity": "error",
         "personId": "KD96-TV4",
         "personName": "Ole C. Hole",
-        "message": "An event is dated more than 1 year after this person's latest death-like fact."
+        "message": "An event is dated more than 1 year after this person's latest death-like fact.",
+        "factIds": [
+          "F13",
+          "F14",
+          "F15"
+        ]
       }
     ]
   }

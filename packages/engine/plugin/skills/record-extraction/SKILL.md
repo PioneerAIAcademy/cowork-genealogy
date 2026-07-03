@@ -93,6 +93,19 @@ Record data arrives in one of four ways:
    then browses on FamilySearch to pick a specific image
    (`dgs:{DGS}_{IMAGE}/dist.jpg`).
 
+   If an image cannot be read — you have no reachable image ARK / DGS
+   URL, or `volume_search` / `place_search` fails (common in the sandbox,
+   where the Places API is often unreachable) — do **not** try a browser,
+   "Claude in Chrome", or `web_fetch` to fetch it: those are unavailable
+   here and only waste turns. Instead, pivot to searchable **indexes**
+   that carry the same facts — the record's own indexed persona fields
+   (`record_read`), a broader `record_search` / `search-full-text`, a
+   Find A Grave index entry, or the indexed records of related persons
+   (e.g. a subject's children's death-record indexes routinely name a
+   parent). Reserve image transcription for facts that exist *only* on
+   the image; when even that is blocked, log the gap and continue via
+   indexes rather than stopping the research.
+
 ## Steps
 
 ### 1. Identify the source
@@ -243,8 +256,10 @@ matching entry in the result's `gedcomx.persons[]`. This lets
 person-evidence hand the right focus person to `same_person`.
 **Required (non-null) for every assertion whose source is a `record_search`
 result** — leaving it null on those breaks the downstream matcher and is
-a hard validator failure. Set it to **null** only for image-, PDF-, and
-full-text-sourced records, which carry no structured GedcomX persona.
+a hard validator failure. Set it to **null** for image-, PDF-,
+full-text-, and **`record_read`-sourced** records — none of these produce
+the staged `record_search` sidecar the matcher keys on, so there is no
+persona id to point at.
 
 **`value`** — Human-readable, what the record says (not your
 interpretation). "age 5" not "born 1845". Use `[?]` for uncertain
@@ -378,6 +393,15 @@ you ran with `projectPath`, instead pass that response's
 `results/<log_id>.json` sidecar (the validator needs it to cross-check
 assertions carrying a `record_persona_id`). Use the returned `logId` as
 the `log_entry_id` you stamp on the source and assertions in step 5.
+
+A record from **`record_read`** (fetched by ARK, not staged from a
+`record_search`) has **no** staged sidecar. Do **not** pass
+`stagedResultsRef`, and do **not** hand-write a `results/<log_id>.json`
+file for it — a manual sidecar with no staged persona is flagged as an
+orphan by the validator and blocks every subsequent write until removed.
+Just call `research_log_append` for it (tool `record_read`) with no
+staged ref; its assertions carry `record_persona_id: null` (step 3), so
+no sidecar is needed.
 
 Staged handles expire (~24h); if `research_log_append` returns
 `{ ok: false }` because the handle no longer resolves, re-run the

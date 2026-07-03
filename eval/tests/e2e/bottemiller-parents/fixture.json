@@ -1,0 +1,18 @@
+{
+  "id": "bottemiller-parents",
+  "name": "Find William Henry Bottemiller's parents from the 1880 census and Oregon vital records",
+  "source_pid": "249W-9LP",
+  "captured": "2026-07-01",
+  "researcher_question": "Who were the parents of William Henry Bottemiller, born 29 December 1862 in Franconia Township, Chisago County, Minnesota, and died 13 May 1929 in Oregon City, Clackamas County, Oregon?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1880s",
+    "geography": "US-MN"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "German-immigrant parents. Recoverable via the 1880 U.S. Census (William, age 17, as 'Willie' in the Todd County, Minnesota household of Henry & Mary Bottermiller) and via William's 1929 Oregon death record (father 'Casper H'). Heavy surname transcription variation across records (Bottermiller, Boettenellr, Buttimiller, Battemiller, Rottemiller). Three parent-naming sources were stripped from the starting tree to prevent the answer leaking off the local citations: the 1880 census, the mother's 1921 GenealogyBank obituary, and the Oregon State Archives death record naming 'Casper H'. Death-index leads (Oregon Death Index / Deaths and Burials) remain as pointers the agent must follow."
+}
