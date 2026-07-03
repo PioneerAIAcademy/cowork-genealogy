@@ -31,6 +31,18 @@ Fires when all plan items for a question have status `completed`
 or `skipped`. If items are still `in_progress`, refuse to declare
 and recommend completing the in-flight work first.
 
+## 0. Precondition check (run first)
+
+The `evidence_class` and `independent_verification` criteria in Step 3 are
+meaningless against unclassified or unlinked assertions. Before applying the
+five threshold questions, confirm every assertion tied to this question (via
+`extracted_for_question_ids`) has: (a) a real `information_quality` and
+`evidence_type` from `assertion-classification` (not a leftover
+record-extraction default), and (b) a `person_evidence` link. If any
+assertion fails either check, stop here, name the specific assertion IDs,
+and recommend `assertion-classification` or `person-evidence` — do not
+declare exhaustive on unclassified or unlinked evidence.
+
 ## 1. Gather evidence
 
 Read:
