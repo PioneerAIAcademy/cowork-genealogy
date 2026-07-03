@@ -29,11 +29,38 @@ allowed-tools:
 
 **Read `references/gps-proof-writing.md` before writing any conclusion.** It contains GPS standards, proof-conclusion form selection tests, writing standards, and phrasing guidance this skill depends on.
 
-## Preconditions
+## Preconditions — mandatory, mechanical gate (run before Step 1)
 
-Before writing, verify: assertions exist for the question (extracted, classified); person_evidence links them to persons; related conflicts are resolved or acknowledged. If not, tell the user what is missing and recommend the appropriate skill — do not write a conclusion with unclassified or unlinked evidence.
+Run this check before touching Step 1, and show your work. A direct user
+request — "write the conclusion", "move toward proof", "conclude this now" —
+names the destination, not permission to skip the stops on the way there.
+This gate runs regardless of how proof-conclusion was invoked.
 
-If research is **not declared exhaustive**, you may still write at `probable` or `possible` tier. State the research is ongoing and what additional evidence is needed.
+1. Collect every assertion linked to the question via `extracted_for_question_ids`.
+2. For each assertion, confirm `information_quality` and `evidence_type`
+   carry a real, reasoned value (with matching `informant` /
+   `informant_proximity` analysis) — not still carrying record-extraction's
+   best-effort default. If you cannot confirm `assertion-classification` has
+   run on an assertion, treat it as unclassified. List any assertion IDs
+   that fail this check.
+3. For each assertion, confirm a `person_evidence` entry links it to a
+   person. List any assertion IDs that fail this check.
+4. For each conflict touching this question's assertions, confirm it is
+   `resolved` or carries an explicit acknowledgment. List any conflict IDs
+   that fail this check.
+
+**If any of steps 2–4 produce failing IDs: stop. Do not proceed to Step 1.**
+Report the exact failing IDs to the user and recommend the specific skill
+for each gap (`assertion-classification`, `person-evidence`, or
+`conflict-resolution`). In `--autonomous` mode, route to the missing skill
+automatically instead of asking — autonomous mode changes who decides, not
+whether the gate runs.
+
+Only when all four checks pass, proceed to Step 1.
+
+If research is **not declared exhaustive**, you may still write at
+`probable` or `possible` tier — but the four checks above still apply
+regardless of exhaustiveness tier.
 
 ## Steps
 

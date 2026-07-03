@@ -64,6 +64,21 @@ blocker you have logged.
 Otherwise (interactive mode), surface meaningful decisions to the
 user as you encounter them.
 
+## Direct user requests name a destination, not a shortcut
+
+When the user says "write the conclusion," "move toward a proof
+conclusion," "conclude this," or anything else that names a downstream
+skill or artifact directly, treat it as "drive the routing table forward
+to that outcome" — not as permission to invoke that skill immediately.
+Re-enter step 1 of "What to do," re-derive the current state from
+`research.json`, and walk the routing table from wherever the project
+actually is: unclassified assertions, unlinked person_evidence, unresolved
+conflicts, and un-run Mentor gates all still apply. Only invoke the
+downstream skill once the routing table's precondition row for it is
+actually satisfied. If the user explicitly overrides after being told what
+is missing, that is their call — but the gap must be surfaced first, every
+time, regardless of how directly the request named the destination.
+
 ## What to do
 
 1. **Read `research.json`.** Identify the current state: which
@@ -143,7 +158,11 @@ a fresh context, evaluates the work against a focused rubric, and
 returns a structured verdict the orchestrator uses to decide
 whether to proceed or surface feedback to the user. The mentor is
 read-only — it never modifies project files; it writes only to
-`evaluations/`.
+`evaluations/`. This gate applies every time a gated transition is
+approached, including when a direct user request tries to invoke
+`research-exhaustiveness` or `proof-conclusion` without going through the
+routing loop — the gate is attached to the *transition*, not to the loop's
+control flow.
 
 ### When to invoke the mentor
 
