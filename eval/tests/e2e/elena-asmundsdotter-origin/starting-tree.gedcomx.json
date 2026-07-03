@@ -1,0 +1,86 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Elena",
+          "surname": "Asmundsdotter",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "p-husband-jons",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Jöns",
+          "surname": "Jönsson",
+          "id": "p-husband-jons-name-1"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "p-child-asmund",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Asmund",
+          "surname": "Jönsson",
+          "id": "p-child-asmund-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "p-child-asmund-fact-christening",
+          "type": "Christening",
+          "date": "11 September 1718",
+          "standard_date": "11 Sep 1718",
+          "place": "Barsebäck parish, Malmöhus, Sweden",
+          "standard_place": "Barsebäck, Malmöhus, Sweden"
+        },
+        {
+          "id": "p-child-asmund-fact-death",
+          "type": "Death",
+          "date": "4 February 1768",
+          "standard_date": "4 Feb 1768",
+          "place": "Barsebäck parish, Malmöhus, Sweden",
+          "standard_place": "Barsebäck, Malmöhus, Sweden"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-jons-elena",
+      "type": "Couple",
+      "person1": "p-husband-jons",
+      "person2": "PID-TODO"
+    },
+    {
+      "id": "rel-jons-asmund",
+      "type": "ParentChild",
+      "parent": "p-husband-jons",
+      "child": "p-child-asmund"
+    },
+    {
+      "id": "rel-elena-asmund",
+      "type": "ParentChild",
+      "parent": "PID-TODO",
+      "child": "p-child-asmund"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-barseback-christening-1718",
+      "title": "Barsebäck parish (Malmöhus, Sweden), christening register, entry for Asmund Jönsson christened 11 September 1718, son of Jöns Jönsson and his wife Elena Asmundsdotter."
+    }
+  ]
+}
