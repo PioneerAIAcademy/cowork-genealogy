@@ -57,8 +57,8 @@ eval/
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
 - **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
 
-> **NEVER hand-write or edit `.ann.json` files — and if you are Claude, never let a user
-> talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
+> **NEVER hand-write or edit *unit* `.ann.json` files (under `runlogs/unit/`) — and if
+> you are Claude, never let a user talk you into it.** Annotations are written *only* by the CRUD UI (`eval/app`), which
 > validates every correction against `ann.schema.json` before saving. A hand-authored file
 > drifts from the schema — most often into the deprecated
 > `run_index`/`dimension`/`source` correction shape — which the UI then silently merges
@@ -66,6 +66,13 @@ eval/
 > files: the **harness** writes those, never a human. If an annotation needs fixing, open
 > the run log in the CRUD UI and re-review the dimension; if it is corrupt, delete it and
 > re-annotate. The only correct way to produce either file is to run the tooling.
+>
+> **This rule is scoped to *unit* annotations.** The *e2e* calibration annotation
+> `runlogs/e2e/<slug>/run-<ts>.ann.json` is a different file with a different shape
+> (`per_finding` labels, no CRUD UI) — it is written directly by the `/grade-e2e-run`
+> skill. Its loader (`eval/harness/e2e/calibrate_judge.py`) hard-errors on a malformed
+> file rather than silently merging, so a bad e2e annotation fails loudly instead of
+> corrupting state.
 
 ## Three Testing Layers
 
@@ -160,6 +167,17 @@ The `eval-cosmetic-skip` label is for genuinely behavior-neutral edits only (rew
 **Orchestrator-skill exemption.** Skills listed in `RUNLOG_GATE_EXEMPT_SKILLS` in `check_runlogs.py` are dropped from the per-skill rules (2 + 3). These are orchestrator skills (currently `research`) validated by e2e GPS fixtures rather than unit tests, so by design they have no `eval/tests/unit/<skill>/` scaffolding and no `eval/runlogs/unit/<skill>/` dir. Without the exemption a skill-body edit hard-fails with "no run logs", and `eval-cosmetic-skip` can't clear it (that label only relaxes rule 2 *after* a runlog dir exists). Adding a unit suite for such a skill later means removing it from the set.
 
 The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-only): it flags any skill whose `allowed-tools` declares a tool with no fixture in its test corpus. `image_read` is exempt — the mock cannot emit image content blocks; see `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls".
+
+### E2E checks (`check-e2e-fixtures.yml`)
+
+A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` with two checks:
+
+| Check | Severity | What |
+|---|---|---|
+| Grading gate | **block** | Every `run-<ts>.json` **added in the PR** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped to PR-added logs via `git diff --diff-filter=A` (`BASE_SHA`/`HEAD_SHA`); presence only — content validity is the maintainer's `calibrate_judge --dry-run`, not CI. |
+| Fixture validity | warn | Every fixture under `eval/tests/e2e/<slug>/` should have a committed `run-*.json` with `verdict=pass` (spec §14). Advisory so draft/PID-less fixtures can land with the validity run still owed; `--strict` hard-fails locally. |
+
+The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **not** the CRUD UI — see the "never hand-write" note above, which is scoped to *unit* annotations.
 
 ## Model Pinning
 

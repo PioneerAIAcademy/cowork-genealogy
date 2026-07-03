@@ -3,11 +3,14 @@
 A run produces four artifacts under eval/runlogs/e2e/<test-id>/, named by
 outcome (see runlog_prefix):
 
-- a PASSING run uses the committable `run-<timestamp>.*` prefix — it is the
-  fixture's validity artifact and is committed (e2e-test-spec.md §14).
-- any other outcome (partial / fail / skipped) uses `scratch_<timestamp>.*`,
-  which `.gitignore` keeps out of version control so a non-passing run can't
-  be committed as if it validated the fixture.
+- a gradeable run (verdict pass / partial / fail) uses the committable
+  `run-<timestamp>.*` prefix and is committed. A committed `fail` is retained
+  signal — "the system can't solve this yet; retry later" — exactly as a failing
+  unit test is committed. Fixture *validity* is a separate axis: only a `pass`
+  proves the fixture solvable (e2e-test-spec.md §14).
+- a `skipped` run (the judge never ran — the agent crashed before producing any
+  tree, so there is nothing to grade) uses `scratch_<timestamp>.*`, which
+  `.gitignore` keeps out of version control.
 
 The four files per run ({prefix} = `run-` or `scratch_`):
 
@@ -77,18 +80,28 @@ def timestamp_slug(now: datetime | None = None) -> str:
     return t.strftime("%Y-%m-%d_%H-%M-%S")
 
 
-def is_committable_run(verdict: str) -> bool:
-    """Whether a run is the fixture's *validity* artifact (committed).
+_GRADED_VERDICTS = frozenset({"pass", "partial", "fail"})
 
-    Only a `pass` validates a fixture (e2e-test-spec.md §14); every other
-    outcome is a scratch run that `.gitignore` keeps out of version control,
-    so a failed run can't be committed as if it had validated the fixture.
+
+def is_committable_run(verdict: str) -> bool:
+    """Whether a run produced a gradeable tree worth committing.
+
+    A judge verdict of pass / partial / fail means the run produced a final
+    tree, so it is committed as `run-<ts>.*` and must be graded (§7.4) —
+    including a `fail`, which is retained signal: a capability gap to retry
+    later, exactly as a failing unit test is committed. Only a `skipped` (or
+    otherwise non-graded) run — the judge never ran, so there is no tree to
+    grade — stays a gitignored `scratch_` run.
+
+    Fixture *validity* is a separate axis (e2e-test-spec.md §14): only a `pass`
+    proves the fixture solvable. A committed `fail` does NOT validate the
+    fixture — check_e2e_fixtures.py looks specifically for verdict==pass.
     """
-    return verdict == "pass"
+    return verdict in _GRADED_VERDICTS
 
 
 def runlog_prefix(verdict: str) -> str:
-    """`run-` for a committable (passing) run, otherwise `scratch_`."""
+    """`run-` for a gradeable run (pass/partial/fail), else `scratch_` (skipped)."""
     return "run-" if is_committable_run(verdict) else "scratch_"
 
 

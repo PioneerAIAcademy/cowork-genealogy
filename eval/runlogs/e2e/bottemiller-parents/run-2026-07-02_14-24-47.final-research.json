@@ -1,0 +1,1387 @@
+{
+  "project": {
+    "id": "rp_bottemiller_parents",
+    "objective": "Who were the parents of William Henry Bottemiller, born 29 December 1862 in Franconia Township, Chisago County, Minnesota, and died 13 May 1929 in Oregon City, Clackamas County, Oregon?",
+    "subject_person_ids": [
+      "249W-9LP"
+    ],
+    "status": "active",
+    "created": "2026-07-01T00:00:00Z",
+    "updated": "2026-07-01T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the death certificate of William Henry Bottemiller (died 13 May 1929, Oregon City, Clackamas County, Oregon) report about his parents?",
+      "rationale": "Oregon death certificates post-1903 routinely name the deceased's father and mother's maiden name. William died in 1929 in Oregon City, so a state death certificate almost certainly exists and is the single most direct source likely to name both parents. Answering this question first establishes a baseline identification of the parents before corroborating evidence is sought in census records and other sources.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-02",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The question asks specifically what the death certificate reports about William Henry Bottemiller's parents. The FamilySearch 'Oregon, Deaths and Burials, 1903\u20131947' database abstract (src_001) explicitly names Father = Casper A. Battermiller and Mother = Mary Mehlman (maiden name). Three FamilySearch collections searched; Oregon Death Index (src_002) and Find a Grave Index (src_003) independently confirm the death event and subject identity. Original certificate image (ark:/61903/1:2:MYQR-859) was attempted via record_read and returned 'not found' \u2014 the derivative abstract is the best accessible version. Newspaper full-text returned nil for 1929. No conflicts among sources.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 src_001 explicitly states Father = Casper A. Battermiller and Mother = Mary Mehlman, directly answering what the death certificate reports about his parents.",
+          "repository_breadth": "Three FamilySearch collections searched (1675532, 1946790, 2221801). Newspaper full-text nil. External sites (Ancestry, findagrave.com) not searched \u2014 noted as limitation for future corroboration questions; acceptable scope for this specific death-certificate question.",
+          "original_substitution": "Attempted original certificate image (ark:/61903/1:2:MYQR-859 via record_read); returned 'not found' \u2014 the 1:2: source-citation ARK points to the Oregon State Archives original, inaccessible via available tools. Derivative abstract (src_001) is best available.",
+          "independent_verification": "Three independent sources confirm the death event and subject identity. Only one source (src_001) names the parents; both parent assertions derive from the same unknown personal informant on the death certificate \u2014 one evidence unit for parentage. Subsequent questions will seek census and other corroboration.",
+          "evidence_class": "All sources are derivative (src_001, src_002) or authored (src_003). No original records with primary information accessible. Accuracy limited by indexer fidelity to the original certificate.",
+          "conflict_resolution": "No conflicts. All three sources agree on name, death date (13 May 1929), and place (Clackamas, Oregon). Parent names in src_001 are not contradicted.",
+          "overturn_risk": "Low for the specific question (what does the death certificate report). The abstract clearly names both parents. Future census research may refine the identification of the named parents but will not change what this certificate reports."
+        }
+      },
+      "created": "2026-07-02"
+    },
+    {
+      "id": "q_002",
+      "question": "Does the 1880 U.S. census show William Henry Bottemiller residing in the household of Casper A. Bottemiller, corroborating the parentage named in his 1929 Oregon death certificate?",
+      "rationale": "The death certificate abstract (src_001, q_001 outcome) names Casper A. Battermiller as William's father, but parentage rests on a single derivative source with a secondary unknown informant \u2014 a one-evidence-unit foundation. The tree already records William's 1880 residence as Bertha, Todd County, Minnesota (existing tree fact), placing him in Minnesota at approximately age 17-18. The 1880 U.S. census introduced explicit relationship columns (unlike 1850/1860) and would directly record a parent-child relationship if William was still in Casper Bottemiller's household. A positive result would provide an independent original source with primary relationship information, creating the second evidence unit needed to advance parentage from possible to probable. FamilySearch 1880 U.S. Census (collection 1417683) is fully indexed and searchable by person and location.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-02"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1929",
+          "repository": "FamilySearch",
+          "rationale": "Oregon state death registration began in 1903. The 'Oregon, Oregon State Archives, Death Records, 1864-1968' collection (FamilySearch collection 3657650) is indexed with images and covers Clackamas County. A 1929 state death certificate for William Henry Bottemiller should name his father and mother's maiden name \u2014 the single most direct source for both parents' identities.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1929",
+          "repository": "Ancestry",
+          "rationale": "Ancestry's 'Oregon, U.S., State Deaths, 1864-1971' (collection 61675) may provide access to the same underlying death certificate or a separate transcription with different indexing. If the FamilySearch search fails to locate the record (spelling variants, missed indexing), Ancestry's independent index is the first fallback.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1903-1998",
+          "repository": "FamilySearch",
+          "rationale": "The 'Oregon, Death Index, 1903-1998' (FamilySearch collection 1946790, 1.4M records) is an index-only resource but covers a very broad date range with high record counts, providing an independent confirmation of the death date, place, and spelling used. Useful if the primary record search returns no image-bearing result.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "newspaper",
+          "jurisdiction": "Clackamas County, Oregon, United States",
+          "date_range": "1929",
+          "repository": "other",
+          "rationale": "An obituary in the Oregon City Enterprise or another Clackamas County paper from May 1929 is likely to name William's surviving relatives and may directly state his parents or note his birthplace in Minnesota, corroborating or extending the death certificate evidence. Historic Oregon Newspapers (oregonnews.uoregon.edu) and Chronicling America have digitized Oregon papers from this period.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "cemetery",
+          "jurisdiction": "Oregon City, Clackamas County, Oregon, United States",
+          "date_range": "1929",
+          "repository": "other",
+          "rationale": "A Find A Grave or BillionGraves entry for William Henry Bottemiller in Oregon City may include an obituary link, memorial notes naming parents, or a memorial photo. This is a quick FAN-adjacent check that can corroborate the death certificate or point to additional sources.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-02",
+      "items": [
+        {
+          "id": "pli_006",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1929",
+          "repository": "FamilySearch",
+          "rationale": "Existing tree source S8VD-92V (ark:/61903/1:1:VZHS-YXF) is the Oregon Death Index, 1903-1998 entry for 'Henry William Battemiller' (collection 1946790). Reading this record provides an independent confirmation of the death identification separate from the collection-1675532 abstract, and may reveal different field values. Mentor identified this as needed for repository breadth.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 2,
+          "record_type": "cemetery",
+          "jurisdiction": "Oregon City, Clackamas County, Oregon, United States",
+          "date_range": "1929",
+          "repository": "FamilySearch",
+          "rationale": "Existing tree source S8VD-963 (ark:/61903/1:1:QV2C-WKHM) is the Find a Grave Index entry for William Henry Bottemiller. Reading this record may reveal memorial notes, parents, or family connections added by contributors. Provides an independent compiled source to corroborate or challenge the death certificate data.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 3,
+          "record_type": "newspaper",
+          "jurisdiction": "Clackamas County, Oregon, United States",
+          "date_range": "1929",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch full-text search of digitized Oregon newspapers may surface a May 1929 obituary for William Bottemiller in Oregon City or Clackamas County. An obituary written at the time of death would be an independent second informant for the parents' names, directly addressing the single-source limitation of q_001. Mentor explicitly identified this as the highest-value gap to fill.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_003",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-02",
+      "items": [
+        {
+          "id": "pli_009",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Todd County, Minnesota, United States",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "William Henry Bottemiller appears in the tree with a residence in Bertha, Todd County, in 1880 (from prior extraction). If Casper A. Bottemiller \u2014 the father named on the 1929 death certificate \u2014 is the household head in Todd County in 1880 with William listed as a child, that is direct evidence answering q_002. The 1880 U.S. Federal Census (collection 1417683) is fully indexed on FamilySearch.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Chisago County, Minnesota, United States",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "William was born December 1862 in Franconia Township, Chisago County. At age ~8 in 1870 he would most likely still be in his birth-county household. Finding Casper Bottemiller as head with William as a child in Chisago County in 1870 would independently corroborate the father-child relationship. The 1870 U.S. Federal Census (collection 1438024) is indexed on FamilySearch.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Minnesota, United States",
+          "date_range": "1875",
+          "repository": "FamilySearch",
+          "rationale": "The Minnesota State Census of 1875 (collection 1503053, 612,847 indexed records) bridges the gap between the 1870 and 1880 federal censuses. If the family had already migrated from Chisago to Todd County by 1875, this would document the household composition at an intermediate point and show William still in Casper's household.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Chisago County, Minnesota, United States",
+          "date_range": "1865",
+          "repository": "FamilySearch",
+          "rationale": "The Minnesota State Census of 1865 (collection 1503054, 246,591 indexed records) would show the Bottemiller family in Chisago County when William was about 2\u20133 years old, directly after his 1862 birth. Finding Casper as head with an infant William corroborates the parentage claim closest to William's birth.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Todd County, Minnesota, United States",
+          "date_range": "1880",
+          "repository": "Ancestry",
+          "rationale": "Fallback for pli_009. Ancestry's 1880 U.S. Federal Census index (collection 6742) uses different name parsing and OCR than FamilySearch's and may surface a Bottemiller entry missed due to indexing variants (Battermiller, Bottimiller, etc.). Provides independent search coverage of the same record set.",
+          "fallback_for": "pli_009",
+          "status": "planned"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Chisago County, Minnesota, United States",
+          "date_range": "1862-1870",
+          "repository": "FamilySearch",
+          "rationale": "Minnesota Birth and Death Records 1866\u20131916 (collection 1858352, indexed) and Minnesota County Birth Records 1863\u20131983 (collection 1920099, images only) may contain a birth registration for William Henry Bottemiller in Franconia Township, Chisago County, 29 December 1862. If found, the record would name his parents directly, providing original-source corroboration of the parentage relationship.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T13:28:45.471Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottemiller",
+        "givenName": "William",
+        "deathYearFrom": 1927,
+        "deathYearTo": 1931,
+        "deathPlace": "Oregon",
+        "recordType": "death",
+        "collectionId": "3657650"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero hits for Bottemiller/William in Oregon State Archives Death Records (coll. 3657650). Existing tree sources show he is indexed as 'Henry William Battemiller' \u2014 surname is corrupted in the index."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T13:31:44.172Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battemiller",
+        "givenName": "Henry",
+        "deathYearFrom": 1927,
+        "deathYearTo": 1931,
+        "deathPlace": "Oregon",
+        "recordType": "death",
+        "collectionId": "3657650"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "4 results returned; all are phonetic near-misses (Kitsmiller, Heckelsmiller, Ottermiller, Kitzmiller Phelps). None match William Henry Bottemiller. Collection 3657650 does not appear to have his record indexed under either Bottemiller or Battemiller."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T13:31:53.242Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battemiller",
+        "deathYearFrom": 1928,
+        "deathYearTo": 1930,
+        "collectionId": "3657650"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 43,
+      "notes": "43 total matches, 20 examined \u2014 all phonetic near-misses (Kitzmiller, Rhinemiller, Zaunmiller, etc.). William Bottemiller's record does not appear to be indexed in collection 3657650 under any Battemiller variant. Pivoting to record_read of existing indexed records in other collections."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T13:32:20.759Z",
+      "tool": "record_search",
+      "query": {
+        "tool": "record_read",
+        "recordId": "ark:/61903/1:1:F8WM-X8F",
+        "collection": "Oregon, Deaths and Burials, 1903-1947",
+        "collectionId": "1675532",
+        "note": "Reading existing source S8VD-MGG already attached to tree person 249W-9LP"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "record_read of ark:/61903/1:1:F8WM-X8F (coll. 1675532) reveals the death-record abstract for Henry William Battemiller (=William Henry Bottemiller), died 13 May 1929, Clackamas, Oregon. PARENTS NAMED: Father = Casper A. Battermiller (ark:/61903/1:1:F8WM-X8N); Mother = Mary Mehlman (ark:/61903/1:1:F8WM-X8J). Spouse named as Lilly Jane (consistent with known wife Lillie Jane Kleinsmith). Birth year abstracted as 1862. Image source reference: ark:/61903/1:2:MYQR-859. This directly answers q_001."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T13:52:04.549Z",
+      "tool": "record_read",
+      "query": {
+        "tool": "record_read",
+        "recordId": "ark:/61903/1:2:MYQR-859",
+        "purpose": "Attempt to access original Oregon death certificate image underlying the database abstract in src_001"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "record_read of ark:/61903/1:2:MYQR-859 (1:2: source-citation ARK) returned 'Record not found'. This is a source citation pointer to the Oregon State Archives certificate image; it is not directly accessible as a FamilySearch record entity. Original image inaccessible via available tools. Derivative database abstract (src_001) remains the best available version of this record."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-02T13:53:43.427Z",
+      "tool": "record_read",
+      "query": {
+        "tool": "record_read",
+        "recordId": "ark:/61903/1:1:VZHS-YXF",
+        "collection": "Oregon, Death Index, 1903-1998",
+        "collectionId": "1946790"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "record_read of ark:/61903/1:1:VZHS-YXF (Oregon Death Index, 1903-1998) returns: name 'Henry William Battemiller', death 13 May 1929, Clackamas, Oregon. Index-only \u2014 no parent names. Independently confirms the death event and subject identification from a second collection (1946790 vs. 1675532 for src_001). Source citation ARK: ark:/61903/1:2:9MSQ-JPYR."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-02T13:53:51.257Z",
+      "tool": "record_read",
+      "query": {
+        "tool": "record_read",
+        "recordId": "ark:/61903/1:1:QV2C-WKHM",
+        "collection": "Find a Grave Index",
+        "collectionId": "2221801"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "record_read of ark:/61903/1:1:QV2C-WKHM (Find a Grave Index) returns: name 'William Henry Bottemiller' (correct form, not transposed), birth 29 Dec 1862, death 13 May 1929, burial Clarkes, Clackamas, Oregon. No parent names in the FamilySearch index. External memorial page at findagrave.com GRid=64307258 may have more detail but requires an external site visit. Authored/compiled source. Confirms subject identity and death date independently."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-02T13:53:58.560Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Bottemiller +Oregon +1929",
+        "recordType": "newspaper",
+        "yearFrom": 1929,
+        "yearTo": 1929
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for '+Bottemiller +Oregon +1929' in FamilySearch newspaper full-text search. No Oregon newspapers from 1929 containing 'Bottemiller' are currently digitized and indexed in FamilySearch. A May 1929 Oregon City obituary may exist in Historic Oregon Newspapers (oregonnews.uoregon.edu) or Chronicling America but would require a separate external-site search."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-02T14:10:08.771Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottemiller",
+        "recordType": "census",
+        "residencePlace": "Minnesota, United States",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "collectionId": "1417683"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 29,
+      "notes": "29 fuzzy matches returned but none bear the Bottemiller surname \u2014 all are Bottomaly/Bottomly families from Wright and Martin counties. FamilySearch index does not appear to have an exact Bottemiller entry for Minnesota 1880. Will retry with spelling variants."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-02T14:14:15.636Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "William",
+        "givenNameAlt": "Willie",
+        "surname": "Bottemiller",
+        "surnameAlt": "Battermiller",
+        "recordType": "census",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "birthYearFrom": 1860,
+        "birthYearTo": 1865,
+        "collectionId": "1417683"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 20,
+      "notes": "Found 'Willie Bottermiller' (born 1862 MN) in household of Henry Bottermiller (b.1828 Germany) and Mary Bottermiller (b.1838 Germany) in Bertha, Todd, Minnesota. Tree match 249W-9LP (5 stars). CONFLICT: death cert named father as 'Casper A. Bottemiller'; 1880 census head is 'Henry Bottermiller'. Record: ark:/61903/1:1:MZ9R-28C. Will read full record for details."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S8VD-MGG",
+      "citation": "\"Oregon, Deaths and Burials, 1903\u20131947,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F : accessed 2 July 2026), entry for Henry William Battemiller, died 13 May 1929, Clackamas, Oregon; citing Oregon Vital Records.",
+      "citation_detail": {
+        "who": "Henry William Battemiller (deceased); Casper A. Battermiller (father); Mary Mehlman (mother)",
+        "what": "Oregon, Deaths and Burials, 1903\u20131947, database entry",
+        "when_created": "1929",
+        "when_accessed": "2026-07-02",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Entry ark:/61903/1:1:F8WM-X8F"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "notes": "Database abstract of Oregon state death certificates; collection 1675532 has no images. Underlying certificate image referenced at ark:/61903/1:2:MYQR-859. Subject indexed as 'Henry William Battemiller' \u2014 given name transposed, surname corrupted from 'Bottemiller'. Parents named: father = Casper A. Battermiller; mother = Mary Mehlman (maiden name).",
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S8VD-92V",
+      "citation": "\"Oregon, Death Index, 1903-1998,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF : accessed 2 July 2026), entry for Henry William Battemiller, died 13 May 1929, Clackamas, Oregon; citing Oregon Vital Records.",
+      "citation_detail": {
+        "who": "Henry William Battemiller (deceased)",
+        "what": "Oregon, Death Index, 1903-1998, database entry",
+        "when_created": "compiled from 1903\u20131998 original certificates",
+        "when_accessed": "2026-07-02",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Entry ark:/61903/1:1:VZHS-YXF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF",
+      "notes": "Index-only resource (collection 1946790); no images. Confirms name 'Henry William Battemiller', death 13 May 1929, Clackamas, Oregon. No parent names present. Independent confirmation of subject's death from a different collection than src_001.",
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S8VD-963",
+      "citation": "\"Find a Grave Index,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM : accessed 2 July 2026), entry for William Henry Bottemiller; citing Find A Grave (Memorial GRid=64307258).",
+      "citation_detail": {
+        "who": "William Henry Bottemiller (deceased)",
+        "what": "Find a Grave Index, database entry",
+        "when_created": "contributed by memorial creator (date unknown)",
+        "when_accessed": "2026-07-02",
+        "where": "FamilySearch (familysearch.org) / Find A Grave (findagrave.com)",
+        "where_within": "Entry ark:/61903/1:1:QV2C-WKHM; GRid=64307258"
+      },
+      "source_classification": "authored",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM",
+      "notes": "Compiled Find A Grave memorial. Name correctly rendered as 'William Henry Bottemiller' (not transposed). Birth 29 Dec 1862, death 13 May 1929, burial Clarkes, Clackamas, Oregon. No parent names. Memorial page at findagrave.com GRid=64307258 may contain further detail but requires an external-site visit.",
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"United States, Census, 1880\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MZ9R-28W : 2 July 2026), Entry for Henry Bottermiller and Mary Bottermiller, Bertha, Todd, Minnesota, 1880.",
+      "citation_detail": {
+        "who": "Household of Henry Bottermiller",
+        "what": "United States, Census, 1880 (FamilySearch database index)",
+        "when_created": "1880",
+        "when_accessed": "2026-07-02",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Bertha, Todd County, Minnesota; household of Henry Bottermiller"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28W",
+      "notes": "FamilySearch indexed database abstract derived from original 1880 U.S. Census schedule. Original image accessible at FamilySearch DGS ark:/61903/3:1:33S7-9YB8-R5D. Head listed as 'Henry Bottermiller,' born 1828, Germany \u2014 CONFLICTS with 1929 death cert naming William's father as 'Casper A. Bottemiller.' Wife listed as 'Mary Bottermiller,' born 1838, Germany \u2014 consistent with death cert 'Mary Mehlman' (maiden name). FamilySearch tree auto-matched Willie to 249W-9LP (5 stars, score 3.29).",
+      "log_entry_id": "log_010"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Henry William Battemiller (given name transposed; actual name William Henry Bottemiller)",
+      "structured_value": {
+        "given": "Henry William",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown personal informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Informant identity unknown from this database abstract; the specific person who registered the death and provided the deceased's name cannot be determined without the original certificate."
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 13 May 1929, Clackamas, Oregon",
+      "date": "13 May 1929",
+      "date_certainty": "exact",
+      "place": "Clackamas, Oregon",
+      "standard_place": "Clackamas, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "attending physician (standard informant for death date/cause on Oregon death certificates)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Attending physician typically certified the death and was physically present \u2014 a witness to the death event. Proximity is witness, not merely official_duty."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1862",
+      "date": "1862",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "father named as Casper A. Battermiller on death certificate",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Death certificate parental information is secondary information (the personal informant reported what they knew, not what they witnessed). However, the statement of the father's name is direct evidence for q_001 \u2014 it explicitly answers what the certificate reports about parents. Per GPS three-layer model, information quality (secondary) and evidence type (direct) are independent classifications. a_003 through a_007 all derive from the same unknown personal informant and form one evidence unit for parentage and birth facts.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "mother named as Mary Mehlman on death certificate",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Death certificate parental information is secondary (the personal informant reported what they knew, not what they witnessed). However, the statement of the mother's name is direct evidence for q_001 \u2014 it explicitly answers what the certificate reports about parents. 'Mehlman' is the mother's maiden name. a_003 through a_007 form one evidence unit from the same unknown personal informant.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Casper A. Battermiller",
+      "structured_value": {
+        "given": "Casper A.",
+        "surname": "Battermiller"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving spouse or family member of deceased)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Surname 'Battermiller' is a corrupted transcription of 'Bottemiller'. Father's given name 'Casper A.' is informant-reported on the death certificate.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Mary Mehlman",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Mehlman"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown personal informant (likely surviving spouse or family member of deceased)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "'Mehlman' is the mother's maiden name as recorded on the certificate. She married into the Bottemiller family; this reflects her birth name.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Lilly Jane",
+      "structured_value": {
+        "given": "Lilly Jane"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown personal informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "informant_bias_notes": "Informant identity unknown from this database abstract. The surviving spouse (Lilly Jane) may have registered the death and provided her own name, which would be primary information \u2014 but this cannot be confirmed without the original certificate."
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Henry William Battemiller",
+      "structured_value": {
+        "given": "Henry William",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (Oregon Death Index \u2014 index created from original certificate informant chain)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "informant_bias_notes": "Index derived from an original state death certificate; the identity of the person who provided the name to the original certificate is unknown from this source."
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 13 May 1929, Clackamas, Oregon",
+      "date": "13 May 1929",
+      "date_certainty": "exact",
+      "place": "Clackamas, Oregon",
+      "standard_place": "Clackamas, Oregon, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown (Oregon Death Index \u2014 index created from original certificate informant chain)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "William Henry Bottemiller",
+      "structured_value": {
+        "given": "William Henry",
+        "surname": "Bottemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown Find A Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "informant_bias_notes": "Find A Grave memorials are compiled by volunteers; the contributor's source for the name is unknown."
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 29 Dec 1862",
+      "date": "29 Dec 1862",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown Find A Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 13 May 1929",
+      "date": "13 May 1929",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown Find A Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "buried Clarkes, Clackamas, Oregon",
+      "place": "Clarkes, Clackamas, Oregon",
+      "standard_place": "Clarkes, Clackamas, Oregon, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown Find A Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "son_1",
+      "record_persona_id": "p_244503339",
+      "fact_type": "name",
+      "value": "Willie Bottermiller",
+      "structured_value": {
+        "given": "Willie",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1880 census; respondent unknown. 'Willie' is a common diminutive of William, consistent with subject William Henry Bottemiller.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "son_1",
+      "record_persona_id": "p_244503339",
+      "fact_type": "birth",
+      "value": "born 1862, Minnesota",
+      "structured_value": {
+        "year": 1862,
+        "place": "Minnesota, United States"
+      },
+      "date": "1862",
+      "date_certainty": "approximate",
+      "place": "Minnesota, United States",
+      "standard_place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "son_1",
+      "record_persona_id": "p_244503339",
+      "fact_type": "residence",
+      "value": "Bertha, Todd, Minnesota, 1880",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "standard_place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "son_1",
+      "record_persona_id": "p_244503339",
+      "fact_type": "relationship",
+      "value": "son in household of Henry Bottermiller, 1880 census",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1880 census introduced explicit 'relationship to head' column; stated relationship, not inferred from position. Household head is Henry Bottermiller, which conflicts with death cert naming father as Casper A. Bottemiller.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_244503336",
+      "fact_type": "name",
+      "value": "Henry Bottermiller",
+      "structured_value": {
+        "given": "Henry",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1880 census; respondent unknown. Given name 'Henry' conflicts with 'Casper A.' on William's 1929 death certificate. German immigrants commonly used a middle name or Americanized name in U.S. records vs. their baptismal name.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_244503336",
+      "fact_type": "birth",
+      "value": "born 1828, Germany",
+      "structured_value": {
+        "year": 1828,
+        "place": "Germany"
+      },
+      "date": "1828",
+      "date_certainty": "approximate",
+      "place": "Germany",
+      "standard_place": "Germany",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_244503336",
+      "fact_type": "residence",
+      "value": "Bertha, Todd, Minnesota, 1880",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "standard_place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_022",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_244503336",
+      "fact_type": "occupation",
+      "value": "Farmer",
+      "structured_value": {
+        "occupation": "Farmer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_023",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "wife",
+      "record_persona_id": "p_244503337",
+      "fact_type": "name",
+      "value": "Mary Bottermiller",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Wife of Henry Bottermiller. William's 1929 death cert named his mother as 'Mary Mehlman' \u2014 Mehlman is her maiden name; Bottermiller is her married name. Consistent with I2.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_024",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+      "record_role": "wife",
+      "record_persona_id": "p_244503337",
+      "fact_type": "birth",
+      "value": "born 1838, Germany",
+      "structured_value": {
+        "year": 1838,
+        "place": "Germany"
+      },
+      "date": "1838",
+      "date_certainty": "approximate",
+      "place": "Germany",
+      "standard_place": "Germany",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_010"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Record names the deceased 'Henry William Battemiller', death 13 May 1929, Clackamas, Oregon, birth year 1862. Tree person 249W-9LP (William Henry Bottemiller) has matching death date and place (13 May 1929, Oregon City, Clackamas County, Oregon) and birth year 1862. Given-name transposition (Henry William vs. William Henry) and surname corruption (Battemiller vs. Bottemiller) are documented indexing artifacts of this record (existing tree sources confirm the same ARK is attached to 249W-9LP). Name, death date, death place, and birth year all agree \u2014 strong match.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death fact 'died 13 May 1929, Clackamas, Oregon' matches tree person 249W-9LP's death fact (13 May 1929, Oregon City, Clackamas, Oregon, United States) exactly. Same record as a_001; identity established there.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1862 is consistent with tree person 249W-9LP's documented birth date of 29 December 1862. Same record and persona as a_001.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "This relationship assertion ('father named Casper A. Battermiller on death certificate') bears on 249W-9LP as the child in the parent-child relationship. The deceased has been confidently identified as 249W-9LP (via a_001/a_002/a_003); this assertion is about that person's parentage.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The relationship assertion names 'Casper A. Battermiller' as the father of the deceased. Stub I1 (Casper A. Bottemiller) was created from this single record. 'Battermiller' is a corrupted form of 'Bottemiller' consistent with indexing artifacts seen throughout this record. Probable confidence \u2014 only one source links to this person; no independent corroboration yet.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "This relationship assertion ('mother named Mary Mehlman on death certificate') bears on 249W-9LP as the child in the parent-child relationship. Identity of the deceased as 249W-9LP is established via a_001/a_002/a_003.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The relationship assertion names 'Mary Mehlman' as the mother of the deceased. Stub I2 (Mary Mehlman) was created from this single record. Mehlman is her maiden name as recorded on the death certificate. Probable confidence \u2014 only one source; no independent corroboration yet.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Casper A. Battermiller' for the father_of_deceased role. Tree stub I1 has given name 'Casper A.' and surname 'Bottemiller'. The 'Battermiller' surname in the record is a corruption of 'Bottemiller' \u2014 the same pattern seen in the deceased's own surname throughout this collection. Probable \u2014 single source, stub newly created.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Mary Mehlman' for the mother_of_deceased role. Tree stub I2 (Mary Mehlman) was created from this single record. The maiden name 'Mehlman' is recorded as the mother's name on the death certificate, consistent with Oregon death certificate practice of recording mother's maiden name. Probable \u2014 single source, stub newly created.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "9SPC-3H6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Wife name 'Lilly Jane' on the death certificate. Tree person 9SPC-3H6 has the preferred name 'Lillie Jane Kleinsmith' \u2014 'Lilly' and 'Lillie' are common spelling variants of the same name. She is the documented wife of 249W-9LP (Couple relationship present in tree). No surname is given in the death record abstract, but the given-name match and the known marital relationship make her the clear candidate. Probable \u2014 name variant and absent surname prevent fully confident identification from this record alone.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Oregon Death Index entry names 'Henry William Battemiller', death 13 May 1929, Clackamas, Oregon \u2014 same death date and place as tree person 249W-9LP. Given-name transposition and surname corruption are the same indexing artifacts already documented for src_001. Independent confirmation from a second collection.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death date and place 'died 13 May 1929, Clackamas, Oregon' from Oregon Death Index matches 249W-9LP's documented death fact exactly. Consistent with pe_002 from src_001.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Find A Grave entry names 'William Henry Bottemiller' with birth 29 Dec 1862 and death 13 May 1929 \u2014 all three facts match tree person 249W-9LP exactly. Notably uses the correct name form (not transposed), consistent with the known subject.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth date '29 Dec 1862' from Find A Grave matches 249W-9LP's birth fact exactly. Same record as a_011.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death date '13 May 1929' from Find A Grave matches 249W-9LP's death fact. Same record as a_011.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Burial at 'Clarkes, Clackamas, Oregon' from Find A Grave consistent with 249W-9LP's burial fact in tree. Same record as a_011.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Willie Bottermiller' on 1880 census matches subject William Henry Bottemiller: 'Willie' is a standard diminutive of William; 'Bottermiller' is a spelling variant of 'Bottemiller' consistent with this family's indexing across records. Birth year 1862 in Minnesota matches subject (b. 29 Dec 1862, Franconia Township, Chisago County, MN). Residence Bertha, Todd, Minnesota matches tree. FamilySearch automated system matched this persona to tree entry 249W-9LP with 5-star rating.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1862, Minnesota aligns with subject born 29 December 1862. Same census persona (p_244503339) already identified as 249W-9LP.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence Bertha, Todd, Minnesota in 1880 is consistent with subject's known location. Same census persona, FamilySearch 5-star match to 249W-9LP.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Willie Bottermiller (identified as 249W-9LP) is listed as son of Henry Bottermiller per the 1880 census relationship column. This relationship assertion bears on 249W-9LP as the child.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The parent-child relationship assertion also bears on the household head Henry Bottermiller (I3 stub). I3 was created from this census record. Confidence is probable because I3 rests on a single derivative source and has an unresolved name conflict with I1 (Casper A. Bottemiller from death cert).",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "I3 stub was created from this 1880 census to represent 'Henry Bottermiller,' head in Bertha, Todd, Minnesota. Probable because I3 rests on a single derivative source. Unresolved conflict with I1 (Casper A. Bottemiller, death cert) prevents confident identification.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1828, Germany consistent with German immigrant who had children born in Minnesota 1860-1879. Same census persona (p_244503336) as a_019, linked to I3.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Residence Bertha, Todd, Minnesota in 1880 applies to Henry Bottermiller (I3), household head in this census.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Occupation 'Farmer' in 1880 applies to Henry Bottermiller (I3) as household head.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Census wife 'Mary Bottermiller' (b. 1838, Germany) is consistent with I2 (Mary Mehlman stub from death cert). Death cert named William's mother as 'Mary Mehlman' \u2014 Mehlman is her maiden name; Bottermiller is her married name. Both records agree on given name Mary and German origin. Probable because these are two derivative sources pointing to the same woman by complementary names.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1838, Germany for census wife Mary Bottermiller bears on I2 (Mary Mehlman, William's mother). Same census persona as a_023.",
+      "created": "2026-07-02"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Father's given name conflict: William Henry Bottemiller's 1929 Oregon death certificate (a_006) names his father as 'Casper A. Bottemiller,' but the 1880 U.S. Census (a_019) for William's household in Bertha, Todd, Minnesota lists the household head as 'Henry Bottermiller,' born 1828, Germany. Both sources agree on surname, German origin, and household location. Discrepancy in first name may reflect: (1) use of a middle name vs. baptismal name (German immigrants commonly known by different names in American vs. family contexts, e.g., 'Heinrich Kaspar' known as Henry publicly and Casper to family), (2) informant error on the 1929 death certificate (derivative source, unknown secondary informant, 49-year gap from subject's birth), or (3) genuinely different persons. Corroboration from 1870 census or other pre-death-cert records is needed.",
+      "disputed_attribute": "father_given_name",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_006",
+        "a_019"
+      ],
+      "independence_analysis": null,
+      "weighing_analysis": null,
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_002"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Three FamilySearch collections searched: 'Oregon, Deaths and Burials, 1903\u20131947' (collection 1675532, the death certificate abstract naming parents); 'Oregon, Death Index, 1903\u20131998' (collection 1946790, index confirming death, no parent names); 'Find a Grave Index' (collection 2221801, compiled memorial confirming identity, no parent names). FamilySearch collection 3657650 (Oregon State Archives Death Records) searched under Bottemiller and Battemiller variants \u2014 zero hits for the subject. Original certificate image (ark:/61903/1:2:MYQR-859) attempted via record_read but returned 'not found.' Newspaper full-text search for '+Bottemiller +Oregon +1929' returned zero results. External repositories (Ancestry state deaths, findagrave.com memorial, Historic Oregon Newspapers) not searched \u2014 noted as next corroboration steps. Parent names appear only in one source (src_001); no second evidence unit for parentage exists.",
+      "narrative_markdown": "## Proof Summary: What William Henry Bottemiller\u2019s 1929 Death Certificate Reports About His Parents\n\n**Question (q_001):** What does the death certificate of William Henry Bottemiller (died 13 May 1929, Oregon City, Clackamas County, Oregon) report about his parents?\n\n**Conclusion:** The 1929 Oregon death certificate abstract reports that William Henry Bottemiller\u2019s father was **Casper A. Battermiller** (a corrupted transcription of Bottemiller) and his mother was **Mary Mehlman** (maiden name). This record-content conclusion is **probable** based on a single derivative database abstract with secondary information from an unknown personal informant. The identification of Casper A. Bottemiller and Mary Mehlman as William\u2019s biological parents is at this stage only **possible**, pending corroboration from independent sources.\n\n---\n\n### Sources Examined\n\n**Source 1 \u2014 Death certificate abstract (src_001, derivative):** \u201cOregon, Deaths and Burials, 1903\u20131947,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F8WM-X8F : accessed 2 July 2026), entry for Henry William Battemiller, died 13 May 1929, Clackamas, Oregon; citing Oregon Vital Records. *This abstract explicitly names Father = Casper A. Battermiller and Mother = Mary Mehlman.* Source classification: derivative. Information: secondary (unknown personal informant reported parentage). Evidence: direct (parent names explicitly stated).\n\n**Source 2 \u2014 Oregon Death Index entry (src_002, derivative):** \u201cOregon, Death Index, 1903\u20131998,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF : accessed 2 July 2026), entry for Henry William Battemiller, died 13 May 1929. *Independently confirms the death event from a separate collection (1946790); contains no parent names.*\n\n**Source 3 \u2014 Find A Grave index entry (src_003, authored):** \u201cFind a Grave Index,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM : accessed 2 July 2026), entry for William Henry Bottemiller. *Confirms name (correctly non-transposed), birth 29 December 1862, death 13 May 1929, burial Clarkes, Clackamas, Oregon; no parent names.*\n\n---\n\n### Subject Identification\n\nWilliam Henry Bottemiller (249W-9LP), born 29 December 1862, Franconia Township, Chisago County, Minnesota; died 13 May 1929, Oregon City, Clackamas County, Oregon. The death certificate indexes him as \u201cHenry William Battemiller\u201d \u2014 given names transposed, surname corrupted. Three independent sources confirm the death date and place; source 3 carries the correct name form and exact birth date. **Subject identification: confident.**\n\n---\n\n### What the Certificate Reports\n\nThe death certificate abstract (src_001) explicitly states:\n- **Father:** Casper A. Battermiller (\u201cBattermiller\u201d = corrupted form of Bottemiller, consistent with indexing artifacts throughout this record)\n- **Mother:** Mary Mehlman (maiden name, consistent with Oregon death certificate practice of recording the mother\u2019s birth surname)\n\nNo other source examined names the parents.\n\n---\n\n### Evidence Analysis\n\n**Three-layer classification of a_004\u2013a_007 (parentage assertions):**\n- *Source:* Derivative \u2014 database abstract of the original Oregon State Archives certificate. The original image (ark:/61903/1:2:MYQR-859) was attempted via record_read and returned \u201cnot found\u201d; the derivative abstract is the best available version.\n- *Information quality:* Secondary \u2014 an unknown personal informant (likely the surviving spouse or attending family member) reported the parent names to the original certificate.\n- *Evidence type:* Direct \u2014 the certificate explicitly names the father and mother; no inference is required.\n\n**Evidence independence (GPS Standard 46):** Both parent-name assertions (a_004\u2013a_007) derive from the same unknown informant on the same death certificate. This constitutes **one evidence unit** for the parentage facts. Sources 2 and 3 confirm the subject\u2019s death and identity independently but add no parent data.\n\n---\n\n### Tier Declaration\n\n**For the record-content question (q_001):** **PROBABLE** \u2014 The derivative abstract credibly reports Father = Casper A. Battermiller and Mother = Mary Mehlman. The tier is limited to probable (not proved) because: (1) the source is derivative; the original is inaccessible; (2) all parent data comes from a single evidence unit from an unknown informant; (3) no second independent source corroborates the parent names.\n\n**For the parentage identification (project objective):** **POSSIBLE** \u2014 Casper A. Bottemiller and Mary Mehlman are identified as probable parents based solely on the death certificate abstract. Without corroborating evidence (census records placing William as a child in Casper Bottemiller\u2019s household, Minnesota birth records, marriage records, or probate), parentage is a credible hypothesis, not a proved conclusion. Parent stubs I1 (Casper A. Bottemiller) and I2 (Mary Mehlman) with provisional ParentChild relationships to 249W-9LP have been created in the working tree as provisional findings pending corroboration.\n\n---\n\n### Next Steps to Advance the Tier\n\n1. Search 1870 and 1880 U.S. censuses for Casper Bottemiller in Minnesota, looking for William (born 1862) as a child in his household\n2. Search Minnesota birth records for Franconia Township, Chisago County, ca. 1862\n3. Check the external findagrave.com memorial (GRid=64307258) for any parent names added by contributors\n4. Search Ancestry \u201cOregon, U.S., State Deaths, 1864\u20131971\u201d for an independent rendering of the same certificate\n\n---\n\n*Prepared 2 July 2026 | Project rp_bottemiller_parents | GPS Component 5*"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "address_first",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-02T14-30-00.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-02T13:50:48.130Z"
+    },
+    {
+      "id": "ev_002",
+      "focus": "conclusion-readiness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "address_first",
+      "file_path": "evaluations/conclusion-readiness-q_001-2026-07-02T15-05-00.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-02T13:59:56.167Z"
+    },
+    {
+      "id": "ev_003",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "looks_solid",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-02T00-00-00.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-02T14:03:43.388Z"
+    }
+  ]
+}
