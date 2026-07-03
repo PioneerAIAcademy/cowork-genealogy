@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Peter Geach was the father of Elizabeth Geach. A resident and taxpayer of Union Township, Licking County, Ohio, in the 1820s who also held land in Washington County, Ohio; he died in Licking County in the early-to-mid 1830s and his intestate estate went to probate. The Licking County estate/probate record names his widow, Rebecca Geach, and his minor children — including Elizabeth — establishing the parentage.",
+      "details": {
+        "subject_person": {
+          "name": "Elizabeth Geach",
+          "pid": "273D-F9Z"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Peter Geach",
+          "birth": "about 1791"
+        }
+      },
+      "supporting_sources": [
+        "Licking County, Ohio, Common Pleas / probate record for the estate of Peter Geach (intestate) — names widow Rebecca Geach and minor children including Elizabeth (recoverable via FamilySearch full-text search).",
+        "Deed records: Peter Geach of Granville, Licking County, purchasing land in Roxbury Township, Washington County, Ohio, 13 January 1829 (corroborates his presence and Washington County land)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Rebecca Geach was the mother of Elizabeth Geach. She is named as the surviving widow (and co-administrator) of Peter Geach in the Licking County estate/probate record that lists Elizabeth among the minor children. Her married name 'Rebecca Geach' is what the searchable records establish; her maiden name is not required for this finding.",
+      "details": {
+        "subject_person": {
+          "name": "Elizabeth Geach",
+          "pid": "273D-F9Z"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Rebecca Geach"
+        }
+      },
+      "supporting_sources": [
+        "Licking County, Ohio, estate/probate record for Peter Geach — names his widow Rebecca Geach alongside the minor children including Elizabeth."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Bonus: Rebecca (Geach)'s maiden name was Benjamin (she was born Rebecca Mary Benjamin). This is recorded in the FamilySearch family tree and family tradition but is NOT recoverable from indexed FamilySearch vital records — the Peter Geach–Rebecca Benjamin marriage (circa 1818) is not indexed, and the probate names her only under her married surname. Credit only if the agent recovers 'Benjamin' from an out-of-tree source such as a Find A Grave memorial.",
+      "details": {
+        "target_person": {
+          "name": "Rebecca Mary Benjamin"
+        },
+        "fact_type": "Maiden name",
+        "value": "Benjamin"
+      },
+      "supporting_sources": [
+        "FamilySearch family tree (tree-only) and Find A Grave — Rebecca Mary Benjamin, wife of Peter Geach."
+      ],
+      "required": false
+    }
+  ]
+}

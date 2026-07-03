@@ -1,0 +1,480 @@
+{
+  "persons": [
+    {
+      "id": "273D-F9Z",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-F9Z-name-1",
+          "given": "Elizabeth",
+          "surname": "Geach"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-eliz-birth",
+          "type": "Birth",
+          "date": "17 August 1822",
+          "standard_date": "17 Aug 1822",
+          "place": "Washington, Ohio, United States",
+          "standard_place": "Washington, Ohio, United States"
+        },
+        {
+          "id": "f-eliz-res-1850",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Union, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-eliz-res-1860",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Union Township, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-eliz-res-1880",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Union, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-eliz-death",
+          "type": "Death",
+          "date": "6 September 1895",
+          "standard_date": "6 Sep 1895",
+          "place": "Union, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-eliz-burial",
+          "type": "Burial",
+          "date": "9 September 1895",
+          "standard_date": "9 Sep 1895",
+          "place": "Maple Grove Cemetery, Granville, Licking, Ohio, United States",
+          "standard_place": "Maple Grove Cemetery, Granville, Granville Township, Licking, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "273D-6CP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-6CP-name-1",
+          "given": "Jonathan",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-jon-birth",
+          "type": "Birth",
+          "date": "15 September 1824",
+          "standard_date": "15 Sep 1824",
+          "place": "Virginia, United States",
+          "standard_place": "Virginia, United States"
+        },
+        {
+          "id": "f-jon-res-1850",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Union, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-jon-res-1860",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Union Township, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-jon-res-1870",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Union Township, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-jon-res-1880",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Union, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-jon-death",
+          "type": "Death",
+          "date": "21 December 1890",
+          "standard_date": "21 Dec 1890",
+          "place": "Union Twp, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-jon-burial",
+          "type": "Burial",
+          "date": "23 December 1890",
+          "standard_date": "23 Dec 1890",
+          "place": "Maple Grove Cemetery, Granville, Licking, Ohio",
+          "standard_place": "Maple Grove Cemetery, Granville, Granville Township, Licking, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "273D-FWD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-FWD-name-1",
+          "given": "Mary Irene",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-mary-birth",
+          "type": "Birth",
+          "date": "13 September 1848",
+          "standard_date": "13 Sep 1848",
+          "place": "Newark, Licking, Ohio, United States",
+          "standard_place": "Newark, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-mary-death",
+          "type": "Death",
+          "date": "25 January 1926",
+          "standard_date": "25 Jan 1926",
+          "place": "Uniontown, Bourbon, Kansas, United States",
+          "standard_place": "Uniontown, Bourbon, Kansas, United States"
+        }
+      ]
+    },
+    {
+      "id": "2MGY-VMQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "2MGY-VMQ-name-1",
+          "given": "Melissa",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-melissa-birth",
+          "type": "Birth",
+          "date": "1846",
+          "standard_date": "1846",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "f-melissa-death",
+          "type": "Death",
+          "date": "6 September 1908",
+          "standard_date": "6 Sep 1908",
+          "place": "Spokane, Spokane, Washington, United States",
+          "standard_place": "Spokane, Spokane, Washington, United States"
+        }
+      ]
+    },
+    {
+      "id": "273D-XS1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-XS1-name-1",
+          "given": "Henry C.",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-henry-birth",
+          "type": "Birth",
+          "date": "23 March 1855",
+          "standard_date": "23 Mar 1855",
+          "place": "Union Twp, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-henry-death",
+          "type": "Death",
+          "date": "3 August 1855",
+          "standard_date": "3 Aug 1855",
+          "place": "Union Twp, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "273D-Z55",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-Z55-name-1",
+          "given": "Inez Mariah",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-inez-birth",
+          "type": "Birth",
+          "date": "24 May 1856",
+          "standard_date": "24 May 1856",
+          "place": "Union Twp, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-inez-death",
+          "type": "Death",
+          "date": "21 August 1924",
+          "standard_date": "21 Aug 1924",
+          "place": "Newark Twp, Licking, Ohio, United States",
+          "standard_place": "Newark Township, Licking, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "273D-XCZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-XCZ-name-1",
+          "given": "Casper J.",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-casper-birth",
+          "type": "Birth",
+          "date": "25 October 1859",
+          "standard_date": "25 Oct 1859",
+          "place": "Union Twp, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-casper-death",
+          "type": "Death",
+          "date": "3 March 1887",
+          "standard_date": "3 Mar 1887",
+          "place": "Granville Twp, Licking, Ohio",
+          "standard_place": "Licking, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "273D-XFL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-XFL-name-1",
+          "given": "Clara I.",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-clara-birth",
+          "type": "Birth",
+          "date": "2 December 1863",
+          "standard_date": "2 Dec 1863",
+          "place": "Granville Twp, Licking, Ohio",
+          "standard_place": "Licking, Ohio, United States"
+        },
+        {
+          "id": "f-clara-death",
+          "type": "Death",
+          "date": "6 January 1866",
+          "standard_date": "6 Jan 1866",
+          "place": "Granville Twp, Licking, Ohio",
+          "standard_place": "Licking, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "273D-N6M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "273D-N6M-name-1",
+          "given": "Charles Benton",
+          "surname": "Slack"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-charles-birth",
+          "type": "Birth",
+          "date": "25 January 1865",
+          "standard_date": "25 Jan 1865",
+          "place": "Outville, Licking, Ohio, United States",
+          "standard_place": "Outville, Licking, Ohio, United States"
+        },
+        {
+          "id": "f-charles-death",
+          "type": "Death",
+          "date": "7 November 1935",
+          "standard_date": "7 Nov 1935",
+          "place": "Granville Twp, Licking, Ohio",
+          "standard_place": "Licking, Ohio, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "273D-6CP",
+      "person2": "273D-F9Z",
+      "facts": [
+        {
+          "id": "f-marriage-1844",
+          "type": "Marriage",
+          "date": "1844",
+          "standard_date": "1844",
+          "place": "Union Twp, Licking, Ohio, United States",
+          "standard_place": "Union Township, Licking, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "273D-6CP",
+      "child": "273D-FWD"
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "273D-F9Z",
+      "child": "273D-FWD"
+    },
+    {
+      "id": "rel-4",
+      "type": "ParentChild",
+      "parent": "273D-6CP",
+      "child": "2MGY-VMQ"
+    },
+    {
+      "id": "rel-5",
+      "type": "ParentChild",
+      "parent": "273D-F9Z",
+      "child": "2MGY-VMQ"
+    },
+    {
+      "id": "rel-6",
+      "type": "ParentChild",
+      "parent": "273D-6CP",
+      "child": "273D-XS1"
+    },
+    {
+      "id": "rel-7",
+      "type": "ParentChild",
+      "parent": "273D-F9Z",
+      "child": "273D-XS1"
+    },
+    {
+      "id": "rel-8",
+      "type": "ParentChild",
+      "parent": "273D-6CP",
+      "child": "273D-Z55"
+    },
+    {
+      "id": "rel-9",
+      "type": "ParentChild",
+      "parent": "273D-F9Z",
+      "child": "273D-Z55"
+    },
+    {
+      "id": "rel-10",
+      "type": "ParentChild",
+      "parent": "273D-6CP",
+      "child": "273D-XCZ"
+    },
+    {
+      "id": "rel-11",
+      "type": "ParentChild",
+      "parent": "273D-F9Z",
+      "child": "273D-XCZ"
+    },
+    {
+      "id": "rel-12",
+      "type": "ParentChild",
+      "parent": "273D-6CP",
+      "child": "273D-XFL"
+    },
+    {
+      "id": "rel-13",
+      "type": "ParentChild",
+      "parent": "273D-F9Z",
+      "child": "273D-XFL"
+    },
+    {
+      "id": "rel-14",
+      "type": "ParentChild",
+      "parent": "273D-6CP",
+      "child": "273D-N6M"
+    },
+    {
+      "id": "rel-15",
+      "type": "ParentChild",
+      "parent": "273D-F9Z",
+      "child": "273D-N6M"
+    }
+  ],
+  "sources": [
+    {
+      "id": "921M-64M",
+      "title": "Elizabeth Slack in household of Johnitta Slack, \"United States Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MX33-KVR : Wed Oct 22 21:59:19 UTC 2025), Entry for Johnitta Slack and Elizabeth Slack, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MX33-KVT"
+    },
+    {
+      "id": "3TSZ-QLG",
+      "title": "Elisabeth Slack, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCGK-Y2X : Thu Jan 16 18:10:44 UTC 2025), Entry for Johnathan Slack and Elisabeth Slack, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MCGK-Y2F"
+    },
+    {
+      "id": "QF9C-GZW",
+      "title": "Elizabeth Slack, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6VT-WXC : Mon Oct 13 22:52:03 UTC 2025), Entry for Jonathan Slack and Elizabeth Slack, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6VT-WXZ"
+    },
+    {
+      "id": "9VWN-KXH",
+      "title": "Elisabeth Slack in household of Jonathan Slack, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M89N-JK9 : Sat Jan 18 16:27:53 UTC 2025), Entry for Jonathan Slack and Elisabeth Slack, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M89N-JKS"
+    },
+    {
+      "id": "9PM3-Z98",
+      "title": "Elizabeth Slack, \"Ohio, County Death Records, 1840-2001\"",
+      "citation": "\"Ohio, County Death Records, 1840-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR : Sun Mar 10 00:24:49 UTC 2024), Entry for Elizabeth Slack, 06 Sep 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6FJ-ZMR"
+    }
+  ]
+}
