@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mikkel Nielsen Blyeberg (born 20 August 1779, Stagstrup Sogn) was the son of Niels Madsen Blyeberg (recorded in the levying rolls as \"Niels Bliberg\").",
+      "details": {
+        "subject_person": {
+          "name": "Mikkel Nielsen Blyeberg",
+          "pid": "PID-TODO"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Niels Madsen Blyeberg",
+          "birth": "died 1802, Stagstrup parish"
+        }
+      },
+      "supporting_sources": [
+        "Danish Military Levying Rolls (Lægdsruller), Vestervig Amt Lægd 20 / after 1793 Thisted Amt Lægd 47, regular list of 1792 onward: the father's name, Niels Bliberg, entered directly above Mikkel's name (the levying-roll naming convention).",
+        "Stagstrup parish burial register confirming Niels Madsen Blyeberg."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Mikkel's father Niels Madsen Blyeberg was buried 20 December 1802 in Stagstrup parish (the levying rolls show he died between the 1801 and 1803 sessions).",
+      "details": {
+        "target_person": {
+          "name": "Niels Madsen Blyeberg"
+        },
+        "fact_type": "Burial",
+        "date": "20 December 1802",
+        "place": "Stagstrup Sogn, Thisted Amt, Denmark"
+      },
+      "supporting_sources": [
+        "Stagstrup parish burial register: Niels Madsen Blyeberg buried 20 December 1802.",
+        "Danish Military Levying Rolls: 1801 notation gl. M. S. (gammel mands søn, 'old man's son', father ill) and 1803 notation GBES (Gård Brug Enkes Søn, 'widow's son'), bracketing the father's death between the 1801 and 1803 sessions."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Mikkel Nielsen Blyeberg became the fæsteholder (leaseholding farmer, gaardmand) of the farm at Sundby, Stagstrup parish, on 3 January 1805.",
+      "details": {
+        "target_person": {
+          "name": "Mikkel Nielsen Blyeberg"
+        },
+        "fact_type": "Occupation",
+        "date": "3 January 1805",
+        "place": "Sundby, Stagstrup Sogn, Thisted Amt, Denmark"
+      },
+      "supporting_sources": [
+        "Danish Military Levying Rolls (Lægdsruller), 1802 roll with a 1805-session notation: Mikkel becomes the fæsteholder as of 3 January 1805 and is now a gaardmand (farm owner), age 25 years 4 months, at Sundby, Stagstrup parish."
+      ],
+      "required": false
+    }
+  ]
+}
