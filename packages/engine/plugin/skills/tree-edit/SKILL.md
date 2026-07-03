@@ -61,6 +61,11 @@ tree_edit({
 
 Other operations: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `add_person` · `add_relationship` · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). For corrections pass only the changed fields — e.g. fix a wrong death date with `tree_edit({ projectPath, operation: "update_fact", personId: "I1", factId: "F2", fact: { date: "1908-03-12" } })`. When something already exists at that id, use `update_*` rather than adding a duplicate.
 
+### Writing facts correctly
+
+- **Dates must be GedcomX-parseable.** Write a bare year (`1773`), an ISO date (`1908-03-12`), or a spelled date (`12 March 1908`); record any approximation in the source `page` or your reply, not in the `date` string.
+- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself: `relationship: { type: "Couple", person1, person2, facts: [{ type: "Marriage", date, place, sources }] }`. A Marriage written as a person `add_fact` misplaces the event. See `references/relationship-accuracy.md`.
+
 ## Person merging
 
 When proof-conclusion confirms two persons are the same individual, execute the merge here. The tool does all clerical work (folding names/facts, repointing relationships, repointing every `research.json` reference, removing the collapsed person); your job is to pick the survivor and confirm pairs.
