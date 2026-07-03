@@ -21,6 +21,12 @@ Vries, Drenthe, Netherlands.
   Drenthe), and the parent-child relationship to Teitje.
 - Removed the parents' **Couple/Marriage** relationship (married
   13 Apr 1824, Slochteren, Groningen).
+- Removed everything else that links **through** those two parents:
+  Teitje's siblings (the parents' other children) and both sets of
+  grandparents (the parents' own parents). Keeping any of these would
+  re-expose a stripped parent by name — e.g. a sibling's parent-child
+  edge to "Jan Roelfs Harkema" hands the agent the father for free — so
+  they are part of the stripped answer, not context.
 - Removed the two **vital-records index sources that name the
   father alongside Teitje**: the 1833 birth-index entry for "Teitje
   Harkema and Jan Roelfs Harkema" (source `S1PK-C76`) and the 1899
@@ -36,25 +42,34 @@ the marriage-index entry) and Teitje's own birth/death sources that
 do not name her parents. None of the kept sources name the stripped
 parents.
 
-### Other normalization applied to the raw `person_read` tree
+### Retained extended family (spouse side)
 
-Not part of the answer, but cleaned up so the starting tree validates
-and is internally consistent:
+The subject's spouse, Roelf Meerten Huisman, brings his own extended
+family, which is **kept** as realistic starting context — none of it
+references the stripped parents, so it cannot leak the answer:
 
-- Dropped Roelf Meerten Huisman's **first marriage** (to a different
-  wife, `LC9J-84F`) and all descendant relationships from that
-  marriage — none of those person records were returned by
-  `person_read`, so the relationships were dangling references.
-- Dropped relationships pointing at relatives one hop beyond the
-  four returned persons (the parents' own parents and siblings, the
-  spouse's parents) whose person records `person_read` did not
-  include — they were dangling references, and both parent persons
-  are removed anyway as the stripped answer.
-- Added synthetic `id`s to names and the one retained relationship
-  (existing fact `id`s from `person_read` were kept as-is).
+- Roelf's **first marriage** (3 Sep 1836, Norg) to Anna Jans
+  (`LC9J-84F`) and their eleven children (Teitje's step-children).
+- Roelf's parents, Meerten Kornelis Huisman (`LCQ7-13R`) and Anna
+  Roelfs Jager (`LCQC-FXF`).
+
+These relatives appeared only as edges (no person records) in the
+subject's `person_read`, so each was fetched with an individual
+`person_read` and added as a schema-valid person stub (`id` + `gender`
++ name). Synthetic `id`s were added to the new relationships
+(`rel-2`…`rel-26`) and to names; existing fact `id`s from `person_read`
+were kept as-is.
+
+> **Review note (Leduthet):** an earlier revision *dropped* this
+> spouse-side family; it has been restored per review. The parent-side
+> extended family (Teitje's siblings, the grandparents, the parents'
+> own marriage) stays removed because every one of those relationships
+> names a stripped parent — restoring them would either leak the answer
+> or dangle against removed person records. See "What was removed."
 
 `starting-research.json` and `starting-tree.gedcomx.json` both pass
-`validate_research_schema`.
+`validate_research_schema`, and the stripping linter reports every
+finding absent.
 
 ## Expected difficulty
 
