@@ -1,22 +1,15 @@
 ---
 name: check-warnings
 model: claude-sonnet-4-6
-description: Checks a single person's genealogical data for impossibilities and
-  anomalies -- married before age 14, died after 120, child born after parent's
-  death, events on impossible dates, two conflicting birth/death dates on the
-  same person, burial dated before death. Also reports FamilySearch's own
-  data-quality score -- missing dates, places, and untagged sources -- for
-  people with a FamilySearch ID. Surfaces both to the user without
-  modifying project files; a guardrail skill invoked after
-  assertions or person_evidence are added. Use when
-  another skill's validation-protocol says "invoke check-warnings", when
-  the user says "check for warnings", "are there any problems with this
-  data?", "sanity check", or when reviewing assertions before writing a
-  proof conclusion. Do NOT use for either of these -- route them elsewhere. A
-  SOURCE CONFLICT (two or more sources disagreeing about the same fact, e.g. one
-  census says one birthplace and a death record says another) goes to
-  conflict-resolution; SCHEMA VALIDATION (malformed data, bad ids, broken
-  references) goes to validate-schema.
+description: Genealogical data integrity guardrail — catches logical
+  impossibilities in a person's data (impossible lifespans, events after death,
+  child born after parent died, burial before death) and retrieves
+  FamilySearch's live quality score. Invoke whenever the user wants to check for
+  warnings, spot data problems, verify consistency before closing research, or
+  get a sanity check on any person's dates and family relationships. Route
+  source conflicts (two records disagreeing about the same fact) to
+  conflict-resolution; route schema validation (malformed data, bad ids, broken
+  references) to validate-schema.
 allowed-tools:
   - person_warnings
   - person_quality
