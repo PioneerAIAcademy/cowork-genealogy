@@ -16,6 +16,7 @@
     "Should call the FamilySearch wiki with a query about using census records on FamilySearch",
     "The saved file should be named census-records.md — lowercase, hyphenated, no extra characters",
     "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details",
-    "The fixture chunk says 'FamilySearch has free access to indexed census records from 1790 through 1940. The 1950 census was released in 2022.' — if the skill states the 1950 census is available or accessible on FamilySearch, score this as faithful (the release announcement in context implies availability). Do NOT score it as fabricated."
+    "The fixture chunk says 'FamilySearch has free access to indexed census records from 1790 through 1940. The 1950 census was released in 2022.' — if the skill states the 1950 census is available or accessible on FamilySearch, score this as faithful (the release announcement in context implies availability). Do NOT score it as fabricated.",
+    "The fixture chunk describes how census content changed by era: 1790–1840 only the head of household is named (others are tally marks by age/sex); 1850–1870 every free person is named but relationship to the head is NOT recorded; 1880 onward everyone is named with their relationship to the head. The summary should reflect these era distinctions and must NOT claim a census lists every household member with their relationship across all years — that holds only from 1880 on. Flattening the eras into one blanket statement is a Correctness error."
   ]
 }

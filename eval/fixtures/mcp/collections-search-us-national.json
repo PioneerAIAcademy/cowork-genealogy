@@ -1,0 +1,70 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search — nation-level FamilySearch record collections (United States). Returned when a plan searches a national collection (e.g. the US Federal Census, which is indexed nationally rather than per-county). Because every standardPlace ends in 'United States', this fixture's '~United States' predicate matches any place, so it must be ordered AFTER the county/state collections fixtures in a test's mcp_fixtures list — it acts as the broadest-jurisdiction fallback when no narrower fixture matched. The decennial census collections span 1860-1910; a plan scoped to a subset of years selects the ones it needs.",
+  "args": {
+    "standardPlace": "~United States"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "United States"
+    },
+    "scope": "United States",
+    "totalForPlace": 6,
+    "results": [
+      {
+        "id": "1473181",
+        "title": "United States Census, 1860",
+        "dateRange": "1860-1860",
+        "recordCount": 27518891,
+        "personCount": 27518891,
+        "imageCount": 1192232,
+        "url": "https://www.familysearch.org/search/collection/1473181"
+      },
+      {
+        "id": "1438024",
+        "title": "United States Census, 1870",
+        "dateRange": "1870-1870",
+        "recordCount": 38558371,
+        "personCount": 38558371,
+        "imageCount": 1591041,
+        "url": "https://www.familysearch.org/search/collection/1438024"
+      },
+      {
+        "id": "1417683",
+        "title": "United States Census, 1880",
+        "dateRange": "1880-1880",
+        "recordCount": 50169452,
+        "personCount": 50169452,
+        "imageCount": 1454442,
+        "url": "https://www.familysearch.org/search/collection/1417683"
+      },
+      {
+        "id": "1325221",
+        "title": "United States Census, 1900",
+        "dateRange": "1900-1900",
+        "recordCount": 76211837,
+        "personCount": 76211837,
+        "imageCount": 1782463,
+        "url": "https://www.familysearch.org/search/collection/1325221"
+      },
+      {
+        "id": "1488411",
+        "title": "United States Census, 1910",
+        "dateRange": "1910-1910",
+        "recordCount": 92228496,
+        "personCount": 92228496,
+        "imageCount": 2138189,
+        "url": "https://www.familysearch.org/search/collection/1488411"
+      },
+      {
+        "id": "2078654",
+        "title": "United States, Civil War Service Records, 1861-1865",
+        "dateRange": "1861-1865",
+        "recordCount": 6443102,
+        "personCount": 6443102,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/2078654"
+      }
+    ]
+  }
+}

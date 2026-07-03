@@ -1,0 +1,448 @@
+{
+  "persons": [
+    {
+      "id": "LHZM-TR7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHZM-TR7-name-1",
+          "given": "Teitje",
+          "surname": "Harkema"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "31 July 1833",
+          "standard_date": "31 Jul 1833",
+          "place": "Veenhuizen, Norg, Drenthe, Netherlands",
+          "standard_place": "Veenhuizen, Norg, Drenthe, Netherlands"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "17 January 1899",
+          "standard_date": "17 Jan 1899",
+          "place": "Vries, Vries, Drenthe, Netherlands",
+          "standard_place": "Vries, Vries, Drenthe, Netherlands"
+        }
+      ]
+    },
+    {
+      "id": "LH56-BC2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LH56-BC2-name-1",
+          "given": "Roelf Meerten",
+          "surname": "Huisman"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 May 1818",
+          "standard_date": "11 May 1818",
+          "place": "Slochteren, Groningen, Netherlands",
+          "standard_place": "Slochteren, Groningen, Netherlands"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 January 1881",
+          "standard_date": "17 Jan 1881",
+          "place": "Norg, Drenthe, Netherlands",
+          "standard_place": "Norg, Drenthe, Netherlands"
+        },
+        {
+          "id": "14608977-25f1-4b28-8c98-23c489b656bc",
+          "type": "Burial",
+          "place": "Veenhuizen, Drenthe, Nederland",
+          "standard_place": "Veenhuizen, Dalen, Drenthe, Netherlands"
+        },
+        {
+          "id": "466258b4-9189-4d1e-8ede-e5979b4eb55c",
+          "type": "Occupation",
+          "place": "Norg, Drenthe, Netherlands",
+          "standard_place": "Norg, Drenthe, Netherlands",
+          "value": "wijkmeester"
+        }
+      ]
+    },
+    {
+      "id": "LC9J-84F",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LC9J-84F-name-1",
+          "given": "Anna",
+          "surname": "Jans"
+        }
+      ]
+    },
+    {
+      "id": "LCQ7-13R",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LCQ7-13R-name-1",
+          "given": "Meerten Kornelis",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LCQC-FXF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LCQC-FXF-name-1",
+          "given": "Anna Roelfs",
+          "surname": "Jager"
+        }
+      ]
+    },
+    {
+      "id": "LC7G-FCF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LC7G-FCF-name-1",
+          "given": "Meerten Cornelis",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LH56-PFN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LH56-PFN-name-1",
+          "given": "Cornelis",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LHSH-NP8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHSH-NP8-name-1",
+          "given": "Geertje",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LHSH-J7H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHSH-J7H-name-1",
+          "given": "Gesina",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LHSH-HS2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHSH-HS2-name-1",
+          "given": "Alida",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LZDM-5BY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LZDM-5BY-name-1",
+          "given": "Henderika",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LHSH-JXF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHSH-JXF-name-1",
+          "given": "Eltje",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LHSH-JLM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHSH-JLM-name-1",
+          "given": "Martha",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LC27-WKS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LC27-WKS-name-1",
+          "given": "Anna",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LHSH-4R8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LHSH-4R8-name-1",
+          "given": "Grietje",
+          "surname": "Huisman"
+        }
+      ]
+    },
+    {
+      "id": "LHSH-9NR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LHSH-9NR-name-1",
+          "given": "Roelof",
+          "surname": "Huisman"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "LH56-BC2",
+      "person2": "LHZM-TR7",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "30 June 1876",
+          "standard_date": "30 Jun 1876",
+          "place": "Norg, Drenthe, Netherlands",
+          "standard_place": "Norg, Drenthe, Netherlands"
+        }
+      ]
+    },
+    {
+      "id": "rel-2",
+      "type": "Couple",
+      "person1": "LH56-BC2",
+      "person2": "LC9J-84F",
+      "facts": [
+        {
+          "id": "rel-2-marriage",
+          "type": "Marriage",
+          "date": "03 September 1836",
+          "standard_date": "3 Sep 1836",
+          "place": "Norg, Drenthe, Netherlands",
+          "standard_place": "Norg, Drenthe, Netherlands"
+        }
+      ]
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "LCQ7-13R",
+      "child": "LH56-BC2"
+    },
+    {
+      "id": "rel-4",
+      "type": "ParentChild",
+      "parent": "LCQC-FXF",
+      "child": "LH56-BC2"
+    },
+    {
+      "id": "rel-5",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LC7G-FCF"
+    },
+    {
+      "id": "rel-6",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LC7G-FCF"
+    },
+    {
+      "id": "rel-7",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LH56-PFN"
+    },
+    {
+      "id": "rel-8",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LH56-PFN"
+    },
+    {
+      "id": "rel-9",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LHSH-NP8"
+    },
+    {
+      "id": "rel-10",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LHSH-NP8"
+    },
+    {
+      "id": "rel-11",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LHSH-J7H"
+    },
+    {
+      "id": "rel-12",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LHSH-J7H"
+    },
+    {
+      "id": "rel-13",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LHSH-HS2"
+    },
+    {
+      "id": "rel-14",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LHSH-HS2"
+    },
+    {
+      "id": "rel-15",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LZDM-5BY"
+    },
+    {
+      "id": "rel-16",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LZDM-5BY"
+    },
+    {
+      "id": "rel-17",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LHSH-JXF"
+    },
+    {
+      "id": "rel-18",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LHSH-JXF"
+    },
+    {
+      "id": "rel-19",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LHSH-JLM"
+    },
+    {
+      "id": "rel-20",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LHSH-JLM"
+    },
+    {
+      "id": "rel-21",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LC27-WKS"
+    },
+    {
+      "id": "rel-22",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LC27-WKS"
+    },
+    {
+      "id": "rel-23",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LHSH-4R8"
+    },
+    {
+      "id": "rel-24",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LHSH-4R8"
+    },
+    {
+      "id": "rel-25",
+      "type": "ParentChild",
+      "parent": "LH56-BC2",
+      "child": "LHSH-9NR"
+    },
+    {
+      "id": "rel-26",
+      "type": "ParentChild",
+      "parent": "LC9J-84F",
+      "child": "LHSH-9NR"
+    }
+  ],
+  "sources": [
+    {
+      "id": "35NY-8LC",
+      "title": "Feitje Harkema, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MM-SQLS : Tue Mar 25 15:40:35 UTC 2025), Entry for Feitje Harkema and Feitje Harkema, 18 Jan 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68MM-SQLS"
+    },
+    {
+      "id": "M9LV-28H",
+      "title": "Legacy NFS Source: Teitje Harkema - Government record: Birth record or certificate: birth: 31 July 1833; Veenhuizen, Drente, Netherlands",
+      "citation": "Paper, Archive, Drents Archief, Brink 4, Assen, Nederland, 9401 HS"
+    },
+    {
+      "id": "35N5-R4J",
+      "title": "Teitje Harkema, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLNQ-H9HK : Tue Mar 25 04:22:05 UTC 2025), Entry for Roelof Huisman and Meerten Kornelis Huisman, 16 Jan 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLNQ-H9C4"
+    },
+    {
+      "id": "S1PK-67W",
+      "title": "Teitje Harkema, \"Netherlands, Archival Indexes, Vital Records, 1600-2000\"",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL5P-H1KC : Tue Mar 25 07:52:43 UTC 2025), Entry for Roelf Huisman and Meerten Kornelis Huisman, 30 Jun 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL5P-3YZL"
+    }
+  ]
+}

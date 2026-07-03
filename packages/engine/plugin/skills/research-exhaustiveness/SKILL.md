@@ -23,33 +23,32 @@ allowed-tools:
 Evaluates whether research on a single question qualifies as
 "reasonably exhaustive" under GPS Component 1.
 
-**Load reference files before proceeding:**
-- Read `references/research-exhaustiveness.md` for the framework
-  (five threshold questions, overturn risk test, termination criteria)
+**Before proceeding**, read `references/research-exhaustiveness.md` for
+the framework (five threshold questions, overturn risk test,
+termination criteria).
 
-Fires when all plan items for a question have status `completed`
-or `skipped`. If items are still `in_progress`, refuse to declare
-and recommend completing the in-flight work first.
+Only evaluate a question whose plan items are all `completed` or
+`skipped`. If any is `in_progress`, refuse to declare and recommend
+finishing the in-flight work first.
 
 ## 1. Gather evidence
 
 Read:
-- The question being evaluated and its `exhaustive_declaration`
-- Log entries for this question's plan items (via `plan_item_id`)
-- Assertions produced by those searches (via each assertion's `log_entry_id`)
+- The question and its `exhaustive_declaration`
+- Log entries for its plan items (via `plan_item_id`)
+- Assertions from those searches (via each assertion's `log_entry_id`)
 - Skipped plan items and their reasons
 
 ## 2. Apply the five threshold questions
 
-(From `references/research-exhaustiveness.md`)
+(From `references/research-exhaustiveness.md`.) If any answer is "no,"
+identify what is missing and stop here.
 
-1. Has the question been answered with sufficient evidence?
+1. Answered with sufficient evidence?
 2. Broad range of record types searched?
 3. All relevant strategies employed (FAN, variant spellings)?
 4. Derivative sources replaced with originals where accessible?
 5. Enough evidence to resolve conflicts?
-
-If any answer is "no," identify what is missing and stop here.
 
 ## 3. Assess the 7-Point Stop Criteria
 
@@ -63,35 +62,32 @@ Write a 1-2 sentence assessment for each:
 | `independent_verification` | At least two independent sources? (Same informant = one unit.) |
 | `evidence_class` | At least one original record with primary information? |
 | `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |
-| `overturn_risk` | Likelihood that an unsearched source would change the conclusion? |
+| `overturn_risk` | Could an unsearched source plausibly change the conclusion? |
 
 ## 4. Decide: declare or continue
 
-**Declare exhaustive** if all criteria are met. Persist the
-declaration and flip the status in one call (see Step 5).
-
-**Do not declare** if criteria are unmet. Explain what is missing and
-recommend either expanding the plan (`research-plan`) or, if no further
-sources are available, an honest early termination.
-
-**Early termination** is valid for resource limits or no further known
-sources, but the declaration must honestly state `declared: false`
-with a clear explanation. **Do not change the question's `status`** —
-leave it as `"in_progress"`. The status `"exhaustive_declared"` means
-the research WAS exhaustive; a `declared: false` early termination is
-explicitly not exhaustive, so the status must stay `"in_progress"`.
-Terminating before sufficient evidence means the conclusion cannot
-meet the GPS standard.
+- **Declare exhaustive** — all criteria met. Persist the declaration
+  and set `status: "exhaustive_declared"` in one call (Step 5).
+- **Do not declare** — criteria unmet. Explain what is missing and
+  recommend expanding the plan (`research-plan`) or, if no further
+  sources are available, an honest early termination.
+- **Early termination** — valid for resource limits or no further known
+  sources, but the declaration must honestly state `declared: false`.
+  **Do not change `status`** — leave it `"in_progress"`.
+  `"exhaustive_declared"` means the research WAS exhaustive; a
+  `declared: false` termination is explicitly not, so the status stays
+  `"in_progress"`. Terminating before sufficient evidence means the
+  conclusion cannot meet the GPS standard.
 
 ## 5. Write the declaration
 
-Persist the declaration with `research_append` `op: "update"` on the
-question. The tool assigns nothing here — you pass the analytical
-judgment (the `stop_criteria` assessments and the `log_entry_ids` you
-gathered) and it validates-before-persist and writes atomically.
+Persist via `research_append` `op: "update"` on the question. You pass
+the analytical judgment (the `stop_criteria` assessments and the
+`log_entry_ids` you gathered); the tool validates-before-persist and
+writes atomically.
 
 **Declare exhaustive** (all criteria met) — sets `status` and the
-filled declaration in one call:
+declaration in one call:
 
 ```
 research_append({
@@ -103,13 +99,13 @@ research_append({
     status: "exhaustive_declared",
     exhaustive_declaration: {
       declared: true,
-      justification: "Searched 1850 and 1860 censuses (FamilySearch, Ancestry), death certificate (FamilySearch), and probate records (FamilySearch). Three independent sources confirm parentage.",
+      justification: "Searched 1850/1860 censuses, death certificate, and probate (FamilySearch, Ancestry). Three independent sources confirm parentage.",
       log_entry_ids: ["log_001", "log_002", "log_003"],
       stop_criteria: {
-        goal_alignment: "Yes — three sources name Thomas Flynn as Patrick's father.",
+        goal_alignment: "Yes — three sources name Thomas Flynn as father.",
         repository_breadth: "Census, vital records, and probate all searched.",
         original_substitution: "Original images accessed; derivative index confirmed.",
-        independent_verification: "Three independent sources with different informants.",
+        independent_verification: "Three independent sources, different informants.",
         evidence_class: "1860 census (original, primary) and death certificate (original, direct).",
         conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
         overturn_risk: "Low. No unexamined record type likely to name a different father."
@@ -131,7 +127,7 @@ research_append({
   fields: {
     exhaustive_declaration: {
       declared: false,
-      justification: "Probate and church records for the parish were destroyed in an 1862 fire; no surviving source names the father. Terminating for lack of further known sources.",
+      justification: "Probate and church records were destroyed in an 1862 fire; no surviving source names the father. Terminating for lack of further known sources.",
       log_entry_ids: ["log_001", "log_002"],
       stop_criteria: { /* honest per-criterion assessment of what was and wasn't met */ }
     }
@@ -139,13 +135,11 @@ research_append({
 })
 ```
 
-If the call returns `{ ok: false, errors }`, surface the errors to the
-user and fix the offending field — do not retry the same payload
-blindly.
+If the call returns `{ ok: false, errors }`, surface the errors and fix
+the offending field — do not blindly retry the same payload.
 
 ## 6. Present
 
-Tell the user:
 - If exhaustive: "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not: "Not yet exhaustive. [What's missing.] Create a plan to
@@ -156,16 +150,16 @@ Tell the user:
 - **One declaration at a time.** Each invocation evaluates exactly one
   question.
 - **Plan must be complete.** Only evaluate questions whose plan items
-  are all `completed` or `skipped`. If items are still `in_progress`,
-  recommend completing them first instead of declaring.
-- **Exhaustive does not mean exhausting.** The overturn risk
-  criterion is the ultimate test: could a real, unsearched source
-  plausibly change the conclusion?
+  are all `completed` or `skipped`; if any is `in_progress`, recommend
+  completing them first instead of declaring.
+- **Exhaustive does not mean exhausting.** Overturn risk is the
+  ultimate test: could a real, unsearched source plausibly change the
+  conclusion?
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary
-  changes, migration patterns, wars, and record availability for the
-  time and place when evaluating breadth.
+  changes, migration, wars, and record availability for the time and
+  place when judging breadth.
 
 ## Edge cases
 
@@ -174,26 +168,24 @@ Tell the user:
   stopping.
 - **Plan items still in progress:** Refuse to declare; recommend
   completing the in-flight work first.
-- **Already declared:** If `exhaustive_declaration.declared` is
-  already true, do not re-declare — re-running the Step 5 `update` on
-  an already-declared question is a structural no-op. Report the
-  existing declaration and suggest `proof-conclusion` instead.
+- **Already declared:** If `exhaustive_declaration.declared` is already
+  `true`, do not re-declare — re-running Step 5's `update` is a
+  structural no-op. Report the existing declaration and suggest
+  `proof-conclusion` instead.
 
 ## Re-invocation behavior
 
-**Writes:** the `exhaustive_declaration` object and the `status` field
-on a single `question` (`q_` id) via `research_append` `op: "update"`.
-Writes nothing else — no new questions, no `tree.gedcomx.json`
+**Writes:** the `exhaustive_declaration` object and `status` on a single
+`question` (`q_` id) via `research_append` `op: "update"`. Nothing else
+— no new questions, no `tree.gedcomx.json` changes.
+
+**On repeat invocation:** if `exhaustive_declaration.declared` is
+already `true`, does not re-declare — it reports the existing
+declaration and points to `proof-conclusion`. If not yet declared, it
+re-evaluates the same question against the five threshold questions and
+the 7-point stop criteria, and may reach a different result as evidence
 changes.
 
-**On repeat invocation:** if the question's
-`exhaustive_declaration.declared` is already `true`, does not
-re-declare — it reports the existing declaration and points the user
-at `proof-conclusion`. If not yet declared, it re-evaluates the same
-question against the five threshold questions and the 7-point stop
-criteria and may reach a different result as the underlying evidence
-changes.
-
-**Do not duplicate:** each invocation evaluates exactly one question
-and refines that question's `exhaustive_declaration` in place. Never
-write a second declaration for the same question.
+**Do not duplicate:** each invocation evaluates exactly one question and
+refines that question's `exhaustive_declaration` in place. Never write a
+second declaration for the same question.
