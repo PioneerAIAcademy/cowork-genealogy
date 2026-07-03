@@ -2799,3 +2799,166 @@ describe("calculateWarnings — Tier B emitters", () => {
   });
 
 });
+
+// ────────────────────────────────────────────────────────────────────
+// factIds / relatedPersonId attribution
+// ────────────────────────────────────────────────────────────────────
+
+describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
+  it("self date warning: hasAgeRangeGreaterThan120 carries the birth + death fact ids", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Methuselah", surname: "Outlier" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1800", standard_date: "1800" },
+            { id: "F2", type: "Death", date: "1930", standard_date: "1930" },
+          ],
+        },
+      ],
+    };
+    const w = finalWarnings(new Mob(tree, "I1")).find(
+      (x) => x.issueType === "hasAgeRangeGreaterThan120",
+    );
+    expect(w).toBeDefined();
+    // Birth-like + death-like facts examined by the check.
+    expect(w?.factIds).toEqual(["F1", "F2"]);
+    // No relative involved — relatedPersonId stays unset.
+    expect(w?.relatedPersonId).toBeUndefined();
+  });
+
+  it("self date warning: tooManyBirthDates2 carries only the Birth fact ids", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Conflict", surname: "Birth" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1 Jan 1900", standard_date: "1 Jan 1900" },
+            { id: "F2", type: "Birth", date: "1 Jun 1900", standard_date: "1 Jun 1900" },
+            { id: "F3", type: "Death", date: "1 Jan 1960", standard_date: "1 Jan 1960" },
+          ],
+        },
+      ],
+    };
+    const w = finalWarnings(new Mob(tree, "I1")).find(
+      (x) => x.issueType === "tooManyBirthDates2",
+    );
+    expect(w).toBeDefined();
+    expect(w?.factIds).toEqual(["F1", "F2"]);
+  });
+
+  it("child-birth warning: earliestChildBirthToBirthMale14 carries anchor + child fact ids and relatedPersonId", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "P",
+          gender: "Male",
+          names: [{ id: "N", given: "Young", surname: "Father" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1820", standard_date: "1820" },
+          ],
+        },
+        {
+          id: "C",
+          gender: "Female",
+          names: [{ id: "N", given: "The", surname: "Child" }],
+          facts: [
+            { id: "F2", type: "Birth", date: "1828", standard_date: "1828" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R", type: "ParentChild", parent: "P", child: "C" },
+      ],
+    };
+    const w = finalWarnings(new Mob(tree, "P")).find(
+      (x) => x.issueType === "earliestChildBirthToBirthMale14",
+    );
+    expect(w).toBeDefined();
+    // Anchor's birth fact + the contributing child's birth fact.
+    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.relatedPersonId).toBe("C");
+  });
+
+  it("relative warning: relativesDeathRangeGreaterThan2 carries the relative's death fact ids and relatedPersonId", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ given: "Anchor", surname: "Smith" }],
+        },
+        {
+          id: "I2",
+          gender: "Male",
+          names: [{ given: "Father", surname: "Smith" }],
+          facts: [
+            { id: "F1", type: "Death", date: "1900", standard_date: "1900" },
+            { id: "F2", type: "Death", date: "1903", standard_date: "1903" },
+          ],
+        },
+      ],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I2", child: "I1" },
+      ],
+    };
+    const w = finalWarnings(new Mob(tree, "I1")).find(
+      (x) => x.issueType === "relativesDeathRangeGreaterThan2",
+    );
+    expect(w).toBeDefined();
+    // Anchored on the focal person, but points at the failing relative.
+    expect(w?.personId).toBe("I1");
+    expect(w?.relatedPersonId).toBe("I2");
+    expect(w?.factIds).toEqual(["F1", "F2"]);
+  });
+
+  it("structural warning: tooManyChildren18 carries NO factIds", () => {
+    const persons: SimplifiedGedcomX["persons"] = [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "Anchor", surname: "X" }],
+      },
+    ];
+    const relationships: SimplifiedGedcomX["relationships"] = [];
+    for (let i = 0; i < 18; i++) {
+      persons.push({
+        id: `C${i}`,
+        gender: "Male",
+        names: [{ id: `NC${i}`, given: "Child", surname: "X" }],
+      });
+      relationships.push({
+        id: `RC${i}`,
+        type: "ParentChild",
+        parent: "I1",
+        child: `C${i}`,
+      });
+    }
+    const w = finalWarnings(new Mob({ persons, relationships }, "I1")).find(
+      (x) => x.issueType === "tooManyChildren18",
+    );
+    expect(w).toBeDefined();
+    expect(w?.factIds).toBeUndefined();
+  });
+
+  it("name warning: hasBlankName carries NO factIds", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "", surname: "Surname" }],
+        },
+      ],
+    };
+    const w = finalWarnings(new Mob(tree, "I1")).find(
+      (x) => x.issueType === "hasBlankName",
+    );
+    expect(w).toBeDefined();
+    expect(w?.factIds).toBeUndefined();
+  });
+});
