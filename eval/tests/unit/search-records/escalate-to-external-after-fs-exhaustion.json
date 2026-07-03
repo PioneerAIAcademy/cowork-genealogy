@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_records_018",
+    "skill": "search-records",
+    "name": "Escalate to search-external-sites after FamilySearch census exhaustion",
+    "type": "positive",
+    "description": "When a FamilySearch census search returns nil across 3+ name variants for an important plan item and the question remains open, the skill must invoke Skill('search-external-sites') to generate Ancestry/MyHeritage search URLs. FamilySearch's index has no phonetic fallback — a transcription error (e.g. 'Flynn' → 'Flinn') means no variant will ever surface that record on FamilySearch. Other sites fuzzy-match and can recover it, which is exactly why the escalation is triggered by the nil signal here, not planned upfront.",
+    "tags": [
+      "search",
+      "negative-result",
+      "escalation",
+      "external-sites",
+      "ancestry",
+      "nil-exhaustion",
+      "familysearch-exhausted"
+    ]
+  },
+  "input": {
+    "user_message": "Execute pli_001 — search FamilySearch for Patrick Flynn in the 1850 US census.",
+    "scenario": "flynn-census-nil"
+  },
+  "mcp_fixtures": [
+    "record-search-patrick-flynn-no-results",
+    "record-search-patrick-flinn-no-results",
+    "record-search-patrick-flyn-no-results",
+    "record-search-variant-any-givenname-flynn-no-results",
+    "record-search-variant-father-name-no-results"
+  ],
+  "execution": {
+    "max_turns": 35
+  },
+  "judge_context": [
+    "This is a POSITIVE test for the FamilySearch-exhaustion → external-sites escalation. After trying 3+ FamilySearch name variants for Patrick Flynn (all returning zero results), the skill MUST call Skill('search-external-sites').",
+    "REQUIRED: Skill('search-external-sites') must be called. Failing to escalate after FamilySearch is exhausted is a Correctness=1 failure — do not award partial credit for merely suggesting it.",
+    "The plan item pli_001 must NOT be marked 'completed' as if the search succeeded — it should remain in_progress or be logged as a nil result awaiting external follow-up, because the external search has not yet been run.",
+    "The nil log entry must be written (research_log_append called) with outcome 'negative', results_examined 0, and notes that FamilySearch variants were exhausted and external sites should be checked.",
+    "Acceptable: the skill may also mention research-plan as an alternative path. But it must escalate — suggestion alone without the Skill call is a Correctness=1 failure.",
+    "Tool Arguments: score 3 if primary searches include givenName on every call. Score 2 if a primary search drops givenName without having first tried givenName variants. Score 1 if multiple primary calls systematically omit givenName."
+  ]
+}
