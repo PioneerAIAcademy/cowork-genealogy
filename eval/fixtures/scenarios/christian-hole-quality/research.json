@@ -1,0 +1,21 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Review the data quality of Christian P. Hole (KD96-TV2) and his immediate family, Polk County, Minnesota (Norwegian immigrants)",
+    "subject_person_ids": ["KD96-TV2"],
+    "status": "active",
+    "created": "2026-07-01",
+    "updated": "2026-07-01"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

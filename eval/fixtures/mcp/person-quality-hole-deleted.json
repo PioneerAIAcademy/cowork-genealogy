@@ -1,0 +1,8 @@
+{
+  "tool": "person_quality",
+  "description": "person_quality on KD96-TV5 -- a duplicate of the son that was DELETED on FamilySearch after this project last synced. The tool surfaces the tombstoned state as an error object. The skill must note this in the quality section and still report the offline warnings. Used by ut_check_warnings_017.",
+  "args": { "personId": "KD96-TV5" },
+  "response": {
+    "error": "Person KD96-TV5 is tombstoned in the FamilySearch tree — it has been deleted or merged into another profile — so it has no quality score."
+  }
+}

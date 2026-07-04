@@ -1,11 +1,11 @@
 {
   "project": {
-    "id": "rp_augustine_louis_azores",
-    "objective": "Where was Augustine Louis (Agostinho Luiz) born and baptized in the Azores, and who were his parents?",
+    "id": "rp_jan_gallo_father",
+    "objective": "Who was the father of Jan Gallo, born in 1893 in Šútovo, Turany parish, Slovakia (then Suttó, Turány parish, Turócz County, Hungary)?",
     "subject_person_ids": ["PID-TODO"],
     "status": "active",
-    "created": "2026-06-19T00:00:00Z",
-    "updated": "2026-06-19T00:00:00Z"
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-03T00:00:00Z"
   },
   "researcher_profile": {
     "experience_level": "intermediate",

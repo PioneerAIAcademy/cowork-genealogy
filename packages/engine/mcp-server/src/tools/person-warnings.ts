@@ -26,12 +26,14 @@ import {
 } from "../utils/mob.js";
 import {
   earliestDayOfChildFacts,
+  earliestDayOfPersonFacts,
   earliestDayOfSelfFacts,
   earliestYearOfChildFacts,
   earliestYearOfParentFacts,
   earliestYearOfPersonFacts,
   earliestYearOfSelfFacts,
   factDaysCount,
+  factIdsOfPersonFacts,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
@@ -867,6 +869,136 @@ export function hasDiffSurname(mob: Mob): boolean {
   return false;
 }
 
+// ─── factIds attribution helpers ────────────────────────────────────────────
+// Pure reads used only AFTER a predicate fires, to attach the specific facts a
+// check examined (PersonWarning.factIds) and — for relationship warnings — the
+// contributing relative (relatedPersonId). They never change firing behavior.
+
+/** Ids of the anchor's own facts in the given families (union, order-stable). */
+function selfFactIds(
+  mob: Mob,
+  ...families: Array<ReadonlySet<string> | null>
+): string[] {
+  return unionFactIds(
+    ...families.map((fam) => factIdsOfPersonFacts(mob.getPerson(), fam)),
+  );
+}
+
+/** Merge several id lists, dropping duplicates while preserving first-seen order. */
+function unionFactIds(...lists: string[][]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const list of lists) {
+    for (const id of list) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  return out;
+}
+
+/** Child with the earliest fact year in `types` (the one an earliest-* check keyed on). */
+function childWithEarliestYear(
+  mob: Mob,
+  types: ReadonlySet<string>,
+): SimplifiedPerson | undefined {
+  let best: SimplifiedPerson | undefined;
+  let bestYear: number | null = null;
+  for (const c of mob.getChildren()) {
+    const y = earliestYearOfPersonFacts(c, types);
+    if (y === null) continue;
+    if (bestYear === null || y < bestYear) {
+      bestYear = y;
+      best = c;
+    }
+  }
+  return best;
+}
+
+/** Child with the latest fact year in `types` (the one a latest-* check keyed on). */
+function childWithLatestYear(
+  mob: Mob,
+  types: ReadonlySet<string>,
+): SimplifiedPerson | undefined {
+  let best: SimplifiedPerson | undefined;
+  let bestYear: number | null = null;
+  for (const c of mob.getChildren()) {
+    const y = latestYearOfPersonFacts(c, types);
+    if (y === null) continue;
+    if (bestYear === null || y > bestYear) {
+      bestYear = y;
+      best = c;
+    }
+  }
+  return best;
+}
+
+/** Child with the earliest fact day in `types` (day-level analog). */
+function childWithEarliestDay(
+  mob: Mob,
+  types: ReadonlySet<string>,
+): SimplifiedPerson | undefined {
+  let best: SimplifiedPerson | undefined;
+  let bestDay: number | null = null;
+  for (const c of mob.getChildren()) {
+    const d = earliestDayOfPersonFacts(c, types);
+    if (d === null) continue;
+    if (bestDay === null || d < bestDay) {
+      bestDay = d;
+      best = c;
+    }
+  }
+  return best;
+}
+
+/** Parent with the earliest fact year in `types`. */
+function parentWithEarliestYear(
+  mob: Mob,
+  types: ReadonlySet<string>,
+): SimplifiedPerson | undefined {
+  let best: SimplifiedPerson | undefined;
+  let bestYear: number | null = null;
+  for (const p of mob.getParents()) {
+    const y = earliestYearOfPersonFacts(p, types);
+    if (y === null) continue;
+    if (bestYear === null || y < bestYear) {
+      bestYear = y;
+      best = p;
+    }
+  }
+  return best;
+}
+
+/**
+ * factIds (the matched relative's own facts in the given families) +
+ * relatedPersonId (the relative's anchor id) for a relative-mob warning.
+ */
+function relativeMobContribution(
+  rel: Mob,
+  ...families: Array<ReadonlySet<string> | null>
+): { factIds: string[]; relatedPersonId: string } {
+  return {
+    factIds: unionFactIds(
+      ...families.map((fam) => factIdsOfPersonFacts(rel.getPerson(), fam)),
+    ),
+    relatedPersonId: rel.anchorId,
+  };
+}
+
+/** factIds + relatedPersonId contribution from a single relative (may be undefined). */
+function relativeContribution(
+  relative: SimplifiedPerson | undefined,
+  types: ReadonlySet<string>,
+): { factIds: string[]; relatedPersonId?: string } {
+  if (!relative) return { factIds: [] };
+  const contribution: { factIds: string[]; relatedPersonId?: string } = {
+    factIds: factIdsOfPersonFacts(relative, types),
+  };
+  if (relative.id !== undefined) contribution.relatedPersonId = relative.id;
+  return contribution;
+}
+
 // ─── Warning emitters (predicate + tag → PersonWarning) ─────────────────────
 // One per check, mirroring the if-block pattern in Java's
 // calculateFinalWarnings (warnings.java:78–570). Each returns null when the
@@ -882,6 +1014,9 @@ function checkHasEventBeforeBirth(mob: Mob): PersonWarning | null {
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    // Trigger spans "any event" (earliest self fact) vs the latest birth-like
+    // fact — so the examined set is every self fact.
+    factIds: selfFactIds(mob, null),
     message:
       "An event is dated more than 2 years before this person's earliest birth-like fact.",
   };
@@ -901,12 +1036,18 @@ function checkEarliestChildBirthToBirthMale14(
   // Non-null here because the predicate would have returned false otherwise.
   const ageAtEarliestChildBirth = earliestChildBirth! - earliestBirth!;
 
+  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_MALE_14,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message: `Earliest child was born when this person was at most ${ageAtEarliestChildBirth}, which is normally before fatherhood age (14).`,
   };
 }
@@ -919,6 +1060,9 @@ function checkHasEventAfterDeath(mob: Mob): PersonWarning | null {
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    // Trigger spans the latest death-like fact vs the latest self fact of any
+    // type — the examined set is every self fact.
+    factIds: selfFactIds(mob, null),
     message:
       "An event is dated more than 1 year after this person's latest death-like fact.",
   };
@@ -932,6 +1076,7 @@ function checkHasAgeRangeGreaterThan120(mob: Mob): PersonWarning | null {
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES),
     message:
       "This person's lifespan is greater than 120 years, which is implausible.",
   };
@@ -945,6 +1090,7 @@ function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, BURIAL, DEATH),
     message:
       "The earliest Burial is more than 31 days before the latest Death, which is unusual.",
   };
@@ -952,12 +1098,18 @@ function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
 
 function checkEarliestChildBirthToBirth12(mob: Mob): PersonWarning | null {
   if (!earliestChildBirthToBirth(mob, 12)) return null;
+  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "This person appears to have had a child at age 12 or younger, which is normally before childbearing years.",
   };
@@ -971,6 +1123,7 @@ function checkDeathRangeGreaterThan2(mob: Mob): PersonWarning | null {
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, DEATHLIKE_FACT_TYPES),
     message:
       "This person's death-like dates span more than 2 years — likely unreconciled conflicting records.",
   };
@@ -984,6 +1137,7 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
     message:
       "This person appears to have married more than 90 years after their birth, which is biologically unusual.",
   };
@@ -997,6 +1151,7 @@ function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
     message:
       "This person appears to have married before age 14, which is unusual.",
   };
@@ -1004,12 +1159,18 @@ function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
 
 function checkLatestChildBirthToBirth80(mob: Mob): PersonWarning | null {
   if (!latestChildBirthToBirth(mob, 80)) return null;
+  const child = childWithLatestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: LATEST_CHILD_BIRTH_TO_BIRTH_80,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "A child of this person was born 80 or more years after this person's birth, which is implausible.",
   };
@@ -1072,12 +1233,18 @@ function checkLatestChildBirthToBirthFemale55(
 ): PersonWarning | null {
   if (mob.getGender() !== "Female") return null;
   if (!latestChildBirthToBirth(mob, 55)) return null;
+  const child = childWithLatestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: LATEST_CHILD_BIRTH_TO_BIRTH_FEMALE_55,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "This person (female) had a child 55 or more years after her own birth, which is biologically unusual.",
   };
@@ -1085,12 +1252,18 @@ function checkLatestChildBirthToBirthFemale55(
 
 function checkHasDeathAfterChildBirth90(mob: Mob): PersonWarning | null {
   if (!hasDeathMoreThanNYearsAfterEarliestChildBirth(mob, 90)) return null;
+  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_AFTER_CHILD_BIRTH_90,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "This person died more than 90 years after their earliest child's birth, an implausibly long post-parenthood lifespan.",
   };
@@ -1100,12 +1273,18 @@ function checkHasChildDeathAfterParentBirth200(
   mob: Mob,
 ): PersonWarning | null {
   if (!hasDeathMoreThanNYearsAfterEarliestParentBirth(mob, 200)) return null;
+  const parent = parentWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const parentC = relativeContribution(parent, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), parentC.factIds),
+    ...(parentC.relatedPersonId
+      ? { relatedPersonId: parentC.relatedPersonId }
+      : {}),
     message:
       "This person died more than 200 years after a parent's birth, which is biologically impossible.",
   };
@@ -1126,12 +1305,21 @@ function checkMissingFactsAndRelatives(mob: Mob): PersonWarning | null {
 
 function checkChildBirthRange40(mob: Mob): PersonWarning | null {
   if (!childBirthLikeRange(mob, 40)) return null;
+  // The span is between two children (earliest + latest birth) — attach both
+  // contributing children's birth-like facts. Two relatives, so relatedPersonId
+  // is left unset.
+  const earliest = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const latest = childWithLatestYear(mob, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: CHILD_BIRTH_RANGE_40,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      relativeContribution(earliest, BIRTHLIKE_FACT_TYPES).factIds,
+      relativeContribution(latest, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
     message:
       "The span between this person's earliest and latest child births is 40 or more years, which is implausible for a single parent.",
   };
@@ -1141,12 +1329,18 @@ function checkEarliestChildMarriageToBirth30(
   mob: Mob,
 ): PersonWarning | null {
   if (!earliestChildMarriageToBirth(mob, 30)) return null;
+  const child = childWithEarliestYear(mob, MARRIAGELIKE_FACT_TYPES);
+  const childC = relativeContribution(child, MARRIAGELIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "A child of this person married before this person reached age 30, which suggests an unusually young parenthood.",
   };
@@ -1156,12 +1350,21 @@ function checkLatestChildBirthToMarriage35(
   mob: Mob,
 ): PersonWarning | null {
   if (!latestChildBirthToMarriage(mob, 35)) return null;
+  const child = childWithLatestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: LATEST_CHILD_BIRTH_TO_MARRIAGE_35,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      selfFactIds(mob, MARRIAGELIKE_FACT_TYPES),
+      childC.factIds,
+    ),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "A child was born 35 or more years after this person's latest marriage — suggests a record error or wrong relationship.",
   };
@@ -1169,12 +1372,37 @@ function checkLatestChildBirthToMarriage35(
 
 function checkHasYoungSpouse15(mob: Mob): PersonWarning | null {
   if (!hasYoungSpouse(mob, 15)) return null;
+  // Re-find the specific spouse the predicate keyed on (same lifespan test),
+  // so we can attach its facts and id.
+  let spouse: SimplifiedPerson | undefined;
+  for (const s of mob.getSpouses()) {
+    const earliestBirth = earliestYearOfPersonFacts(s, BIRTHLIKE_FACT_TYPES);
+    const latestDeath = latestYearOfPersonFacts(s, DEATHLIKE_FACT_TYPES);
+    if (earliestBirth === null || latestDeath === null) continue;
+    if (latestDeath - earliestBirth < 15) {
+      spouse = s;
+      break;
+    }
+  }
+  const spouseC = spouse
+    ? {
+        factIds: unionFactIds(
+          factIdsOfPersonFacts(spouse, BIRTHLIKE_FACT_TYPES),
+          factIdsOfPersonFacts(spouse, DEATHLIKE_FACT_TYPES),
+        ),
+        relatedPersonId: spouse.id,
+      }
+    : { factIds: [] as string[], relatedPersonId: undefined };
   return {
     scoreType: COHERENCE,
     issueType: HAS_YOUNG_SPOUSE_15,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: spouseC.factIds,
+    ...(spouseC.relatedPersonId
+      ? { relatedPersonId: spouseC.relatedPersonId }
+      : {}),
     message:
       "A spouse of this person died before age 15, suggesting an early-childhood marriage record that warrants scrutiny.",
   };
@@ -1188,6 +1416,7 @@ function checkHasChristeningBeforeBirth(mob: Mob): PersonWarning | null {
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, CHRISTENING, BIRTH),
     message:
       "This person's Christening is dated before their Birth — a date impossibility.",
   };
@@ -1203,6 +1432,12 @@ function checkHasEventBeforeChristening365_3(
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    // Christening/Baptism (the late anchor) + every earlier event the check
+    // considers (any self fact except Birth / EventRegistration).
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(mob.getPerson(), CHRISTENING_AND_BAPTISM),
+      factIdsOfPersonFacts(mob.getPerson(), null, BIRTH_AND_EVENT_REGISTRATION),
+    ),
     message:
       "An event is dated more than 3 years before this person's Christening / Baptism, which is implausible.",
   };
@@ -1216,6 +1451,7 @@ function checkTooManyBirthDates2(mob: Mob): PersonWarning | null {
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, BIRTH),
     message:
       "This person has 2 or more distinct Birth dates more than 30 days apart — unreconciled conflicting records.",
   };
@@ -1229,6 +1465,7 @@ function checkTooManyDeathDates2(mob: Mob): PersonWarning | null {
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, DEATH),
     message:
       "This person has 2 or more distinct Death dates more than 14 days apart — unreconciled conflicting records.",
   };
@@ -1242,6 +1479,7 @@ function checkHasBurialBeforeDeath(mob: Mob): PersonWarning | null {
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: selfFactIds(mob, BURIAL, DEATH),
     message:
       "This person's Burial is dated before their Death — a date impossibility.",
   };
@@ -1252,12 +1490,18 @@ function checkHasDeathBeforeChildBirth30_10(
 ): PersonWarning | null {
   if (mob.getGender() !== "Male") return null;
   if (!hasDeathBeforeChildBirth(mob, 300)) return null;
+  const child = childWithEarliestDay(mob, BIRTH);
+  const childC = relativeContribution(child, BIRTH);
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_30_10,
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, DEATH), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "This person (male) died more than 300 days before a child's recorded Birth, which is biologically impossible.",
   };
@@ -1268,12 +1512,18 @@ function checkHasDeathBeforeChildBirth365_2(
 ): PersonWarning | null {
   if (mob.getGender() !== "Male") return null;
   if (!hasDeathBeforeChildBirthLike(mob, 365 * 2)) return null;
+  const child = childWithEarliestDay(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_365_2,
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "This person (male) died more than 2 years before a child's earliest birth-like fact, which is implausible.",
   };
@@ -1284,12 +1534,18 @@ function checkHasDeathBeforeChildBirthFemale2(
 ): PersonWarning | null {
   if (mob.getGender() !== "Female") return null;
   if (!hasDeathBeforeChildBirth(mob, 2)) return null;
+  const child = childWithEarliestDay(mob, BIRTH);
+  const childC = relativeContribution(child, BIRTH);
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_2,
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, DEATH), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "This person (female) died more than 2 days before a child's recorded Birth — physically impossible.",
   };
@@ -1300,12 +1556,18 @@ function checkHasDeathBeforeChildBirthFemale365(
 ): PersonWarning | null {
   if (mob.getGender() !== "Female") return null;
   if (!hasDeathBeforeChildBirthLike(mob, 365)) return null;
+  const child = childWithEarliestDay(mob, BIRTHLIKE_FACT_TYPES);
+  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: HAS_DEATH_BEFORE_CHILD_BIRTH_FEMALE_365,
     severity: "error",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "This person (female) died more than 1 year before a child's earliest birth-like fact, which is implausible.",
   };
@@ -1315,12 +1577,21 @@ function checkHasDeathBeforeChildBirthFemale365(
 
 function checkChildMarriageToMarriage15(mob: Mob): PersonWarning | null {
   if (!childMarriageToMarriage(mob, 15)) return null;
+  const child = childWithEarliestYear(mob, MARRIAGELIKE_FACT_TYPES);
+  const childC = relativeContribution(child, MARRIAGELIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: CHILD_MARRIAGE_TO_MARRIAGE_15,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      selfFactIds(mob, MARRIAGELIKE_FACT_TYPES),
+      childC.factIds,
+    ),
+    ...(childC.relatedPersonId
+      ? { relatedPersonId: childC.relatedPersonId }
+      : {}),
     message:
       "A child of this person married within 15 years of this person's earliest marriage, suggesting this person had that child very young.",
   };
@@ -1358,13 +1629,17 @@ function checkRelativesDeathRangeGreaterThan2(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => deathRangeGreaterThan(r, 2))) return null;
+  const rel = relativeMobs.find((r) => deathRangeGreaterThan(r, 2));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, DEATHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_DEATH_RANGE_GREATER_THAN_2,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has a death-date range greater than 2 years, suggesting unreconciled death records.",
   };
@@ -1376,12 +1651,21 @@ function checkRelativesEarliestChildBirthToBirth12(
   const out: PersonWarning[] = [];
   for (const rel of relativeMobs) {
     if (!earliestChildBirthToBirth(rel, 12)) continue;
+    const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+    const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
     out.push({
       scoreType: COHERENCE,
       issueType: RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
       severity: "warning",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
+      factIds: unionFactIds(
+        factIdsOfPersonFacts(rel.getPerson(), BIRTHLIKE_FACT_TYPES),
+        childC.factIds,
+      ),
+      ...(childC.relatedPersonId
+        ? { relatedPersonId: childC.relatedPersonId }
+        : {}),
       message:
         "This person had a child before age 12, which is biologically implausible.",
     });
@@ -1393,15 +1677,21 @@ function checkRelativesHasEventBeforeChristening365_3(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasEventBeforeChristening(r, 365 * 3))) {
-    return null;
-  }
+  const rel = relativeMobs.find((r) => hasEventBeforeChristening(r, 365 * 3));
+  if (!rel) return null;
+  const c = relativeMobContribution(
+    rel,
+    CHRISTENING_AND_BAPTISM,
+    null,
+  );
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EVENT_BEFORE_CHRISTENING_365_3,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has an event dated more than 3 years before their christening, which is implausible.",
   };
@@ -1412,13 +1702,21 @@ function checkMaleRelativesEarliestChildBirthToBirth14(
   relativeMobs: Mob[],
 ): PersonWarning | null {
   const males = relativeMobs.filter((r) => r.getGender() === "Male");
-  if (!males.some((r) => earliestChildBirthToBirth(r, 14))) return null;
+  const rel = males.find((r) => earliestChildBirthToBirth(r, 14));
+  if (!rel) return null;
+  const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: MALE_RELATIVES_EARLIEST_CHILD_BIRTH_TO_BIRTH_14,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A male relative of this person had a child before age 14, which is normally before fatherhood age.",
   };
@@ -1429,13 +1727,21 @@ function checkFemaleRelativesLatestChildBirthToBirth55(
   relativeMobs: Mob[],
 ): PersonWarning | null {
   const females = relativeMobs.filter((r) => r.getGender() === "Female");
-  if (!females.some((r) => latestChildBirthToBirth(r, 55))) return null;
+  const rel = females.find((r) => latestChildBirthToBirth(r, 55));
+  if (!rel) return null;
+  const child = childWithLatestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: FEMALE_RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_55,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A female relative of this person had a child after age 55, which is biologically unusual.",
   };
@@ -1450,13 +1756,17 @@ function checkRelativesHasEventAfterDeath1(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasEventAfterDeath(r, 365))) return null;
+  const rel = relativeMobs.find((r) => hasEventAfterDeath(r, 365));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, null);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EVENT_AFTER_DEATH_1,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has an event dated more than 1 year after their death.",
   };
@@ -1466,13 +1776,17 @@ function checkRelativesHasEventBeforeBirth365_2(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasEventBeforeBirth(r, 365 * 2))) return null;
+  const rel = relativeMobs.find((r) => hasEventBeforeBirth(r, 365 * 2));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, null);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EVENT_BEFORE_BIRTH_365_2,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has an event dated more than 2 years before their birth.",
   };
@@ -1482,13 +1796,21 @@ function checkRelativesHasEarlyMarriage14(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasEarlyMarriage(r, 14))) return null;
+  const rel = relativeMobs.find((r) => hasEarlyMarriage(r, 14));
+  if (!rel) return null;
+  const c = relativeMobContribution(
+    rel,
+    BIRTHLIKE_FACT_TYPES,
+    MARRIAGELIKE_FACT_TYPES,
+  );
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_EARLY_MARRIAGE_14,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person appears to have married before age 14.",
   };
@@ -1498,13 +1820,21 @@ function checkRelativesHasLateMarriage90(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasLateMarriage(r, 90))) return null;
+  const rel = relativeMobs.find((r) => hasLateMarriage(r, 90));
+  if (!rel) return null;
+  const c = relativeMobContribution(
+    rel,
+    BIRTHLIKE_FACT_TYPES,
+    MARRIAGELIKE_FACT_TYPES,
+  );
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_LATE_MARRIAGE_90,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person appears to have married more than 90 years after their birth.",
   };
@@ -1514,13 +1844,17 @@ function checkRelativesHasBurialBeforeDeath(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasBurialBeforeDeath(r))) return null;
+  const rel = relativeMobs.find((r) => hasBurialBeforeDeath(r));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, BURIAL, DEATH);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_BURIAL_BEFORE_DEATH,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has a Burial dated before their Death — a date impossibility.",
   };
@@ -1530,13 +1864,17 @@ function checkRelativesHasBurialAfterDeath31(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasBurialAfterDeath(r, 31))) return null;
+  const rel = relativeMobs.find((r) => hasBurialAfterDeath(r, 31));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, BURIAL, DEATH);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_BURIAL_AFTER_DEATH_31,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person's earliest Burial is more than 31 days before their latest Death.",
   };
@@ -1579,13 +1917,17 @@ function checkRelativesTooManyBirthDates2(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => tooManyBirthDates(r, 2))) return null;
+  const rel = relativeMobs.find((r) => tooManyBirthDates(r, 2));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, BIRTH);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_TOO_MANY_BIRTH_DATES_2,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has 2 or more distinct Birth dates more than 30 days apart — unreconciled records.",
   };
@@ -1595,13 +1937,17 @@ function checkRelativesTooManyDeathDates2(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => tooManyDeathDates(r, 14, 2))) return null;
+  const rel = relativeMobs.find((r) => tooManyDeathDates(r, 14, 2));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, DEATH);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_TOO_MANY_DEATH_DATES_2,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has 2 or more distinct Death dates more than 14 days apart — unreconciled records.",
   };
@@ -1611,13 +1957,17 @@ function checkRelativesBirthLikeRangeGreaterThan8(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => birthLikeRangeGreaterThan(r, 8))) return null;
+  const rel = relativeMobs.find((r) => birthLikeRangeGreaterThan(r, 8));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_BIRTH_LIKE_RANGE_GREATER_THAN_8,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has birth-like fact dates spanning more than 8 years — suggests two records merged on one identity.",
   };
@@ -1629,13 +1979,21 @@ function checkRelativesChildBirthRange40(
 ): PersonWarning | null {
   // Java emits a SINGLE aggregate warning via `anyMatch`, anchored on the
   // focal/merged mob (warnings.java:612-617) — not one warning per relative.
-  if (!relativeMobs.some((rel) => childBirthLikeRange(rel, 40))) return null;
+  const rel = relativeMobs.find((r) => childBirthLikeRange(r, 40));
+  if (!rel) return null;
+  const earliest = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const latest = childWithLatestYear(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_CHILD_BIRTH_RANGE_40,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      relativeContribution(earliest, BIRTHLIKE_FACT_TYPES).factIds,
+      relativeContribution(latest, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: rel.anchorId,
     message:
       "A relative of this person has children whose births span 40 or more years, which is implausible for a single parent.",
   };
@@ -1664,9 +2022,11 @@ function findPerson(persons: readonly SimplifiedPerson[], id: string): Simplifie
  * overlap heuristics of the full Java implementation; can over-flag
  * compared to Java but does not under-flag.
  */
-function hasSimilarChildren(mob: Mob): boolean {
+function hasSimilarChildren(
+  mob: Mob,
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
   const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
-  if (children.length < 2) return false;
+  if (children.length < 2) return null;
   const pairs = getSimilarNamePairs(children, children, [], true);
   for (const [id1, id2] of pairs) {
     const c1 = findPerson(children, id1);
@@ -1675,9 +2035,9 @@ function hasSimilarChildren(mob: Mob): boolean {
     if (!compatibleGenders(c1, c2)) continue;
     if (hasOverlappingDates(c1, c2)) continue;
     if (hasConflictingDates(c1, c2)) continue;
-    return true;
+    return [c1, c2];
   }
-  return false;
+  return null;
 }
 
 /**
@@ -1686,18 +2046,20 @@ function hasSimilarChildren(mob: Mob): boolean {
  * overlap — that suggests the two records are not actually duplicates but
  * carry conflicting source-disagreement.
  */
-function hasSimilarChildrenConflictingDates(mob: Mob): boolean {
+function hasSimilarChildrenConflictingDates(
+  mob: Mob,
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
   const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
-  if (children.length < 2) return false;
+  if (children.length < 2) return null;
   const pairs = getSimilarNamePairs(children, children, [], true);
   for (const [id1, id2] of pairs) {
     const c1 = findPerson(children, id1);
     const c2 = findPerson(children, id2);
     if (!c1 || !c2) continue;
     if (!compatibleGenders(c1, c2)) continue;
-    if (hasOverlappingDates(c1, c2)) return true;
+    if (hasOverlappingDates(c1, c2)) return [c1, c2];
   }
-  return false;
+  return null;
 }
 
 function focalSpouseNoiseNames(mob: Mob): string[] {
@@ -1721,9 +2083,11 @@ function focalSpouseNoiseNames(mob: Mob): string[] {
  * `hasOverlappingDates` is the children-path predicate (warnings.java:2072),
  * so it must not gate the spouse path.
  */
-function hasSimilarSpouses(mob: Mob): boolean {
+function hasSimilarSpouses(
+  mob: Mob,
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
   const spouses = mob.getSpouses();
-  if (spouses.length < 2) return false;
+  if (spouses.length < 2) return null;
   const noise = focalSpouseNoiseNames(mob);
   const pairs = getSimilarNamePairs(spouses, spouses, noise, false);
   for (const [id1, id2] of pairs) {
@@ -1731,9 +2095,9 @@ function hasSimilarSpouses(mob: Mob): boolean {
     const s2 = findPerson(spouses, id2);
     if (!s1 || !s2) continue;
     if (hasConflictingDates(s1, s2)) continue;
-    return true;
+    return [s1, s2];
   }
-  return false;
+  return null;
 }
 
 /**
@@ -1743,18 +2107,20 @@ function hasSimilarSpouses(mob: Mob): boolean {
  * have conflicting dates. Keys on `hasConflictingDates`, matching Java (the
  * earlier port used `hasOverlappingDates`, copied from the children path).
  */
-function hasSimilarSpousesConflictingDates(mob: Mob): boolean {
+function hasSimilarSpousesConflictingDates(
+  mob: Mob,
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
   const spouses = mob.getSpouses();
-  if (spouses.length < 2) return false;
+  if (spouses.length < 2) return null;
   const noise = focalSpouseNoiseNames(mob);
   const pairs = getSimilarNamePairs(spouses, spouses, noise, false);
   for (const [id1, id2] of pairs) {
     const s1 = findPerson(spouses, id1);
     const s2 = findPerson(spouses, id2);
     if (!s1 || !s2) continue;
-    if (hasConflictingDates(s1, s2)) return true;
+    if (hasConflictingDates(s1, s2)) return [s1, s2];
   }
-  return false;
+  return null;
 }
 
 /**
@@ -1772,8 +2138,8 @@ function hasClosePersonFactDates(
   maxDays: number,
   compareSimilar: boolean,
   compareGivenOnly: boolean,
-): boolean {
-  if (persons.length < 2) return false;
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
+  if (persons.length < 2) return null;
   const similarPairs = getSimilarNamePairs(persons, persons, [], compareGivenOnly);
   const similarKeys = new Set(
     similarPairs.map(([a, b]) => `${a}|${b}`),
@@ -1796,10 +2162,14 @@ function hasClosePersonFactDates(
       const isSimilar = similarKeys.has(`${a}|${b}`);
       if (compareSimilar !== isSimilar) continue;
       const diff = Math.abs(dayByPersonId.get(id1)! - dayByPersonId.get(id2)!);
-      if (diff > minDays && diff < maxDays) return true;
+      if (diff > minDays && diff < maxDays) {
+        const p1 = findPerson(persons, id1);
+        const p2 = findPerson(persons, id2);
+        if (p1 && p2) return [p1, p2];
+      }
     }
   }
-  return false;
+  return null;
 }
 
 const CHRISTENING_AND_BAPTISM_TYPES: ReadonlySet<string> = new Set([
@@ -1819,7 +2189,9 @@ const MARRIAGE_TYPES: ReadonlySet<string> = new Set([
  * `minDays=2, maxDays=8*30` → fires when two NON-similar children's exact
  * Birth dates are 2 to 240 days apart (suspicious sibling spacing).
  */
-function hasCloseChildBirthsIgnoreSimilar(mob: Mob): boolean {
+function hasCloseChildBirthsIgnoreSimilar(
+  mob: Mob,
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
   const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
   return hasClosePersonFactDates(children, BIRTH_ONLY_TYPES, 2, 8 * 30, false, true);
 }
@@ -1830,7 +2202,9 @@ function hasCloseChildBirthsIgnoreSimilar(mob: Mob): boolean {
  * Christening or Baptism dates are within that window (suggests duplicate
  * records of the same event).
  */
-function hasCloseChildChristenings6_30(mob: Mob): boolean {
+function hasCloseChildChristenings6_30(
+  mob: Mob,
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
   const children = mob.getChildren().slice(0, MAX_CHILDREN_TO_COMPARE);
   return hasClosePersonFactDates(children, CHRISTENING_AND_BAPTISM_TYPES, 2, 6 * 30, true, true);
 }
@@ -1861,9 +2235,11 @@ function getEarliestMarriageYearOfPerson(person: SimplifiedPerson): number | nul
  * names are dissimilar — a strong signal that two different spouses got
  * merged under one identity.
  */
-function hasDissimilarSpousesWithSameMarriageYear(mob: Mob): boolean {
+function hasDissimilarSpousesWithSameMarriageYear(
+  mob: Mob,
+): readonly [SimplifiedPerson, SimplifiedPerson] | null {
   const spouses = mob.getSpouses();
-  if (spouses.length < 2) return false;
+  if (spouses.length < 2) return null;
   const noise = focalSpouseNoiseNames(mob);
   const similarPairs = getSimilarNamePairs(spouses, spouses, noise, false);
   const similarKeys = new Set(similarPairs.map(([a, b]) => `${a}|${b}`));
@@ -1880,100 +2256,135 @@ function hasDissimilarSpousesWithSameMarriageYear(mob: Mob): boolean {
       if (!s1.id || !s2.id) continue;
       const [a, b] = s1.id < s2.id ? [s1.id, s2.id] : [s2.id, s1.id];
       if (similarKeys.has(`${a}|${b}`)) continue;
-      return true;
+      return [s1, s2];
     }
   }
-  return false;
+  return null;
 }
 
 // ─── Tier C + D — emitters ───────────────────────────────────────────────────
 
 function checkSimilarChildren(mob: Mob): PersonWarning | null {
-  if (!hasSimilarChildren(mob)) return null;
+  const pair = hasSimilarChildren(mob);
+  if (!pair) return null;
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_CHILDREN,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
+      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    ),
     message:
       "Two of this person's children look like the same individual recorded twice (similar names, same gender, dates compatible).",
   };
 }
 
 function checkSimilarChildrenConflictingDates(mob: Mob): PersonWarning | null {
-  if (!hasSimilarChildrenConflictingDates(mob)) return null;
+  const pair = hasSimilarChildrenConflictingDates(mob);
+  if (!pair) return null;
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_CHILDREN_CONFLICTING_DATES,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
+      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    ),
     message:
       "Two of this person's children have similar names but conflicting dates — likely the same child recorded twice with divergent source data.",
   };
 }
 
 function checkSimilarSpouses(mob: Mob): PersonWarning | null {
-  if (!hasSimilarSpouses(mob)) return null;
+  const pair = hasSimilarSpouses(mob);
+  if (!pair) return null;
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_SPOUSES,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
+      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    ),
     message:
       "Two of this person's spouses look like the same individual recorded twice (similar names, dates compatible).",
   };
 }
 
 function checkSimilarSpousesConflictingDates(mob: Mob): PersonWarning | null {
-  if (!hasSimilarSpousesConflictingDates(mob)) return null;
+  const pair = hasSimilarSpousesConflictingDates(mob);
+  if (!pair) return null;
   return {
     scoreType: COHERENCE,
     issueType: SIMILAR_SPOUSES_CONFLICTING_DATES,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
+      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    ),
     message:
       "Two of this person's spouses have similar names but conflicting dates — likely the same spouse recorded twice with divergent source data.",
   };
 }
 
 function checkHasCloseChildBirthsIgnoreSimilarChildren(mob: Mob): PersonWarning | null {
-  if (!hasCloseChildBirthsIgnoreSimilar(mob)) return null;
+  const pair = hasCloseChildBirthsIgnoreSimilar(mob);
+  if (!pair) return null;
   return {
     scoreType: COHERENCE,
     issueType: HAS_CLOSE_CHILD_BIRTHS_IGNORE_SIMILAR_CHILDREN,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(pair[0], BIRTH),
+      factIdsOfPersonFacts(pair[1], BIRTH),
+    ),
     message:
       "Two of this person's children have Birth dates suspiciously close together — possible duplicate sibling records.",
   };
 }
 
 function checkHasCloseChildChristenings6_30(mob: Mob): PersonWarning | null {
-  if (!hasCloseChildChristenings6_30(mob)) return null;
+  const pair = hasCloseChildChristenings6_30(mob);
+  if (!pair) return null;
   return {
     scoreType: COHERENCE,
     issueType: HAS_CLOSE_CHILD_CHRISTENINGS_6_30,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(pair[0], CHRISTENING_AND_BAPTISM_TYPES),
+      factIdsOfPersonFacts(pair[1], CHRISTENING_AND_BAPTISM_TYPES),
+    ),
     message:
       "Two of this person's children have Christening/Baptism dates within 6 months of each other AND similar names — possible duplicate event records.",
   };
 }
 
 function checkHasDissimilarSpousesWithSameMarriageYear(mob: Mob): PersonWarning | null {
-  if (!hasDissimilarSpousesWithSameMarriageYear(mob)) return null;
+  const pair = hasDissimilarSpousesWithSameMarriageYear(mob);
+  if (!pair) return null;
   return {
     scoreType: COHERENCE,
     issueType: HAS_DISSIMILAR_SPOUSES_WITH_SAME_MARRIAGE_YEAR,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      factIdsOfPersonFacts(pair[0], MARRIAGELIKE_FACT_TYPES),
+      factIdsOfPersonFacts(pair[1], MARRIAGELIKE_FACT_TYPES),
+    ),
     message:
       "Two of this person's spouses share a marriage year but have dissimilar names — suggests two different spouses were merged under one identity.",
   };
@@ -1986,12 +2397,21 @@ function checkRelativesHasDeathBeforeChildBirth365_2(
   const out: PersonWarning[] = [];
   for (const rel of relativeMobs) {
     if (!hasDeathBeforeChildBirthLike(rel, 365 * 2)) continue;
+    const child = childWithEarliestDay(rel, BIRTHLIKE_FACT_TYPES);
+    const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
     out.push({
       scoreType: COHERENCE,
       issueType: RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365_2,
       severity: "warning",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
+      factIds: unionFactIds(
+        factIdsOfPersonFacts(rel.getPerson(), DEATHLIKE_FACT_TYPES),
+        childC.factIds,
+      ),
+      ...(childC.relatedPersonId
+        ? { relatedPersonId: childC.relatedPersonId }
+        : {}),
       message:
         "This person's death-like fact is dated more than 2 years before a child's earliest birth-like fact.",
     });
@@ -2005,12 +2425,21 @@ function checkRelativesHasDeathBeforeChildBirth30_10(
   const out: PersonWarning[] = [];
   for (const rel of relativeMobs) {
     if (!hasDeathBeforeChildBirth(rel, 30 * 10)) continue;
+    const child = childWithEarliestDay(rel, BIRTH);
+    const childC = relativeContribution(child, BIRTH);
     out.push({
       scoreType: COHERENCE,
       issueType: RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_30_10,
       severity: "warning",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
+      factIds: unionFactIds(
+        factIdsOfPersonFacts(rel.getPerson(), DEATH),
+        childC.factIds,
+      ),
+      ...(childC.relatedPersonId
+        ? { relatedPersonId: childC.relatedPersonId }
+        : {}),
       message:
         "This person's exact Death day is more than 300 days before a child's exact Birth day.",
     });
@@ -2022,15 +2451,21 @@ function checkRelativesEarliestChildMarriageToBirth30(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => earliestChildMarriageToBirth(r, 30))) {
-    return null;
-  }
+  const rel = relativeMobs.find((r) => earliestChildMarriageToBirth(r, 30));
+  if (!rel) return null;
+  const child = childWithEarliestYear(rel, MARRIAGELIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_EARLIEST_CHILD_MARRIAGE_TO_BIRTH_30,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, MARRIAGELIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person had a child marry before the relative reached age 30, implying very young parenthood.",
   };
@@ -2041,13 +2476,21 @@ function checkFemaleRelativesHasDeathBeforeChildBirth365(
   relativeMobs: Mob[],
 ): PersonWarning | null {
   const females = relativeMobs.filter((r) => r.getGender() === "Female");
-  if (!females.some((r) => hasDeathBeforeChildBirthLike(r, 365))) return null;
+  const rel = females.find((r) => hasDeathBeforeChildBirthLike(r, 365));
+  if (!rel) return null;
+  const child = childWithEarliestDay(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, DEATHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_365,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A female relative of this person has a death-like fact more than 1 year before a child's earliest birth-like fact.",
   };
@@ -2058,13 +2501,21 @@ function checkFemaleRelativesHasDeathBeforeChildBirth2(
   relativeMobs: Mob[],
 ): PersonWarning | null {
   const females = relativeMobs.filter((r) => r.getGender() === "Female");
-  if (!females.some((r) => hasDeathBeforeChildBirth(r, 2))) return null;
+  const rel = females.find((r) => hasDeathBeforeChildBirth(r, 2));
+  if (!rel) return null;
+  const child = childWithEarliestDay(rel, BIRTH);
+  const c = relativeMobContribution(rel, DEATH);
   return {
     scoreType: COHERENCE,
     issueType: FEMALE_RELATIVES_HAS_DEATH_BEFORE_CHILD_BIRTH_2,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, BIRTH).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A female relative of this person has an exact Death day more than 2 days before a child's exact Birth day, which is biologically impossible.",
   };
@@ -2074,13 +2525,21 @@ function checkRelativesLatestChildBirthToMarriage35(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => latestChildBirthToMarriage(r, 35))) return null;
+  const rel = relativeMobs.find((r) => latestChildBirthToMarriage(r, 35));
+  if (!rel) return null;
+  const child = childWithLatestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, MARRIAGELIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_LATEST_CHILD_BIRTH_TO_MARRIAGE_35,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person had a child born 35+ years after their latest marriage, suggesting a record error.",
   };
@@ -2090,13 +2549,21 @@ function checkRelativesLatestChildBirthToBirth80(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => latestChildBirthToBirth(r, 80))) return null;
+  const rel = relativeMobs.find((r) => latestChildBirthToBirth(r, 80));
+  if (!rel) return null;
+  const child = childWithLatestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_LATEST_CHILD_BIRTH_TO_BIRTH_80,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person had a child born 80+ years after their own birth, which is biologically implausible.",
   };
@@ -2106,13 +2573,21 @@ function checkRelativesChildMarriageToMarriage15(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => childMarriageToMarriage(r, 15))) return null;
+  const rel = relativeMobs.find((r) => childMarriageToMarriage(r, 15));
+  if (!rel) return null;
+  const child = childWithEarliestYear(rel, MARRIAGELIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, MARRIAGELIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_CHILD_MARRIAGE_TO_MARRIAGE_15,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, MARRIAGELIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has a child who married within 15 years of the relative's earliest marriage.",
   };
@@ -2122,19 +2597,23 @@ function checkRelativesHasDeathAfterChildBirth90(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (
-    !relativeMobs.some((r) =>
-      hasDeathMoreThanNYearsAfterEarliestChildBirth(r, 90),
-    )
-  ) {
-    return null;
-  }
+  const rel = relativeMobs.find((r) =>
+    hasDeathMoreThanNYearsAfterEarliestChildBirth(r, 90),
+  );
+  if (!rel) return null;
+  const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, DEATHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_DEATH_AFTER_CHILD_BIRTH_90,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person died more than 90 years after their earliest child's birth, which is implausible.",
   };
@@ -2144,13 +2623,17 @@ function checkRelativesHasAgeRangeGreaterThan120(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (!relativeMobs.some((r) => hasAgeRangeGreaterThan(r, 120))) return null;
+  const rel = relativeMobs.find((r) => hasAgeRangeGreaterThan(r, 120));
+  if (!rel) return null;
+  const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_AGE_RANGE_GREATER_THAN_120,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: c.factIds,
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has a lifespan greater than 120 years, which is implausible.",
   };
@@ -2160,19 +2643,23 @@ function checkRelativesHasChildDeathAfterParentBirth200(
   mob: Mob,
   relativeMobs: Mob[],
 ): PersonWarning | null {
-  if (
-    !relativeMobs.some((r) =>
-      hasDeathMoreThanNYearsAfterEarliestParentBirth(r, 200),
-    )
-  ) {
-    return null;
-  }
+  const rel = relativeMobs.find((r) =>
+    hasDeathMoreThanNYearsAfterEarliestParentBirth(r, 200),
+  );
+  if (!rel) return null;
+  const parent = parentWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const c = relativeMobContribution(rel, DEATHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
     issueType: RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    factIds: unionFactIds(
+      c.factIds,
+      relativeContribution(parent, BIRTHLIKE_FACT_TYPES).factIds,
+    ),
+    relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person died more than 200 years after their earliest parent's birth, which is implausible.",
   };
@@ -2183,13 +2670,17 @@ function checkMaleRelativesHasDiffSurname(
   relativeMobs: Mob[],
 ): PersonWarning | null {
   const males = relativeMobs.filter((r) => r.getGender() === "Male");
-  if (!males.some((r) => hasDiffSurname(r))) return null;
+  const rel = males.find((r) => hasDiffSurname(r));
+  if (!rel) return null;
   return {
     scoreType: COHERENCE,
     issueType: MALE_RELATIVES_HAS_DIFF_SURNAME,
     severity: "warning",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
+    // Name-conclusion warning (not an event fact) — no factIds; the relative
+    // it fired on is still surfaced via relatedPersonId.
+    relatedPersonId: rel.anchorId,
     message:
       "A male relative of this person has surnames that don't match each other, suggesting conflated identities.",
   };
@@ -2492,6 +2983,7 @@ function checkBirthLikeRangeGreaterThan8(
     severity: "warning",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
+    factIds: factIdsOfPersonFacts(merged.getPerson(), BIRTHLIKE_FACT_TYPES),
     message:
       "The merged record's birth-like facts span more than 8 years, with no shared marriage date to corroborate the match — the two records may be different people.",
   };
@@ -2513,6 +3005,7 @@ function checkBirthRangeGreaterThan3(
     severity: "warning",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
+    factIds: factIdsOfPersonFacts(merged.getPerson(), BIRTH),
     message:
       "The merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the match — the two records may be different people.",
   };
