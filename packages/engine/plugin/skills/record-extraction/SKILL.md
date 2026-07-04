@@ -108,6 +108,15 @@ Record data arrives in one of four ways:
 
 ## Steps
 
+**Read inputs once, up front.** Before Step 1, read `research.json` and
+`tree.gedcomx.json` a single time and keep both in context for the whole
+extraction — you reuse them for source-id (`src_`) numbering, duplicate
+checks, and existing-person (`I` id) lookups. Do not re-open either file
+before each such check; the copy you read at the start is authoritative
+for this pass, and `tree_edit` returns the ids it assigns, so you never
+need to re-read to learn a new id. (This is the pre-write counterpart to
+the no-re-read-after-write rule below.)
+
 ### 1. Identify the source
 
 Determine the source of the record:
@@ -409,13 +418,11 @@ Staged handles expire (~24h); if `research_log_append` returns
 
 ### 5. Persist source and assertions
 
-**Call the tool BEFORE narrating it.** Do not write sentences like
-"Now I'll persist…", "Now writing the source…", "Now adding the
-sibling stubs…" in your text response unless the corresponding tool
-call has already executed. The pattern "narrate the persistence,
-[end of response]" is a hard test failure — your audit log must show
-the actual `research_append` / `tree_edit` invocations, not text
-claiming you made them.
+**Call the tool BEFORE narrating it.** No "Now I'll persist…" preamble
+before the call fires — the audit log must show the actual
+`research_append` / `tree_edit` invocation, not text claiming you made
+it. Narrating the persistence then ending the response is a hard test
+failure.
 
 **Tool-first checklist for this step:**
 1. Make the `research_append` call (the batched `ops` from 5a/5b
@@ -427,6 +434,13 @@ claiming you made them.
 4. **Only after the tool returns are you allowed to summarize
    what was persisted.** Match what you write to what the tool log
    actually shows.
+
+**No post-write re-validation.** `research_append` and `tree_edit`
+validate-on-write and keep a one-deep `.bak`; a successful return is
+proof the write is valid. Do NOT call `validate_research_schema` (it is
+not in this skill's allowed-tools) and do NOT re-read `research.json` /
+`tree.gedcomx.json` to "sanity check" a successful write — that only
+burns turns and tokens.
 
 **If `research_append` or `tree_edit` are not immediately available** in
 your tool list (e.g., shown as deferred), call ToolSearch first with
@@ -525,13 +539,14 @@ whether to write any stub:
    listed persons. Siblings found in the tree are skipped (duplicate-
    sibling skip). Siblings not found are the in-scope set for the
    write loop below.
-4. **State the result of steps 2–3 explicitly in your response** — name
-   the in-tree parents and their `I` ids, name each sibling as either
-   "already in tree as I<x>" or "to be created", and only then proceed
-   to write. Never write the words *"all siblings already existed"* or
-   *"trigger was skipped"* without first surfacing the enumerated list
-   that supports the conclusion. A reader (or validator) must be able
-   to confirm the skip from the enumeration, not from a bare claim.
+4. **Emit a compact enumeration checklist** (required before writing —
+   a few lines, no deliberation prose):
+   - Parents in tree: `<name> = I<id>`, … (or "none → skip stubs")
+   - Siblings: `<name>` → create / `<name>` → already I<id>
+
+   Don't claim *"all siblings already existed"* or *"trigger skipped"*
+   without this list — the skip must be confirmable from the enumeration,
+   not a bare assertion.
 
 **Write the stubs and edges in two `tree_edit` batches** (tree `I` ids
 mix synthesized + FamilySearch ids and aren't safe to predict, so read
@@ -557,9 +572,25 @@ The subject's own person and ParentChild edges are out of scope —
 
 ### 6. Present results
 
-Show source, assertions by person-role, and classifications. Suggest
-`check-warnings` to surface genealogical impossibilities, and
-assertion-classification or person-evidence as next steps.
+**OUTPUT ECONOMY (latency).** The source, assertions, and any tree stubs
+are ALREADY persisted — the `research_append` and `tree_edit` returns
+confirm every assigned id. Wall-clock time is ~linear in the tokens the
+model generates (~16-20 ms/token, independent of model tier), so the
+single biggest latency lever is generating fewer tokens. Do NOT reproduce
+the full per-assertion tables, per-field walkthroughs, or the
+classification rationale in chat — that content lives in the persisted
+artifact, and the return already confirmed each assigned id.
+
+Present a terse summary, **≤10 lines**:
+- source id (`src_` + `S`),
+- assertion count grouped by `record_role`,
+- tree changes (persons created, edges added),
+- key findings if any (gaps / conflicts / negative evidence),
+- next step: `check-warnings` for genealogical impossibilities, then
+  assertion-classification or person-evidence.
+
+One short line per tool action, not a paragraph. The per-assertion detail
+belongs in `research.json`, not echoed here.
 
 ## Decision rules
 

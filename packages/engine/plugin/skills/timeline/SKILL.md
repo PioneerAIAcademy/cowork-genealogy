@@ -19,7 +19,7 @@ allowed-tools:
   - place_search
   - place_search_all
   - place_distance
-  - validate_research_schema
+  - research_append
 ---
 
 # Timeline
@@ -121,9 +121,15 @@ events.
 **Phase 1 — Resolve places to standard place names:**
 
 1. Collect all unique non-null `place` strings from the built events.
-2. For each unique place string, call the `place_search` MCP tool to
-   standardize it. Pass the place string as `placeName` —
-   e.g. `place_search({ placeName: "Schuylkill County, Pennsylvania" })`.
+2. For each unique place string, call the `place_search` MCP tool
+   **exactly once** to standardize it. Pass the place string as
+   `placeName` — e.g. `place_search({ placeName: "Schuylkill County,
+   Pennsylvania" })`. **Issue all of these `place_search` calls together
+   in a single turn (they are independent) rather than one per turn** —
+   each turn re-reads the whole context, so serializing independent calls
+   is the main avoidable cost here. Cache the resulting `standard_place`
+   keyed by the raw string and reuse it for every event sharing that
+   string; never re-resolve a string you have already resolved.
 3. If the tool returns one or more results, take the first (best)
    match's `standardPlace` field and write it as `standard_place` onto
    all events sharing that place string.
@@ -133,13 +139,20 @@ events.
 **Phase 2 — Compute distances:**
 
 1. Walk events in chronological order as consecutive pairs.
-2. For each pair where both events have a non-null `standard_place`:
+2. First determine every pair that needs a distance, then **issue all the
+   needed `place_distance` calls together in one turn** (they are
+   independent) instead of one per turn. For each pair where both events
+   have a non-null `standard_place`:
    - If the two `standard_place` values are the same, set
      `distance_from_previous_km` to `0` (no API call needed).
    - Otherwise call
      `place_distance({ standardPlace1, standardPlace2 })` with the two
      `standard_place` names and write its `kilometers` onto the later
-     event's `distance_from_previous_km`.
+     event's `distance_from_previous_km`. Compute each unordered place
+     pair only once — `place_distance` is symmetric, so
+     `place_distance(A, B)` equals `place_distance(B, A)`; cache the
+     result by unordered pair and never re-call it with the arguments
+     reversed.
 3. Skip (leave `distance_from_previous_km` null) when either event lacks
    a `standard_place`.
 
@@ -245,7 +258,13 @@ coherence and report one of three results:
   or deny. Consistency alone does not prove identity when the
   profile is thin (name + approximate age may match multiple people).
 
-Report the coherence result to the user. If fail or inconclusive,
+Report the coherence result to the user, and **name the specific signals
+that drove the verdict** — the actual age progression, birthplace
+stability (or drift), geographic plausibility of the moves, and
+family-member consistency you observed — not just the Pass / Fail /
+Inconclusive label. This identity-coherence judgment has no persisted
+field; your chat reply is its only record, so a bare label without the
+deciding signals is an incomplete finding. If fail or inconclusive,
 suggest `hypothesis-tracking` for next steps.
 
 ### 7. Write the timeline
@@ -267,57 +286,92 @@ its `a_*` ID in the free-text `conflict_note` field. The rejected
 `assertion_ids` is "what produced this event," not "everything anyone
 said about it."
 
-Add or replace the timeline in `research.json` `timelines[]`:
+Persist the timeline to `research.json` `timelines[]` through
+`research_append`. Pass **only the timeline object** — never read and
+re-serialize the whole `research.json`. The persisted timeline's fields
+and shape are exactly as before (`label`, optional `hypothesis_id`,
+`person_ids`, `generated`, `events[]`, `gaps[]`, `impossibilities[]`);
+only the write mechanism changes. On `{ ok: false, errors }` it writes
+nothing — surface those errors and fix the input rather than retrying
+blindly.
+
+**New timeline** — `op: "append"`. The tool assigns the `t_` id and
+stamps `generated`, so omit both from the entry:
 
 ```json
-{
-  "id": "t_001",
-  "label": "Patrick Flynn — assuming Thomas Flynn parentage",
-  "hypothesis_id": "h_001",
-  "person_ids": ["KWCJ-RN4"],
-  "generated": "2026-05-04T16:00:00Z",
-  "events": [ ... ],
-  "gaps": [ ... ],
-  "impossibilities": [ ... ]
-}
+research_append({
+  "section": "timelines",
+  "op": "append",
+  "entry": {
+    "label": "Patrick Flynn — assuming Thomas Flynn parentage",
+    "hypothesis_id": "h_001",
+    "person_ids": ["KWCJ-RN4"],
+    "events": [ ... ],
+    "gaps": [ ... ],
+    "impossibilities": [ ... ]
+  }
+})
 ```
 
-**Regeneration:** If a timeline with this label or person_ids already
-exists, replace it entirely. Timelines are regeneratable — they're
-cached analysis, not primary data. Set `generated` to the current
-timestamp so downstream skills know how fresh the analysis is.
+**Regeneration (replace an existing timeline for the same
+person/hypothesis)** — read that timeline's `t_` id from
+`research.json` `timelines[]` and update it in place with
+`op: "update"`. The `fields` you pass are shallow-merged and array
+fields (`events`, `gaps`, `impossibilities`) are replaced **wholesale**,
+so pass the full recomputed arrays. `update` does **not** re-stamp
+`generated`, so include it yourself with the current timestamp so
+downstream skills know how fresh the analysis is:
 
-### 8. Validate and present
-
-Call `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. Then present the timeline:
-
-**Display format** — chronological rows, a distance line between
-consecutive placed events, then gaps, impossibilities, and a coherence
-summary:
-
-```
-Timeline: <label>     Generated: <date>
-
-~1845  BIRTH    Ireland (estimated from census ages)  [a_002, a_009]
-                                    ── 5,400 km ──
-1850   CENSUS   Schuylkill County, PA — age 5, Thomas Flynn household
-                [a_003, a_004]
-
-GAPS:            1860–1908 (HIGH) — missing marriage, 1870/1880/1900
-                 censuses. 48-year gap.
-IMPOSSIBILITIES: None
-Coherence:       Plausible life in Schuylkill County, PA; large gap
-                 1860–1908 needs investigation.
+```json
+research_append({
+  "section": "timelines",
+  "op": "update",
+  "entryId": "t_001",
+  "fields": {
+    "generated": "2026-05-04T16:00:00Z",
+    "events": [ ... ],
+    "gaps": [ ... ],
+    "impossibilities": [ ... ]
+  }
+})
 ```
 
-Distance lines appear between consecutive events when both have
-resolved place IDs. Omit the distance line when either event has
-no resolved place. Show `0 km` for same-place consecutive events
-— this confirms the person stayed in the same location.
+Timelines are regeneratable — cached analysis, not primary data — so
+never leave a stale duplicate for the same candidate.
 
-For next steps after presenting, see **Handoff rules** below.
+### 8. Present
+
+`research_append` validates the whole project before persisting, so no
+separate `validate_research_schema` pass is needed — a successful write
+means the timeline (and `tree.gedcomx.json`) are valid.
+
+OUTPUT ECONOMY (latency): The timeline is ALREADY persisted to
+`research.json` by `research_append`. Wall-clock time is ~linear in the
+tokens you generate (~16–20 ms/token, independent of model tier), so
+the single biggest latency lever is generating fewer tokens. In your
+FINAL chat response, do NOT reproduce the persisted content — the full
+event table, the distance ladder, or a per-event walkthrough. Present a
+terse summary ONLY: what was written, the key findings, and the
+recommended next step. The full chronological table belongs in the
+persisted timeline (the viewer renders it), not echoed in chat. Reserve
+one short line per finding, not a paragraph.
+
+Report:
+
+- **Written:** the timeline `t_` id and label plus event / gap /
+  impossibility counts — e.g. "t_003 — 7 events, 2 gaps, 0
+  impossibilities; persisted for the viewer".
+- **Gaps:** one line per gap — its span and severity (the actionable
+  negative evidence). Omit if none.
+- **Chronological impossibilities:** one line per impossibility, or
+  "None".
+- **Coherence** (Mode B hypothesis test): the Pass / Fail /
+  Inconclusive verdict with a one-sentence rationale.
+- **Recommended next step** (see Handoff rules below).
+
+Do NOT re-render every event row or the distance ladder in chat — the
+events, places, and distances are persisted and the viewer renders the
+full chronological table.
 
 ## Handoff rules
 

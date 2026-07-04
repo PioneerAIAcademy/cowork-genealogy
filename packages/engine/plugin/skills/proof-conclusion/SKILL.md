@@ -57,11 +57,11 @@ All assertions linked to the question via `extracted_for_question_ids`, their pe
 
 ### 3. Select the proof conclusion form
 
-- **Statement** — a few cited sentences, no explanation needed.
-- **Summary** — multiple sources correlate; weight clearly one direction.
-- **Argument** — significant conflicts, only indirect evidence, competing candidates, or a reader would ask "but what about...?"
+- **Statement** — a few cited sentences, no explanation needed. Budget: ≤~150 words.
+- **Summary** — multiple sources correlate; weight clearly one direction. Budget: ~300–500 words.
+- **Argument** — significant conflicts, only indirect evidence, competing candidates, or a reader would ask "but what about...?" Use only when that bar is met; budget: ≤~800 words.
 
-Most conclusions require a Summary or Argument. See `references/gps-proof-writing.md` for full selection tests.
+Do not restate evidence already quoted verbatim elsewhere — cite it. Most conclusions require a Summary or Argument. See `references/gps-proof-writing.md` for full selection tests.
 
 ### 4. Write the narrative markdown
 
@@ -73,15 +73,15 @@ The `narrative_markdown` is the **authoritative GPS conclusion** — if structur
 
 **Required fields in `entry`:** `question_id` (the `q_` this conclusion answers), `tier` (lowercase enum from §2), `vehicle` (lowercase enum from §3: `statement` / `summary` / `argument`), `supporting_assertion_ids` (array of `a_` ids that ground the conclusion), `resolved_conflict_ids` (array of `c_` ids the conclusion resolves — may be empty `[]`), `exhaustive_search_summary` (one-paragraph string describing what was searched and what wasn't, even at probable/possible tiers), and `narrative_markdown` (the self-contained narrative from §4). Omitting any of these causes the project schema validation to reject the entry and `research_append` writes nothing.
 
-On re-invocation where a proof summary for this question already exists, use `op: "update"` with the existing `ps_` id — **never append a second summary for the same question**.
+On re-invocation where a proof summary for this question already exists, use `op: "update"` with the existing `ps_` id — **never append a second summary for the same question**. `op: "update"` shallow-merges, so pass `entryId: "ps_NNN"` plus a `fields` object containing ONLY the fields that changed — do NOT regenerate or re-emit the full entry (especially `narrative_markdown`) when just a couple of fields change.
 
 ### 6. Update tree.gedcomx.json (tier >= probable)
 
-Use `tree_edit` (one call per edit) to add facts (`add_fact` with `primary: true`), relationships (`add_relationship`), and source entries (`add_source` — hand-write; no tool source op yet, copy the finalized `research.json` `sources[].citation`). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with `tree_edit({ operation: "remove", … })`.
+Use `tree_edit` to add facts (`add_fact` with `primary: true`), relationships (`add_relationship`), and source entries (`add_source` — hand-write; no tool source op yet, copy the finalized `research.json` `sources[].citation`). **Batch all of these into ONE `tree_edit` call via its `ops[]` array** rather than one call per edit — the tool applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing), and ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op in the same batch.
 
 **Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "error"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "warning"` is advisory. Get confirmation, then call `merge_tree_persons` or `merge_record_into_tree`.
 
-After any tree edit or merge, run `check-warnings` (see `references/validation-protocol.md`).
+After the single batched `tree_edit` (or a merge), run `check-warnings` **once** (see `references/validation-protocol.md`) — not after each op.
 
 ### 7. Do not modify the question
 
@@ -97,7 +97,25 @@ Set `project.updated` to today's date (hand-write — no tool op yet). If ALL qu
 
 ### 9. Present
 
-Show the full narrative (formatted), the tier and rationale, what changed in the tree, what would advance the tier, and next steps: more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan.
+**OUTPUT ECONOMY (latency):** The proof_summaries entry — including the full `narrative_markdown` — is ALREADY persisted to research.json by `research_append`, and any tree facts by `tree_edit`. Wall-clock time is ~linear in the tokens you generate (~16–20 ms/token, independent of model tier), so generating fewer tokens is the single biggest latency lever. Do NOT reproduce the persisted narrative, the full argument, or a per-assertion walkthrough in chat — that prose belongs in the persisted artifact, not echoed here.
+
+Present a terse summary ONLY:
+
+- **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
+- **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree (facts / relationships / sources added or removed, with ids/counts) — not the prose. One short line per tool action.
+- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier).
+
+The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
+
+**Exception — review / assessment mode (no new proof written).** When this
+invocation does NOT write a new or updated `proof_summaries` entry — e.g.
+the user asks whether an existing conclusion meets GPS, or to assess the
+current evidence without concluding — the reasoned assessment IS the
+deliverable and exists only in your chat reply. Give the full assessment
+(which GPS components are met vs. missing, and why), not a terse summary:
+there is no persisted artifact to point to, so trimming here deletes the
+entire output. The OUTPUT ECONOMY rule above applies only to content that
+is already persisted.
 
 ## Important rules
 
@@ -110,6 +128,6 @@ Show the full narrative (formatted), the tier and rationale, what changed in the
 
 **Writes:** `proof_summaries[]` and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable.
 
-**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ op: "update", entry: { id: "ps_NNN", ... } })` — never append a second proof_summary for the same `question_id`. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_edit({ operation: "remove", ... })`.
+**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_edit({ operation: "remove", ... })`.
 
 **Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write to the `questions` section (see §7).
