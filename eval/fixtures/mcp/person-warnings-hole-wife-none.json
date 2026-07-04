@@ -1,0 +1,6 @@
+{
+  "tool": "person_warnings",
+  "description": "person_warnings on Inger Hole (KD96-TV3) -- no warnings. Paired with the clean quality fixture. Used by ut_check_warnings_016.",
+  "args": { "personId": "KD96-TV3" },
+  "response": { "warningCount": 0, "warnings": [] }
+}
