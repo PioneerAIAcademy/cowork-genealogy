@@ -1,7 +1,9 @@
 {
   "tool": "person_warnings",
   "description": "person_warnings on Patrick (I1) returns hasEventAfterDeath1 -- flagship Fundamental violation (event dated more than 1 year after Patrick's recorded death). Used by ut_check_warnings_004.",
-  "args": { "personId": "I1" },
+  "args": {
+    "personId": "I1"
+  },
   "response": {
     "warningCount": 1,
     "warnings": [
@@ -11,7 +13,11 @@
         "severity": "error",
         "personId": "I1",
         "personName": "Patrick Flynn",
-        "message": "An event is dated more than 1 year after this person's latest death-like fact."
+        "message": "An event is dated more than 1 year after this person's latest death-like fact.",
+        "factIds": [
+          "F1",
+          "F2"
+        ]
       }
     ]
   }

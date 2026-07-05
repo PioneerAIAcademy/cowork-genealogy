@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_check_warnings_016",
+    "skill": "check-warnings",
+    "name": "Clean FamilySearch quality (zero issues) reported without fabrication",
+    "type": "positive",
+    "description": "User asks to check Inger Hole (KD96-TV3), a fully-sourced, clean profile. person_warnings finds nothing and person_quality returns issueCount 0 (overall 1.0). The skill should call both tools, report no impossibilities, and report that FamilySearch flagged no quality issues -- without inventing any.",
+    "tags": ["positive", "person-quality", "clean", "zero-issues"]
+  },
+  "input": {
+    "user_message": "Any data problems with Inger Hole (KD96-TV3)?",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": ["person-warnings-hole-wife-none", "person-quality-hole-wife-clean"],
+  "judge_context": [
+    "Should call both person_warnings and person_quality with personId 'KD96-TV3'",
+    "Should report no impossibilities from person_warnings",
+    "Should report that FamilySearch flagged no quality issues (issueCount 0, overall ~1.0)",
+    "Should NOT fabricate quality issues to seem thorough, and should NOT invent a quality band"
+  ]
+}

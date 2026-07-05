@@ -1,0 +1,21 @@
+{
+  "tool": "person_quality",
+  "description": "person_quality on Ole C. Hole (KD96-TV4) -- 2 completeness issues (missing burial date, marriage place missing a city). Paired with a person_warnings fixture that fires hasEventAfterDeath1, so both the impossibility and the quality issues are present at once. Used by ut_check_warnings_015.",
+  "args": { "personId": "KD96-TV4" },
+  "response": {
+    "personId": "KD96-TV4",
+    "segment": "Norway 1816 - 1920",
+    "overallScore": 0.94,
+    "issueCount": 2,
+    "categories": [
+      { "scoreType": "COMPLETENESS", "count": 1, "score": 0.9 },
+      { "scoreType": "VERIFIABILITY", "count": 1, "score": 0.95 },
+      { "scoreType": "CONSISTENCY", "count": 0, "score": 1 },
+      { "scoreType": "COHERENCE", "count": 0, "score": 1 }
+    ],
+    "issues": [
+      { "sentence": "The death place is missing a city.", "conclusionType": "DEATH", "conclusionId": "b1a2c3d4-0001-4a00-9000-000000000001", "scoreType": "COMPLETENESS" },
+      { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "conclusionId": "b1a2c3d4-0002-4a00-9000-000000000002", "scoreType": "VERIFIABILITY" }
+    ]
+  }
+}

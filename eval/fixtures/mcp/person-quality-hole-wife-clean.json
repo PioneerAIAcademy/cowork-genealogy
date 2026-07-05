@@ -1,0 +1,18 @@
+{
+  "tool": "person_quality",
+  "description": "person_quality on Inger Hole (KD96-TV3) -- a fully-sourced, clean profile: overall 1.0, no issues. Exercises the empty-quality (issueCount 0) reporting path. Used by ut_check_warnings_016.",
+  "args": { "personId": "KD96-TV3" },
+  "response": {
+    "personId": "KD96-TV3",
+    "segment": "Norway 1816 - 1920",
+    "overallScore": 1,
+    "issueCount": 0,
+    "categories": [
+      { "scoreType": "COMPLETENESS", "count": 0, "score": 1 },
+      { "scoreType": "VERIFIABILITY", "count": 0, "score": 1 },
+      { "scoreType": "CONSISTENCY", "count": 0, "score": 1 },
+      { "scoreType": "COHERENCE", "count": 0, "score": 1 }
+    ],
+    "issues": []
+  }
+}
