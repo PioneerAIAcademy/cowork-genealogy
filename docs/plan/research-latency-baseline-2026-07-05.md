@@ -1,7 +1,7 @@
 # Research-Latency Baseline — 2026-07-05 (Phase 0)
 
-**Status:** measured from committed e2e runs; one canonical fresh run still owed
-(blocked on FamilySearch re-login — see §5).
+**Status:** measured from committed e2e runs; the owed fresh kenneth run is now in
+(§5) — it does not change the §4 conclusions but surfaces a confound worth reading.
 **Feeds:** [`research-latency-reduction-plan.md`](./research-latency-reduction-plan.md) (this is its Phase 0 gate).
 **Tool:** `make e2e-latency` (`eval/harness/e2e/latency_report.py`) — pure analysis
 over committed run JSONs, no live run, no API. Reproduce any number below with it.
@@ -113,23 +113,63 @@ Measured against `research-latency-reduction-plan.md`:
 Net: **stop adding persistence tools for latency; spend the effort on 2a + 2b**,
 both of which are skill-prose changes.
 
-## 5. The one owed measurement (blocked)
+## 5. The owed measurement — done, and its confound
 
-A fresh **post-migration** kenneth-quass-death real run, to sit beside the Jun 16
-pre-migration point (32.5m / 129 turns / 818 tok/turn) and confirm the persistence
-migration's effect on the canonical fixture. Blocked only on an interactive
-FamilySearch re-login (the token is >24h old; `e2e-preflight` is green on
-everything else — built server, `ANTHROPIC_API_KEY`, deps). To run it:
+Fresh kenneth-quass-death run (`run-2026-07-05_20-05-17`, **pass**, proof 2/3),
+beside the Jun 16 point:
 
+| | Jun 16 (pre-migration, pre-#578) | Jul 05 (post-migration, post-#578) | Δ |
+|---|---|---|---|
+| wall-clock | 32.5m | 50.3m | **+55%** |
+| model-API % | 99.7% | 99.6% | flat |
+| turns | 129 | 125 | −3% (flat) |
+| output tokens | 105,544 | 131,635 | **+25%** |
+| tok/turn | 818 | 1,053 | **+29%** |
+| cost | $6.47 | $7.88 | +22% |
+| top tools | `Edit:37, validate:15` | `research_append:24, research_log_append:7` | **different workflow** |
+
+The naïve read — "latency *rose*, so the perf work regressed" — is wrong. **These
+two runs are not a clean A/B for any single change**; at least three things moved
+between them, and the confounds dominate:
+
+1. **The persistence architecture migrated.** Jun 16 hand-wrote research.json via
+   `Edit` (37×) + `validate_research_schema` (15×); Jul 05 uses the structured
+   `research_append` (24×) + `research_log_append` (7×) tools. That is a different
+   generation profile, not a prose change. **Hypothesis worth testing before acting:**
+   a batched `research_append` serializes a large assertion payload *as tool-use
+   input* — which counts as **generated output tokens** — so the structured tools
+   may *raise* tok/turn (818→1,053) while cutting hand-edit turns elsewhere. If real,
+   that's a latency cost hiding inside a correctness/UX win. Test it by measuring the
+   tool-use-input token share per turn, not by eyeballing wall-clock.
+2. **Different research path.** The Jul 05 run hit a conflict (`conflicts=yes`,
+   proof 2/3, exhaustiveness=partial) and did conflict-resolution + argument-form
+   proof work the Jun 16 run did not. More work → more tokens, legitimately.
+3. **Single-run variance + gen stalls.** No `temperature=0`; the Jul 05 timeline
+   carries individual 206s / 177s / 164s generation gaps (one turn each) that read
+   as API-side queueing on this run, not a systematic property. n=1 per side.
+
+**So we still do not have a clean e2e measurement of #578 — and can't cheaply get
+one**, because the only pre-#578 kenneth run also predates the migration. This is
+the real lesson: **at e2e, confounds are unavoidable** (architecture, research path,
+stalls, n=1), so e2e wall-clock is a *coarse multi-run trend*, not an attribution
+tool. **Attributing a single SKILL.md edit needs the unit-level instrument**
+(`make skill-latency`, PR #583) — identical test inputs, same skill, isolated. Use
+e2e to watch aggregate drift; use unit to credit a specific edit. A genuine #578
+e2e A/B would require two runs that differ *only* in #578 (both post-migration) —
+worth one focused pair if a hard e2e number is ever needed.
+
+The fresh run JSON is uncommitted at
+`eval/runlogs/e2e/kenneth-quass-death/run-2026-07-05_20-05-17.json` (+ `.final-tree`,
+`.final-research`, `.transcript.md`). It is **not** added to this PR — committing an
+e2e run that produced a final tree triggers the same-PR grading gate
+(`check-e2e-fixtures`), and that `.ann.json` is a calibration judgment for the
+maintainer, not away-block work. Grade + commit it as a second canonical baseline if
+wanted (`/grade-e2e-run`), or discard it — the numbers above are already captured here.
+
+Reproduce the breakdown:
 ```
-make e2e-login                                 # browser OAuth, ~24h-lived
-make e2e-run  TEST=kenneth-quass-death          # ~20–60 min, $3–10
-make e2e-latency TEST=kenneth-quass-death       # breakdown of the fresh run
+make e2e-latency TEST=kenneth-quass-death       # newest committed run
 ```
-
-This does **not** change the §4 conclusions — the model-vs-tool split is already
-unambiguous across seven runs. It refines the canonical before/after for the
-migration, and gives 2a/2b a fixed reference to measure against.
 
 ## 6. Reproduce
 
