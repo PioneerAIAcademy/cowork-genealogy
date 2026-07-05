@@ -455,9 +455,6 @@ async def _execute_single_run(
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
-    had_substantive_effect = bool(
-        file_changes or files_created or result.tool_calls
-    )
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
@@ -465,7 +462,6 @@ async def _execute_single_run(
         aborted_reason=result.aborted_reason,
         activated=activated,
         skills_invoked=result.skills_invoked,
-        had_substantive_effect=had_substantive_effect,
         judge_skipped=judge_result.skipped,
     )
 
@@ -725,17 +721,9 @@ def _compute_outcome(
     aborted_reason: str | None,
     activated: bool,
     skills_invoked: list[str],
-    had_substantive_effect: bool = False,
     judge_skipped: bool = False,
 ) -> str:
     """v1 per-run outcome per spec §7.
-
-    `had_substantive_effect` is True iff *any* substantive side effect
-    occurred in the workspace (file changes, files created, or MCP tool
-    calls). Used for negative tests with `correct_skill: []`, where the
-    rule is "no skill should fire" — a routing-only Skill call that
-    declines without effect is allowed per spec §6 ("a one-line response
-    that names a different skill and stops" is not activation).
 
     `judge_skipped` is True iff the judge layer didn't grade (validators
     failed OR judge raised an error). For positive tests, when validators

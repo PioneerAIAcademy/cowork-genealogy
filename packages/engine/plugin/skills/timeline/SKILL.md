@@ -181,7 +181,14 @@ likely move (broaden the search geographically), not lost records —
 see `references/timeline-analysis-guide.md` (Eliza Olds pattern).
 
 Each gap has `start`, `end`, `expected_events` (the record types that
-should fill it), and `severity`.
+should fill it), and `severity`. Set `start` and `end` to the **actual
+boundary values, copied verbatim** — the `date` of the bounding event
+(in whatever format that event uses), or the year of the expected
+record when the boundary is only known to the year (a bare `"1850"` for
+a missing census is correct and valid). **Do not pad a year to
+`YYYY-01-01` / `YYYY-12-31`** — that fabricates a January-1 precision the
+boundary doesn't have. Boundaries stay as precise, and no more precise,
+than the events they come from.
 
 **Gap severity:**
 - **High:** Missing a census year where the person should appear

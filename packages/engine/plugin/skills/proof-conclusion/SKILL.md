@@ -77,7 +77,7 @@ On re-invocation where a proof summary for this question already exists, use `op
 
 ### 6. Update tree.gedcomx.json (tier >= probable)
 
-Use `tree_edit` to add facts (`add_fact` with `primary: true`), relationships (`add_relationship`), and source entries (`add_source` — hand-write; no tool source op yet, copy the finalized `research.json` `sources[].citation`). **Batch all of these into ONE `tree_edit` call via its `ops[]` array** rather than one call per edit — the tool applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing), and ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op in the same batch.
+Use `tree_edit` to add facts (`add_fact` with `primary: true`), relationships (`add_relationship`), and source entries (`add_source` for a new tree source, or `update_source` with its `sourceId` to refine an existing one). A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole `tree_edit` write fails validation). **Batch all of these into ONE `tree_edit` call via its `ops[]` array** rather than one call per edit — the tool applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing), and ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op in the same batch.
 
 **Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "error"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "warning"` is advisory. Get confirmation, then call `merge_tree_persons` or `merge_record_into_tree`.
 
@@ -93,7 +93,12 @@ Marking the question `resolved` (setting `resolved`, `resolution_assertion_ids`)
 
 ### 8. Update project status
 
-Set `project.updated` to today's date (hand-write — no tool op yet). If ALL questions are now `resolved`, set `project.status` to `completed`.
+`project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
+
+- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
+- Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
+
+**Never pass `updated` in `fields`.**
 
 ### 9. Present
 
