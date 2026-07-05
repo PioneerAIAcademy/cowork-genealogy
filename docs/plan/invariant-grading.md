@@ -1,7 +1,7 @@
 # Invariant grading for routing-flaky negatives
 
-**Status:** proposed (harness change — needs team review)
-**Scope:** `negative.grade_on_invariant` boolean; `_compute_outcome`; schema; 3 tests.
+**Status:** mechanism merged (#580); application in progress (this branch).
+**Scope:** `negative.grade_on_invariant` boolean; `_compute_outcome`; schema; 2 tests.
 
 ## Problem
 
@@ -13,17 +13,28 @@ them on **routing** (did the skill under test activate / did an accepted
 `correct_skill` fire), so single-run routing variance flipped them
 red/green and they had to be parked as `xfail`.
 
-Three tests are in this bucket:
+Two tests are in this bucket:
 
 | Test | Invariant that always holds |
 |---|---|
-| citation `_011` | citation never inserts a new `src_` |
 | citation `_012` (refuse-new-source) | citation never inserts a new `src_` |
-| search-records `_005` (negative-research-plan-request) | no `record_search`, no writes |
+| search-records `_005` (negative-research-plan-request) | no `record_search`, no new search log / sidecar |
 
 `correct_skill: []` (out-of-scope) can't express them either — several
 routes are *acceptable*, not zero, so the "skills_invoked must be []"
 rule structurally fails them.
+
+**Excluded — citation `_011` (evidence-quality routing).** An earlier
+draft listed `_011` here too, but it has no state-mutating invariant to
+grade on. citation's `allowed-tools` is `[validate_research_schema]`, so
+no citation run can write a source; and `_011`'s scenario (a "is this
+informant primary or secondary?" question) routes to
+assertion-classification, which writes only `assertions`, never a `src_`.
+The `no-new-source` validator therefore *can never fail* on `_011`, so
+`grade_on_invariant` would be a guaranteed green that asserts nothing
+(the vacuous-pass mode below) — strictly worse than `xfail`, because it
+hides that the routing is still unverified. `_011` stays `xfail`: its
+flake is pure routing with no deterministic invariant underneath.
 
 ## Options considered
 
@@ -73,10 +84,13 @@ So the contract is: **every `grade_on_invariant` test must carry a tag
 that gates a real, non-skipped invariant validator** in
 `eval/harness/validators/test_<skill>.py`.
 
-- citation `_011`/`_012`: the `no-new-source` validator (asserts no new
-  `src_` id appears) — un-skipped for any `no-new-source`-tagged negative.
-- search-records `_005`: a no-harm validator (asserts no `record_search`
-  call and no research/tree writes) — added with this change.
+- citation `_012`: the `no-new-source` validator (asserts no new `src_`
+  id appears) — un-skipped for any `no-new-source`-tagged negative.
+- search-records `_005`: the `no-search-no-write` validator (asserts no
+  `record_search` call, no new search log entry, and no `results/`
+  sidecar) — added with this change, gated on the `no-search-no-write`
+  tag. It deliberately does *not* flag `plans`/`questions` writes, so a
+  correct route to research-plan still passes.
 
 This constraint is currently enforced by review + convention. If it
 proves fragile we can add a lint (a `grade_on_invariant` test must carry
@@ -98,10 +112,10 @@ a recognized invariant tag) or pass validator-ran-count into
 - **Mechanism** (this change): schema field + orchestrator branch +
   harness unit tests + this note. All outside the runlog snapshot →
   **no skill re-runs**, gate stays green.
-- **Application** (the 3 tests + the search-records validator): edits
+- **Application** (the 2 tests + the search-records validator): edits
   test JSON → flips citation + search-records runlogs inactive → owes a
   re-run + re-annotation. Batch per skill.
-- **Coupling with #578:** citation `_012` is un-xfailed and re-annotated
-  on #578. Convert `_012` to `grade_on_invariant` only after #578 merges
-  (or after merging main into this branch), to avoid a conflicting edit
-  and a double re-run of citation.
+- **#578 + #580 (done):** citation `_012` was un-xfailed and re-annotated
+  on #578; the mechanism landed on #580. This branch was cut from `main`
+  after both, so `_012` starts un-xfailed and `grade_on_invariant` is
+  available — no conflict, single citation re-run.
