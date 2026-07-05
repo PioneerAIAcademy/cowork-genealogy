@@ -2,8 +2,7 @@
 
 Pure math over a synthetic result dict (the e2e/result.py schema). No live
 run, no Anthropic API — this runs in `make harness-test`. The synthetic
-timeline is hand-computed so the bucketed model/tool/overhead split is
-checkable by eye.
+timeline is hand-computed so the tool-vs-non-tool split is checkable by eye.
 """
 
 from __future__ import annotations
@@ -35,9 +34,9 @@ def _result(**overrides):
                 "cache_read_input_tokens": 12_000_000,
                 "cache_creation_input_tokens": 400_000,
             },
-            # gaps: 8->assistant(=8 model), 8->10 tool_result(=2 tool),
-            # 10->13 assistant(=3 model), 13->14 system(=1 overhead),
-            # 14->20 assistant(=6 model)
+            # gaps by later-message kind: 8->10 tool_result(=2 tool),
+            # 10->13 assistant(=3 non-tool), 13->14 system(=1 non-tool),
+            # 14->20 assistant(=6 non-tool)  => tool=2, non_tool=10
             "timeline": [
                 [8.0, "assistant"],
                 [10.0, "tool_result"],

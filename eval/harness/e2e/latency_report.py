@@ -29,8 +29,11 @@ CLI (from eval/harness/):
 
 Two independent decompositions are reported so they corroborate:
   1. usage-based  — duration_api_ms / duration_ms  (SDK-internal, always present)
-  2. timeline-based — sum of inter-message gaps bucketed by the *later* message's
-     kind (assistant → model time, tool_result → tool time, system:* → overhead)
+  2. timeline-based — inter-message gaps split two ways by the *later* message's
+     kind: gaps ending at ``tool_result`` are tool-execution; everything else
+     (``assistant`` + ``system:*``) is non-tool (model generation, plus any
+     stall/resume idle — not separable within one session). Wall-clock beyond the
+     timeline span is flagged separately as stall/idle.
 """
 
 from __future__ import annotations
