@@ -783,6 +783,19 @@ def _compute_outcome(
         if spec.skill not in skills_invoked:
             return "fail"
     else:  # negative
+        # Invariant grading (opt-in via `negative.grade_on_invariant`).
+        # The test is graded SOLELY on its deterministic invariant
+        # validator(s), which already gated above: reaching this point
+        # means not-aborted AND validators_passed. Routing and activation
+        # are intentionally NOT gated — for a routing-flaky negative where
+        # every plausible route is state-safe (e.g. citation
+        # refuse-new-source), the skill may or may not fire, but no run
+        # may harm state, and the validator is what enforces that. The
+        # invariant must be backed by a tag-gated validator that actually
+        # runs; a `grade_on_invariant` test with no such validator passes
+        # vacuously (see docs/plan/invariant-grading.md).
+        if (spec.negative or {}).get("grade_on_invariant"):
+            return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in
         # skills_invoked (Claude tried the Skill tool, the skill declined
         # without effect) is not activation per spec §6 — "a one-line
