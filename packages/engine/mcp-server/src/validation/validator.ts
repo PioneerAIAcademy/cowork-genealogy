@@ -280,6 +280,14 @@ const NULLABLE_FIELDS = new Set([
   "conflict_ids", "conflict_note", "justification",
 ]);
 
+// Allowed properties on a simplified-GedcomX tree source. Mirrors
+// `$defs.source_description` in tree-gedcomx.schema.json, which sets
+// `additionalProperties: false`. The runtime check in validateGedcomx rejects
+// any other key so an op that puts citation text under the wrong field name
+// (e.g. `description` instead of `citation`) fails validation and is not
+// written — instead of persisting a tree that later fails the JSON Schema.
+const TREE_SOURCE_FIELDS = new Set(["id", "title", "citation", "author", "url"]);
+
 function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const path = "research.json";
 
@@ -809,6 +817,19 @@ export function validateGedcomx(
     const src = sources[i];
     const sp = `${path}/sources[${i}]`;
     checkRequired(src, ["id", "title"], sp, report, NULLABLE_FIELDS);
+    if (src && typeof src === "object") {
+      for (const key of Object.keys(src)) {
+        if (!TREE_SOURCE_FIELDS.has(key)) {
+          addError(
+            report,
+            sp,
+            `unexpected property '${key}' (tree sources allow only ${Array.from(
+              TREE_SOURCE_FIELDS
+            ).join(", ")})`
+          );
+        }
+      }
+    }
     if ("id" in src) {
       sourceIds.add(src.id);
     }
