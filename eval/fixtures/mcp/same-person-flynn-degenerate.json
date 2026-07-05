@@ -1,0 +1,18 @@
+{
+  "tool": "same_person",
+  "description": "same_person — a degenerate near-zero score (0.005) produced because the tree candidate is a local stub whose id cannot resolve to a full FamilySearch ARK. The number reflects the missing ARK, not a real mismatch: it must be treated as no score available, and correlation analysis must carry the decision (person-evidence degenerate-score rule).",
+  "args": {
+    "primaryId1": "~",
+    "primaryId2": "~"
+  },
+  "response": {
+    "matched": false,
+    "confidence": 0,
+    "score": 0.005,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4",
+    "candidateArk": null,
+    "apiTitle": "Matches for ark:/61903/1:1:MXHY-TP4",
+    "note": "Candidate id did not resolve to a FamilySearch ARK; score is degenerate and not a similarity signal.",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}
