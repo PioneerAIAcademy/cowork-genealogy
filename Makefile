@@ -349,6 +349,18 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,)
 
+.PHONY: skill-latency
+skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json
+	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
+	# tokens, read from the unit re-run the edit already forces — no e2e run.
+	# Diff leads with "concision" (both-active tests); tests going to 0 output
+	# are activation/abort changes, not concision, and are excluded. See
+	# docs/plan/research-latency-baseline-2026-07-05.md.
+	cd eval/harness && uv run python -m skill_latency_report \
+		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
+		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
+		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
+
 .PHONY: e2e-scratch
 e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
 	# Seeds the fixture's starting state + plugin skills into a sibling dir
