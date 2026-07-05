@@ -16,8 +16,8 @@
     "sdk_message_silence_seconds": 300
   },
   "negative": {
-    "correct_skill": ["record-extraction"],
-    "explanation": "Creating a new src_ entry in research.json is record-extraction's job, not citation's. The citation skill only refines citation and citation_detail fields on source entries that already exist. Even when the user frames the request as 'add and format a citation', if no source entry exists yet, the user must go through record-extraction first."
+    "correct_skill": ["record-extraction", "citation"],
+    "explanation": "The invariant under test is that citation must never insert a new src_ entry into research.json — creating source entries is record-extraction's job; citation only refines citation/citation_detail on entries that already exist. correct_skill lists BOTH record-extraction and citation because both observed no-harm behaviors are acceptable: the model may auto-route the 'add a source' request to record-extraction, or load citation and decline in-body. Listing citation here does NOT weaken the invariant — the negative branch of orchestrator._compute_outcome checks the `activated` gate BEFORE routing, so a citation run that actually persists a src_ flips activated=true and fails regardless of correct_skill. The hard, routing-independent gate is the deterministic validator test_does_not_add_new_source_entries (eval/harness/validators/test_citation.py), which runs on this test via the `no-new-source` tag and fails the run if any new src_ id appears after the skill runs. Do NOT revert correct_skill to []: that shape is structurally unwinnable here (the model never returns empty skills_invoked) and gates on skill-name routing rather than on the actual harm."
   },
   "judge_context": [
     "Must NOT create a new src_ entry in research.json",

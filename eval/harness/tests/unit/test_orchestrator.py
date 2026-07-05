@@ -307,9 +307,10 @@ def test_negative_fails_when_no_correct_skill_invoked():
 
 def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     """v1.6 reverts to spec §6 step 2 literal: correct_skill: [] →
-    pass requires skills_invoked is also []. The earlier had_substantive_effect
-    interpretation was too lenient — for an out-of-scope user message,
-    Claude shouldn't even try a skill, regardless of whether it had effect."""
+    pass requires skills_invoked is also []. An earlier, more lenient
+    interpretation keyed on whether the run had a substantive effect; for
+    an out-of-scope user message, Claude shouldn't even try a skill,
+    regardless of whether it had effect."""
     spec = _negative_spec(correct=[])
     dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
 
@@ -317,7 +318,6 @@ def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False, skills_invoked=[],
-        had_substantive_effect=False,
     ) == "pass"
 
     # Claude routed to some other skill that then declined → fail
@@ -325,14 +325,12 @@ def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False, skills_invoked=["something-else"],
-        had_substantive_effect=False,
     ) == "fail"
 
     # A skill fired AND did work → also fail.
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False, skills_invoked=["something-else"],
-        had_substantive_effect=True,
     ) == "fail"
 
 
