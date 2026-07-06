@@ -207,11 +207,16 @@ sharpened two claims above.
   reloaded tool is *already* declared in the skill's `allowed-tools`; the harness
   defers MCP tools regardless, so the reload is the mandatory first-load. Removing it
   needs a **harness** preload of declared `allowed-tools`, not a skill edit.
-- 2b levers by magnitude: **harness** (preload declared `allowed-tools`, ~12
-  round-trips/run) > **tool** (bound `record_search` output, stops sidecar paging) ≫
-  **skill prose** (~1–2 reads/run across four skills — below the cost of the
-  re-annotation a SKILL.md edit triggers). The one clean skill-prose 2b item is
-  `ops[]` batch-append adoption. **Skill-prose effort belongs on 2a.**
+- 2b levers, ranked by **round-trip count**: **harness** (preload declared
+  `allowed-tools`, ~12 round-trips/run) > **tool** (bound `record_search` output,
+  stops sidecar paging) ≫ **skill prose** (~1–2 reads/run across four skills — below
+  the cost of the re-annotation a SKILL.md edit triggers). The one clean skill-prose
+  2b item is `ops[]` batch-append adoption. **Skill-prose effort belongs on 2a.**
+  *By wall-clock, not count,* the harness lever is only ~3–6% (prior value research —
+  ToolSearch turns are cheap and the context cache is 95–97% hit), and it is a
+  **Cowork/SDK runtime** feature request, not repo work: we declare `allowed-tools`;
+  the runtime decides preload vs. defer. The `record_search` output bound is the one
+  2b lever that is both repo-implementable and non-trivial by wall-clock.
 
 **§5 point 1 — the append-token hypothesis is refuted** (see the corrected point 1):
 structured persistence *cut* the payload share of output tokens (33%→22%, 34.7k→28.4k
