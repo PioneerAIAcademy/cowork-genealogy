@@ -37,6 +37,14 @@ Current live tools:
   registered live, the migrated skills' write calls return `fixture_not_found`
   and the model silently fails to persist (it analyzes in text but never
   writes), which the validators and judge then grade as a write failure.
+- tree_edit: calls the compiled TS tool to add/correct facts, names, persons,
+  relationships, and sources on tree.gedcomx.json (single op or a batched
+  `ops` array). Like research_append it validates-before-persist against the
+  actual workspace files, so its result reflects what the skill wrote — a
+  fixture cannot. Without it registered live, record-extraction (and any skill
+  that writes tree stubs/sources) gets `fixture_not_found` on every tree_edit
+  call and either fails to persist or thrashes retrying an unavailable tool
+  until it hits the wall-clock cap.
 """
 
 from __future__ import annotations
@@ -54,7 +62,12 @@ from harness.tool_catalog import default_tools_dir, load_tool_catalog
 
 # Bare tool names that are always registered as live handlers rather than
 # fixture-backed mocks. See module docstring for the rationale.
-LIVE_TOOLS: set[str] = {"validate_research_schema", "research_log_append", "research_append"}
+LIVE_TOOLS: set[str] = {
+    "validate_research_schema",
+    "research_log_append",
+    "research_append",
+    "tree_edit",
+}
 
 # Path to the compiled MCP server build output, used by live tool handlers.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -305,6 +318,55 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
             },
             "required": ["projectPath", "section", "op"],
         }
+    if tool_name == "tree_edit":
+        # Mirror the production tool's input schema (tree-edit.ts). Advertising
+        # the `operation` enum and the `ops` batch array (rather than a
+        # permissive stub) keeps eval behaviour matching production — the model
+        # picks a valid operation and can batch on its first call.
+        _op_enum = [
+            "add_fact",
+            "update_fact",
+            "add_name",
+            "update_name",
+            "update_person",
+            "add_person",
+            "add_relationship",
+            "add_source",
+            "update_source",
+            "remove",
+        ]
+        _op_fields = {
+            "operation": {"type": "string", "enum": _op_enum},
+            "personId": {"type": "string"},
+            "factId": {"type": "string"},
+            "nameId": {"type": "string"},
+            "relationshipId": {"type": "string"},
+            "sourceId": {"type": "string"},
+            "fact": {"type": "object"},
+            "name": {"type": "object"},
+            "person": {"type": "object"},
+            "relationship": {"type": "object"},
+            "source": {"type": "object"},
+            "gender": {"type": "string"},
+            "ark": {"type": "string"},
+            "resolveStandardPlace": {"type": "boolean"},
+        }
+        return {
+            "type": "object",
+            "properties": {
+                "projectPath": {"type": "string"},
+                **_op_fields,
+                "ops": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": _op_fields,
+                        "required": ["operation"],
+                    },
+                },
+            },
+            "required": ["projectPath"],
+        }
     return {"type": "object", "properties": {}, "additionalProperties": True}
 
 
@@ -320,6 +382,8 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "tree_edit":
+        return _make_tree_edit_handler(workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -521,6 +585,75 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
             "response_fixture": "live:research_append",
+            "response": response,
+        }
+        call_log.append(entry)
+        return {"content": [{"type": "text", "text": json.dumps(response)}]}
+
+    return handler
+
+
+def _make_tree_edit_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """Build the live handler for tree_edit.
+
+    Calls the compiled TS tool via `node --input-type=module` against the
+    workspace path. The skill passes its own projectPath arg, but we always
+    override it with workspace (the harness tempdir) to avoid path drift.
+
+    Input is piped via stdin (as JSON) to avoid shell/JS string escaping
+    issues with values that may contain quotes, backslashes, or newlines.
+    """
+    tree_edit_js = _MCP_BUILD / "tools" / "tree-edit.js"
+
+    async def handler(args, _ws=workspace, _tjs=tree_edit_js):
+        if _ws is None or not _tjs.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
+            response: dict[str, Any] = {
+                "ok": False,
+                "errors": [f"tree_edit: {reason}"],
+            }
+        else:
+            tjs_posix = str(_tjs).replace("\\", "/").replace("'", "\\'")
+            tree_edit_url = ("file:///" + tjs_posix) if sys.platform == "win32" else tjs_posix
+
+            # Override projectPath with workspace; pipe the full input via
+            # stdin so no value needs JS-string escaping.
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+
+            script = (
+                f"import {{ treeEdit }} from '{tree_edit_url}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const r = await treeEdit(input);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = subprocess.run(
+                    ["node", "--input-type=module", "--eval", script],
+                    input=json.dumps(input_obj),
+                    capture_output=True, text=True, timeout=30,
+                )
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"tree_edit: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {
+                    "ok": False,
+                    "errors": [f"tree_edit: {e}"],
+                }
+
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__tree_edit",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:tree_edit",
             "response": response,
         }
         call_log.append(entry)

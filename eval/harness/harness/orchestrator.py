@@ -455,9 +455,6 @@ async def _execute_single_run(
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
-    had_substantive_effect = bool(
-        file_changes or files_created or result.tool_calls
-    )
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
@@ -465,7 +462,6 @@ async def _execute_single_run(
         aborted_reason=result.aborted_reason,
         activated=activated,
         skills_invoked=result.skills_invoked,
-        had_substantive_effect=had_substantive_effect,
         judge_skipped=judge_result.skipped,
     )
 
@@ -587,7 +583,8 @@ async def _execute_skill_with_retry(
     after_snapshot: dict[str, Any] = {}
     for attempt in range(attempts):
         with tempfile.TemporaryDirectory(
-            prefix=f"eval-{spec.id}-{run_index}-{attempt}-"
+            prefix=f"eval-{spec.id}-{run_index}-{attempt}-",
+            ignore_cleanup_errors=True,
         ) as tmp:
             workspace = Path(tmp)
             try:
@@ -725,17 +722,9 @@ def _compute_outcome(
     aborted_reason: str | None,
     activated: bool,
     skills_invoked: list[str],
-    had_substantive_effect: bool = False,
     judge_skipped: bool = False,
 ) -> str:
     """v1 per-run outcome per spec §7.
-
-    `had_substantive_effect` is True iff *any* substantive side effect
-    occurred in the workspace (file changes, files created, or MCP tool
-    calls). Used for negative tests with `correct_skill: []`, where the
-    rule is "no skill should fire" — a routing-only Skill call that
-    declines without effect is allowed per spec §6 ("a one-line response
-    that names a different skill and stops" is not activation).
 
     `judge_skipped` is True iff the judge layer didn't grade (validators
     failed OR judge raised an error). For positive tests, when validators
@@ -782,6 +771,19 @@ def _compute_outcome(
         if spec.skill not in skills_invoked:
             return "fail"
     else:  # negative
+        # Invariant grading (opt-in via `negative.grade_on_invariant`).
+        # The test is graded SOLELY on its deterministic invariant
+        # validator(s), which already gated above: reaching this point
+        # means not-aborted AND validators_passed. Routing and activation
+        # are intentionally NOT gated — for a routing-flaky negative where
+        # every plausible route is state-safe (e.g. citation
+        # refuse-new-source), the skill may or may not fire, but no run
+        # may harm state, and the validator is what enforces that. The
+        # invariant must be backed by a tag-gated validator that actually
+        # runs; a `grade_on_invariant` test with no such validator passes
+        # vacuously (see docs/plan/invariant-grading.md).
+        if (spec.negative or {}).get("grade_on_invariant"):
+            return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in
         # skills_invoked (Claude tried the Skill tool, the skill declined
         # without effect) is not activation per spec §6 — "a one-line

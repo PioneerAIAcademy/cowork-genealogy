@@ -1,0 +1,6 @@
+{
+  "tool": "person_warnings",
+  "description": "person_warnings on KD96-TV5 (deleted duplicate, local stub) -- no impossibilities. The point of the test is that the offline warnings still run while person_quality returns tombstoned. Used by ut_check_warnings_017.",
+  "args": { "personId": "KD96-TV5" },
+  "response": { "warningCount": 0, "warnings": [] }
+}

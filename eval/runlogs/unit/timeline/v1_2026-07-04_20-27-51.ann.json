@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-06-19_19-56-33.json",
-  "annotator": "Francisbucci2@gmail.com",
+  "run_log": "v1_2026-07-04_20-27-51.json",
+  "annotator": "dallan@quass.org",
   "corrections": [
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_timeline_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_timeline_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_timeline_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,47 +27,47 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Chronological ordering",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Gap detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Impossibility detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
-      "dimension_name": "Sidecar correctness",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -75,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -91,63 +91,247 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Chronological ordering",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Gap detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Impossibility detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "rubric",
-      "dimension_name": "Sidecar correctness",
+      "dimension_name": "Geographic feasibility",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_001",
+      "test_id": "ut_timeline_005",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_004",
+      "test_id": "ut_timeline_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_004",
+      "test_id": "ut_timeline_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_004",
+      "test_id": "ut_timeline_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -155,23 +339,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_007",
+      "test_id": "ut_timeline_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_007",
+      "test_id": "ut_timeline_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_007",
+      "test_id": "ut_timeline_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -179,7 +363,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_002",
+      "test_id": "ut_timeline_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -187,7 +371,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_002",
+      "test_id": "ut_timeline_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -195,71 +379,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Sidecar correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_005",
+      "test_id": "ut_timeline_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -267,7 +387,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -275,7 +395,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -283,7 +403,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -291,233 +411,41 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Chronological ordering",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Gap detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Impossibility detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "rubric",
-      "dimension_name": "Sidecar correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_011",
+      "test_id": "ut_timeline_002",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Sidecar correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Sidecar correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Sidecar correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

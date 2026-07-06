@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_check_warnings_014",
+    "skill": "check-warnings",
+    "name": "Report FamilySearch quality issues for a person with a FS ID",
+    "type": "positive",
+    "description": "User asks to check Christian P. Hole (KD96-TV2), whose id is a FamilySearch ID. person_warnings finds no impossibilities, but person_quality returns 7 completeness/verifiability issues (overall 0.97): burial missing a date, a marriage place missing its city, and 5 untagged residences. The skill should call BOTH tools with KD96-TV2, report no impossibilities from person_warnings, and add a separate FamilySearch quality section that lists the issue sentences verbatim, grouped by category, framed as optional improvements (not errors), with no invented quality 'band'.",
+    "tags": ["positive", "person-quality", "quality-reporting", "fs-id"]
+  },
+  "input": {
+    "user_message": "Check Christian P. Hole (KD96-TV2) for any data-quality warnings.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": ["person-warnings-hole-christian-none", "person-quality-hole-christian"],
+  "judge_context": [
+    "Should call person_warnings with personId 'KD96-TV2' (projectPath is the working dir)",
+    "Should ALSO call person_quality with personId 'KD96-TV2' -- the id is a FamilySearch ID (XXXX-XXX), so quality applies",
+    "Should report that person_warnings found no impossibilities/anomalies",
+    "Should add a SEPARATE FamilySearch quality section (distinct from the impossibilities check) reporting the overall score (~0.97) and the issue sentences verbatim: 'The burial date is missing.', 'A marriage place is missing a city.', and 'A residence has no tagged sources.' (which appears 5 times -- may be collapsed with a count)",
+    "Should frame the quality issues as optional improvements to the FamilySearch profile, NOT as errors or impossibilities to fix urgently",
+    "Should NOT invent a quality label/band (e.g. 'High Quality') -- the tool returns overallScore and sentences only",
+    "Should NOT merge the quality issues into the impossibilities list, and should NOT re-derive or re-score them"
+  ]
+}
