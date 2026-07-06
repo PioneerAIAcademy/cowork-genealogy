@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_ogletree_parents",
+    "objective": "Who were the parents of Lewis Ogletree, born March 1897 in Georgia, who resided in West Point, Troup County, Georgia, in 1910?",
+    "subject_person_ids": ["GW8N-X1W"],
+    "status": "active",
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-03T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
