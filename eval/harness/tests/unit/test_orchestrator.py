@@ -163,14 +163,17 @@ def _positive_spec(skill="search-wikipedia"):
 _SENTINEL = object()
 
 
-def _negative_spec(skill="record-extraction", correct=_SENTINEL):
+def _negative_spec(skill="record-extraction", correct=_SENTINEL, grade_on_invariant=False):
     if correct is _SENTINEL:
         correct = ["search-records"]
+    negative = {"correct_skill": correct, "explanation": "x"}
+    if grade_on_invariant:
+        negative["grade_on_invariant"] = True
     return load_test_from_dict({
         "test": {"id": "ut_o_002", "skill": skill, "name": "n", "type": "negative",
                   "description": "x", "tags": []},
         "input": {"user_message": "m", "scenario": None},
-        "negative": {"correct_skill": correct, "explanation": "x"},
+        "negative": negative,
         "judge_context": [],
     })
 
@@ -304,9 +307,10 @@ def test_negative_fails_when_no_correct_skill_invoked():
 
 def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     """v1.6 reverts to spec §6 step 2 literal: correct_skill: [] →
-    pass requires skills_invoked is also []. The earlier had_substantive_effect
-    interpretation was too lenient — for an out-of-scope user message,
-    Claude shouldn't even try a skill, regardless of whether it had effect."""
+    pass requires skills_invoked is also []. An earlier, more lenient
+    interpretation keyed on whether the run had a substantive effect; for
+    an out-of-scope user message, Claude shouldn't even try a skill,
+    regardless of whether it had effect."""
     spec = _negative_spec(correct=[])
     dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
 
@@ -314,7 +318,6 @@ def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False, skills_invoked=[],
-        had_substantive_effect=False,
     ) == "pass"
 
     # Claude routed to some other skill that then declined → fail
@@ -322,14 +325,12 @@ def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False, skills_invoked=["something-else"],
-        had_substantive_effect=False,
     ) == "fail"
 
     # A skill fired AND did work → also fail.
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
         aborted_reason=None, activated=False, skills_invoked=["something-else"],
-        had_substantive_effect=True,
     ) == "fail"
 
 
@@ -411,6 +412,41 @@ def test_negative_out_of_scope_fails_when_judge_skipped():
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=False, skills_invoked=[],
         judge_skipped=True,
+    ) == "fail"
+
+
+# --- invariant grading (negative.grade_on_invariant) ---------------------
+
+
+def test_negative_invariant_passes_despite_activation():
+    """grade_on_invariant grades on the deterministic invariant validator
+    only (validators_passed above). Activation is NOT gated: the skill
+    under test may fire, and as long as it harmed no state (validator
+    passed) the routing-flaky negative still passes."""
+    spec = _negative_spec(grade_on_invariant=True)
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=True, skills_invoked=["record-extraction"],
+    ) == "pass"
+
+
+def test_negative_invariant_passes_despite_unsatisfied_correct_skill():
+    """Routing is not gated either: even when no `correct_skill` fired,
+    an invariant negative passes on a clean invariant validator."""
+    spec = _negative_spec(correct=["search-records"], grade_on_invariant=True)
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=["something-else"],
+    ) == "pass"
+
+
+def test_negative_invariant_fails_when_validators_failed():
+    """The invariant validator is the sole gate — if it fails (state was
+    harmed) the test fails, exactly as a routing negative would."""
+    spec = _negative_spec(grade_on_invariant=True)
+    assert _compute_outcome(
+        spec=spec, validators_passed=False, judge_dimensions=[],
+        aborted_reason=None, activated=True, skills_invoked=["record-extraction"],
     ) == "fail"
 
 

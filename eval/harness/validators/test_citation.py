@@ -29,8 +29,13 @@ def test_does_not_add_new_source_entries(before_state, after_state, test):
     Per SKILL.md: "This skill never creates new source entries — it only
     refines entries created by record-extraction."
     """
-    if test.get("type") != "positive":
-        pytest.skip("negative tests don't run the skill body")
+    # Runs on every positive citation test, and on negative tests tagged
+    # `no-new-source` (e.g. ut_citation_012): those negatives DO run a
+    # skill body — record-extraction, or a citation trigger-then-decline —
+    # so the never-create-a-source invariant must be enforced
+    # deterministically here, independent of which skill routed.
+    if test.get("type") != "positive" and "no-new-source" not in test.get("tags", []):
+        pytest.skip("negative test without the no-new-source invariant")
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:

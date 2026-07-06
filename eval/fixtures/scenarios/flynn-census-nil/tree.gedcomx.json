@@ -1,0 +1,33 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "~1845",
+          "place": "Ireland"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Schuylkill County, Pennsylvania, USA"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}
