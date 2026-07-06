@@ -37,29 +37,40 @@ names the destination, not permission to skip the stops on the way there.
 This gate runs regardless of how proof-conclusion was invoked.
 
 1. Collect every assertion linked to the question via `extracted_for_question_ids`.
-2. For each assertion, confirm `information_quality` and `evidence_type`
-   carry a real, reasoned value (with matching `informant` /
-   `informant_proximity` analysis) — not still carrying record-extraction's
-   best-effort default. If you cannot confirm `assertion-classification` has
-   run on an assertion, treat it as unclassified. List any assertion IDs
-   that fail this check.
-3. For each assertion, confirm a `person_evidence` entry links it to a
-   person. List any assertion IDs that fail this check.
-4. For each conflict touching this question's assertions, confirm it is
-   `resolved` or carries an explicit acknowledgment. List any conflict IDs
-   that fail this check.
+2. **Classification (hard block, all assertions).** For each assertion,
+   confirm `information_quality` and `evidence_type` carry a real, reasoned
+   value (with matching `informant` / `informant_proximity` analysis) — not
+   still carrying record-extraction's best-effort default. If you cannot
+   confirm `assertion-classification` has run on an assertion, treat it as
+   unclassified. List any assertion IDs that fail this check. Classification
+   grounds the tier, so this applies to every assertion tied to the question.
+3. **person_evidence (hard block, but scoped to relied-upon assertions).**
+   First identify the assertions the conclusion will actually rely on to
+   reach its tier: those that identify the persons the question is about
+   (the subject and any candidate parent/relative) and those that carry the
+   facts grounding the verdict. Confirm each of those has a `person_evidence`
+   link. An assertion that only *corroborates* a fact already carried by a
+   linked assertion (e.g. a second source for a birth year that is already
+   linked) is **not** a blocker — note it as advisory and proceed. List any
+   relied-upon assertion IDs that lack a link (blocking) separately from any
+   corroborating-only unlinked IDs (advisory).
+4. **Conflicts (hard block).** For each conflict touching this question's
+   assertions, confirm it is `resolved` or carries an explicit
+   acknowledgment. List any conflict IDs that fail this check.
 
-**If any of steps 2–4 produce failing IDs: stop. Do not proceed to Step 1.**
+**If step 2 produces failing IDs, step 3 produces a *relied-upon* failing ID,
+or step 4 produces failing IDs: stop. Do not proceed to Step 1.**
 Report the exact failing IDs to the user and recommend the specific skill
 for each gap (`assertion-classification`, `person-evidence`, or
 `conflict-resolution`). In `--autonomous` mode, route to the missing skill
 automatically instead of asking — autonomous mode changes who decides, not
-whether the gate runs.
+whether the gate runs. Corroborating-only unlinked assertions (step 3
+advisory) do **not** stop the gate — surface them as a note and continue.
 
-Only when all four checks pass, proceed to Step 1.
+Only when the blocking checks pass, proceed to Step 1.
 
 If research is **not declared exhaustive**, you may still write at
-`probable` or `possible` tier — but the four checks above still apply
+`probable` or `possible` tier — but the checks above still apply
 regardless of exhaustiveness tier.
 
 ## Steps

@@ -35,13 +35,23 @@ and recommend completing the in-flight work first.
 
 The `evidence_class` and `independent_verification` criteria in Step 3 are
 meaningless against unclassified or unlinked assertions. Before applying the
-five threshold questions, confirm every assertion tied to this question (via
-`extracted_for_question_ids`) has: (a) a real `information_quality` and
-`evidence_type` from `assertion-classification` (not a leftover
-record-extraction default), and (b) a `person_evidence` link. If any
-assertion fails either check, stop here, name the specific assertion IDs,
-and recommend `assertion-classification` or `person-evidence` — do not
-declare exhaustive on unclassified or unlinked evidence.
+five threshold questions, run two checks over the assertions tied to this
+question (via `extracted_for_question_ids`):
+
+- **Classification (hard block, all assertions).** Every assertion must have
+  a real `information_quality` and `evidence_type` from
+  `assertion-classification` (not a leftover record-extraction default). If
+  any assertion fails, stop here, name the specific assertion IDs, and
+  recommend `assertion-classification`.
+- **person_evidence (hard block, scoped).** Every assertion the exhaustiveness
+  judgment relies on — those identifying the persons the question is about and
+  those carrying the facts under evaluation — must have a `person_evidence`
+  link. If any *relied-upon* assertion is unlinked, stop and recommend
+  `person-evidence`. An assertion that only corroborates a fact already
+  carried by a linked assertion is advisory, not a blocker — note it and
+  continue.
+
+Do not declare exhaustive while a blocking check fails.
 
 ## 1. Gather evidence
 
