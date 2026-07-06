@@ -1,0 +1,18 @@
+{
+  "id": "elizabeth-geach-parents",
+  "name": "Elizabeth Geach — parents (1820s Licking County, Ohio)",
+  "source_pid": "273D-F9Z",
+  "captured": "2026-07-02",
+  "researcher_question": "Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1820s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Parents Peter Geach (KGYQ-8BZ) and Rebecca (Geach) (KGYQ-D3V) were stripped from the starting tree, along with both parent-child relationships to Elizabeth and the Find A Grave index source ('Elizabeth Geach Slack'). Elizabeth is retained under her maiden surname 'Geach' (as with the spriggs-parents fixture, which keeps the subject's own surname); the task is to identify the specific parents and prove the link. REQUIRED findings are the two parent IDENTITIES (father Peter Geach, mother Rebecca Geach) — both recoverable. The primary recovery path is a FamilySearch FULL-TEXT search that surfaces the Licking County probate/estate record for the intestate Peter Geach, which names his widow Rebecca Geach and minor children including Elizabeth; corroborated by 1829 Washington County deeds placing Peter there. Verified recoverable via an interactive Cowork run (2026-07-02). NOTE ON SCOPE (learned from that run): the mother's MAIDEN name 'Benjamin' and the ~1818 Peter Geach–Rebecca Benjamin marriage exist only in the FamilySearch tree — they are NOT recoverable from indexed FamilySearch records (early-statehood Ohio marriages are not indexed), so 'Benjamin' is a non-required bonus (f3) only. Peter's exact death date is left loose: the probate points to the early 1830s while the tree records April 1836; the finding is his identity as father, not the date. On the harder side of moderate: Elizabeth married Jonathan Slack in 1844 and appears in every census under 'Slack,' and no named census shows her as a child in her parents' household, so the probate full-text hit is the key. No bundled documents needed."
+}

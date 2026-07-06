@@ -13,13 +13,6 @@
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
-  },
   "difficulty": "moderate",
   "notes": "Parents (Sóstenes Cruz and Apolinar Corona) and exact birth (22 Nov 1910, La Unión, Montes de Oca, Guerrero) are the required findings. Mexican civil registration and parish records for Guerrero are heavily indexed on FamilySearch, making this one of the more recoverable Mexican cases; the 1930 census household provides a strong anchor for the search. Grandparents are bonus findings."
 }

@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_victor_spenard_parents",
+    "objective": "Who were the parents and paternal grandparents of Victor Spénard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?",
+    "subject_person_ids": ["PID-TODO"],
+    "status": "active",
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-03T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

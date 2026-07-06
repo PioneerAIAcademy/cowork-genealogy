@@ -1,0 +1,39 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-13",
+    "updated": "2026-05-13"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-05-04T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Flynn",
+        "given": "Patrick",
+        "collection": "United States Census, 1850"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "search-records ran record_search for Patrick Flynn and retained the result for extraction; the sidecar holds the record_search gedcomx (P1 Patrick, P2 Thomas, P3 Mary).",
+      "external_site": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

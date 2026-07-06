@@ -148,3 +148,57 @@ def test_no_sidecar_for_nil_search(before_state, after_state, test):
     assert not sidecars, (
         f"a nil search must write no results/ sidecar; got: {sorted(sidecars)}"
     )
+
+
+# --- No-harm invariant for planning/strategy requests ----------------
+
+def test_no_search_or_writes_on_planning_request(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (no-search-no-write): the search-records no-harm invariant
+    for a planning/strategy request that should route to research-plan.
+
+    search-records executes searches and logs them; a pure planning
+    question ("what should I search for next?") must not cause a search to
+    be EXECUTED or its results to be persisted. This is the deterministic
+    gate for the grade_on_invariant negative ut_search_records_005: the
+    routing (research-plan vs a project-status detour) is a known-unstable
+    model prior, but the state-harm invariant always holds and is what we
+    assert. See docs/plan/invariant-grading.md.
+
+    Fails iff the run:
+      - made a `record_search` MCP call (a search was executed), or
+      - appended a new `log` entry (search-records records every search it
+        runs; research-plan — the acceptable route — never writes `log`,
+        so any new log entry means a search skill actually ran), or
+      - wrote a new `results/` sidecar file.
+
+    Deliberately does NOT flag other research.json writes: routing to
+    research-plan legitimately writes `plans`/`questions`, which is correct
+    behavior, not harm.
+    """
+    if "no-search-no-write" not in test.get("tags", []):
+        pytest.skip("not a no-search-no-write scenario")
+
+    # 1. No record_search executed.
+    searched = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] == "record_search"
+    ]
+    assert not searched, (
+        "planning request must not execute a search; got record_search "
+        f"call(s) with args: {[c.get('args') for c in searched]}"
+    )
+
+    # 2. No new search log entry (research-plan never writes `log`).
+    new_entries = _new_log_entries(before_state, after_state)
+    assert not new_entries, (
+        "planning request must not append a search log entry; new log "
+        f"ids: {[e.get('id') for e in new_entries]}"
+    )
+
+    # 3. No new results/ sidecar file.
+    sidecars = _new_result_sidecars(before_state, after_state)
+    assert not sidecars, (
+        f"planning request must not write a results/ sidecar; got: {sorted(sidecars)}"
+    )

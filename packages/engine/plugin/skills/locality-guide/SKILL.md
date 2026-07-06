@@ -32,7 +32,7 @@ allowed-tools:
 
 # Locality Guide
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to narrating once at the start of the survey and once when presenting the guide — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
 
 **Places:** Resolve with `place_search` / `place_search_all`; record `standardPlace` (and `standard_place` on persisted facts). See `references/places-guidance.md`.
 
@@ -58,19 +58,20 @@ Determine place, time period, and scope from the user's request. If the time per
 
 ```
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
-place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
 
-`place_search` returns the canonical `standardPlace` — pass that to `place_population` and other place tools. When boundaries changed across the target period, call `place_search_all` instead: it returns every standard place a location has belonged to over time, which directly informs where records were created and are now held.
+`place_search` returns the canonical `standardPlace` — pass that to `place_population` and the other place tools. `place_population` depends only on that `standardPlace`, so **do not spend a separate turn on it here — issue it inside the Step 3 parallel batch** alongside the other surveys. When boundaries changed across the target period, call `place_search_all` instead: it returns every standard place a location has belonged to over time, which directly informs where records were created and are now held.
 
 Note when the jurisdiction was formed, from what parent, and any boundary changes during the target period. Keep this brief — deep historical context belongs in historical-context (see Decision rules). Note only what directly affects which records exist and where they are held. When a boundary or name change splits a locality's records across two jurisdictions (e.g., a territorial-era set and a later county set), connect them explicitly as one continuous research trail for that place rather than listing them as unrelated record sets.
 
 ### 3. Survey available records and repositories
 
+Once `place_search` (step 2) has returned the `standardPlace`, issue the survey calls in a SINGLE turn as PARALLEL tool calls — `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, and all four `wiki_place_page` sections (home / getting_started / online_records / research_tips) are independent and must NOT be run one-per-turn. Batch them together. The only exception is `wiki_read`: it needs a page URL, so run it right after `wiki_search` returns one. Do not drop any call — parallelize, don't prune.
+
 ```
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
-wiki_read({ url: "<relevant wiki page URL>" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
@@ -78,6 +79,8 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "resear
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
+# then, once wiki_search returns a page URL:
+wiki_read({ url: "<relevant wiki page URL>" })
 ```
 
 `collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern).

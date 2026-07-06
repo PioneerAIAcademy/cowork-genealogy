@@ -1,0 +1,211 @@
+{
+  "persons": [
+    {
+      "id": "GW8N-X1W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "GW8N-X1W-name-1",
+          "given": "Lewis",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f04219a8-8b1d-48e9-a771-c40b70247803",
+          "type": "Birth",
+          "date": "March 1897",
+          "standard_date": "Mar 1897",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "d58a6ef3-c88d-480f-8a98-615ff755bb2c",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "standard_place": "West Point, Troup, Georgia, United States"
+        },
+        {
+          "id": "55cba3be-c41c-47ca-95a6-d7ebb8ea7cb3",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Frank",
+          "surname": "Ogletree",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N1"
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1869",
+          "standard_date": "~1869",
+          "place": "Georgia, United States",
+          "primary": true,
+          "id": "F1",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "West Point, Troup, Georgia, United States",
+          "primary": true,
+          "id": "F2",
+          "standard_place": "West, Cameroon"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Susie",
+          "surname": "Ogletree",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N2"
+        }
+      ],
+      "id": "I2"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "John",
+          "surname": "Ogletree",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N3"
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Otis",
+          "surname": "Ogletree",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N4"
+        }
+      ],
+      "id": "I4"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Amps",
+          "surname": "Hogg",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N5"
+        }
+      ],
+      "id": "I5"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Hattie",
+          "surname": "Oneal",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N6"
+        }
+      ],
+      "id": "I6"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Carrie",
+          "surname": "Hogg",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N7"
+        }
+      ],
+      "id": "I7",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "4 December 1895",
+          "standard_date": "1895-12-04",
+          "place": "Troup, Georgia, United States",
+          "primary": true,
+          "id": "F3",
+          "standard_place": "Troup, Central, Sri Lanka"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "GW8N-X1W",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I2",
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "id": "R4"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I7",
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "GW8N-X1W",
+      "id": "R6"
+    }
+  ],
+  "sources": [
+    {
+      "title": "United States Census, 1910",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD",
+      "id": "S1"
+    },
+    {
+      "title": "Georgia, County Marriages, 1785-1950",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV",
+      "id": "S2"
+    }
+  ]
+}
