@@ -159,6 +159,15 @@ table and contextual factors checklist.
 **Key selection principles:**
 - Apply topical breadth (BCG Standard 14) — do not limit the plan
   to census and vital records.
+- **For a parentage question, always add a dedicated plan item for the
+  candidate parents' marriage to *each other*** — not the subject's own
+  marriage, and not folded into a generic "church records" item. The
+  couple's marriage record supplies the mother's maiden name (which
+  census and death records usually omit) and, by its date relative to
+  the child's birth, is direct evidence of paternity that can confirm or
+  refute a parent named only by indirect or derivative evidence (a death
+  certificate, a single census co-residence). See
+  `references/record-type-guide.md` ("Identifying parents").
 - Include the FAN cluster (relatives, neighbors, associates) — their
   records may contain evidence about the subject.
 - Consider occupation-specific, institutional, and organizational

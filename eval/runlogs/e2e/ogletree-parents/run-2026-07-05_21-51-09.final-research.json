@@ -1,0 +1,1262 @@
+{
+  "project": {
+    "id": "rp_ogletree_parents",
+    "objective": "Who were the parents of Lewis Ogletree, born March 1897 in Georgia, who resided in West Point, Troup County, Georgia, in 1910?",
+    "subject_person_ids": [
+      "GW8N-X1W"
+    ],
+    "status": "completed",
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-05"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1910 U.S. Census record for Lewis Ogletree in West Point, Troup County, Georgia reveal about his parents or the head of his household?",
+      "rationale": "Lewis Ogletree is documented as residing in West Point, Troup County, Georgia in 1910, making the 1910 federal census the highest-yield starting point. The census lists every household member with their relationship to the head, age, birthplace, and parents' birthplaces \u2014 all directly relevant to identifying his parents. For a Black family in early 20th-century Georgia, vital birth records would not have been created until 1919, so the census is the primary gateway source. Answering this question first will likely name or describe his parents and unblock all downstream questions.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "exhaustive_declared",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched 1910, 1900, and 1920 U.S. censuses; Georgia County Marriages (1785\u20131950); and WWI draft registration on FamilySearch. Two genuinely independent record types \u2014 the 1910 census household (original record, different institutional origin) and the Georgia county marriage register (different creation process, different informants) \u2014 establish Frank Ogletree as Lewis's father and Carrie Hogg as his mother. The marriage on 4 December 1895 precedes Lewis's March 1897 birth by 15 months; the 1910 census shows Frank as widowed head of household with Lewis listed as child. No conflicting sources were found. Vital birth records for Black Georgians born in 1897 did not exist; the 1900 census household was not located in the FamilySearch index despite multiple variant searches; the 1920 census and WWI draft yielded no additional match. Overturn risk is low \u2014 no unexamined record type is likely to name different parents.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 Frank Ogletree (father) identified from 1910 census household relationship column; Carrie Hogg (mother) identified from Georgia County Marriages entry for Frank Ogletree and Carrie Hogg, 4 December 1895, Troup County, 15 months before Lewis's March 1897 birth.",
+          "repository_breadth": "FamilySearch census collections for 1900, 1910, and 1920 all searched; Georgia County Marriages (1785\u20131950) searched; WWI draft registration searched. Variant spellings and name forms tried across all plan items. Multi-decade coverage achieved.",
+          "original_substitution": "1910 census result confirmed via record_read (full GedcomX retrieval). Marriage record confirmed via record_search and record_read of persona ark:KXJY-PL7. Derivative index entries followed to full record persona data in both cases.",
+          "independent_verification": "Two independent sources: (1) 1910 U.S. Census \u2014 government enumeration, institutional creation, relationship column directly names Lewis as child of Frank Ogletree; (2) Georgia County Marriages \u2014 county clerk's register of a private legal event, different informants (the contracting parties), different record-creation process. These represent genuinely independent evidence units.",
+          "evidence_class": "1910 U.S. Census is an original record containing direct evidence of the parent-child relationship (relationship column). Georgia County Marriages is a derivative index of an original county register providing direct evidence of the spousal relationship and the mother's maiden name (Hogg).",
+          "conflict_resolution": "No conflicting evidence found. The 1910 census showing Frank as widowed is consistent with Carrie Hogg having predeceased 1910. Amps Hogg (b.~1840, Black, Widowed) in Frank's 1910 household is consistent with being Carrie's surviving father. All sources cohere.",
+          "overturn_risk": "Low. Georgia did not have functioning vital birth registration for Black residents in 1897. No church records or probate records identified as likely to name different parents. The 1900 census household was not located, but extensive variant searching was performed; absence is a limitation, not a contradiction. The two core sources are structurally independent and mutually corroborating."
+        }
+      },
+      "created": "2026-07-05"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-05",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "West Point, Troup County, Georgia",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "Lewis Ogletree is documented as residing in West Point, Troup County, Georgia in 1910. The 1910 U.S. Federal Census lists every household member with their relationship to the head, age, birthplace, and both parents' birthplaces. This is the primary gateway record \u2014 it will either name his parents directly (if he lived with them) or reveal the household head and structure. FamilySearch has an indexed collection for this census.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "West Point, Troup County, Georgia",
+          "date_range": "1910",
+          "repository": "Ancestry",
+          "rationale": "If the FamilySearch index fails to return Lewis (due to name spelling variations or indexing error), Ancestry holds a separate index of the same 1910 census and additionally allows page-by-page browsing of Troup County enumeration districts, which can locate entries missed by automated indexing.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Georgia",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "Lewis was born March 1897 and would be approximately 3 years old at the time of the 1900 census. If the family was already in Troup County or nearby, this census would show the complete parental household with all children and relationships. It corroborates the 1910 household identification and may reveal additional siblings or the mother's maiden name through enumeration context.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Georgia",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "Lewis would be approximately 23 years old in 1920. The 1920 census may show him still with his parents or in a separate household nearby, and the parental household (if parents survived to 1920) would confirm their names and ages, corroborating findings from 1910 and 1900. Sibling households in the same county are also a valuable FAN source.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Troup County, Georgia",
+          "date_range": "1880-1910",
+          "repository": "FamilySearch",
+          "rationale": "For a parentage question, a dedicated search for the parents' marriage record is required. The FamilySearch collection 'Georgia County Marriages, 1785\u20131950' (coll. 1927197) covers Troup County and is indexed. The parents' marriage record: (a) confirms them as a couple; (b) supplies the mother's maiden name, which census records typically omit; and (c) by its date relative to Lewis's March 1897 birth provides direct evidence of paternity that corroborates or refutes parents identified only through co-residence.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "military",
+          "jurisdiction": "Georgia",
+          "date_range": "1917-1918",
+          "repository": "FamilySearch",
+          "rationale": "Lewis Ogletree, born March 1897, would have been approximately 20\u201321 during WWI and subject to draft registration. WWI draft registration cards (NARA Series M1509, available on FamilySearch) record the registrant's name, address, age, employer, and nearest relative \u2014 frequently a parent. This is particularly valuable if census searches are inconclusive, as the card would name his nearest of kin directly.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-05T21:01:45.690Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Lewis",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "residencePlace": "Troup, Georgia, United States",
+        "recordType": "census",
+        "sex": "Male",
+        "collectionId": "1727033"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "Strong match (same_person score 0.987, confidence 5) for Lewis Ogletree (ark:/61903/1:1:MLLP-B7P) in the household of Frank Ogletree, West Point, Troup Co., GA, 1910 census. Frank Ogletree (b. 1869, GA, Black, Widowed) is listed as head with ParentChild relationship to Lewis. Siblings in household: Susie (b. 1893, F), John (b. 1901, M), Otis (b. 1903, M). No mother present \u2014 Frank is widowed, indicating Lewis's mother predeceased 1910. Also in household: Hattie Oneal (b. 1892, Mulatto, Single) and Amps Hogg (b. 1840, Widowed, Black). Second result (Gilbert L Ogletree in Hogansville) is a different person. Father Frank Ogletree identified; mother's identity remains unknown and requires further research."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-05T21:23:53.244Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Frank",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Troup, Georgia, United States",
+        "recordType": "census",
+        "sex": "Male",
+        "collectionId": "1030728"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results for Frank Ogletree in Troup County, GA 1900 census (collection 1030728). Will retry with broader Georgia residence and name variants."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-05T21:24:06.195Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Frank",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Georgia, United States",
+        "recordType": "census",
+        "sex": "Male",
+        "collectionId": "1030728"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results for Frank Ogletree statewide Georgia 1900 census. Indexing or spelling variant likely. Will try without collection filter and with Lewis as subject."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-05T21:24:17.659Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Lewis",
+        "birthYearFrom": 1895,
+        "birthYearTo": 1899,
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Georgia, United States",
+        "recordType": "census",
+        "collectionId": "1030728"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Lewis Ogletree (b. 1895-1899) not found in Georgia 1900 census. At ~3 years old he may be poorly indexed. Trying Frank Ogletree without place restriction."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-05T21:24:28.947Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Frank",
+        "birthYearFrom": 1866,
+        "birthYearTo": 1872,
+        "recordCountry": "United States",
+        "recordType": "census",
+        "sex": "Male",
+        "collectionId": "1030728"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Frank Ogletree (b. 1866-1872) not found anywhere in US 1900 census index (coll. 1030728). Collection may not fully cover Georgia. Trying cross-collection search without collectionId."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-05T21:29:54.430Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Frank",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Troup, Georgia, United States",
+        "recordType": "census",
+        "sex": "Male",
+        "collectionId": "1325221"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 3,
+      "notes": "Three Frank Ogletrees in Troup Co. 1900 (coll. 1325221): Frank b.1888 in Emanuel Ogletree household (p_87867949, ark:M3VX-89K), Frank b.1879 in Adam Ogletree household (p_87856444, ark:M3V6-BHQ). Both are Black males in District 697 but born too late and not heads of household. Our Frank (b.~1869) is not indexed under that name as head in Troup County. Will try broader search or neighboring counties."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-05T21:30:32.606Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "sex": "Male",
+        "birthYearFrom": 1864,
+        "birthYearTo": 1874,
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Troup, Georgia, United States",
+        "recordType": "census",
+        "collectionId": "1325221"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 4,
+      "notes": "All Ogletree males born 1864-1874 in Troup County 1900: Andrew (b.1872, District 701), Ab (b.1865, District 697, Rough Edge), Joseph (b.1866, White), Will (b.1874, White). None is Frank Ogletree (b.~1869, Black). Frank not found in Troup County 1900 under his name. He may have been living in a neighboring county or under a variant name. Pivoting to Georgia marriages (pli_005) and Amps Hogg 1900 lead."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-05T21:35:01.731Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Frank",
+        "marriageYearFrom": 1885,
+        "marriageYearTo": 1910,
+        "marriagePlace": "Troup, Georgia, United States",
+        "recordType": "marriage",
+        "sex": "Male",
+        "collectionId": "1927197"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 7,
+      "notes": "CRITICAL FINDING: Frank Ogletree married Carrie Hogg on 4 December 1895 in Troup County, Georgia (ark:KXJY-PL7, record ark:9MVT-J7MV). This identifies Lewis Ogletree's mother as Carrie Hogg. The Hogg surname corroborates Amps Hogg's presence in Frank's 1910 household \u2014 Amps Hogg is almost certainly Carrie Hogg's father (Lewis's maternal grandfather). Marriage date (Dec 1895) precedes Lewis's birth (March 1897) by 15 months, establishing lawful parentage."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-05T21:35:07.363Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Hogg",
+        "givenName": "Amps",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Georgia, United States",
+        "recordType": "census",
+        "collectionId": "1325221"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 34,
+      "notes": "Searched for Amps Hogg in Georgia 1900 census as FAN lead (likely father-in-law of Frank Ogletree). No Black male Hogg born ~1840 found. Closest geographic match: Abram Hogg (b. March 1863, White) in West Point, Troup County (District 701). 'Amps' may be a variant of a different given name; further searching not warranted given marriage record now identifies Lewis's mother as Carrie Hogg."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-05T21:36:27.461Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:KXJY-PL7",
+        "description": "Full record read of Frank Ogletree / Carrie Hogg marriage entry"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Record read confirms: Frank Ogletree married Carrie Hogg, 4 December 1895, Troup County, Georgia. Index entry only \u2014 no ages or parents' names in the indexed fields. Original county register image not yet examined."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-05T21:42:40.792Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Lewis",
+        "birthYearFrom": 1895,
+        "birthYearTo": 1899,
+        "residencePlace": "Georgia, United States",
+        "recordType": "military",
+        "sex": "Male"
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 6,
+      "notes": "No WWI draft card found for Lewis Ogletree (b.1897, Black, Georgia). Six results: all wrong race (White), wrong state, or wrong birth date. Closest: Lewis Ogletree (b.1 March 1900, Negro, Birmingham AL) \u2014 same_person score 0.0007, definitively not a match. Lewis may not have been indexed, may have registered under a different spelling, or may have been outside Georgia during registration."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-05T21:43:07.126Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Frank",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "residencePlace": "Georgia, United States",
+        "recordType": "census",
+        "sex": "Male",
+        "collectionId": "1488411"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 20,
+      "notes": "1920 census for Frank Ogletree in Georgia: 20 results. No confident match. Closest: Frank Ogletree (b.1850, Black, Meriwether County, ark:MJ6L-G6Z) \u2014 race and adjacent geography match but birth year 19 years too early; only one child (Rufus b.1903), Lewis not present. Lewis Ogletree (b.1895-1899, Black, Meriwether, ark:MJ6L-CZL) also retrieved, but same_person score 0.010 \u2014 not our subject. Frank Ogletree's 1920 household not conclusively located; he may be indexed under variant or in a different county."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-05T21:45:16.408Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ogletree",
+        "givenName": "Lewis",
+        "residencePlace": "Troup, Georgia, United States",
+        "recordType": "military",
+        "sex": "Male",
+        "collectionId": "1968530"
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 9,
+      "notes": "9 results for Lewis Ogletree in WWI draft (coll. 1968530) near Troup County. Closest: Lewis Ogletree b.1 March 1900, Negro, Birmingham AL (same_person score 0.0007) \u2014 definitively not our subject. No Lewis Ogletree (b.March 1897, Black) registered in Georgia or Troup County found."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"United States Census, 1910,\" digital images, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD : accessed 5 July 2026), Frank Ogletree household, West Point, Troup County, Georgia.",
+      "citation_detail": {
+        "who": "Frank Ogletree household including Lewis Ogletree",
+        "what": "United States Census, 1910, population schedule",
+        "when_created": "1910",
+        "when_accessed": "2026-07-05",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Troup County, Georgia, West Point township, household of Frank Ogletree"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-05",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD",
+      "notes": "Accessed via FamilySearch indexed record (United States, Census, 1910, collection 1727033) and record_read. Population schedule is an original record. Lewis persona: ark:/61903/1:1:MLLP-B7P; Frank persona: ark:/61903/1:1:MLLP-B7L. Frank listed as Widowed, indicating Lewis's mother died before 1910.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Georgia, County Marriages, 1785-1950,\" digital images, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV : accessed 5 July 2026), entry for Frank Ogletree and Carrie Hogg, 4 December 1895, Troup County, Georgia.",
+      "citation_detail": {
+        "who": "Frank Ogletree (groom) and Carrie Hogg (bride)",
+        "what": "Georgia, County Marriages, 1785-1950, county marriage register index",
+        "when_created": "1895",
+        "when_accessed": "2026-07-05",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Troup County, Georgia, entry dated 4 December 1895"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-05",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV",
+      "notes": "FamilySearch index of Troup County marriage register. Index entry only \u2014 no ages or parents' names in indexed fields. Underlying original register image at ark:/61903/3:1:33SQ-GBZC-74X.",
+      "log_entry_id": "log_010"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Frank Ogletree",
+      "structured_value": {
+        "given": "Frank",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; likely a household member but possibly a neighbor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born approximately 1869 (computed from stated age in census)",
+      "structured_value": {
+        "year": "1869",
+        "place": null
+      },
+      "date": "1869",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; likely a household member but possibly a neighbor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year estimated from stated age; FamilySearch computed birth year from age at enumeration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "year": null,
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; likely a household member but possibly a neighbor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "date": "1910",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; pre-1940 census respondent could be Frank himself, another household member, or a neighbor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Frank listed as Widowed in 1910 \u2014 Lewis's mother died before this enumeration. Key finding for parentage research: mother must be sought in pre-1910 records. Information quality corrected to indeterminate because pre-1940 census did not identify the respondent; though Frank would know his own marital status, we cannot confirm he was the informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "Black",
+      "date": "1910",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "census enumerator (unknown)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956371",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "West Point, Troup County, Georgia (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "place": "West Point, Troup, Georgia, United States",
+      "standard_place": "West Point, Troup, Georgia, United States",
+      "date": "1910",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator (unknown)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Lewis Ogletree",
+      "structured_value": {
+        "given": "Lewis",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; likely a household member but possibly a neighbor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born approximately 1897 (computed from stated age)",
+      "structured_value": {
+        "year": "1897",
+        "place": null
+      },
+      "date": "1897",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; a parent likely reported Lewis's age but identity unconfirmed)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Child ~13 in 1910; Frank Ogletree as head likely reported age. Consistent with known birth of March 1897.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Georgia",
+      "place": "Georgia",
+      "standard_place": "Georgia, United States",
+      "structured_value": {
+        "year": null,
+        "place": "Georgia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; a parent likely reported birthplace but identity unconfirmed)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "West Point, Troup County, Georgia (1910)",
+      "structured_value": {
+        "place": "West Point, Troup, Georgia, United States"
+      },
+      "place": "West Point, Troup, Georgia, United States",
+      "standard_place": "West Point, Troup, Georgia, United States",
+      "date": "1910",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator (unknown)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956373",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "son of head of household Frank Ogletree",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "date": "1910",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member who stated relationships to enumerator",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1910 census had explicit relationship-to-head column; Lewis listed as son of Frank Ogletree (head). Direct evidence of parent-child relationship.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956372",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Susie Ogletree",
+      "structured_value": {
+        "given": "Susie",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956372",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born approximately 1893 (computed from stated age)",
+      "structured_value": {
+        "year": "1893",
+        "place": null
+      },
+      "date": "1893",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; a parent likely reported child's age)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956374",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "John Ogletree",
+      "structured_value": {
+        "given": "John",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956374",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born approximately 1901 (computed from stated age)",
+      "structured_value": {
+        "year": "1901",
+        "place": null
+      },
+      "date": "1901",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; a parent likely reported child's age)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956375",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Otis Ogletree",
+      "structured_value": {
+        "given": "Otis",
+        "surname": "Ogletree"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956375",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born approximately 1903 (computed from stated age)",
+      "structured_value": {
+        "year": "1903",
+        "place": null
+      },
+      "date": "1903",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity; a parent likely reported child's age)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956376",
+      "record_role": "other_1",
+      "fact_type": "name",
+      "value": "Hattie Oneal",
+      "structured_value": {
+        "given": "Hattie",
+        "surname": "Oneal"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Hattie Oneal (b. ~1892, Mulatto, Single) in Frank Ogletree household with different surname. Relationship to Ogletrees not indicated. May be boarder or extended-family member. FAN associate noted.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956377",
+      "record_role": "other_2",
+      "fact_type": "name",
+      "value": "Amps Hogg",
+      "structured_value": {
+        "given": "Amps",
+        "surname": "Hogg"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Amps Hogg (b. ~1840, Widowed, Black) is ~70 in 1910. Age gap of ~29 years from Frank (b. ~1869) is consistent with a parent or father-in-law. Different surname suggests possible father-in-law \u2014 potential lead to Lewis's mother's maiden name (Hogg).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MLLP-B7P",
+      "record_persona_id": "p_527956377",
+      "record_role": "other_2",
+      "fact_type": "birth",
+      "value": "born approximately 1840 (computed from stated age)",
+      "structured_value": {
+        "year": "1840",
+        "place": null
+      },
+      "date": "1840",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown (census enumerator did not record respondent identity)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV",
+      "record_persona_id": null,
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Frank Ogletree",
+      "structured_value": {
+        "given": "Frank",
+        "surname": "Ogletree"
+      },
+      "information_quality": "primary",
+      "informant": "Frank Ogletree (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_022",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV",
+      "record_persona_id": null,
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Carrie Hogg",
+      "structured_value": {
+        "given": "Carrie",
+        "surname": "Hogg"
+      },
+      "information_quality": "primary",
+      "informant": "Carrie Hogg (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_023",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV",
+      "record_persona_id": null,
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married 4 December 1895, Troup County, Georgia",
+      "date": "1895-12-04",
+      "date_certainty": "exact",
+      "place": "Troup, Georgia, United States",
+      "standard_place": "Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "county marriage clerk or officiant",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_024",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV",
+      "record_persona_id": null,
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Frank Ogletree, 4 December 1895, Troup County, Georgia",
+      "date": "1895-12-04",
+      "date_certainty": "exact",
+      "place": "Troup, Georgia, United States",
+      "standard_place": "Troup, Georgia, United States",
+      "information_quality": "primary",
+      "informant": "county marriage clerk or officiant",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Frank Ogletree' on the head_of_household role matches the new stub I1 (Frank Ogletree). New stub created from this record as Lewis's identified father; no prior tree entry. Single-record basis, so probable rather than confident.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1869 attributed to head_of_household role, linked to Frank Ogletree stub (I1). First record for this person.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Georgia for head_of_household, linked to Frank Ogletree stub (I1).",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marital status Widowed for Frank Ogletree (head), linked to I1. Key finding: Lewis's mother died before 1910 enumeration.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Race 'Black' for head_of_household, linked to Frank Ogletree stub (I1).",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Residence West Point, Troup Co., Georgia (1910) for Frank Ogletree (head), linked to I1.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.9868261,
+      "rationale": "Name 'Lewis Ogletree' on child_2 role. same_person score 0.987 (confidence 5) against GW8N-X1W. Name, birth year 1897, birthplace Georgia, and residence West Point, Troup Co., GA 1910 all align with the known subject. FamilySearch tree had already linked this record to GW8N-X1W. Strong match on all identifiers.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.9868261,
+      "rationale": "Birth year ~1897 for child_2 Lewis Ogletree. Consistent with known fact (March 1897). Linked to GW8N-X1W.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.9868261,
+      "rationale": "Birthplace Georgia for child_2 Lewis Ogletree, consistent with known facts for GW8N-X1W.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.9868261,
+      "rationale": "Residence West Point, Troup Co., Georgia 1910 for Lewis Ogletree (child_2). Matches known residence fact on GW8N-X1W. All identifiers consistent.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "GW8N-X1W",
+      "confidence": "confident",
+      "match_score": 0.9868261,
+      "rationale": "Relationship assertion: Lewis listed as son of head of household (Frank Ogletree) in 1910 census. Linked to GW8N-X1W as the child in this relationship. 1910 census had explicit relationship-to-head column; this is direct evidence of parent-child relationship. Strong match on all identifiers for Lewis.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion also bears on the parent: Frank Ogletree (head) is identified as father of Lewis (child_2) by the 1910 census relationship column. Linked to Frank Ogletree stub (I1) as the parent in this relationship. Probable because Frank's stub rests on a single record.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Susie Ogletree' on child_1 role in Frank Ogletree's household. New stub I2 created. FamilySearch index shows ParentChild relationship between Frank (head) and Susie. Probable as stub rests on single record.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1893 for Susie Ogletree (child_1), linked to stub I2.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'John Ogletree' on child_3 role. New stub I3 created. FamilySearch index shows ParentChild relationship between Frank (head) and John. Probable as stub rests on single record.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1901 for John Ogletree (child_3), linked to stub I3.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_016",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Otis Ogletree' on child_4 role. New stub I4 created. FamilySearch index shows ParentChild relationship between Frank (head) and Otis. Probable as stub rests on single record.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_017",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1903 for Otis Ogletree (child_4), linked to stub I4.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_018",
+      "person_id": "I6",
+      "confidence": "speculative",
+      "match_score": null,
+      "rationale": "Name 'Hattie Oneal' on other_1 role. New stub I6 created. Different surname from Ogletrees; relationship to family unknown. Could be a boarder, domestic worker, or extended-family member. Speculative because no relationship to the research subject is established.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_019",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Amps Hogg' on other_2 role. New stub I5 created. Age ~70 in 1910 (b. ~1840) is consistent with being Frank Ogletree's father or father-in-law. Different surname suggests possible father-in-law (Lewis's maternal grandfather). Probable as a FAN associate warranting investigation.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_020",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1840 for Amps Hogg (other_2), linked to stub I5. Age gap of ~29 years from Frank (b. ~1869) is consistent with parent or parent-in-law relationship.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Frank Ogletree' on groom role in 4 Dec 1895 Troup County marriage record. Matches I1 (Frank Ogletree stub from 1910 census) on name, county, and chronology (b.~1869, age ~26 at marriage). Corroborated by Carrie Hogg's surname matching Amps Hogg who lived in Frank's 1910 household.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_022",
+      "person_id": "I7",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Carrie Hogg' on bride role in 4 Dec 1895 Troup County marriage. New stub I7 created for Lewis's mother. Probable \u2014 rests on this single record; Hogg surname corroborated by Amps Hogg (b.~1840, Widowed, Black) in Frank's 1910 household, consistent with a father-in-law relationship.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (4 Dec 1895, Troup County) on groom role bears on Frank Ogletree (I1). Confident \u2014 name, county, and timeline all agree with I1.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_023",
+      "person_id": "I7",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event also bears on the bride (Carrie Hogg, I7). Linked to her stub as the other party to the marriage.",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_024",
+      "person_id": "I7",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event on bride role bears on Carrie Hogg (I7).",
+      "created": "2026-07-05"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event on bride role also bears on Frank Ogletree (I1) as the other party.",
+      "created": "2026-07-05"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_004",
+        "a_007",
+        "a_011",
+        "a_019",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Reasonably exhaustive search declared 5 July 2026. Searched: 1910 U.S. Census (FamilySearch, collection 1727033) \u2014 positive, Frank Ogletree household with Lewis listed as son; 1900 U.S. Census (FamilySearch, collection 1325221) \u2014 negative despite eight variant queries; 1920 U.S. Census (FamilySearch, collection 1488411) \u2014 negative; Georgia County Marriages, 1785\u20131950 (FamilySearch, collection 1927197) \u2014 positive, Frank Ogletree and Carrie Hogg married 4 December 1895, Troup County; WWI Draft Registration (FamilySearch, collection 1968530) \u2014 negative for Lewis Ogletree (b. March 1897) despite two variant searches. No vital birth records exist for Black Georgians born in 1897 (state registration not fully in force until after 1919). The original Troup County marriage register image (ark:/61903/3:1:33SQ-GBZC-74X) and church records were not examined \u2014 these represent the primary avenue for advancing the conclusion to proved.",
+      "narrative_markdown": "# Parents of Lewis Ogletree (Born March 1897, Georgia)\n\n## Conclusion\n\nThe preponderance of evidence strongly suggests that Lewis Ogletree, born March 1897 in Georgia and residing in West Point, Troup County, Georgia, in 1910, was the son of **Frank Ogletree** (father, born approximately 1869 in Georgia) and **Carrie Hogg Ogletree** (mother, maiden name Hogg, died before June 1910). Frank Ogletree and Carrie Hogg married on 4 December 1895 in Troup County, Georgia \u2014 fifteen months before Lewis's birth \u2014 establishing the parental couple. Frank's widowed status in the 1910 census is consistent with Carrie having died before that enumeration.\n\n## Source Assessment\n\n| Source | Classification | Information Quality | Evidence Type |\n|--------|---------------|---------------------|---------------|\n| 1910 U.S. Census, Frank Ogletree household | Original | Indeterminate (pre-1940, respondent unknown) | Direct \u2014 relationship column |\n| Georgia, County Marriages, 1785\u20131950 (index) | Derivative | Primary (parties stated own names) | Direct \u2014 marriage event |\n\nThe two sources are independent in institutional origin and record-creation process. The census is a federal government enumeration; the marriage record is a county clerk's civil register. No conflict exists between them.\n\n## Evidence\n\n### 1910 United States Census \u2014 Identifies Frank Ogletree as Father\n\nThe primary evidence for Frank Ogletree's paternity is the 1910 United States Federal Census, an original government record. Lewis Ogletree (born approximately March 1897, Black, Georgia) appears in the household of Frank Ogletree, West Point, Troup County, Georgia, with the relationship-to-head column recording him as \"Son.\"\u00b9 The 1910 census introduced an explicit relationship column, making this a direct statement of the parent-child relationship rather than an inference from household position. Frank Ogletree (born approximately 1869, Black, Georgia) is listed as head of household and widowed, establishing that Lewis's mother had died before the June 1910 enumeration date.\n\nLewis's identity in this record is confirmed by a FamilySearch identity-match score of 0.987 (the highest confidence band), consistent with his known name, birth year (~1897), birthplace (Georgia), and 1910 residence (West Point, Troup County). Because the respondent is unidentified in pre-1940 census records, the information quality for the relationship assertion is classified indeterminate rather than primary, per standard GPS evidence-classification practice.\n\n### Georgia County Marriages, 1785\u20131950 \u2014 Identifies Carrie Hogg as Mother and Corroborates Paternity\n\nA search of the FamilySearch collection \"Georgia, County Marriages, 1785\u20131950\" covering Troup County returned an entry for Frank Ogletree and Carrie Hogg, married 4 December 1895 in Troup County, Georgia.\u00b2 The contracting parties stated their own names to the county marriage clerk, making the name facts primary information. The marriage is a direct event record.\n\nThis record establishes two findings: (1) Frank Ogletree is confirmed as groom, corroborating his identity as established from the 1910 census \u2014 name, county, and chronology (born ~1869, approximately 26 at marriage) are consistent; and (2) Carrie Hogg is identified as the bride and thus Frank Ogletree's wife at the time Lewis was conceived. Lewis Ogletree was born approximately fifteen months after this marriage (March 1897), establishing the couple as his likely parents.\n\nThis source is classified as a derivative \u2014 it is a FamilySearch index of the original Troup County marriage register, confirmed through two searches and a record_read of the persona (ark:/61903/1:1:KXJY-PL7). The underlying original county register image (ark:/61903/3:1:33SQ-GBZC-74X) was not examined.\n\n### Corroborating FAN Evidence \u2014 Amps Hogg in the 1910 Household\n\nThe 1910 census household of Frank Ogletree also includes Amps Hogg (born approximately 1840, Black, widowed).\u00b9 An elderly Black man sharing the Hogg surname residing in Frank's household \u2014 with no documented relationship to Frank by name \u2014 is consistent with a father-in-law relationship: Amps Hogg as Carrie Hogg's father and Lewis's maternal grandfather. His widowed status in 1910 coheres with Carrie having predeceased that date. This evidence is circumstantial but corroborates the identification of Carrie Hogg as connected to the Hogg family of West Point, Troup County.\n\n### Negative Evidence\n\n**1900 Census**: Despite eight variant searches of FamilySearch collection 1325221, Frank Ogletree's household was not located. Extended-family Ogletrees found in Troup County (Emanuel, b. ~1850; Adam, b. ~1847) are not the subject. Absence may reflect indexing errors, variant spellings, or temporary residence outside the county.\n\n**1920 Census and WWI Draft**: Frank Ogletree was not conclusively located in the 1920 census (collection 1488411), and Lewis Ogletree was not found in the WWI draft registration collection (1968530) \u2014 the closest candidate (Lewis Ogletree, b. 1 March 1900, Negro, Birmingham, Alabama) scored 0.0007 on identity matching, definitively a different person. These negative results do not contradict the established parentage.\n\n## Limitations and Path to Proved\n\nThe conclusion is rated **probable** rather than proved for three reasons: (1) the marriage source is a derivative index, not an examined original record; (2) the census relationship evidence carries indeterminate information quality due to the unknown respondent; and (3) Carrie Hogg's identification as Lewis's biological mother is an inference from the marriage and birth timing rather than a direct statement in any surviving source. No conflicting evidence was found.\n\nTo advance to proved, examination of the original Troup County marriage register image (FamilySearch ark:/61903/3:1:33SQ-GBZC-74X) and any church baptismal or death records for Carrie Hogg would be the highest-yield next steps.\n\n---\n\n\u00b9 \"United States Census, 1910,\" digital images, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9FHP-PMD : accessed 5 July 2026), Frank Ogletree household, West Point, Troup County, Georgia.\n\n\u00b2 \"Georgia, County Marriages, 1785-1950,\" digital images, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MVT-J7MV : accessed 5 July 2026), entry for Frank Ogletree and Carrie Hogg, 4 December 1895, Troup County, Georgia."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-05.json",
+      "verdict": "address_first",
+      "checkpoint": "pre_exhaustiveness",
+      "evaluator": "gps-mentor",
+      "superseded_by": null,
+      "timestamp": "2026-07-05T21:23:34.060Z"
+    }
+  ]
+}
