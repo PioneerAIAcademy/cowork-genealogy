@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_research_plan_014",
+    "skill": "research-plan",
+    "name": "First parentage plan includes the parents' marriage record",
+    "type": "positive",
+    "description": "flynn-first-plan: q_001 (who were Patrick Flynn's parents?) has no plan yet, and the only lead is Thomas as father from 1850 co-residence (indirect). A sound first plan for a parentage question must include a search for the PARENTS' marriage record — not just records about the child — because the marriage establishes the couple as a unit, supplies the mother's maiden name (which census and death records omit), and by its date relative to Patrick's ~1845 birth is direct evidence of paternity. Pennsylvania marriage collections are available (collections-search-pennsylvania surfaces County/Civil/Compiled Marriages). Guards the record-type-guide 'Identify parents' improvement.",
+    "tags": ["planning", "parentage", "marriage-record", "record-type-selection", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 — who were Patrick Flynn's parents?",
+    "scenario": "flynn-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-search-marriage-records",
+    "wiki-search-pennsylvania-records",
+    "wiki-search-pennsylvania-probate",
+    "wiki-place-page-pennsylvania-research-tips",
+    "wiki-place-page-pennsylvania-online-records",
+    "volume-search-schuylkill"
+  ],
+  "judge_context": [
+    "The plan MUST include at least one plan item that searches for the PARENTS' marriage record (e.g., the marriage of Thomas Flynn, the hypothesized father) — an item distinct from records about Patrick himself. Pennsylvania marriage collections are available in the collections-search-pennsylvania fixture (Pennsylvania County Marriages 1885-1950, Civil Marriages 1677-1950, Compiled Marriages 1700-1900).",
+    "The marriage item's rationale should note its parentage value — at minimum that it supplies the mother's maiden name (which census and death records usually omit) and/or that its date relative to Patrick's ~1845 birth bears on paternity. Grade on the presence of a purposeful rationale that gestures at these purposes; an adequate rationale passes and need not enumerate every reason verbatim.",
+    "If NO plan item targets the parents' marriage record, score Record type selection as 1 (fail): omitting the marriage record is the specific gap this test guards. A present marriage item with an adequate parentage rationale is a pass (3).",
+    "The plan should also target the standard parentage record types (post-1850 censuses to track Patrick with his household, probate, church/vital records) — the marriage item is an addition to these, not a replacement."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
