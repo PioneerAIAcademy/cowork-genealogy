@@ -10,13 +10,28 @@ contextual factors that affect availability.
 
 | Goal | Primary record types | Secondary/fallback |
 |------|---------------------|-------------------|
-| Identify parents | Census (household), vital records (death/birth cert), probate (will), church (baptism) | Military pension, immigration, land deeds (witnesses) |
+| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism) | Military pension, immigration, land deeds (witnesses) |
 | Confirm identity | Census (name/age/place across decades), vital records, church records | Newspaper, tax records, city directories |
 | Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary) | Military records, immigration, delayed birth cert |
 | Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
 | Find marriage | Vital records (marriage cert), church (marriage register), newspaper (announcement) | Census (married status), county bonds/licenses |
 | Track migration | Census (residence across decades), land records, tax records | Church transfers, newspaper, city directories |
 | FAN research | Land deeds (witnesses), census (neighbors), probate (witnesses), church (godparents) | Business records, court records, military unit records |
+
+**Identifying parents — plan a dedicated search for the parents'
+marriage record.** For a parentage question, add a **separate plan
+item** targeting the *parents'* marriage — civil marriage registers,
+county marriage bonds/licenses, or a church marriage register — kept
+**distinct** from any item about the child's own baptism or marriage,
+and do not fold it into a generic "church records" item. Its rationale
+must state that the marriage: (a) confirms the couple as a unit; (b)
+supplies the **mother's maiden name**, which census and death records
+usually omit; and (c) by its date relative to the child's birth is
+direct evidence of **paternity** — able to confirm or refute a father
+who is otherwise named only by indirect or derivative evidence (e.g., a
+death certificate or a single census co-residence). This item belongs in
+essentially every parentage plan, even when a parent already appears in
+the tree from indirect evidence.
 
 ---
 

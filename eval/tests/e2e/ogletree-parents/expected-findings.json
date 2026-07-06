@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Frank Ogletree was the father of Lewis Ogletree. Born December 1870 in Georgia; enumerated as head of household in the 1900 and 1910 U.S. censuses in Troup County, Georgia.",
+      "details": {
+        "subject_person": {
+          "name": "Lewis Ogletree",
+          "pid": "GW8N-X1W"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Frank Ogletree",
+          "birth": "December 1870, Georgia, United States"
+        }
+      },
+      "supporting_sources": [
+        "\"United States, Census, 1900\", FamilySearch — Troup County, Georgia; household of Frank and Carrie Ogletree, with Lewis as son.",
+        "\"United States, Census, 1910\", FamilySearch — West Point, Troup County, Georgia; household of Frank Ogletree."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Carrie Hogg (indexed as Carrie Ogletree after marriage) was the mother of Lewis Ogletree. Born 1876 in Georgia; married Frank Ogletree on 4 December 1895 in Troup County, Georgia.",
+      "details": {
+        "subject_person": {
+          "name": "Lewis Ogletree",
+          "pid": "GW8N-X1W"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Carrie Hogg",
+          "birth": "1876, Georgia, United States"
+        }
+      },
+      "supporting_sources": [
+        "\"United States, Census, 1900\", FamilySearch — Troup County, Georgia; household of Frank and Carrie Ogletree, with Lewis as son.",
+        "Troup County, Georgia marriage record — Frank Ogletree to Carrie Hogg, 4 December 1895 (mother's maiden name)."
+      ],
+      "required": true
+    }
+  ]
+}
