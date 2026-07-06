@@ -39,7 +39,7 @@ import type {
   RunLogFile,
   TestEntry,
 } from '@/lib/types';
-import { NULLABLE_BASE_DIMENSIONS } from '@/lib/types';
+import { dimensionAllowsNa } from '@/lib/types';
 import { buildArgTableRows, formatArgValue } from '@/lib/argTable';
 
 interface Detail {
@@ -192,8 +192,11 @@ function ScorePicker({
 }: {
   value: ScoreOrNull;
   onChange: (v: ScoreOrNull) => void;
-  /** When true, the picker shows N/A as a fourth option (used for the
-   * Tool Arguments dimension, which is N/A when zero MCP calls happened). */
+  /** When true, the picker shows N/A as a fourth option — so the reviewer
+   * can agree with (or set) a null score. Enabled whenever the judge scored
+   * the dimension null (any base or rubric dimension with an N/A criterion),
+   * plus the nullable base dimensions (Tool Arguments). See
+   * `dimensionAllowsNa`. */
   allowNa?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -293,7 +296,7 @@ const DimensionRow = memo(function DimensionRow({
 
   const disagrees = correction != null && correction.corrected_score !== correction.llm_score;
   const needsComment = disagrees && !draft.trim();
-  const allowNa = dim.source === 'base' && NULLABLE_BASE_DIMENSIONS.has(dim.name);
+  const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
 
   const setScore = (s: ScoreOrNull) => {
     onUpdate({
