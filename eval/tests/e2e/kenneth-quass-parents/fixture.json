@@ -1,0 +1,18 @@
+{
+  "id": "kenneth-quass-parents",
+  "name": "Kenneth Quass Parents",
+  "source_pid": "KNS4-P6W",
+  "captured": "2026-06-30",
+  "researcher_question": "Who were Kenneth Werner Quass's parents?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1910s",
+    "geography": "US-IA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "The 1920 census transcribes the Quass surname as 'Ovass' — a common OCR/transcription variant that may complicate searches. Evidence is available in the 1920 and 1930 Iowa census records and the 1917 Iowa County Birth record. Parents are Ralph Kennedy Quass (KFYQ-1Y2) and Emma Wilhelmina Nehls (KNSY-35C), married 16 Dec 1915 in Independence, Buchanan, Iowa."
+}

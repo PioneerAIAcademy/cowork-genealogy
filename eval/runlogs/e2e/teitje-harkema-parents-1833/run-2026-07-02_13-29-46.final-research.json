@@ -1,0 +1,1128 @@
+{
+  "project": {
+    "id": "rp_teitje_harkema_parents_1833",
+    "objective": "Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?",
+    "subject_person_ids": [
+      "LHZM-TR7"
+    ],
+    "status": "completed",
+    "created": "2026-07-02T00:00:00Z",
+    "updated": "2026-07-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1833 civil birth registration for Teitje Harkema in Veenhuizen, Norg, Drenthe, Netherlands name as her parents?",
+      "rationale": "Dutch civil registration (Burgerlijke Stand) has been in force since 1811, so a birth act from 1833 in Norg municipality should exist and would name both parents by full name. This is the most direct record for identifying parentage and the gatekeeper question for the entire objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-02",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_008",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_017"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent derivative sources from the Dutch Burgerlijke Stand both name the same parents for Teitje Harkema: (1) The 1833 Norg geboorteakte index (src_001, record no. 41, archive 0165.016) names father Jan Roelfs Harkema (bouwboer, b. ~1799) and mother Hillichje Willems Jager (b. ~1800). (2) The 1876 Norg huwelijksakte index (src_002, ARK QL5P-3YZL) independently names father_of_bride Jan Roelfs Harkema and mother_of_bride Hillichje Willems Jager. These two civil registration acts constitute independent evidence units \u2014 different records, different registrars, different informants (father in 1833; adult bride in 1876), 43 years apart. The original birth register image was located (image group 004748896_041_M9XH-2JQ, confirmed correct volume) but could not be read inline due to a tool transport limitation; this is documented in log_002. Remaining planned items pli_003 (WieWasWie), pli_005 (Veenhuizen colonist registers), and pli_006 (Ancestry NL birth index) would provide repository diversity and contextual enrichment but would not alter the conclusion \u2014 Dutch Burgerlijke Stand birth and marriage acts naming identical parents are the authoritative sources for this question.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003"
+        ],
+        "stop_criteria": "The primary targeted record (1833 geboorteakte, record 41) was found and extracted via a indexed search (pli_001). A second independent civil registration act (1876 huwelijksakte, pli_002) corroborates the same parents from a different record type, different event, and different informant. GPS Standard 18 stop criteria met: continued searching would not alter the conclusion; remaining sources would add diversity but not change the parentage finding."
+      },
+      "created": "2026-07-02"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Norg, Drenthe, Netherlands",
+          "date_range": "1833",
+          "repository": "FamilySearch",
+          "rationale": "Netherlands, Archival Indexes, Vital Records, 1600-2000 (collection 2704829) indexes 46M+ Dutch vital records including Drenthe civil births from 1811. A 1833 geboorteakte (birth act) for Teitje Harkema would name both parents as declarant and mother. This is the fastest path to resolving the parentage question.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Norg, Drenthe, Netherlands",
+          "date_range": "1876",
+          "repository": "FamilySearch",
+          "rationale": "A 1876 marriage act (huwelijksakte) for Teitje Harkema already exists in the tree (source S1PK-67W, ARK QL5P-3YZL) but has not been extracted into research.json assertions. Dutch marriage acts under Burgerlijke Stand always state the fathers of both parties and usually the mothers, making this a direct parentage source independent of the birth act.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Norg, Drenthe, Netherlands",
+          "date_range": "1833",
+          "repository": "other",
+          "rationale": "WieWasWie (wiewaswie.nl) aggregates vital records from Dutch provincial archives including Drents Archief. Searching here for Teitje Harkema 1833 may surface the birth act with parent names directly without requiring image browsing.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Drenthe, Netherlands",
+          "date_range": "1833",
+          "repository": "FamilySearch",
+          "rationale": "Netherlands, Drenthe, Civil Registration, 1811-1942 (collection 2026974) contains 1.15M browse-only images of the original Drenthe civil registers. If the indexed search (pli_001) fails to surface the birth act, browsing the Norg 1833 geboorteregister images will allow direct examination of the original document.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Veenhuizen, Norg, Drenthe, Netherlands",
+          "date_range": "1823-1850",
+          "repository": "FamilySearch",
+          "rationale": "Netherlands, Archival Indexes, Population Registers (collection 2821274) covers 1600-2000 and may include Veenhuizen colony household registers. Veenhuizen was a Maatschappij van Weldadigheid labor colony; its colonist registers would list entire family units including parents. Searching Harkema in this collection could confirm the family group and identify parents by name.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Norg, Drenthe, Netherlands",
+          "date_range": "1833",
+          "repository": "other",
+          "rationale": "Ancestry Netherlands Birth Index, 1784-1923 is an independent index of Dutch civil births. Searching here for Teitje Harkema provides a cross-check against the FamilySearch index and may surface the birth act if the FamilySearch collection indexing is incomplete for Drenthe 1833.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-02T12:47:04.101Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Teitje",
+        "surname": "Harkema",
+        "birthYearFrom": 1828,
+        "birthYearTo": 1838,
+        "birthPlace": "Drenthe, Netherlands",
+        "collectionId": "2704829",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Single match: Teitje Harkema b. 31 Jul 1833, Norg, Drenthe. Father: Jan Roelfs Harkema (b. ~1799); Mother: Hillichje Willems Jager (b. ~1800). Source cites Drents Archief, archive 0165.016, inv. 1833, record no. 41. 5-star tree match to LHZM-TR7."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-02T13:01:34.955Z",
+      "tool": "image_search",
+      "query": {
+        "collection": "2026974",
+        "standardPlace": "Norg, Drenthe, Netherlands",
+        "startYear": 1833,
+        "endYear": 1833,
+        "imageGroupNumber": "004748896_041_M9XH-2JQ",
+        "targetRecord": "archive 0165.016, inventory 1833, record no. 41"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 31,
+      "notes": "Volume search confirmed image group 004748896_041_M9XH-2JQ as the Norg 1833 civil birth register (31 images). image_read failed \u2014 all images ~1MB, exceeding MCP inline transport cap. Original image not readable through this tool. Record no. 41 (Teitje Harkema, 31 Jul 1833) is in this volume and can be viewed manually at https://www.familysearch.org/search/image/index?owc=004748896_041_M9XH-2JQ. The index transcription (src_001 / openarch.nl) identifies the record as archive 0165.016, inventory 1833, record 41 at Drents Archief \u2014 the image group confirms this is the correct volume, but image content could not be verified inline."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-02T13:05:33.616Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL5P-3YZL",
+        "source": "Netherlands, Archival Indexes, Vital Records, 1600-2000 (collection 2704829)",
+        "description": "1876 huwelijksakte (marriage act) for Roelf Huisman and Teitje Harkema, 30 Jun 1876, Norg, Drenthe",
+        "alreadyInTree": "S1PK-67W"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Marriage act (huwelijksakte) for Roelf Huisman and Teitje Harkema, 30 Jun 1876, Norg, Drenthe. Names Teitje's father as Jan Roelfs Harkema and mother as Hillichje Willems Jager \u2014 independent corroboration of birth-act parentage. Discrepancy: marriage act indexes Teitje's birth as 1834; birth act says 31 Jul 1833. OpenArch: https://www.openarch.nl/show.php?archive=dar&identifier=919acbff-b187-4275-a0f3-3d9f115e51a3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82 : accessed 2 July 2026), entry for Teitje Harkema, birth 31 July 1833; citing Norg, archive 0165.016, inventory number 1833, record number 41; Drents Archief, Assen.",
+      "citation_detail": {
+        "who": "Teitje Harkema (child), Jan Roelfs Harkema (father/declarant), Hillichje Willems Jager (mother)",
+        "what": "Index entry in Netherlands, Archival Indexes, Vital Records, 1600-2000 derived from Norg civil birth registration (geboorteakte), 31 July 1833, record no. 41",
+        "when_created": "31 July 1833 (original geboorteakte); indexed by openarch.nl, 2016",
+        "when_accessed": "2026-07-02",
+        "where": "FamilySearch (familysearch.org), citing Drents Archief, Assen, Netherlands",
+        "where_within": "Norg, archive 0165.016, inventory number 1833, record number 41"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "notes": "Index entry sourced from openarch.nl (Open Archives), itself derived from the original geboorteakte at Drents Archief. OpenArch record: https://www.openarch.nl/show.php?archive=dar&identifier=1530e378-e73d-4111-ba1b-61fe9a1ed378. The original civil register image should be consulted for full detail and to confirm the index transcription.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S1PK-67W",
+      "citation": "\"Nederland, Indexen van de Archieven, Primaire Archiefstukken (BS en DTB), 1600-2000,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL : accessed 2 Jul 2026), entry for Roelf Huisman and Teitje Harkema, marriage 30 Jun 1876, Norg, Drenthe, Netherlands; indexing original huwelijksakte held at Drents Archief.",
+      "citation_detail": {
+        "who": "Roelf Huisman (groom) and Teitje Harkema (bride)",
+        "what": "Marriage act (huwelijksakte), 30 Jun 1876, civil register (Burgerlijke Stand), Norg, Drenthe, Netherlands",
+        "when_created": "30 Jun 1876",
+        "when_accessed": "2026-07-02",
+        "where": "FamilySearch, 'Netherlands, Archival Indexes, Vital Records, 1600-2000'",
+        "where_within": "Marriage register, Norg, 30 Jun 1876, entry for Roelf Huisman and Teitje Harkema"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "notes": "Derivative: FamilySearch index of Drenthe civil registration marriage records. Original huwelijksakte held at Drents Archief, Assen. Record fetched via record_read on ARK QL5P-3YZL; GedcomX persona IDs: bride p_103390935621, groom p_103391072679, father-of-bride p_103390935629, mother-of-bride p_103390935645, father-of-groom p_103391072686, mother-of-groom p_103391072694.",
+      "log_entry_id": "log_003"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046224850",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Teitje Harkema",
+      "structured_value": {
+        "given": "Teitje",
+        "surname": "Harkema"
+      },
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (vader/declarant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046224850",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "31 Jul 1833, Norg, Drenthe, Netherlands",
+      "structured_value": {
+        "year": 1833,
+        "place": "Norg, Drenthe, Netherlands"
+      },
+      "date": "1833-07-31",
+      "date_certainty": "exact",
+      "place": "Nederland",
+      "standard_place": "Norg, Drenthe, Netherlands",
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (vader/declarant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046224850",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Jan Roelfs Harkema (father)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (vader/declarant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046224850",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Hillichje Willems Jager (mother)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (vader/declarant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046224892",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Jan Roelfs Harkema",
+      "structured_value": {
+        "given": "Jan Roelfs",
+        "surname": "Harkema"
+      },
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (self, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046224892",
+      "record_role": "father",
+      "fact_type": "birth",
+      "value": "~1799",
+      "structured_value": {
+        "year": 1799
+      },
+      "date": "1799",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (self, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Self-reported birth year; person cannot cognitively witness own birth but self-reported age is the closest available testimony. Year is approximate (~1799); minor rounding error possible."
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046224892",
+      "record_role": "father",
+      "fact_type": "occupation",
+      "value": "bouwboer",
+      "structured_value": {
+        "occupation": "bouwboer"
+      },
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (self, declarant)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Self-reported occupation at time of registration (1833). Bouwboer (farmer) was a common Drenthe occupation; no known motivation to misstate."
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046195509",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Hillichje Willems Jager",
+      "structured_value": {
+        "given": "Hillichje Willems",
+        "surname": "Jager"
+      },
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (declarant, reporting about wife)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLZJ-NR82",
+      "record_persona_id": "p_103046195509",
+      "record_role": "mother",
+      "fact_type": "birth",
+      "value": "~1800",
+      "structured_value": {
+        "year": 1800
+      },
+      "date": "1800",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Jan Roelfs Harkema (declarant, reporting about wife)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Husband reporting wife's approximate birth year. Estimate likely based on knowledge of wife's age; minor error possible (\u00b12 years typical)."
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Teitje Harkema",
+      "structured_value": {
+        "given": "Teitje",
+        "surname": "Harkema"
+      },
+      "information_quality": "primary",
+      "informant": "Teitje Harkema (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "1834",
+      "structured_value": {
+        "year": 1834
+      },
+      "date": "1834",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Teitje Harkema (bride)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride stated own birth year; a person cannot have primary knowledge of their own birth. Year 1834 conflicts with 1833 stated in the birth act (src_001/a_003). One-year discrepancy may reflect an indexing error, transcription error, or imprecise recollection.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "Veenhuizen (Norg), Drenthe, Netherlands",
+      "structured_value": {
+        "place": "Veenhuizen (Norg), Drenthe, Netherlands"
+      },
+      "place": "Veenhuizen (Norg), Drenthe, Netherlands",
+      "standard_place": "Veenhuizen, Drenthe, Netherlands",
+      "information_quality": "secondary",
+      "informant": "Teitje Harkema (bride)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride stated own birthplace; a person cannot have primary knowledge of their own birth. Consistent with birth act (src_001/a_004).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "father: Jan Roelfs Harkema",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Teitje Harkema (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "mother: Hillichje Willems Jager",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Teitje Harkema (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "marriage",
+      "value": "30 Jun 1876, Norg, Drenthe, Netherlands",
+      "date": "1876-06-30",
+      "date_certainty": "exact",
+      "place": "Norg, Drenthe, Netherlands",
+      "standard_place": "Norg, Noordenveld, Drenthe, Netherlands",
+      "information_quality": "primary",
+      "informant": "civil registrar, Norg",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "father_of_bride",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Jan Roelfs Harkema",
+      "structured_value": {
+        "given": "Jan Roelfs",
+        "surname": "Harkema"
+      },
+      "information_quality": "primary",
+      "informant": "Teitje Harkema (bride)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "mother_of_bride",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Hillichje Willems Jager",
+      "structured_value": {
+        "given": "Hillichje Willems",
+        "surname": "Jager"
+      },
+      "information_quality": "primary",
+      "informant": "Teitje Harkema (bride)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "groom",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Roelf Huisman",
+      "structured_value": {
+        "given": "Roelf",
+        "surname": "Huisman"
+      },
+      "information_quality": "primary",
+      "informant": "Roelf Huisman (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "groom",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "1818",
+      "structured_value": {
+        "year": 1818
+      },
+      "date": "1818",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Roelf Huisman (groom)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom stated own birth year; a person cannot have primary knowledge of their own birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "groom",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "Slochteren, Groningen, Netherlands",
+      "structured_value": {
+        "place": "Slochteren, Groningen, Netherlands"
+      },
+      "place": "Slochteren, Groningen, Netherlands",
+      "standard_place": "Slochteren, Groningen, Netherlands",
+      "information_quality": "secondary",
+      "informant": "Roelf Huisman (groom)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom stated own birthplace; a person cannot have primary knowledge of their own birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "groom",
+      "record_persona_id": null,
+      "fact_type": "occupation",
+      "value": "wijkmeester",
+      "structured_value": {
+        "occupation": "wijkmeester"
+      },
+      "place": "Norg, Drenthe, Netherlands",
+      "standard_place": "Norg, Noordenveld, Drenthe, Netherlands",
+      "information_quality": "primary",
+      "informant": "Roelf Huisman (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_022",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "father_of_groom",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Meerten Kornelis Huisman",
+      "structured_value": {
+        "given": "Meerten Kornelis",
+        "surname": "Huisman"
+      },
+      "information_quality": "primary",
+      "informant": "Roelf Huisman (groom)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_023",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QL5P-3YZL",
+      "record_role": "mother_of_groom",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Anna Roelfs Jager",
+      "structured_value": {
+        "given": "Anna Roelfs",
+        "surname": "Jager"
+      },
+      "information_quality": "primary",
+      "informant": "Roelf Huisman (groom)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": 0.988,
+      "rationale": "Exact name match (Teitje Harkema), exact birth date match (31 Jul 1833), same province (Drenthe, Netherlands). same_person score 0.988/confidence 5. FamilySearch 5-star tree match to LHZM-TR7. No plausible alternate candidate.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": 0.988,
+      "rationale": "Birth date 31 Jul 1833 in Norg, Drenthe exactly matches LHZM-TR7's known birth fact (Veenhuizen, Norg, Drenthe). same_person score 0.988. Confirms subject identity.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": 0.988,
+      "rationale": "This birth record names Teitje Harkema (LHZM-TR7) as child of Jan Roelfs Harkema. The child side of the relationship directly links to the confirmed subject.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Jan Roelfs Harkema is named as father of Teitje Harkema in the 1833 Norg geboorteakte. New stub I1 created \u2014 no prior tree entry. Single-record introduction; confident link awaits corroboration.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": 0.988,
+      "rationale": "Birth record names Teitje Harkema (LHZM-TR7) as child of Hillichje Willems Jager. Child side of the relationship confirmed by same_person 0.988.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Hillichje Willems Jager named as mother of Teitje Harkema in the 1833 Norg geboorteakte. New stub I2 created \u2014 no prior tree entry. Single-record introduction; confident link awaits corroboration.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Jan Roelfs Harkema' links to stub I1 created from this record. The declarant self-reported his name to the civil registrar; no competing candidate in tree.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1799 for Jan Roelfs Harkema links to stub I1. Self-reported; consistent with being father of a child born 1833 (age ~34).",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Occupation 'bouwboer' (farmer) for Jan Roelfs Harkema links to stub I1. Self-reported to civil registrar.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Hillichje Willems Jager' links to stub I2 created from this record. Reported by husband Jan Roelfs Harkema as mother of Teitje; no competing candidate in tree.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1800 for Hillichje Willems Jager links to stub I2. Reported by husband; consistent with being mother of a child born 1833 (age ~33).",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's name 'Teitje Harkema' matches tree person LHZM-TR7 exactly. The marriage on 30 Jun 1876 in Norg corroborates: rel-1 in tree links LHZM-TR7 to LH56-BC2 (Roelf Meerten Huisman) with that same date and place. Name, spouse, and marriage event are an obvious match.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "LHZM-TR7",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1834 stated by bride, one year later than 1833 in tree (from birth act a_003). The name, marriage date/place, and birthplace all confirm this is LHZM-TR7; the one-year discrepancy is likely a transcription or recollection error. Probable rather than confident because of this conflict.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride's birthplace 'Veenhuizen (Norg), Drenthe' matches tree fact on LHZM-TR7 (birth 31 Jul 1833, Veenhuizen, Norg, Drenthe). Place is consistent; confirms LHZM-TR7.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride-father relationship assertion: the bride (LHZM-TR7 per a_010 match) explicitly names Jan Roelfs Harkema as her father. This assertion bears on LHZM-TR7 as the child in that relationship.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The marriage act names Jan Roelfs Harkema as father of bride. Tree stub I1 is 'Jan Roelfs Harkema' (Male), created from birth act index a_005. Names match exactly; the marriage act provides independent corroboration that this individual is Teitje's father, confirming I1.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride-mother relationship assertion: the bride (LHZM-TR7) explicitly names Hillichje Willems Jager as her mother. This assertion bears on LHZM-TR7 as the child in that relationship.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The marriage act names Hillichje Willems Jager as mother of bride. Tree stub I2 is 'Hillichje Willems Jager' (Female), created from birth act index a_006. Names match exactly; the marriage act independently corroborates I2 as Teitje's mother.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "LHZM-TR7",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event 30 Jun 1876 Norg matches tree relationship rel-1 linking LHZM-TR7 to LH56-BC2. Same date, same place. Obvious match.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "LH56-BC2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event 30 Jun 1876 Norg matches tree relationship rel-1 linking LH56-BC2 (Roelf Meerten Huisman) to LHZM-TR7. Groom name 'Roelf Huisman' is a short form of 'Roelf Meerten Huisman'; birth year 1818 and birthplace Slochteren match exactly. Obvious match.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-of-bride named 'Jan Roelfs Harkema' in 1876 marriage act. Tree stub I1 is 'Jan Roelfs Harkema' (Male), created from 1833 birth act index. Same full name; this is a second independent record naming this individual as Teitje's father. Confident match.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother-of-bride named 'Hillichje Willems Jager' in 1876 marriage act. Tree stub I2 is 'Hillichje Willems Jager' (Female), created from 1833 birth act index. Same full name; this is a second independent record naming this individual as Teitje's mother. Confident match.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "LH56-BC2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom name 'Roelf Huisman' in marriage act is short form of tree name 'Roelf Meerten Huisman' (LH56-BC2). Birth year 1818 and birthplace Slochteren (a_019, a_020) match tree facts exactly. Occupation wijkmeester (a_021) also matches tree fact on LH56-BC2. Strong match across multiple attributes.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "LH56-BC2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom birth year 1818 matches tree fact on LH56-BC2 (birth 11 May 1818, Slochteren). Exact year agreement, consistent with identity.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "LH56-BC2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom birthplace Slochteren, Groningen matches tree fact on LH56-BC2 (birth 11 May 1818, Slochteren, Groningen). Exact place agreement.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_021",
+      "person_id": "LH56-BC2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom occupation 'wijkmeester' in Norg matches tree fact on LH56-BC2 (Occupation: wijkmeester, Norg). Consistent with identity.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_022",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father of groom named 'Meerten Kornelis Huisman' in 1876 marriage act. Tree stub I3 was just created for this individual. Single assertion, no independent corroboration yet. Probable confidence; name fully consistent with Dutch patronymic convention (groom's middle name 'Meerten' is patronymic = son of Meerten). Stub awaits corroboration from additional records.",
+      "created": "2026-07-02"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_023",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother of groom named 'Anna Roelfs Jager' in 1876 marriage act. Tree stub I4 was just created for this individual. Single assertion, no independent corroboration. Probable confidence; name pattern consistent (patronymic 'Roelfs' = daughter of Roelf). Stub awaits corroboration.",
+      "created": "2026-07-02"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "disputed_attribute": "birth_year",
+      "description": "Two sources give different birth years for Teitje Harkema: 1833 (1833 Norg birth act index, src_001) vs. 1834 (1876 Norg marriage act index, src_002).",
+      "competing_assertion_ids": [
+        "a_002",
+        "a_011"
+      ],
+      "blocks_question_ids": [],
+      "status": "resolved",
+      "independence_analysis": "The two sources are fully independent. src_001 derives from the 1833 Norg geboorteakte created at the birth event; informant was the father Jan Roelfs Harkema (declarant, witness). src_002 derives from the 1876 Norg huwelijksakte created 43 years later; informant for the bride's birth year was the bride herself. Different events, records, registrars, informants, and dates \u2014 no shared information chain.",
+      "weighing_analysis": "src_001 (birth act) is superior: (1) Temporal proximity \u2014 created on the day of birth (31 Jul 1833) vs. 43 years later. (2) Informant quality \u2014 father witnessed the birth (primary, witness proximity); bride cannot have cognitively witnessed own birth (secondary, self proximity). (3) Record purpose \u2014 geboorteakte was created specifically to register the birth date; huwelijksakte recorded birth year incidentally. (4) Error pattern \u2014 one-year off-by-one discrepancies in bride self-reports in Dutch civil registration are a known artifact. Birth act 1833 is accepted.",
+      "resolution_rationale": "The 1833 birth act (src_001) is accepted as the authoritative source for Teitje Harkema's birth year. Marriage act's 1834 reflects secondary information from a self-informant reporting 43 years post-event. Conflict does not affect the parentage question \u2014 both records name identical parents. Tree carries 31 Jul 1833; no correction required.",
+      "notes": "Parentage evidence (q_001) unaffected. LHZM-TR7 birth year 1833 confirmed."
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "conclusion": "The parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands, were Jan Roelfs Harkema (father, bouwboer, born approximately 1799) and Hillichje Willems Jager (mother, born approximately 1800).",
+      "status": "proved",
+      "tier": "proved",
+      "vehicle": "argument",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_008",
+        "a_010",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_017"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "pli_001 (FamilySearch indexed vital records, Norg 1833): positive \u2014 birth act index found, parent names extracted. pli_002 (FamilySearch 1876 marriage act): positive \u2014 huwelijksakte independently names same parents. pli_004 (original birth register image, collection 2026974): partial \u2014 image group confirmed, inline read technically blocked by tool transport cap; manual URL preserved. pli_003, pli_005, pli_006: skipped as question answered by two independent civil-registration sources; additional searches would add repository diversity but not alter the parentage conclusion.",
+      "narrative_markdown": "## Proof Argument: Parents of Teitje Harkema (born 31 July 1833, Veenhuizen, Norg, Drenthe)\n\n### Conclusion\nTeitje Harkema was the daughter of **Jan Roelfs Harkema** (father, *bouwboer*, born approximately 1799) and **Hillichje Willems Jager** (mother, born approximately 1800). This conclusion rests on the concurrence of two independent Dutch Burgerlijke Stand derivative indexes, both citing Drents Archief originals. The original 1833 birth register image has been located (Drents Archief, archive 0165.016, inventory 1833, record 41; FamilySearch image group 004748896_041_M9XH-2JQ) but could not be read inline due to a tool transport limitation; manual verification against the original would confirm the index transcription.\n\n### Source 1 \u2014 1833 Geboorteakte Index (src_001)\n*\"Netherlands, Archival Indexes, Vital Records, 1600-2000,\"* FamilySearch (ARK QLZJ-NR82), citing Drents Archief, archive 0165.016, inventory 1833, record no. 41, via openarch.nl.\n\nJan Roelfs Harkema appeared as declarant (*vader*) on 31 July 1833 and registered the birth of his daughter Teitje Harkema, naming Hillichje Willems Jager as the mother. As the declarant and father who witnessed the birth, Jan Roelfs provided **primary information** (witness proximity) for the child's name, birth date, and his own identity, and **primary information** (household member proximity) for the mother's name. The parentage relationship assertions a_003 and a_004 are **direct evidence** for q_001.\n\n### Source 2 \u2014 1876 Huwelijksakte Index (src_002)\n*\"Netherlands, Archival Indexes, Vital Records, 1600-2000,\"* FamilySearch (ARK QL5P-3YZL), citing Drents Archief, huwelijksregister Norg, 30 Jun 1876.\n\nThe adult bride Teitje Harkema appeared in person before the civil registrar and stated Jan Roelfs Harkema as her father (a_016, direct) and Hillichje Willems Jager as her mother (a_017, direct), with explicit parent-child relationship assertions a_013 and a_014. This record was generated 43 years after the birth, from a different event, with a different registrar, and a different informant (the adult bride rather than her father), constituting a **separately created record**.\n\n### Correlation and Corroboration\nBoth records name identical full names \u2014 Jan Roelfs Harkema and Hillichje Willems Jager \u2014 with no variant spelling. Dutch patronymic conventions corroborate internal consistency: \u2018Roelfs\u2019 in Jan Roelfs Harkema marks Jan as son of Roelf; \u2018Willems\u2019 in Hillichje Willems Jager marks Hillichje as daughter of Willem. These are not common-surname situations where coincidental name match would be plausible.\n\nThe two records are independent at the level of **record creation**: different events, different registrars, different archive volumes, different dates, and different informant individuals. A qualification applies at the level of **informant knowledge for parentage**: the 1876 bride (adult Teitje) drew her knowledge of who her parents were from the same family unit that produced the 1833 declarant (her father). They do not share an information chain at the level of the records themselves, but they do share a common family-knowledge origin for the parentage fact. This is the expected pattern for parent-child relationships attested across birth and marriage records; it does not collapse the two records into one evidence unit, but the independence is record-independence, not informant-independence on the underlying parentage fact.\n\n### Conflict Resolved\nThe marriage act states Teitje\u2019s birth year as 1834 (a_011), one year later than the 1833 birth act (a_002). This conflict (c_001) is resolved in favor of the birth act: it was created contemporaneously on the day of birth by a first-hand witness (primary information); the marriage act records the bride\u2019s self-reported year 43 years post-event (secondary information). One-year off-by-one discrepancies in 19th-century Dutch bride self-reports are a recognized indexing and recollection artifact. The accepted birth year is 1833. This conflict does not affect the parentage conclusion.\n\n### Basis and Limitation\nBoth sources are derivative civil-registration indexes (openarch.nl and FamilySearch respectively), both ultimately citing Drents Archief originals. The original 1833 geboorteakte is in a confirmed image group (004748896_041_M9XH-2JQ) at FamilySearch; inline reading was blocked by a tool transport limitation (log_002, partial). The openarch.nl index cites archive 0165.016, inventory 1833, record 41, and the FamilySearch birth-act index entry corroborates the same record with a same_person score of 0.988 against tree person LHZM-TR7. Manual examination of the original image would confirm the transcription and would allow this argument to be elevated to a basis in a directly-examined original record."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-02.json",
+      "superseded_by": "ev_002",
+      "verdict": "address_first",
+      "must_address": [
+        {
+          "issue": "Derivative source only \u2014 original geboorteakte image not yet examined",
+          "detail": "All parentage evidence rests on a single derivative index entry. The original 1833 Norg birth register image (collection 2026974, pli_004) is accessible and must be consulted to confirm parent names.",
+          "suggested_skill": "search-records",
+          "plan_item_id": "pli_004"
+        },
+        {
+          "issue": "1876 marriage act not yet extracted \u2014 independent direct parentage source",
+          "detail": "S1PK-67W / ark:/61903/1:1:QL5P-3YZL is in the tree but unextracted. Dutch huwelijksakten name parents of both parties independently of the birth act.",
+          "suggested_skill": "record-extraction",
+          "plan_item_id": "pli_002"
+        }
+      ],
+      "consider_addressing": [
+        {
+          "issue": "Repository diversity \u2014 all evidence from FamilySearch only",
+          "detail": "WieWasWie and Ancestry Netherlands Birth Index provide independent cross-checks."
+        },
+        {
+          "issue": "Veenhuizen colonist registers",
+          "detail": "Maatschappij van Weldadigheid household registers list entire family units."
+        }
+      ],
+      "narrative_for_user": "The 1833 birth index entry is strong but rests on a single derivative source. Before declaring exhaustiveness: (1) examine the original Norg birth register image to confirm parent names, and (2) extract the 1876 marriage act which independently names Teitje's parents.",
+      "timestamp": "2026-07-02T12:58:37.552Z"
+    },
+    {
+      "id": "ev_002",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-02-pass2.json",
+      "superseded_by": null,
+      "verdict": "looks_solid",
+      "must_address": [],
+      "consider_addressing": [
+        {
+          "standard": "Standard 48 \u2014 conflict resolution",
+          "issue": "Birth-year discrepancy (1833 birth act vs. 1834 marriage act) is noted in assertion bias notes and pe_013 but not logged in conflicts[]. Does not affect parentage answer; must be formally resolved before proof.",
+          "suggested_action": "Create a conflict record for 1833/1834 discrepancy with four-part resolution rationale before proof-conclusion."
+        },
+        {
+          "standard": "Standard 32 \u2014 original vs. derivative",
+          "issue": "Both parentage sources remain derivative indexes. Originals are documented and accessible (image group 004748896_041_M9XH-2JQ confirmed for birth; huwelijksakte at Drents Archief). Two independent acts agreeing exactly suffices for exhaustiveness; original examination would raise proof tier.",
+          "suggested_action": "View Norg 1833 record 41 image manually and confirm transcription if feasible."
+        },
+        {
+          "standard": "Standard 15 \u2014 repository diversity",
+          "issue": "All evidence surfaces through FamilySearch. pli_003 (WieWasWie) and pli_006 (Ancestry NL Birth Index) remain planned as independent cross-checks. src_001 traces beneath FamilySearch to openarch.nl/Drents Archief, giving partial provenance diversity.",
+          "suggested_action": "Optionally run pli_003 or pli_006 for independent index cross-check."
+        }
+      ],
+      "narrative_for_user": "Both must_address items from ev_001 have been addressed. pli_002 (marriage act extraction) is complete \u2014 the 1876 huwelijksakte independently names Jan Roelfs Harkema and Hillichje Willems Jager as Teitje's parents from a separate act 43 years later, closing the single-derivative-source vulnerability. pli_004 (original birth register image) was attempted, the image group was confirmed, but the ~1MB images exceed the inline tool transport cap \u2014 this is a documented tooling limitation, not a research gap (log_002, partial, manual URL preserved). Verdict: proceed to exhaustiveness declaration. Before proof-conclusion, formally log and resolve the 1833/1834 birth-year conflict in conflicts[].",
+      "timestamp": "2026-07-02T13:19:50.669Z"
+    },
+    {
+      "id": "ev_003",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-02.json",
+      "superseded_by": "ev_004",
+      "verdict": "address_first",
+      "must_address": [
+        {
+          "standard": "Standards 32, 65 \u2014 original vs. derivative; tier defensibility",
+          "issue": "Tier 'proved' rests entirely on two derivative indexes (src_001, src_002 both classified derivative). No original document was examined; the 1833 register image was located (log_002) but never read. Corroboration is index-to-index, not original-to-original. The tier statement must explicitly acknowledge this or the original must be examined.",
+          "suggested_action": "Revise proof narrative to add explicit statement that corroboration rests on two independent derivative civil-registration indexes with original image located (image group 004748896_041_M9XH-2JQ) but not yet verified inline."
+        },
+        {
+          "standard": "Standard 46 \u2014 independence analysis",
+          "issue": "Narrative claims the two sources are 'genuinely independent evidence units' without qualification. For the parentage fact specifically, the 1876 bride-informant's knowledge shares a family-knowledge origin with the 1833 father-declarant. Record-creation events are independent; informant knowledge-chain for parentage is not fully independent.",
+          "suggested_action": "Add a qualifying clause acknowledging the shared family-knowledge chain while affirming record-creation independence."
+        }
+      ],
+      "narrative_for_user": "The conclusion is correct and the work is strong. Two targeted revisions to the proof narrative are needed: (1) explicitly state that corroboration is between two independent derivative indexes (both originals located, birth register image not yet verified inline), and (2) qualify the independence claim to acknowledge the bride's knowledge of her own parents shares a family-knowledge origin with the 1833 declarant (her father). Neither fix requires new evidence.",
+      "timestamp": "2026-07-02T13:27:03.035Z"
+    },
+    {
+      "id": "ev_004",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-02-final.json",
+      "superseded_by": null,
+      "verdict": "looks_solid",
+      "must_address": [],
+      "consider_addressing": [
+        {
+          "standard": "Standard 32 \u2014 original vs. derivative",
+          "issue": "Both parentage sources remain derivative indexes; the original 1833 register image is located (image group 004748896_041_M9XH-2JQ) but not yet examined inline.",
+          "suggested_action": "If revisited, manually view Norg 1833 record 41 to verify openarch.nl transcription against the original. Not required for the current tier."
+        }
+      ],
+      "narrative_for_user": "Both ev_003 must_address items are adequately addressed. The tier-defensibility gap is closed: the Conclusion and Basis sections explicitly state corroboration rests on two independent derivative civil-registration indexes with the original image located but not verified inline. The independence qualification is handled correctly: the Correlation section distinguishes record-creation independence from informant-knowledge independence for the parentage fact. Standard 43 holds \u2014 two separately-created acts 43 years apart, identical patronymic names, 0.988 same_person match, birth-year conflict correctly resolved and quarantined. Proof is defensible as written.",
+      "timestamp": "2026-07-02T13:28:59.373Z"
+    }
+  ]
+}

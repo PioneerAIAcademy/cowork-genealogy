@@ -13,13 +13,6 @@
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
-  },
   "difficulty": "hard",
   "notes": "The answer rests on Spanish Catholic parish registers from Limpias, Santander (Archivo Diocesano de Santillana del Mar) plus a Mexican parish baptism from Papantla, Veracruz — FamilySearch has coverage of both collections but indexing is uneven; the baptism of Francisco was found only via a parent-name search after a surname-only search failed. Recoverability at run time must be verified by a live passing run."
 }

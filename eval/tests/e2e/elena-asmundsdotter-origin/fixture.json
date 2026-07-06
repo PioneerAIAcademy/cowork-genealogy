@@ -1,0 +1,25 @@
+{
+  "id": "elena-asmundsdotter-origin",
+  "name": "Elena Asmundsdotter — birthplace and parents (Sweden, born c. 1681)",
+  "source_pid": "PID-TODO",
+  "captured": "2026-07-03",
+  "researcher_question": "Where was Elena Asmundsdotter — the mother of Asmund Jönsson (born 11 September 1718 in Barsebäck parish, Malmöhus, Sweden) — born, and who were her parents?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1680s",
+    "geography": "SE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "hard",
+  "notes": "Indirect-evidence case study. Västra Karaby parish registers begin only in 1688, while Elena was born c. 1681, so her origin is established by correlating Swedish tax lists (Mantalslängder, from 1658) and catechism records (Katekismilängder) across five decades to place Asmund Torsson's household at Henckelstorp. Most of this evidence is browse-only and largely on SVAR/ArkivDigital, NOT name-indexed on FamilySearch — recoverability via FamilySearch record search is low. This is the deliberately hardest fixture of the batch."
+}
