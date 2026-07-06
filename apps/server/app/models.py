@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from sqlalchemy import DateTime
 from sqlmodel import Field, SQLModel
 
+from app.config import default_skill_model
+
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -54,7 +56,10 @@ class Project(SQLModel, table=True):
     sandbox_id: str
     agent_session_id: str | None = None  # Agent SDK resume id (set after 1st turn)
     title: str = "New research session"
-    model: str = "claude-sonnet-4-6"
+    # Per-project model. create_project() sets this from settings.default_model
+    # (itself the shared default-model.json); this factory is just the column
+    # fallback so the literal lives in exactly one place.
+    model: str = Field(default_factory=default_skill_model)
     status: str = "active"  # active | archived
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     updated: datetime = Field(default_factory=utcnow, sa_type=_TZ)

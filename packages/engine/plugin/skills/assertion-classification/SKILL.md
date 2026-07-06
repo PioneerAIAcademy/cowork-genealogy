@@ -1,6 +1,5 @@
 ---
 name: assertion-classification
-model: claude-sonnet-4-6
 description: Refines GPS three-layer evidence classifications on assertions in research.json —
   information quality (Primary/Secondary/Indeterminate) with informant
   analysis, and evidence type (Direct/Indirect/Negative). GPS Step 3 —

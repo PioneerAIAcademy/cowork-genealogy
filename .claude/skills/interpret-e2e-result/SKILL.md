@@ -1,6 +1,5 @@
 ---
 name: interpret-e2e-result
-model: claude-sonnet-4-6
 description: Reads an e2e benchmark run log and explains what happened — which expected findings the agent recovered and which it missed (read from its final tree, not the judge's grade), what proof conclusion it wrote, why it stopped, and the most likely cause (agent reasoning regression, /research routing regression, sub-skill regression, FamilySearch data drift, or single-run jitter). Points the user at the right transcript section to read next. Use when the user says "what happened in this e2e run", "interpret this e2e result", "why did this fixture fail", or "read the latest e2e runlog". Do NOT use to author or modify a fixture (use author-e2e-fixture), to interpret a unit-test scratch run (those are developer-facing — read the run log directly), to grade a single research question in a live project (use the relevant analysis skills like timeline or conflict-resolution), or to grade this run into its calibration annotation (use grade-e2e-run — this skill only explains the result and never writes the .ann.json).
 ---
 

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import re
 import sys
 import time
@@ -48,7 +49,20 @@ from harness.mock_mcp import create_mock_server
 BASELINE_ALLOWED = ["Read", "Write", "Edit", "Glob", "Grep", "Skill"]
 DISALLOWED_BACKSTOP = ["Bash", "WebFetch", "WebSearch", "Task", "NotebookEdit"]
 
-DEFAULT_MODEL = "claude-sonnet-4-6"
+def _read_default_skill_model() -> str:
+    """Single source of truth shared with the hosted server:
+    <repo>/default-model.json (key `skill_model`). The same file backs
+    apps/server/app/config.default_model, so the eval suite and production
+    run the same skill model. Override one run with `run_tests.py --model ...`;
+    don't edit this. (Does not govern the gps-mentor agent or Cowork — see
+    that file's _comment.)"""
+    repo_root = Path(__file__).resolve().parents[3]
+    return json.loads(
+        (repo_root / "default-model.json").read_text(encoding="utf-8")
+    )["skill_model"]
+
+
+DEFAULT_MODEL = _read_default_skill_model()
 DEFAULT_MAX_TURNS = 20
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 300
 DEFAULT_MAX_TOOL_CALLS = 50

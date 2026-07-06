@@ -16,6 +16,22 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+def default_skill_model() -> str:
+    """The model the genealogy skills run on, shared with the eval harness.
+
+    Single source of truth: <repo>/default-model.json (key `skill_model`) —
+    read here AND by eval/harness/harness/skill_runner.py so the hosted
+    server and the eval suite can never drift. Override per-deploy with the
+    DEFAULT_MODEL env var (pydantic-settings reads env ahead of this
+    default_factory). Governs the skills / session model only — not the
+    gps-mentor agent (its own `model:` frontmatter, honored by the Agent
+    SDK) and not Cowork (runs skills on the user-selected session model).
+    """
+    return json.loads(
+        (REPO_ROOT / "default-model.json").read_text(encoding="utf-8")
+    )["skill_model"]
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -24,7 +40,9 @@ class Settings(BaseSettings):
     # "real" → the Claude Agent SDK driving the genealogy skills + MCP server.
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
-    default_model: str = "claude-sonnet-4-6"
+    # Single source of truth: <repo>/default-model.json. Override with the
+    # DEFAULT_MODEL env var. See default_skill_model() above.
+    default_model: str = Field(default_factory=default_skill_model)
 
     # ── Sandbox provider ─────────────────────────────────────────
     # "local" → LocalProvider (subprocess + local dir; the POC default).

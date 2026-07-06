@@ -1,6 +1,5 @@
 ---
 name: historical-context
-model: claude-sonnet-4-6
 description: Provides historical context for genealogy research — boundary changes, naming conventions, migration patterns, record availability by era, cultural practices, and historical events that affect records. Outputs narrative context to the user; does not modify project files. Use
   when the user says "what was happening in [place] in [year]?", "boundary
   changes", "naming conventions", "why would [thing] appear in a record?",

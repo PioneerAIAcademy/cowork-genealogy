@@ -1,6 +1,5 @@
 ---
 name: research-exhaustiveness
-model: claude-sonnet-4-6
 description: Evaluates whether research on a question is reasonably
   exhaustive — applies the five threshold questions and the 7-point
   stop criteria, then either writes the exhaustive_declaration on the
