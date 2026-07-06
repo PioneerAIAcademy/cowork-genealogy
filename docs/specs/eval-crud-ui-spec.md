@@ -185,8 +185,8 @@ The Results section opens to a dashboard with two panels:
 
 ### Annotation view
 
-- Each rubric dimension and additional criterion shown with the LLM judge's score (`1` = fail, `2` = partial, `3` = pass, `null` = N/A). N/A is currently used only by the **Tool Arguments** base dimension when zero MCP tool calls happened. The score is read directly from the run log — no enum-to-integer mapping happens at display time.
-- For each dimension, an editable `corrected_score` field defaults to the LLM's score; the junior changes only the dimensions they disagree with. The Tool Arguments picker exposes a fourth `N/A` button so the junior can set or override N/A explicitly.
+- Each rubric dimension and additional criterion shown with the LLM judge's score (`1` = fail, `2` = partial, `3` = pass, `null` = N/A). N/A is emitted by the **Tool Arguments** base dimension when zero MCP tool calls happened, and by any rubric dimension with an N/A criterion (e.g. `check-warnings`' *Actionability* / *Severity classification* when the project is clean). The score is read directly from the run log — no enum-to-integer mapping happens at display time.
+- For each dimension, an editable `corrected_score` field defaults to the LLM's score; the junior changes only the dimensions they disagree with. The picker exposes a fourth `N/A` button whenever the judge scored the dimension `null` (so the junior can *agree* with N/A instead of being forced to pick `3`), plus on the nullable base dimension (Tool Arguments) so N/A can be set or overridden explicitly. See `dimensionAllowsNa` in `eval/app/lib/types.ts`.
 - Optional `comment` text area per dimension — expected on disagreement, omitted on agreement.
 - Save writes `<run-log-timestamp>.ann.json` alongside the run log. Schema: `docs/specs/schemas/ann.schema.json`.
 - Every dimension of every test in the run log gets an entry — agreement (`corrected_score == llm_score`) is computed, not stored as a separate flag. See plan §2.3.
