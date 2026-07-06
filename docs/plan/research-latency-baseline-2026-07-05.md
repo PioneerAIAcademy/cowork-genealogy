@@ -1,7 +1,8 @@
 # Research-Latency Baseline — 2026-07-05 (Phase 0)
 
 **Status:** measured from committed e2e runs; the owed fresh kenneth run is now in
-(§5) — it does not change the §4 conclusions but surfaces a confound worth reading.
+(§5). **A later per-skill attribution corrected two claims — see §7:** 2b is mostly a
+harness/tool lever, not skill-prose, and the append-token hypothesis is refuted.
 **Feeds:** [`research-latency-reduction-plan.md`](./research-latency-reduction-plan.md) (this is its Phase 0 gate).
 **Tool:** `make e2e-latency` (`eval/harness/e2e/latency_report.py`) — pure analysis
 over committed run JSONs, no live run, no API. Reproduce any number below with it.
@@ -81,9 +82,9 @@ prints top tools):
 
 | pattern | typical count / run | nature | lever |
 |---|---|---|---|
-| `Read` | 40–56 | re-reading files often already in context (research.json, tree, templates) | 2b: "you already have X — don't re-Read" (skill prose) |
+| `Read` | 40–56 | **mostly distinct-offset _paging_ of oversized `record_search` sidecars + load-bearing cold-entry reads; true re-reads only ~3.75/run** (offset-aware) | tool: bound `record_search` output (stops the paging); prose residue ~1–2/run, below the noise floor — **see §7** |
 | `research_append` + `research_log_append` | 25–45 combined | one-entry-at-a-time appends | 1c is **shipped** (`ops[]` batch) but **under-adopted** — skill prose should batch |
-| `ToolSearch` | 7–22 | deferred MCP-tool loading, one round-trip each | 2b: preload the tools a skill will need |
+| `ToolSearch` | 7–22 | deferred MCP-tool loading, one round-trip each — tools are **already declared** in each skill's `allowed-tools` | harness: preload declared `allowed-tools` (**not** prose-fixable) — **see §7** |
 
 ## 4. Implications for the roadmap (the reprioritization)
 
@@ -105,13 +106,17 @@ Measured against `research-latency-reduction-plan.md`:
   - **2a (narration/thinking precision)** — cuts output-tokens/turn (818–1,179).
     Highest-leverage single lever. Quality-sensitive → must be verified by
     per-skill unit-eval re-runs before landing.
-  - **2b (round-trip reduction)** — cuts turns (59–165): stop re-reading files
-    already in context; preload expected tools to kill `ToolSearch` round-trips;
-    adopt the `ops[]` batch-append form.
+  - **2b (round-trip reduction)** — cuts turns (59–165). But the later attribution
+    (§7) shows its two largest sources are **not** skill-prose: `ToolSearch`
+    round-trips need a **harness** preload of already-declared `allowed-tools`, and
+    the re-read count is mostly oversized-`record_search` sidecar paging that needs a
+    **tool** output bound. The one skill-prose 2b item left is adopting the `ops[]`
+    batch-append form.
   - **2c (auto-chaining)** — still a `plan-design-review` item, not a foregone win.
 
-Net: **stop adding persistence tools for latency; spend the effort on 2a + 2b**,
-both of which are skill-prose changes.
+Net: **stop adding persistence tools for latency.** The one clearly skill-prose lever
+is **2a**; the biggest **2b** wins are a harness preload + a bounded `record_search`
+(§7), not prose.
 
 ## 5. The owed measurement — done, and its confound
 
@@ -135,12 +140,15 @@ between them, and the confounds dominate:
 1. **The persistence architecture migrated.** Jun 16 hand-wrote research.json via
    `Edit` (37×) + `validate_research_schema` (15×); Jul 05 uses the structured
    `research_append` (24×) + `research_log_append` (7×) tools. That is a different
-   generation profile, not a prose change. **Hypothesis worth testing before acting:**
-   a batched `research_append` serializes a large assertion payload *as tool-use
-   input* — which counts as **generated output tokens** — so the structured tools
-   may *raise* tok/turn (818→1,053) while cutting hand-edit turns elsewhere. If real,
-   that's a latency cost hiding inside a correctness/UX win. Test it by measuring the
-   tool-use-input token share per turn, not by eyeballing wall-clock.
+   generation profile, not a prose change. **Hypothesis (now tested → refuted):** that
+   a batched `research_append` serializes a large assertion payload *as tool-use input*
+   — generated output tokens — and so *raises* tok/turn. Measured over both runs'
+   committed `tool_calls` args, the migration **cut** persistence payload, not raised
+   it: **33%→22%** of output tokens (34.7k→28.4k absolute), because `Edit` must
+   regenerate the `old_string` locate-context on every write while `research_append`
+   emits only the new entry. So the tok/turn rise (818→1,053) is **not** append
+   serialization — it is the extra conflict-path research in point 2. Structured
+   persistence was a token *win*. (§7.)
 2. **Different research path.** The Jul 05 run hit a conflict (`conflicts=yes`,
    proof 2/3, exhaustiveness=partial) and did conflict-resolution + argument-form
    proof work the Jun 16 run did not. More work → more tokens, legitimately.
@@ -178,3 +186,43 @@ make e2e-latency            # all fixtures, human blocks
 make e2e-latency MD=1       # Markdown comparison table (§2)
 make e2e-latency TEST=<slug> # one fixture
 ```
+
+## 7. Correction (2026-07-05, post-attribution)
+
+A per-skill round-trip attribution over the same committed runs (offset-aware re-read
+metric + an adversarially-verified audit of the six highest-footprint skills)
+sharpened two claims above.
+
+**§3/§4 — "2b is a skill-prose lever" was mostly wrong.**
+
+- The `Read` count (40–56/run) is largely *not* redundant. Counting a re-read only
+  when the same `(file, offset)` window repeats with no write since drops true-waste
+  re-reads from ~11/run to **~3.75/run**. The rest is **distinct-offset paging** of
+  `record_search` output that overflows to a multi-thousand-line `.txt` sidecar (each
+  page read once), **load-bearing cold-entry reads** (a skill launched with only a
+  `pli_00X` id must read research.json once to recover state), and **re-launches** of
+  a skill for a different plan item (miscounted as "re-reading SKILL.md"). Adversarial
+  verification left only ~1–2 prose-fixable reads/run.
+- The **~12 `ToolSearch`/run** are **not** prose- or frontmatter-fixable: every
+  reloaded tool is *already* declared in the skill's `allowed-tools`; the harness
+  defers MCP tools regardless, so the reload is the mandatory first-load. Removing it
+  needs a **harness** preload of declared `allowed-tools`, not a skill edit.
+- 2b levers, ranked by **round-trip count**: **harness** (preload declared
+  `allowed-tools`, ~12 round-trips/run) > **tool** (bound `record_search` output,
+  stops sidecar paging) ≫ **skill prose** (~1–2 reads/run across four skills — below
+  the cost of the re-annotation a SKILL.md edit triggers). The one clean skill-prose
+  2b item is `ops[]` batch-append adoption. **Skill-prose effort belongs on 2a.**
+  *By wall-clock, not count,* the harness lever is only ~3–6% (prior value research —
+  ToolSearch turns are cheap and the context cache is 95–97% hit), and it is a
+  **Cowork/SDK runtime** feature request, not repo work: we declare `allowed-tools`;
+  the runtime decides preload vs. defer. The `record_search` output bound is the one
+  2b lever that is both repo-implementable and non-trivial by wall-clock.
+
+**§5 point 1 — the append-token hypothesis is refuted** (see the corrected point 1):
+structured persistence *cut* the payload share of output tokens (33%→22%, 34.7k→28.4k
+absolute), because `Edit` regenerates `old_string` locate-context on every write while
+`research_append` emits only the new entry.
+
+The attribution and payload figures are one-off analyses over each run's committed
+`tool_calls` (full `args` included), not yet a `make` target; productionizing them as
+`make e2e-payload` is a separate follow-up.
