@@ -106,6 +106,21 @@ Record data arrives in one of four ways:
    the image; when even that is blocked, log the gap and continue via
    indexes rather than stopping the research.
 
+   **A required identifying name you flag as suspect is not confirmed by
+   the index alone.** When the element that *keys identity* — a
+   patronymic, a surname, a father's name on a baptism — is transcribed
+   in a way you judge unusual or a likely mistranscription (an
+   out-of-place patronymic, a spelling no other record corroborates),
+   the indexed value is a lead, not a conclusion. Read the original
+   register image (`image_read`, or `volume_search` to locate it) to
+   confirm the spelling before recording the assertion as established.
+   If the image is unreachable, record the name as **tentative** — keep
+   the uncertain text in `value` with `[?]` and explain the doubt in
+   `notes` — and name original-image confirmation as the outstanding
+   step. Never hand a self-flagged suspect *required* name to the reader
+   as a finished conclusion: that is how an index OCR slip (a patronymic
+   like "Aadnesen" read as "Nadnesen") becomes a wrong father in the tree.
+
 ## Steps
 
 **Read inputs once, up front.** Before Step 1, read `research.json` and
