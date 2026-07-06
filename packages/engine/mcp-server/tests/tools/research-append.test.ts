@@ -104,6 +104,40 @@ describe("research_append (Phase 1)", () => {
     expect(r.ok && r.entryId).toBe("a_002");
   });
 
+  it("normalizes a GedcomX date object ({original}) on an appended assertion to a plain string", async () => {
+    await writeProject();
+    const { id: _omit, ...assertionNoId } = validAssertion("x", "src_001");
+    // The model routinely emits `date` as a GedcomX object instead of the
+    // schema's plain string (observed in the record-extraction eval,
+    // ut_record_extraction_003). Without normalization this fails
+    // validate_research_schema (`date` is not of type string/null).
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: { ...assertionNoId, date: { original: "~1818", formal: "+1818" } as any },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const appended = (await readResearch()).assertions.find((a: any) => a.id === r.entryId);
+    expect(appended.date).toBe("~1818");
+  });
+
+  it("normalizes a date object on an assertion update too", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { date: { formal: "+1850" } as any },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const updated = (await readResearch()).assertions.find((a: any) => a.id === "a_001");
+    expect(updated.date).toBe("+1850");
+  });
+
   it("appends a person_evidence link, stamps created, references an existing assertion + tree person", async () => {
     await writeProject();
     const r = await researchAppend({
