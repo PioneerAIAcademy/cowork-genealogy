@@ -1,0 +1,44 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Jan Gallo (born 1893, Šútovo) was the son of Andrej Gallo (also recorded as Ondrej, a variant of the same name).",
+      "details": {
+        "subject_person": {
+          "name": "Jan Gallo",
+          "pid": "PID-TODO"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Andrej Gallo (also recorded as Ondrej)",
+          "birth": "unknown"
+        }
+      },
+      "supporting_sources": [
+        "Turany Lutheran parish (Turócz County) church records, FamilySearch microfilm 2062258: Jan Gallo's christening record and his parents' marriage record; the groom (Jan's father) is named Andrej, a variant of Ondrej."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Jan Gallo had a younger brother, Ondrej Gallo, christened in the same Turany Lutheran parish after Jan's 1893 birth.",
+      "details": {
+        "subject_person": {
+          "name": "Jan Gallo",
+          "pid": "PID-TODO"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Ondrej Gallo",
+          "birth": "after 1893, Šútovo, Turany parish"
+        }
+      },
+      "supporting_sources": [
+        "Turany Lutheran parish christening records, FamilySearch microfilm 2062258: christening of a brother Ondrej (and several other younger siblings) to the same parents as Jan Gallo."
+      ],
+      "required": false
+    }
+  ]
+}

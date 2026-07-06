@@ -24,25 +24,17 @@ from __future__ import annotations
 import pytest
 
 
-# --- Tool-allowlist enforcement ---------------------------------------
-
-def test_no_mcp_tools_called(tool_calls):
-    """proof-conclusion must not call any *research* MCP tools — it's a
-    pure analysis skill that reads research.json and writes a
-    proof_summaries entry plus tree.gedcomx.json updates. The universal
-    verification tool `validate_research_schema` is exempted: post
-    commit 861d3c9 it's a built-in schema check every skill is expected
-    to call at the end of its flow, not a research tool."""
-    mcp_calls = [
-        tc for tc in tool_calls
-        if tc.get("tool", "").startswith("mcp__")
-        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
-    ]
-    assert not mcp_calls, (
-        f"proof-conclusion should not call MCP tools (other than "
-        f"validate_research_schema), but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
-    )
+# --- Tool allowlist ---
+#
+# `test_no_mcp_tools_called` was removed: it forbade every MCP tool except
+# validate_research_schema, which predated proof-conclusion's migration to
+# the `research_append` write tool (commit 86c741d). It is now both wrong
+# (research_append is a sanctioned write path in this skill's allowed-tools)
+# and redundant with the universal `test_tool_allowlist` + `test_ownership_table`
+# checks in test_universal.py, which enforce the real invariant: every call
+# must match the skill's declared allowed-tools, and writes stay within
+# proof-conclusion's owned sections. Same removal already applied to
+# conflict-resolution and assertion-classification.
 
 
 # --- New proof_summary structural checks ------------------------------

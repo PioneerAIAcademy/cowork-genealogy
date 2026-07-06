@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Agent correctly identified Margaret Rees as wife and added her to the tree, but never added birth date or birth place facts to her tree record. The 1851 census gave approximate birth year (~1822) and birthplace (St Ishmael) in research assertions only. The specific date 15 May 1821 was not found in any source."
+  }
+}

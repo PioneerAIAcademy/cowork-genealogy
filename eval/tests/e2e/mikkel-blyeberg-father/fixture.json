@@ -1,0 +1,25 @@
+{
+  "id": "mikkel-blyeberg-father",
+  "name": "Mikkel Nielsen Blyeberg — father and father's death (Denmark, born 1779)",
+  "source_pid": "PID-TODO",
+  "captured": "2026-07-03",
+  "researcher_question": "Who was the father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup Sogn, Thisted (Vestervig) Amt, Denmark, and when did his father die?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1800s",
+    "geography": "DK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "hard",
+  "notes": "Reframed from a records-walkthrough case study. The source traces Mikkel's life through the Danish Military Levying Rolls (Lægdsruller) rather than posing a parents question; the reframe turns it into 'identify the father and his death date.' Core evidence = the levying rolls, which name the father directly above the son but are browse-only image rolls, not name-indexed on FamilySearch; the father's death is confirmed only in the Stagstrup parish burial register. The mother is never named in the source, so she is not a finding. Recoverability via FamilySearch record search is low-to-moderate."
+}

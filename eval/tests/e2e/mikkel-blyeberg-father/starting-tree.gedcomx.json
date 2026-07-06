@@ -1,0 +1,33 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Mikkel",
+          "surname": "Nielsen Blyeberg",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "PID-TODO-fact-birth",
+          "type": "Birth",
+          "date": "20 August 1779",
+          "standard_date": "20 Aug 1779",
+          "place": "Stagstrup Sogn, Vestervig Amt, Denmark",
+          "standard_place": "Stagstrup, Thisted, Denmark"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "src-mikkel-birth-known",
+      "title": "Researcher's starting information: Mikkel Nielsen Blyeberg born 20 August 1779, Stagstrup Sogn, Vestervig (later Thisted) Amt, Denmark."
+    }
+  ]
+}

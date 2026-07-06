@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_bottemiller_parents",
+    "objective": "Who were the parents of William Henry Bottemiller, born 29 December 1862 in Franconia Township, Chisago County, Minnesota, and died 13 May 1929 in Oregon City, Clackamas County, Oregon?",
+    "subject_person_ids": [
+      "249W-9LP"
+    ],
+    "status": "active",
+    "created": "2026-07-01T00:00:00Z",
+    "updated": "2026-07-01T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
