@@ -1,0 +1,45 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Jan Roelfs Harkema was the father of Teitje Harkema. Born 5 May 1799 (christened same day in Scharmer, Groningen, Netherlands); a bouwboer (farmer) by occupation; died 30 June 1876.",
+      "details": {
+        "subject_person": {
+          "name": "Teitje Harkema",
+          "pid": "LHZM-TR7"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Jan Roelfs Harkema",
+          "birth": "5 May 1799, Scharmer, Groningen, Netherlands"
+        }
+      },
+      "supporting_sources": [
+        "\"Netherlands, Archival Indexes, Vital Records, 1600-2000\", FamilySearch — entry for Teitje Harkema and Jan Roelfs Harkema, 31 Jul 1833 (birth index).",
+        "\"Netherlands, Archival Indexes, Vital Records, 1600-2000\", FamilySearch — entry for Feitje Harkema and Jan Roelfs Harkema, 17 Jan 1899 (death index; subject indexed as \"Feitje\")."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Hillichje Willems Jager was the mother of Teitje Harkema. Born 25 January 1800 in Scharmer, Groningen, Netherlands; died 14 August 1867 in Veenhuizen, Drenthe, Netherlands.",
+      "details": {
+        "subject_person": {
+          "name": "Teitje Harkema",
+          "pid": "LHZM-TR7"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Hillichje Willems Jager",
+          "birth": "25 January 1800, Scharmer, Groningen, Netherlands"
+        }
+      },
+      "supporting_sources": [
+        "\"Netherlands, Archival Indexes, Vital Records, 1600-2000\", FamilySearch — entry for Teitje Harkema and Jan Roelfs Harkema, 31 Jul 1833 (birth index naming the family)."
+      ],
+      "required": true
+    }
+  ]
+}

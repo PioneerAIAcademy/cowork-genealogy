@@ -1,0 +1,25 @@
+{
+  "id": "jan-gallo-father",
+  "name": "Jan Gallo — father (Slovakia, born 1893)",
+  "source_pid": "PID-TODO",
+  "captured": "2026-07-03",
+  "researcher_question": "Who was the father of Jan Gallo, born in 1893 in Šútovo, Turany parish, Slovakia (then Suttó, Turány parish, Turócz County, Hungary)?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1890s",
+    "geography": "SK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "hard",
+  "notes": "Thin documented conclusion — the source case study names only the father (given name Andrej, a variant of Ondrej) and a younger brother Ondrej; it never names the mother or gives any dates, so those cannot be findings. Evidence is Turany Lutheran parish church records on FamilySearch microfilm 2062258 (catalog-ordered; Slovak/Hungarian/Latin, largely browse-only, not name-indexed). The weakest fixture of the batch on both ground-truth completeness and recoverability."
+}

@@ -1,0 +1,25 @@
+{
+  "id": "victor-spenard-parents",
+  "name": "Victor Spénard — parents and paternal grandparents (Quebec, 1896 marriage)",
+  "source_pid": "PID-TODO",
+  "captured": "2026-07-03",
+  "researcher_question": "Who were the parents and paternal grandparents of Victor Spénard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1890s",
+    "geography": "CA-QC"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "medium",
+  "notes": "French-Canadian Drouin Collection church records and Canadian censuses (1851-1921), both indexed on FamilySearch. The source case study never names the specific parish/town, so disambiguation rests on the uncommon surname Spénard plus the specific 1896 marriage of Victor Spénard and Orise Lesage. The answer spans three generations: parents from the 1896 marriage record (corroborated by the 1891 census), paternal grandparents only from Maximin Spénard's 1819 baptism."
+}

@@ -560,6 +560,44 @@ describe("Project Validator", () => {
         result.errors.some((e) => e.message.includes("should be PascalCase"))
       ).toBe(true);
     });
+
+    it("rejects an unexpected property on a tree source", async () => {
+      // Guards the proof_002 bug: an update_source op that writes citation text
+      // under `description` (not `citation`) must fail validation and not be
+      // persisted, matching the schema's additionalProperties:false.
+      const tree = {
+        persons: [],
+        relationships: [],
+        sources: [{ id: "SD-001", title: "Test", description: "1850 census" }],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("unexpected property 'description'")
+        )
+      ).toBe(true);
+    });
+
+    it("accepts every allowed tree-source property", async () => {
+      const tree = {
+        persons: [],
+        relationships: [],
+        sources: [
+          {
+            id: "SD-001",
+            title: "Test",
+            citation: "Full citation",
+            author: "A. Author",
+            url: "https://example.com/record",
+          },
+        ],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe("Sidecar validation", () => {

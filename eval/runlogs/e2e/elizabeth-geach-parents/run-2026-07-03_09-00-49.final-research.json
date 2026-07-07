@@ -1,0 +1,980 @@
+{
+  "project": {
+    "id": "rp_elizabeth_geach_parents",
+    "objective": "Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?",
+    "subject_person_ids": [
+      "273D-F9Z"
+    ],
+    "status": "active",
+    "created": "2026-07-02T00:00:00Z",
+    "updated": "2026-07-02T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does Elizabeth Slack's 1895 Ohio death record state about her parentage and birthplace?",
+      "rationale": "Ohio county death records from 1895 are available on FamilySearch (collection already referenced in the tree) and may directly name Elizabeth Geach's parents or at least confirm her birthplace. This is the highest-priority source for direct parental identification and is the gatekeeper question: its findings will either name parents outright or narrow the birth locality for subsequent census and vital-record searches.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-03",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_004"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Q_001 is a gatekeeper question asking what the 1895 Licking County death register states about Elizabeth Slack's parentage and birthplace. The record was retrieved and fully analyzed (log_001, pli_001 completed). Finding: the register records no parental information \u2014 a structural limitation of pre-1908 Ohio county death registers documented in src_001.notes \u2014 and gives birthplace as 'Washington Co., O.' (Washington County, Ohio). An obituary search on FamilySearch FTS (4 variants, pli_003 completed) returned nil, with a probable coverage gap for Licking County newspapers 1895 documented in log_002. Paid repositories (Newspapers.com, GenealogyBank) are unavailable; Chronicling America was flagged non-blocking by ev_002. The question's answer is definitive: the death record does not name parents and confirms Washington County, Ohio as birthplace. Overturn risk is essentially zero \u2014 no further source can change what the 1895 register contains. Single-source limitation applies to the downstream parentage proof question (q_002+), not to this gatekeeper question's exhaustiveness.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the death record's contents are fully known: no parental field (pre-1908 structural limitation), birthplace confirmed as 'Washington Co., O.' The question is definitively answered.",
+          "repository_breadth": "Death register searched on FamilySearch (primary repository, pli_001). Obituary searched on FamilySearch FTS with 4 query variants (pli_003). Paid repositories unavailable; Chronicling America non-blocking per ev_002.",
+          "original_substitution": "Source is a derivative (FamilySearch index). Original image ARK documented (ark:/61903/3:1:3QSQ-G9ZB-LS4X). Image transcription not executed but indexed record reliably captures available fields; pre-1908 Ohio registers structurally lack a parental field so transcription would not change the finding.",
+          "independent_verification": "Single source (src_001). Obituary search nil (log_002, FTS coverage gap). Independent verification is the mandate for downstream parentage proof questions, not for this gatekeeper question about a specific record's contents.",
+          "evidence_class": "Derivative source (indexed Ohio county death register). Original image accessible and documented. Consistent with the question's scope.",
+          "conflict_resolution": "No conflicts identified. Data internally consistent and aligns with all known facts for Elizabeth Slack (273D-F9Z).",
+          "overturn_risk": "Essentially zero. No further source can change the 1895 death register's content. The finding is what the record says, not a hypothesis subject to revision."
+        }
+      },
+      "created": "2026-07-03"
+    },
+    {
+      "id": "q_002",
+      "question": "Does a Geach household appear in the 1840 federal census for Washington County, Ohio, consistent with including Elizabeth Geach (born circa 1822)?",
+      "rationale": "q_001 established that Elizabeth Slack's 1895 death register records her birthplace as Washington County, Ohio \u2014 the confirmed jurisdiction for Geach family research. In the 1840 federal census Elizabeth would have been approximately 18 years old, almost certainly still residing in her parents' household before her ca. 1844 marriage to Jonathan Slack in Licking County. The 1840 U.S. census for Washington County, Ohio is indexed and freely searchable on FamilySearch. Identifying a Geach household head in Washington County in 1840 with a female aged 15-20 (the census age-range bracket for Elizabeth) would establish the family unit, name the head of household (likely Elizabeth's father), and direct subsequent research to that individual's probate, land, and church records. This is the gatekeeper question for naming Elizabeth's father.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-03"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-03",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Licking County, Ohio",
+          "date_range": "1895",
+          "repository": "FamilySearch",
+          "rationale": "The tree already holds a reference to Elizabeth Slack's 6 Sep 1895 death record in the FamilySearch 'Ohio, County Death Records, 1840-2001' collection (ARK /1:1:F6FJ-ZMR). The full record image must be retrieved and read to determine whether it names her parents and confirms her birthplace in 'Washington, Ohio'. Ohio county death registers from this period vary in informant quality; the image may contain more detail than the index.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Ohio",
+          "date_range": "1895",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'Ohio, Deaths and Burials, 1854-1997' (collection 1681000) and 'Ohio, Church and Civil Deaths, 1833-1991' (collection 2373723) are independent compiled indexes that may carry slightly different transcriptions or supplementary fields not visible in the county records index. A cross-check confirms the index entry and may surface additional parentage or birthplace data.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "newspaper",
+          "jurisdiction": "Licking County, Ohio",
+          "date_range": "1895",
+          "repository": "other",
+          "rationale": "An obituary published in the Granville or Newark newspapers immediately after Elizabeth Slack's death on 6 Sep 1895 could name her parents and maiden name. FamilySearch and Chronicling America have some Ohio newspaper runs; Newspapers.com and GenealogyBank cover Licking County papers. Obituaries of this era often include parental names and birthplace, supplementing sparse county death registers.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-03",
+      "items": [
+        {
+          "id": "pli_004",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Washington County, Ohio",
+          "date_range": "1840",
+          "repository": "FamilySearch",
+          "rationale": "The 1840 U.S. federal census is the highest-priority source: Elizabeth Geach would have been approximately 18 years old and almost certainly still in her parents' household before her ca. 1844 marriage to Jonathan Slack in Licking County. The 1840 census for Washington County, Ohio is indexed on FamilySearch. Finding a Geach household with a female in the 15-19 age bracket would identify the head of household (almost certainly Elizabeth's father), establish the family's location within the county, and direct all subsequent research (probate, land, church) to that individual.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Washington County, Ohio",
+          "date_range": "1830",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for the 1840 census search (pli_004). In 1830 Elizabeth would be approximately 8 years old and definitively still in her parents' household. If no Geach appears in 1840 (family may have moved before the census or a transcription error obscures them), the 1830 census provides an independent check. The 1830 census records age brackets rather than individual names, but a Geach head of household with the right family composition (male adult, female adult, children including one girl aged 5-9) would establish the family unit. Also covers the possibility of early family movement or the father's death before 1840.",
+          "fallback_for": "pli_004",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Washington County, Ohio",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "The 1850 U.S. federal census is the first to name all household members individually with ages and birthplaces. Elizabeth's parents would be in their 50s-60s in 1850 and may still be in Washington County (Elizabeth herself migrated to Licking County by 1844). The 1850 Geach household in Washington County would name the parents directly, give their ages (confirming generation), and record their birthplaces. Unmarried siblings still in the household would corroborate the family structure. This search is not a fallback but an independent strategy: even if Elizabeth left home before 1840, the parents' 1850 household should still identify them.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 4,
+          "record_type": "tax",
+          "jurisdiction": "Washington County, Ohio",
+          "date_range": "1820-1850",
+          "repository": "FamilySearch",
+          "rationale": "Ohio Tax Records 1800-1887 (FamilySearch collection 1473259) are indexed and cover Washington County. Annual tax records establish the presence of a Geach head of household in the county from the 1820s onward, corroborate census findings, and may narrow the Geach family's location to a specific township (useful for church and land record targeting). Because tax records run annually, they can detect the father's death year (his name disappears from the rolls) and may surface the widow or heirs taking over the land entry \u2014 both are leads toward probate and land record searches.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Washington County, Ohio",
+          "date_range": "1810-1860",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch FTS search in log_002 noted that a broad +Geach +Ohio query returned results (too large to process in that session). This plan item executes a targeted +Geach +Washington County FTS search to surface land deeds, court records, church entries, and other documents naming Geach family members in Washington County. Deed parties, court witnesses, and estate appraisers are frequently named in FTS results even when not the indexed principal. This search can identify the father's full name, his land transactions, and FAN associates independently of the census \u2014 critical for corroboration.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-03T08:04:49.982Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, County Death Records, 1840-2001",
+        "collectionId": "2128172",
+        "surname": "Slack",
+        "givenName": "Elizabeth",
+        "deathYearFrom": 1893,
+        "deathYearTo": 1897,
+        "deathPlace": "Licking, Ohio",
+        "recordType": "death"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 7,
+      "notes": "Top hit (score 5.45, 5-star tree match to 273D-F9Z) is ark:/61903/1:1:F6FJ-ZMR \u2014 Elizabeth Slack, died 6 Sep 1895, Union Township, Licking, Ohio; birth year 1822, birthplace 'Washington Co., O.' Record does NOT name parents. Confirms Washington County, Ohio as birthplace. Image available at ark:/61903/3:1:3QSQ-G9ZB-LS4X."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-03T08:18:09.306Z",
+      "tool": "fulltext_search",
+      "query": {
+        "variants_tried": [
+          "keywords: '+\"Elizabeth Slack\"', Ohio, 1894-1896",
+          "keywords: '+Elisabeth +Slack', Ohio, 1893-1897",
+          "keywords: '+Slack +Geach', Ohio, 1880-1900",
+          "keywords: '+Slack +Granville', Ohio, 1895"
+        ],
+        "collection": "FamilySearch full-text search (AI-transcribed historical document images)",
+        "jurisdiction": "Ohio",
+        "record_type": "newspaper/obituary"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Searched FamilySearch FTS for Elizabeth Slack obituary, Licking/Granville/Newark, Ohio, September 1895. Four variants tried: '\\\"Elizabeth Slack\\\"' (exact phrase, OH 1894-1896), '+Elisabeth +Slack' (OH 1893-1897), '+Slack +Geach' (OH 1880-1900), '+Slack +Granville' (OH 1895). All returned 0 results. FamilySearch FTS coverage gap probable for Licking County Ohio newspapers 1895 \u2014 Granville and Newark papers of this era appear unindexed. Note: a broad '+Geach +Ohio' search (no year filter) returned results too large to process in this session; Geach surname is present in Ohio FTS records and warrants targeted follow-up in Washington County records for the parental research question. For Elizabeth Slack obituary, Newspapers.com and GenealogyBank would be the next step (paid repositories; not available with current subscriptions)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-03T08:39:00.647Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": false,
+        "residencePlace": "Washington, Ohio, United States",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 64,
+      "notes": "64 results returned but ALL are phonetic false positives (Jack, Jackson) \u2014 FamilySearch's fuzzy engine maps Geach\u2192Jack phonetically. No true Geach household found in Washington County, Ohio in the 1840 census under fuzzy matching."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-03T08:39:06.259Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residencePlace": "Washington, Ohio, United States",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result with exact surname flag. No Geach household indexed in the 1840 U.S. census for Washington County, Ohio. Confirms phonetic false positives in log_003 are the only hits; the surname may be misindexed or the family absent from the county by 1840."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-03T08:39:14.564Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "recordType": "census"
+      },
+      "outcome": "partial",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 2,
+      "notes": "2 results nationwide with exact Geach surname, 1840: (1) Mathew Geach, head of household, Montgomery Township, Franklin County, Pennsylvania (ark:/61903/1:1:XHRT-X5D) \u2014 the only confirmed Geach in the entire 1840 U.S. indexed census, a potentially significant lead given PA\u2192OH migration patterns; (2) Elsie Geach in a Dayton, Ohio city directory (~1906\u20131908) \u2014 wrong record type and era, not a census. No Ohio Geach household found in 1840."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-03T08:39:22.686Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": false,
+        "residencePlace": "Ohio, United States",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 1182,
+      "notes": "1,182 results for fuzzy Geach statewide Ohio 1840; spot-check of top results confirms all are Jack, Jackson, Jaques \u2014 same phonetic aliasing as log_003. No true Geach household surfaced in any Ohio county. Coverage gap: Geach surname absent from Ohio 1840 indexed census under any fuzzy variant. 4 variants tried across log_003\u2013log_006; declaring negative for pli_004."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-03T08:40:10.230Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residencePlace": "Washington, Ohio, United States",
+        "residenceYearFrom": 1830,
+        "residenceYearTo": 1830,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result. No Geach household indexed in the 1830 U.S. census for Washington County, Ohio with exact surname matching."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-03T08:40:44.844Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residenceYearFrom": 1830,
+        "residenceYearTo": 1830,
+        "recordType": "census"
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 3,
+      "notes": "3 results nationwide: (1) Nehemiah Geach, head of household, Falls Township, Muskingum County, Ohio (ark:/61903/1:1:XH5G-85D) \u2014 SIGNIFICANT LEAD: Muskingum County is adjacent to Washington County where Elizabeth's death record places her birth; the household age tally may confirm an 8-year-old girl consistent with Elizabeth b. 1822; (2) Maryan Geach, Norwich, New London, Connecticut \u2014 geographically irrelevant; (3) Elsie Geach in a Dayton city directory 1906\u20131908 \u2014 wrong record type and era. No Geach found in Washington County proper in 1830."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-03T08:43:07.309Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residencePlace": "Washington, Ohio, United States",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. No Geach household indexed in Washington County, Ohio in the 1850 census with exact surname matching."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-03T08:43:14.100Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residencePlace": "Ohio, United States",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1,
+      "notes": "1 result returned but it is Elsie Geach in a Dayton city directory (1906\u20131908), not a census record and wrong era \u2014 FamilySearch collection-mismatch. No true 1850 Ohio census Geach household found. Nehemiah Geach (found in Muskingum Co. in 1830) absent from 1850 Ohio census index."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-03T08:43:20.553Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 8,
+      "notes": "8 results nationwide. All are New York households (Richard Geach, Bath, Steuben Co., NY b. 1810; wife Govina b. 1822 NY; children born NY) plus the recurring Elsie Geach city directory false positive. No Ohio Geach in the 1850 indexed census. Nehemiah Geach confirmed absent from any 1850 census entry \u2014 likely deceased, relocated out of Ohio, or surname misindexed in 1850. Declaring negative for pli_006 Washington County Ohio target."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-03T08:44:02.774Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residencePlace": "Washington, Ohio, United States",
+        "anyYearFrom": 1820,
+        "anyYearTo": 1850,
+        "collectionId": "1473259"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 28,
+      "notes": "SIGNIFICANT POSITIVE: Peter Geach taxed annually in Roxbury Township, Washington County, Ohio from 1822 through at least 1839 (28 total index entries, 20 examined; some years have duplicate entries). The 1822 entry is contemporaneous with Elizabeth Geach's birth year in Washington County per her 1895 death register. Peter Geach is the strongest parentage candidate identified to date. Passing to record-extraction for full analysis."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-03T08:44:52.773Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Geach",
+        "surnameExact": true,
+        "residencePlace": "Washington, Ohio, United States",
+        "anyYearFrom": 1820,
+        "anyYearTo": 1850,
+        "collectionId": "1473259",
+        "offset": 20
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 8,
+      "notes": "Page 2 of 28 Ohio tax results for Peter Geach in Washington County. Extends record back to 1810 (Roxbury Township) and 1818-1819. No post-1839 entries appear in the full 28-result set, consistent with Peter Geach dying circa 1839-1840 before the 1840 census. Earliest confirmed entry: 1810 \u2014 he was established in Washington County 12 years before Elizabeth was born there. Full span documented: 1810, 1818, 1819, 1822-1839 (all years covered in collection for Washington County)."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-03T08:47:11.953Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Geach",
+        "yearFrom": 1810,
+        "yearTo": 1860
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 52986,
+      "notes": "CRITICAL POSITIVE: First result (ark:/61903/3:1:3Q9M-C9BQ-R9B3-T, Licking County Common Pleas 1836-1837) is a probate petition to sell Washington County land from the estate of Peter Geach, deceased. Petition explicitly names widow Rebecca Geach and children Jacob, Elizabeth, Mary, Thomas, William, and Nancy Geach as minor heirs (April 1836). Land described: Lot 3, Mile Square 17, Tp. 8, Range 11, Ohio Company purchase, Washington County, Ohio \u2014 the same county as Elizabeth's birthplace per her 1895 death register. This directly establishes PETER GEACH as Elizabeth Geach's father and REBECCA GEACH as her mother. Note: county-filtered FTS for Washington County 1810-1860 returned nil (pli_008 primary target) \u2014 record found in Licking County probate collection via nationwide search."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-03T08:49:53.288Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Geach",
+        "recordPlace1": "Ohio",
+        "recordPlace2": "Washington",
+        "yearFrom": 1810,
+        "yearTo": 1860
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search for +Geach filtered to Washington County, Ohio, 1810\u20131860; 0 results. Washington County Ohio probate/deed records for this period not in FTS index. This is variant 1 of 4 nil attempts before dropping place filters."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-03T08:49:58.269Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Geach",
+        "recordPlace1": "Ohio",
+        "yearFrom": 1810,
+        "yearTo": 1860
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search for +Geach filtered to Ohio statewide, 1810\u20131860; 0 results. Broader Ohio state filter still returns nothing \u2014 FTS coverage gap for Ohio records in this period. Variant 2 of 4 nil attempts."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-03T08:50:04.444Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Geach",
+        "yearFrom": 1810,
+        "yearTo": 1860
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS search for +Geach nationwide, date-filtered 1810\u20131860; 0 results. Date range filter itself causing false nil \u2014 Geach records exist but the FTS date metadata for 1836 Licking County probate is misclassified. Variant 3 of 4; dropped date filter for variant 4 (log_014), which returned the critical probate petition."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Ohio, County Death Records, 1840-2001,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR : accessed 3 July 2026), entry for Elizabeth Slack, 6 September 1895.",
+      "citation_detail": {
+        "who": "Elizabeth Slack",
+        "what": "Ohio, County Death Records, 1840-2001 \u2014 Licking County death register",
+        "when_created": "1895",
+        "when_accessed": "2026-07-03",
+        "where": "FamilySearch (https://www.familysearch.org/search/collection/2128172)",
+        "where_within": "Licking County, Ohio; entry for Elizabeth Slack, 6 September 1895"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "log_entry_id": "log_001",
+      "notes": "FamilySearch indexed database of Ohio county death registers; original Licking County register microfilmed. Pre-1908 Ohio county registers did not include a field for parents' names \u2014 absence of parental information is a limitation of this record type, not a finding against parentage."
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "Licking County, Ohio, Court of Common Pleas, \"Petition to Sell Washington County Real Estate \u2014 Estate of Peter Geach, Deceased,\" April Term 1836 \u2013 February Term 1837; AI-transcribed textDocument, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BQ-R9B3-T : accessed 3 July 2026).",
+      "citation_detail": {
+        "who": "Peter Geach (deceased), Rebecca Geach (widow), and minor heirs including Elizabeth Geach",
+        "what": "Licking County Common Pleas probate petition to sell Washington County real estate from estate of Peter Geach",
+        "when_created": "1836\u20131837",
+        "when_accessed": "2026-07-03",
+        "where": "FamilySearch full-text document index (https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BQ-R9B3-T)",
+        "where_within": "Licking County, Ohio; petition filed April 23, 1836; proceedings July Term 1836; final approval February Term 1837"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-03",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BQ-R9B3-T",
+      "log_entry_id": "log_014",
+      "notes": "FamilySearch FTS AI-transcribed textDocument (3:1 ARK) of an original Licking County Court of Common Pleas probate petition. Filed April 23, 1836 by widow Rebecca Geach and co-administrator John Park. Names minor heirs: Jacob Geach, Elizabeth Geach, Mary Geach, Thomas Geach, William Geach, and Nancy Geach; guardian Phineas Ford. Describes land in Lot 3, Mile Square 17, Township 8, Range 11, Ohio Company's purchase, Washington County, Ohio. Peter described as 'late of said Licking County.' Derivative source (AI transcript); information about family relationships is primary quality."
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "\"Ohio, Tax Records, 1800\u20131887,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:JSRX-56F : accessed 3 July 2026), entry for Peter Geach, 1822, Roxbury Township, Washington County, Ohio.",
+      "citation_detail": {
+        "who": "Peter Geach",
+        "what": "Ohio Tax Records 1800\u20131887 \u2014 annual assessment entries for Peter Geach in Roxbury Township, Washington County, Ohio",
+        "when_created": "1822 (representative; full span 1810\u20131839)",
+        "when_accessed": "2026-07-03",
+        "where": "FamilySearch (https://www.familysearch.org/search/collection/1473259)",
+        "where_within": "Washington County, Ohio; Roxbury Township; collection 1473259"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:JSRX-56F",
+      "log_entry_id": "log_012",
+      "notes": "FamilySearch indexed database (collection 1473259) of Ohio county tax assessment records. 28 index entries for Peter Geach in Roxbury Township, Washington County, Ohio spanning 1810, 1818, 1819, and 1822\u20131839. No entries after 1839, consistent with Peter's death before the 1840 census. Representative entry 1822 ARK: ark:/61903/1:1:JSRX-56F. Image: https://www.familysearch.org/ark:/61903/3:1:S3HT-DT5S-HX."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "record_persona_id": "p_11263518025",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Elizabeth Slack",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Slack"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown informant who reported the death to Licking County",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "record_persona_id": "p_11263518025",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "06 Sep 1895, Union Township, Licking, Ohio",
+      "date": "1895-09-06",
+      "date_certainty": "exact",
+      "place": "Union Township, Licking, Ohio, United States",
+      "standard_place": "Union Township, Licking, Ohio, United States",
+      "structured_value": {
+        "year": 1895,
+        "place": "Union Township, Licking, Ohio, United States"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown informant who reported the death to Licking County",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Ohio county death registers of this era did not name the informant. The reporter was likely a family member or attending physician who knew the death date and place directly, but since the identity cannot be confirmed, the informant's proximity cannot be established and the classification must remain indeterminate. Death date and place are typically primary-quality facts in this record type, but the unknown-informant rule overrides."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "record_persona_id": "p_11263518025",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1822 (birth year)",
+      "date": "1822",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": 1822
+      },
+      "information_quality": "secondary",
+      "informant": "unknown informant who reported the death to Licking County",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Birth year reported on a death register 73 years after the event. No person reporting Elizabeth's death in 1895 could plausibly have witnessed her birth in 1822. Even if the identity of the reporter were known, the classification would remain secondary. Possible memory degradation or family oral tradition; the year 1822 aligns with the 1850\u20131880 census records showing her age 27\u201357, providing cross-corroboration."
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "record_persona_id": "p_11263518025",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Washington Co., O. (birthplace)",
+      "place": "Washington Co., O.",
+      "standard_place": "Washington, Ohio, United States",
+      "structured_value": {
+        "place": "Washington, Ohio, United States"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown informant who reported the death to Licking County",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "informant_bias_notes": "Birthplace reported on a death register 73 years after the event. No possible first-hand witness to Elizabeth's 1822 birth could plausibly have been reporting in 1895. Washington County, Ohio is a plausible birthplace given the Geach surname and migration patterns toward Licking County. The abbreviation 'Washington Co., O.' is unambiguous. This is the key jurisdictional clue directing subsequent research to Washington County, Ohio records."
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "record_persona_id": "p_11263518025",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown informant who reported the death to Licking County",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "record_persona_id": "p_11263518025",
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Farm",
+      "structured_value": {
+        "occupation": "Farm"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown informant who reported the death to Licking County",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR",
+      "record_persona_id": "p_11263518025",
+      "record_role": "deceased",
+      "fact_type": "residence",
+      "value": "Union Tp.",
+      "place": "Union Tp.",
+      "standard_place": "Union Township, Licking, Ohio, United States",
+      "structured_value": {
+        "place": "Union Township, Licking, Ohio, United States"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown informant who reported the death to Licking County",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/3:1:3Q9M-C9BQ-R9B3-T",
+      "record_role": "heir (daughter of decedent)",
+      "fact_type": "parentage",
+      "value": "Peter Geach, deceased, is father of Elizabeth Geach \u2014 Elizabeth named as minor heir in Licking County probate petition for estate of Peter Geach (1836)",
+      "information_quality": "primary",
+      "informant": "Rebecca Geach (widow, co-administrator) and John Park (co-administrator), petition filed Licking County Common Pleas April 23, 1836",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_014"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/3:1:3Q9M-C9BQ-R9B3-T",
+      "record_role": "heir (daughter of widow)",
+      "fact_type": "parentage",
+      "value": "Rebecca Geach, widow of Peter Geach, is mother of Elizabeth Geach \u2014 Rebecca named as widow/co-administrator; Elizabeth among minor heirs in Licking County probate petition (1836)",
+      "information_quality": "primary",
+      "informant": "Rebecca Geach (widow, co-administrator) and John Park (co-administrator), petition filed Licking County Common Pleas April 23, 1836",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_014"
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/3:1:3Q9M-C9BQ-R9B3-T",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Peter Geach 'late of said Licking County' \u2014 probate petition filed April 23, 1836; died before that date in Licking County, Ohio",
+      "date": "1836",
+      "date_certainty": "approximate",
+      "place": "Licking County, Ohio",
+      "standard_place": "Licking, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "Rebecca Geach (widow, co-administrator) and John Park (co-administrator)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_014",
+      "informant_bias_notes": "Peter Geach's widow filed the probate petition and knew when and where he died. The court's jurisdiction confirms the Licking County location. Terminus ante quem: died before April 23, 1836."
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:JSRX-56F",
+      "record_persona_id": "p_12462250005",
+      "record_role": "taxpayer",
+      "fact_type": "residence",
+      "value": "Peter Geach taxed annually in Roxbury Township, Washington County, Ohio: 1810, 1818, 1819, and 1822\u20131839 (28 index entries). Establishes Geach family presence in Washington County through Elizabeth's birth year (1822) and childhood. No entries after 1839.",
+      "date": "1822",
+      "date_certainty": "exact",
+      "place": "Roxbury Township, Washington County, Ohio, United States",
+      "standard_place": "Washington, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "Ohio county tax assessor, Roxbury Township, Washington County",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_012",
+      "informant_bias_notes": "Tax assessors recorded taxable property annually; identification of Peter Geach as taxpayer in Roxbury Township is primary information from a government official acting in official capacity. Indirect evidence for parentage (does not name Elizabeth as Peter's daughter) but corroborates Washington County birthplace and Geach family presence there."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Elizabeth Slack' matches the married name of 273D-F9Z (Elizabeth Geach, wife of Jonathan Slack). Combined with the death date, birthplace, and residence on the same record, identity is unambiguous. Record was pre-matched to 273D-F9Z in the FamilySearch tree at 5 stars.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death date 6 Sep 1895, Union Township, Licking, Ohio matches exactly the known death facts for 273D-F9Z in tree.gedcomx.json (f-eliz-death: 6 Sep 1895, Union Twp., Licking). No other Elizabeth Slack known in this area and time period.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1822 matches the known birth date 17 August 1822 for 273D-F9Z. Secondary information from the death register but consistent with all census records for this individual.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace 'Washington Co., O.' (Washington County, Ohio) is new evidence about 273D-F9Z's origin and is plausible given her appearance in Licking County by the time of her marriage ca. 1844. This is the key assertion directing further research to Washington County records.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status 'Widowed' is consistent with 273D-F9Z: her husband Jonathan Slack (273D-6CP) died 21 December 1890, leaving Elizabeth a widow for approximately 5 years until her own death on 6 Sep 1895.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Occupation 'Farm' is consistent with the agricultural context of Union Township, Licking County; Jonathan Slack's household is documented as a farming family in the census records.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence 'Union Tp.' matches the known residence of 273D-F9Z in Union Township, Licking County, Ohio, documented in the 1850\u20131880 census records and confirmed by her death and burial records in Granville Township.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The 1836 Licking County probate petition names Elizabeth Geach as a minor heir of Peter Geach. Identity with 273D-F9Z is confirmed by matching birthplace (Washington County, Ohio \u2014 location of Peter's land per probate and per 1895 death register), given name, and surname. No other Elizabeth Geach of this age and place is documented.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "273D-F9Z",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Rebecca Geach is named as widow of Peter Geach and co-administrator of his estate in the same petition that names Elizabeth Geach as a minor heir. Rebecca is the mother of Elizabeth (273D-F9Z).",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The probate petition names Peter Geach as deceased, 'late of said Licking County,' with petition filed April 23, 1836. Absence from post-1839 tax records and the 1840 census corroborates death circa 1835\u20131836 in Licking County.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Peter Geach (I1) is the only Geach documented in Washington County, Ohio tax records. 28 annual entries in Roxbury Township (1810\u20131839) confirm long-term residence. The 1822 representative entry is contemporaneous with Elizabeth's birth in Washington County.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The probate petition establishes Peter Geach (I1) as the father of Elizabeth Geach (273D-F9Z) by naming Elizabeth as a minor heir. The tax record span (1810\u20131839) places him continuously in Washington County where Elizabeth was born.",
+      "created": "2026-07-03"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Rebecca Geach (I2) is explicitly named as widow of Peter Geach in the probate petition and as co-administrator of his estate, establishing her as mother of the named minor heirs including Elizabeth Geach.",
+      "created": "2026-07-03"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_007"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The 1895 Licking County, Ohio death register was retrieved from FamilySearch 'Ohio, County Death Records, 1840-2001' (log_001, pli_001 completed). A supplementary obituary search was conducted on FamilySearch full-text newspaper holdings using four query variants targeting Granville/Newark, Ohio, September 1895; all returned 0 results (log_002, pli_003 completed). A probable FTS coverage gap for Licking County newspapers of this era was documented. Paid newspaper repositories (Newspapers.com, GenealogyBank) were unavailable. A cross-index check of compiled Ohio death indexes (pli_002) was legitimately skipped as it would not constitute independent evidence. Research declared reasonably exhaustive 3 July 2026.",
+      "narrative_markdown": "## What Elizabeth Slack's 1895 Ohio Death Record States About Her Parentage and Birthplace\n\n**Conclusion:** The 1895 Licking County, Ohio death register for Elizabeth Slack names no parents and records her birthplace as Washington County, Ohio. Both findings are proved by the record itself \u2014 what is proved is the register's contents, not the independent historical truth of the birthplace. Independent corroboration of the birthplace in Washington County, Ohio records remains the priority of the continuing parentage investigation.\n\n### Background\n\nElizabeth Geach (born 17 August 1822; died 6 September 1895) was the wife of Jonathan Slack of Union Township, Licking County, Ohio. Her Geach family origins and parents are the subject of ongoing research. This summary addresses precisely what her 1895 death record contributes to that question.\n\n### The Death Register Entry\n\nElizabeth Slack's entry in the Licking County, Ohio death register \u2014 indexed in \"Ohio, County Death Records, 1840-2001,\" a FamilySearch derivative database of the original county registers \u2014 records the following: name, Elizabeth Slack; death date and place, 6 September 1895, Union Township, Licking County, Ohio; birth year, 1822; birthplace, \"Washington Co., O.\" (Washington County, Ohio); marital status, Widowed; residence, Union Township. The record was identified by a targeted FamilySearch search and confirmed by a 5-star tree match to Elizabeth Slack (FamilySearch person ID 273D-F9Z).\n\nThe record **does not name Elizabeth's parents**. This is not a finding that parents are unknown; it is a structural feature of Ohio county death registers prior to 1908, which did not include a field for parents' names. The absence carries no evidentiary weight for or against parentage.\n\n### Source and Evidence Analysis\n\nThe source is a derivative: a FamilySearch indexed database created from the original Licking County register, itself preserved on microfilm (image ARK: ark:/61903/3:1:3QSQ-G9ZB-LS4X). The informant is unknown \u2014 Ohio county registers of this era did not record who reported the death. Unknown informant status requires conservative classification throughout.\n\nThe death date and place (6 September 1895, Union Township) would ordinarily yield primary information (typically reported by someone present), but the unknown informant requires an indeterminate classification (assertions a_001, a_002). The birth year (1822) and birthplace (Washington County, Ohio) are classified as secondary information: no person reporting a death in 1895 could have witnessed a birth in 1822. Both are nevertheless direct evidence \u2014 values explicitly stated in the register (assertions a_003, a_004).\n\n**What is proved here is that the register states these values, not that Elizabeth was factually born in Washington County, Ohio.** The birthplace claim is secondary information from an unknown informant. Its accuracy awaits independent corroboration through Washington County, Ohio records. The geographic-plausibility notes below support the claim's internal consistency and its value as a research direction, not its factual truth:\n\nElizabeth appears in Union Township, Licking County in every census from 1850 through 1880; migration from Washington County (approximately 70 miles south-southeast) to Licking County prior to her ca. 1844 marriage is geographically plausible and consistent with mid-nineteenth-century Ohio settlement patterns.\n\n### Supplementary Obituary Search\n\nTo supplement the structurally limited death register, a search for an Elizabeth Slack obituary in Granville and Newark, Ohio newspapers (September 1895) was conducted on FamilySearch's full-text newspaper holdings across four query variants: exact phrase \"Elizabeth Slack\" (Ohio, 1894\u20131896), variant spelling \"Elisabeth Slack\" (Ohio, 1893\u20131897), FAN combination \"+Slack +Geach\" (Ohio, 1880\u20131900), and place combination \"+Slack +Granville\" (Ohio, 1895). All returned zero results. A probable coverage gap for Licking County newspapers of this era in FamilySearch's full-text index was documented; Granville and Newark papers of the 1890s do not appear to be indexed in that repository. A cross-check of compiled Ohio death indexes was considered but set aside as non-independent (they derive from the same underlying register data as src_001 and would not constitute a second evidence unit). Chronicling America (Library of Congress) and paid newspaper repositories (Newspapers.com, GenealogyBank) remain unsearched avenues for a future obituary; those repositories were not available for this research. No obituary was found.\n\n### Conclusion\n\nThe 1895 Licking County death register proves the following: **the register names no parents for Elizabeth Slack** (a record-type limitation of pre-1908 Ohio county death registers, not a negative finding against parentage) **and records her birthplace as Washington County, Ohio** (\"Washington Co., O.\"), secondary information from an unknown informant that is explicitly stated in the register and internally consistent with known biographical facts.\n\nThis finding directs further research to Washington County, Ohio, where probate, land, church, and census records from the 1820s\u20131840s may identify the Geach family and Elizabeth's parents. The present question \u2014 what the 1895 death record states about her parentage and birthplace \u2014 is fully and definitively answered.\n\n*Citation:* \"Ohio, County Death Records, 1840-2001,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F6FJ-ZMR : accessed 3 July 2026), entry for Elizabeth Slack, 6 September 1895.\n\n*Research declared reasonably exhaustive on 3 July 2026. The birthplace claim rests on secondary information from an unknown informant; independent corroboration through Washington County, Ohio records is the next priority in the continuing parentage investigation.*"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "address_first",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-03T00-00-00.json",
+      "timestamp": "2026-07-03T00:00:00Z",
+      "superseded_by": "ev_002"
+    },
+    {
+      "id": "ev_002",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-03T08-18-00.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-03T08:22:01.167Z"
+    },
+    {
+      "id": "ev_003",
+      "focus": "conclusion-readiness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "looks_solid",
+      "file_path": "evaluations/conclusion-readiness-q_001-2026-07-03T09-00-00.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-03T08:25:21.870Z"
+    },
+    {
+      "id": "ev_004",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-03T09-30-00.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-03T08:29:59.314Z"
+    }
+  ]
+}

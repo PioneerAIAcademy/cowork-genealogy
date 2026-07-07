@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_check_warnings_015",
+    "skill": "check-warnings",
+    "name": "Report impossibility and FamilySearch quality together, kept distinct",
+    "type": "positive",
+    "description": "User asks to check Ole C. Hole (KD96-TV4). person_warnings fires hasEventAfterDeath1 (a 1975 Residence after his 1960 death -- a Fundamental impossibility), AND person_quality returns 2 quality issues. The skill should report BOTH, in two clearly-separate sections, without conflating them: the impossibility is Critical and gets the investigate-the-cause treatment; the quality issues are optional improvements and must NOT be escalated to error severity.",
+    "tags": ["positive", "person-quality", "both-fire", "not-conflated", "event-after-death"]
+  },
+  "input": {
+    "user_message": "Check Ole C. Hole (KD96-TV4) for problems.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": ["person-warnings-hole-son-event-after-death", "person-quality-hole-son"],
+  "judge_context": [
+    "Should call both person_warnings and person_quality with personId 'KD96-TV4'",
+    "Should report the hasEventAfterDeath1 warning as Critical (severity 'error') and recommend investigating the cause (identity confusion, wrong death date, or posthumous mention) before assuming one -- per the skill's event-after-death guidance",
+    "Should ALSO report the FamilySearch quality issues (~2: the death place missing a city, a residence with no tagged sources) in a SEPARATE section",
+    "Must keep the two distinct: the quality issues are improvements to the profile, NOT impossibilities. Must NOT label the quality issues as Critical/error, and must NOT merge them into the impossibility list",
+    "Should NOT re-derive either tool's output; report what the tools returned"
+  ]
+}
