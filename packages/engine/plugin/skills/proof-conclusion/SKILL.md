@@ -44,28 +44,32 @@ This gate runs regardless of how proof-conclusion was invoked.
    confirm `assertion-classification` has run on an assertion, treat it as
    unclassified. List any assertion IDs that fail this check. Classification
    grounds the tier, so this applies to every assertion tied to the question.
-3. **person_evidence (hard block, but scoped to relied-upon assertions).**
-   First identify the assertions the conclusion will actually rely on to
-   reach its tier: those that identify the persons the question is about
-   (the subject and any candidate parent/relative) and those that carry the
-   facts grounding the verdict. Confirm each of those has a `person_evidence`
-   link. An assertion that only *corroborates* a fact already carried by a
-   linked assertion (e.g. a second source for a birth year that is already
-   linked) is **not** a blocker — note it as advisory and proceed. List any
-   relied-upon assertion IDs that lack a link (blocking) separately from any
-   corroborating-only unlinked IDs (advisory).
+3. **person_evidence (hard block scoped to person identity).**
+   `person_evidence` is identity resolution — it defeats the unsound
+   assumption that a record is about your person. The hard block is therefore
+   on *identity*, not on every fact. Confirm that **each person the conclusion
+   depends on** — the subject and every candidate parent/relative — is
+   identified by **at least one** linked assertion (a name/identity assertion
+   carrying a `person_evidence` link). List any such person that has **no**
+   linked identity assertion.
+   Unlinked *fact* and *negative* assertions (a birth year, a co-residence, an
+   "unknown father") that pertain to a person already identified above are
+   **advisory, not blockers** — their person is already resolved, and GPS
+   requires them to be analyzed in the narrative, not separately linked. Note
+   any unlinked fact/negative IDs as advisory and proceed.
 4. **Conflicts (hard block).** For each conflict touching this question's
    assertions, confirm it is `resolved` or carries an explicit
    acknowledgment. List any conflict IDs that fail this check.
 
-**If step 2 produces failing IDs, step 3 produces a *relied-upon* failing ID,
-or step 4 produces failing IDs: stop. Do not proceed to Step 1.**
+**If step 2 produces failing IDs, step 3 leaves any relied-upon *person*
+without a linked identity assertion, or step 4 produces failing IDs: stop.
+Do not proceed to Step 1.**
 Report the exact failing IDs to the user and recommend the specific skill
 for each gap (`assertion-classification`, `person-evidence`, or
 `conflict-resolution`). In `--autonomous` mode, route to the missing skill
 automatically instead of asking — autonomous mode changes who decides, not
-whether the gate runs. Corroborating-only unlinked assertions (step 3
-advisory) do **not** stop the gate — surface them as a note and continue.
+whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
+do **not** stop the gate — surface them as a note and continue.
 
 Only when the blocking checks pass, proceed to Step 1.
 

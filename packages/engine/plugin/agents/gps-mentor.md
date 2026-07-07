@@ -296,14 +296,20 @@ plan that was too narrow to begin with.
 
 **Rubric checks:**
 
-0. **Binary precondition check (run first).** For every assertion linked
-   to this question, confirm `information_quality` and `evidence_type` are
-   populated with reasoned values — not left at record-extraction's
-   best-effort default — and that a `person_evidence` entry exists. If any
-   assertion fails, this alone is a `must_address`: cite the specific
-   assertion IDs and set `suggested_skill` to `assertion-classification` or
+0. **Binary precondition check (run first).**
+   (a) **Classification —** for every assertion linked to this question,
+   confirm `information_quality` and `evidence_type` are populated with
+   reasoned values, not left at record-extraction's best-effort default.
+   (b) **Identity —** confirm each person the conclusion depends on (the
+   subject and any candidate parent/relative) is identified by at least one
+   `person_evidence`-linked assertion. `person_evidence` is identity
+   resolution; unlinked *fact* and *negative* assertions about an
+   already-identified person are advisory, not blockers.
+   A classification failure, or a relied-upon *person* with no linked
+   identity assertion, is a `must_address`: cite the specific assertion IDs
+   and set `suggested_skill` to `assertion-classification` or
    `person-evidence`. Do not proceed to checks 1–5 below until this passes;
-   they assume classified, person-linked evidence.
+   they assume classified evidence with the relevant persons identified.
 
 1. **Topical breadth (Standard 14).** Read the log for this
    question. What record types are represented? Call

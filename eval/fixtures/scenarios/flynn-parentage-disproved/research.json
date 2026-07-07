@@ -328,16 +328,6 @@
       "match_score": null,
       "created": "2026-05-06",
       "superseded_by": null
-    },
-    {
-      "id": "pe_005",
-      "assertion_id": "a_002",
-      "person_id": "I1",
-      "confidence": "confident",
-      "rationale": "1850 census age (5) for Patrick Flynn, Schuylkill Co. — the same enumeration whose name assertion (a_001) already identifies I1. Grounds his ~1845 birth, the fact the disproof turns on; the 1908 death-certificate age (a_006) corroborates the same birth year.",
-      "match_score": null,
-      "created": "2026-05-02",
-      "superseded_by": null
     }
   ],
 
