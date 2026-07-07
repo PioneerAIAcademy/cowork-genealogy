@@ -13,8 +13,12 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
 });
 
+import { mkdtemp, rm } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
 import { recordReadTool, extractEntityId } from "../../src/tools/record-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { stageSearchResults } from "../../src/utils/results-staging.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
@@ -263,5 +267,118 @@ describe("recordReadTool", () => {
     const result = await recordReadTool({ recordId: "QVS9-DHDB" });
     // toSimplified returns an empty object for empty input — no throw
     expect(result).toBeDefined();
+  });
+});
+
+// ─── Sidecar mode (resultsRef) — no network ────────────────────────────────
+
+describe("recordReadTool — sidecar mode (resultsRef)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-sidecar-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const stagedResponse = () => ({
+    results: [
+      {
+        recordId: "ark:/61903/1:1:MXHY-TP4",
+        collectionTitle: "United States Census, 1850",
+        gedcomx: {
+          persons: [
+            {
+              id: "p1",
+              names: [{ given: "Patrick", surname: "Flynn" }],
+              facts: [
+                { type: "Residence", date: "1850", place: "Branch Township, Schuylkill, Pennsylvania" },
+              ],
+            },
+            { id: "p2", names: [{ given: "Thomas", surname: "Flynn" }], facts: [] },
+          ],
+          relationships: [{ type: "ParentChild", parent: "p2", child: "p1" }],
+        },
+      },
+      {
+        recordId: "ark:/61903/1:1:OTHER-REC",
+        gedcomx: { persons: [{ id: "p9", names: [{ given: "Someone", surname: "Else" }] }] },
+      },
+    ],
+  });
+
+  it("resolves a record (with household + relationships) from the sidecar and makes NO live fetch", async () => {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: stagedResponse(),
+    });
+    const out = await recordReadTool({
+      recordId: "ark:/61903/1:1:MXHY-TP4",
+      resultsRef: handle!.resultsRef,
+      projectPath: dir,
+    });
+    expect(out.persons).toHaveLength(2);
+    expect(out.persons!.map((p) => p.names![0].given)).toEqual(["Patrick", "Thomas"]);
+    expect(out.relationships).toHaveLength(1);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("matches by bare entity id when the caller passes a full ark result (and vice-versa)", async () => {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: stagedResponse(),
+    });
+    const out = await recordReadTool({
+      recordId: "MXHY-TP4",
+      resultsRef: handle!.resultsRef,
+      projectPath: dir,
+    });
+    expect(out.persons).toHaveLength(2);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("errors clearly (pointing at a live read) when the record is not in the sidecar", async () => {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: stagedResponse(),
+    });
+    await expect(
+      recordReadTool({ recordId: "NOPE-99", resultsRef: handle!.resultsRef, projectPath: dir }),
+    ).rejects.toThrow(/not found in staged results/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("requires projectPath when resultsRef is given", async () => {
+    await expect(
+      recordReadTool({ recordId: "MXHY-TP4", resultsRef: "results/.staging/x.json" }),
+    ).rejects.toThrow(/requires `projectPath`/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("reads from a finalized results/<log_id>.json sidecar too", async () => {
+    // Finalized sidecar shape: { log_id, tool, retrieved, returned_count, payload }
+    const { mkdir, writeFile } = await import("fs/promises");
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({
+        log_id: "log_001",
+        tool: "record_search",
+        retrieved: "2026-07-07T00:00:00.000Z",
+        returned_count: 2,
+        payload: stagedResponse(),
+      }),
+      "utf-8",
+    );
+    const out = await recordReadTool({
+      recordId: "MXHY-TP4",
+      resultsRef: "results/log_001.json",
+      projectPath: dir,
+    });
+    expect(out.persons).toHaveLength(2);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,12 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
-import type { GedcomX } from "../types/gedcomx.js";
+import {
+  standardizePlaces,
+  toSimplifiedStandardized,
+} from "../utils/gedcomx-convert.js";
+import { readStagedResults } from "../utils/results-staging.js";
+import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
+import type { RecordSearchResult } from "../types/record-search.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 
 const RECAPI_BASE =
@@ -27,6 +32,24 @@ export const recordReadSchema = {
           '"ark:/61903/1:1:QVS9-DHDB" (feed record_search\'s `recordId` ' +
           'directly). A bare entity ID like "QVS9-DHDB" is also accepted. Required.',
       },
+      resultsRef: {
+        type: "string",
+        description:
+          "Optional. A `staged.resultsRef` handle from record_search (or a " +
+          "finalized results/<log_id>.json ref) — read this record from that " +
+          "sidecar host-side, WITHOUT a live FamilySearch fetch. The sidecar " +
+          "carries the same persons, facts, and relationships as a live read; a " +
+          "live read (omit this) additionally guarantees the authoritative source " +
+          "citation. Prefer the sidecar for triage/extraction; do a live read when " +
+          "finalizing a source or when the record was not part of a staged search. " +
+          "Requires `projectPath`.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Absolute path to the active project directory. Required when " +
+          "`resultsRef` is given (the sidecar lives under the project's results/ dir).",
+      },
     },
     required: ["recordId"],
   },
@@ -37,12 +60,22 @@ export const recordReadSchema = {
 export async function recordReadTool(
   input: RecordReadInput,
 ): Promise<RecordReadResult> {
-  const { recordId } = input;
+  const { recordId, resultsRef, projectPath } = input;
   if (typeof recordId !== "string" || recordId.trim() === "") {
     throw new Error(
       'The record_read tool requires a non-empty recordId string ' +
         '(e.g., "QVS9-DHDB" or "ark:/61903/1:1:QVS9-DHDB").',
     );
+  }
+
+  // Sidecar mode: resolve the record from a staged/finalized search sidecar
+  // instead of a live FS fetch (no network round-trip). The staged gedcomx
+  // carries the same persons, facts, and relationships as a live read (verified);
+  // we re-apply place standardization here (the search stage skips it) so the
+  // result matches a live read. A live read (omit `resultsRef`) additionally
+  // guarantees the authoritative source citation.
+  if (resultsRef !== undefined) {
+    return await readFromSidecar(recordId.trim(), resultsRef, projectPath);
   }
 
   const entityId = extractEntityId(recordId.trim());
@@ -96,6 +129,46 @@ export async function recordReadTool(
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
+
+// Resolve one record's gedcomx from a staged/finalized search sidecar by id,
+// re-applying place standardization so the result matches a live record_read.
+async function readFromSidecar(
+  recordId: string,
+  resultsRef: string,
+  projectPath: string | undefined,
+): Promise<RecordReadResult> {
+  if (typeof projectPath !== "string" || projectPath.trim() === "") {
+    throw new Error(
+      "record_read with `resultsRef` also requires `projectPath` — the sidecar " +
+        "lives under the project's results/ directory.",
+    );
+  }
+  const wanted = extractEntityId(recordId);
+  const results = (await readStagedResults(
+    projectPath,
+    resultsRef,
+  )) as RecordSearchResult[];
+  const match = results.find(
+    (r) =>
+      typeof r?.recordId === "string" && extractEntityId(r.recordId) === wanted,
+  );
+  if (!match || !match.gedcomx) {
+    throw new Error(
+      `record '${recordId}' was not found in staged results '${resultsRef}'. ` +
+        "Do a live read (omit `resultsRef`) instead, or verify the ref/id.",
+    );
+  }
+  const gedcomx = match.gedcomx as SimplifiedGedcomX;
+  // Standardize every fact's place (persons + relationships) — idempotent, and
+  // the one field the search stage leaves un-standardized vs a live read.
+  const facts = (gedcomx.persons ?? []).flatMap((p) => p.facts ?? []);
+  for (const rel of gedcomx.relationships ?? []) {
+    const rf = (rel as { facts?: typeof facts }).facts;
+    if (rf) facts.push(...rf);
+  }
+  await standardizePlaces(facts);
+  return gedcomx;
+}
 
 // Normalise the caller-supplied record ID to a bare entity ID.
 // Full ARK format: "ark:/61903/1:1:QVS9-DHDB" → "QVS9-DHDB"
