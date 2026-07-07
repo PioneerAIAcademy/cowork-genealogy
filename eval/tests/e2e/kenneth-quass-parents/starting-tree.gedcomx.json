@@ -1,0 +1,379 @@
+{
+  "persons": [
+    {
+      "id": "KNS4-P6W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "name-kns4-p6w-1",
+          "given": "Kenneth Werner",
+          "surname": "Quass"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "4 December 1917",
+          "standard_date": "4 Dec 1917",
+          "place": "Sumner, Bremer, Iowa, United States",
+          "standard_place": "Sumner, Bremer, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 September 1982",
+          "standard_date": "17 Sep 1982",
+          "place": "Grapevine, Tarrant County, Texas, United States",
+          "standard_place": "Grapevine, Tarrant, Texas, United States"
+        },
+        {
+          "id": "e02d8c27-c8bb-4c09-9f8e-c1ba505d2ee4",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "R, Buchanan, Iowa",
+          "standard_place": "Buchanan, Iowa, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Madelia Village, Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "55b16226-9fe3-46c9-9ad9-7fecf3c40e57",
+          "type": "Military Draft Registration",
+          "date": "16 Oct 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Marshall, Watonwan, Minnesota, United States",
+          "standard_place": "Marshall, Minnesota, United States"
+        },
+        {
+          "id": "ab93f448-37cc-401f-b1c8-739d271affbb",
+          "type": "Move",
+          "date": "2 July 1962",
+          "standard_date": "2 Jul 1962",
+          "place": "Los Angeles, California, United States",
+          "standard_place": "Los Angeles, California, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "date": "25 September 1982",
+          "standard_date": "25 Sep 1982",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "32f3ba77-8481-4d6d-8b66-a50d689b4d5f",
+          "type": "Residence",
+          "place": "Marshall, Watonwan, Minnesota",
+          "standard_place": "Marshall, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWZP-4Q8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "name-kwzp-4q8-1",
+          "given": "Ivyl Phylena",
+          "surname": "Greenley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166242",
+          "type": "Birth",
+          "date": "26 May 1914",
+          "standard_date": "26 May 1914",
+          "place": "Farley, Taylor Twsp, Dubuque County, Iowa",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Farley, Dubuque, Iowa, United States",
+          "standard_place": "Farley, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "49dd74a8-b659-4133-87c9-c30a0156589b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Taylor, Dubuque, Iowa, United States",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "4c12a7e2-0f16-4631-bc0d-6f2c32298a6e",
+          "type": "Residence",
+          "date": "1925",
+          "standard_date": "1925",
+          "place": "Dubuque, Iowa, United States",
+          "standard_place": "Dubuque, Iowa, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Taylor, Dubuque, Iowa",
+          "standard_place": "Taylor Township, Dubuque, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c2",
+          "type": "Death",
+          "date": "24 May 2005",
+          "standard_date": "24 May 2005",
+          "place": "San Diego, San Diego, California",
+          "standard_place": "San Diego, San Diego, California, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b522",
+          "type": "Burial",
+          "place": "Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KW4T-D9J",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "name-kw4t-d9j-1",
+          "given": "Donald Wendell",
+          "surname": "Quass"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "16 January 1940",
+          "standard_date": "16 Jan 1940",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Madelia Village, Madelia, Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "b52c85f4-5f6c-4d7a-a8df-87e932a8bc25",
+          "type": "Christening",
+          "date": "31 May 1943",
+          "standard_date": "31 May 1943",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "7b2291a8-18a0-4189-aa93-d2d71618545b",
+          "type": "Death",
+          "date": "25 April 2024",
+          "standard_date": "25 Apr 2024",
+          "place": "Breezy Point, Crow Wing, Minnesota, United States",
+          "standard_place": "Breezy Point, Crow Wing, Minnesota, United States"
+        },
+        {
+          "id": "bf435172-7ef5-47ff-91d4-747781eac965",
+          "type": "Obituary",
+          "date": "27 April 2024",
+          "standard_date": "27 Apr 2024",
+          "place": "Saint Paul, Ramsey, Minnesota, United States",
+          "standard_place": "Saint Paul, Ramsey, Minnesota, United States"
+        },
+        {
+          "id": "df09702a-d087-4277-aebb-db9057efae45",
+          "type": "Burial",
+          "date": "1 May 2024",
+          "standard_date": "1 May 2024",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Watonwan, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KNXW-Z21",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "name-knxw-z21-1",
+          "given": "Alice Jeanette",
+          "surname": "Quass"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166243",
+          "type": "Birth",
+          "date": "06 Dec 1940",
+          "standard_date": "6 Dec 1940",
+          "place": "Madelia Watonwan, Minnesota",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "9c275256-a5ab-463a-99e1-39cb2c3d6e8e",
+          "type": "Baptism",
+          "date": "31 May 1943",
+          "standard_date": "31 May 1943",
+          "place": "Randalia, Fayette, Iowa, United States",
+          "standard_place": "Randalia, Fayette, Iowa, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c3",
+          "type": "Death",
+          "date": "03 Feb 1955",
+          "standard_date": "3 Feb 1955",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "21 February 1955",
+          "standard_date": "21 Feb 1955",
+          "place": "Madelia, Watonwan, Minnesota, United States",
+          "standard_place": "Madelia, Brown, Minnesota, United States"
+        },
+        {
+          "id": "47df9197-b3f2-4db6-8fde-2125e5359f48",
+          "type": "Religion",
+          "value": "Presbyterian"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-couple-kns4-kwzp",
+      "type": "Couple",
+      "person1": "KNS4-P6W",
+      "person2": "KWZP-4Q8",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "06 Mar 1938",
+          "standard_date": "6 Mar 1938",
+          "place": "Independence, Buchman, Iowa",
+          "standard_place": "Independence, Buchanan, Iowa, United States"
+        }
+      ]
+    },
+    {
+      "id": "rel-pc-kns4-kw4t",
+      "type": "ParentChild",
+      "parent": "KNS4-P6W",
+      "child": "KW4T-D9J",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-pc-kwzp-kw4t",
+      "type": "ParentChild",
+      "parent": "KWZP-4Q8",
+      "child": "KW4T-D9J",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-pc-kns4-knxw",
+      "type": "ParentChild",
+      "parent": "KNS4-P6W",
+      "child": "KNXW-Z21",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-pc-kwzp-knxw",
+      "type": "ParentChild",
+      "parent": "KWZP-4Q8",
+      "child": "KNXW-Z21",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "WWDC-3PY",
+      "title": "Kenneth Werner Quass, \"United States, Obituary Records, 2014-2023\"",
+      "citation": "\"United States, Obituary Records, 2014-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XM5X-SPSL : Sat Nov 30 06:36:18 UTC 2024), Entry for Donald Wendell Quass and Karen Ann Spriggs Quass, 27 April 2024.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XM5X-SPSY"
+    },
+    {
+      "id": "71MS-RDC",
+      "title": "Kenneth, \"United States, Obituary Records, 2014-2023\"",
+      "citation": "\"United States, Obituary Records, 2014-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:61T2-8TGB : Wed Nov 13 08:22:30 UTC 2024), Entry for Lucille E Clemens and Ralph K Quass, 8 January 2020.",
+      "url": "https://familysearch.org/ark:/61903/1:1:61T2-8TPQ"
+    },
+    {
+      "id": "SR6J-X89",
+      "title": "Kenneth Quass, \"Minnesota, Deaths, 1887-2001\"",
+      "citation": "\"Minnesota, Deaths, 1887-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H5PN-JXT2 : Fri Mar 27 20:51:48 UTC 2026), Entry for Alice Jeannette Quass and Kenneth Quass, 3 Feb 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H5PN-JFMM"
+    },
+    {
+      "id": "SLTH-P7B",
+      "title": "Kenneth Warner Quass, \"Minnesota, World War II Draft Registration Cards, 1940-1947\"",
+      "citation": "\"Minnesota, World War II Draft Registration Cards, 1940-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLF9-1GKW : Thu Apr 10 20:11:45 UTC 2025), Entry for Kenneth Warner Quass and Ivyl Phylena Quass, 16 Oct 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLF9-1GKW"
+    },
+    {
+      "id": "9GMZ-45V",
+      "title": "Kenneth Quass in entry for Mrs Bernice H Quass Wegner, \"United States, GenealogyBank Obituaries, 1980-2014\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKGC-WSLK : Mon Jan 13 11:12:58 UTC 2025), Entry for Mrs Bernice H Quass Wegner and Ralph Quass, 22 Jun 2010.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKGC-W3S9"
+    },
+    {
+      "id": "9X8M-9NF",
+      "title": "Kenneth Werner Quass, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVK1-PM77 : Thu Sep 18 00:35:41 UTC 2025), Entry for Kenneth Werner Quass.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVK1-PM77"
+    },
+    {
+      "id": "MSR9-XMS",
+      "title": "Kenneth Quass, \"Texas, Death Index, 1903-2000\"",
+      "citation": "\"Texas, Death Index, 1903-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZZJ-TBB : Wed Sep 17 17:48:07 UTC 2025), Entry for Kenneth Quass, 17 Sep 1982.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VZZJ-TBB"
+    },
+    {
+      "id": "MSR9-6PK",
+      "title": "Kenneth Quass, \"Texas, Death Index, 1964-1998\"",
+      "citation": "\"Texas, Death Index, 1964-1998,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:JVXG-ZZL : 5 December 2014), Kenneth Quass, Tarrant, Texas, United States; citing Department of State Health Services, Austin.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JVXG-ZZL"
+    },
+    {
+      "id": "MSR9-7KD",
+      "title": "Kenneth W Quass, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KSLN-B5K : Fri Jan 17 15:15:54 UTC 2025), Entry for Kenneth W Quass, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KSLN-B5K"
+    },
+    {
+      "id": "MSR9-7QT",
+      "title": "Kenneth Quass, \"Minnesota, Death Records and Certificates, 1900-1955\"",
+      "citation": "\"Minnesota, Death Records and Certificates, 1900-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDX7-8MF : Fri Mar 27 20:51:48 UTC 2026), Entry for Alice Jeannette Quass and Kenneth Quass, 3 February 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDX7-8MN"
+    },
+    {
+      "id": "MSR9-3LG",
+      "title": "Kenneth Warner Quass, \"Minnesota, Birth Index, 1935-2002\"",
+      "citation": "\"Minnesota, Birth Index, 1935-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VCF7-BY8 : Fri May 01 15:58:41 UTC 2026), Entry for Alice Jeanette Quass and Kenneth Warner Quass, 06 Dec 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VCF7-BYD"
+    },
+    {
+      "id": "MS88-FLK",
+      "title": "Legacy NFS Source: Kenneth Werner Quass Sr. - Memory of Someone: move: 1957; California, United States"
+    }
+  ]
+}

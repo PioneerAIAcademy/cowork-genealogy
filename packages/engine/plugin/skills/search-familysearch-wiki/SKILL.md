@@ -51,9 +51,9 @@ the FamilySearch wiki:
    and stop — do not save a file.
 4. Read and fill `templates/wiki-search-summary.md`. **Actually invoke the file-write tool to save it** (don't just describe the save) as `<topic-slug>.md` in the user's working folder.
    - `<topic-slug>`: extract the **core noun phrase** from the user's question — the record type and any qualifying jurisdiction/origin — and skip leading verbs/qualifiers like "how to use", "search for", "find", "tracing". Lowercase + hyphens, no leading/trailing hyphens. Examples: "how to use census records to trace my family" → `census-records.md`; "How do I find Italian birth records?" → `italian-birth-records.md`; "How do I find German church records?" → `german-church-records.md`.
-   - Summary: synthesize **only** from `chunk_text` — every sentence must trace to a specific chunk. Do NOT add facts (dates, repository names, URLs), do NOT interpret beyond the text (e.g., what a record's contents "frequently imply" or "point to"), do NOT strengthen the source's wording. Plain prose paragraphs only; no lists, sub-headers, or URLs in the body.
+   - Summary: synthesize **only** from `chunk_text` — every sentence must trace to a specific chunk. Do NOT add facts (dates, repository names, URLs) the chunks don't state, invent navigation paths (e.g. "Search → Records, select Ireland"), add explanatory clauses ("important because…", what a record's contents "frequently imply" or "point to"), combine separate facts into one synthesized step, or strengthen the source's wording (if the wiki says "key", keep "key" — don't upgrade to "essential", "primary", or "most important"). Plain prose paragraphs only; no lists, sub-headers, or URLs in the body.
    - Sources: one bullet per result — `- [page_title — section_heading](source_url)` — using the exact values from the tool response.
-5. Tell the user the filename. Keep it brief.
+5. Tell the user the filename and that it includes a **Sources** section citing the wiki pages used. Keep it brief.
 
 For general-encyclopedia topics use `search-wikipedia`; for a locality records-availability survey use `locality-guide`; for migration patterns or narrative history use `historical-context`.
 

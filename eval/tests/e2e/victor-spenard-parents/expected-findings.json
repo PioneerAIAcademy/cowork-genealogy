@@ -1,0 +1,120 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Victor Spénard (married Orise Lesage 29 September 1896) was the son of Maximin Spénard.",
+      "details": {
+        "subject_person": {
+          "name": "Victor Spénard",
+          "pid": "PID-TODO"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Maximin Spénard",
+          "birth": "31 October 1819, Quebec, Canada"
+        }
+      },
+      "supporting_sources": [
+        "Quebec Drouin Collection, marriage of Victor Spénard and Orise Lesage, 29 September 1896: \"Victor Spénard, son of Maximin Spénard, farmer, and Zoé Brousseau.\"",
+        "1891 Census of Canada, Quebec: Victor Spénard listed in the household of his parents Maximin and Zoé Spénard."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Victor Spénard (married Orise Lesage 29 September 1896) was the son of Zoé Brousseau.",
+      "details": {
+        "subject_person": {
+          "name": "Victor Spénard",
+          "pid": "PID-TODO"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Zoé Brousseau",
+          "birth": "daughter of Joseph Brousseau"
+        }
+      },
+      "supporting_sources": [
+        "Quebec Drouin Collection, marriage of Victor Spénard and Orise Lesage, 29 September 1896: groom named as son of Maximin Spénard and Zoé Brousseau.",
+        "1891 Census of Canada, Quebec: Victor Spénard in the household of Maximin and Zoé Spénard."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Victor Spénard's paternal grandfather (Maximin Spénard's father) was Jean Baptiste Spénard.",
+      "details": {
+        "subject_person": {
+          "name": "Maximin Spénard",
+          "pid": "PID-TODO"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Jean Baptiste Spénard",
+          "birth": "cultivateur (farmer)"
+        }
+      },
+      "supporting_sources": [
+        "Quebec Drouin Collection, baptism of Maximin Spénard, 31 October 1819: parents Jean Baptiste Spénard, cultivateur (farmer), and Geneviève Payan also known as St-Onge."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Victor Spénard's paternal grandmother (Maximin Spénard's mother) was Geneviève Payan, also known as St-Onge.",
+      "details": {
+        "subject_person": {
+          "name": "Maximin Spénard",
+          "pid": "PID-TODO"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Geneviève Payan (dite St-Onge)",
+          "birth": "unknown"
+        }
+      },
+      "supporting_sources": [
+        "Quebec Drouin Collection, baptism of Maximin Spénard, 31 October 1819: parents Jean Baptiste Spénard and Geneviève Payan also known as St-Onge."
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "fact",
+      "description": "Maximin Spénard married Zoé Brousseau on 2 June 1863; he was the widower of Exupine Perrault at the time.",
+      "details": {
+        "target_person": {
+          "name": "Maximin Spénard"
+        },
+        "fact_type": "Marriage",
+        "date": "2 June 1863",
+        "place": "Quebec, Canada"
+      },
+      "supporting_sources": [
+        "Quebec Drouin Collection, marriage of Maximin Spénard and Zoé Brousseau, 2 June 1863: groom the widower of Exupine Perrault; bride Zoé Brousseau, daughter of Joseph Brousseau."
+      ],
+      "required": false
+    },
+    {
+      "id": "f6",
+      "type": "fact",
+      "description": "Maximin Spénard died 20 March 1901, age 82 (spouse Zoé Brousseau).",
+      "details": {
+        "target_person": {
+          "name": "Maximin Spénard"
+        },
+        "fact_type": "Death",
+        "date": "20 March 1901",
+        "place": "Quebec, Canada"
+      },
+      "supporting_sources": [
+        "Quebec Drouin Collection, burial of Maximin Spénard, died 20 March 1901, age 82, spouse Zoé Brousseau."
+      ],
+      "required": false
+    }
+  ]
+}

@@ -26,6 +26,14 @@ relationship without asserting a type rather than defaulting to
 living with adults without clarifying whether the connection is
 genetic, adoptive, or something else.
 
+## Couple-event facts belong on the relationship
+
+Marriage, divorce, and other couple events are facts of the **`Couple`
+relationship**, not of either spouse. Record them in the relationship's
+`facts` array — supplied when you create the relationship — never as a
+person-level fact. A marriage stored on a person record misplaces the
+event; the couple relationship is its only correct home.
+
 ## When to create relationships
 
 Create a relationship entry when:

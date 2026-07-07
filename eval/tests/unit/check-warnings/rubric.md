@@ -32,3 +32,12 @@ Does each warning suggest what to investigate? "Birth year conflict between cens
 - **pass:** Every warning names the specific records involved and the action a genealogist should take.
 - **partial:** Most warnings are actionable but at least one is generic ("possible date issue") without naming records or next steps.
 - **fail:** Warnings are decoupled from records, or suggested actions are too vague to act on.
+
+## FamilySearch quality reporting
+
+Does the skill handle the `person_quality` tool correctly -- calling it when (and only when) it applies, reporting it as a concern distinct from the offline impossibilities, and degrading gracefully? Judge only from the tool calls, the tool responses, and the skill's text -- not from the tree.
+
+- **N/A:** The person's id is synthetic (not a FamilySearch ID), so quality does not apply and no `person_quality` call is expected. Score this dimension `null` -- **unless** the skill wrongly called `person_quality` on a synthetic id, which is a `fail`.
+- **pass:** `person_quality` was called exactly when the id was a FamilySearch ID (and skipped for a synthetic id). Its issues are reported in a section distinct from the impossibilities, sentences taken from the tool verbatim, framed as optional improvements (never escalated to error/Critical), with no invented quality band. Zero-issue and tombstoned/error responses are reported honestly, and a quality failure never suppresses the `person_warnings` result.
+- **partial:** Quality is reported but with one slip -- merged into the impossibilities list, an issue lightly re-worded or re-scored, a missing overall score, or an over-stated "fix urgently" tone -- while the warnings result is still intact.
+- **fail:** `person_quality` called on a synthetic id or skipped on a real FS id; quality issues escalated as impossibilities/errors; a quality failure suppressed or aborted the warnings report; or quality issues were fabricated.
