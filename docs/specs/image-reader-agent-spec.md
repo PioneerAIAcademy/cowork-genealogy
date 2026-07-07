@@ -144,26 +144,25 @@ without crashing is **not** sufficient.
 The landing gate is a fresh scored run in which the agent **actually reads
 at least one image successfully** — ideally **2+ scans across separate
 invocations**, to exercise the once-per-image isolation and confirm base64
-never accumulates in the caller. Because `image_read` today rejects the
-ARK inputs `record-extraction` feeds it (see §8), this real-read run is
-only achievable once the ARK-accepting `image_read` has landed. Record the
-passing scored run + `.ann.json` per the usual e2e gate.
+never accumulates in the caller. This is now unblocked: the ARK-accepting
+`image_read` has landed (§8), so `record-extraction`'s ARK inputs reach a
+successful read. Produce this real-read run (the prior `clark-parents` run
+that fabricated its read does not count) and record the passing scored run
++ `.ann.json` per the usual e2e gate.
 
-## 8. Merge dependency: the ARK-accepting `image_read`
+## 8. Merge dependency: the ARK-accepting `image_read` (satisfied)
 
-This PR **must not land ahead of the ARK-supporting `image_read` fix.**
+This agent depends on an `image_read` that accepts document-image **ARKs**
+(`3:1:/3:2:`), because `record-extraction` hands the agent ARKs — the shape
+`fulltext_search` returns. That dependency is now **satisfied**: the
+ARK-accepting `image_read` landed in `main` (#600) and has been merged into
+this branch, so the ARK inputs named in the `imageId`/`ark` convention
+(§3.1) work as written.
 
-`record-extraction` hands the agent image **ARKs** (`3:1:.../$dist`), but
-today's `image_read` accepts only a bare `NUMBER_NUMBER` Image Group
-Number and rejects an ARK — and on that rejection the failure path, before
-the §6 hardening, *fabricated* a reading instead of erroring. So if this
-PR merges first, **every original-scan read is broken in production**: the
-agent is fed ARKs its only tool refuses.
-
-No wording change is needed here or in the agent — the ARK claims in the
-`imageId` convention (§3.1) become true as written the moment the
-ARK-accepting `image_read` lands. The requirement is purely one of
-**merge order**: co-merge with the other team's `image_read` fix, or land
-theirs first. The §6 NOT-READ hardening is orthogonal and lands with this
-PR regardless — it makes any future `image_read` failure a clean, visible
-miss rather than a fabrication.
+(Historical context, kept because it explains the §6 guardrail: before
+#600, `image_read` accepted only a bare `NUMBER_NUMBER` Image Group Number
+and rejected an ARK — and the pre-§6 failure path *fabricated* a reading on
+that rejection instead of erroring. Had this agent shipped ahead of #600,
+every original-scan read would have been broken in production. The §6
+NOT-READ hardening is orthogonal and stands regardless: it turns any future
+`image_read` failure into a clean, visible miss rather than a fabrication.)
