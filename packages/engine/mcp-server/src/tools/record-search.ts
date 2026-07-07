@@ -534,12 +534,16 @@ export async function recordSearchTool(
     }
   }
 
-  // Drop the inline per-result gedcomx AFTER staging so a broad search doesn't
-  // overflow the model's context (rank_search_matches reads the bulk from the
-  // staged file). Gated on staging success: the staged file is already
-  // serialized to disk, so stripping the inline copy cannot corrupt the sidecar.
-  // Never strip when `staged` is null (nothing was retained to re-read from).
-  if (input.omitGedcomx && out.staged) {
+  // Whenever results were staged, drop the inline per-result gedcomx so a broad
+  // search can't overflow the model's context — the bulk lives in the staged
+  // file, which rank_search_matches (and record_read) read host-side, and the
+  // remaining flat stub fields still carry names/dates/places for triage. This
+  // is unconditional (no opt-in flag): once staged, nothing needs inline
+  // gedcomx, so the overflow protection can't be forgotten by the caller. Safe
+  // because the staged file is already serialized to disk, so stripping the
+  // inline copy cannot corrupt the sidecar. Never strip when `staged` is null
+  // (an un-staged exploratory search — nothing was retained to re-read from).
+  if (out.staged) {
     for (const r of out.results) {
       delete r.gedcomx;
     }
@@ -632,8 +636,7 @@ export const recordSearchToolSchema = {
       count: { type: "number", description: "Number of results per page. Default 20, max 100." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
-      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle; pass that to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them. Omit it for an exploratory search you do not intend to log." },
-      omitGedcomx: { type: "boolean", description: "When true, drop the per-result `gedcomx` blob from the inline return AFTER the full results are staged host-side — keeping a broad search from overflowing the context window. Requires `projectPath` (only takes effect once staging succeeds). Pass this with `projectPath` and `count: 50`, then call `rank_search_matches` with the returned `staged.resultsRef` to re-rank by match score." },
+      projectPath: { type: "string", description: "Absolute path to the active project directory. When supplied, the tool stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results then come back as compact stubs WITHOUT the per-result `gedcomx` (the bulk lives in the staged file, so a broad search can't overflow the context) — pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them. Omit `projectPath` for an exploratory search you do not intend to log (results come back inline with full gedcomx)." },
     },
   },
 };

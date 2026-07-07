@@ -81,20 +81,21 @@ the FS ranker's failure auditable; `matchScore:null` on persistent call failure 
 would reintroduce the exact blindness we're fixing (the probe's rescued records
 would have been gated out). Verify all; let `matchScore` sort them.
 
-### Changed tool: `record_search` (additive, opt-in flag; **on by default in the skill**)
+### Changed tool: `record_search` (auto-omit inline gedcomx when staged)
 
-Add `omitGedcomx?: boolean`. When true **and** staging succeeded, the inline
-`results[]` drop the `gedcomx` field (the size driver) — built as copies **after**
-`stageSearchResults` writes (`record-search.ts:526`), never by mutating `out.results`
-first (the staged copy shares the object). Gate on staging success: if `staged` is
-null, keep gedcomx inline as the fallback. Other callers unaffected (flag defaults
-false at the tool; the `search-records` skill passes it true).
+**Unconditionally** drop the inline `results[]` `gedcomx` (the size driver)
+**whenever staging succeeded** — no opt-in flag. Strip **after**
+`stageSearchResults` writes, so the on-disk staged file is intact. If `staged` is
+null (an un-staged exploratory search), keep gedcomx inline. Safe because nothing
+consumes inline gedcomx once staged (the review confirmed `person-evidence` /
+`record-extraction` read via `record_read`), so the overflow protection can't be
+forgotten by the caller and can't regress.
 
 ### New `search-records` flow (default path — pre-prod, so exercise it everywhere)
 
-1. `record_search({ …, projectPath, count: 50, omitGedcomx: true })` → compact
-   stubs + `staged.resultsRef`. (Top-50 cap; page with `offset:50` if no confident
-   match — recall cliff at rank 50.)
+1. `record_search({ …, projectPath, count: 50 })` → compact stubs (inline gedcomx
+   auto-omitted) + `staged.resultsRef`. (Top-50 cap; page with `offset:50` if no
+   confident match — recall cliff at rank 50.)
 2. `rank_search_matches({ projectPath, stagedResultsRef, subjectId, checkAttachments: true })`
    → match-ranked stubs + scores + attachment flags. The per-result `same_person`
    loop and the separate `source_attachments` call **collapse into this one call.**
@@ -127,7 +128,7 @@ New: `src/types/rank-search-matches.ts`, `src/tools/rank-search-matches.ts`,
 in `tool-schemas.ts` + `index.ts` + `manifest.json`; spec
 `docs/specs/rank-search-matches-tool-spec.md`. Move `scorePair` + `buildRawWithAnchor`
 from `same-person.ts` into `src/utils/match-engine.ts` (both tools import). Changed:
-`record_search` opt-in `omitGedcomx` (~5 lines + schema/type); `search-records/SKILL.md`
+`record_search` auto-omit inline gedcomx when staged (~3 lines); `search-records/SKILL.md`
 + allowed-tools. **Untouched:** research.json schema/validator/enums/web-mirror, VM code,
 `same_person`'s public contract, staging/finalize paths, and (omit is opt-in)
 `person-evidence`/`record-extraction`.

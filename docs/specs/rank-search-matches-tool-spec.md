@@ -23,10 +23,10 @@ live FamilySearch data (see **Design notes**):
 ### Relationship to other tools
 
 - **`record_search`** stages its verbatim results host-side and returns a
-  `staged.resultsRef` handle (`search-result-staging-spec.md`). The new
-  `omitGedcomx` flag (below) drops the per-result gedcomx from its *inline*
-  return so the raw search no longer overflows. `rank_search_matches` consumes
-  the `resultsRef`.
+  `staged.resultsRef` handle (`search-result-staging-spec.md`), and (below)
+  **automatically drops the per-result gedcomx from its *inline* return whenever
+  it stages** (no flag), so the raw search can't overflow. `rank_search_matches`
+  consumes the `resultsRef`.
 - **`same_person`** is the pair scorer. `rank_search_matches` reuses its
   `scorePair` / `buildRawWithAnchor` internals (lifted to a shared
   `src/utils/match-engine.ts`), calling them in a bounded host-side fan-out.
@@ -258,26 +258,29 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 - Wiring: `src/tool-schemas.ts` (`allToolSchemas`), `src/index.ts` (dispatch),
   `manifest.json` (`tools[]`) — kept in sync by the manifest drift test
   (`tests/packaging/manifest.test.ts`).
-- `record_search` change: add opt-in `omitGedcomx?: boolean` to
-  `RecordSearchInput` + inputSchema + the `record-search.ts` return path. Strip
-  inline `gedcomx` **after** `await stageSearchResults(...)`, gated on staging
-  success — the staged file is already serialized to disk, so stripping the
-  inline copy cannot corrupt the sidecar.
+- `record_search` change: in the `record-search.ts` return path, **unconditionally
+  strip inline `results[].gedcomx` after `await stageSearchResults(...)` whenever
+  staging succeeded** — no opt-in flag (nothing needs inline gedcomx once staged,
+  so the overflow protection can't be forgotten by the caller). The staged file is
+  already serialized to disk, so stripping cannot corrupt the sidecar; an un-staged
+  (no `projectPath`) search still returns full gedcomx inline.
 - **`packages/engine/plugin/skills/search-records/SKILL.md` — required, not
   optional.** Add `rank_search_matches` to `allowed-tools` and rewrite the triage
-  step to the flow below. **Without this the tool is unreachable and `omitGedcomx`
-  is inert** (nothing sets it) — `omitGedcomx` is exercised *only* by this
-  rewrite. Plan for: the `allowed-tools` change flips the `search-records` eval
+  step to the flow below. **Without this the tool is unreachable** — the
+  compact-stub behavior is automatic on every staged `record_search`, but this
+  rewrite is what invokes `rank_search_matches` on the staged results. Plan for:
+  the `allowed-tools` change flips the `search-records` eval
   run log inactive (snapshot → re-run + re-grade), and `check_tool_coverage.py`
   warns until the test corpus gains a `rank_search_matches` MCP fixture.
 
 ### `search-records` flow (the skill rewrite)
 
-1. `record_search({ …, projectPath, count: 50, omitGedcomx: true })` → compact
-   stubs + `staged.resultsRef`. (Page with `offset: 50` if no confident match —
-   recall cliff at rank 50.)
-2. `rank_search_matches({ projectPath, stagedResultsRef, subjectId,
-   checkAttachments: true })` → match-ranked stubs + scores. The per-result
+1. `record_search({ …, projectPath, count: 50 })` → compact stubs (inline
+   gedcomx auto-omitted) + `staged.resultsRef`. (Page with `offset: 50` if no
+   confident match — recall cliff at rank 50.)
+2. **Always** `rank_search_matches({ projectPath, stagedResultsRef, subjectId,
+   checkAttachments: true })` after any results-returning search → match-ranked
+   stubs + scores. The per-result
    `same_person` loop and the separate `source_attachments` call **collapse into
    this one call.** If `subjectResolvable: false`, fall back to the manual
    `same_person` / cross-check path.
@@ -299,8 +302,9 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 - A failing pair yields `matchScore: null` + `scoringErrors++`, never dropped.
 - Guard rejections (traversal, missing file, `subjectId` absent) error cleanly.
 - Read-only: the staged file still exists and is finalizable after the call.
-- `record_search` `omitGedcomx:true` strips inline gedcomx only when staging
-  succeeded; keeps it inline when `staged` is null.
+- `record_search` strips inline `results[].gedcomx` whenever staging succeeded
+  (unconditional); keeps it inline for an un-staged (no `projectPath`) search and
+  when `staged` is null.
 
 Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 `rank_search_matches` against live FS for a known subject.

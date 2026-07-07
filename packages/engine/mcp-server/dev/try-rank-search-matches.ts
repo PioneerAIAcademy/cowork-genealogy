@@ -1,7 +1,7 @@
 /// <reference types="node" />
 /**
- * Smoke test for rank_search_matches — runs a real record_search (with
- * omitGedcomx + host-side staging) and then re-ranks the staged results by
+ * Smoke test for rank_search_matches — runs a real record_search (which
+ * auto-omits inline gedcomx and stages host-side) and then re-ranks the staged results by
  * match score against a known tree subject, end-to-end against live FamilySearch.
  *
  * Requires a valid FS session (run `login` first) and a project directory that
@@ -33,7 +33,6 @@ const search = await recordSearchTool({
   surname,
   givenName,
   count: 50,
-  omitGedcomx: true,
 });
 
 console.log("record_search →");

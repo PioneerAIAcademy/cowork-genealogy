@@ -102,13 +102,12 @@ export interface RecordSearchInput {
   // When set, the tool stages its verbatim response to results/.staging/ and
   // returns a `staged` handle (search-result-staging-spec.md). Purely additive:
   // omitting it leaves behavior identical to before.
+  // When set, results are staged host-side AND the inline per-result `gedcomx`
+  // is dropped (unconditionally) so a broad search can't overflow the model's
+  // context — the staged file (read by rank_search_matches / research_log_append)
+  // carries the full gedcomx; the inline stubs keep the flat fields. An
+  // un-staged (no projectPath) search returns full gedcomx inline as before.
   projectPath?: string;
-  // When true, drop the per-result `gedcomx` from the INLINE return AFTER the
-  // full results have been staged host-side, so a broad search no longer
-  // overflows the model's context. The staged file (and thus rank_search_matches
-  // / research_log_append) still carries the full gedcomx. Only takes effect
-  // when staging succeeded (never strips when `staged` is null).
-  omitGedcomx?: boolean;
   surname?: string;
   givenName?: string;
   surnameAlt?: string;

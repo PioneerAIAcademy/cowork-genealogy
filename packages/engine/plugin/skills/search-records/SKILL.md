@@ -127,14 +127,18 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 ### 3. Execute the search
 
-Call `record_search` with the constructed params plus `projectPath` (the absolute path of the project directory), **`count: 50`, and `omitGedcomx: true`**. `projectPath` stages the raw results host-side and returns a `staged.resultsRef` handle (pass it to `rank_search_matches` in Step 4 **and** `research_log_append` in Step 5); `omitGedcomx: true` keeps the bulk per-result GedcomX off the return (it lives in the staged file), so a large result set can't overflow — you get compact stubs plus the handle. `count: 50` fetches a deep-enough pool for the match re-ranker.
+Call `record_search` with the constructed params plus `projectPath` (the absolute path of the project directory) and **`count: 50`**. Passing `projectPath` stages the raw results host-side, returns a `staged.resultsRef` handle (pass it to `rank_search_matches` in Step 4 **and** `research_log_append` in Step 5), and returns the inline results as **compact stubs** — the bulk per-result GedcomX lives in the staged file (so a large result set can't overflow; no flag needed). `count: 50` fetches a deep-enough pool for the match re-ranker.
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
 
 ### 4. Triage results — rank by match, then confirm
 
-Step 3 returned compact stubs plus a `staged.resultsRef`. Rather than hand-score
-each hit, have the host rank them all by match against the subject.
+Step 3 returned compact stubs plus a `staged.resultsRef`. **Always call
+`rank_search_matches` after any search that returns one or more results — even
+1–2.** Don't hand-score, eyeball, or skip it for a small result set: one cheap
+host-side call gives a real match score + attachment flag for every candidate
+(which also feeds the match-score log for later threshold calibration) and keeps
+triage uniform.
 
 **Rank the staged results:**
 

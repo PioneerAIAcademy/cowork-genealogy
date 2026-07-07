@@ -677,7 +677,7 @@ describe("recordSearchTool — User-Agent contract", () => {
   });
 });
 
-describe("recordSearchTool — omitGedcomx", () => {
+describe("recordSearchTool — inline gedcomx omission when staged", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "record-search-omit-"));
@@ -692,16 +692,16 @@ describe("recordSearchTool — omitGedcomx", () => {
     entries: [lincolnEntry()],
   });
 
-  it("strips inline results[].gedcomx AFTER staging succeeds, keeping the stub", async () => {
+  it("strips inline results[].gedcomx whenever staging succeeds, keeping the stub", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
     const out = await recordSearchTool({
       surname: "Lincoln",
       projectPath: dir,
-      omitGedcomx: true,
     });
 
-    // Staging happened, so the inline gedcomx is dropped; the stub survives.
+    // Staging happened, so the inline gedcomx is dropped unconditionally (no
+    // opt-in flag); the flat stub survives for triage.
     expect(out.staged).toBeTruthy();
     expect(out.results).toHaveLength(1);
     expect(out.results[0].gedcomx).toBeUndefined();
@@ -709,14 +709,13 @@ describe("recordSearchTool — omitGedcomx", () => {
     expect(out.results[0].primaryId).toBe("p_1");
   });
 
-  it("keeps inline gedcomx when omitGedcomx is true but staging returned null", async () => {
+  it("keeps inline gedcomx when staging returned null", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
     // A non-existent projectPath makes stageSearchResults throw → staged: null.
     const out = await recordSearchTool({
       surname: "Lincoln",
       projectPath: join(dir, "does-not-exist"),
-      omitGedcomx: true,
     });
 
     expect(out.staged).toBeNull();
@@ -725,15 +724,15 @@ describe("recordSearchTool — omitGedcomx", () => {
     expect(out.results[0].gedcomx).toBeDefined();
   });
 
-  it("keeps inline gedcomx when omitGedcomx is unset even though staging succeeded", async () => {
+  it("keeps inline gedcomx for an exploratory search with no projectPath", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
+    // No projectPath → no staging → full gedcomx returned inline as before.
     const out = await recordSearchTool({
       surname: "Lincoln",
-      projectPath: dir,
     });
 
-    expect(out.staged).toBeTruthy();
+    expect(out.staged).toBeUndefined();
     expect(out.results[0].gedcomx).toBeDefined();
   });
 });
