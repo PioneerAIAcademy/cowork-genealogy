@@ -4,12 +4,13 @@
     "skill": "search-records",
     "name": "Write a result sidecar for a positive record search",
     "type": "positive",
-    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). The record_search fixture returns a matching household. The skill must retain the raw results: write results/<log_id>.json with the verbatim payload, set the log entry's results_ref and results_available, and write a one-line notes summary.",
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). After record_search (with projectPath) stages the matching household and rank_search_matches (with checkAttachments) re-ranks the correct record to the top as a strong match, the skill must retain the raw results: write results/<log_id>.json with the verbatim payload, set the log entry's results_ref and results_available, and write a one-line notes summary.",
     "tags": [
       "search",
       "census",
       "1850",
       "sidecar-write",
+      "rank-search-matches",
       "log-positive-record-search"
     ]
   },
@@ -18,16 +19,18 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
-    "record-search-1850-census-flynn"
+    "record-search-1850-census-flynn",
+    "rank-search-matches-flynn-census"
   ],
   "judge_context": [
     "The new log entry must carry a non-null results_ref pointing at results/<log_id>.json, and a results/<log_id>.json sidecar must be written containing the verbatim record_search response",
     "The sidecar's returned_count must equal the number of results in its payload",
     "results_available should reflect the upstream total-match count, and notes should be a one-line human summary of what the search returned",
+    "Triage flow: after record_search stages results (called with projectPath), the skill should call rank_search_matches with the staged.resultsRef, the subject id (I1), and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds both in). The fixture re-ranks the correct record (Patrick Flynn, ark MXHY-TP4) to matchRank 1 with a strong match score, confirming the positive match whose raw results the sidecar then retains.",
     "IMPORTANT — How file writes work in this skill: The skill uses the baseline Write/Edit tool to write research.json and results/ files. These are NOT MCP tool calls and will NOT appear in the MCP tool calls section. Research.json modifications appear in the file-change diff. results/ sidecars are NEWLY CREATED files — they do NOT appear in the file-change diff (only modifications to existing files are diffed).",
     "Log quality: Score 3 if the file-change diff shows research.json was modified with a new log entry added. Do NOT require the model to print the raw JSON log entry in its text response. Do NOT require a Write MCP tool call — the Write/Edit tool is a baseline tool, not an MCP tool.",
     "Sidecar correctness: Score 3 if the skill's text response references writing results/<log_id>.json (e.g., 'writing results/log_005.json', 'Sidecar: results/log_005.json', 'retained at results/log_005.json'). Do NOT reduce this score because results/ does not appear in the file-change diff (it's a new file, not a diff). Do NOT require a Write MCP tool call — sidecar writes use the baseline Write tool.",
-    "Result triage: same_person and source_attachments are NOT loaded as fixtures in this test. The model correctly does not call them (it would get fixture_not_found). Score Result triage 3 if the skill correctly identifies the result as a match and notes the key supporting attributes — tool calls beyond record_search are not required.",
-    "Completeness: Score 3 if the search was executed, the sidecar was written, and the log entry was appended. If the model notes that same_person or source_attachments tools are unavailable, that is an acceptable observation about the test environment — do NOT reduce Completeness for this. All required outputs (sidecar + log entry) are complete."
+    "Tool Arguments / Result triage: Score 3 if record_search (with projectPath) and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Per-result same_person and a separate source_attachments call are NOT expected (rank_search_matches folds both in). Score Result triage 3 if the skill identifies the top-ranked record as a strong match and notes the key supporting attributes — tool calls beyond record_search and rank_search_matches are not required.",
+    "Completeness: Score 3 if the search was executed, the staged results were re-ranked via rank_search_matches, the sidecar was written, and the log entry was appended. All required outputs (sidecar + log entry) are complete."
   ]
 }
