@@ -4,13 +4,14 @@
     "skill": "search-records",
     "name": "Check attachment status during result triage",
     "type": "positive",
-    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). After record_search returns results, the skill should call source_attachments to check which results are already attached to tree persons. The fixture returns one result attached to the target person (KWCJ-RN4) and one unattached — the skill should deprioritize the attached result and prioritize the unattached one for extraction.",
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn, Schuylkill County). After record_search (with omitGedcomx) stages results, the skill should call rank_search_matches to re-rank them by match against the subject and fold in the attachment check (checkAttachments: true). The fixture reranks the correct record (attached to the subject) to the top and returns unattached lower-ranked candidates — the skill should note the attached record is already in the tree (deprioritize for extraction) and surface attachment status in its triage.",
     "tags": [
       "search",
       "census",
       "1850",
       "attachment-check",
-      "triage"
+      "triage",
+      "rank-search-matches"
     ]
   },
   "input": {
@@ -19,14 +20,13 @@
   },
   "mcp_fixtures": [
     "record-search-1850-census-flynn",
-    "record-attachments-flynn-census"
+    "rank-search-matches-flynn-census"
   ],
   "judge_context": [
-    "After record_search returns results, the skill should call source_attachments with the arkUrl values from the search results to check attachment status",
-    "The triage output should distinguish between records already attached to the target person (KWCJ-RN4) and unattached records, deprioritizing the attached one and prioritizing the unattached one for extraction",
-    "The skill should mention the attachment status in its triage presentation to the user — e.g., noting that one record is already attached to KWCJ-RN4",
-    "Tool Arguments: score 3 if record_search and source_attachments were both called with appropriate parameters. A validate_research_schema call with a project path is acceptable and expected after writing — do not penalize it. Only score 2 if a required tool (source_attachments or record_search) had clearly wrong arguments or was skipped entirely",
-    "same_person is NOT required for this test — the core task is source_attachments-based triage. If the skill scores match quality manually from record attributes rather than calling same_person, accept this as valid and do NOT penalize Correctness for the inconsistency. Score Correctness 3 if the skill correctly identifies which results are attached vs. unattached and triages accordingly.",
+    "After record_search stages results (called with projectPath and omitGedcomx: true), the skill should call rank_search_matches with the staged.resultsRef, the subject id, and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds both in).",
+    "The triage output should surface attachment status from the returned matches: distinguish records already attached to the subject (attachedToSubject) — deprioritized as already in the tree — from unattached records prioritized as new evidence for extraction.",
+    "The skill should present the top matches with match score and attachment status to the user, and record_read / hand off the promising record(s) for extraction.",
+    "Tool Arguments: score 3 if record_search (with projectPath, omitGedcomx) and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool (record_search or rank_search_matches) had clearly wrong arguments or was skipped entirely.",
     "IMPORTANT — How file writes work: The skill uses baseline Write/Edit (not MCP) to write log entries and sidecars. results/ sidecars are newly created files — they do NOT appear in the file-change diff. Score Sidecar correctness 3 if the skill text mentions writing results/<log_id>.json. Do NOT score Sidecar=1 because the file does not appear in the MCP tool calls or file-change diff."
   ]
 }

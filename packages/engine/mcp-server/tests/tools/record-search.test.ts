@@ -27,6 +27,9 @@ import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 import type { FSSearchEntry, FSSearchResponse } from "../../src/types/record-search.js";
+import { mkdtemp, rm } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -671,5 +674,66 @@ describe("recordSearchTool — User-Agent contract", () => {
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+  });
+});
+
+describe("recordSearchTool — omitGedcomx", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-omit-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const oneResult = (): FSSearchResponse => ({
+    results: 1,
+    index: 0,
+    entries: [lincolnEntry()],
+  });
+
+  it("strips inline results[].gedcomx AFTER staging succeeds, keeping the stub", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({
+      surname: "Lincoln",
+      projectPath: dir,
+      omitGedcomx: true,
+    });
+
+    // Staging happened, so the inline gedcomx is dropped; the stub survives.
+    expect(out.staged).toBeTruthy();
+    expect(out.results).toHaveLength(1);
+    expect(out.results[0].gedcomx).toBeUndefined();
+    expect(out.results[0].recordId).toBeTruthy();
+    expect(out.results[0].primaryId).toBe("p_1");
+  });
+
+  it("keeps inline gedcomx when omitGedcomx is true but staging returned null", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    // A non-existent projectPath makes stageSearchResults throw → staged: null.
+    const out = await recordSearchTool({
+      surname: "Lincoln",
+      projectPath: join(dir, "does-not-exist"),
+      omitGedcomx: true,
+    });
+
+    expect(out.staged).toBeNull();
+    expect(out.stagingError).toBeTruthy();
+    // Never strip when nothing was retained to re-read from.
+    expect(out.results[0].gedcomx).toBeDefined();
+  });
+
+  it("keeps inline gedcomx when omitGedcomx is unset even though staging succeeded", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({
+      surname: "Lincoln",
+      projectPath: dir,
+    });
+
+    expect(out.staged).toBeTruthy();
+    expect(out.results[0].gedcomx).toBeDefined();
   });
 });

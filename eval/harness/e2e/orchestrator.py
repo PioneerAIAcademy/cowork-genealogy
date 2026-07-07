@@ -147,7 +147,10 @@ class FixtureCaps:
     # caps from here (don't re-hardcode the numbers there). Tuned so a real
     # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
     # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
-    wall_clock_seconds: int = 3600  # 60 min
+    wall_clock_seconds: int = 7200  # 120 min — the formal GPS apparatus
+    # (research-exhaustiveness + gps-mentor gates + proof-conclusion) pushes a
+    # real full-GPS run well past 60 min; kenneth/elizabeth/teitje all hit the
+    # old 3600 cap mid-proof-conclusion (morris already overrode to 4800).
     inactivity_seconds: int = 600   # 10 min with NO SDK message at all (silence)
     # Abort (or, with resume_on_stall, resume) when the agent makes no PROGRESS
     # — no assistant text and no tool call/result — for this long, even while the
@@ -162,7 +165,11 @@ class FixtureCaps:
     # Voluntary-yield nudges allowed before an autonomous run is permitted to
     # end. The agent sometimes narrates the next step then stops mid-loop; a
     # Stop hook vetoes that, bounded by this cap. See should_continue_run().
-    max_continue_nudges: int = 5
+    # Generous by design: a full GPS proof yields after each of ~10+ sub-skill
+    # steps, so a stingy cap ends the loop before proof-conclusion. The
+    # no-progress check (see should_continue_run) is the real backstop against
+    # a genuinely idle agent; this cap only bounds the worst case.
+    max_continue_nudges: int = 20
 
 
 @dataclass
@@ -339,7 +346,14 @@ async def _run_agent(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
+    # mcp__-only, for the tool_calls budget cap. Distinct from activity_count
+    # below, which powers the no-progress stop check.
     tool_call_count = {"n": 0}
+    # Any-tool counter (Skill, Read, mcp__, …) for the no-progress check. A
+    # read-only sub-skill step (e.g. research-exhaustiveness deciding "not yet
+    # exhaustive" and writing nothing) is real progress, not a stuck agent —
+    # gating no-progress on mcp__-only calls false-killed runs mid-loop.
+    activity_count = {"n": 0}
     # Every denied attempt to read the answer off the live tree. A
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
@@ -350,7 +364,7 @@ async def _run_agent(
     # bounded by max_continue_nudges + a no-progress check (see
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
-    last_nudge_tool_count = {"n": -1}
+    last_nudge_activity_count = {"n": -1}
 
     run_started = time.monotonic()
 
@@ -381,6 +395,11 @@ async def _run_agent(
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
+        # Count EVERY tool the agent issues (Skill, Read, mcp__, …) toward the
+        # no-progress signal — invoking a sub-skill is progress even when that
+        # skill writes nothing. The mcp__-only budget cap is tool_call_count,
+        # incremented separately below.
+        activity_count["n"] += 1
         if not tool_name.startswith("mcp__"):
             return {}
 
@@ -435,12 +454,12 @@ async def _run_agent(
             research=research,
             nudges_used=continue_nudges["n"],
             max_nudges=fixture.caps.max_continue_nudges,
-            tool_count=tool_call_count["n"],
-            tool_count_at_last_nudge=last_nudge_tool_count["n"],
+            tool_count=activity_count["n"],
+            tool_count_at_last_nudge=last_nudge_activity_count["n"],
         ):
             return {}
         continue_nudges["n"] += 1
-        last_nudge_tool_count["n"] = tool_call_count["n"]
+        last_nudge_activity_count["n"] = activity_count["n"]
         transcript.append(
             f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
             f"{fixture.caps.max_continue_nudges}: agent yielded before "

@@ -15,6 +15,7 @@
     "record-search-1860-census-mullen-sarah",
     "record-search-price-no-results",
     "record-search-mielke-no-results",
+    "rank-search-matches-mullen-1860-census",
     "validate-research-schema"
   ],
   "judge_context": [
@@ -23,6 +24,8 @@
     "The givenName should be 'Sarah' or 'Sarah Ann' — do NOT penalize for including or omitting the middle name 'Ann'.",
     "The log entry must record the search parameters accurately in query{} and the results honestly. The fixture returns 1 match (Sarah A. Mullen in William Mullen's household).",
     "CRITICAL for Search strategy scoring: The key signal is whether the skill recognized that pli_001 targets a date (1860) before the first marriage (1872) and therefore chose the maiden surname. Score 3 if it explicitly reasons about the name type or marriage date. Score 2 if it uses Mullen but doesn't explain why. Score 1 if it uses a married name as the primary surname.",
-    "same_person is NOT mocked in this test. If the skill does manual triage based on field comparison, accept that as sufficient — do NOT penalize for not calling same_person."
+    "After the maiden-name record_search stages results (called with projectPath and omitGedcomx: true), the skill should triage them by calling rank_search_matches with the staged.resultsRef, the subject id (I1), and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds match scoring and the attachment check in). The Price and Mielke searches return zero results, so they stage nothing and are not re-ranked; only the Mullen result set is.",
+    "The triage output should surface attachment status from the returned match: the 1860 census record is unattached (attachedToSubject: false, attachedToOther: false), so it is new evidence confirming Sarah's birth surname and should be prioritized for extraction / record_read — not deprioritized as already in the tree.",
+    "Tool Arguments: score 3 if record_search (with projectPath, omitGedcomx) and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool (record_search or rank_search_matches) had clearly wrong arguments or was skipped entirely."
   ]
 }

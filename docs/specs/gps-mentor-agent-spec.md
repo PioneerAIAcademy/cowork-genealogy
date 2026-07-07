@@ -83,13 +83,19 @@ knows what was evaluated.
 
 ### 3.4 Orchestrator checkpoints
 
-When `/research` invokes gps-mentor, it must supply explicit `focus` and `target_id`:
+`/research` **auto-invokes** gps-mentor at **one** checkpoint, advisory, supplying explicit `focus` and `target_id`:
 
 | Checkpoint | focus | target_id |
 |------------|-------|-----------|
-| Before declaring exhaustive | `pre-exhaustiveness` | the question's `q_` ID |
-| After exhaustive declared, before writing proof | `conclusion-readiness` | the question's `q_` ID |
 | After proof summary written | `proof-critique` | the proof summary's `ps_` ID |
+
+The `pre-exhaustiveness` and `conclusion-readiness` focuses remain supported for **on-demand**
+use ("am I ready to conclude?"), but `/research` no longer auto-gates on them: they duplicated
+`research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s tier analysis, the
+read-only mentor cannot verify exhaustiveness without search tools, and their forced rework
+starved the proof step (see the e2e latency analysis, `docs/plan/e2e-latency-analysis-and-plan.md`).
+The single `proof-critique` gate is identical in interactive and `--autonomous` mode and never
+blocks the flow — see §11.
 
 ---
 
@@ -100,8 +106,8 @@ The agent file `packages/engine/plugin/agents/gps-mentor.md` must open with this
 ```yaml
 ---
 name: gps-mentor
-description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research at three checkpoints (before research-exhaustiveness, before proof-conclusion, after proof-conclusion writes a summary) and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion". Read-only — never modifies project files. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
-model: claude-opus-4-7
+description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof — an advisory `proof-critique` after `proof-conclusion` writes a summary — and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?". Advisory only: it never blocks the flow or forces rework. Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
+model: claude-sonnet-5
 tools:
   - Read
   - validate_research_schema
@@ -114,9 +120,12 @@ tools:
 ---
 ```
 
-**Model requirement:** `claude-opus-4-7` (or the current Opus model). The rubric checks
-require reading and cross-referencing large research files with careful analytical reasoning.
-Do not substitute a smaller model.
+**Model requirement:** `claude-sonnet-5`. The gates read and cross-reference large research
+files with careful analytical reasoning. Sonnet 5 — released after this spec was first written —
+reaches near-Opus quality on that analytical work at lower cost and latency, which matters
+because the mentor runs on the critical path 3–4 times per question. Pin this model explicitly
+in the agent frontmatter (Cowork honors an agent's `model:`) rather than inheriting the session
+model; do not silently downgrade below Sonnet-5-class analytical reasoning.
 
 **Tools list is closed:** The agent does not have `record_search`, `fulltext_search`,
 `person_read`, or any write tool. It evaluates evidence the researcher has gathered; it
@@ -458,16 +467,16 @@ The agent prints `narrative_for_user` and stops. The orchestrator surfaces it to
 and pauses. The user decides what to do next — resume the `/research` flow, invoke a
 specific skill, or dismiss the review and continue.
 
-### 11.2 Autonomous mode
+### 11.2 Verdict handling (advisory — identical in interactive and autonomous)
 
-After the verdict is returned:
+The `proof-critique` gate runs *after* the answer is already persisted, so no verdict blocks
+the flow or re-opens the resolved question. After the verdict is returned:
 
 | Verdict | Orchestrator action |
 |---------|---------------------|
-| `looks_solid` | Continue to next step in the GPS cycle |
-| `consider_addressing` | Continue to next step; log `consider_addressing` items for future reference |
-| `address_first` | Route to `suggested_skill` on the first `must_address` item; pass the `specific_action` as the skill's input context |
-| `refused` | Surface the refusal message to the user and pause — autonomous flow cannot continue without human resolution |
+| `looks_solid` / `consider_addressing` | Surface the narrative; log `consider_addressing` items for later review; continue. |
+| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. In interactive mode a watching researcher may choose to act; under `--autonomous`, log and continue. |
+| `refused` | Surface the refusal message; it names the correct target. |
 
 The gps-mentor agent is not responsible for the orchestrator routing decision. It writes
 its verdict and prints its narrative; what happens next is the orchestrator's concern.

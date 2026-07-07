@@ -14,14 +14,16 @@
   "mcp_fixtures": [
     "record-search-1880-census-price-sarah",
     "record-search-1860-census-mullen-sarah",
+    "rank-search-matches-price-child-middle-name",
     "validate-research-schema"
   ],
   "judge_context": [
-    "The skill MUST use surname 'Price' as the primary surname parameter. This is what the tree's BirthName entry specifies: given='Sarah Ann Mullen', surname='Price'. Score Correctness=1 if the skill uses 'Mullen' as the primary surname.",
+    "NEW FLOW: After record_search stages results (called with projectPath and omitGedcomx: true, count up to 50), the skill should call rank_search_matches once with the staged.resultsRef, the subject id (Sarah = I1), and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds match scoring and the attachment check in). It re-ranks the staged Price candidates by match score against the subject and returns compact stubs for the review surface.",
+    "The skill MUST use surname 'Price' as the primary surname parameter to record_search. This is what the tree's BirthName entry specifies: given='Sarah Ann Mullen', surname='Price'. Score Correctness=1 if the skill uses 'Mullen' as the primary surname.",
     "The skill must NOT put 'Mullen' in the surnameAlt field for this search. 'Mullen' is part of the given name in the tree, not an alternate surname. Using surnameAlt='Mullen' would be a misinterpretation of the name structure. Score Search strategy=1 if surnameAlt is set to 'Mullen'.",
     "The givenName parameter should be 'Sarah', 'Sarah Ann', or 'Sarah Ann Mullen'. All are acceptable — the FamilySearch API handles multi-token given names. Do NOT penalize for including or omitting 'Ann' or 'Mullen' from the given name.",
-    "The fixture returns 2 results: Sarah M. Price (age 5, Dodge County — strong match) and Sarah Price (age 10, born New York, Milwaukee County — wrong person). The skill should triage these, identifying the first as a strong match and the second as not relevant based on birth year, birthplace, and county.",
+    "rank_search_matches returns 2 ranked stubs: matchRank 1 = Sarah M. Price (matchScore ~0.91, matchConfidence 5, b. 1875 Wisconsin, Dodge County — the strong match; the 'M.' initial is the middle name Mullen) and matchRank 2 = Sarah Price (matchScore ~0.24, b. 1870 New York, Milwaukee County, attachedToOther — the same-surname distractor / wrong person). The skill should surface the top match with its match score and attachment status, and triage the second as not relevant based on birth year, birthplace, and county.",
     "IMPORTANT: It is acceptable for the skill to note that 'Mullen' as a middle name may offer a clue to maternal relatives (FAN club) and suggest a future plan item to search Mullen families in Dodge County. This is good genealogical reasoning and should NOT reduce any score.",
-    "same_person is NOT mocked in this test. If the skill does manual triage based on field comparison, accept that as sufficient — do NOT penalize for not calling same_person."
+    "Tool Arguments: score 3 if record_search (with projectPath, omitGedcomx, surname 'Price') and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool had clearly wrong arguments (e.g., surname 'Mullen') or rank_search_matches was skipped in favor of per-result same_person / a separate source_attachments call."
   ]
 }

@@ -4,18 +4,20 @@
     "skill": "search-records",
     "name": "Execute a planned 1850 census search and log the result",
     "type": "positive",
-    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn in Schuylkill County, FamilySearch). The MCP fixture returns the expected matching household. Tests whether the skill (a) constructs the search parameters from the plan item, (b) writes a proper log entry, and (c) triages the results without silently dropping near-matches.",
-    "tags": ["search", "census", "1850", "plan-execution", "log-quality", "log-positive-record-search"]
+    "description": "Execute plan item pli_001 (1850 census for Patrick Flynn in Schuylkill County, FamilySearch). After record_search (with omitGedcomx) stages the results, the skill re-ranks them with rank_search_matches (checkAttachments: true) against subject I1. The fixture returns the expected matching household as a strong, unattached top match. Tests whether the skill (a) constructs the search parameters from the plan item, (b) writes a proper log entry, and (c) triages the ranked results without silently dropping near-matches.",
+    "tags": ["search", "census", "1850", "plan-execution", "log-quality", "log-positive-record-search", "rank-search-matches"]
   },
   "input": {
     "user_message": "Execute a fresh 1850 census search for Patrick Flynn in Schuylkill County for plan item pli_001. Prior log entries on this plan item used different query parameters and were inconclusive — log this new search regardless.",
     "scenario": "flynn-record-matching"
   },
-  "mcp_fixtures": ["record-search-1850-census-flynn"],
+  "mcp_fixtures": ["record-search-1850-census-flynn", "rank-search-matches-execute-census"],
   "judge_context": [
-    "The log entry's `query` should reflect the actual search parameters used (name, place, year/collection) and `results_examined` should match the count returned by the fixture",
+    "After record_search stages results (called with projectPath and omitGedcomx: true), the skill should call rank_search_matches with the staged.resultsRef, the subject id, and checkAttachments: true to re-rank the staged candidates and fold in the attachment check — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds both in).",
+    "The log entry's `query` should reflect the actual search parameters used (name, place, year/collection) and `results_examined` should match the count returned by the record_search fixture",
     "Must NOT set pli_001 status to 'completed' — the plan item status should remain 'in_progress' after the search; 'completed' is only set once the results have been extracted and analyzed by record-extraction downstream",
-    "Should categorize any near-matches in the fixture (results that are not the target but share some attributes) rather than silently filtering them — the log's `notes` field is appropriate for triage commentary",
-    "same_person is NOT mocked in this test (only record_search is). If the skill claims same_person is unavailable or does not call it, accept manual triage based on field comparison (name, birth year, birthplace, residence, household composition) as fully sufficient — score Result triage=3 if the manual reasoning is sound and the result is correctly categorized. Do NOT penalize for not calling same_person."
+    "Using the ranked matches as a review surface, the skill should triage the top match (a strong, unattached census hit — surfaced as new evidence to prioritize for extraction) rather than silently filtering it, and categorize any near-matches in `notes` instead of dropping them",
+    "Tool Arguments: score 3 if record_search (with projectPath, omitGedcomx) and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool (record_search or rank_search_matches) had clearly wrong arguments or was skipped entirely.",
+    "IMPORTANT — How file writes work: The skill uses baseline Write/Edit (not MCP) to write log entries and sidecars. results/ sidecars are newly created files — they do NOT appear in the file-change diff. Score Sidecar correctness 3 if the skill text mentions writing results/<log_id>.json. Do NOT score Sidecar=1 because the file does not appear in the MCP tool calls or file-change diff."
   ]
 }

@@ -4,14 +4,14 @@
     "skill": "search-records",
     "name": "Near-match with variant surname must be flagged needs-review, not dismissed",
     "type": "positive",
-    "description": "record_search returns one result: 'Patrick Flyn' (variant spelling), age 8 in 1850 (3 years older than expected 5), correct county. The skill should call same_person and receive a low score (0.32) because the name component tanks the algorithm. However, the low score must NOT be used as the sole reason to dismiss — the place, county, and household context still make this worth human review. The skill must flag it as needs-review with reasoning, not drop it silently.",
+    "description": "record_search (with omitGedcomx) stages one result: 'Patrick Flyn' (variant spelling), age 8 in 1850 (3 years older than expected 5), correct county. The skill should call rank_search_matches (checkAttachments: true) on the staged results. The near-match comes back with a MIDDLING matchScore (0.52) in the needs-review band because the surname transcription variant and age gap pull the score down. That middling score must NOT be used as the sole reason to dismiss — the place, county, and household context still make this worth human review. The skill must flag it as needs-review with reasoning, not drop it silently.",
     "tags": [
       "search",
       "census",
       "1850",
       "triage",
       "near-match",
-      "same-person",
+      "rank-search-matches",
       "needs-review"
     ]
   },
@@ -21,13 +21,14 @@
   },
   "mcp_fixtures": [
     "record-search-near-match-age-off-flynn",
-    "same-person-flynn-variant"
+    "rank-search-matches-flynn-near-match"
   ],
   "judge_context": [
-    "The skill should call same_person after finding the near-match result — the score (0.32) reflects surname transcription variance, not a genuine mismatch",
-    "A score of 0.32 falls below the 'weak match' threshold (<0.4), but the skill must NOT auto-dismiss based on score alone when place and county match — it should reason about why the score is low (variant spelling) and flag needs-review",
-    "The result must be categorized as needs-review (not not-relevant) with explicit reasoning: e.g., 'Flyn is a known spelling variant of Flynn; age off by 3 years and score is low, but county and place match — flagged for human review'",
+    "After record_search stages results (called with projectPath and omitGedcomx: true), the skill should call rank_search_matches with the staged.resultsRef, the subject id (I1), and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds both in).",
+    "The returned match has a MIDDLING matchScore (0.52) that lands in the needs-review band — it reflects surname transcription variance ('Flyn' vs 'Flynn') and an age off by ~3 years, not a genuine mismatch. The skill must NOT auto-dismiss based on the middling score alone when place and county match — it should reason about why the score is depressed (variant spelling, age gap) and flag needs-review.",
+    "The result must be categorized as needs-review (not not-relevant) with explicit reasoning: e.g., 'Flyn is a known spelling variant of Flynn; age off by 3 years and match score is middling, but county and place (Schuylkill) match — flagged for human review'. attachedToSubject is false, so it is an unattached candidate, not already in the tree.",
     "The log entry should record outcome 'positive' (a result was returned) and notes should capture the triage reasoning",
+    "Tool Arguments: score 3 if record_search (with projectPath, omitGedcomx) and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool (record_search or rank_search_matches) had clearly wrong arguments or was skipped entirely.",
     "Log quality and Sidecar correctness: do NOT require the skill to print the raw log entry JSON or raw sidecar JSON in its text response. Score 3 if the skill stated it wrote results/<log_id>.json and appended a log entry with appropriate fields. Score 2 only if the skill explicitly says it skipped writing, or if key fields (query, outcome, results_ref) were clearly absent from its description of what it wrote.",
     "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test",
     "Nil escalation: score null (N/A) for this test. The scenario returned one result and the skill triaged it. This test grades near-match triage behavior only — it is NOT a nil search. Do not penalize for not attempting additional variant searches."

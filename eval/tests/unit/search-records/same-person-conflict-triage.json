@@ -2,16 +2,16 @@
   "test": {
     "id": "ut_search_records_014",
     "skill": "search-records",
-    "name": "High same_person score must not override a qualitative conflict",
+    "name": "High match score must not override a qualitative conflict",
     "type": "positive",
-    "description": "record_search returns Patrick Flynn, correct name/age/place, but the record lists him as HEAD of household in 1850 — impossible, he is 5 years old. same_person returns a high score (0.85, matched: true) because name, date, and place align. The skill must catch the impossible household role, flag a conflict, and NOT treat this as a confirmed match despite the high score.",
+    "description": "record_search (omitGedcomx) returns one Patrick Flynn result with correct name/age/place, staged for ranking; rank_search_matches (checkAttachments) re-ranks it to matchRank 1 with a high match score (0.85) because name, date, and place align. But the record lists him as HEAD of household in 1850 — impossible, he is 5 years old. The skill must apply its Step-4 logical cross-check, catch the impossible household role, flag a conflict, and NOT treat this as a confirmed match despite the high score.",
     "tags": [
       "search",
       "census",
       "1850",
       "triage",
       "conflict",
-      "same-person",
+      "rank-search-matches",
       "needs-review"
     ]
   },
@@ -21,13 +21,14 @@
   },
   "mcp_fixtures": [
     "record-search-conflict-household-flynn",
-    "same-person-flynn-conflict"
+    "rank-search-matches-flynn-conflict"
   ],
   "judge_context": [
-    "same_person returns score 0.85 (matched: true) — a strong score — but the record shows Patrick Flynn as HEAD of household in 1850 when he is 5 years old, which is impossible",
-    "The skill must NOT auto-accept this as a confirmed match based on the high score alone — it must cross-check the record details and flag the impossible household role as a qualitative conflict",
-    "The result should be categorized as needs-review or flagged-conflict with explicit reasoning citing the impossible head-of-household role: e.g., 'same_person score is 0.85 but the record lists a 5-year-old as head of household — likely a transcription or attribution error; flagged for human review'",
-    "This tests that the skill treats same_person as one input to triage reasoning, not as the final word",
+    "After record_search (with projectPath and omitGedcomx: true) stages results, the skill should call rank_search_matches with the staged.resultsRef, the subject id, and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds both in). rank_search_matches returns the Patrick Flynn record at matchRank 1 with a high match score (0.85, matchConfidence 5).",
+    "The high match score must NOT auto-accept this as a confirmed match. The underlying record lists Patrick Flynn as HEAD of household in 1850 (recordTitle 'Patrick Flynn — Head of Household, 1850') when he was born ~1845 — a 5-year-old cannot be head of household. The skill must apply its Step-4 logical cross-check (role vs. age) and flag this impossible household role as a qualitative conflict.",
+    "The result should be categorized as needs-review or flagged-conflict with explicit reasoning citing the impossible head-of-household role: e.g., 'match score is 0.85 but the record lists a 5-year-old as head of household — likely a transcription or attribution error; flagged for human review'. Reason, not score, is the arbiter.",
+    "This tests that the skill treats the rank_search_matches match score as one input to triage reasoning, not as the final word — the ranked list is a review surface for the existing role/age cross-checks, not an accept/reject classifier.",
+    "Tool Arguments: score 3 if record_search (with projectPath, omitGedcomx) and rank_search_matches (with stagedResultsRef, subjectId, checkAttachments) were both called with appropriate parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if a required tool (record_search or rank_search_matches) had clearly wrong arguments or was skipped entirely.",
     "IMPORTANT — Completeness grading: score 3 if the skill (a) found the conflicted result, (b) flagged the conflict with reasoning, (c) logged and offered next steps. Do NOT penalize for stopping after the conflicted result — stopping is CORRECT behavior. A conflicted result is NOT nil; the nil-escalation rules do not apply here. The Completeness dimension should NOT require the skill to search further after identifying a qualitative conflict"
   ]
 }
