@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the staged 1900-census results against tree subject I1 (Mary 'Bitsie' Jackson, F, b.~1850 Lancaster County, Pennsylvania). Only fires after the formal-name search under-matched and the skill retried with the documented Nickname 'Bitsie', which staged the single Bitsie-Jackson record. The record (ark:/61903/1:1:BJKN-90A, Bitsie Jackson in William Jackson's household) scores as a strong match to I1 despite its personName being the community nickname rather than I1's preferred BirthName 'Mary' — the match engine keys on sex/date/place, not the surface name string. checkAttachments confirms it is unattached (new evidence), so triage prioritizes it. Matched on subjectId; independent of the per-run stagedResultsRef handle.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:BJKN-90A",
+        "primaryId": "P1",
+        "personName": "Bitsie Jackson",
+        "sex": "Female",
+        "birthDate": "1850",
+        "birthPlace": "Pennsylvania",
+        "collectionTitle": "United States Census, 1900 (Lancaster County, Pennsylvania)",
+        "matchScore": 0.9127,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}
