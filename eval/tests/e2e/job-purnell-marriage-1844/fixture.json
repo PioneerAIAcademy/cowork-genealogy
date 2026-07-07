@@ -1,0 +1,18 @@
+{
+  "id": "job-purnell-marriage-1844",
+  "name": "Job Purnell & Emma Osborne — marriage date and place (1844)",
+  "source_pid": "2W2F-CNH",
+  "captured": "2026-07-07",
+  "researcher_question": "When and where did Job Purnell marry his wife Emma?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1840s",
+    "geography": "US-CT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Immigrant subject: born Trowbridge, Wiltshire (1819), family in Norwich, New London Co., Connecticut by the mid-1840s, later Portage, Columbia Co., Wisconsin. The marriage event (27 Oct 1844, Norwich CT) is stripped from the couple relationship; the spouse (Emm/Emma) and the Norwich residences are retained as anchors, so the agent must recover the date and place from the Connecticut Vital Records (Prior to 1850) marriage entry, not read it off the tree. Emma's maiden name Osborne is a bonus finding (present only as daughter Sarah Osborne Purnell's middle name in the tree)."
+}
