@@ -109,17 +109,16 @@ Record data arrives in one of four ways:
    **A required identifying name you flag as suspect is not confirmed by
    the index alone.** When the element that *keys identity* — a
    patronymic, a surname, a father's name on a baptism — is transcribed
-   in a way you judge unusual or a likely mistranscription (an
-   out-of-place patronymic, a spelling no other record corroborates),
-   the indexed value is a lead, not a conclusion. Read the original
-   register image (`image_read`, or `volume_search` to locate it) to
-   confirm the spelling before recording the assertion as established.
-   If the image is unreachable, record the name as **tentative** — keep
-   the uncertain text in `value` with `[?]` and explain the doubt in
-   `notes` — and name original-image confirmation as the outstanding
-   step. Never hand a self-flagged suspect *required* name to the reader
-   as a finished conclusion: that is how an index OCR slip (a patronymic
-   like "Aadnesen" read as "Nadnesen") becomes a wrong father in the tree.
+   in a way you judge a likely mistranscription (an out-of-place
+   patronymic, a spelling no other record corroborates), treat the
+   indexed value as a lead, not a conclusion: read the original register
+   image (`image_read`, or `volume_search` to locate it) to confirm the
+   spelling before recording the assertion as established. If the image
+   is unreachable, record the name **tentative** — keep the uncertain
+   text in `value` with `[?]`, explain the doubt in `notes`, and name
+   original-image confirmation as the outstanding step. (This is how an
+   index OCR slip — a patronymic like "Aadnesen" read as "Nadnesen" —
+   becomes a wrong father in the tree.)
 
 ## Steps
 
@@ -440,10 +439,15 @@ it. Narrating the persistence then ending the response is a hard test
 failure.
 
 **Tool-first checklist for this step:**
-1. Make the `research_append` call (the batched `ops` from 5a/5b
-   below). Wait for its return.
-2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
-   `add_person` ops). Wait for its return.
+1. Make the `tree_edit` call FIRST (5c/5d, source `S` + any sibling
+   `add_person` ops) and read back the assigned `S` id. The source you
+   append to research.json carries a required
+   `gedcomx_source_description_id` pointing at this `S` entry, and
+   `research_append` rejects the batch if that `S` id does not yet
+   exist in tree.gedcomx.json — so the tree side must be written first.
+2. Make the `research_append` call (the batched `ops` from 5a/5b),
+   stamping each source op's `gedcomx_source_description_id` with the
+   `S` id from step 1. Wait for its return.
 3. If 5d sibling stubs fired: make the second `tree_edit` call for
    the `ParentChild` edges. Wait for its return.
 4. **Only after the tool returns are you allowed to summarize
@@ -587,14 +591,11 @@ The subject's own person and ParentChild edges are out of scope —
 
 ### 6. Present results
 
-**OUTPUT ECONOMY (latency).** The source, assertions, and any tree stubs
-are ALREADY persisted — the `research_append` and `tree_edit` returns
-confirm every assigned id. Wall-clock time is ~linear in the tokens the
-model generates (~16-20 ms/token, independent of model tier), so the
-single biggest latency lever is generating fewer tokens. Do NOT reproduce
-the full per-assertion tables, per-field walkthroughs, or the
-classification rationale in chat — that content lives in the persisted
-artifact, and the return already confirmed each assigned id.
+**OUTPUT ECONOMY.** The source, assertions, and tree stubs are ALREADY
+persisted — the `research_append` / `tree_edit` returns confirm every
+assigned id. Do NOT reproduce the full per-assertion tables, per-field
+walkthroughs, or classification rationale in chat; that lives in the
+persisted artifact. Fewer tokens = lower latency.
 
 Present a terse summary, **≤10 lines**:
 - source id (`src_` + `S`),
@@ -615,6 +616,9 @@ belongs in `research.json`, not echoed here.
   (e.g., same census via FamilySearch vs. Ancestry) -> new `src_` entry,
   but same GedcomX source description (`S` entry)
 - Different record entirely -> new `src_` and new `S` entry
+
+**On re-invocation:** the log is append-only — always append a new `log_`
+entry, never modify existing ones (see `docs/specs/research-schema-spec.md` §4).
 
 **Partial or damaged records:** Extract whatever is legible. Annotate
 gaps with `[illegible]`, `[torn]`, `[stained]`. Do not guess missing data.
@@ -675,12 +679,3 @@ dwelling 84, Thomas Flynn household.
 | a_003 | child_1 | residence | Schuylkill County, PA | primary | census enumerator | witness |
 | a_004 | child_1 | relationship | position consistent with child | indeterminate | census enumerator | witness |
 | a_005 | head_of_household | name | Thomas Flynn | indeterminate | unknown household member (likely self or spouse) | household_member |
-
-## Re-invocation behavior
-
-On repeat invocation, detect whether a source for this record already
-exists (by `gedcomx_source_description_id` or working citation). If so,
-refine it via `research_append` `op: "update"` instead of creating a
-duplicate; refine its assertions the same way. The log is append-only —
-always append a new `log_` entry, never modify existing ones (see
-`docs/specs/research-schema-spec.md` §4).
