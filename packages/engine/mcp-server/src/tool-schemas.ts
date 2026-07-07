@@ -47,6 +47,7 @@ import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
 import { treeEditSchema } from "./tools/tree-edit.js";
 import { researchAppendSchema } from "./tools/research-append.js";
+import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -88,4 +89,5 @@ export const allToolSchemas = [
   convertCalendarSchema,
   treeEditSchema,
   researchAppendSchema,
+  rankSearchMatchesSchema,
 ];

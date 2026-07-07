@@ -1,0 +1,59 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the staged 1850-census Flynn results against tree subject I1 (Patrick Flynn, b.~1845 Ireland). The correct record (Patrick Flynn, ark MXHY-TP4, attached to the subject) sits at searchRank 3 under FamilySearch's ranker but re-ranks to matchRank 1 by match score — demonstrating the tool's core value. Two weaker same-name candidates follow: a needs-review near-miss (unattached) and a clear non-match already attached to a different person. Used by search-records triage tests to exercise the match-ranked review surface + attachment flags without a live match API. Matched on subjectId; independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "I1"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 3,
+    "returnedCount": 3,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 3,
+        "recordId": "ark:/61903/1:1:MXHY-TP4",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Ireland",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.9481,
+        "matchConfidence": 5,
+        "attachedToSubject": true,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:MXHY-QK8",
+        "primaryId": "P7",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1841",
+        "birthPlace": "Ireland",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.5137,
+        "matchConfidence": 3,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 3,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:MXHY-Z9L",
+        "primaryId": "P9",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1838",
+        "birthPlace": "Pennsylvania, United States",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.0724,
+        "attachedToSubject": false,
+        "attachedToOther": true
+      }
+    ]
+  }
+}
