@@ -910,6 +910,10 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
         f"decline/routing decision: a clear, accurate decline is a full "
         f"pass. Do NOT penalize the response for not carrying out "
         f"{spec.skill}'s task — not doing it is the correct outcome here.",
+        f"Conversely, if {spec.skill} instead carried out its own task, or "
+        f"produced substantive output when it should have declined or stayed "
+        f"silent, score Correctness and Completeness as fail (1) — polished "
+        f"output for the wrong behavior is still a failure, not a pass.",
         *spec.judge_context,
     ]
 
