@@ -7,12 +7,15 @@ never enters (or accumulates in) the calling agent's context.
 ## 1. Purpose
 
 `image_read` returns a page scan as inline base64 (~33% larger than the
-raw JPEG). The MCP stdio transport decodes one message at a time behind a
-hard ~1 MiB (1,048,576-byte) buffer, and base64 blobs from successive
-`image_read` calls **accumulate** in the calling agent's context and are
-re-sent every turn. A later message then overflows the buffer and crashes
-the *entire session* — an uncatchable transport error — even when every
-individual image is small.
+raw JPEG). Each response adds a base64 content block to the calling
+agent's conversation, and the **whole conversation is re-serialized and
+re-sent every turn**. So base64 blobs from successive `image_read` calls
+**accumulate**, the per-turn payload grows with each read, and eventually
+one re-serialized message carrying the accumulated pile exceeds the
+~1 MiB (1,048,576-byte) buffer and crashes the *entire session* — an
+uncatchable error — even when every individual image is small. The
+overflow is the accumulated conversation, **not** a single MCP response
+frame.
 
 Observed: an e2e run (`clark-parents`) made **17** `image_read` calls,
 each ≤458 KB raw (~5.4 MB of base64 total), and crashed with
@@ -57,16 +60,20 @@ hands this agent the imageId.
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
-| `imageId` (or a short list) | yes | DGS Image Group Number (`004022578_00190`) or image ARK (`3:1:.../$dist`). |
-| `looking_for` | no | What the caller needs, to focus the transcription and produce a clear FOUND / NOT FOUND. |
+| `imageId` | yes | The **single** image to read — a DGS Image Group Number (`004022578_00190`) or image ARK (`3:1:.../$dist`). |
+| `looking_for` | no | A **search key only** — *who or what* to locate on the page. It focuses the FOUND / NOT FOUND pointer; it is **not** the expected result and **never** suppresses or shortens the full transcription. If the caller's message asserts the answer ("confirm the father is Adam Schreck"), the agent ignores the assertion and transcribes what the page actually says. |
 
-### 3.2 Bounded reads
+### 3.2 One image per invocation
 
-The agent reads **at most 3 images per invocation**. Reading many scans
-in one invocation re-creates the accumulation problem inside the
-subagent's own context. For more, it transcribes the most promising few,
-says which it read, and instructs the caller to re-invoke with the next
-specific imageId(s). The caller must not pass a whole volume/range.
+The agent reads **exactly one image per invocation** — the single
+`imageId` it is given. It does not read a range, a volume, or a "next
+few." One image is the only count provably under the ~1 MiB buffer for a
+large scan: two large scans (~458 KB raw → ~610 KB base64 each) already
+sum past it inside the subagent's own re-serialized conversation, so "read
+a few" re-creates the crash the subagent exists to prevent. When several
+images are needed the caller invokes the agent **once per image** (which
+also yields clean one-image-per-source provenance). If the caller passes
+more than one imageId, the agent reads only the first and says so.
 
 ## 4. Agent Frontmatter
 
@@ -81,25 +88,41 @@ specific imageId(s). The caller must not pass a whole volume/range.
 
 ## 5. Output Protocol
 
-Returns **text only** — never the base64 image, never a request for the
-caller to fetch it. Per image:
+The agent's job is **faithful OCR, not answering the caller's question** —
+it transcribes the page and returns it; matching the page to the research
+objective stays with the caller. Returns **text only** — never the base64
+image, never a request for the caller to fetch it:
 
 - `imageId` + one-line page description (record type, jurisdiction, date
   span, language).
-- Faithful transcription of the relevant entries, using `[?]`
+- The **full transcription of every genealogically relevant entry on the
+  page** — not only the entry that matches `looking_for` — using `[?]`
   (uncertain), `[illegible]`, `[torn]`; original spelling/language
-  preserved.
+  preserved. The transcription is never trimmed or slanted toward an
+  expected answer.
 - An **extracted facts** list (names, dates, relationships, places) the
   caller can turn into assertions.
-- If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line.
+- If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line — as
+  a pointer for the caller, never a substitute for the full transcription.
 
 ## 6. Failure Behavior
 
-If `image_read` throws (image over the transport floor, or an unreachable
-ARK): report the error verbatim + the `imageId`, do **not** retry via
-browser / `web_fetch` / "Claude in Chrome", and recommend the indexed
-fallback (`record_read` / `record_search` / `search-full-text`, or a
-related person's indexed record). The caller decides the pivot.
+If `image_read` throws (image over the 700 KB transport floor, an
+unreachable ARK, or any other error) the agent **must not** produce a
+transcription — a fabricated read is worse than a visible miss. It returns:
+
+- `NOT READ: <imageId>` on its own line;
+- the **exact error message** `image_read` returned, quoted verbatim;
+- the pivot recommendation: read the **indexed** record for this image
+  (`record_read` / `record_search` / `search-full-text`, or a related
+  person's indexed record).
+
+It does **not** retry via browser / `web_fetch` / "Claude in Chrome"
+(unavailable), and it never invents, infers, or guesses page contents when
+the read failed. The caller decides the pivot. This guardrail is
+independent of the ARK-support fix in §8 — the tool can still fail for
+other reasons, and this is what turns a failed read into a clean, visible
+miss instead of a silent fabrication.
 
 ## 7. Testing
 
@@ -108,7 +131,39 @@ skill-runner backstops the `Task` tool as disallowed
 (`skill_runner.py` `DISALLOWED_BACKSTOP`), and `image_read` cannot be
 mocked (the mock MCP server cannot emit image content blocks — already
 exempt from tool-coverage checks). Like `gps-mentor`, the agent is
-validated at the **e2e** level: the `clark-parents` fixture exercises the
-image path and, with this agent in place, must complete without the
-transport crash. Record its passing scored run + `.ann.json` per the
-usual e2e gate.
+validated at the **e2e** level.
+
+**The validation run must genuinely OCR a real scan.** The `clark-parents`
+run that first accompanied this agent *fabricated* its single image read
+(it "confirmed" the register without a successful `image_read`), so
+nothing about the agent's real behavior was exercised — not "reads
+correctly," not "returns the full transcription," not "keeps base64 out of
+the main context," not "survives accumulation." A run that merely finishes
+without crashing is **not** sufficient.
+
+The landing gate is a fresh scored run in which the agent **actually reads
+at least one image successfully** — ideally **2+ scans across separate
+invocations**, to exercise the once-per-image isolation and confirm base64
+never accumulates in the caller. Because `image_read` today rejects the
+ARK inputs `record-extraction` feeds it (see §8), this real-read run is
+only achievable once the ARK-accepting `image_read` has landed. Record the
+passing scored run + `.ann.json` per the usual e2e gate.
+
+## 8. Merge dependency: the ARK-accepting `image_read`
+
+This PR **must not land ahead of the ARK-supporting `image_read` fix.**
+
+`record-extraction` hands the agent image **ARKs** (`3:1:.../$dist`), but
+today's `image_read` accepts only a bare `NUMBER_NUMBER` Image Group
+Number and rejects an ARK — and on that rejection the failure path, before
+the §6 hardening, *fabricated* a reading instead of erroring. So if this
+PR merges first, **every original-scan read is broken in production**: the
+agent is fed ARKs its only tool refuses.
+
+No wording change is needed here or in the agent — the ARK claims in the
+`imageId` convention (§3.1) become true as written the moment the
+ARK-accepting `image_read` lands. The requirement is purely one of
+**merge order**: co-merge with the other team's `image_read` fix, or land
+theirs first. The §6 NOT-READ hardening is orthogonal and lands with this
+PR regardless — it makes any future `image_read` failure a clean, visible
+miss rather than a fabrication.
