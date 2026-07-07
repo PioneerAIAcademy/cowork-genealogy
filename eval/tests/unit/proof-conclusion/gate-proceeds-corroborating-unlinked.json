@@ -2,19 +2,19 @@
   "test": {
     "id": "ut_proof_conclusion_013",
     "skill": "proof-conclusion",
-    "name": "Gate proceeds past corroborating-only unlinked assertions",
+    "name": "Gate proceeds past unlinked fact assertions when persons are identity-linked",
     "type": "positive",
-    "description": "Regression test for the narrowed precondition gate. In flynn-parentage-disproved, Patrick's ~1845 birth is carried by a_002 (the 1850 census age), which is linked to I1 via pe_005. A second assertion, a_006 (the same birth year derived from the 1908 death-certificate age), has no person_evidence link but only corroborates that already-linked birth year, while the disproving evidence (a_003/a_004: Thomas of Ballingarry buried 1842, linked to I2) is fully linked. The narrowed gate must NOT stop on a_006 (corroborating-only, hence advisory); it must proceed, write the `disproved` conclusion, and surface a_006 as an advisory note rather than a blocker. Before the narrowing, an unlinked corroborating assertion hard-stopped the gate and produced no proof_summary.",
-    "tags": ["proof", "parentage", "disproved", "GPS-step-5", "precondition-gate", "gate-advisory-corroborating", "tier-disproved-q001", "no-tree-write"]
+    "description": "Regression test for the identity-scoped precondition gate. In flynn-parentage-disproved, Patrick's ~1845 birth is carried by two unlinked *fact* assertions — a_002 (the 1850 census age) and a_006 (the 1908 death-certificate age) — neither of which has a person_evidence link. Under the identity-scoped gate these are advisory, not blockers, because every person the conclusion depends on is already identity-linked: Patrick via a_001/a_005 → I1, and Thomas of Ballingarry via a_004 (name) and a_003 (the decisive 1842 burial) → I2. The gate must proceed, write the `disproved` conclusion, and surface a_002/a_006 as an advisory note. A hard stop that refuses to conclude and defers to person-evidence is a FAIL — unlinked birth-fact assertions must not block the conclusion once the relevant persons are identified.",
+    "tags": ["proof", "parentage", "disproved", "GPS-step-5", "precondition-gate", "gate-advisory-fact", "tier-disproved-q001", "no-tree-write"]
   },
   "input": {
     "user_message": "An online tree says Thomas Flynn of Ballingarry was Patrick's father. Write the conclusion on whether that holds up.",
     "scenario": "flynn-parentage-disproved"
   },
   "judge_context": [
-    "This test targets the precondition gate specifically. Patrick's ~1845 birth year is carried by a_002 (the 1850 census age), which is linked to I1 via person_evidence. a_006 (the 1908 death-certificate age) carries the same birth year but has no person_evidence link — it only corroborates the already-linked birth year. The correct behavior is to treat a_006 as advisory and PROCEED to write the conclusion.",
-    "A hard stop at the gate that refuses to conclude and defers to person-evidence is a FAIL for this test — the corroborating-only unlinked assertion (a_006) must not block the conclusion.",
-    "It is acceptable (and good) for the skill to note a_006 as an advisory (e.g. 'this could also be linked but is not required to conclude'); such a note must not prevent the conclusion.",
+    "This test targets the precondition gate specifically. Patrick's ~1845 birth year is carried only by unlinked fact assertions — a_002 (1850 census age) and a_006 (1908 death-certificate age). Because every person the conclusion depends on is already identity-linked (Patrick → I1 via a_001/a_005; Thomas of Ballingarry → I2 via a_004/a_003), those unlinked fact assertions are advisory, and the correct behavior is to PROCEED and write the conclusion.",
+    "A hard stop at the gate that refuses to conclude and defers to person-evidence is a FAIL for this test — unlinked fact/negative assertions must not block the conclusion once the relevant persons are identity-linked.",
+    "It is acceptable (and good) for the skill to note a_002/a_006 as advisory (e.g. 'these birth-year assertions could also be linked but are not required to conclude'); such a note must not prevent the conclusion.",
     "Should select the `disproved` tier: the evidence affirmatively refutes the claim — Thomas of Ballingarry was buried in 1842, Patrick was born ~1845 — it does not merely fail to support it.",
     "Must NOT update tree.gedcomx.json — no ParentChild relationship is added; the real father is left as a separate future question.",
     "narrative_markdown should cite the Ballingarry burial register and the birth-year evidence and stand alone."
