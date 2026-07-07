@@ -76,6 +76,29 @@ question they belong to, so it has to be addressed first. Proceed to Step 2
 `unblocks` to include the question whose plan is in flight, since resolving
 the conflict re-enables that plan's progress.
 
+### 1b. Stop when the objective is already answered at a defensible tier
+
+Gate new-question creation on **answered**, not **proved.** Once every
+*independent* part of the objective is `resolved` with a `proof_summary` at a
+defensible tier (`probable` or better), the objective is answered — that is
+the autonomous stop point. Do **NOT** spawn a new question to **corroborate**
+or upgrade the tier of a part already concluded (a second source to move
+`probable` → `proved`): that is optional corroboration, not required for
+autonomous completion, and chasing it after the answer is already in the tree
+is what runs an autonomous session out of its budget. Return the "no further
+questions — objective answered" signal so `/research` writes
+`project.status = "completed"` and stops.
+
+This applies **only** to corroboration of a fact **already concluded** at a
+defensible tier. It does **not** suppress any of: a **genuinely independent,
+still-open** part of the objective (a death *and* a burial are two independent
+facts — answer both); a **Priority 1** unresolved conflict; or a **Priority 6
+FAN pivot** when a question's direct evidence is exhausted *without* a
+defensible answer — that question is unresolved, so FAN is the legitimate next
+step, not tier-chasing. The line: any *unanswered* objective fact → select the
+appropriate question (decompose, or FAN-pivot when direct evidence is spent);
+another source for a fact *already concluded* at a defensible tier → stop.
+
 ## 2. Identify the highest-value question
 
 Apply these priorities in order. When multiple candidates exist at the same

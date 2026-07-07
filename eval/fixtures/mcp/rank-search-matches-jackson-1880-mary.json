@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the single staged 1880-census candidate (recovered by searching the formal BirthName 'Mary', not the nickname 'Bitsie') against tree subject I1 (Mary/Bitsie Jackson, b.~1850 Lancaster County, Pennsylvania). The Mary Jackson record in William Jackson's household (ark MJKN-BIT) scores as a strong match and — because subject I1 carries no sources yet — comes back unattached, i.e. new evidence to extract. Matched on subjectId (wildcard '~'); independent of the per-run stagedResultsRef handle. Used by the non-derivative-nickname search-records test to exercise the match-ranked review surface + checkAttachments flag without a live match API.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:MJKN-BIT",
+        "primaryId": "P1",
+        "personName": "Mary Jackson",
+        "sex": "Female",
+        "birthDate": "1850",
+        "birthPlace": "Pennsylvania",
+        "collectionTitle": "United States Census, 1880",
+        "matchScore": 0.9312,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}
