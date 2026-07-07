@@ -37,7 +37,13 @@ import anthropic
 
 
 DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
-DEFAULT_MAX_TOKENS = 4096
+# Generous cap: on a rich run (large tree, several findings, a long proof), the
+# judge's adaptive thinking + the structured verdict together overflowed the old
+# 4096 — the JSON was truncated (stop_reason='max_tokens') → JudgeOutputError →
+# the whole completed run was written "skipped"/ungraded. max_tokens only bills
+# for tokens actually generated, so a high cap is free insurance against silently
+# losing the grade on exactly the hardest, most-interesting runs.
+DEFAULT_MAX_TOKENS = 16384
 
 
 class JudgeOutputError(ValueError):
