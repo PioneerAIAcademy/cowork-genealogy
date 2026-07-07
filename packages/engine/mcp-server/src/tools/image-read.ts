@@ -1,10 +1,24 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
+import { toArk, arkToUrl } from "../utils/ark.js";
 
 // An imageId is a digitized-image identifier of the form NUMBER_NUMBER
 // (an image group number, an underscore, and an image sequence number,
 // e.g. "004884748_02613").
 const IMAGE_ID_PATTERN = /^\d+_\d+$/;
+
+// `ark` accepts either an already-resolved distribution URL (the pre-#267
+// input shapes, restored here for callers that already have one) or a
+// FamilySearch document-image ARK (3:1:/3:2:, e.g. fulltext_search's `id`),
+// which has no other resolver in this codebase. Verified live
+// (2026-07-07): fetching a 3:1:/3:2: ARK's resolver URL redirects straight
+// to the image bytes. A 1:2: record ARK (e.g. record_search's `recordArk`)
+// does not — its resolver returns an HTML shell, not an image — so that
+// shape is deliberately not accepted here; only 3:1:/3:2: are.
+const ARK_PATTERN = /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
+const DGS_URL_PATTERN =
+  /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
+const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 
 // Ceiling on the raw image bytes we will base64-encode and return inline.
 // The MCP stdio transport decodes one JSON message at a time with a hard
@@ -20,7 +34,8 @@ const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 const MAX_INLINE_IMAGE_BYTES = 700_000;
 
 export interface ImageReadInput {
-  imageId: string;
+  imageId?: string;
+  ark?: string;
 }
 
 export interface ImageReadResult {
@@ -39,11 +54,40 @@ function imageIdToUrl(imageId: string): string {
   return `https://familysearch.org/das/v2/dgs:${imageId}/dist.jpg`;
 }
 
+function arkToImageUrl(ark: string): string {
+  if (ARK_PATTERN.test(ark) || DGS_URL_PATTERN.test(ark)) {
+    return ark;
+  }
+  const canonical = toArk(ark);
+  if (DOCUMENT_IMAGE_ARK_PATTERN.test(canonical)) {
+    return arkToUrl(canonical);
+  }
+  throw new Error(
+    "Unrecognized ark. Expected a FamilySearch document-image ARK " +
+      "(ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a " +
+      "resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), " +
+      "or a DGS distribution URL (dgs:.../dist.jpg)."
+  );
+}
+
+function resolveInput(input: ImageReadInput): { url: string; label: string } {
+  if (input.imageId !== undefined && input.ark !== undefined) {
+    throw new Error("Provide either imageId or ark, not both.");
+  }
+  if (input.imageId !== undefined) {
+    return { url: imageIdToUrl(input.imageId), label: input.imageId };
+  }
+  if (input.ark !== undefined) {
+    return { url: arkToImageUrl(input.ark), label: input.ark };
+  }
+  throw new Error("image_read requires either imageId or ark.");
+}
+
 export async function imageReadTool(input: ImageReadInput): Promise<{
   imageData: string;
   metadata: ImageReadResult;
 }> {
-  const url = imageIdToUrl(input.imageId);
+  const { url, label } = resolveInput(input);
 
   const token = await getValidToken();
 
@@ -75,7 +119,7 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
   if (buffer.byteLength > MAX_INLINE_IMAGE_BYTES) {
     const mb = (buffer.byteLength / 1_000_000).toFixed(1);
     throw new Error(
-      `FamilySearch image ${input.imageId} is ${mb} MB — too large to return inline. ` +
+      `FamilySearch image ${label} is ${mb} MB — too large to return inline. ` +
         `The MCP transport caps a single response near 1 MB and base64 encoding inflates ` +
         `the image by ~33%, so returning it would crash the session. Read the indexed ` +
         `record for this image with record_read / record_search instead of fetching the ` +
@@ -105,9 +149,11 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
 export const imageReadToolSchema = {
   name: "image_read",
   description:
-    "Fetch a FamilySearch distribution image by imageId and return it as image data. " +
-    "Takes an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613), " +
-    "such as an imageId returned by image_search, and builds the distribution URL internally. " +
+    "Fetch a FamilySearch distribution image and return it as image data. " +
+    "Provide exactly one of imageId or ark. Use imageId (from image_search) " +
+    "when you have one; use ark when you only have a document-image ARK " +
+    "(e.g. from fulltext_search's id field), a resolver URL for one, or an " +
+    "already-resolved distribution URL. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -119,7 +165,15 @@ export const imageReadToolSchema = {
           "(an image group number, an underscore, and an image sequence " +
           "number), e.g. 004884748_02613. Feed an imageId from image_search directly.",
       },
+      ark: {
+        type: "string",
+        description:
+          "A FamilySearch document-image ARK, when no imageId is available " +
+          "— ark:/61903/3:1:... or 3:2:... (e.g. from fulltext_search's " +
+          "`id`), a bare 3:1:.../3:2:... id, a full resolver URL for one, " +
+          "or an already-resolved DeepZoomCloud (ending in /$dist) or DGS " +
+          "(dgs:.../dist.jpg) distribution URL.",
+      },
     },
-    required: ["imageId"],
   },
 };
