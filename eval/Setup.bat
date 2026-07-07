@@ -62,6 +62,35 @@ if errorlevel 1 (
 cd ..\..\..\eval
 
 echo.
+echo Installing pnpm (Node package manager for the viewer)...
+REM Pin to the version in package.json "packageManager". pnpm 10 blocks
+REM dependency build scripts by default, which skips electron's binary
+REM download and breaks the viewer; pnpm 9.x runs them. Keep this in sync
+REM with the "packageManager" field in the repo-root package.json.
+call npm install -g pnpm@9.15.9
+if errorlevel 1 (
+  echo.
+  echo ERROR: Could not install pnpm. Setup aborted.
+  echo Re-open cmd as Administrator and rerun Setup.bat, or install pnpm
+  echo manually from https://pnpm.io/installation.
+  pause
+  exit /b 1
+)
+
+echo.
+echo Installing viewer dependencies...
+cd ..
+call pnpm install
+if errorlevel 1 (
+  echo.
+  echo ERROR: pnpm install failed. Setup aborted.
+  cd eval
+  pause
+  exit /b 1
+)
+cd eval
+
+echo.
 echo Installing Claude Code CLI globally (required by the test harness)...
 call npm install -g @anthropic-ai/claude-code
 if errorlevel 1 (

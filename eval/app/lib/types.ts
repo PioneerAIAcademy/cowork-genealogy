@@ -67,6 +67,31 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
   BASE_DIMENSIONS.TOOL_ARGUMENTS,
 ]);
 
+/**
+ * Whether the annotation score picker should offer an `N/A` (null) option
+ * for a dimension. Two independent reasons:
+ *
+ *  1. The judge itself scored the dimension `null` — the reviewer must be
+ *     able to *agree* with that N/A. This is not limited to base dimensions:
+ *     a rubric dimension with an N/A criterion (e.g. check-warnings'
+ *     "Actionability"/"Severity classification" when the project is clean)
+ *     legitimately comes back null. Without this, the picker only offers
+ *     1/2/3 and the reviewer is forced to pick 3, manufacturing a
+ *     null-vs-3 "disagreement" that is really just a UI gap.
+ *  2. It is a nullable base dimension (Tool Arguments) — the reviewer may
+ *     set *or override to* N/A even when the judge emitted a 1/2/3.
+ */
+export function dimensionAllowsNa(
+  source: DimensionSource,
+  name: string,
+  judgeScore: Score,
+): boolean {
+  return (
+    judgeScore === null ||
+    (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name))
+  );
+}
+
 export interface RunLogDimension {
   source: DimensionSource;
   name: string;

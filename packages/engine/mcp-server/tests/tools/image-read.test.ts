@@ -103,3 +103,107 @@ describe("imageReadTool — imageId input", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
+
+describe("imageReadTool — ark input", () => {
+  it("fetches an ARK URL (ending in /$dist) directly", async () => {
+    mockImageResponse();
+    const ark =
+      "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist";
+
+    const result = await imageReadTool({ ark });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(ark);
+    expect(result.metadata.url).toBe(ark);
+  });
+
+  it("fetches a DGS distribution URL directly", async () => {
+    mockImageResponse();
+    const url = "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg";
+
+    await imageReadTool({ ark: url });
+
+    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(fetchedUrl).toBe(url);
+  });
+
+  it("expands a canonical document-image ARK (3:1:) to a resolver URL", async () => {
+    mockImageResponse();
+
+    await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" });
+
+    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
+    );
+  });
+
+  it("rejects a record ARK (1:2:, e.g. record_search's recordArk) without fetching", async () => {
+    // Verified live (2026-07-07): a 1:2: ARK's resolver returns an HTML
+    // shell, not the image, so this shape is deliberately unsupported —
+    // only 3:1:/3:2: document-image ARKs resolve to bytes.
+    await expect(
+      imageReadTool({ ark: "ark:/61903/1:2:HSJG-CLNF" })
+    ).rejects.toThrow(/Unrecognized ark/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("expands a bare n:n:id ARK to a resolver URL", async () => {
+    mockImageResponse();
+
+    await imageReadTool({ ark: "3:2:3Q9M-CSNL-S98H-M" });
+
+    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:2:3Q9M-CSNL-S98H-M"
+    );
+  });
+
+  it("passes a full resolver URL through unchanged", async () => {
+    mockImageResponse();
+    const url = "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M";
+
+    await imageReadTool({ ark: url });
+
+    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(fetchedUrl).toBe(url);
+  });
+
+  it("rejects an unrecognized ark value without fetching", async () => {
+    await expect(imageReadTool({ ark: "not-an-ark" })).rejects.toThrow(
+      /Unrecognized ark/i
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a non-image resolver response as an error rather than misinterpreting it", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      headers: { get: (name: string) => (name.toLowerCase() === "content-type" ? "text/html" : null) },
+      arrayBuffer: async () => new ArrayBuffer(0),
+    });
+
+    await expect(
+      imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" })
+    ).rejects.toThrow(/Expected an image response/i);
+  });
+});
+
+describe("imageReadTool — input validation", () => {
+  it("rejects when both imageId and ark are provided", async () => {
+    await expect(
+      imageReadTool({ imageId: "004884748_02613", ark: "ark:/61903/1:2:HSJG-CLNF" })
+    ).rejects.toThrow(/either imageId or ark, not both/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects when neither imageId nor ark is provided", async () => {
+    await expect(imageReadTool({})).rejects.toThrow(
+      /requires either imageId or ark/i
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
