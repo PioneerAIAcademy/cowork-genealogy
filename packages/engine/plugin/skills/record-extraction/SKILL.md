@@ -16,7 +16,6 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   citations (use citation).
 allowed-tools:
   - record_read
-  - image_read
   - volume_search
   - place_search
   - place_search_all
@@ -80,18 +79,33 @@ Record data arrives in one of four ways:
    user upload.
 
 4. **Image** — a FamilySearch image ARK (`3:1:.../$dist`) or Image
-   Group Number URL (`dgs:.../dist.jpg`). Call `image_read` to fetch
-   the bytes (image ARKs and DGS URLs only — not persona `1:1:` or
-   record `1:2:` ARKs). Claude reads natively, produces a verbatim
-   transcription using `[?]` / `[illegible]` / `[torn]` for uncertain
-   or damaged areas, presents it for user review, then extracts
-   assertions only after confirmation. Write the confirmed text to the
-   source's `transcription` field.
+   Group Number (`dgs:{DGS}_{IMAGE}/dist.jpg`, i.e. an imageId like
+   `004022578_00190`). **Do not call `image_read` yourself** — delegate
+   to the **`image-reader` subagent** by invoking `@plugin:image-reader`
+   with a delegation message naming the `imageId` (and, if helpful, a
+   `looking_for` note describing the entry you need), the same way
+   `/research` invokes `@plugin:gps-mentor`. It reads the scan in an
+   isolated context and returns a **text transcription** plus an
+   extracted-facts list; the raw image never enters your context. Treat
+   its returned transcription exactly as
+   you would your own reading — present it for user review, extract
+   assertions after confirmation, and write it to the source's
+   `transcription` field.
+
+   **Why delegate:** `image_read` returns the page as inline base64, and
+   those blobs accumulate across a session and overflow the transport's
+   ~1 MB per-message buffer, crashing the whole run. The subagent absorbs
+   the base64 so only text flows back to you. Hand it **specific**
+   imageIds — narrow to the right page first (below), don't ask it to
+   browse a whole volume.
 
    To find images without a URL, use `volume_search` by `standardPlace`
-   + year range to discover digitized volumes (image groups); the user
-   then browses on FamilySearch to pick a specific image
-   (`dgs:{DGS}_{IMAGE}/dist.jpg`).
+   + year range to discover digitized volumes (image groups), then have
+   the `image-reader` subagent read the specific image(s) you land on.
+
+   If the subagent reports the image is too large (over `image_read`'s
+   transport-safety floor) or unreachable, follow its recommendation and
+   pivot to indexes (see the paragraph below) — do not retry the image.
 
    If an image cannot be read — you have no reachable image ARK / DGS
    URL, or `volume_search` / `place_search` fails (common in the sandbox,

@@ -6,17 +6,29 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 // e.g. "004884748_02613").
 const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 
-// Ceiling on the raw image bytes we will base64-encode and return inline.
-// The MCP stdio transport decodes one JSON message at a time with a hard
+// Transport-safety FLOOR on the raw image bytes we base64-encode inline.
+// This is NOT the primary defense against overflow — it only stops a
+// SINGLE image whose base64 alone would exceed the transport buffer. The
+// MCP stdio transport decodes one JSON message at a time behind a hard
 // ~1 MiB (1,048,576-byte) buffer; base64 inflates the payload ~33%, so a
-// raw image much above ~780 KB produces a response message that overflows
-// the buffer and crashes the *entire session* — an uncatchable transport
-// error, not a per-tool failure (observed killing an e2e run on a 1950
-// census page scan). 700 KB raw → ~933 KB of base64, comfortably under the
-// cap with headroom for the JSON-RPC envelope. Above this we throw an
-// actionable error instead of returning the bytes. (Downscaling to fit so
-// large scans stay readable would require an image-processing dependency in
-// the shipped .mcpb — deferred; see docs/specs/image-read-spec.md.)
+// raw image above ~780 KB overflows the buffer on its own and crashes the
+// *entire session* — an uncatchable transport error, not a per-tool
+// failure. 700 KB raw → ~933 KB base64, under the cap with envelope
+// headroom; above this we throw an actionable error instead of the bytes.
+//
+// The per-image ceiling does NOT prevent the real failure mode:
+// *accumulation*. Base64 blobs from successive image_read calls pile up in
+// the calling agent's context and are re-sent every turn, and a later
+// message overflows the buffer even though every individual image is small
+// (observed: an e2e run made 17 image_read calls, each ≤458 KB raw, ~5.4 MB
+// of base64 total, then crashed). The fix for accumulation is the
+// `image-reader` subagent (packages/engine/plugin/agents/image-reader.md):
+// it absorbs the base64 in an isolated context and returns only text, so
+// the bytes never accumulate in the main transcript. This ceiling remains
+// as a floor protecting any single response — main or subagent.
+// (Downscaling to fit so large scans stay readable rather than refused
+// would need an image-processing dependency in the shipped .mcpb —
+// deferred; see docs/specs/image-read-spec.md.)
 const MAX_INLINE_IMAGE_BYTES = 700_000;
 
 export interface ImageReadInput {
