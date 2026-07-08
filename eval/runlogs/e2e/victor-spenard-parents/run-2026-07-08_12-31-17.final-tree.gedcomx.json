@@ -1,0 +1,219 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Victor",
+          "surname": "Sp\u00e9nard",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "1873-09-08",
+          "place": "Quebec, Canada",
+          "primary": true,
+          "id": "F10",
+          "standard_place": "Quebec, Canada"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Orise",
+          "surname": "Lesage",
+          "type": "BirthName"
+        },
+        {
+          "id": "N3",
+          "given": "Aurise",
+          "surname": "Lesage",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "Henri",
+          "surname": "Sp\u00e9nard",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1897-08",
+          "place": "Quebec, Canada",
+          "standard_place": "Quebec, Canada"
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1967",
+          "place": "Quebec, Canada",
+          "standard_place": "Quebec, Canada"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Maximin",
+          "surname": "Sp\u00e9nard",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N5"
+        }
+      ],
+      "id": "I4",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "31 Oct 1819",
+          "place": "Quebec, Canada",
+          "id": "F4",
+          "standard_place": "Quebec, Canada"
+        },
+        {
+          "type": "Death",
+          "date": "18 Mar 1901",
+          "place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+          "id": "F5",
+          "standard_place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada"
+        },
+        {
+          "type": "Burial",
+          "place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+          "id": "F6",
+          "standard_place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Marie Zo\u00e9",
+          "surname": "Brousseau",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N6"
+        },
+        {
+          "given": "Zo\u00e9",
+          "surname": "Sp\u00e9nard",
+          "type": "AlsoKnownAs",
+          "id": "N7"
+        }
+      ],
+      "id": "I5",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "24 Jun 1832",
+          "place": "Quebec, Canada",
+          "id": "F7",
+          "standard_place": "Quebec, Canada"
+        },
+        {
+          "type": "Death",
+          "date": "18 May 1919",
+          "place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+          "id": "F8",
+          "standard_place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada"
+        },
+        {
+          "type": "Burial",
+          "place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+          "id": "F9",
+          "standard_place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Marriage",
+          "date": "1896-09-29",
+          "place": "Quebec, Canada",
+          "standard_place": "Quebec, Canada"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3"
+    },
+    {
+      "type": "Couple",
+      "person1": "I4",
+      "person2": "I5",
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1",
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I1",
+      "id": "R6"
+    }
+  ],
+  "sources": [
+    {
+      "title": "Canada, Census, 1881",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MN1S-MCD",
+      "id": "S1"
+    },
+    {
+      "title": "Canada, Census, 1891",
+      "id": "S2"
+    },
+    {
+      "title": "Find a Grave Index",
+      "url": "https://www.findagrave.com",
+      "id": "S3"
+    },
+    {
+      "title": "Canada, Census, 1901",
+      "id": "S4"
+    }
+  ]
+}
