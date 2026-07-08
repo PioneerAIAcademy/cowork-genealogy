@@ -33,6 +33,24 @@ death certificate or a single census co-residence). This item belongs in
 essentially every parentage plan, even when a parent already appears in
 the tree from indirect evidence.
 
+**Emigrant origin or an unindexed parish register — plan a full-text
+co-occurrence search, routed to the search-full-text skill.** When the
+subject emigrated and the destination records only say "native of
+[country]" (never the town), or the origin-country baptism is not
+name-indexed, indexed `record_search` on the surname will fail no matter
+how many variants you try — the answer lives in the AI-transcribed page
+text. Add a plan item whose `record_type` is `church` and whose rationale
+names the tactic explicitly: a **full-text search on the surnames as a
+co-occurrence** (both required as separate terms), run **unscoped**
+across the whole corpus, executed via the **search-full-text** skill. For
+a compound (Iberian / Latin-American) surname `Given Paterno Materno`,
+the two surnames are the father's and the mother's — so the co-occurrence
+`+Paterno +Materno` lands the parents' own acts (the child's baptism, a
+parent's burial or marriage). Do **not** plan this as a phrase search of
+the child's compound name, and do **not** scope it to a record
+collection id. This is the highest-yield item for "where was X from / who
+were X's parents" once indexed search has stalled.
+
 ---
 
 ## Less-consulted record types to consider
