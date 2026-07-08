@@ -104,6 +104,7 @@ catalog. Key decision: what kind of FTS search is this?
 | Find person as witness/appraiser/heir | `+Surname` in Name field, place filter after |
 | Find person in narrative records (deeds, probate, court) | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
+| Parents of someone with a compound surname (Iberian / Latin-American `Paterno Materno`) | Decompose the compound: `+PaternalSurname +MaternalSurname` co-occurrence in Keywords — **never** as one phrase (see critical rules) |
 | Kinship determination | `+Surname +"daughter of"` or `+Surname +"my beloved wife"` |
 | Migration tracing | `+Surname` with successive place filters |
 | Enslaved persons | Enslaver surname + slavery keywords (see strategies reference) |
@@ -118,6 +119,30 @@ Read `references/query-syntax.md` for operator rules.
 - **Search by name only first.** Do NOT include place in the initial
   query — place matches collection metadata and causes false
   positives. Apply place as a post-search filter.
+- **Do NOT scope a full-text search to a record `collectionId`.** The
+  FTS corpus is partitioned into its own auto-generated collections;
+  a `collectionId` guessed from `record_search` (or from a collections
+  survey) frequently does **not** contain the FTS volume that holds the
+  answer, so scoping silently drops it. Search the whole corpus first;
+  narrow with the `recordPlace*` / `recordType` / year filters (or a
+  known `imageGroupNumber`) only after you have hits. (Real failure: a
+  Cantabrian baptism was found by an unscoped `+Naveda +Somarriba` but
+  returned **zero** when the same query was scoped to the Diocese-of-
+  Santander indexed collection — the record lived in a different FTS
+  collection.)
+- **Decompose a compound surname into co-occurrence, not a phrase.**
+  For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
+  "Francisco **Naveda Somarriba**"), a parent-finding search must
+  require the two surnames as separate terms — `+Naveda +Somarriba` —
+  **never** the adjacent phrase `+"Naveda Somarriba"`. In the parents'
+  own records (the child's baptism, a parent's burial/marriage) the
+  father carries the paternal surname and the mother the maternal
+  surname, so the two words appear on **different people and are not
+  adjacent** — the phrase form only matches where the child's own
+  compound name is written out, missing exactly the parentage records
+  you are after. Also try the mother's fuller form as a phrase paired
+  with the father's surname (`+"Somarriba González" +Naveda`) to cut
+  noise once you know it.
 - **Abbreviations must be searched explicitly.** FTS does not
   auto-expand. If searching for William, also search Wm. If
   searching for Thomas, also search Thos.
@@ -148,6 +173,13 @@ fulltext_search({ keywords: '+"Thomas Flynn" +"Last Will and Testament"' })
 
 # FAN cluster (target + associate)
 fulltext_search({ keywords: "+Flynn +Brennan" })
+
+# Compound-surname parentage: co-occurrence of the two surnames,
+# UNSCOPED (no collectionId) — the two surnames sit on the mother and
+# father separately, so they are not adjacent. Do NOT write it as the
+# phrase +"Naveda Somarriba".
+fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })
+fulltext_search({ keywords: '+"Somarriba González" +Naveda', projectPath })
 
 # Wildcard for HTR errors
 fulltext_search({ keywords: "+Fl?nn +Patrick" })

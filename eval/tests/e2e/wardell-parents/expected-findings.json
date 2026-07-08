@@ -1,0 +1,47 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John Henry Wardell was the father of Moroni ('Rone') Nephi Wardell. Born 26 June 1859 in Elizabethtown, Lancaster County, Pennsylvania; died 19 May 1947 in Murray, Salt Lake County, Utah. He heads the Fremont County, Wyoming household in which Moroni appears as a son in the 1900, 1910, and 1920 U.S. censuses.",
+      "details": {
+        "subject_person": {
+          "name": "Moroni Nephi 'Rone' Wardell",
+          "pid": "GR1P-492"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "John Henry Wardell",
+          "birth": "26 June 1859, Elizabethtown, Lancaster County, Pennsylvania"
+        }
+      },
+      "supporting_sources": [
+        "1900 U.S. Census, New Fork, Fremont County, Wyoming — John Wardell household, with son 'Ronie' Wardell.",
+        "1910 U.S. Census, Olson, Fremont County, Wyoming — John and Jane Wardell, with son 'Moroni' Wardell.",
+        "1920 U.S. Census, Election District 13, Fremont County, Wyoming — John and Jane Wardell, with son 'Rone M' Wardell."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Jane Duncan Hill was the mother of Moroni ('Rone') Nephi Wardell. Born 18 January 1859 in Millcreek, Salt Lake County, Utah; died 6 July 1934 in Salt Lake County, Utah. She appears as the wife 'Jane Wardell' in the household where Moroni is listed as a son.",
+      "details": {
+        "subject_person": {
+          "name": "Moroni Nephi 'Rone' Wardell",
+          "pid": "GR1P-492"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Jane Duncan Hill",
+          "birth": "18 January 1859, Millcreek, Salt Lake County, Utah"
+        }
+      },
+      "supporting_sources": [
+        "1910 and 1920 U.S. Censuses, Fremont County, Wyoming — 'Jane Wardell' as wife of John, with son Moroni/Rone.",
+        "Marriage of John Wardell and Jane Hill, 12 November 1884, Logan, Cache County, Utah (maiden name, corroborating)."
+      ],
+      "required": true
+    }
+  ]
+}

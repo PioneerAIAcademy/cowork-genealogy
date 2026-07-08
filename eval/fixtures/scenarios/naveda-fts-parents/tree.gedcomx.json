@@ -1,0 +1,55 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Francisco",
+          "surname": "Naveda Somarriba",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1832",
+          "place": "Spain"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1862",
+          "place": "Papantla, Veracruz, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Maria Josefa",
+          "surname": "Silvera",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2"
+    }
+  ],
+  "sources": []
+}

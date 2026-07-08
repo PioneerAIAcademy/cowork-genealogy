@@ -1,7 +1,7 @@
 # Research-Latency Quick Wins — Spec
 
 **Project:** Cowork Genealogy — AI genealogy research assistant
-**Status:** DRAFT, for review (dev + genealogist)
+**Status:** IMPLEMENTED — both changes landed on `main` (`184f857d`). `tree_edit` has `add_source`/`update_source` (tool + schema + tests + `tree-edit-tool-spec.md`); the closed enums are pinned in the assertion-classification / record-extraction prose.
 **Scope:** Two high-value, high-confidence, low-blast-radius changes to cut
 wasted agent turns/thinking in a research session — landed **before** the
 re-measurement gate in [`research-latency-reduction-plan.md`](../plan/research-latency-reduction-plan.md).
