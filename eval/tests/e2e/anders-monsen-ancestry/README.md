@@ -1,30 +1,31 @@
-# Anders Monsen — parents and christening (1759)
+# Anders Monsen & Unna Halsteinsdatter — marriage (1786, Norway)
 
-**Source PID:** `PID-TODO`
+**Source PID:** `LKFW-9XH`
 
-Anders Monsen is deceased.
+**Anders Monsen is deceased** (buried 8 January 1821, Manger parish, Hordaland, Norway). (FamilySearch ToS requires all committed e2e fixtures to be about deceased persons.)
 
-> Who were the parents of Anders Monsen born in 1759 in Haatuft, Meland parish, Hordaland, Norway, and when and where was he christened?
+## Research question
+
+> When and where did Anders Monsen marry Unna Halsteinsdatter, and what does the marriage record show?
 
 ## What was removed from the starting tree
 
-- The identity of Anders Monsen's father (Mons Monsen Haatuft, christened 1 October 1724 at Qvame, Meland parish)
-- The identity of Anders Monsen's mother (Anna Andersdatter, christened 5 April 1739 at Biörnestad, Meland parish)
-- Anders Monsen's own christening date and farm (7 April 1759, Haatuft farm, Meland parish, Hordaland, Norway)
-- The ParentChild relationships linking Anders to both parents
+- The `Marriage` fact (date and place: 25 June 1786, Hamre parish church, Hordaland, Norway) from the `Couple` relationship between Anders Monsen (`LKFW-9XH`) and Unna Halsteinsdatter (`KZHH-VTX`) — the relationship itself is retained (empty `facts` array), since the question already names Unna as the spouse.
+- The marriage-attesting source: `MWGF-FDS`, "Anders Monsen, 'Norway, Marriages, 1660-1926'" (ark `1:1:NW44-PM2`).
 
 ## What the starting tree contains
 
-- Anders Monsen himself (death 8 January 1821 and burial 16 January 1821 at Aasebøe, Manger parish)
-- His wife Unna Halsteinsdatter (christened 27 May 1745, Meland parish)
-- Their marriage record (25 June 1786, Meland parish)
+- Anders Monsen himself: birth (1759, Håtuft, Meland), christening (7 April 1759, Hamre kirke, Osterøy), death (1821, Åsebø), burial (8 January 1821, Manger).
+- His parents, both fully identified and linked via `ParentChild`: Mons Monsen "Qvamme" (`LKFW-9ML`, b. 1724 Nedre Kvamme, christened 1 Oct 1724 Hamre kirke, d. 1779 Åsebø) and Anna Andersdatter (`LKFW-9QR`, b. 1739 Bjørnestad, christened 5 Apr 1739 Meland, d. 1805 Åsebø). These were the answer in a prior version of this fixture (parents/christening question) — they are now given context, not the tested finding.
+- His spouse Unna Halsteinsdatter (`KZHH-VTX`) as a known person: birth (May 1745, Hestdal, Meland) and christening (27 May 1745, Hamre). The `Couple` relationship to Anders exists but carries no marriage fact.
+- Three non-marriage sources: the christening record, the "Norway, Baptisms, 1634-1927" index entry, and the death/burial record.
+
+Extended relatives not relevant to the marriage question (Mons's other marriages, Anna's parents, Anders's many siblings) were deliberately left out of the starting tree to keep it focused — see "Path 1" scope note below.
 
 ## Expected difficulty
 
-Hard — Norwegian 18th-century parish records with patronymic naming conventions and farm name identifiers; evidence requires navigating Digitalarkivet church books and the compiled Mellands Slekter genealogy rather than standard FamilySearch indexed records.
+Moderate — the marriage is indexed on FamilySearch in "Norway, Marriages, 1660-1926" (ark `1:1:NW44-PM2`), so the agent should find it via `record_search` rather than needing Digitalarkivet or other Norwegian-only archives. However, Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) makes both names extremely common, so disambiguation rests on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography.
 
 ## Notes for reviewers
 
-Evidence is drawn from Digitalarkivet (Statsarkivet Bergen) church books and the Mellands Slekter compiled genealogy (FHL Call 948.32/M1d2L), not FamilySearch indexed records. The father's identity comes primarily from the 1759 christening record (father named as "Mons Haatuft"); the mother's name (Anna Andersdatter) is not in the christening record but is confirmed by the probate (skifte) of Mons Monsen Aasebø and by his daughter Ingeborg's probate. Norwegian patronymic naming: Anders Monsen = Anders son of Mons; Anna Andersdatter = Anna daughter of Anders.
-
-**Authoring note (PID-less / Path 3):** Built from the bundled research document(s) (ColetteHokanson research log + Level One Report) with no FamilySearch access, so the starting tree was *constructed* from the document rather than captured from a live `person_read` snapshot — sanity-check its fidelity before relying on it. `source_pid` is an unused placeholder (`PID-TODO`): §6.1 blocks every person-keyed tool, so neither the benchmark run nor the judge ever reads the PID — it is provenance only, and may optionally be filled in later if a re-snapshot or provenance link is wanted. The landing gate is the same as for every fixture (Path 1 included): a committed §14 validity run that passes (`uv run python -m e2e.validate_fixture anders-monsen-ancestry`). Recoverability from FamilySearch records is flagged in the reviewer notes above.
+Two required findings: (f1) the marriage fact — Anders Monsen married Unna Halsteinsdatter on 25 June 1786 at Hamre parish church, Hordaland, Norway, and (f2) the source — the FamilySearch-indexed "Norway, Marriages, 1660-1926" collection entry that documents it. This fixture was rebuilt from a live `person_read` snapshot of `LKFW-9XH` (Path 1), replacing an earlier PID-less (Path 3) version of this fixture that tested Anders's parents and christening instead — that prior version's document-derived christening place (Håtuft farm) turned out to conflate the birth farm with the actual christening church (Hamre kirke, a different parish), which the live FamilySearch data corrects. The parents/christening facts from that prior version are now included as given context in the starting tree rather than being the tested answer.
