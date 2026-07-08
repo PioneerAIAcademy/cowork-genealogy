@@ -1,9 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import {
-  standardizePlaces,
-  toSimplifiedStandardized,
-} from "../utils/gedcomx-convert.js";
+import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
@@ -37,12 +34,13 @@ export const recordReadSchema = {
         description:
           "Optional. A `staged.resultsRef` handle from record_search (or a " +
           "finalized results/<log_id>.json ref) — read this record from that " +
-          "sidecar host-side, WITHOUT a live FamilySearch fetch. The sidecar " +
-          "carries the same persons, facts, and relationships as a live read; a " +
-          "live read (omit this) additionally guarantees the authoritative source " +
-          "citation. Prefer the sidecar for triage/extraction; do a live read when " +
-          "finalizing a source or when the record was not part of a staged search. " +
-          "Requires `projectPath`.",
+          "sidecar host-side, WITHOUT a live FamilySearch fetch. For the person " +
+          "you searched, the sidecar carries the same facts, the source citation, " +
+          "and correctly standardized places (more reliable than a live read, whose " +
+          "place standardization can misfire). It returns OTHER household members " +
+          "(co-residents) with reduced facts — so omit this (live read) when you " +
+          "need a co-resident's full facts, or for a record that was not part of a " +
+          "staged search. Requires `projectPath`.",
       },
       projectPath: {
         type: "string",
@@ -158,16 +156,13 @@ async function readFromSidecar(
         "Do a live read (omit `resultsRef`) instead, or verify the ref/id.",
     );
   }
-  const gedcomx = match.gedcomx as SimplifiedGedcomX;
-  // Standardize every fact's place (persons + relationships) — idempotent, and
-  // the one field the search stage leaves un-standardized vs a live read.
-  const facts = (gedcomx.persons ?? []).flatMap((p) => p.facts ?? []);
-  for (const rel of gedcomx.relationships ?? []) {
-    const rf = (rel as { facts?: typeof facts }).facts;
-    if (rf) facts.push(...rf);
-  }
-  await standardizePlaces(facts);
-  return gedcomx;
+  // Return the staged record as-is. The search result already carries the
+  // record's standardized places (from FamilySearch), and they are the more
+  // trustworthy value: a live record_read re-standardizes place NAMES through the
+  // resolver, which mis-resolves ambiguous names (observed: "Southampton, NY" ->
+  // "Southampton, England"; "Rochdale, England" -> "Rochdale, South Africa"). So
+  // we deliberately do NOT re-run standardizePlaces here.
+  return match.gedcomx as SimplifiedGedcomX;
 }
 
 // Normalise the caller-supplied record ID to a bare entity ID.

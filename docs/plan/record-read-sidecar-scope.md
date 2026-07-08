@@ -76,7 +76,9 @@ backward-compatible):
 
 - Content (persons/facts/relationships) is **verified identical** → extraction
   loses nothing by sourcing it from the sidecar.
-- Place standardization is **re-applied** in the host tool → parity with a live read.
+- Place standardization: the staged result already has the **correct** standardized
+  place; the tool returns it as-is (a live read's own standardization is *less*
+  reliable — see Findings).
 - If the sidecar carries citations → the win is large (sidecar for nearly
   everything). If it doesn't → the skill still triages from the sidecar and only
   reads live for records it **keeps**, killing the duplicate re-reads regardless.
@@ -92,9 +94,25 @@ backward-compatible):
 - **Untouched:** `record_search`/`rank_search_matches` core, staging/finalize
   paths, auth, research.json schema.
 
-## Owed verification (non-blocking, 30s when re-logged-in)
+## Findings (verified live, 2026-07-08)
 
-Re-run the search-vs-read comparison capturing `result.gedcomx.sources` /
-`citation` content (not just counts): does the FS **search** response carry the
-source citation per result? The answer only *tunes the skill's guidance* (how
-often it needs a live read for the citation) — it does not gate the design.
+Ran the search-vs-`record_read` comparison on real records (1940 US census +
+England death/burial). For **the person you searched** (the matched persona):
+
+- **Facts** (type / value / original date + place): **identical** search vs read.
+- **Source citation: present in the search result** — the staged result already
+  carries the working collection + household citation (a live read adds only one
+  extra persona-specific source). So the sidecar has the citation; the citation
+  question that earlier looked like the blocker is **resolved** — no live read
+  needed for it.
+- **Standardized place: the search result's is correct; a live `record_read`
+  re-standardizes it WRONGLY** (observed `Southampton, NY → Southampton, England`;
+  `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore *more*
+  reliable, and the tool now returns the staged place **as-is** (it no longer
+  re-runs `standardizePlaces`). *(This is a separate `record_read` bug worth its
+  own fix.)*
+
+The one genuine "read has more" is **co-residents**: a census search returns other
+household members with **reduced facts** (name + a fact or two); a live read fills
+in their full facts. Hence the guidance carve-out — sidecar for the searched
+person; **live read for a co-resident's full facts** (or an off-search ARK).
