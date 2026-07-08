@@ -1,0 +1,969 @@
+{
+  "project": {
+    "id": "rp_naveda_spain_origin",
+    "objective": "Where in Spain was Francisco Naveda Somarriba born or baptized, and who were his parents?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "active",
+    "created": "2026-06-19T00:00:00Z",
+    "updated": "2026-06-19T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What specific locality in Spain appears as Francisco Naveda Somarriba's place of origin in contemporaneous records from Papantla, Veracruz, Mexico, or in Spanish emigration records?",
+      "rationale": "The research objective requires identifying where in Spain Francisco was born or baptized. The specific locality is a gatekeeper fact: without it, Spanish parish records cannot be searched for his baptism or his parents. Papantla church records (including the already-sourced 1862 baptism of his daughter) commonly recorded a Spanish-born father's place of origin, and the BYU Immigrant Ancestors Project entry may supply or corroborate this detail. Spanish emigration records from the mid-19th century and Mexican civil or ecclesiastical records are the primary sources. This question must be answered before Q2 (parentage via Spanish parish records) can be meaningfully pursued.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-07"
+    },
+    {
+      "id": "q_002",
+      "question": "Who were the parents of Francisco Naveda Somarriba, as named in his baptism record from his Spanish locality of origin or in other contemporaneous original records?",
+      "rationale": "Identifying Francisco's parents is the second half of the research objective. The primary source is his baptism record from his Spanish hometown (to be located by Q1); secondary sources include the 1862 Papantla baptism of his daughter (which may record the child's paternal grandparents), other Papantla church records, and the BYU Immigrant Ancestors Project entry. This question depends on Q1 because the Spanish parish search strategy requires knowing the locality.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-07"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-07",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "other",
+          "jurisdiction": "Spain (emigrant database)",
+          "date_range": "1850-1870",
+          "repository": "other",
+          "rationale": "The BYU Immigrant Ancestors Project entry for Francisco Naveda y [Somarriba] (src-2, http://immigrants.byu.edu/search/view_newrecord/836925) is already in the project sources but has not been extracted. BYU's project systematically compiled Spanish emigrants to Latin America, often recording the specific town of origin in Spain. This entry is the highest-probability quick answer \u2014 review and extract it first before searching new sources.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Papantla, Veracruz, Mexico",
+          "date_range": "1856-1875",
+          "repository": "FamilySearch",
+          "rationale": "The 1862 baptism of daughter Maria Valentina (src-1, collection 1883382) is sourced but not yet extracted. Mexican Catholic baptism registers routinely named the father's place of origin in Spain, and the child's paternal grandparents (Francisco's parents) were often recorded as well. Extracting this record may simultaneously answer q_001 and q_002. Additionally, searching the same Papantla parish collection for Francisco's other children's baptisms, his marriage to Maria Josefa Silvera, or any burial record will multiply the chances of finding his stated origin.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Papantla, Veracruz, Mexico",
+          "date_range": "1857-1880",
+          "repository": "FamilySearch",
+          "rationale": "Mexico, Veracruz, Civil Registration, 1821-1963 (collection 1922413) covers the period after Mexican civil registration began (1857 Reform Laws). Civil birth, marriage, and death records sometimes recorded a foreign-born party's place of origin more explicitly than church records. Search for Francisco Naveda or Naveda Somarriba in Papantla/Veracruz civil records. A marriage record with Maria Josefa Silvera or a death record would be especially valuable.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "immigration",
+          "jurisdiction": "Spain (emigration to Latin America)",
+          "date_range": "1845-1865",
+          "repository": "other",
+          "rationale": "PARES Movimientos Migratorios Iberoamericanos (http://pares.mcu.es/MovimientosMigratorios/) is the Spanish government's online database of emigration records drawn from passenger lists, notarial acts, and consular records. It covers departures from Spanish ports to Latin America and often records the emigrant's town of origin, age, and family. Search for Francisco Naveda and variant spellings. This is a free, indexed resource covering the period when Francisco emigrated (~1856).",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Spain (unscoped \u2014 whole corpus)",
+          "date_range": "1820-1860",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search for the surnames Naveda AND Somarriba across the entire FamilySearch Spanish-records corpus, executed via the search-full-text skill. Francisco's compound surname 'Naveda Somarriba' encodes his father's surname (Naveda) and his mother's surname (Somarriba). A co-occurrence query (+Naveda +Somarriba) will surface his own baptism, his parents' marriage, and his siblings' baptisms \u2014 regardless of whether the index captures his name \u2014 because both surnames appear together in any act from this family. Both surnames are Cantabrian toponyms (Naveda is a village in Cantabria; Somarriba is a valley/district there), making this the highest-yield item once indexed name searches fail. Do NOT scope to a specific collection or phrase; search unscoped across the full corpus.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "immigration",
+          "jurisdiction": "Cantabria (Province of Santander), Spain",
+          "date_range": "1845-1863",
+          "repository": "FamilySearch",
+          "rationale": "Spain, Cantabria, Passports, 1785-1863 (collection 2000617, 24,806 images, browse-only) records passport applications from the Province of Santander/Cantabria \u2014 the most likely region of origin given that 'Naveda' and 'Somarriba' are both Cantabrian place-names. Francisco emigrated around 1856, squarely within this date range. Passport applications named the applicant's municipality of origin, age, and purpose of travel. Browse by estimated emigration years 1854-1858.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "immigration",
+          "jurisdiction": "Spain (national)",
+          "date_range": "1808-1860",
+          "repository": "FamilySearch",
+          "rationale": "Spain, Consular Records of Emigrants, 1808-1960 (collection 1928310, 105,083 images, browse-only) is a national-level series of consular emigration records that may document Francisco's departure from Spain with his specific town of origin. Fallback for the Cantabria Passports (pli_006) if that browse search proves unmanageable or he is not found there.",
+          "fallback_for": "pli_006",
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Diocese of Santander (Cantabria), Spain",
+          "date_range": "1825-1840",
+          "repository": "FamilySearch",
+          "rationale": "Spain, Diocese of Santander, Catholic Church Records, 1538-1985 (collection 2078544, 2.7M persons, 706K images) covers all of historic Cantabria. If earlier steps confirm a Cantabrian origin but do not identify the specific parish, search this collection for baptisms of a Francisco Naveda (father's surname) born around 1830 whose mother bore the surname Somarriba. This collection is the primary vehicle for confirming the locality hypothesis and locating his actual baptism record once the region is confirmed.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T13:48:17.592Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Mexico, Veracruz, Catholic Church Records, 1590-1978",
+        "collectionId": "1883382",
+        "givenName": "Francisco",
+        "surname": "Naveda",
+        "anyPlace": "Papantla, Veracruz, Mexico"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 162,
+      "notes": "162 total matches. Result 15 (ark:/61903/1:1:66BV-FCWR) is Francisco Naveda as father in the 18 Jan 1862 Papantla baptism of Maria Valentina \u2014 the record already in src-1. Most other results are from Jalacingo, a different Veracruz parish with a distinct Naveda family. No Spanish locality named in the top 20 results for Francisco. Result 1 shows a separate 'Gaspar Naveda Espa\u00f1ol' in Papantla 1866, possibly a relative but not Francisco. Will fetch the daughter-baptism record to check for Francisco's stated origin."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T13:51:17.983Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Mexico, Veracruz, Catholic Church Records, 1590-1978",
+        "collectionId": "1883382",
+        "givenName": "Francisco",
+        "surname": "Naveda",
+        "spouseGivenName": "Maria Josefa"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 147,
+      "notes": "147 results but only one from Papantla \u2014 the already-known daughter's baptism (ark:/61903/1:1:66BV-FCWR). No marriage record for Francisco and Maria Josefa Silvera found. No compound surname Naveda Somarriba appears in any result. FamilySearch index for the daughter's baptism does not record Francisco's Spanish place of origin. The image (ark:/61903/3:1:33SQ-GG8M-S133) must be examined directly for any 'natural de' statement. No additional Papantla records for Francisco found in the indexed collection."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-07T13:53:51.738Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Mexico, Veracruz, Civil Registration, 1821-1963",
+        "collectionId": "1922413",
+        "givenName": "Francisco",
+        "surname": "Naveda",
+        "anyPlace": "Papantla, Veracruz, Mexico"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 40,
+      "notes": "40 total matches; 2 Papantla records found where Francisco Naveda appears as a FATHER: (1) Petra Naveda death 28 Sep 1908 Papantla (ark:/61903/1:1:QGM3-JZNV) and (2) Eugenio Naveda death 6 Jul 1875 Papantla (ark:/61903/1:1:QGMW-CXWX). These civil death records for Francisco's children may name him as the deceased's parent with his place of origin. Fetching both records for extraction. No compound surname Naveda Somarriba and no Spain/natural de references visible in the index."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-07T13:55:24.387Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Mexico, Veracruz, Civil Registration, 1821-1963",
+        "collectionId": "1922413",
+        "givenName": "Francisco",
+        "surname": "Naveda",
+        "spouseGivenName": "Josefa",
+        "spouseSurname": "Silvera",
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1,
+      "notes": "Found the 1895 civil marriage of Maria Naveda (born 1875) to Donato Marquez, listing parents as Francisco Naveda (father) and Josefa Silvera (mother). Record ark:/61903/1:1:QGMD-HJFD; image ark:/61903/3:1:33SQ-GTDK-XMG. Civil marriage records in Veracruz routinely listed the bride/groom's parents' details including birthplace and nationality. This image must be examined for Francisco's stated origin in Spain. High-priority extraction target. 5-star tree match (KKMZ-TN6)."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-07T14:22:24.424Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Naveda +Somarriba",
+        "offset": 0,
+        "count": 5,
+        "scope": "unscoped \u2014 full FamilySearch FTS corpus, no collectionId"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 36,
+      "notes": "36 total hits. Key finds: (1) Baptism of Balentina Josefa, 17 Dec 1833, Limpias, Cantabria \u2014 daughter of Juan Navedas Somarriba + Mar\u00eda Somarriba Gonz\u00e1lez; paternal grandparents Lu\u00eds de Naveda + Mar\u00eda Cruz Somarriba of Carasa, Voto, Santander (ark:/61903/3:1:S3HY-D13W-M9W); (2) 1843 re-marriage of Juan de Naveda at Limpias as widower, confirming same parentage (ark:/61903/3:1:S3HY-D13W-4NX). These place the Naveda Somarriba family squarely in Limpias/Carasa, Junta de Voto, Province of Santander, Cantabria."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-07T14:22:33.008Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Naveda +Somarriba",
+        "offset": 5,
+        "count": 31,
+        "scope": "unscoped \u2014 full FamilySearch FTS corpus, continuation of log_005"
+      },
+      "outcome": "positive",
+      "results_examined": 31,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 36,
+      "notes": "Critical hit: Death of Do\u00f1a Mar\u00eda de Somarriba Gonz\u00e1lez, 11 Oct 1834, Limpias, Cantabria \u2014 wife of Don Juan de Naveda; in their marriage they had 'Francisco y Valentina' (ark:/61903/3:1:S3HY-D137-1PP). Francisco Naveda Somarriba is the son of Juan de Naveda and Mar\u00eda de Somarriba Gonz\u00e1lez. Also found: 'Francisco Naveda Somarriba' named as godfather in Papantla, Mexico, 2 Apr 1877 (ark:/61903/3:1:33SQ-GG89-HSK) \u2014 confirms compound surname in Mexican records. Also: 1824 baptism in Hoz de Marr\u00f3n names Lu\u00eds de Naveda + Mar\u00eda Cruz of Carasas as grandparents (ark:/61903/3:1:S3HT-DRR9-XZC), establishing the Naveda family in Carasa/Voto."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "src-1",
+      "citation": "\"M\u00e9xico, Veracruz, registros parroquiales y diocesanos, 1590-1978,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:66BV-FCW5 : accessed 7 July 2026), entry for Maria Valentina Josefa Teofila de Jesus Naveda, baptism 18 January 1862, Papantla, Veracruz; citing image 20 of 486, Santa Maria, Papantla.",
+      "citation_detail": {
+        "who": "Maria Valentina Josefa Teofila de Jesus Naveda, daughter of Dn. Francisco Naveda and Do\u00f1a Maria Josefa Silvoro Morales",
+        "what": "Baptism registration",
+        "when_created": "18 January 1862",
+        "when_accessed": "7 July 2026",
+        "where": "FamilySearch",
+        "where_within": "collection 1883382, image 20 of 486, Santa Maria parish, Papantla, Veracruz"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-07",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:66BV-FCW5",
+      "log_entry_id": "log_001",
+      "notes": "FamilySearch index of the Papantla Catholic parish baptism register. Index entry only; image (ark:/61903/3:1:33SQ-GG8M-S133) not yet read. Index does not record Francisco's place of origin in Spain."
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"M\u00e9xico, Veracruz, Registro Civil, 1821-1963,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ : accessed 7 July 2026), entry for Eugenio Naveda, death registration 6 July 1875, Papantla, Veracruz; parents Francisco Naveda and Josefa Silvera.",
+      "citation_detail": {
+        "who": "Eugenio Naveda (son of Francisco Naveda and Josefa Silvera)",
+        "what": "Civil death registration",
+        "when_created": "6 July 1875",
+        "when_accessed": "7 July 2026",
+        "where": "FamilySearch",
+        "where_within": "collection 1922413, Papantla, Veracruz, Mexico"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-07",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ",
+      "log_entry_id": "log_003",
+      "notes": "FamilySearch index of Veracruz civil registration. Image (ark:/61903/3:1:33S7-9TDJ-JGV) not yet read. Index does not record Francisco's birthplace."
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"M\u00e9xico, Veracruz, Registro Civil, 1821-1963,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z : accessed 7 July 2026), entry for Donato M\u00e1rquez y Maria Naveda, marriage registration 15 November 1895, Veracruz; bride's parents Francisco Naveda and Josefa Silvera.",
+      "citation_detail": {
+        "who": "Maria Naveda (daughter of Francisco Naveda and Josefa Silvera) and Donato M\u00e1rquez (son of Esteban M\u00e1rquez and Zeferian Guara)",
+        "what": "Civil marriage registration",
+        "when_created": "15 November 1895",
+        "when_accessed": "7 July 2026",
+        "where": "FamilySearch",
+        "where_within": "collection 1922413, Veracruz, Mexico, 15 November 1895 entry"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-07",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "log_entry_id": "log_004",
+      "notes": "FamilySearch index of Veracruz civil registration. Image (ark:/61903/3:1:33SQ-GTDK-XMG) not yet read. This is the highest-priority image to examine for Francisco's Spanish place of origin, as Mexican civil marriage records of this era sometimes recorded the birthplace of the bride's father."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BV-FCW5",
+      "record_role": "baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Maria Valentina Josefa Teofila de Jesus",
+      "structured_value": {
+        "given": "Maria Valentina Josefa Teofila de Jesus",
+        "surname": "Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "one or both parents of Maria Valentina Naveda, presenting the child for baptism",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parent(s) presenting a child for baptism chose and know the name being conferred; this is first-hand knowledge regardless of which parent spoke to the priest."
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BV-FCW5",
+      "record_role": "baptized",
+      "record_persona_id": null,
+      "fact_type": "baptism",
+      "value": "18 January 1862, Papantla, Veracruz, Mexico",
+      "date": "18 Jan 1862",
+      "date_certainty": "exact",
+      "place": "Papantla, Veracruz, Mexico",
+      "standard_place": "Papantla, Veracruz, Mexico",
+      "information_quality": "primary",
+      "informant": "parish priest who performed and recorded the baptism",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Parish priest officiated and recorded the baptism he personally performed; his proximity is witness, not official_duty (the lookup table for church registers specifies 'witness' for the clergyman)."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BV-FCW5",
+      "record_role": "father_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Dn. Francisco Naveda",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Dn. Francisco Naveda, father presenting child for baptism",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BV-FCW5",
+      "record_role": "father_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "named as father of Maria Valentina Josefa Teofila de Jesus at her 1862 Papantla baptism",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Dn. Francisco Naveda, presenting himself as the child's father at the baptism",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The father-child relationship is stated by the father himself at the moment of presenting the child; the priest records what he was told. Francisco is the informant for his own parentage role, not the priest."
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:66BV-FCW5",
+      "record_role": "mother_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Do\u00f1a Maria Josefa Silvoro Morales",
+      "structured_value": {
+        "given": "Maria Josefa",
+        "surname": "Silvoro"
+      },
+      "information_quality": "primary",
+      "informant": "Do\u00f1a Maria Josefa Silvoro Morales, mother",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Eugenio Naveda",
+      "structured_value": {
+        "given": "Eugenio",
+        "surname": "Naveda"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown person who registered Eugenio's death at the civil registry",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "The civil index does not identify the registrant. Could be Francisco or Josefa (parents) who had direct knowledge, or a neighbor. Informant identity unknown."
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "about 1873",
+      "structured_value": {
+        "year": 1873
+      },
+      "date": "Abt 1873",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown family member who registered the death; birth date estimated from age at death",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Registrant unknown. Birth year is derived by subtraction from the child's stated age at death, not directly stated \u2014 compounding the indeterminacy of the informant with the arithmetic inference."
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "death",
+      "value": "6 July 1875, Papantla, Veracruz, Mexico",
+      "date": "6 Jul 1875",
+      "date_certainty": "exact",
+      "place": "Papantla, Veracruz, Mexico",
+      "standard_place": "Papantla, Veracruz, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "unknown person who registered Eugenio's death at the civil registry",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Registrant unknown. A parent registering a child's death would have been a witness (primary). A neighbor or third party would be secondary. Cannot determine which applies."
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ",
+      "record_role": "father_of_deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Francisco Naveda",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Naveda"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown family member registering the death, naming Francisco Naveda as the child's father",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Registrant identity unknown from the FamilySearch index. If it was Francisco himself registering his son's death, his own name would be primary (self-report). If a sibling or neighbor, secondary. Indeterminate until the image is read."
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ",
+      "record_role": "father_of_deceased",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "named as father of Eugenio Naveda in 1875 Papantla civil death registration",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown family member who registered the death",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Same unknown registrant as a_009. The parent-child relationship (Francisco = father of Eugenio) is plausible but the informant's identity \u2014 and thus their first-hand knowledge \u2014 is unconfirmed at the index level."
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGMW-CXWQ",
+      "record_role": "mother_of_deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Josefa Silvera",
+      "structured_value": {
+        "given": "Josefa",
+        "surname": "Silvera"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown family member who registered the death",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Same unknown registrant. Josefa Silvera's name as mother of the deceased is plausible but indeterminate until the image identifies the registrant."
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "father_of_bride",
+      "record_persona_id": "p_103527648100",
+      "fact_type": "name",
+      "value": "Francisco Naveda",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Naveda (bride), naming her own father on the marriage registration",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Maria Naveda (bride) names her father Francisco Naveda. She grew up in his household and has direct personal knowledge of his name. 'self' was incorrect \u2014 'self' means the informant IS the subject; here the subject is Francisco, not Maria. 'household_member' correctly captures her relationship."
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "father_of_bride",
+      "record_persona_id": "p_103527648100",
+      "fact_type": "relationship",
+      "value": "named as father of bride Maria Naveda in 1895 Papantla civil marriage registration",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Naveda (bride), naming her father at civil marriage registration",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Bride names her own father. Same analysis as a_012: household_member, not self. She has direct personal knowledge of the father-daughter relationship."
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "mother_of_bride",
+      "record_persona_id": "p_103527648110",
+      "fact_type": "name",
+      "value": "Josefa Silvera",
+      "structured_value": {
+        "given": "Josefa",
+        "surname": "Silvera"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Naveda (bride), naming her mother at civil marriage registration",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Bride names her own mother. Same analysis: household_member, not self. She has direct personal knowledge of her mother's name."
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "bride",
+      "record_persona_id": "p_103527951791",
+      "fact_type": "name",
+      "value": "Maria Naveda",
+      "structured_value": {
+        "given": "Maria",
+        "surname": "Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Maria Naveda (bride, self-reporting)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "bride",
+      "record_persona_id": "p_103527951791",
+      "fact_type": "birth",
+      "value": "about 1875",
+      "structured_value": {
+        "year": 1875
+      },
+      "date": "Abt 1875",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Maria Naveda (bride, self-reporting)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "A person cannot provide primary information about their own birth (not cognitively aware during the event). Maria stating her own birth year in 1895 is secondary information regardless of how confidently she reported it."
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "bride",
+      "record_persona_id": "p_103527951791",
+      "fact_type": "marriage",
+      "value": "15 November 1895",
+      "date": "15 Nov 1895",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "civil registrar who recorded the marriage",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "groom",
+      "record_persona_id": "p_103527951762",
+      "fact_type": "name",
+      "value": "Donato M\u00e1rquez",
+      "structured_value": {
+        "given": "Donato",
+        "surname": "M\u00e1rquez"
+      },
+      "information_quality": "primary",
+      "informant": "Donato M\u00e1rquez (groom, self-reporting)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "groom",
+      "record_persona_id": "p_103527951762",
+      "fact_type": "birth",
+      "value": "about 1869",
+      "structured_value": {
+        "year": 1869
+      },
+      "date": "Abt 1869",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Donato M\u00e1rquez (groom, self-reporting)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Same rule as a_016: Donato cannot have primary knowledge of his own birth. Birth year reported on his own marriage registration is secondary."
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "father_of_groom",
+      "record_persona_id": "p_103527951775",
+      "fact_type": "name",
+      "value": "Esteban M\u00e1rquez",
+      "structured_value": {
+        "given": "Esteban",
+        "surname": "M\u00e1rquez"
+      },
+      "information_quality": "primary",
+      "informant": "Donato M\u00e1rquez (groom), naming his own father",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Donato M\u00e1rquez names his father Esteban M\u00e1rquez. Subject of this assertion is Esteban, not Donato. 'self' was incorrect; 'household_member' captures Donato's direct personal knowledge of his father's name from growing up in his household."
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QGM8-YZ3Z",
+      "record_role": "mother_of_groom",
+      "record_persona_id": "p_103527951786",
+      "fact_type": "name",
+      "value": "Zeferian Guara",
+      "structured_value": {
+        "given": "Zeferian",
+        "surname": "Guara"
+      },
+      "information_quality": "primary",
+      "informant": "Donato M\u00e1rquez (groom), naming his own mother",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Donato M\u00e1rquez names his mother Zeferian Guara. Same analysis as a_020: household_member, not self."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "p-child-1",
+      "confidence": "confident",
+      "rationale": "a_001 names the baptized child as 'Maria Valentina Josefa Teofila de Jesus Naveda'. p-child-1 is Maria Valentina Josefa Teofila de Jesus Naveda Silvera, baptized 18 Jan 1862 in Papantla, Veracruz \u2014 the same event. Name, date, place, and event type all match exactly. Strong match.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "p-child-1",
+      "confidence": "confident",
+      "rationale": "a_002 records the baptism event (18 Jan 1862, Papantla, Veracruz, Mexico) of the same child named in a_001. The date and place match p-child-1's known baptism exactly.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "a_003 names 'Dn. Francisco Naveda' as father of the baptized child at Papantla, 18 Jan 1862. PID-TODO is Francisco Naveda Somarriba, known to reside in Papantla, Veracruz c.1862 with wife Maria Josefa Silvera. Name matches (surname 'Naveda'); place and date match known residence facts exactly; wife Josefa Silvera appears in a_005 from the same record. Strong match.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "a_004 asserts Francisco Naveda is father of Maria Valentina at the 1862 Papantla baptism. Consistent with PID-TODO (Francisco Naveda Somarriba), known Papantla resident c.1862. The relationship role 'father_of_baptized' corroborates his identity as the father.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "p-child-1",
+      "confidence": "confident",
+      "rationale": "a_004 also bears on the child side of the father-daughter relationship: Maria Valentina Naveda (p-child-1) is the child named in this relationship assertion. Same record, same event, same identifiers.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "p-spouse",
+      "confidence": "confident",
+      "rationale": "a_005 names 'Do\u00f1a Maria Josefa Silvoro Morales' as mother of the baptized child at Papantla, 1862. p-spouse is Maria Josefa Silvera. 'Silvoro' is a phonetic/spelling variant of 'Silvera' \u2014 a common transcription variant in 19th-century Mexican records. Given name 'Maria Josefa' matches exactly, and she is co-present with Francisco (PID-TODO) as expected from the known couple. Strong match.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "a_006 names 'Eugenio Naveda' as the deceased in the 6 Jul 1875 Papantla civil death registration, son of Francisco Naveda and Josefa Silvera. I1 is a new stub created for this person. No independent corroboration yet; one source only. Parents match PID-TODO and p-spouse exactly. Probable confidence for a new stub with single-record evidence.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "a_007 records Eugenio Naveda's birth (estimated ~1873, from age at death). Same reasoning as a_006 \u2014 single-record stub (I1). Birth year inferred from age, so indirect evidence.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "a_008 records Eugenio Naveda's death (6 Jul 1875, Papantla, Veracruz, Mexico). Same as a_006 \u2014 single-record stub (I1). Death date and place directly stated.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "a_009 names 'Francisco Naveda' as father of Eugenio Naveda in the 1875 Papantla civil death registration. PID-TODO (Francisco Naveda Somarriba) is the only known Francisco Naveda in Papantla with wife Josefa Silvera (named in a_011 from the same record). Consistent with the 1862 baptism (src_001) where Francisco and Josefa appear as parents. Name, place, wife's name, and role all agree. Strong match.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "a_010 asserts Francisco Naveda is father of the deceased Eugenio Naveda. Same reasoning as a_009: PID-TODO is the only Francisco Naveda in Papantla documented with wife Josefa Silvera. Relationship role as father corroborates the identification.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "a_010 also bears on the child side: Eugenio Naveda (I1) is the child in this father-son relationship assertion. Same one-source stub as a_006\u2013a_008.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "p-spouse",
+      "confidence": "confident",
+      "rationale": "a_011 names 'Josefa Silvera' as mother of Eugenio Naveda in the 1875 Papantla civil death registration. p-spouse is Maria Josefa Silvera. The surname 'Silvera' matches exactly; given name abbreviated to 'Josefa'. Consistent with her role as mother in the 1862 baptism (a_005). Name, place, and family context all agree. Strong match.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "a_012 names 'Francisco Naveda' as father of bride Maria Naveda in the 15 Nov 1895 Papantla civil marriage registration. PID-TODO (Francisco Naveda Somarriba) matches: name agrees, wife Josefa Silvera appears in a_014 from the same record, and Francisco is documented as Maria's father across three independent records (1862 baptism, 1875 death, 1895 marriage). The tree persona id (p_103527648100) is non-null but PID-TODO has no FS ARK, making same_person scoring uninformative; correlation governs. Strong match.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "a_013 asserts Francisco Naveda is father of bride Maria Naveda, same record as a_012. Same reasoning: name, co-occurrence of Josefa Silvera, and consistent appearance across three records all confirm PID-TODO.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "a_013 also bears on the child side: Maria Naveda (I2) is the bride/child in this father-daughter relationship assertion. New stub from a single record.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "p-spouse",
+      "confidence": "confident",
+      "rationale": "a_014 names 'Josefa Silvera' as mother of bride Maria Naveda in the 1895 civil marriage. p-spouse (Maria Josefa Silvera) matches: surname 'Silvera' exact, given name abbreviated to 'Josefa', consistent with her role in the 1862 baptism and 1875 death records. Strong match.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "a_015 names 'Maria Naveda' as the bride in the 1895 Papantla civil marriage to Donato M\u00e1rquez. I2 is the new stub created for this person, daughter of Francisco Naveda (PID-TODO) and Josefa Silvera (p-spouse). Single-record evidence; probable confidence for a new stub.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "a_016 records Maria Naveda's birth (estimated ~1875). Same stub I2, same single-record basis.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "a_017 records the marriage event (15 Nov 1895) for the bride role. Maria Naveda (I2) is the bride. Same single-record stub.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "a_018 names 'Donato M\u00e1rquez' as the groom in the 15 Nov 1895 civil marriage to Maria Naveda. I3 is the stub created for him. New person, single-record evidence; probable confidence.",
+      "match_score": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "a_019 records Donato M\u00e1rquez's birth (estimated ~1869). Same stub I3, same single-record basis.",
+      "match_score": null,
+      "created": "2026-07-07"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

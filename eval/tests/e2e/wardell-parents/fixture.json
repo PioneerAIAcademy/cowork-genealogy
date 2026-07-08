@@ -1,0 +1,18 @@
+{
+  "id": "wardell-parents",
+  "name": "Moroni Nephi (Rone) Wardell — parents (Fremont County, Wyoming, 1900s)",
+  "source_pid": "GR1P-492",
+  "captured": "2026-07-06",
+  "researcher_question": "Who were the parents of Moroni Nephi 'Rone' Wardell (born 1895), who lived in Fremont County, Wyoming and married Stella in 1922?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1900s",
+    "geography": "US-WY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Stripped both parents — father John Henry Wardell (KWJH-P7W, b. 26 Jun 1859 Elizabethtown, Lancaster, PA; d. 19 May 1947 Murray, Salt Lake, UT) and mother Jane Duncan Hill (KWJH-P7H, b. 18 Jan 1859 Millcreek, Salt Lake, UT; d. 6 Jul 1934 Salt Lake, UT) — with both parent-child relationships to Moroni and the three census sources that show him as a child in their household. REQUIRED findings are the two parent IDENTITIES; both are recoverable from the indexed federal census: Moroni appears as a son of John and Jane Wardell in the 1900, 1910, and 1920 U.S. censuses (New Fork / Olson / Election District 13, Fremont County, Wyoming). KEY CHALLENGE: the subject is indexed under his nickname 'Rone' (1920: 'Rone M Wardell') and childhood variants ('Ronie' in 1900, 'Moroni' in 1910), so the agent must search name variants to find the household. The mother's maiden name 'Hill' comes from the 1884 Utah marriage / her own records (corroborating); the required bar is identifying the parents, not her maiden surname. Recoverable via FamilySearch indexed census search; no bundled documents needed. (Re-scoped from an earlier 'children' question, which proved unreachable in a tree-blocked headless run — the children's evidence lived only in an unindexed 1930 census + tree-attached NUMIDENT records.)"
+}

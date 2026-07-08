@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_search_full_text_013",
+    "skill": "search-full-text",
+    "name": "Compound (Iberian) surname parentage — decompose into co-occurrence, not adjacent phrase",
+    "type": "positive",
+    "description": "Tests that for a subject with an Iberian compound surname (Given Paterno Materno — Francisco NAVEDA SOMARRIBA), the skill finds the parents by requiring the two surnames as a CO-OCCURRENCE (`+Naveda +Somarriba`) rather than the adjacent PHRASE (`+\"Naveda Somarriba\"`). In the parents' own parish acts (the child's baptism, a parent's burial/marriage) the father carries the paternal surname and the mother the maternal one, so the two words appear on different people and are never adjacent — the phrase form matches only where the child's OWN compound name is written out, missing exactly the parentage records. The co-occurrence fixture returns the three Limpias (Cantabria) acts naming Juan de Naveda and María de Somarriba González; the phrase fixture returns only a Mexican godfather record that names no parents. This exact gap caused the naveda-spain-origin e2e run to time out having recovered no parents. The Query-construction rubric dimension grades it directly.",
+    "tags": ["compound-surname", "iberian", "latin-american", "co-occurrence", "parentage", "e2e-derived"]
+  },
+  "input": {
+    "user_message": "Execute plan item pli_001: find the parents of Francisco Naveda Somarriba via full-text search of the Cantabrian parish registers. His own baptism is not name-indexed and indexed surname searches have already failed. Construct and run the full-text query (or queries) you would use to surface the records that name his parents, then report what you find.",
+    "scenario": "naveda-fts-parents"
+  },
+  "mcp_fixtures": ["fulltext-search-naveda-parents-cooccurrence", "fulltext-search-naveda-parents-phrase"],
+  "judge_context": [
+    "Should REQUIRE the two surnames as a co-occurrence — `+Naveda +Somarriba` (both terms required, in any position). This is the correct decomposition of the compound surname 'Naveda Somarriba' for finding the parents, because in the parents' own records the father is named with the paternal surname (Naveda) and the mother with the maternal surname (Somarriba), so the two words are on different people and not adjacent.",
+    "Should NOT search the adjacent phrase `+\"Naveda Somarriba\"` as the parent-finding query. The phrase (even with one-word slop) matches only where the child's own compound name is written out contiguously — it returns the Mexican godfather record, which names no parents, and misses the Limpias parish acts entirely. A run that relies on the phrase form and concludes the parents are unfindable has made the exact mistake this test targets.",
+    "Should NOT scope the full-text search to a record `collectionId` guessed from record_search or a collections survey (e.g. a Diocese-of-Santander indexed-collection id). The FTS corpus is partitioned into its own auto-generated collections; the answering records here live in different FTS collections (1784529 and M9J1-WJ7). Search the whole corpus first; narrow by recordPlace*/recordType/year filters only after hits. Passing an unrelated collectionId that would exclude the answer is a defect even though the mock still returns results.",
+    "With the co-occurrence query, the skill should recover the three Limpias records and report the parents by name: father Juan de Naveda (Juan Navedas Somarriba) and mother María de Somarriba González — and ideally note the corroboration (the mother's 1834 burial names 'Francisco y Valentina' as her children; the sister Balentina's 1833 baptism and the father's 1843 remarriage name the same couple and the paternal grandparents Luís de Naveda and María Cruz Somarriba).",
+    "Reasonable escalation is fine and not penalized: starting broad with `+Naveda +Somarriba`, then tightening to `+\"Somarriba González\" +Naveda` (mother's fuller form) or adding the parish once known. Running a phrase query as ONE exploratory variant among several is acceptable; relying on it as the parentage search is not."
+  ]
+}
