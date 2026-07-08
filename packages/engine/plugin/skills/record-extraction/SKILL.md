@@ -81,7 +81,7 @@ Record data arrives in one of four ways:
    `record_read({ recordId, resultsRef: "<the search log entry's results_ref>", projectPath })`.
    The sidecar carries the **same persons, facts, and relationships** as a live
    read (verified) — use it for extracting evidence; it saves a network
-   round-trip and never re-fetches a record you already searched. Do a **live**
+   round-trip and never re-fetches a record you already searched. **Do NOT `Read` the sidecar file yourself to find record IDs** — you already hold each `recordId` from the search / ranked results, and `record_read` pulls just the one record you name out of the sidecar; reading the whole `results/<log_id>.json` reloads every staged result's gedcomx into context and defeats the compaction. Do a **live**
    read (omit `resultsRef`) only when (a) you are finalizing a source and need
    its authoritative full **citation**, or (b) the record was not part of a
    staged search (a bare ARK handed to you). And never `record_read` a record you
