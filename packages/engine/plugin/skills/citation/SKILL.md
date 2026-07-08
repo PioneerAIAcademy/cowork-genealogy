@@ -58,7 +58,10 @@ record using only your citation? If not, the citation is incomplete.
 
 Every citation must address five elements. In `citation_detail` these
 map to six fields because **When** is split into `when_created` and
-`when_accessed` (both required for online sources):
+`when_accessed` (both required for online sources). **This table is
+internal reasoning scaffolding — use it to derive the six fields; never
+reproduce the table, or a per-field Who/What/When/Where/Wherein
+walkthrough, in your chat response.**
 
 | Element | Field | What to capture | Example |
 |---------|-------|----------------|---------|
@@ -212,11 +215,17 @@ beats a complete-looking citation with invented detail:
 ### Review path is read-only
 
 When a citation already meets Evidence Explained standards, confirm
-it and change nothing. Do not "enhance" a compliant citation with
-additional locators, reordered elements, or rephrasing. You may note
-what extra detail (page, sheet, line, image number) the user could
-capture from the record image, but only as a suggestion — never
-written into the fields.
+it and change nothing in the fields. Do not "enhance" a compliant
+citation with additional locators, reordered elements, or rephrasing.
+You may note what extra detail (page, sheet, line, image number) the
+user could capture from the record image, but only as a suggestion —
+never written into the fields.
+
+**Even on this no-change path, echo the compliant `citation` string and
+its `citation_detail` fields in your reply before stating it meets EE
+standards.** This path writes nothing to disk, so your chat response is
+the only place the citation appears — confirming "it's already compliant"
+without showing the citation leaves nothing to evaluate.
 
 ### 3. Format the citation string
 
@@ -224,7 +233,9 @@ Generate the `citation` field following Evidence Explained patterns.
 The citation is a single formatted string that encodes all five
 elements.
 
-**Template by source type:**
+**Template by source type:** These templates are internal reasoning
+scaffolding — use them to build the `citation` string; never reproduce a
+template (or its worked example) in your chat response.
 
 *Examples below show citation shape, not data — never copy a sample number,
 name, or date into a real citation (see Source fidelity rule 3).*
@@ -449,9 +460,23 @@ the genealogical-impossibility warnings the tool also returns.
 
 ### 7. Present results
 
-Show the user each refined citation with the formatted string and
-the structured citation_detail. Highlight any gaps that couldn't
-be filled (e.g., missing microfilm roll number, unknown creator).
+**OUTPUT ECONOMY (latency):** The refined `citation` and `citation_detail`
+are ALREADY persisted to `research.json` by Step 5. Wall-clock time is
+~linear in the tokens you generate (~16-20 ms/token, independent of model
+tier), so generating fewer tokens is the single biggest latency lever. In
+your FINAL chat response, do NOT re-explain each field in prose — no
+Who / What / When / Where / Wherein walkthrough — and do NOT reproduce the
+framework table or the per-source-type templates. Present, per refined
+source, ONLY:
+
+- the `src_` id and the final formatted `citation` string
+- the six-field `citation_detail` JSON block
+- one line per gap that couldn't be filled (e.g. missing microfilm roll
+  number, unknown creator), each with its ask-the-user-to-check-the-image
+  note
+
+That terse output is the whole presentation; the reasoning that produced
+it stays internal.
 
 ## Terminology guardrail
 

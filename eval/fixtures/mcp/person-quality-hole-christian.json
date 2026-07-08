@@ -1,0 +1,26 @@
+{
+  "tool": "person_quality",
+  "description": "person_quality on Christian P. Hole (KD96-TV2) -- the real captured FamilySearch response (Polk Co., Minnesota): overall 0.97 with 7 completeness/verifiability issues (burial missing a date, marriage place missing a city, 5 untagged residences). Used by ut_check_warnings_014 and _015.",
+  "args": { "personId": "KD96-TV2" },
+  "response": {
+    "personId": "KD96-TV2",
+    "segment": "Norway 1816 - 1920",
+    "overallScore": 0.9703703703703703,
+    "issueCount": 7,
+    "categories": [
+      { "scoreType": "COMPLETENESS", "count": 2, "score": 0.9111111111111111 },
+      { "scoreType": "VERIFIABILITY", "count": 5, "score": 1 },
+      { "scoreType": "CONSISTENCY", "count": 0, "score": 1 },
+      { "scoreType": "COHERENCE", "count": 0, "score": 1 }
+    ],
+    "issues": [
+      { "sentence": "The burial date is missing.", "conclusionType": "BURIAL", "conclusionId": "d57d443f-d206-44d6-b795-929f74989a17", "scoreType": "COMPLETENESS" },
+      { "sentence": "A marriage place is missing a city.", "conclusionType": "MARRIAGE", "conclusionId": "5ced6592-c1b2-44cd-b99f-6b3f21f3d8ec", "scoreType": "COMPLETENESS" },
+      { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "conclusionId": "e77ececa-810e-4d86-b94d-de371491b97a", "scoreType": "VERIFIABILITY" },
+      { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "conclusionId": "4f7dd02e-5143-4902-be1e-484ea5821e75", "scoreType": "VERIFIABILITY" },
+      { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "conclusionId": "ee1e7dbc-81a0-4798-8362-6b57892083d1", "scoreType": "VERIFIABILITY" },
+      { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "conclusionId": "004a5ddb-dea2-48a4-8416-ed5ce5b59e64", "scoreType": "VERIFIABILITY" },
+      { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "conclusionId": "8d05ee64-8b61-4a3a-9669-efcb17085ab9", "scoreType": "VERIFIABILITY" }
+    ]
+  }
+}

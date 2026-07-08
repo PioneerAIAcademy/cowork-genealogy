@@ -1,7 +1,9 @@
 {
   "tool": "person_warnings",
   "description": "person_warnings on Patrick (I1) returns 4 warnings: 3 on Patrick himself (hasEventAfterDeath1 error + hasAgeRangeGreaterThan120 error + tooManyDeathDates2 warning) and 1 on his relative Thomas (relativesHasAgeRangeGreaterThan120 error on I2). Multi-warning cluster exercising the 'almost certainly two people merged' escalation rule AND the focal-vs-relative separation requirement: the cluster verdict applies only to Patrick's three warnings, not to all four indiscriminately. Used by ut_check_warnings_009.",
-  "args": { "personId": "I1" },
+  "args": {
+    "personId": "I1"
+  },
   "response": {
     "warningCount": 4,
     "warnings": [
@@ -11,7 +13,11 @@
         "severity": "error",
         "personId": "I1",
         "personName": "Patrick Flynn",
-        "message": "An event is dated more than 1 year after this person's latest death-like fact."
+        "message": "An event is dated more than 1 year after this person's latest death-like fact.",
+        "factIds": [
+          "F1",
+          "F2"
+        ]
       },
       {
         "scoreType": "COHERENCE",
@@ -19,7 +25,11 @@
         "severity": "error",
         "personId": "I1",
         "personName": "Patrick Flynn",
-        "message": "This person's lifespan is greater than 120 years, which is implausible."
+        "message": "This person's lifespan is greater than 120 years, which is implausible.",
+        "factIds": [
+          "F1",
+          "F2"
+        ]
       },
       {
         "scoreType": "COHERENCE",
@@ -27,7 +37,10 @@
         "severity": "warning",
         "personId": "I1",
         "personName": "Patrick Flynn",
-        "message": "Two or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records."
+        "message": "Two or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records.",
+        "factIds": [
+          "F2"
+        ]
       },
       {
         "scoreType": "COHERENCE",
@@ -35,7 +48,11 @@
         "severity": "error",
         "personId": "I2",
         "personName": "Thomas Flynn",
-        "message": "This relative's lifespan is greater than 120 years, which is implausible."
+        "message": "This relative's lifespan is greater than 120 years, which is implausible.",
+        "factIds": [
+          "F3"
+        ],
+        "relatedPersonId": "I2"
       }
     ]
   }

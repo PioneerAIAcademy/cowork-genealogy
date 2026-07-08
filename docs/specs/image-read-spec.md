@@ -2,17 +2,20 @@
 
 ## What it does
 
-Fetches a FamilySearch distribution image (≥200 DPI) by imageId and
-returns the image data so Claude can display it or pass it to OCR
-models. Requires FamilySearch authentication.
+Fetches a FamilySearch distribution image (≥200 DPI) by `imageId` or
+`ark` and returns the image data so Claude can display it or pass it
+to OCR models. Requires FamilySearch authentication.
 
 ## Input
 
 ```typescript
 {
-  imageId: string   // An Image Group Number of the form NUMBER_NUMBER
+  imageId?: string   // An Image Group Number of the form NUMBER_NUMBER
+  ark?: string       // A FamilySearch document-image ARK, resolver URL, or resolved distribution URL
 }
 ```
+
+Exactly one of `imageId` or `ark` must be provided.
 
 ### imageId format
 
@@ -27,8 +30,36 @@ The tool builds the distribution-image URL internally:
 https://familysearch.org/das/v2/dgs:{imageId}/dist.jpg
 ```
 
-The caller never constructs the URL. Fetching requires a valid
-FamilySearch bearer token.
+The caller never constructs the URL.
+
+### ark format
+
+`ark` is for callers that only have a document-image reference code,
+not an `imageId` — e.g. `fulltext_search`'s `id` field (a `3:1:`/
+`3:2:` document-image ARK).
+
+Accepted forms:
+
+- A canonical document-image ARK (`ark:/61903/3:1:...` / `3:2:...`) or
+  a bare type-prefixed id (`3:1:...` / `3:2:...`) — normalized via
+  `src/utils/ark.ts`'s `toArk`/`arkToUrl` and expanded to the full
+  resolver URL (`https://www.familysearch.org/ark:/61903/...`), which
+  is then fetched directly.
+- A full resolver URL for one of the above, passed through unchanged.
+- An already-resolved DeepZoomCloud ARK URL (ending in `/$dist`) or DGS
+  distribution URL (`dgs:.../dist.jpg`), passed through unchanged —
+  the pre-existing shapes from before `imageId` was introduced.
+
+**Verified against a live session (2026-07-07):** fetching a `3:1:`/
+`3:2:` ARK's resolver URL redirects straight to the image bytes
+(confirmed: `image_read({ ark: "ark:/61903/3:1:3Q9M-CSBN-T9CV-F" })`
+returned a 418,782-byte `image/jpeg`). Other FamilySearch ARK types
+(e.g. a `1:2:` record ARK) do not resolve this way — their resolver
+returns an HTML shell, not the image — so `ark` only accepts `3:1:`/
+`3:2:` document-image ARKs; other ARK types are rejected with
+`"Unrecognized ark"` rather than silently attempted.
+
+Fetching requires a valid FamilySearch bearer token.
 
 ## Output
 
@@ -52,10 +83,13 @@ The tool returns two content blocks:
 | Condition | Message |
 |-----------|---------|
 | Not logged in | "Not authenticated. Call the login tool first." |
+| Both imageId and ark provided | "Provide either imageId or ark, not both." |
+| Neither imageId nor ark provided | "image_read requires either imageId or ark." |
 | Invalid imageId format | "Unrecognized imageId. Expected an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613)." |
+| Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg)." |
 | FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" |
 | Response is not an image | "Expected an image response but got content-type: {type}" |
-| Image exceeds the inline size cap | "FamilySearch image {imageId} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. Read the indexed record for this image with record_read / record_search instead of fetching the page scan, or choose a more specific image." |
+| Image exceeds the inline size cap | "FamilySearch image {imageId or ark} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. Read the indexed record for this image with record_read / record_search instead of fetching the page scan, or choose a more specific image." |
 
 ## Auth
 

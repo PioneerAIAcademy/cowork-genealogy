@@ -1,0 +1,18 @@
+{
+  "id": "ogletree-parents",
+  "name": "Lewis Ogletree — parents (Frank Ogletree & Carrie Hogg)",
+  "source_pid": "GW8N-X1W",
+  "captured": "2026-07-03",
+  "researcher_question": "Who were the parents of Lewis Ogletree, born March 1897 in Georgia, who resided in West Point, Troup County, Georgia, in 1910?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1900s",
+    "geography": "US-GA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "African American family in early-1900s Troup County, Georgia. Ground truth (verified from records during authoring): father Frank Ogletree, mother Carrie Hogg, who married 4 Dec 1895 — before Lewis's 1897 birth. The father is recoverable from the 1910 census (Frank's household, Lewis as son); the mother requires finding Frank's 1895 marriage record (which supplies the maiden name Hogg) — the specific step this fixture exercises. The starting tree deliberately keeps only Lewis's Georgia anchors (birth Mar 1897 GA, 1910 Troup County residence): the FamilySearch profile also carries a 1969 Alabama death and 1930 Birmingham residence, but those very likely belong to a DIFFERENT Lewis Ogletree (a Birmingham family headed by 'Barney' with an Alabama-born son) and were removed so the fixture is a clean Georgia parentage question rather than a death-certificate rabbit hole. Note the 1900 census (the intact Frank+Carrie household) is mis-indexed with a digit zero ('0gletree') and does not surface in a surname search for 'Ogletree', so corroboration leans on the marriage + 1880 census."
+}

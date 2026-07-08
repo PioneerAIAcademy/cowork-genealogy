@@ -1,7 +1,9 @@
 {
   "tool": "person_warnings",
   "description": "person_warnings on Thomas (I2) returns hasDeathBeforeChildBirth30_10 -- male-gendered Fundamental check: Thomas's death is more than 300 days before Patrick's birth, biologically impossible for a father. The brief's flagship example. Used by ut_check_warnings_005.",
-  "args": { "personId": "I2" },
+  "args": {
+    "personId": "I2"
+  },
   "response": {
     "warningCount": 1,
     "warnings": [
@@ -12,7 +14,10 @@
         "personId": "I2",
         "personName": "Thomas Flynn",
         "message": "This person (male) died more than 300 days before a child's earliest birth-like fact, which is biologically impossible.",
-        "relatedPersonId": "I1"
+        "relatedPersonId": "I1",
+        "factIds": [
+          "F1"
+        ]
       }
     ]
   }

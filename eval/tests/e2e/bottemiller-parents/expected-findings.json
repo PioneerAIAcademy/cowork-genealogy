@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "William Henry Bottemiller's father was Kasper (Casper) Heinrich Bottemiller, a German immigrant born in 1826 in Brockhagen, Westphalia, Prussia, who died in 1899 in Oregon.",
+      "details": {
+        "subject_person": "William Henry Bottemiller (249W-9LP)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Kasper Heinrich Bottemiller",
+          "birth": "23 October 1826, Brockhagen, Steinhagen, Westphalia, Prussia (Germany)"
+        }
+      },
+      "supporting_sources": [
+        "1880 U.S. Census, Todd County, Minnesota — household of Henry Bottermiller, with son 'Willie'",
+        "Oregon State Archives Death Records — William's 1929 death entry naming father 'Casper H'"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "William Henry Bottemiller's mother was Anne Marie Moehlmann, born in 1839 in Germany, who died in 1921 in Clackamas County, Oregon.",
+      "details": {
+        "subject_person": "William Henry Bottemiller (249W-9LP)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Anne Marie Moehlmann",
+          "birth": "7 August 1839, Minden, Westphalia (Germany)"
+        }
+      },
+      "supporting_sources": [
+        "1880 U.S. Census, Todd County, Minnesota — household of Henry & Mary Bottermiller",
+        "GenealogyBank obituary — Anna Marie Bottemiller, died 31 Jan 1921"
+      ],
+      "required": true
+    }
+  ]
+}

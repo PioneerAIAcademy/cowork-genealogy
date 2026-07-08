@@ -1,0 +1,55 @@
+{
+  "tool": "fulltext_search",
+  "description": "The WRONG query form for compound-surname parentage: the adjacent phrase `+\"Naveda Somarriba\"`. Because the two surnames belong to the father and mother separately in the parents' own parish acts, they are never adjacent there — so the phrase matches only records where the child's OWN compound name is written out contiguously. Returns a single Mexican record (Francisco as a 1877 baptism godfather) that does NOT name his parents, so it fails to answer the question. Serves to penalize the phrase form relative to the co-occurrence fixture.",
+  "args": { "keywords": "~\"Naveda Somarriba\"" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": { "type": "string" },
+      "name": { "type": "string" },
+      "place": { "type": "string" },
+      "nlQuery": { "type": "string" },
+      "collectionId": { "type": "string" },
+      "imageGroupNumber": { "type": "string" },
+      "recordPlace0": { "type": "string" },
+      "recordPlace1": { "type": "string" },
+      "recordPlace2": { "type": "string" },
+      "recordPlace3": { "type": "string" },
+      "yearFrom": { "type": "integer" },
+      "yearTo": { "type": "integer" },
+      "recordType": { "type": "string" },
+      "count": { "type": "integer" },
+      "offset": { "type": "integer" },
+      "includeFacets": { "type": "boolean" },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "ark:/61903/3:1:33SQ-GG89-HSK",
+        "sourceUrl": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GG89-HSK",
+        "collectionId": "1883382",
+        "collectionTitle": "México, Veracruz, registros parroquiales y diocesanos, 1590-1978",
+        "title": "Santa Maria, Papantla, Veracruz Baptism",
+        "recordType": "Baptism",
+        "recordPlace": "Papantla, Veracruz, Mexico",
+        "textDocument": "En la Villa de Papantla a dos de Abril de mil ochocientos setenta y siete ... fueron padrinos Francisco Naveda Somarriba y Cándida García, a quienes advertí el parentesco espiritual.",
+        "names": [
+          "Francisco Naveda Somarriba",
+          "Cándida García"
+        ],
+        "places": ["Papantla, Veracruz, Mexico"],
+        "dates": ["1877"],
+        "highlightTerms": ["Naveda Somarriba"]
+      }
+    ]
+  }
+}

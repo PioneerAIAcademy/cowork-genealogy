@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_check_warnings_017",
+    "skill": "check-warnings",
+    "name": "Quality tombstoned (deleted on FS) degrades gracefully; warnings still run",
+    "type": "positive",
+    "description": "User asks to check KD96-TV5, a duplicate that was DELETED on FamilySearch after this project last synced. It is still in the local tree, so person_warnings runs offline and returns nothing. person_quality returns a tombstoned error. The skill should surface the tombstoned state as a one-line note in the quality section and STILL report the offline warnings result -- a person_quality failure must never suppress person_warnings.",
+    "tags": ["positive", "person-quality", "degradation", "tombstoned"]
+  },
+  "input": {
+    "user_message": "Check KD96-TV5 for any warnings.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": ["person-warnings-hole-deleted-none", "person-quality-hole-deleted"],
+  "judge_context": [
+    "Should call both person_warnings and person_quality with personId 'KD96-TV5'",
+    "Should report the offline person_warnings result (no impossibilities) -- this must appear regardless of the quality failure",
+    "Should surface the tombstoned state as a brief note in the quality section (the person was deleted or merged on FamilySearch, so there is no quality score) -- using the tool's returned message; do NOT treat it as a fatal error that aborts the report",
+    "Should NOT invent a quality score or issues for a person that has none"
+  ]
+}
