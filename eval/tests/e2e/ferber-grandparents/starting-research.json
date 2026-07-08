@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_ferber_grandparents",
+    "objective": "Who were the grandparents of Charles Hubert Ferber, born 22 June 1891 in Cincinnati, Ohio (the parents of his father William Hubert Ferber and his mother Emma Becker)?",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-06T00:00:00Z",
+    "updated": "2026-07-06T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
