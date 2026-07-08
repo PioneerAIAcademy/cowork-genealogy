@@ -1,13 +1,13 @@
 {
-  "run_log": "v1_2026-07-06_22-26-25.json",
+  "run_log": "v1_2026-07-07_21-14-10.json",
   "annotator": "ernestjacob789@gmail.com",
   "corrections": [
     {
       "test_id": "ut_record_extraction_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -30,24 +30,24 @@
       "test_id": "ut_record_extraction_003",
       "dimension_source": "rubric",
       "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
       "test_id": "ut_record_extraction_003",
       "dimension_source": "rubric",
       "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
       "test_id": "ut_record_extraction_003",
       "dimension_source": "rubric",
       "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -166,16 +166,16 @@
       "test_id": "ut_record_extraction_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
       "test_id": "ut_record_extraction_009",
       "dimension_source": "rubric",
       "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -214,8 +214,8 @@
       "test_id": "ut_record_extraction_010",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -382,8 +382,8 @@
       "test_id": "ut_record_extraction_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -414,8 +414,8 @@
       "test_id": "ut_record_extraction_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     },
     {
@@ -550,8 +550,8 @@
       "test_id": "ut_record_extraction_006",
       "dimension_source": "rubric",
       "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": 2,
+      "corrected_score": 2,
       "comment": null
     }
   ]
