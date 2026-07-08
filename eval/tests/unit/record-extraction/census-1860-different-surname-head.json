@@ -18,6 +18,11 @@
     "user_message": "Extract assertions from this 1860 census record for a household in Schuylkill County: Silas Kerrigan, age 62, male, born Ireland, laborer; Thomas Flynn, age 42, male, born Ireland, miner; Mary Flynn, age 38, female, born Ireland; Patrick Flynn, age 15, male, born Pennsylvania.",
     "scenario": "empty-project-just-created"
   },
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  },
   "judge_context": [
     "Should produce atomic assertions — separate `a_` entries per person for name, age/birth year, and birthplace; occupation assertions only for Silas (laborer) and Thomas (miner), never for Mary or Patrick, whose occupation columns are not stated.",
     "The 1860 census has no relationship column: any reading of family structure (Thomas-Mary as a couple, Patrick as their child, Silas's connection to the Flynns) is indirect evidence inferred from household position, not direct.",
