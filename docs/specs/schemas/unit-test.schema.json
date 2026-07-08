@@ -107,6 +107,11 @@
         "explanation": {
           "type": "string",
           "description": "Why the tested skill should not activate. Documents the boundary between the two skills."
+        },
+        "grade_on_invariant": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe (e.g. citation refuse-new-source: the skill may or may not fire, but no run may fabricate a source). REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/plan/invariant-grading.md."
         }
       }
     },

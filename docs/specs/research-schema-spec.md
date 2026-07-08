@@ -512,8 +512,8 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `start` | string | yes | ISO 8601 date |
-| `end` | string | yes | ISO 8601 date |
+| `start` | string | yes | Date the gap opens, copied verbatim from the bounding event or expected record. Free-form (matches `timeline_event.date`), not restricted to ISO `YYYY-MM-DD` — a bare year like `"1850"` is valid when the boundary is only known to the year (e.g. a missing census). Downstream consumers (`person-warnings`) standardize it. |
+| `end` | string | yes | Date the gap closes, same format rules as `start`. |
 | `expected_events` | string[] | yes | Event types expected in this gap |
 | `severity` | string | yes | `high`, `medium`, or `low` |
 | `notes` | string or null | no | Explanation of why this gap matters to the research question or what it might reveal (e.g., "Missing marriage record could reveal parents' names"). |

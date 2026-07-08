@@ -76,6 +76,13 @@ fact conflicts which require at least two).
 ### 1. Identify conflicts
 
 Read `research.json` assertions, person_evidence, and timelines.
+**Trust the existing assertion classifications** (evidence_type,
+directness, informant) as recorded — do NOT re-classify inline, and do
+NOT invoke the assertion-classification or check-warnings skills from
+here. If a classification looks wrong and would change the weighing,
+note it and recommend running `assertion-classification` as a next
+step, then proceed with what is recorded.
+
 Look for:
 
 **Fact conflicts:**
@@ -157,8 +164,9 @@ for the full list of factors and rationales.
 
 Evaluate the seven factors (relevance, record category, format,
 informant proximity, directness, consistency, plausibility) for each
-side. Focus on the factors that create meaningful differentiation —
-not all apply to every conflict.
+side, but write up only the **2-3 decisive factors** that actually
+differentiate the sides — do NOT tabulate all seven for every
+assertion. Keep `weighing_analysis` to **~200 words or fewer**.
 
 **After weighing, articulate a defensible rationale (Standard 48).**
 The GPS recognizes four defensible rationales for setting aside
@@ -223,7 +231,12 @@ not among the competing set, will be rejected here), correct the
 `fields`, and call again. Do not retry blindly.
 
 The `resolution_rationale` must follow the **four-part structure**
-(see `references/resolution-writing.md` for full guidance):
+(keep it to **~250 words or fewer** for the common two-way conflict; see
+`references/resolution-writing.md` for full guidance). **Completeness
+outranks the word cap:** in a three-or-more-way conflict, name every
+non-preferred assertion and say why each is less reliable, even if that
+runs past ~250 words — the cap is a default for the simple case, never a
+license to drop a competing assertion from the analysis. The four parts:
 
 1. **State the problem** — What fact is in dispute and why it matters
 2. **Lay out the conflicting evidence** — Present each side with its
@@ -328,14 +341,25 @@ section here; recommend the owning skill for any person/link work):
 
 `research_append` validates the whole project before persisting and
 writes nothing on `{ ok: false }`, so a successful write is already
-schema-valid — no separate validation pass is needed. Present each
-conflict with:
-- The competing assertions and their classifications
-- The independence analysis
-- The weighing analysis
-- The resolution (or why it remains unresolved)
-- What this means for the research (does it change any hypothesis?
-  does it unblock any questions?)
+schema-valid — no separate validation pass is needed.
+
+OUTPUT ECONOMY (latency): the independence, weighing, and resolution
+analyses are ALREADY persisted to the `conflicts` entry by
+`research_append`. Wall-clock time is ~linear in the tokens you
+generate (~16-20 ms/token, independent of model tier), so the single
+biggest latency lever is generating fewer tokens. Do NOT reproduce
+`independence_analysis`, `weighing_analysis`, or `resolution_rationale`
+in chat — that full prose lives in the persisted artifact. Present a
+terse summary ONLY, per conflict:
+- The `c_` id written and its `status` (resolved / unresolved / moot)
+- 2-4 sentences: what the conflict was, the decisive finding, and — if
+  resolved — the `preferred_assertion_id`
+- What it means for the research (any hypothesis changed, any question
+  unblocked)
+
+Keep the whole per-conflict summary to the 2-4 sentences above, not a
+paragraph of re-argued analysis; the full argument belongs in the
+persisted `conflicts` entry, not echoed here.
 
 Suggest next steps:
 - Resolved conflict → "This conflict is resolved. Would you like

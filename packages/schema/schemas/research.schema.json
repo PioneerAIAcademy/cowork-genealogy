@@ -627,8 +627,8 @@
       "required": ["start", "end", "expected_events", "severity"],
       "additionalProperties": false,
       "properties": {
-        "start": { "$ref": "enums.schema.json#/$defs/iso_date" },
-        "end": { "$ref": "enums.schema.json#/$defs/iso_date" },
+        "start": { "type": "string" },
+        "end": { "type": "string" },
         "expected_events": {
           "type": "array",
           "items": { "type": "string" }

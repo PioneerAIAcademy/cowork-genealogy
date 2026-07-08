@@ -13,13 +13,6 @@
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
-  },
   "difficulty": "hard",
   "notes": "The paternal grandparents are confirmed primarily via John Thomson's 1891 death record (Statutory Registers, Methlick, FHL 8047716) and his 1891 testament/probate (Aberdeen Sheriff Court, SC1/37/108, ScotlandsPeople) — both on ScotlandsPeople, which is not FamilySearch-native but is indexed there. John's baptism was not found in OPRs; the 1826 marriage of his parents in New Deer OPR is the earliest direct record. The maternal grandparents (George Simpson and Barbara Davidson) are confirmed by the 1856 marriage record of John Thomson and Margaret Simpson (Statutory Registers, Methlick 221/1, ScotlandsPeople)."
 }
