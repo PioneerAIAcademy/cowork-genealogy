@@ -60,9 +60,25 @@ Check `src/main/index.ts` for `onHeadersReceived` CSP header:
 - [ ] `base-uri 'none'` — no base tag hijacking
 - [ ] `frame-ancestors 'none'` — no embedding
 
-Any domain added to CSP directives must have a documented reason. Currently
-allowed external domains: `fonts.googleapis.com` (style-src),
-`fonts.gstatic.com` (font-src) for Google Fonts.
+Any domain added to CSP directives must have a documented reason. Beyond
+`'self'`, the current header (`src/main/index.ts`) allows:
+
+| Directive | Value | Reason |
+|-----------|-------|--------|
+| `style-src` | `'unsafe-inline'` | React inline styles |
+| `style-src` | `https://fonts.googleapis.com` | Google Fonts stylesheet |
+| `font-src` | `https://fonts.gstatic.com`, `data:` | Google Fonts files + inline data-URI fonts |
+| `img-src` | `data:` | inline data-URI images |
+| `connect-src` | `http://localhost:3000`, `https://script.google.com`, `https://script.googleusercontent.com` | ⚠️ **UNVERIFIED — flagged for removal.** No renderer consumer found: the feedback POST runs in the **main** process (where `connect-src` does not apply) and `viewer-ui` makes no direct external `fetch`. These were inherited from the shared hosted-web CSP (#293). The Electron renderer's `connect-src` should be just `'self'` — see the follow-up note below. |
+
+There is also a `<meta>` CSP in `src/renderer/index.html` carrying the same
+directives; keep the two in sync (the **header** in `index.ts` is authoritative —
+see CVE-2023-23623 above).
+
+> **Follow-up (tracked, not yet done):** tighten `connect-src` to `'self'` in
+> both the header and the `<meta>` tag once confirmed no renderer path uses the
+> three external origins above. Until then this item is a documented known-gap,
+> not a PASS by default.
 
 CSP is skipped in dev mode (Vite HMR needs eval). This is acceptable because
 dev mode is local only.
@@ -87,13 +103,20 @@ The allowed IPC channels (update this list when adding new ones):
 | `open-file` | invoke | File open dialog with validation |
 | `open-external` | invoke | HTTPS-only URL opener |
 | `get-version` | invoke | App version string |
-| `project:select-folder` | invoke | Folder picker dialog |
-| `project:get-state` | invoke | Current watcher state |
+| `project:select-folder` | invoke | Folder picker dialog (rejects a folder with no `research.json`) |
+| `project:get-state` | invoke | Current watcher state (cached; no file I/O) |
+| `project:list-files` | invoke | List files under the open project folder |
+| `project:read-sidecar` | invoke | Read a `results/<logId>.json` sidecar (logId validated in `readSidecar`) |
+| `session:get-log` | invoke | Read the session log for the open folder |
+| `feedback:submit` | invoke | Build + POST a feedback zip (the POST is a **main-process** `fetch`, not a renderer request) |
 | `project:research-updated` | on (push) | Parsed research.json |
 | `project:gedcomx-updated` | on (push) | Parsed tree.gedcomx.json |
 | `project:watch-error` | on (push) | Error string |
+| `project:sidecar-updated` | on (push) | A sidecar changed: `{ logId, mtime }` |
 
 If a channel exists in the preload but is not in this table, it is unauthorized.
+Push channels are sent from `src/main/watcher.ts` (the two `*-updated` file
+channels come from a hardcoded filename→channel map, not a computed name).
 
 ### 4. IPC input validation
 
@@ -153,7 +176,12 @@ are devDependencies.
 
 Check `package.json`:
 
-- [ ] Production `dependencies` contains only: `@electron-toolkit/utils`, `chokidar`, `react-markdown` (and their transitive deps)
+- [ ] Production `dependencies` contains only the following (and their transitive deps):
+  - `@electron-toolkit/utils`, `chokidar` — window/env helpers + the project file watcher
+  - `react-markdown` — proof-summary narrative rendering (no `rehype-raw`; see §7)
+  - `focus-trap-react` — modal focus containment (feedback dialog)
+  - `jszip` — builds the feedback zip in-process (see the `feedback:submit` channel)
+  - `@genealogy/schema`, `@genealogy/viewer-ui` — internal `workspace:*` packages (first-party, not third-party attack surface)
 - [ ] No native C++ addons in production deps (verify: `npm ls --prod --all 2>/dev/null | grep -i 'gyp\|node-pre\|prebuild\|nan\|napi'` returns nothing)
 - [ ] `npmRebuild: false` in `electron-builder.yml` (no native modules to rebuild)
 
@@ -178,13 +206,13 @@ SECURITY INVARIANTS CHECK
 
 1. BrowserWindow webPreferences    [PASS] src/main/index.ts:19-25
 2. Content Security Policy         [PASS] src/main/index.ts:53-64
-3. Preload bridge allowlist        [PASS] src/preload/index.ts (8 channels)
+3. Preload bridge allowlist        [PASS] src/preload/index.ts (13 channels)
 4. IPC input validation            [PASS] src/main/index.ts:71-116
 5. Navigation blocked              [PASS] src/main/index.ts:122-123
 6. No remote module                [PASS] not in package.json
 7. No unsafe HTML rendering        [PASS] 0 violations in renderer
 8. Secrets not in source           [PASS] .env in .gitignore
-9. Minimal dependencies            [PASS] 3 prod deps, 0 native
+9. Minimal dependencies            [PASS] 5 external + 2 workspace prod deps, 0 native
 10. Hardened runtime               [PASS] entitlements.mac.plist
 
 RESULT: 10/10 PASSED
