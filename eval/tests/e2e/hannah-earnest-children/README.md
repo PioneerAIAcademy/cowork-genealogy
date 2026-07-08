@@ -50,12 +50,25 @@ that is itself useful signal about the limits of thinly-sourced FamilySearch
 persons as fixture subjects.
 
 **Birth-date precision caveat:** `expected-findings.json` states Lydia's
-birth as "10 July 1878," taken from the live FamilySearch Birth fact — but
-that fact carries **no attached source**. None of Lydia's three attached
-sources (the 1881 census, the church christening record, the 1891 census)
-attest that specific day; the christening record only gives 8 Aug 1878, and
-the censuses give ages only. A correctly-behaving agent has no source from
-which to recover the exact birth day and should record only the year
-(1878, sourced to the christening entry) rather than assert the unsourced
-day. Grading should treat that as full recovery, not a precision miss —
-see the grading note below.
+birth as "10 July 1878," taken from the live FamilySearch Birth fact. On
+FamilySearch's UI, that fact is tagged to two sources — the 1881 and 1891
+censuses — but neither can actually be the origin of that date: a census
+records an age, never a specific day/month, and FamilySearch's own
+age-derived birth year from each of those two censuses is **1879**, not
+1878 — a year off from the fact's own stated date. The christening record
+(8 Aug 1878) is the only source that plausibly bears on her birth, and it
+gives a baptism date, not a birth date. So the exact day "10 July" is not
+independently attested by any of Lydia's cited sources — it reads as a
+contributor-entered estimate loosely tagged to nearby records, not a
+sourced fact. A correctly-behaving agent has no record basis to recover
+that exact day and should record only the year (1878, sourced to the
+christening entry) rather than assert the unattested day. Grading should
+treat that as full recovery, not a precision miss — see the grading note
+below.
+
+(Note: the MCP `person_read` tool's simplified output does not expose
+fact-level source attribution — its `sources[]` list is person-level only,
+so it cannot show which specific fact a source is tagged to on
+FamilySearch's live UI. That's a separate, general tool-fidelity gap,
+not specific to this fixture; the analysis above relies on the live
+FamilySearch UI and the record content itself, not on that field.)
