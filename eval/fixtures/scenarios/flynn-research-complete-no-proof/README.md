@@ -24,7 +24,7 @@ Everything else (project.status, q_001.exhaustive_declaration shape, plans, log 
 - `questions[q_001].resolution_assertion_ids` — appends `a_014`, `a_015`
 - `questions[q_001].exhaustive_declaration` — log_entry_ids appends `log_007`, `log_008`; justification/stop_criteria text updated for the five-source, two-primary picture
 - `tree.gedcomx.json.sources[S5, S6]` — NLI catalog entry and the family Bible
-- `tree.gedcomx.json.relationships[R1].sources` — appends `S5` and `S6` references
+- `tree.gedcomx.json.relationships` — **empty** (no pre-loaded `R1`): unlike `flynn-resolved`, the concluded ParentChild link is NOT staged in the pre-state — proof-conclusion must write it (the `tree-write-expected` found-but-lost guard verifies absent → present). `S5`/`S6` are added as top-level tree sources, ready for the skill to cite on the relationship.
 
 ## Used by
 
