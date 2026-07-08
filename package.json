@@ -12,7 +12,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "dev:web": "pnpm --filter web dev",
-    "dev:electron": "pnpm --filter cowork-genealogy-ui dev",
+    "dev:electron": "pnpm --filter @genealogy/electron dev",
     "server": "bash apps/server/run-dev.sh"
   },
   "devDependencies": {
