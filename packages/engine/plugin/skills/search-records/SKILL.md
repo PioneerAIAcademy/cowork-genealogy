@@ -68,9 +68,30 @@ On demand, load:
 |----------------------|----------|-------------|
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** Use when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
+| Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Delegate to search-full-text skill.** When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries. |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
 Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
+
+**If you run `fulltext_search` yourself instead of delegating** (a quick
+check from the main loop), two rules decide success or failure — the
+`search-full-text` skill carries the full version, but at minimum:
+
+- **Compound (Iberian / Latin-American) surnames → co-occurrence, not a
+  phrase.** For a subject named `Given Paterno Materno` (e.g. "Francisco
+  **Naveda Somarriba**"), require the two surnames as separate terms:
+  `+Naveda +Somarriba`. **Never** the adjacent phrase `+"Naveda
+  Somarriba"` — in the parents' own records the father carries the
+  paternal surname and the mother the maternal one, so the two words sit
+  on different people and are never adjacent; the phrase only matches the
+  child's own written-out name and misses every parentage record.
+- **Do not scope a full-text search to a record `collectionId`.** The FTS
+  corpus is partitioned into its own auto-generated collections; a
+  `collectionId` borrowed from `record_search` or a collections survey
+  routinely excludes the FTS volume that holds the answer and the search
+  returns zero. Search the whole corpus first; narrow with
+  `recordPlace*` / `recordType` / year filters (or a known
+  `imageGroupNumber`) only after you have hits.
 
 ## Steps
 

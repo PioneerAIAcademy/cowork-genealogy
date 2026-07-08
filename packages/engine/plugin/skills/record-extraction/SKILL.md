@@ -16,7 +16,6 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   citations (use citation).
 allowed-tools:
   - record_read
-  - image_read
   - volume_search
   - place_search
   - place_search_all
@@ -80,18 +79,45 @@ Record data arrives in one of four ways:
    user upload.
 
 4. **Image** — a FamilySearch image ARK (`3:1:.../$dist`) or Image
-   Group Number URL (`dgs:.../dist.jpg`). Call `image_read` to fetch
-   the bytes (image ARKs and DGS URLs only — not persona `1:1:` or
-   record `1:2:` ARKs). Claude reads natively, produces a verbatim
-   transcription using `[?]` / `[illegible]` / `[torn]` for uncertain
-   or damaged areas, presents it for user review, then extracts
-   assertions only after confirmation. Write the confirmed text to the
-   source's `transcription` field.
+   Group Number (`dgs:{DGS}_{IMAGE}/dist.jpg`, i.e. an imageId like
+   `004022578_00190`). **Do not call `image_read` yourself** — delegate
+   to the **`image-reader` subagent** by invoking `@plugin:image-reader`,
+   the same way `/research` invokes `@plugin:gps-mentor`. Invoke it
+   **once per image** (it reads exactly one), with a delegation message
+   naming the single `imageId`. It reads the scan in an isolated context
+   and returns a **full text transcription** of the page plus an
+   extracted-facts list; the raw image never enters your context.
+
+   **`looking_for` is a search key, not the answer.** If you add a
+   `looking_for` note, phrase it as *who or what* to locate on the page —
+   e.g. "the christening entry for a Christina born ~Jan 1783" or "any
+   entry naming a Clark." **Never tell the reader the answer or ask it to
+   "confirm" one** — do not write "confirm the father is Adam Schreck and
+   mother Margreth." The reader transcribes what the page actually says;
+   **you** decide whether the returned transcription contains what you
+   were looking for. Feeding it the expected result invites it to echo
+   your hoped-for answer instead of reading the page.
+
+   Treat the returned transcription exactly as you would your own reading
+   — present it for user review, extract assertions after confirmation,
+   and write it to the source's `transcription` field.
+
+   **If the reader returns `NOT READ`** (an unreachable ARK, or an image
+   over `image_read`'s transport-safety floor), it will include the
+   verbatim error and a pivot recommendation. Do **not** treat a NOT READ
+   as evidence and do **not** retry the image — pivot to indexes (see the
+   paragraph below). Never fill the gap with an assumed reading.
+
+   **Why delegate:** `image_read` returns the page as inline base64, and
+   those blobs accumulate in the conversation, which is re-serialized every
+   turn and eventually overflows the transport's ~1 MiB buffer, crashing
+   the whole run. The subagent absorbs the base64 so only text flows back
+   to you. Hand it **one specific** imageId at a time — narrow to the right
+   page first (below); never ask it to browse a range or a whole volume.
 
    To find images without a URL, use `volume_search` by `standardPlace`
-   + year range to discover digitized volumes (image groups); the user
-   then browses on FamilySearch to pick a specific image
-   (`dgs:{DGS}_{IMAGE}/dist.jpg`).
+   + year range to discover digitized volumes (image groups), then invoke
+   the `image-reader` subagent once for each specific image you land on.
 
    If an image cannot be read — you have no reachable image ARK / DGS
    URL, or `volume_search` / `place_search` fails (common in the sandbox,

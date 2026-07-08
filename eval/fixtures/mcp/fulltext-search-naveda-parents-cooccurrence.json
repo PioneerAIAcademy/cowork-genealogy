@@ -1,0 +1,101 @@
+{
+  "tool": "fulltext_search",
+  "description": "Compound-surname parentage co-occurrence search. Matches a full-text query that REQUIRES the paternal surname as its own term (`+Naveda`, present in `+Naveda +Somarriba` and in `+\"Somarriba González\" +Naveda`, but NOT in the adjacent phrase `+\"Naveda Somarriba\"`). Returns the three Limpias (Cantabria) parish acts that name the parents Juan de Naveda and María de Somarriba González — the records that answer the parentage question. This is the correct query form; the adjacent-phrase form is served the parents-less fixture instead.",
+  "args": { "keywords": "~+Naveda" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": { "type": "string" },
+      "name": { "type": "string" },
+      "place": { "type": "string" },
+      "nlQuery": { "type": "string" },
+      "collectionId": { "type": "string" },
+      "imageGroupNumber": { "type": "string" },
+      "recordPlace0": { "type": "string" },
+      "recordPlace1": { "type": "string" },
+      "recordPlace2": { "type": "string" },
+      "recordPlace3": { "type": "string" },
+      "yearFrom": { "type": "integer" },
+      "yearTo": { "type": "integer" },
+      "recordType": { "type": "string" },
+      "count": { "type": "integer" },
+      "offset": { "type": "integer" },
+      "includeFacets": { "type": "boolean" },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "totalResults": 3,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "ark:/61903/3:1:S3HY-D13W-M9W",
+        "sourceUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-M9W",
+        "collectionId": "1784529",
+        "collectionTitle": "Spain, Catholic Church Records, 1307-2005",
+        "title": "San Pedro, Limpias, Cantabria, Spain Baptism",
+        "recordType": "Baptism",
+        "recordPlace": "San Pedro, Limpias, Cantabria, Spain",
+        "textDocument": "En la Villa de Limpias a diez y siete de Diciembre de mil ochocientos treinta y tres ... puse por nombre Balentina Josefa, hija legítima de D. Juan Navedas Somarriba y Doña María Somarriba González, su mujer, de esta vecindad: nieta paterna de D. Luís de Naveda y Doña María Cruz Somarriba: materna de Don Francisco Somarriba, y Doña Josefa González Aguirre, todos vecinos de Carasa, Voto, Santander, España.",
+        "names": [
+          "Balentina Josefa",
+          "Juan Navedas Somarriba",
+          "María Somarriba González",
+          "Luís de Naveda",
+          "María Cruz Somarriba",
+          "Francisco Somarriba",
+          "Josefa González Aguirre"
+        ],
+        "places": [
+          "Villa de Limpias",
+          "Carasa, Voto, Santander, España"
+        ],
+        "dates": ["1833"],
+        "highlightTerms": ["Naveda", "Somarriba González"]
+      },
+      {
+        "id": "ark:/61903/3:1:S3HY-D137-1PP",
+        "sourceUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D137-1PP",
+        "collectionId": "M9J1-WJ7",
+        "collectionTitle": "Spain, Santander, Deaths, from 1 February 1500 to 2018",
+        "title": "Limpias, Santander, Spain Church Death",
+        "recordType": "Church Death",
+        "recordPlace": "Limpias, Santander, Spain",
+        "textDocument": "En el Campo Santo de la Iglesia Parroquial de esta Villa de Limpias a once de Octubre de mil ochocientos treinta y cuatro se enterró Doña María de Somarriba González que murió hoy mismo del Colera morbo de edad de treinta y dos años ... fue legítima consorte de Don Juan de Naveda, en cuyo matrimonio tuvieron a Francisco y a Valentina.",
+        "names": [
+          "María de Somarriba González",
+          "Juan de Naveda",
+          "Francisco",
+          "Valentina"
+        ],
+        "places": ["Villa de Limpias"],
+        "dates": ["1834"],
+        "highlightTerms": ["Naveda", "Somarriba González"]
+      },
+      {
+        "id": "ark:/61903/3:1:S3HY-D13W-4NX",
+        "sourceUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-4NX",
+        "collectionId": "1784529",
+        "collectionTitle": "Spain, Catholic Church Records, 1307-2005",
+        "title": "San Pedro, Limpias, Cantabria, Spain Church Marriage",
+        "recordType": "Church Marriage",
+        "recordPlace": "San Pedro, Limpias, Cantabria, Spain",
+        "textDocument": "En la villa de Limpias a siete de Agosto de mil ochocientos cuarenta y tres ... contrajeron infacie Eclesie Don Juan de Naveda, viudo de Doña María de Somarriba González, hijo legítimo de D. Luís de Naveda y Doña María Cruz de Somarriba, vecinos ... del lugar de Carasa, Junta de Voto.",
+        "names": [
+          "Juan de Naveda",
+          "María de Somarriba González",
+          "Luís de Naveda",
+          "María Cruz de Somarriba"
+        ],
+        "places": ["villa de Limpias", "lugar de Carasa", "Junta de Voto"],
+        "dates": ["1843"],
+        "highlightTerms": ["Naveda", "Somarriba González"]
+      }
+    ]
+  }
+}
