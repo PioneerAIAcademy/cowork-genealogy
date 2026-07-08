@@ -1,0 +1,18 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Exact birth 22 Nov 1910, La Unión (Montes de Oca), Guerrero recovered and written to Mauro's birth fact, from the indexed Guerrero civil birth registration — the agent bridged from Mauro's later Michoacán residence to his Guerrero birth region using the siblings' Guerrero birth-state lead.",
+    "f2": "Father Sóstenes Cruz recovered and linked (I1), from the birth registration and independently corroborated by a sibling's (Primitivo's) 1935 Guerrero marriage record naming the same parents.",
+    "f3": "Mother Apolinar Corona recovered and linked (I2), same two sources.",
+    "f4": "Paternal grandparents (Jesús Cruz / Donaciana Basurto) not recovered — bonus finding; the agent did not extract or persist grandparent persons.",
+    "f5": "Maternal grandparents (Miguel Corona / Jesús Mercado) not recovered — bonus finding."
+  },
+  "annotator": "ernest"
+}
