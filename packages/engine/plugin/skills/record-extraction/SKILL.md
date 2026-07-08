@@ -89,9 +89,24 @@ Record data arrives in one of four ways:
    source's `transcription` field.
 
    To find images without a URL, use `volume_search` by `standardPlace`
-   + year range to discover digitized volumes (image groups); the user
-   then browses on FamilySearch to pick a specific image
-   (`dgs:{DGS}_{IMAGE}/dist.jpg`).
+   + year range to discover digitized volumes (image groups), then
+   navigate to the target image yourself (`dgs:{DGS}_{IMAGE}/dist.jpg` is
+   the per-image form). **Don't probe image numbers one at a time** —
+   calibrate, then binary-search:
+   - **Anchor** on a record whose date *and* image position you already
+     hold (an indexed relative in the same volume, or the volume's first/
+     last-image dates from `volume_search`). Two anchors give an
+     images-per-time ratio.
+   - **Interpolate** the target image from that ratio and `image_read`
+     that estimate — never start at image #1.
+   - **Binary-search** from there: read the visible date, jump back or
+     forward half the remaining gap, halve each step (~log₂ reads, not a
+     ±1 crawl). No anchor at all? Fetch first/middle/last to fix the date
+     range, then interpolate.
+   - **Size cap:** `image_read` refuses images over ~700 KB
+     (`MAX_INLINE_IMAGE_BYTES`) with a "too large to return inline"
+     error. Treat that as a **hard stop on the first hit** — do not
+     re-fetch the same image; pivot to indexes (next paragraph).
 
    If an image cannot be read — you have no reachable image ARK / DGS
    URL, or `volume_search` / `place_search` fails (common in the sandbox,
@@ -177,6 +192,16 @@ When uncertain, load `references/source-classification-guide.md`.
 
 **Provenance notes:** Use `notes` to trace the path from original to
 the version examined and note image quality or legibility issues.
+
+**"Original not examined" checkpoint — decide it now, not later.** If
+what you examined is a derivative (index entry, abstract, transcript,
+translation) and you did NOT reach the underlying original, make it
+explicit here: set `source_classification: "derivative"`, record
+`"original not examined — <reason: browse-only, image over the ~700 KB
+transport limit, undigitized, etc.>"` in the source `notes`, and state it
+in your Step 6 summary. This is a first-class extraction finding —
+research-exhaustiveness must inherit it, not rediscover it. Never let a
+derivative-only extraction read as if the original was seen.
 
 ### 2. Identify roles in the record
 
@@ -585,7 +610,8 @@ Present a terse summary, **≤10 lines**:
 - source id (`src_` + `S`),
 - assertion count grouped by `record_role`,
 - tree changes (persons created, edges added),
-- key findings if any (gaps / conflicts / negative evidence),
+- key findings if any (gaps / conflicts / negative evidence, and any
+  "original not examined" limitation from Step 1),
 - next step: `check-warnings` for genealogical impossibilities, then
   assertion-classification or person-evidence.
 

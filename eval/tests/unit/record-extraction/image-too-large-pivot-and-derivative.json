@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_record_extraction_014",
+    "skill": "record-extraction",
+    "name": "Oversized browse-only image: hard-stop on transport cap, pivot to index, flag original-not-examined",
+    "type": "positive",
+    "description": "When the original parish register is a browse-only image that exceeds the image_read transport cap (~700 KB), the skill must treat the 'too large to return inline' error as a hard stop on the FIRST hit (not re-fetch the same image repeatedly), pivot to the indexed record via record_read, extract the parents from the index, classify the source as derivative, and flag 'original not examined' at extraction time (Step 1 checkpoint) so downstream exhaustiveness inherits the limitation. Exercises the browse-only transport-limit and derivative-checkpoint fixes; calibrated image navigation is not unit-testable (the mock cannot emit image content) and is verified via the interactive e2e run.",
+    "tags": ["image-read", "transport-limit", "derivative", "browse-only", "fallback"]
+  },
+  "input": {
+    "user_message": "Extract Adrian Zuñiga Rojas's baptism. The original parish register is a browse-only FamilySearch image, Image Group Number 004884748, image 02613 (imageId 004884748_02613). An index entry for the same baptism exists at ark:/61903/1:1:9V8X-BQ7T.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": ["image-read-baptism-too-large", "record-read-baptism-index"],
+  "judge_context": [
+    "The skill should attempt image_read once for imageId 004884748_02613 (the original register) and receive a 'too large to return inline' error.",
+    "TRANSPORT LIMIT (hard stop): After the first 'too large' error, the skill MUST NOT re-fetch the same image repeatedly — there should be no second or third image_read of 004884748_02613. Treating the size cap as a hard constraint on the first hit is the correct behavior; repeated re-fetches of the same oversized image are a failure.",
+    "PIVOT: The skill should pivot to the indexed record via record_read on ark:/61903/1:1:9V8X-BQ7T (or bare id 9V8X-BQ7T) and continue the extraction from it — not stop the research because the image was unreadable.",
+    "EXTRACTION: Should extract the parents named in the index — father Pedro Zuñiga and mother Apolonia Rojas — as ParentChild assertions for Adrian Zuñiga Rojas, plus the christening (~1889, San Bartolomé, Arani, Cochabamba, Bolivia).",
+    "DERIVATIVE CLASSIFICATION: The source must be classified with source_classification 'derivative' — an index entry is a derivative source, not the original register.",
+    "ORIGINAL-NOT-EXAMINED CHECKPOINT (the key new behavior): because the original register image was not readable (over the transport limit), the skill must record that the original was NOT examined — e.g. an 'original not examined' note in the source's notes field AND surfaced in the final summary. The extraction must NOT read as if the original register was seen.",
+    "Should NOT attempt a browser, web_fetch, or 'Claude in Chrome' to fetch the image — those are unavailable in this environment.",
+    "Should NOT invent facts beyond what the index record_read returns."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
