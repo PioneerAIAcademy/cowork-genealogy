@@ -9,10 +9,11 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
-# Source the Anthropic key (operator key) from the sibling UI repo's .env if
-# present, so `make server-dev` / real-agent runs work without copying secrets
-# into this repo. Override by exporting ANTHROPIC_API_KEY yourself.
-UI_ENV := ../cowork-genealogy-ui/.env
+# Source the Anthropic key (operator key) from this repo's eval/.env if present,
+# so `make server-dev` / real-agent runs work without exporting it. Absolute
+# ($(CURDIR)) so the grep still resolves after the `cd apps/server` below.
+# Override by exporting ANTHROPIC_API_KEY yourself.
+EVAL_ENV := $(CURDIR)/eval/.env
 
 # ── Dependency stamps (make implicit prerequisites explicit) ─────
 # Each run/test target depends on a stamp below instead of silently assuming the
@@ -149,12 +150,12 @@ server-mock: ## MOCK agent, dev-login, local sandboxes, :8000 — zero setup, no
 .PHONY: server-dev
 server-dev: $(ENGINE_BUILD) ## REAL agent, dev-login (no FamilySearch), :8000 — needs ANTHROPIC_API_KEY (web client: make web-dev)
 	# engine-build prereq: the real agent forks `node <packages/engine/mcp-server/build/index.js>`.
-	# Key is sourced from $$ANTHROPIC_API_KEY, else the sibling repo's .env (UI_ENV).
+	# Key is sourced from $$ANTHROPIC_API_KEY, else this repo's eval/.env (EVAL_ENV).
 	# Pin the same dev-friendly values as `server-mock` (local provider, dev-login,
 	# FS front door off) so .env kept for the server/e2b targets doesn't leak in here.
 	cd apps/server && AGENT_MODE=real SANDBOX_PROVIDER=local \
 	  FAMILYSEARCH_WEB_ENABLED=false \
-	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(UI_ENV) | cut -d= -f2-)}" \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run uvicorn app.main:app --reload --port 8000
 
 .PHONY: server
