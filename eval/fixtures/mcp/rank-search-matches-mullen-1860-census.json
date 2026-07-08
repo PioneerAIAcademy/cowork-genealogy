@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the single staged 1860-census result against tree subject I1 (Sarah Ann Mullen, b. 1852 Dodge County, Wisconsin, daughter of William Mullen). The record (Sarah A. Mullen, age 8, in William Mullen's household — ark WICN-1860-M01) is a strong match that confirms her maiden surname before either marriage; it is not yet attached to the subject or to anyone else, so it surfaces as new evidence for extraction. The Price and Mielke searches return zero results and stage nothing, so only the Mullen result set is ranked. Used by the maiden-name pre-marriage search test to exercise the match-ranked review surface + attachment flags without a live match API. Matched on subjectId; independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:WICN-1860-M01",
+        "primaryId": "P1",
+        "personName": "Sarah A. Mullen",
+        "sex": "Female",
+        "birthDate": "1852",
+        "birthPlace": "Wisconsin",
+        "collectionTitle": "United States Census, 1860",
+        "matchScore": 0.9312,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}
