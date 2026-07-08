@@ -212,7 +212,7 @@ server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1
 
 .PHONY: electron
 electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
-	pnpm --filter cowork-genealogy-ui dev
+	pnpm --filter @genealogy/electron dev
 
 # ── Quality / tests ──────────────────────────────────────────────
 .PHONY: typecheck
