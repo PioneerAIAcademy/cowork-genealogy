@@ -26,7 +26,7 @@ mac:
 
 dmg:
   sign: false
-  artifactName: ${name}-${version}-${arch}.${ext}
+  artifactName: research-viewer-${version}-${arch}.${ext}
 
 win:
   executableName: research-viewer
@@ -41,7 +41,7 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Research Viewer
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: research-viewer-${version}-setup.${ext}
 
 linux:
   target:
@@ -55,7 +55,7 @@ linux:
   icon: build/icon.png
 
 appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: research-viewer-${version}.${ext}
 
 npmRebuild: false
 
