@@ -9,6 +9,12 @@
           "given": "Elizabeth",
           "surname": "Young",
           "id": "PID-TODO-name-1"
+        },
+        {
+          "given": "Elizabeth",
+          "surname": "Martin",
+          "preferred": false,
+          "id": "N1"
         }
       ],
       "facts": [
@@ -67,6 +73,21 @@
           "standard_date": "12 Sep 1893",
           "place": "Anfield, Lancashire, England",
           "standard_place": "Anfield, Lancashire, England"
+        },
+        {
+          "type": "Marriage",
+          "date": "16 November 1828",
+          "place": "Bristol, England, United Kingdom",
+          "primary": true,
+          "id": "F2",
+          "standard_place": "Bristol, England, United Kingdom"
+        },
+        {
+          "type": "Christening",
+          "date": "26 May 1811",
+          "place": "Bristol, Gloucestershire, England",
+          "standard_place": "Bristol, England, United Kingdom",
+          "id": "F3"
         }
       ]
     },
@@ -121,6 +142,14 @@
           "standard_date": "12 Jan 1892",
           "place": "Anfield, Lancashire, England",
           "standard_place": "Anfield, Lancashire, England"
+        },
+        {
+          "type": "Marriage",
+          "date": "16 November 1828",
+          "place": "Bristol, England, United Kingdom",
+          "primary": true,
+          "id": "F1",
+          "standard_place": "Bristol, England, United Kingdom"
         }
       ]
     },
@@ -475,6 +504,30 @@
           "standard_place": "Kirkdale, Lancashire, England"
         }
       ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "James",
+          "surname": "Martin",
+          "id": "N2",
+          "preferred": true
+        }
+      ],
+      "id": "I1"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Ann",
+          "surname": "Martin",
+          "id": "N3",
+          "preferred": true
+        }
+      ],
+      "id": "I2"
     }
   ],
   "relationships": [
@@ -628,7 +681,42 @@
       "parent": "PID-TODO",
       "child": "p-child-william",
       "id": "rel-25"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "PID-TODO",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "PID-TODO",
+      "id": "R2"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R3"
     }
   ],
-  "sources": []
+  "sources": [
+    {
+      "title": "England Marriages, 1538\u20131973",
+      "url": "https://www.familysearch.org/search/collection/1473015",
+      "id": "S1"
+    },
+    {
+      "title": "England, Bristol, Parish Registers, 1538-1900",
+      "url": "https://www.familysearch.org/search/collection/1718965",
+      "id": "S2"
+    },
+    {
+      "title": "England, Births and Christenings, 1538-1975",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:J726-KVL : accessed 8 July 2026), entry for Elizabeth Martin, christened 26 May 1811, Bristol, Gloucestershire, England; father James Martin, mother Ann Martin.",
+      "url": "https://www.familysearch.org/search/collection/1473014",
+      "id": "S3"
+    }
+  ]
 }

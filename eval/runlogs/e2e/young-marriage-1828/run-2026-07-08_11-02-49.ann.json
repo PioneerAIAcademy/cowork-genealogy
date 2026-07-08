@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Marriage date (16 Nov 1828) and place (Bristol, England) correctly recovered from FamilySearch collection 1473015. Specific parish name (St. James) not named in tree, but Bristol is correct.",
+    "f2": "Maiden name Martin established from marriage record (a_002) and recorded as alternate name N1 in tree. GRO birth-index corroboration (Martha/Robert birth certificates) not found, but maiden name itself is present.",
+    "f3": "Agent found a different Elizabeth Martin (26 May 1811, Bristol, parents James & Ann Martin) instead of the expected Betty Martin (1 Nov 1812, Bitton, parents Thomas & Sophia Martin). The expected record is indexed under the nickname 'Betty' on FamilySearch, which the agent did not search for."
+  },
+  "annotator": "yinkid28-benter070"
+}
