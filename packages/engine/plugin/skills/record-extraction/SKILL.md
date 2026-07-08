@@ -617,9 +617,6 @@ belongs in `research.json`, not echoed here.
   but same GedcomX source description (`S` entry)
 - Different record entirely -> new `src_` and new `S` entry
 
-**On re-invocation:** the log is append-only — always append a new `log_`
-entry, never modify existing ones (see `docs/specs/research-schema-spec.md` §4).
-
 **Partial or damaged records:** Extract whatever is legible. Annotate
 gaps with `[illegible]`, `[torn]`, `[stained]`. Do not guess missing data.
 
@@ -679,3 +676,12 @@ dwelling 84, Thomas Flynn household.
 | a_003 | child_1 | residence | Schuylkill County, PA | primary | census enumerator | witness |
 | a_004 | child_1 | relationship | position consistent with child | indeterminate | census enumerator | witness |
 | a_005 | head_of_household | name | Thomas Flynn | indeterminate | unknown household member (likely self or spouse) | household_member |
+
+## Re-invocation behavior
+
+On repeat invocation, detect whether a source for this record already
+exists (by `gedcomx_source_description_id` or working citation). If so,
+refine it via `research_append` `op: "update"` instead of creating a
+duplicate; refine its assertions the same way. The log is append-only —
+always append a new `log_` entry, never modify existing ones (see
+`docs/specs/research-schema-spec.md` §4).
