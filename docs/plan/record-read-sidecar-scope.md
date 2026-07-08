@@ -108,9 +108,14 @@ England death/burial). For **the person you searched** (the matched persona):
 - **Standardized place: the search result's is correct; a live `record_read`
   re-standardizes it WRONGLY** (observed `Southampton, NY → Southampton, England`;
   `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore *more*
-  reliable, and the tool now returns the staged place **as-is** (it no longer
-  re-runs `standardizePlaces`). *(This is a separate `record_read` bug worth its
-  own fix.)*
+  reliable, and the sidecar tool returns the staged place **as-is** (no
+  `standardizePlaces` re-run). **The live `record_read` path is also fixed:** the
+  recapi record response carries **no** FS-normalized place (only `original` +
+  parsed County/City/State fields — verified), so `record_read` now uses
+  `toSimplified` (FS's provided data) instead of `toSimplifiedStandardized` and
+  leaves `standard_place` **unset** rather than resolving the ambiguous name to a
+  wrong place. Staged records still carry FS's correct normalized place from the
+  search endpoint.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills

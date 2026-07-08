@@ -268,6 +268,24 @@ describe("recordReadTool", () => {
     // toSimplified returns an empty object for empty input — no throw
     expect(result).toBeDefined();
   });
+
+  it("does not re-standardize places on a live read (uses FS's provided data only)", async () => {
+    const { resolveStandardPlace } = await import("../../src/utils/place-resolver.js");
+    mockOk({
+      persons: [
+        {
+          facts: [
+            { type: "Residence", date: { original: "1940" }, place: { original: "Southampton, New York" } },
+          ],
+        },
+      ],
+    } as unknown as GedcomX);
+    await recordReadTool({ recordId: "QVS9-DHDB" });
+    // toSimplifiedStandardized would have resolved the place name (and mis-placed
+    // it — the recapi response has no FS-normalized place); toSimplified must not
+    // touch the resolver at all.
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
 });
 
 // ─── Sidecar mode (resultsRef) — no network ────────────────────────────────

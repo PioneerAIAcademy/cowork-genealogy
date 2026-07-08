@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
+import { toSimplified } from "../utils/gedcomx-convert.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
@@ -123,7 +123,14 @@ export async function recordReadTool(
   }
 
   const body = (await res.json()) as GedcomX;
-  return await toSimplifiedStandardized(body);
+  // Use toSimplified, NOT toSimplifiedStandardized. The recapi record response
+  // carries no FS-normalized place (only `original` + parsed County/City/State
+  // fields), so re-standardizing would resolve the ambiguous place *name* through
+  // the resolver and mis-place it (observed: "Southampton, NY" -> "Southampton,
+  // England"; "Rochdale, England" -> "Rochdale, South Africa"). Leaving
+  // standard_place unset is correct — never fabricate a wrong one. Records reached
+  // via the search sidecar already carry FS's correct normalized place.
+  return toSimplified(body);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
