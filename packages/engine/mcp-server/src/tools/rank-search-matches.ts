@@ -4,7 +4,7 @@ import { getValidToken } from "../auth/refresh.js";
 import { scorePair } from "../utils/match-engine.js";
 import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
-import { STAGING_SUBDIR } from "../utils/results-staging.js";
+import { readStagedResults } from "../utils/results-staging.js";
 import { sourceAttachmentsTool } from "./source-attachments.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
@@ -41,7 +41,10 @@ export async function rankSearchMatches(
   const { projectPath, stagedResultsRef, subjectId } = input;
 
   // ── 1. Read the staged (or finalized) results file (read-only) ─────────────
-  const results = await readStagedResults(projectPath, stagedResultsRef);
+  const results = (await readStagedResults(
+    projectPath,
+    stagedResultsRef,
+  )) as RecordSearchResult[];
 
   // ── 2. Build the subject doc from tree.gedcomx.json ────────────────────────
   const subjectDoc = await buildSubjectDoc(projectPath, subjectId);
@@ -139,50 +142,9 @@ export async function rankSearchMatches(
   return out;
 }
 
-// ─── Staged-file read (dual-location, read-only) ─────────────────────────────
-
-async function readStagedResults(
-  projectPath: string,
-  stagedResultsRef: string,
-): Promise<RecordSearchResult[]> {
-  // Traversal guard, then require EITHER a staged handle under results/.staging/
-  // OR a finalized top-level results/<log_id>.json sidecar. Looser than
-  // finalizeStagedResults (which hard-rejects anything outside .staging/); we
-  // reuse assertInsideProject but write the dual-location check here and never
-  // call finalize's guard.
-  const abs = assertInsideProject(projectPath, stagedResultsRef);
-  const stagingDir = join(projectPath, STAGING_SUBDIR);
-  const resultsDir = resolve(projectPath, "results");
-  const underStaging = isInsideProject(stagingDir, abs);
-  const topLevelSidecar =
-    dirname(abs) === resultsDir && abs.endsWith(".json");
-  if (!underStaging && !topLevelSidecar) {
-    throw new Error(
-      `stagedResultsRef '${stagedResultsRef}' must be a staged handle under ` +
-        `${STAGING_SUBDIR}/ or a finalized results/<log_id>.json sidecar.`,
-    );
-  }
-
-  // Read-only; NEVER unlink (so research_log_append can still finalize a staged
-  // handle after ranking).
-  let envelope: { payload?: { results?: unknown[] } };
-  try {
-    envelope = JSON.parse(await readFile(abs, "utf-8"));
-  } catch {
-    throw new Error(
-      `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON.`,
-    );
-  }
-
-  // Both envelope shapes expose payload.results (staged and finalized sidecar).
-  const results = envelope?.payload?.results;
-  if (!Array.isArray(results)) {
-    throw new Error(
-      `stagedResultsRef '${stagedResultsRef}' envelope has no payload.results array.`,
-    );
-  }
-  return results as RecordSearchResult[];
-}
+// readStagedResults was lifted to utils/results-staging.ts so record_read's
+// sidecar mode shares the exact same dual-location read (staged handle OR
+// finalized results/<log_id>.json). Imported above; callers cast the elements.
 
 // ─── Subject-doc assembly ────────────────────────────────────────────────────
 
