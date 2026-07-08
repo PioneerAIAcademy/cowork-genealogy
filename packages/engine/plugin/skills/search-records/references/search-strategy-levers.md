@@ -43,9 +43,12 @@ and expect a specific record.
 | Lever | API change | When to try |
 |---|---|---|
 | Broaden place (county→state→country) | Drop smaller jurisdiction levels from place string | No hits in expected county; boundary changes; ancestor crossed county lines |
+| **Switch to the modern country** | Set `recordCountry` (and the place string) to the place's **present-day** country, not the one that governed it at the event date | **The place changed national jurisdiction since the event** — an empire that dissolved into successor states (Austria-Hungary → Slovakia / Czechia / Hungary / Croatia / Poland / Ukraine…, Prussia → Poland, Ottoman → Balkan states). See the note below. |
 | Narrow place (state→county→town) | Add smaller levels to place string | Too many hits; subject's town is known |
 | Drop place | Clear all place parameters | Subject migrated unexpectedly |
 | Switch event-place | Move place from `birthLikePlace` → `residencePlace` → `marriageLikePlace` → `anyPlace` | Each event occurred in a different place |
+
+**FamilySearch indexes collections by the place's MODERN country, not the historical one.** A birth in 1893 Šútovo — then Suttó, Turócz County, Kingdom of Hungary — is indexed under **Slovakia** ("Slovakia, Church and Synagogue Books"), because Šútovo is in modern Slovakia. Searching `recordCountry: "Hungary"` (or filtering by the historical county "Turócz") returns nil no matter how many name variants you try, because the record simply isn't filed under Hungary. So when a place has changed countries since the event, **search under the present-day country** — that is where the collection lives. `place_search_all` shows the jurisdictions a place has belonged to over time; the *most recent* one is the country to search first. Do **not** assume the historical empire's religion either (a 1893 Turócz parish is Slovak **Lutheran**, not Catholic) — let the collection, not the assumption, decide.
 
 ## Date levers
 
@@ -76,15 +79,16 @@ and expect a specific record.
 When a search returns 0 hits with reasonable inputs, try in this order:
 
 1. Broaden year range to ±10
-2. Drop given name (surname + place + date)
-3. Drop surname (given name + place + date + relationships)
-4. Wildcard the surname
-5. Wildcard the given name
-6. Switch event type to Any
-7. Broaden place by one jurisdiction level
-8. Drop place entirely
-9. Switch from principal to spouse / parent / child
-10. Search by neighbor or FAN-club member
+2. **If the place changed national borders since the event, switch `recordCountry` to the present-day country** (e.g. Hungary→Slovakia) — FS files the collection under the modern country. Try this early; it is a common, silent cause of nil on Central/Eastern-European searches.
+3. Drop given name (surname + place + date)
+4. Drop surname (given name + place + date + relationships)
+5. Wildcard the surname
+6. Wildcard the given name
+7. Switch event type to Any
+8. Broaden place by one jurisdiction level
+9. Drop place entirely
+10. Switch from principal to spouse / parent / child
+11. Search by neighbor or FAN-club member
 
 **Still 0 hits across all variations:** the records may be unindexed.
 Switch to image browsing, Catalog search, Full-Text Search, or

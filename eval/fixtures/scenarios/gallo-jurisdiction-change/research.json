@@ -1,0 +1,66 @@
+{
+  "project": {
+    "id": "rp_gallo_jurisdiction_change",
+    "objective": "Who was the father of Jan Gallo, born 1893 in Šútovo, Turany parish (then Turócz County, Kingdom of Hungary; today Slovakia)?",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-08",
+    "updated": "2026-07-08"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the father of Jan Gallo (b. 1893, Šútovo, Turany parish)?",
+      "rationale": "Primary objective. The 1893 baptism names the father; find and read it.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-08",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-08",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Šútovo / Turany parish (Turócz County, Kingdom of Hungary; today Slovakia)",
+          "date_range": "1893",
+          "repository": "FamilySearch",
+          "rationale": "Jan's 1893 baptism in the Turany Lutheran parish register names his father. Find and read the indexed baptism.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
