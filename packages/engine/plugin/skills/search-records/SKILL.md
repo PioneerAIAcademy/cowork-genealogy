@@ -114,11 +114,14 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. For place hierarchy expansion and date range behavior, read `references/place-date-mechanics.md`. For collection-specific strategies, read `references/collection-quirks.md`.
 
 **Name variant strategy:** If the exact name returns few results, try:
+- Historical nicknames and diminutives (Elizabeth → Betty/Betsy/Eliza, Margaret → Peggy, Mary → Polly, Catherine → Kate/Kitty, William → Bill, Richard → Dick, John → Jack) — see `references/name-search-mechanics.md` "Common nickname equivalences" for the full table
 - Phonetic variants (Flynn → Flyn, Flinn)
 - Spelling variants (Patrick → Patric, Paddy, Pat)
 - Abbreviations (William → Wm, Thomas → Thos)
 - Initials (J. Smith)
 - Maiden names for married women
+
+**For pre-civil-registration records (before ~1837 in England/Wales, ~1864 in Ireland):** parish registers often recorded nicknames rather than formal names. Always search both the formal name AND common diminutives — don't wait for the formal name to return few results. Load `references/name-search-mechanics.md` for the full nickname equivalences table.
 
 **Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** Use explicit spelling variants instead.
 
