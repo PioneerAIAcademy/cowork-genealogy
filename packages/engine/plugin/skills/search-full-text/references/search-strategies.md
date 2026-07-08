@@ -101,6 +101,32 @@ The unique value proposition of FTS. Search for:
 - Target + neighbor's distinctive item: `+Cochran +"silver watch"`
 - Target + landmark: `+Rodgers +"Turnip Creek"`
 
+### Compound-surname parentage (Iberian / Latin-American)
+
+When the subject's own name is `Given Paterno Materno` (e.g. "Francisco
+**Naveda Somarriba**"), the two surnames are the father's and the
+mother's. To find the parents, **decompose the compound into a
+co-occurrence** — `+Naveda +Somarriba` — and run it **unscoped** (no
+`collectionId`; the answer often sits in a different FTS collection than
+you'd guess). Do **not** search the adjacent phrase `+"Naveda
+Somarriba"`: in the parents' own records (the child's baptism, a
+parent's burial or marriage) the father carries the paternal surname and
+the mother the maternal one, so the words are on separate people and not
+adjacent — the phrase form matches only where the child's compound name
+is written out and misses the parentage records.
+
+Escalate precision as you learn the names:
+1. `+Naveda +Somarriba` (both surnames required, unscoped).
+2. `+"Somarriba González" +Naveda` (mother's fuller form once known).
+3. `+Naveda +Somarriba +Limpias` (add the parish once a locality is in
+   hand) — or apply the place *filter* rather than a keyword.
+
+This is the single highest-yield move for "where was X from / who were
+X's parents" when X emigrated and the destination records only say
+"native of Spain": the origin-country parish acts naming both parents
+are reachable by the surname co-occurrence even when X's own baptism is
+unindexed.
+
 ## Exclusion searches
 
 - Disambiguate same-named people: `+"John Smith" +Pennsylvania -Ohio`

@@ -1,0 +1,146 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "given": "Charles Hubert", "surname": "Ferber", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "22 June 1891", "standard_date": "22 Jun 1891", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F2", "type": "Death", "date": "12 December 1967", "standard_date": "12 Dec 1967", "place": "Fort Lauderdale, Broward, Florida, United States", "standard_place": "Fort Lauderdale, Broward, Florida, United States", "sources": [{ "ref": "S1", "quality": 1 }, { "ref": "S4", "quality": 2 }] },
+        { "id": "F3", "type": "Residence", "date": "1900", "standard_date": "1900", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }, { "ref": "S2", "quality": 2 }] },
+        { "id": "F4", "type": "Residence", "date": "1910", "standard_date": "1910", "place": "Cincinnati Ward 21, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F5", "type": "Military Draft Registration", "date": "1917-1918", "standard_date": "Bet 1917 and 1918", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F6", "type": "Residence", "date": "1920", "standard_date": "1920", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F7", "type": "Residence", "date": "1930", "standard_date": "1930", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F8", "type": "Residence", "date": "1935", "standard_date": "1935", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F9", "type": "Residence", "date": "1940", "standard_date": "1940", "place": "Columbia Township, Hamilton, Ohio, United States", "standard_place": "Columbia Township, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F10", "type": "Military Draft Registration", "date": "1942", "standard_date": "1942", "place": "Ohio, United States", "standard_place": "Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F11", "type": "Residence", "date": "10 April 1950", "standard_date": "10 Apr 1950", "place": "Mariemont, Hamilton, Ohio, United States", "standard_place": "Mariemont, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F12", "type": "Burial", "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "given": "William Hubert", "surname": "Ferber", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F13", "type": "Birth", "date": "December 1869", "standard_date": "Dec 1869", "place": "Ohio, United States", "standard_place": "Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }, { "ref": "S2", "quality": 2 }] },
+        { "id": "F14", "type": "Residence", "date": "1870", "standard_date": "1870", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F15", "type": "Residence", "date": "1900", "standard_date": "1900", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }, { "ref": "S2", "quality": 2 }] },
+        { "id": "F16", "type": "Death", "date": "11 March 1903", "standard_date": "11 Mar 1903", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }, { "ref": "S3", "quality": 2 }] },
+        { "id": "F17", "type": "Burial", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        { "id": "N3", "given": "Emma", "surname": "Becker", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F18", "type": "Birth", "date": "25 March 1870", "standard_date": "25 Mar 1870", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F19", "type": "Residence", "date": "1900", "standard_date": "1900", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }, { "ref": "S2", "quality": 2 }] },
+        { "id": "F20", "type": "Death", "date": "7 December 1948", "standard_date": "7 Dec 1948", "place": "Dayton, Campbell, Kentucky, United States", "standard_place": "Dayton, Campbell, Kentucky, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F21", "type": "Burial", "date": "10 December 1948", "standard_date": "10 Dec 1948", "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        { "id": "N4", "given": "Gerhard", "surname": "Ferber", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F22", "type": "Birth", "date": "29 September 1820", "standard_date": "29 Sep 1820", "place": "Germany", "standard_place": "Germany", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F23", "type": "Immigration", "date": "1850", "standard_date": "1850", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F24", "type": "Naturalization", "date": "1853", "standard_date": "1853", "place": "Ohio, United States", "standard_place": "Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F25", "type": "Death", "date": "31 May 1917", "standard_date": "31 May 1917", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F26", "type": "Burial", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        { "id": "N5", "given": "Eva", "surname": "Engermann", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F27", "type": "Birth", "date": "1834", "standard_date": "1834", "place": "Bavaria, German Empire", "standard_place": "Bavaria", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F28", "type": "Death", "date": "1 January 1872", "standard_date": "1 Jan 1872", "place": "Cincinnati, Hamilton, Ohio, United States", "standard_place": "Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F29", "type": "Burial", "date": "January 1872", "standard_date": "Jan 1872", "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        { "id": "N6", "given": "John", "surname": "Becker", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F30", "type": "Birth", "date": "January 1845", "standard_date": "Jan 1845", "place": "Kentucky, United States", "standard_place": "Kentucky, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Female",
+      "names": [
+        { "id": "N7", "given": "Mary", "surname": "Kramer", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F31", "type": "Birth", "place": "Ohio, United States", "standard_place": "Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Female",
+      "names": [
+        { "id": "N8", "given": "Lydian Inez", "surname": "Hall", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F32", "type": "Birth", "date": "1893", "standard_date": "1893", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Female",
+      "names": [
+        { "id": "N9", "given": "Harriet Helen", "surname": "Bailey", "preferred": true }
+      ],
+      "facts": [
+        { "id": "F33", "type": "Birth", "date": "20 May 1903", "standard_date": "20 May 1903", "place": "Oakley, Cincinnati, Hamilton, Ohio, United States", "standard_place": "Oakley, Cincinnati, Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] },
+        { "id": "F34", "type": "Death", "date": "7 March 1999", "standard_date": "7 Mar 1999", "place": "Fort Lauderdale, Broward, Florida, United States", "standard_place": "Fort Lauderdale, Broward, Florida, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "R1", "type": "ParentChild", "parent": "I2", "child": "I1" },
+    { "id": "R2", "type": "ParentChild", "parent": "I3", "child": "I1" },
+    { "id": "R3", "type": "Couple", "person1": "I2", "person2": "I3", "facts": [
+      { "id": "F35", "type": "Marriage", "date": "10 September 1890", "standard_date": "10 Sep 1890", "place": "Hamilton, Ohio, United States", "standard_place": "Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+    ] },
+    { "id": "R4", "type": "ParentChild", "parent": "I4", "child": "I2" },
+    { "id": "R5", "type": "ParentChild", "parent": "I5", "child": "I2" },
+    { "id": "R6", "type": "Couple", "person1": "I4", "person2": "I5", "facts": [
+      { "id": "F36", "type": "Marriage", "date": "21 May 1856", "standard_date": "21 May 1856", "place": "Hamilton, Ohio, United States", "standard_place": "Hamilton, Ohio, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+    ] },
+    { "id": "R7", "type": "ParentChild", "parent": "I6", "child": "I3" },
+    { "id": "R8", "type": "ParentChild", "parent": "I7", "child": "I3" },
+    { "id": "R9", "type": "Couple", "person1": "I6", "person2": "I7" },
+    { "id": "R10", "type": "Couple", "person1": "I1", "person2": "I8", "facts": [
+      { "id": "F37", "type": "Marriage", "date": "1 February 1918", "standard_date": "1 Feb 1918", "place": "Chicago, Cook, Illinois, United States", "standard_place": "Chicago, Cook, Illinois, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+    ] },
+    { "id": "R11", "type": "Couple", "person1": "I1", "person2": "I9", "facts": [
+      { "id": "F38", "type": "Marriage", "date": "21 April 1934", "standard_date": "21 Apr 1934", "place": "Williamstown, Grant, Kentucky, United States", "standard_place": "Williamstown, Grant, Kentucky, United States", "sources": [{ "ref": "S1", "quality": 1 }] }
+    ] }
+  ],
+  "sources": [
+    { "id": "S1", "title": "FamilySearch Family Tree", "author": "FamilySearch contributors" },
+    { "id": "S2", "title": "United States, Census, 1900", "citation": "\"United States, Census, 1900\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG), Entry for William Ferber and Emma Ferber, 1900.", "url": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG" },
+    { "id": "S3", "title": "Ohio, County Death Records, 1840-2001", "citation": "\"Ohio, County Death Records, 1840-2001\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ), Entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903.", "url": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ" },
+    { "id": "S4", "title": "Obituary of Charles Ferber", "author": "Fort Lauderdale News", "citation": "Fort Lauderdale News, Fort Lauderdale, FL, 13 Dec 1967 (client-provided clipping)" }
+  ]
+}

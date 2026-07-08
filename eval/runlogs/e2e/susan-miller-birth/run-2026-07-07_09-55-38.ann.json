@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Birth recovered with exact date (17 March 1865) and correct place (Dundee, Forfarshire = Angus, its historical county name). The standard_place field is mis-geocoded to Jamaica — a FamilySearch geocoder error, not an agent error; the human-readable place value is correct. Graded true."
+  },
+  "annotator": "promise-emmanuel"
+}
