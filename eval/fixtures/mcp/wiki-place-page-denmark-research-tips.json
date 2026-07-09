@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page research_tips for Denmark — country research strategy naming the record systems canonical to Danish research, including the lægdsruller.",
+  "args": {
+    "standardPlace": "~",
+    "section": "research_tips"
+  },
+  "response": {
+    "place": "Denmark",
+    "section": "research_tips",
+    "content": "## Denmark Research Strategies\n\n### Starting Points\nBegin with the parish registers (kirkebøger) — baptisms, confirmations, marriages, and burials — then anchor households with the national censuses of 1787 and 1801 (and decennial censuses from 1834). Patronymic naming dominates before ~1856: a child's surname is the father's given name + -sen/-datter, so 'Mikkel Nielsen' implies a father named Niels.\n\n### Record systems specific to Denmark\n- **Military levying rolls (lægdsruller), 1789-1861:** every male is registered from birth or early childhood in his levying district under the father's name (the father's entry sits directly above the son's). For male subjects these rolls are direct parentage evidence and track residence, occupation, and the father's status (e.g. 'old man's son', 'widow's son') session by session. Organized by district (lægd), not by name — expect to browse.\n- **Probate (skifteprotokoller):** name spouse and all heirs; kept by herred, estate, or town.\n- **Land and copyhold (fæste) records:** a farm lease (fæste) transfer often marks a father's death or retirement.\n\n### Access notes\nMany Danish series on FamilySearch are digitized but browse-only or fractionally indexed; the Danish National Archives (Rigsarkivet) hosts free images of the lægdsruller and church books.",
+    "page_url": "https://www.familysearch.org/en/wiki/Denmark_Genealogy"
+  }
+}

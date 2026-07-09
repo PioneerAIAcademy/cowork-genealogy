@@ -1,0 +1,28 @@
+{
+  "tool": "place_search",
+  "description": "place_search catch-all for Danish jurisdiction lookups (Thisted county / Denmark). Listed after the Stagstrup fixture so parish queries hit the narrower one first.",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Thisted, Denmark",
+        "type": "County",
+        "dateRange": "+1793/",
+        "latitude": 56.95,
+        "longitude": 8.69,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Thisted&focusedId=430211",
+        "notes": "Thisted Amt; before the 1793 county reform the area fell under Vestervig Amt."
+      },
+      {
+        "standardPlace": "Denmark",
+        "type": "Country",
+        "dateRange": "/",
+        "latitude": 56.0,
+        "longitude": 10.0,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Denmark&focusedId=3000"
+      }
+    ]
+  }
+}

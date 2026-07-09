@@ -13,13 +13,7 @@
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "caps": {
-    "wall_clock_seconds": 3600,
-    "inactivity_seconds": 600,
-    "tool_calls": 200,
-    "max_turns": 100,
-    "max_cost_usd": 15
-  },
+  "blocked_tools": ["wiki_search"],
   "difficulty": "hard",
-  "notes": "Reframed from a records-walkthrough case study. The source traces Mikkel's life through the Danish Military Levying Rolls (Lægdsruller) rather than posing a parents question; the reframe turns it into 'identify the father and his death date.' Core evidence = the levying rolls, which name the father directly above the son but are browse-only image rolls, not name-indexed on FamilySearch; the father's death is confirmed only in the Stagstrup parish burial register. The mother is never named in the source, so she is not a finding. Recoverability via FamilySearch record search is low-to-moderate."
+  "notes": "Reframed from a records-walkthrough case study. The source traces Mikkel's life through the Danish Military Levying Rolls (Lægdsruller) rather than posing a parents question; the reframe turns it into 'identify the father and his death date.' Core evidence = the levying rolls, which name the father directly above the son but are browse-only image rolls, not name-indexed on FamilySearch; the father's death is confirmed only in the Stagstrup parish burial register. The mother is never named in the source, so she is not a finding. Recoverability via FamilySearch record search is low-to-moderate. wiki_search is disabled for this fixture (blocked_tools) per maintainer call 2026-07-09: the ground truth is a public FamilySearch Wiki case-study article that wiki_search surfaces during normal planning and that names the father directly. The stale caps block was removed 2026-07-09 — per spec §3.1 caps are harness policy, not a fixture field; the fixture now inherits the defaults (120 min wall clock)."
 }

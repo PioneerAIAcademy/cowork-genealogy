@@ -1,0 +1,60 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized image groups covering Stagstrup/Thisted: the fractionally-indexed parish register and the browse-only lægdsruller series.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Stagstrup, Thisted, Denmark"
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "004130616",
+        "imageGroupPrefix": "004130616",
+        "imageCount": 486,
+        "recordSearchablePercent": 3,
+        "fulltextSearchable": false,
+        "languages": ["da"],
+        "coverages": [
+          {
+            "place": "Stagstrup, Thisted, Denmark",
+            "dateRange": "1763–1814",
+            "recordType": "Church Records (kirkebog — baptisms, marriages, burials)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004748896",
+        "imageGroupPrefix": "004748896",
+        "imageCount": 1204,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["da"],
+        "coverages": [
+          {
+            "place": "Thisted, Denmark",
+            "dateRange": "1789–1814",
+            "recordType": "Military Levying Rolls (lægdsruller, Vestervig/Thisted Amt districts)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004392710",
+        "imageGroupPrefix": "004392710",
+        "imageCount": 655,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["da"],
+        "coverages": [
+          {
+            "place": "Hassing Herred, Thisted, Denmark",
+            "dateRange": "1690–1850",
+            "recordType": "Probate Records (skifteprotokoller)"
+          }
+        ]
+      }
+    ]
+  }
+}

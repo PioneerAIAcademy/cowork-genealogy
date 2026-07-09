@@ -188,7 +188,12 @@ agent catches what the mechanical check cannot: a plan that was too narrow to be
    `wiki_place_page` (`section: "online_records"`) and `collections_search` for the primary jurisdiction to
    identify record types that exist for the place+period but were not searched. Flag missing
    high-value types (probate, land, church, newspaper) as `must_address` with the specific
-   collection name.
+   collection name. The high-value list is jurisdiction-specific, not the generic set: also
+   check `wiki_place_page` (`section: "research_tips"`) for record systems canonical to the
+   place and era (e.g. conscription/levy rolls — Danish *lægdsruller* — for a male subject in
+   1789+ Denmark/Norway) and flag any locally-canonical type that was never planned at all;
+   an evidence category missing from the plan entirely is the highest-value gap this review
+   exists to catch, since the mechanical check only verifies that planned searches were executed.
 
 2. **FAN coverage.** Is at least one log entry targeting witnesses, neighbors, or associates?
    If not — and direct-evidence searches are complete — flag as `must_address`. Use

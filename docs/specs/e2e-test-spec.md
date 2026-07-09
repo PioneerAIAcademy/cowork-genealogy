@@ -115,6 +115,7 @@ Test metadata.
 | `model.judge` | string | yes | Pinned judge model |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
+| `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
 
 **Stop-condition limits (`caps`) are NOT a fixture field.** They're a
 harness safety concern (don't run forever, don't burn the budget), so
@@ -416,10 +417,27 @@ each call with its arguments and denies by tool name. **A denied call
 does not run, does not count toward the tool-call cap, and does not stop
 the run** — the agent is told to use records instead and continues. Every
 denied attempt is recorded in the run log's `blocked_tree_reads` array
-(`{tool, args}` per entry), so a reviewer can see whether the agent
-*tried* to shortcut research. A non-empty `blocked_tree_reads` doesn't
-invalidate a `pass` (the answer was still earned from records, since the
-read was blocked), but it's worth a look.
+(`{tool, args, blocked_by}` per entry, `blocked_by` ∈ `"tree"` |
+`"fixture"`), so a reviewer can see whether the agent *tried* to
+shortcut research and which block source denied it. A non-empty
+`blocked_tree_reads` doesn't invalidate a `pass` (the answer was still
+earned from records, since the read was blocked), but it's worth a look.
+
+**Per-fixture blocked tools.** A fixture may extend the universal block
+with a `blocked_tools` array in its `fixture.json` (§3.1) — bare
+advertised tool names denied for that fixture's runs by the same
+`PreToolUse` hook, with the same semantics (denied call doesn't run,
+doesn't count toward the cap, doesn't stop the run). Use it when the
+fixture's *ground truth itself* is reachable through a legitimate
+research tool — the canonical case is a fixture derived from a public
+FamilySearch Wiki case-study article that names the answer, where
+`wiki_search` would surface the article during ordinary planning.
+Denials are recorded in the same `blocked_tree_reads` array with
+`"blocked_by": "fixture"` (universal tree-block denials carry
+`"blocked_by": "tree"`) so a reviewer can tell the two block sources
+apart. Note the asymmetry this creates with production (`/research`
+normally has the tool) and keep the list minimal — blocking a tool the
+answer does NOT leak through just handicaps the benchmark.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
 recoverable *from records alone*. The fixture-validity gate (§14) proves
