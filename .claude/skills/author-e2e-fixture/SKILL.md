@@ -318,10 +318,19 @@ place under the repo:
 > Next steps (your call — not run yet):
 > 1. **Lint** — `ValidateFixture.bat` (enter `<slug>`) or
 >    `make e2e-validate TEST=<slug>`; resolve any `WARN`.
-> 2. **Run once** — `RunE2E.bat` (enter `<slug>`) or
->    `make e2e-run TEST=<slug>` (live; 20–60 min, $3–10).
-> 3. **Verdict** — `/interpret-e2e-result`.
-> 4. If it passes, commit the fixture (and its run log) and open a PR.
+> 2. **Seed an editable project** — `SeedProject.bat` (enter `<slug>`) or
+>    `make e2e-project TEST=<slug>`. It copies the fixture's starting state
+>    into `eval/e2e-project/<slug>/` (throwaway, never committed).
+> 3. **Watch it run** — open `eval/e2e-project/<slug>/` in the Claude Desktop
+>    **Cowork** tab and run `/research`. Open the same folder in the Research
+>    Viewer (`Viewer.bat` / `make electron`) to follow along.
+> 4. Commit the five fixture files and open a PR.
+
+Do **not** tell the user to run the scored headless test — that is the internal
+team's step, and they run it after the fixture lands. A live `/research` run
+does not block the tree-reading tools, so the agent can read the answer off the
+live tree: the live run tells you the fixture is *sensible and answerable*, it
+is **not** a pass/fail verdict. Say so when you hand off step 3.
 
 (If you wrote to a `<slug>/` subfolder instead, tell the user to move
 `<slug>/` into `eval/tests/e2e/<slug>/` first, then run the linter.)
@@ -361,13 +370,14 @@ You should (path 1 — from a PID):
    and the Windows `.bat` for each:
    - **Validate the stripping:** `make e2e-validate TEST=<slug>` /
      `ValidateFixture.bat`.
-   - **Debug `/research` live (recommended next):** seed an editable Cowork
-     project with `make e2e-project TEST=<slug>` / `SeedProject.bat`, then
-     watch it in the Research Viewer with `make electron` / `Viewer.bat`.
-     (A live run does not block the tree-read tools, so the honest pass/fail
-     is always the headless run below.)
-   - **Score it headless:** `make e2e-run TEST=<slug>` / `RunE2E.bat`, then
-     `/interpret-e2e-result` for the verdict.
+   - **Seed an editable project:** `make e2e-project TEST=<slug>` /
+     `SeedProject.bat`, which writes `eval/e2e-project/<slug>/`.
+   - **Watch `/research` run live:** open `eval/e2e-project/<slug>/` in the
+     Cowork tab and run `/research`, following along in the Research Viewer
+     (`make electron` / `Viewer.bat`). A live run does not block the tree-read
+     tools, so it is a sanity check on the fixture, not a pass/fail verdict.
+   - **Then commit and open a PR.** The scored headless run is the internal
+     team's step, not the author's — don't send them to it.
 
 *Path 2 (convert a finished project)* differs only at the start: instead
 of a PID + `person_read`, detect an open project whose `research.json`
