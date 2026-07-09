@@ -111,6 +111,38 @@ def test_build_workspace_copies_starting_state(tmp_path: Path):
     assert (workspace / ".claude" / "skills" / "fake-skill" / "SKILL.md").exists()
 
 
+def test_build_workspace_never_copies_the_answer_into_the_workspace(tmp_path: Path):
+    """`build_workspace` must keep copying by explicit filename.
+
+    A fixture directory holds two files that ARE the answer:
+    `expected-findings.json`, and — on Path 1/2 — the committed
+    `unstripped-tree.gedcomx.json` that `strip` derives the starting tree
+    from. Neither may reach the agent. Today that holds because the copy
+    list is two `shutil.copy` calls naming their targets; the moment someone
+    "simplifies" it into a `copytree`, every e2e fixture silently starts
+    handing the agent its own answer key and every run passes.
+    """
+    fixture_dir = _make_fixture_dir(tmp_path)
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps({"persons": [{"id": "ABCD-123"}]}), encoding="utf-8"
+    )
+    fixture = load_fixture(fixture_dir)
+
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir)
+
+    leaked = {p.name for p in workspace.rglob("*")} & {
+        "expected-findings.json",
+        "unstripped-tree.gedcomx.json",
+        "fixture.json",
+    }
+    assert leaked == set()
+
+
 def test_build_workspace_stages_plugin_agents(tmp_path: Path):
     """Plugin subagents are staged into .claude/agents/ so /research can
     delegate to the real gps-mentor instead of an improvised subagent."""

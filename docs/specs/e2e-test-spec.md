@@ -40,15 +40,15 @@ certification that the agent does fully sound, verifiable GPS research.
 - An `expected-findings.json` enumerating what the agent should
   recover, derived from the diff between the original (well-
   researched) tree and the stripped starting state
+- On the FamilySearch-sourced paths, the full original (pre-stripping)
+  `unstripped-tree.gedcomx.json`, from which the starting tree is
+  derived. It is **never** copied into the run workspace — see below.
 - Fixture metadata: id, source PID, tags, model pins (caps are harness
   defaults, not fixture metadata — see §3.1)
 - A README with human notes (PID, what was removed, why)
 
 ### What the test fixture does not contain
 
-- The full original (pre-stripping) tree. The diff that defines the
-  answer is computed once at fixture-creation time and persisted as
-  `expected-findings.json`; the unstripped tree is not retained.
 - Mocked MCP responses. Other than the snapshotted starting tree,
   all the agent's tool calls hit live FamilySearch APIs during the
   test run.
@@ -69,10 +69,31 @@ eval/tests/e2e/smith-parents-1850/
   starting-tree.gedcomx.json
   expected-findings.json
   README.md
+  unstripped-tree.gedcomx.json   (optional; see below)
 ```
 
 Slug convention: `<surname>-<topic>-<year>` where helpful, but any
 short descriptive kebab-case is fine. Slugs are also the test ID.
+
+`unstripped-tree.gedcomx.json` is the committed snapshot of the
+well-researched tree, taken **once** at authoring time. It exists on
+the two FamilySearch-sourced authoring paths (from a PID, or from a
+finished project) and lets `starting-tree.gedcomx.json` be *derived*
+rather than hand-transcribed: re-strip a different subset and the
+starting tree is rebuilt deterministically. It is absent on the
+PID-less path (§6.1), where the starting tree is constructed from a
+research document and there is nothing to strip.
+
+**It is the answer key.** `build_workspace` copies by explicit
+filename, so neither it nor `expected-findings.json` ever reaches the
+agent's workspace. A `copytree`-style "simplification" of that copy
+step would hand every run its own answer and silently pass the whole
+suite; `test_build_workspace_never_copies_the_answer_into_the_workspace`
+guards it.
+
+The snapshot is never refreshed in place — FamilySearch is a mutable
+upstream, and re-fetching would rewrite the test underneath its own
+history, making this month's score incomparable with last month's.
 
 ---
 

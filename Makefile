@@ -335,6 +335,14 @@ e2e-project: ## Seed an editable Cowork project from a fixture's STARTING state 
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-project TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.project --test $(TEST) $(if $(FORCE),--force,)
 
+.PHONY: e2e-author
+e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="snapshot --slug foo --pid ABCD-123"
+	# The mechanical half of /author-e2e-fixture — snapshot, strip, scaffold,
+	# validate. The skill invokes the module directly (genealogists have no
+	# make); this target is a convenience wrapper for developers. `ARGS=""`
+	# prints the subcommand list.
+	cd eval/harness && uv run python -m e2e.author $(ARGS)
+
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}

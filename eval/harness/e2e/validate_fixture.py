@@ -1,4 +1,12 @@
-"""Fixture linter for e2e benchmark fixtures — stripping-completeness check.
+"""Fixture linter for e2e benchmark fixtures — schema + stripping checks.
+
+Two gates, in order:
+
+1. **JSON Schema** (hard, exit 2). `starting-tree.gedcomx.json` and
+   `starting-research.json` are validated against `docs/specs/schemas/`
+   via `harness.schema_validator` — the same module `e2e.author validate`
+   uses, so the authoring gate and this corpus-wide gate cannot disagree.
+2. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
 `expected-findings.json` must be **genuinely absent** from
@@ -34,6 +42,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+from harness.schema_validator import validate_research_json, validate_tree_gedcomx_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -236,6 +246,35 @@ def check_stripping(
     return suspects
 
 
+def format_suspect(fixture_name: str, s: Suspect) -> str:
+    """The WARN line for one suspect.
+
+    Lives here rather than in `main()` so `e2e.author` can lint an
+    *in-memory* candidate tree — on a dry run, or before the first write —
+    and still print the same advice as the standalone linter.
+    """
+    shared = ", ".join(sorted(s.shared))
+    if s.finding_type == "fact":
+        fix = (
+            f"a `fact` finding leaves the person in place, so this is "
+            f"only a problem if the stripped fact is still on "
+            f"{s.person_id} — check its `facts` in "
+            f"starting-tree.gedcomx.json and remove that fact if so."
+        )
+    else:
+        fix = (
+            f"if {s.person_id} IS the answer to this finding, delete "
+            f"that person and its relationship from "
+            f"starting-tree.gedcomx.json and re-run; if it's just a "
+            f"relative who happens to share a surname, ignore this line."
+        )
+    return (
+        f"WARN   [{fixture_name}] finding {s.finding_id} ({s.finding_type}): "
+        f"tree person {s.person_id} is still present and its name "
+        f"overlaps the answer on [{shared}]. {fix}"
+    )
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -243,8 +282,11 @@ def _load_json(path: Path) -> dict[str, Any]:
 def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     """Lint one fixture dir. Returns (suspects, hard_errors).
 
-    hard_errors are structural problems (missing/unparseable files) that
-    should fail the run with exit 2; suspects are warn-only.
+    hard_errors are structural problems — a missing or unparseable file, or a
+    JSON-Schema violation — that should fail the run with exit 2; suspects are
+    warn-only. `e2e.author validate` reaches the same schema check through the
+    same `harness.schema_validator` module, so a fixture cannot pass one gate
+    and fail the other.
     """
     fixture_dir = Path(fixture_dir)
     errors: list[str] = []
@@ -265,6 +307,21 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
         tree = _load_json(tree_path)
     except (json.JSONDecodeError, OSError) as e:
         errors.append(f"starting-tree.gedcomx.json did not parse: {e}")
+    if errors:
+        return [], errors
+
+    errors += [f"starting-tree.gedcomx.json: {e}" for e in validate_tree_gedcomx_json(tree)]
+
+    # Optional: a Path-3 fixture under construction may not have one yet.
+    research_path = fixture_dir / "starting-research.json"
+    if research_path.exists():
+        try:
+            research = _load_json(research_path)
+        except (json.JSONDecodeError, OSError) as e:
+            errors.append(f"starting-research.json did not parse: {e}")
+        else:
+            errors += [f"starting-research.json: {e}" for e in validate_research_json(research)]
+
     if errors:
         return [], errors
 
@@ -337,30 +394,11 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"ERROR  [{name}] {e}", file=sys.stderr)
             continue
         if not suspects:
-            print(f"OK     [{name}] all findings appear stripped")
+            print(f"OK     [{name}] schema valid, all findings appear stripped")
             continue
         total_suspects += len(suspects)
         for s in suspects:
-            shared = ", ".join(sorted(s.shared))
-            if s.finding_type == "fact":
-                fix = (
-                    f"a `fact` finding leaves the person in place, so this is "
-                    f"only a problem if the stripped fact is still on "
-                    f"{s.person_id} — check its `facts` in "
-                    f"starting-tree.gedcomx.json and remove that fact if so."
-                )
-            else:
-                fix = (
-                    f"if {s.person_id} IS the answer to this finding, delete "
-                    f"that person and its relationship from "
-                    f"starting-tree.gedcomx.json and re-run; if it's just a "
-                    f"relative who happens to share a surname, ignore this line."
-                )
-            print(
-                f"WARN   [{name}] finding {s.finding_id} ({s.finding_type}): "
-                f"tree person {s.person_id} is still present and its name "
-                f"overlaps the answer on [{shared}]. {fix}"
-            )
+            print(format_suspect(name, s))
 
     if any_hard_error:
         return 2  # structural problem — fix the fixture files

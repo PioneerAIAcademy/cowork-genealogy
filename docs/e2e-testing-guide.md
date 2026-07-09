@@ -80,16 +80,15 @@ this in order. Each step gates the next.
      don't trip cleanly. Iterate until "reasonably reliable" — not
      perfect, just good enough that future fixture failures will
      reflect agent capability rather than primer bugs.
-3. **Eyeball a candidate PID.** Use `person_read` (with
-   `relatives=true sourceDescriptions=true`) against a well-researched
-   person (acceptance criteria below). Check JSON size; pick a different
-   PID if unwieldy.
+3. **Eyeball a candidate PID.** Pick a well-researched person
+   (acceptance criteria below) and snapshot them (§2 of "Creating a new
+   e2e test"). Check JSON size; pick a different PID if unwieldy.
 4. **Author the first fixture.** Run `/author-e2e-fixture` and give it
-   the PID — it reads the tree via `person_read`, you pick what to
-   strip, and it writes the five files. (You don't need a finished
-   research project; that's the secondary path. Or follow §4 in
-   "Creating a new e2e test" to author by hand.) Keep it focused (one
-   question, 1–5 expected findings). Then **run the stripping linter**
+   the PID — it snapshots the tree, you name what to strip, and it
+   writes the fixture files. (You don't need a finished research
+   project; that's the secondary path. Or follow §4 in "Creating a new
+   e2e test" to author by hand.) Keep it focused (one question, 1–5
+   expected findings). Then **run the stripping linter**
    (`uv run python -m e2e.validate_fixture <slug>`; Windows:
    `ValidateFixture.bat`) and resolve any `WARN` before committing — see
    "Creating a new e2e test" §5.
@@ -172,20 +171,25 @@ Before running any e2e test:
 
 **If you're a genealogist**, run the `/author-e2e-fixture` skill from a Claude Code session opened at the **repo root** — the Code
 tab of the Claude desktop app, or `claude` in a terminal (not Cowork).
-The skill needs the host-side MCP tools `person_read` +
-`validate_research_schema`; the committed `.mcp.json` at the repo root
-wires the `genealogy` MCP server, which you approve once on first open
-(be logged in first via `make e2e-login` / `Login.bat`). The
-primary path starts from a FamilySearch person ID: give it a PID and it
-reads that person's well-researched tree via `person_read`, you pick a
-focused subset to strip (the "answer"), and it strips that subset,
-records it as expected findings, and writes the five files **directly
-into `eval/tests/e2e/<slug>/`** (no move needed). No prior research
-project is needed — the tree on FamilySearch is the ground truth. (A secondary
-path converts a research project you just finished, reusing its
-`proof_summaries`; run from that project folder, the secondary path
-writes a `<slug>/` subfolder you then move into
-`eval/tests/e2e/<slug>/`.)
+Be logged in to FamilySearch first (`Login.bat`, or `make e2e-login` for
+developers); the skill shells out to a script that reuses that token, so
+you no longer approve an MCP server on first open. The primary path
+starts from a FamilySearch person ID: give it a PID and it snapshots
+that person's well-researched tree to `unstripped-tree.gedcomx.json` and
+prints an index of every person, relationship, fact and source. You pick
+the focused subset to strip (the "answer"); it strips that subset,
+records it as expected findings, and writes the files **directly into
+`eval/tests/e2e/<slug>/`** (no move needed). No prior research project is
+needed — the tree on FamilySearch is the ground truth. (A secondary path
+converts a research project you just finished, reusing its
+`proof_summaries`; a third builds a fixture from a research document
+when there is no PID.)
+
+The skill's mechanical half is `eval/harness/e2e/author.py`. It
+normalizes the fetched tree to the simplified-GedcomX schema, refuses on
+any person who is living or unmarked, cascades relationship removals off
+a stripped person, and lints for an answer left behind. Developers can
+drive it directly: `make e2e-author ARGS="snapshot --slug foo --pid ABCD-123"`.
 
 The rest of this section documents the schema and the manual workflow
 for when you want to author by hand, debug a fixture, or review a PR
@@ -202,8 +206,8 @@ Acceptance criteria for a "well-researched" person:
   probate). 5 sources of the same census across multiple years
   doesn't count — diversity matters.
 - **Reasonable tree size.** Not so vast that the JSON is unwieldy
-  (>200 sources, deep ancestor branches). If the `person_read` output
-  is over ~500 KB, narrow scope or pick someone else.
+  (>200 sources, deep ancestor branches). If the snapshot is over
+  ~500 KB, narrow scope or pick someone else.
 - **Clear research question.** You can phrase a natural-language
   question whose answer is anchored in attached evidence (e.g.,
   "Who were John Smith's parents?", "When did Mary Jones die?").
@@ -212,17 +216,21 @@ Acceptance criteria for a "well-researched" person:
 
 ### 2. Eyeball the JSON
 
-Read the unstripped tree before committing to it, via the `person_read`
-MCP tool (in Claude Code with the genealogy MCP server running, and
-logged in via the `login` tool):
+Snapshot the unstripped tree before committing to it:
 
-```text
-person_read personId=<the-pid> relatives=true sourceDescriptions=true
+```bash
+cd eval/harness && uv run python -m e2e.author snapshot --slug <slug> --pid <the-pid>
 ```
 
-It returns simplified GEDCOMX (persons, relationships, sources) — the
-`tree.gedcomx.json` shape. Check JSON size, source count, relationship
-depth. If it's unwieldy, narrow scope or pick a different PID.
+It fetches, normalizes to simplified GEDCOMX (persons, relationships,
+sources — the `tree.gedcomx.json` shape), writes
+`eval/tests/e2e/<slug>/unstripped-tree.gedcomx.json`, and prints an index
+of every id. Check source count and relationship depth. If it's unwieldy,
+delete the directory and pick a different PID.
+
+The snapshot happens exactly once per fixture — the command refuses to
+overwrite an existing one. To see whether FamilySearch has drifted under
+a committed fixture, add `--check`: it diffs and writes nothing.
 
 ### 3. Pick a research question and stripping pattern
 
@@ -363,9 +371,18 @@ A pre-populated `research.json` (full schema in
 
 The unstripped tree per `simplified-gedcomx-spec.md`, with the
 answer information removed. Structure varies by what you stripped
-— there is no minimal template. Start from the live `person_read`
-output and delete the persons / relationships / facts / sources
-that correspond to your research question's answer.
+— there is no minimal template. Derive it from the committed
+`unstripped-tree.gedcomx.json` rather than editing it by hand:
+
+```bash
+cd eval/harness && uv run python -m e2e.author strip --slug <slug> \
+  --persons <ids> --facts <owner>:<fact-id> --sources <ids>
+```
+
+`strip` always reads the snapshot and writes the starting tree, never
+the reverse, so re-running it with a different selector set is free.
+Removing a person cascades to every relationship touching them; sources
+never cascade (whether a source attests the stripped fact is your call).
 
 #### `expected-findings.json`
 
