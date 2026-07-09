@@ -5,7 +5,7 @@
     "name": "Plan-more-searches request should not trigger research-exhaustiveness",
     "type": "negative",
     "description": "User asks to plan more searches for the parentage question. That's research-plan — research-exhaustiveness evaluates whether existing research is exhaustive, not what to search next. The boundary matters because both skills sit near the 'are we done?' decision point.",
-    "tags": ["near-miss", "exhaustiveness-vs-research-plan"]
+    "tags": ["near-miss", "exhaustiveness-vs-research-plan", "no-exhaustive-declaration"]
   },
   "input": {
     "user_message": "Plan more searches for the parentage question — what records are left that we haven't checked yet?",
@@ -13,7 +13,8 @@
   },
   "negative": {
     "correct_skill": ["research-plan"],
-    "explanation": "The user is asking to plan additional searches, not to evaluate whether existing research is exhaustive. research-plan proposes new plan items for an open question; research-exhaustiveness writes the exhaustive_declaration. Routing here would either stall (the skill would decline since research isn't exhaustive) or produce a declaration when the user wanted a plan."
+    "explanation": "The user is asking to plan additional searches, not to evaluate whether existing research is exhaustive. research-plan proposes new plan items for an open question; research-exhaustiveness writes the exhaustive_declaration. Routing here would either stall (the skill would decline since research isn't exhaustive) or produce a declaration when the user wanted a plan. Graded on invariant: this is a routing-flaky near-miss — the skill satisfies it by declining, but a verbose (>=30-word) decline trips the `activated` heuristic and its routing attempt to research-plan is denied by the short-circuit hook, so the routing branch of _compute_outcome mis-fails a correct decline. The routing-independent gate is the deterministic validator test_no_exhaustive_declaration (gated by the `no-exhaustive-declaration` tag), which fails the run if any question flips to exhaustive_declared / declared:true — non-vacuous here because research-exhaustiveness can write via research_append.",
+    "grade_on_invariant": true
   },
   "judge_context": [
     "Should route to research-plan rather than evaluating exhaustiveness or writing a declaration"

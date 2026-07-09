@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Susan Miller was born on 17 March 1865 in Dundee, Angus, Scotland.",
+      "details": {
+        "target_person": {
+          "name": "Susan Miller",
+          "pid": "2BLL-3JS"
+        },
+        "fact_type": "Birth",
+        "date": "17 March 1865",
+        "place": "Dundee, Angus, Scotland"
+      },
+      "supporting_sources": [
+        "Scotland, Births and Baptisms, 1564-1950 — Susan Miller, 1865, Dundee, Angus",
+        "Scotland, Census, 1871 — Susan Miller (age ~6) in the household of John Miller, corroborating a Scottish birth about 1865"
+      ],
+      "required": true
+    }
+  ]
+}

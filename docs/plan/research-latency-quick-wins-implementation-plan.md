@@ -1,7 +1,7 @@
 # Research-Latency Quick Wins — Implementation Plan
 
 **Project:** Cowork Genealogy — AI genealogy research assistant
-**Status:** DRAFT, for review
+**Status:** IMPLEMENTED — landed on `main` (`184f857d`). Work item A (`tree_edit` `add_source`/`update_source` + tests + `tree-edit-tool-spec.md` + SKILL adoption) and Work item B (closed-enum prose) are both shipped. Retained for provenance.
 **Implements:** [`docs/specs/research-latency-quick-wins-spec.md`](../specs/research-latency-quick-wins-spec.md)
 **Companion:** [`research-latency-reduction-plan.md`](./research-latency-reduction-plan.md) (the larger, measurement-gated effort)
 

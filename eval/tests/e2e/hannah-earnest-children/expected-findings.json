@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Hannah Earnest and Edwin Grice had a sixth child besides John, Hannah Grace, Edwin, William, and James: a daughter, Lydia Grice, born 10 July 1878 in West Bromwich, Staffordshire, England, and christened 8 August 1878.",
+      "details": {
+        "subject_person": "Hannah Earnest (9DJ7-219)",
+        "relation": "child",
+        "target_person": {
+          "name": "Lydia Grice",
+          "birth": "10 July 1878, West Bromwich, Staffordshire, England"
+        }
+      },
+      "supporting_sources": [
+        "England, Staffordshire, Church Records, 1538-1944 — christening entry for Lydia Grice, daughter of Edwin Grice, 8 Aug 1878, West Bromwich"
+      ],
+      "required": true
+    }
+  ]
+}

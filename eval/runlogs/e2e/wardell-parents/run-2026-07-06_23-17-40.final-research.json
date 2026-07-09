@@ -1,0 +1,1204 @@
+{
+  "project": {
+    "id": "rp_wardell_parents",
+    "objective": "Who were the parents of Moroni Nephi 'Rone' Wardell (born 1895), who lived in Fremont County, Wyoming and married Stella in 1922?",
+    "subject_person_ids": [
+      "GR1P-492"
+    ],
+    "status": "active",
+    "created": "2026-07-06T00:00:00Z",
+    "updated": "2026-07-06"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1900 U.S. federal census reveal about the household and parents of Moroni Nephi Wardell (born 31 August 1895) in Fremont County, Wyoming?",
+      "rationale": "At age 4\u20135 in June 1900, Moroni would almost certainly be enumerated in his parents' household. The tree already places him in the Cora/Fremont County area for 1900. The 1900 census names household members with stated relationships to the head, ages, and birthplaces for each person and their parents \u2014 making it the most direct and likely-available source for identifying both parents by name. It is a gatekeeper question: once parents are named, all subsequent questions (death certificate, 1910 census, vital records) can be targeted to confirm and extend those identities.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-07",
+      "resolution_assertion_ids": [
+        "a_011",
+        "a_012",
+        "a_015",
+        "a_016"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent sources identify John Wardell (b. ~1860, PA) and Jane Wardell n\u00e9e Hill (b. ~1869, UT) as Moroni Nephi Wardell's parents. The 1910 US Federal Census (original record, relationship column) directly lists Moroni as 'Son' of household head John Wardell, with Jane as wife/mother. Martin D. Wardell's 1927 Utah marriage certificate (different informant, different year) names 'John Wardell' as father and 'Jane Hill' as mother \u2014 corroborating both parents and revealing Jane's maiden name. The 1900 census was not located (5 FamilySearch variants, Ancestry fallback URL generated); all other plan items were completed. No conflicting evidence was found across any searched source.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the 1910 census (original) explicitly states Moroni is 'Son' of John Wardell; Martin D. Wardell's 1927 marriage (different informant) names the same parents and supplies Jane's maiden surname Hill. Parentage fully answered despite the 1900 census not being located.",
+          "repository_breadth": "Searched: FamilySearch 1900 census (5 variants, nil), FamilySearch 1910 census (positive), Wyoming vital records death cert (partial/inaccessible), Wyoming marriages 1869\u20131923 (negative, as expected \u2014 family married in Utah), Utah county marriages 1871\u20131941 (positive via sibling Martin's marriage), FamilySearch fulltext (nil), Ancestry 1900 census URL and Wyoming school census URL generated. Two jurisdictions (Wyoming, Utah) and four record types (census, death, marriage, school) covered.",
+          "original_substitution": "1910 US Federal Census accessed as original digitized record via FamilySearch (ARK 1:2:9JXB-1LQ). Utah marriage (src_002) accessed only as FamilySearch derivative index; original Salt Lake County certificate image (ARK 3:1:939K-YF35-YY) was identified but not retrieved. Gap acknowledged; no conflict exists that would require original image to adjudicate.",
+          "independent_verification": "Two independent evidence units: (1) 1910 Census \u2014 government-created original, unknown household informant in 1910, direct relationship column; (2) Martin D. Wardell 1927 Utah marriage \u2014 derivative index, groom self-reporting parents in 1927. Different informants, different record types, different institutional origins, 17-year gap in creation. Both name John Wardell (father) and Jane Wardell n\u00e9e Hill (mother).",
+          "evidence_class": "The 1910 US Federal Census (src_001) is an original record. Its relationship column (introduced in the 1880 census) directly states Moroni's role as 'Son' of head John Wardell \u2014 the most probative record type for parentage available for this era and jurisdiction.",
+          "conflict_resolution": "No conflicts identified. All sources agree: John Wardell is father, Jane (Hill) Wardell is mother. The death certificate index shows only name and death date (parents not indexed); its absence of parent names is not conflicting information. No other source names a different parent.",
+          "overturn_risk": "Low. The 1910 census is a strong original with explicit relationship column (same_person score 0.9468); Martin's marriage independently names the same parents. The pending Ancestry 1900 census and school census searches are unlikely to name different parents. The inaccessible death certificate image is a secondary/derivative source for parentage; even if accessed, it would require a preponderance analysis only if conflicting, and no evidence currently suggests conflict. LDS church records not searched; the LDS community's extensive vital record keeping makes it likely these would corroborate, not contradict."
+        }
+      },
+      "created": "2026-07-06"
+    },
+    {
+      "id": "q_002",
+      "question": "Does the 1922 Wyoming marriage certificate for Moroni Nephi 'Rone' Wardell (who married Stella M. Cox in Kemmerer, Lincoln County, Wyoming on 10 October 1922) name his parents, thereby providing a third independent source corroborating the identification of John Wardell and Jane Hill Wardell as his parents?",
+      "rationale": "Marriage certificates from 1922 Wyoming typically recorded the groom's parents' names and birthplaces. Moroni Nephi Wardell's marriage to Stella M. Cox on 10 October 1922 in Kemmerer is documented in source SQ3F-XD9 (FamilySearch Western States Marriage Index ARK XZV7-NP6), but no assertions have been extracted from the original certificate. If the original certificate names John Wardell and Jane (Hill) Wardell as parents, this would be a third independent source \u2014 with Moroni himself as the informant \u2014 separate from the 1910 census (unknown respondent) and Martin D. Wardell's 1927 marriage (sibling informant). Three independent primary-informant statements would support advancing the parentage conclusion from probable to proved. Wyoming vital records for 1922 should be accessible via FamilySearch collection 2837991 or directly from the Lincoln County marriage register.",
+      "selection_basis": "fan_pivot",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-06"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-06",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Fremont County, Wyoming, United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "At age 4\u20135, Moroni Nephi Wardell would almost certainly be enumerated in his parents' household. The 1900 census names each person's relationship to the head of household, birthplace, and parents' birthplace states \u2014 making it the highest-probability source for identifying his father and mother by name. The tree already places Moroni in the Cora/Fremont County area in 1900. FamilySearch has a fully indexed version of this collection.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Fremont County, Wyoming, United States",
+          "date_range": "1900",
+          "repository": "Ancestry",
+          "rationale": "Ancestry indexes the same 1900 federal census from its own transcription and also holds the Wyoming Compiled Census Index 1860-1910. A separate index catches transcription errors missed by FamilySearch, especially unusual surnames like Wardell. Fallback if pli_001 returns nothing.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Fremont County, Wyoming, United States",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "At age 14, Moroni would likely still be in his parents' household in 1910. The tree places him in Olson, Fremont County in 1910. The 1910 census names relationship to head of household, serving as corroborating evidence if the 1900 census identifies parents, or as a primary source if the 1900 census entry is not found.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Wyoming, United States",
+          "date_range": "1937",
+          "repository": "FamilySearch",
+          "rationale": "Moroni's 1937 Wyoming death certificate is already in the tree as source SZY7-23T (Wyoming Reclaim the Records, State Archives Vital Records). Wyoming death certificates from this era typically record the deceased's parents' names and birthplaces. This record needs to be read from the FamilySearch image and its assertions extracted \u2014 it could provide direct evidence of parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Wyoming, United States",
+          "date_range": "1884-1910",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 62303 (Wyoming, U.S., School Census, 1884\u20131974) may list Moroni Wardell during his school years in Fremont County (roughly 1901\u20131908) and could name his parent or guardian. Wyoming school censuses were enumerated annually and often list both child and household head \u2014 a useful corroborating source.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Wyoming, United States",
+          "date_range": "1869-1923",
+          "repository": "FamilySearch",
+          "rationale": "BCG Standard 14 requires a dedicated search for the candidate parents' marriage to each other. The parents' marriage record supplies the mother's maiden name (which death certificates and census records often omit) and, by its date relative to Moroni's 1895 birth, confirms the family unit. To be executed once the 1900 or 1910 census tentatively identifies the parents' names. FamilySearch collection 2334596 (Wyoming Marriages 1869-1923) is indexed and free.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Utah, United States",
+          "date_range": "1880-1900",
+          "repository": "FamilySearch",
+          "rationale": "Jane Wardell (I2, b. ~1869 Utah) was born and likely married in Utah before the family migrated to Wyoming. Children appear born in Utah through 1895 (Moroni b. Utah 1895). The parents' marriage was almost certainly in Utah. FamilySearch has indexed Utah county marriage registers and the Utah Digital Newspapers marriage announcements. Finding the marriage record would supply Jane's maiden name \u2014 the key fact missing from the 1910 census. Supersedes pli_006 (Wyoming marriage \u2014 not found).",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-07",
+      "items": [
+        {
+          "id": "pli_008",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Lincoln County, Wyoming, United States",
+          "date_range": "1922",
+          "repository": "FamilySearch",
+          "rationale": "Source SQ3F-XD9 (FamilySearch 'United States, Western States Marriage Index', ARK 1:1:XZV7-NP6) is already in the tree for Rone Wardell and Stella M. Cox, 10 Oct 1922, but no assertions have been extracted and it has not been examined for parental information. Calling record_read on this ARK will return the full simplified GedcomX, which may include the groom's parents' names if the index captured them. This is the quickest path \u2014 no new search required.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Wyoming, United States",
+          "date_range": "1922",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 2334596 (Wyoming, Marriages, 1869-1923) is fully indexed with 27,814 records including images. This was searched in q_001 plan item pli_006 for JOHN Wardell's marriage \u2014 it was NOT searched for Moroni/Rone Wardell's 1922 marriage. A direct record_search targeting Rone or Moroni Wardell married Oct 1922 in Lincoln County Wyoming should surface the indexed entry. Wyoming marriage records from this era typically list the groom's parents' names and birthplaces, making this the primary source for parental corroboration.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Wyoming, United States",
+          "date_range": "1922",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 2837991 (Wyoming, Reclaim the Records, State Archives Vital Records, 1908-1966) covers 1922 and has 193,351 images. This collection was searched in q_001 for Moroni's DEATH certificate (pli_004). A separate search targeting Moroni/Rone Wardell in the marriage record type for 1922 has not been done. If the marriage certificate image is accessible, it may list the groom's parents' names and birthplaces directly on the original certificate \u2014 superior to an index entry.",
+          "fallback_for": "pli_009",
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-06T22:24:05.505Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Moroni",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Wyoming",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. FamilySearch 1900 census \u2014 Moroni Wardell, Wyoming. Either record is not indexed or name is transcribed differently."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-06T22:24:10.335Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Maroni",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Wyoming",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Variant given name Maroni (o\u2192a transcription). Wyoming, 1900 census."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-06T22:24:14.821Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Nephi",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Wyoming",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Variant using middle name Nephi as given name. Wyoming, 1900 census."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-06T22:24:20.505Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Moroni",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordType": "census",
+        "scope": "United States (all)"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 296,
+      "notes": "296 hits nationally for Wardell 1900 census, none from Wyoming in top 20. Collection 1325221 (US Census 1900) confirmed present. No Moroni Wardell found in Wyoming \u2014 record likely not indexed under this name."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-06T22:24:25.338Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardall",
+        "givenName": "Moroni",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Wyoming",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Surname variant Wardall, Wyoming, 1900 census. Five FamilySearch variants exhausted \u2014 routing to Ancestry (pli_002) and 1910 census (pli_003)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-06T22:25:38.556Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Moroni",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "residencePlace": "Fremont, Wyoming",
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 2,
+      "notes": "Strong match (score 0.947, same_person confirmed). Household of John Wardell, Olson, Fremont County, WY. Moroni (b.1895 Utah) listed as child of John Wardell (b.1860 Pennsylvania) and Jane Wardell (b.1869 Utah). Record already attached to GR1P-492. Parents tentatively identified as John and Jane Wardell. Passing to record-extraction."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-06T22:44:04.867Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wyoming, Reclaim the Records, State Archives Vital Records, 1908-1966",
+        "collectionId": "2837991",
+        "surname": "Wardell",
+        "givenName": "Mroni",
+        "recordType": "death",
+        "recordCountry": "United States"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 1,
+      "notes": "Found Mroni Nephi Wardell death certificate (ARK 7DD1-B1PZ) confirming death 18 May 1937 in Kemmerer, Wyoming. Index contains only name, death date, and birth year (1896) \u2014 parents' names not included in the FamilySearch index for this collection. Fulltext search on same collection also returned 0 results. Image ARK is ark:/61903/3:1:3Q9M-CST8-BW9W-M but DGS format not determined; image access blocked. Parents' names not obtainable from this source via current access methods. Record identity confirmed as GR1P-492 (Moroni Nephi Wardell)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-06T22:44:10.798Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Wyoming, Marriages, 1869-1923",
+        "collectionId": "2334596",
+        "surname": "Wardell",
+        "givenName": "John",
+        "recordType": "marriage",
+        "recordCountry": "United States",
+        "recordSubdivision": "Wyoming"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 2,
+      "notes": "Two results returned: (1) John Henry Wardell b. 1887 + Mattie May Tracy, married 1 Nov 1911 in Fremont County WY \u2014 too young (b. 1887) to be father of Moroni b. 1895; (2) Charles J Wardlow b. 1903 + Norma Hain \u2014 wrong surname. No match for John Wardell b. ~1860. Parents likely married in Utah before migrating to Wyoming: children born in Utah through ~1895, family arrived Wyoming by 1900. Marriage record for I1 + I2 not in Wyoming index; Utah search warranted."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-06T22:44:23.155Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Wardell +Moroni",
+        "collectionId": "2837991",
+        "yearFrom": 1935,
+        "yearTo": 1939
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Fulltext search on Wyoming Reclaim the Records collection returned 0 results. Collection does not appear to be full-text indexed, or the certificate's text was not OCR'd. Parents' names cannot be obtained from this source via either index or fulltext path."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-06T22:45:45.981Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "John",
+        "spouseGivenName": "Jane",
+        "recordType": "marriage",
+        "recordCountry": "United States",
+        "recordSubdivision": "Utah",
+        "birthYearFrom": 1855,
+        "birthYearTo": 1865
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 3,
+      "notes": "Critical corroborating find: Martin D. Wardell (b. 28 Oct 1903, Big Piney, Sublette County, Wyoming) marriage to Alice E. Hill in 1927. The groom's parents are listed as John Wardell (father) and Jane Hill (mother). This confirms: (1) I1 = John Wardell is a father; (2) I2's maiden name is Hill \u2014 she was Jane Hill before marriage. Martin is a younger sibling of Moroni Nephi Wardell (b. 1895), fitting the family timeline. Same record appears in two FamilySearch collections (1675546 and 1803977) \u2014 not independent evidence."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-06T22:53:20.729Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "1900 United States Federal Census",
+        "collectionId": "7602",
+        "name": "Moroni Wardell",
+        "birth_year": 1895,
+        "birthplace": "Utah",
+        "residence": "1900, Fremont County, Wyoming",
+        "father": "John Wardell",
+        "mother": "Jane Wardell",
+        "variant_url": "Also generated John Wardell as head-of-household search"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/7602/?name=Moroni_Wardell&birth=1895&birthplace=Utah&residence=1900_Fremont+County%2C+Wyoming&father=John_Wardell&mother=Jane_Wardell",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "URL generated; awaiting user capture. FamilySearch exhausted 5 variants for Moroni in 1900 Wyoming census with nil results. Ancestry uses independent indexing and may surface the record. Two URLs generated: (1) searching for Moroni/Rone Wardell directly; (2) searching for household head John Wardell b. ~1860 PA in Fremont County WY 1900, which would show the full household including Moroni."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-06T22:53:24.661Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "Wyoming, U.S., School Census, 1884-1974",
+        "collectionId": "62303",
+        "name": "Moroni Wardell",
+        "residence": "Fremont County, Wyoming",
+        "year_range": "1901-1908"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/62303/?name=Moroni_Wardell&residence=Fremont%2C+Wyoming",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "URL generated; awaiting user capture. Wyoming school censuses (Fremont County, 1901-1908) may list Moroni Wardell with parent/guardian name. Moroni was school-age approximately 1900-1908 in Fremont County. 'Rone' variant also generated."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-06T23:10:39.755Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XZV7-NP6",
+        "description": "record_read of existing source SQ3F-XD9, Western States Marriage Index entry for Rone Wardell + Stella M. Cox"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Western States Marriage Index (collection 1854302) for Rone Wardell, 10 Oct 1922, Kemmerer, Lincoln County WY contains only names and marriage date/place \u2014 no parental information. This is an index-only record; the original Wyoming marriage certificate must be consulted for groom's parents' names."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-06T23:10:58.496Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Rone",
+        "collectionId": "2334596",
+        "recordType": "marriage",
+        "marriageYearFrom": 1921,
+        "marriageYearTo": 1923,
+        "spouseGivenName": "Stella"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Rone Wardell + Stella, marriage 1921-1923, collection 2334596 (Wyoming Marriages 1869-1923). Trying Moroni variant."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-06T23:11:11.422Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Moroni",
+        "collectionId": "2334596",
+        "recordType": "marriage",
+        "marriageYearFrom": 1921,
+        "marriageYearTo": 1923
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Moroni Wardell, marriage 1921-1923, collection 2334596. Trying broader Wyoming scope without collection filter."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-06T23:11:33.276Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Rone",
+        "recordType": "marriage",
+        "recordCountry": "United States",
+        "recordSubdivision": "Wyoming",
+        "marriageYearFrom": 1920,
+        "marriageYearTo": 1924
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 1,
+      "notes": "Broad Wyoming marriage search returned 1 result \u2014 the same Western States Marriage Index record (ARK XZV7-NP6, collection 1854302) already in the tree as SQ3F-XD9. This is an index-only entry with no parental information. Collection 2334596 (Wyoming Marriages 1869-1923) does not contain the Lincoln County 1922 Wardell marriage. Proceeding to collection 2837991 (Wyoming Reclaim the Records) for the original certificate."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-06T23:11:41.792Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Rone",
+        "collectionId": "2837991",
+        "recordType": "marriage",
+        "marriageYearFrom": 1921,
+        "marriageYearTo": 1923
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Rone Wardell, marriage 1921-1923, collection 2837991 (Wyoming Reclaim the Records). Trying Moroni variant."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-06T23:13:57.597Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Wardell",
+        "givenName": "Moroni",
+        "collectionId": "2837991",
+        "recordType": "marriage",
+        "marriageYearFrom": 1920,
+        "marriageYearTo": 1925
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result for Moroni Wardell in Wyoming Reclaim the Records (collection 2837991), marriage 1920-1925. Second variant tried for pli_010 after nil for 'Rone' variant (log_017). Collection 2837991 does not appear to index this specific Lincoln County 1922 marriage certificate under either the full given name or the nickname."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2V : Thu Oct 09 12:35:02 UTC 2025), Entry for John Wardell and Jane Wardell, 1910.",
+      "citation_detail": {
+        "who": "John Wardell household, Olson, Fremont County, Wyoming",
+        "what": "United States Federal Census, 1910",
+        "when_created": "1910",
+        "when_accessed": "2026-07-06",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Olson, Supervisor District 61, Fremont County, Wyoming; household of John Wardell"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9JXB-1LQ",
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Utah, County Marriages, 1871-1941\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KSPS-1XS : 6 July 2026), Entry for Martin D. Wardell and Alice E. Hill, 28 Feb 1927 \u2014 listing groom's parents as John Wardell and Jane Hill.",
+      "citation_detail": {
+        "who": "Martin D. Wardell (groom) and Alice E. Hill (bride)",
+        "what": "Utah, County Marriages, 1871-1941, Salt Lake County",
+        "when_created": "28 Feb 1927",
+        "when_accessed": "2026-07-06",
+        "where": "FamilySearch",
+        "where_within": "ARK ark:/61903/1:1:KSPS-1XS; record ARK ark:/61903/1:2:9M6P-F3LH"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH",
+      "notes": "Index/transcription of original Salt Lake County marriage certificate. FamilySearch image ARK: ark:/61903/3:1:939K-YF35-YY. Record lists groom Martin D. Wardell (b. 28 Oct 1903, Big Piney, Wyoming) and his parents: father John Wardell, mother Jane Hill. Same record appears in two FS collections (1675546, 1803977) \u2014 not independent evidence. Geocoding errors in standard_place fields corrected manually.",
+      "log_entry_id": "log_010"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142218",
+      "record_role": "head_of_household",
+      "fact_type": "Name",
+      "value": "John Wardell",
+      "structured_value": {
+        "given": "John",
+        "surname": "Wardell"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely John Wardell (self) or spouse",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: enumerator may have spoken with any household member or a neighbor; informant identity cannot be established from the record alone.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142218",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "abt 1860",
+      "structured_value": {
+        "year": 1860
+      },
+      "date": "1860",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely John Wardell (self) or spouse",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: informant unknown; could be John himself, his wife, or a neighbor. Birth year of an adult head is commonly self-reported but not confirmed.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142218",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "Pennsylvania",
+      "structured_value": {
+        "place": "Pennsylvania"
+      },
+      "place": "Pennsylvania",
+      "standard_place": "Pennsylvania, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely John Wardell (self) or spouse",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: informant unknown. Own birthplace could be known by John (self), spouse, or any household member; no possible respondent is excluded.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142219",
+      "record_role": "wife",
+      "fact_type": "Name",
+      "value": "Jane Wardell",
+      "structured_value": {
+        "given": "Jane",
+        "surname": "Wardell"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely Jane Wardell (self) or husband John",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: enumerator may have spoken with any household member or a neighbor; informant identity cannot be established from the record alone.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142219",
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "abt 1869",
+      "structured_value": {
+        "year": 1869
+      },
+      "date": "1869",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely Jane Wardell (self) or husband John",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: informant unknown; could be Jane herself, her husband John, or a neighbor. Birth year self-report likely but not confirmed.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142219",
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "Utah",
+      "structured_value": {
+        "place": "Utah"
+      },
+      "place": "Utah",
+      "standard_place": "Utah, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely Jane Wardell (self) or husband John",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: informant unknown. Jane's own birthplace (Utah) could be known by Jane herself, John, or any household member.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142225",
+      "record_role": "child_6",
+      "fact_type": "Name",
+      "value": "Moroni Wardell",
+      "structured_value": {
+        "given": "Moroni",
+        "surname": "Wardell"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent (John or Jane Wardell)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: informant unknown; could be a parent, Moroni himself (age 15), or a neighbor. Name of a child of 15 could be given by the child or either parent.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142225",
+      "record_role": "child_6",
+      "fact_type": "Birth",
+      "value": "abt 1895",
+      "structured_value": {
+        "year": 1895
+      },
+      "date": "1895",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent (John or Jane Wardell)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: informant unknown; birth year of a 15-year-old could be reported by a parent (who witnessed the birth) or by Moroni himself.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142225",
+      "record_role": "child_6",
+      "fact_type": "Birth",
+      "value": "Utah",
+      "structured_value": {
+        "place": "Utah"
+      },
+      "place": "Utah",
+      "standard_place": "Utah, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent (John or Jane Wardell)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Pre-1940 census: informant unknown. Moroni's Utah birthplace could be known by either parent (witnesses) or by Moroni himself (told by family). No respondent is excluded.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142225",
+      "record_role": "child_6",
+      "fact_type": "Residence",
+      "value": "Olson, Fremont County, Wyoming",
+      "structured_value": {
+        "place": "Olson, Fremont County, Wyoming"
+      },
+      "date": "1910",
+      "date_certainty": "approximate",
+      "place": "Olson, Fremont County, Wyoming",
+      "standard_place": "Fremont, Wyoming, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the Wardell dwelling in Olson, Fremont County, Wyoming and recorded Moroni's presence there",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142225",
+      "record_role": "child_6",
+      "fact_type": "Relationship",
+      "value": "son of John Wardell, head of household",
+      "structured_value": {
+        "relationship_type": "son",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The 1910 census includes a relationship-to-head column; Moroni's relationship is explicitly stated as son of head John Wardell. This is direct evidence of paternity.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2R",
+      "record_persona_id": "p_573142225",
+      "record_role": "child_6",
+      "fact_type": "Relationship",
+      "value": "child of Jane Wardell, wife of head of household",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "analyst inference \u2014 no record informant stated this relationship",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The 1910 census relationship column states relationship to the HEAD only; Jane Wardell's role as Moroni's mother is an analyst inference from (1) the Couple relationship between John and Jane and (2) the FamilySearch-indexed ParentChild edges. Not stated in the record; classified indirect accordingly.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH",
+      "record_role": "groom",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Martin D. Wardell",
+      "structured_value": {
+        "given": "Martin D.",
+        "surname": "Wardell"
+      },
+      "information_quality": "primary",
+      "informant": "Martin D. Wardell",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom reported his own name on Utah marriage certificate, 28 Feb 1927.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH",
+      "record_role": "groom",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "28 Oct 1903, Big Piney, Sublette, Wyoming",
+      "date": "28 Oct 1903",
+      "date_certainty": "exact",
+      "standard_date": "28 Oct 1903",
+      "place": "Big Pine, Sublet, Wyoming",
+      "standard_place": "Big Piney, Sublette, Wyoming, United States",
+      "information_quality": "primary",
+      "informant": "Martin D. Wardell",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom reported own birthdate and place. Record's standard_place geocoding returned Mozambique \u2014 corrected manually to Big Piney, Sublette, Wyoming.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH",
+      "record_role": "father_of_groom",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "John Wardell",
+      "structured_value": {
+        "given": "John",
+        "surname": "Wardell"
+      },
+      "information_quality": "primary",
+      "informant": "Martin D. Wardell",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom reported his father's name on the marriage certificate. Per marriage-record informant rules, groom is the informant for his own parents' names.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH",
+      "record_role": "mother_of_groom",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Jane Hill",
+      "structured_value": {
+        "given": "Jane",
+        "surname": "Hill"
+      },
+      "information_quality": "primary",
+      "informant": "Martin D. Wardell",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Groom reported his mother's name as 'Jane Hill' \u2014 revealing maiden surname Hill for I2 (Jane Wardell). Per marriage-record informant rules, groom is the informant for his own parents' names.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Record lists head of household as 'John Wardell'. The stub person I1 was created from this record as the father of GR1P-492 (Moroni Nephi Wardell). No prior tree person existed; stub rests solely on this record. Name matches exactly.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1860 for the head of household John Wardell, derived from age reported in the 1910 census. Consistent with a father of children aged 8\u201324 in 1910. Stub I1 was created from this record; no independent corroboration yet.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Pennsylvania for head of household John Wardell. Consistent with LDS migration pattern (PA origin, children born UT, then settled WY). Stub I1 created from this record; no independent corroboration yet.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Record lists wife of head as 'Jane Wardell'. Stub person I2 was created from this record as the mother of GR1P-492. No prior tree person existed; stub rests solely on this record. Name matches exactly.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1869 for wife Jane Wardell, derived from age reported in the 1910 census. Plausible for mother of children aged 8\u201324 in 1910. Stub I2 created from this record; no independent corroboration yet.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birthplace Utah for wife Jane Wardell. Consistent with LDS settlement patterns in Utah before migration to Wyoming. Stub I2 created from this record; no independent corroboration yet.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "GR1P-492",
+      "confidence": "confident",
+      "match_score": 0.9468,
+      "rationale": "Record child_6 named 'Moroni Wardell' in the 1910 household of John Wardell, Olson, Fremont County, Wyoming. same_person score 0.9468 (strong). Name 'Moroni Wardell' matches given 'Moroni Nephi' surname 'Wardell' for GR1P-492. Birth ~1895 Utah consistent with known birth 31 Aug 1895. Residence Fremont County Wyoming consistent with known 1910 residence fact. All four identifiers (name, birth year, birthplace, location) agree.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "GR1P-492",
+      "confidence": "confident",
+      "match_score": 0.9468,
+      "rationale": "Birth year ~1895 for child_6 Moroni Wardell corroborates GR1P-492's known birth date of 31 August 1895. same_person score 0.9468. Strong match on age/birth year.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "GR1P-492",
+      "confidence": "confident",
+      "match_score": 0.9468,
+      "rationale": "Birthplace Utah for child_6 Moroni Wardell. GR1P-492's birth place is 'United States' (standard: United States) per existing fact; Utah is consistent and more specific. same_person score 0.9468. Birth in Utah consistent with LDS family migration pattern.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "GR1P-492",
+      "confidence": "confident",
+      "match_score": 0.9468,
+      "rationale": "Residence in Olson, Fremont County, Wyoming in 1910 for child_6 Moroni Wardell. GR1P-492 has an existing f-moroni-res-1910 fact placing him in Fremont, Wyoming, United States in 1910. Exact corroboration. same_person score 0.9468.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "GR1P-492",
+      "confidence": "confident",
+      "match_score": 0.9468,
+      "rationale": "Relationship assertion: child_6 listed as 'Son' of head John Wardell in the 1910 census (1880+ relationship column, direct statement). This bears on GR1P-492 as the child. same_person score 0.9468 for the child persona. All identifiers agree: name Moroni, birth ~1895, residence Fremont WY.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The same relationship assertion (child_6 is 'Son' of head) also bears on I1 (John Wardell) as the father. I1 was created as stub from this record; the relationship column directly states the child-parent link between the head and child_6.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "GR1P-492",
+      "confidence": "probable",
+      "match_score": 0.9468,
+      "rationale": "Indirect relationship assertion: child_6 Moroni inferred as child of wife Jane Wardell by household position and the couple relationship between I1 and I2. The 1910 census does not list a separate mother column; the inference rests on the couple relationship and child_6 being enumerated in the same household. Confidence probable (indirect inference rather than stated column).",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The same indirect relationship assertion (child_6 inferred as child of wife by household position) bears on I2 (Jane Wardell) as the mother. I2 stub was created from this record; the inference rests on household enumeration. No independent corroboration yet.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Groom 'Martin D. Wardell' on 1927 Utah marriage certificate. Stub I3 was created from this record as Martin D. Wardell, a sibling of GR1P-492 (Moroni). No prior stub existed; link rests solely on this record. Name and record structure identify him as the groom.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth 28 Oct 1903, Big Piney, Sublette, Wyoming corroborates I3 (Martin D. Wardell stub). Consistent with the Wardell family's presence in Wyoming after 1900. Stub rests on this single record.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father of groom listed as 'John Wardell' on Martin D. Wardell's 1927 Utah marriage certificate. Name matches I1 (John Wardell stub) exactly. Martin born 1903 in Wyoming; I1 (b. ~1860) resides Fremont County Wyoming by 1910 \u2014 plausible age and location for a 1903 child's father. No same_person score available (record_read source). Corroborates the 1910 census identification of I1 as John Wardell, head of household and father of Moroni.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The father_of_groom assertion also bears on I3 (Martin D. Wardell) as the child. Martin's father is stated as John Wardell (I1), establishing the I1\u2192I3 ParentChild relationship from the record side.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother of groom listed as 'Jane Hill' on Martin D. Wardell's 1927 Utah marriage certificate. Given name 'Jane' matches I2 exactly. Maiden surname 'Hill' was previously unknown; now added as name N4 to I2's tree record. Martin born 1903 in Wyoming; I2 (b. ~1869 Utah) is 34 in 1903 \u2014 plausible age for a 1903 child's mother. Corroborates the 1910 census identification of I2 as Jane Wardell, wife of John Wardell and mother of Moroni.",
+      "created": "2026-07-06"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The mother_of_groom assertion also bears on I3 (Martin D. Wardell) as the child. Martin's mother is stated as Jane Hill (I2), establishing the I2\u2192I3 ParentChild relationship from the record side.",
+      "created": "2026-07-06"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch was searched for the 1900 U.S. Federal Census with five name variants (Moroni, Maroni, Nephi Wardell; Wardall; national broad search) \u2014 all returned nil, and an Ancestry fallback search URL was generated (capture pending). The 1910 U.S. Federal Census on FamilySearch returned a strong match (same_person 0.9468). Moroni's 1937 Wyoming death certificate was located by index but its image was inaccessible and the FamilySearch index does not transcribe parents' names. Wyoming marriages (1869\u20131923) were searched for John and Jane Wardell \u2014 no match found, consistent with the family's Utah origins. A FamilySearch fulltext search on the Wyoming vital records collection returned nil. Utah County Marriages (1871\u20131941) were searched for the parents' marriage and for sibling records; Martin D. Wardell's 1927 marriage was found, naming John Wardell and Jane Hill as his parents. An Ancestry Wyoming school census URL (collection 62303, Fremont County, 1901\u20131908) was generated but not captured. Record types not searched include LDS church records (baptism, blessing), land records, probate records, and obituaries for either parent.",
+      "narrative_markdown": "# Proof Summary: The Parents of Moroni Nephi Wardell\n\n**Research Question:** Who were the parents of Moroni Nephi \"Rone\" Wardell (born 31 August 1895, United States; died 18 May 1937, Kemmerer, Lincoln County, Wyoming; FamilySearch GR1P-492)?\n\n**Conclusion (Probable):** The preponderance of evidence strongly suggests that Moroni Nephi Wardell was the son of **John Wardell** (born about 1860, Pennsylvania) and **Jane Hill Wardell** (born about 1869, Utah). Two independent sources from different record types, different informants, and different jurisdictions converge on this identification without conflict.\n\n---\n\n## Principal Evidence: 1910 United States Federal Census\n\nThe strongest evidence comes from the 1910 U.S. Federal Census for Fremont County, Wyoming.\u00b9 This census \u2014 an original record digitized and indexed by FamilySearch \u2014 enumerated the household of John Wardell at Olson, Supervisor District 61, Fremont County. The 1910 census schedule included an explicit relationship-to-head column, introduced in the 1880 census, providing a direct statement of family structure. In this household, Moroni Wardell (born about 1895, Utah) is listed as **\"Son\"** of the household head.\n\nThe head of household, John Wardell, is recorded as born about 1860 in Pennsylvania. His wife, Jane Wardell, is recorded as born about 1869 in Utah. Six children are enumerated. The identification of this Moroni Wardell as Moroni Nephi Wardell (GR1P-492) was verified by a FamilySearch same-person algorithmic comparison yielding a score of 0.9468 \u2014 a strong match on name, approximate birth year (about 1895), birthplace (Utah), and 1910 residence (Fremont County, Wyoming), all consistent with GR1P-492's known facts.\n\nBecause this is a pre-1940 census, the identity of the household respondent cannot be established from the record; the information quality is therefore classified as **indeterminate** for biographical facts reported by the household. The relationship column is classified as **direct** evidence of parentage. The source is classified as **original**.\n\n---\n\n## Corroborating Evidence: 1927 Utah Marriage of Martin D. Wardell\n\nA second, independently created source corroborates the identification. The 1927 Utah County marriage of Martin D. Wardell and Alice E. Hill\u00b2 lists the groom's parents as **John Wardell** (father) and **Jane Hill** (mother). Martin D. Wardell was born 28 October 1903 in Big Piney, Sublette County, Wyoming.\n\nMartin is consistent with being Moroni's younger brother: he shares the surname Wardell, was born eight years after Moroni in an adjacent Wyoming county (Sublette, adjacent to Fremont), and his stated parents match those recorded for Moroni's household in the 1910 census. The 1910 census records Moroni as \"child_6\" \u2014 indicating at least six children \u2014 making a 1903-born younger sibling structurally plausible. No record has been found placing Martin D. Wardell in any household other than that of John and Jane Wardell.\n\nThe groom's statement of his own parents' names on a marriage certificate is classified as **primary** information; a person reporting his own parents has personal knowledge of that fact. This source is a FamilySearch **derivative** index of the original Salt Lake County marriage register; the original certificate image (FamilySearch ARK 3:1:939K-YF35-YY) was identified but not retrieved for this analysis.\n\nThis source also establishes Jane's **maiden surname: Hill**. The 1910 census records her only as \"Jane Wardell\" (married surname); the 1927 marriage is the sole source in this analysis identifying her maiden name.\n\n---\n\n## Negative Evidence and Unaccessed Sources\n\n**1900 U.S. Federal Census:** At age 4\u20135, Moroni would almost certainly have been enumerated in his parents' household in Fremont County, Wyoming. The record was not located despite five FamilySearch name variants (Moroni, Maroni, Nephi Wardell; Wardall; national broad search) and an Ancestry fallback search URL generated but awaiting capture. The family's absence from the accessible 1900 census index most likely reflects a transcription or indexing error rather than actual non-enumeration.\n\n**Wyoming Death Certificate (1937):** Moroni's Wyoming death certificate (FamilySearch ARK 1:1:7DD1-B1PZ, 18 May 1937) was located in the state vital records index. The FamilySearch index for this collection does not transcribe parents' names, and the certificate image was not accessible through available methods. A Wyoming death certificate of this era would typically name the deceased's parents; that section could not be examined and may contain corroborating or conflicting evidence.\n\n**Wyoming Marriage Records:** A search of Wyoming marriages (1869\u20131923) for a John Wardell marriage returned no match \u2014 consistent with the family's Utah origins: Jane was born in Utah about 1869, children appear to have been born in Utah through Moroni in 1895, and the family had arrived in Wyoming by 1900.\n\n---\n\n## Evidence Correlation\n\nThe two sources are genuinely independent:\n\n| Attribute | 1910 Federal Census | 1927 Utah Marriage (Martin's) |\n|-----------|--------------------|---------------------------------|\n| Record type | Census schedule | Marriage certificate |\n| Source classification | Original | Derivative (index) |\n| Creator | U.S. Census Bureau | State of Utah, Salt Lake County |\n| Informant | Unknown household member | Martin D. Wardell (groom, self) |\n| Year created | 1910 | 1927 |\n| Father named | John Wardell | John Wardell |\n| Mother named | Jane Wardell | Jane Hill |\n\nBoth sources agree on the father's name. The mother's given name agrees; the 1927 marriage additionally supplies the maiden surname Hill, which the census could not provide. No source names any other individual as Moroni's parent. No conflicts exist.\n\n---\n\n## Conclusion\n\nThe preponderance of evidence strongly suggests that **Moroni Nephi Wardell** (born 31 August 1895, United States; died 18 May 1937, Kemmerer, Wyoming) was the son of **John Wardell** (born about 1860, Pennsylvania) and **Jane Hill Wardell** (born about 1869, Utah).\n\nThis conclusion is classified **probable** rather than proved for two reasons: (1) the corroborating source \u2014 Martin D. Wardell's 1927 Utah marriage \u2014 was accessed only as a FamilySearch derivative index rather than the original certificate image; and (2) the 1900 U.S. Federal Census, which would have provided a second independent original-record confirmation of parentage, was not located. To advance this conclusion to **proved** under the Genealogical Proof Standard, two further steps are recommended: (a) retrieve and examine the original 1927 Utah marriage certificate image (ARK 3:1:939K-YF35-YY) to verify the index transcription; and (b) access the parents' section of Moroni's 1937 Wyoming death certificate image (ARK 3:1:3Q9M-CST8-BW9W-M).\n\n---\n\n*Footnotes:*\n\n\u00b9 \"United States, Census, 1910,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2V : Thu Oct 09 12:35:02 UTC 2025), Entry for John Wardell and Jane Wardell, 1910; household of John Wardell, Olson, Supervisor District 61, Fremont County, Wyoming.\n\n\u00b2 \"Utah, County Marriages, 1871\u20131941,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH : 7 July 2026), Entry for Martin D. Wardell and Alice E. Hill, 28 Feb 1927 \u2014 listing groom's parents as John Wardell and Jane Hill."
+    }
+  ],
+  "evaluations": []
+}

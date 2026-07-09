@@ -14,7 +14,7 @@ Patrick Flynn parentage research, mid-project — same as `mid-research-flynn` b
 - **Timelines:** t_001 (Patrick, 4 events, 1 gap)
 - **Proof summaries:** none yet — this is what the skill under test must produce
 - **GedcomX persons:** I1 (Patrick Flynn), I2 (Thomas Flynn)
-- **GedcomX relationships:** R1 (ParentChild, Thomas → Patrick)
+- **GedcomX relationships:** none yet — I1 and I2 are present but **unlinked**; proof-conclusion must write the ParentChild (Thomas → Patrick) link at `probable` tier (the `tree-write-expected` found-but-lost guard verifies absent → present)
 
 ## Differs from `mid-research-flynn`
 

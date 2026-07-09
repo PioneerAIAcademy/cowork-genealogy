@@ -104,12 +104,16 @@ user as you encounter them.
    | Assertions not yet linked to persons | `person-evidence` |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `hypothesis-tracking` |
-   | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | **Mentor gate** (`pre-exhaustiveness` on `<q_id>`), then `research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
-   | All plan items for a question are `completed` or `skipped`, and analysis above is done | **Mentor gate** (`pre-exhaustiveness` on `<q_id>`), then `research-exhaustiveness` |
+   | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | `research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
+   | All plan items for a question are `completed` or `skipped`, and analysis above is done | `research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
    | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | **Mentor gate** (`conclusion-readiness` on `<q_id>`), then `proof-conclusion` |
    | `proof-conclusion` just wrote `<ps_id>` | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. |
    | All questions are `resolved` and `project.status` still `active` | **First verify:** does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and `target_id` equal to that `ps_id`? If any resolved question's proof summary has no proof-critique evaluation on record, that question is not actually done — go back and run the mentor gate on it before writing `project.status = "completed"`. Marking a question `resolved` is not, by itself, evidence this check happened. Once verified: write `project.status = "completed"` via `research_append`, then stop. |
+   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` |
+   | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship is not yet in `tree.gedcomx.json`** | `proof-conclusion` again for the same question — it must encode the relationship before you proceed (see **Tree-encoding gate**) |
+   | `proof-conclusion` wrote `<ps_id>` (and, at tier ≥ probable, its concluded relationship is now in `tree.gedcomx.json`) | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
+   | All questions are `resolved`, **every tier-≥-probable conclusion is encoded in `tree.gedcomx.json`** (see **Tree-encoding gate**), and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    A front-loaded plan is a **prioritized list, not a checklist to
@@ -161,23 +165,68 @@ user as you encounter them.
    writer tools (a hand-edit, or a file the user changed) and you need to
    confirm it still conforms.
 
+## Tree-encoding gate
+
+**A conclusion is not done until the tree reflects it.** `proof-conclusion`
+writes two things — the `proof_summaries` narrative *and* the concluded
+relationship in `tree.gedcomx.json` (its §6, at tier ≥ probable). The narrative
+is the argument; the tree is the deliverable, where the researcher's answer
+actually lives. A proof summary whose relationship is missing from the tree is a
+**found-but-lost** result: the question looks answered on paper while the tree
+still doesn't show it. In long runs the agent sometimes writes the summary and
+skips the tree write — so verify it, don't assume it.
+
+After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
+
+1. **Read `tree.gedcomx.json` and confirm the concluded relationship is present**
+   — a `ParentChild` linking the concluded parent(s) to the child for a
+   parentage question, a `Couple` for a marriage — between the persons the proof
+   concluded.
+2. **If it is missing, re-invoke `proof-conclusion` for the same question** (its
+   §6 writes the relationship). Do this *before* the `proof-critique` mentor
+   review and before anything marks the question resolved.
+3. **This is a hard gate.** Unlike the advisory mentor, it blocks: never let
+   `question-selection` mark the question resolved, and never write
+   `project.status = "completed"`, while any tier-≥-probable conclusion is
+   unencoded in the tree. A run does not finish with a conclusion that never
+   reached the tree.
+
+At tier `possible` / `not_proved` / `disproved` no relationship is expected (the
+conclusion is a documented lead, not a tree assertion), so the gate is satisfied
+trivially.
+
 ## Mentor checkpoints
 
-Three transitions in the routing table above are gated by a review
-from the `gps-mentor` subagent. The mentor reads project state in
-a fresh context, evaluates the work against a focused rubric, and
-returns a structured verdict the orchestrator uses to decide
-whether to proceed or surface feedback to the user. The mentor is
-read-only — it never modifies project files; it writes only to
-`evaluations/`.
+After `proof-conclusion` writes a proof summary, invoke the
+`gps-mentor` subagent once for an independent `proof-critique` of the
+finished proof. The mentor reads project state in a fresh context,
+evaluates the written conclusion against a focused rubric, and records
+a structured verdict. It is **read-only** — it never modifies project
+files; it writes only to `evaluations/`.
 
-### When to invoke the mentor
+**One gate, at the end, advisory — identical in interactive and
+`--autonomous` mode.** It runs *after* the answer is already persisted,
+so its verdict informs later review; it never blocks the flow, forces
+rework, or re-opens a resolved question. (The former `pre-exhaustiveness`
+and `conclusion-readiness` pre-gates were removed: they duplicated
+`research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s
+tier analysis, the read-only mentor cannot verify exhaustiveness without
+search tools, and their forced rework starved the proof step. The mentor
+still *supports* those focuses **on-demand** — see below.)
 
-| Gated transition | Mentor focus | Target |
-|------------------|--------------|--------|
-| About to invoke `research-exhaustiveness` on `<q_id>` | `pre-exhaustiveness` | `<q_id>` |
-| About to invoke `proof-conclusion` on `<q_id>` (question at `exhaustive_declared` with no `proof_summaries` entry yet) | `conclusion-readiness` | `<q_id>` |
+### When to invoke
+
+| Trigger | Focus | Target |
+|---------|-------|--------|
 | `proof-conclusion` just wrote `<ps_id>` | `proof-critique` | `<ps_id>` |
+| User asks "review my work", "is this defensible?", "critique my proof", "am I ready to conclude?", "second opinion", "mentor" | `on-demand` | most recent question / proof summary / `"project"` |
+
+For the `proof-critique` gate, first check `evaluations/` for an existing
+`proof-critique-<ps_id>-*.json` newer than the last edit to that proof
+summary; if a current verdict exists, act on it rather than re-invoking.
+Otherwise invoke `@plugin:gps-mentor` naming the focus and target_id.
+
+### Verdict handling — advisory, identical in both modes
 
 For each gated transition, check `evaluations/` for an existing
 verdict file matching `<focus>-<target_id>-*.json` that is newer
@@ -223,14 +272,20 @@ verdict in interactive mode. The mentor's role is to inform the
 researcher's decision, not to make it for them — this is the
 "support, don't replace" contract that distinguishes the mentor
 from a gatekeeper.
+| Verdict | Action |
+|---------|--------|
+| `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
+| `address_first` | Surface `narrative_for_user` and record each `must_address` item to the audit trail. **Do not block, re-open the resolved question, or force a remediation skill.** In interactive mode the watching researcher may choose to act on it; under `--autonomous`, log and continue. The mentor is a support, not a gatekeeper. |
+| `refused` | Surface the refusal message; it names the correct target. |
 
 ## When to stop
 
 Stop when one of:
 
 - `project.status == "completed"` — the orchestrator writes this
-  via `research_append` once all questions are `resolved` (see
-  routing table)
+  via `research_append` once all questions are `resolved` **and every
+  tier-≥-probable conclusion is encoded in `tree.gedcomx.json`**
+  (Tree-encoding gate) — see routing table
 - The user explicitly halts you
 - You hit a genuine blocker (no more accessible records, an
   irreducible conflict, missing access to a required repository) —
