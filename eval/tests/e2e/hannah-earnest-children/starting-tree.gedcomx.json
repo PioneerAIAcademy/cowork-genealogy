@@ -528,6 +528,7 @@
       "person2": "MCVR-HGZ",
       "facts": [
         {
+          "id": "R2-marriage-1",
           "type": "Marriage",
           "date": "23 December 1849",
           "standard_date": "23 Dec 1849",
