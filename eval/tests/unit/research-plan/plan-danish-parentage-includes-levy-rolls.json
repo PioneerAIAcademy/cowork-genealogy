@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_research_plan_015",
+    "skill": "research-plan",
+    "name": "Danish patronymic parentage plan includes the conscription (lægdsruller) item",
+    "type": "positive",
+    "description": "blyeberg-first-plan: q_001 (who was the father of Mikkel Nielsen Blyeberg, b. 1779 Stagstrup, Thisted, Denmark?) has no plan yet. For a MALE subject in 1789+ Denmark the military levy rolls (lægdsruller) are direct parentage evidence — each boy is enrolled in his levying district under the father's name — so a sound first plan must include a dedicated conscription-roll item alongside the baptism/church and parents'-marriage items. Guards the record-type-guide 'sons in conscription countries' improvement (issue #574 diagnosis: the lægdsruller were never planned).",
+    "tags": ["planning", "parentage", "denmark", "conscription-rolls", "record-type-selection", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 — who was the father of Mikkel Nielsen Blyeberg?",
+    "scenario": "blyeberg-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-stagstrup",
+    "place-search-thisted-denmark",
+    "place-search-all-stagstrup",
+    "collections-search-denmark",
+    "wiki-search-denmark",
+    "wiki-place-page-denmark-research-tips",
+    "wiki-place-page-denmark-online-records",
+    "external-links-search-denmark",
+    "volume-search-thisted",
+    "place-population-thisted"
+  ],
+  "judge_context": [
+    "The plan MUST include at least one plan item targeting the Danish military levy rolls / conscription registers (lægdsruller) — record_type 'military', or an item whose jurisdiction/rationale unambiguously names the levy rolls. The collections-search fixture surfaces 'Denmark, Military Levying Rolls (Lægdsruller), 1789-1861', the wiki fixtures describe the rolls, and volume_search surfaces the browse-only roll image group.",
+    "The levy-roll item's rationale should gesture at why the rolls bear on parentage — that males are enrolled under the father's name (the father's entry directly above the son's), making the roll direct evidence of the father for a male subject born 1779 (enrolled from the system's 1789 start). An adequate gesture passes; verbatim enumeration of the convention is not required.",
+    "If NO plan item targets the conscription/levy rolls, score Record type selection as 1 (fail): omitting the lægdsruller for a male Danish subject is the specific gap this test guards.",
+    "The plan should also cover the standard parentage record types for the jurisdiction — the Stagstrup parish register/baptism (the fixture volume is only 3% indexed, so noting a browse fallback is good practice) and, per the standing parentage guidance, the parents' marriage. These complement the levy-roll item rather than replace it; grade their presence generously."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
