@@ -5,7 +5,12 @@
     "name": "Detect a stale active plan (recent findings the plan doesn't account for)",
     "type": "positive",
     "description": "pl_002 (active, for q_001) predates findings it doesn't account for: five sources (src_005-src_009, including Thomas Flynn's 1881 will src_006) were accessed 2026-05-10/12 — after the plan (created 2026-04-28) and its last logged execution (log_005, 2026-05-03) — and remain unextracted with no log_entry_id. pl_002 still has an outstanding planned item (pli_006). Per SKILL.md Step 2 'Stale plans', the skill should flag the plan as predating recent findings and recommend a concrete next step that addresses the new evidence (processing the new sources via record-extraction, and/or revising the plan via research-plan) rather than silently continuing the plan.",
-    "tags": ["status", "integrity", "stale-plan", "recommendation"]
+    "tags": [
+      "status",
+      "integrity",
+      "stale-plan",
+      "recommendation"
+    ]
   },
   "input": {
     "user_message": "Where are we on this project, and what should I do next?",
@@ -17,5 +22,8 @@
     "The recommended next step must be concrete and grounded in the new findings. EITHER of these is acceptable and should pass: (a) process/extract the new sources (record-extraction), reasonably starting with Thomas Flynn's will (src_006), or (b) revise the plan to account for them (research-plan). Do not penalize the choice between (a) and (b) as long as the recommendation addresses the new evidence",
     "Bonus (not required): noting that the planned probate/will search pli_006 is now partly redundant because Thomas Flynn's will (src_006) is already in hand",
     "Should NOT modify research.json or tree.gedcomx.json — read-only skill"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }
