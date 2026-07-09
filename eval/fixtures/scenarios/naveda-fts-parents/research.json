@@ -1,0 +1,66 @@
+{
+  "project": {
+    "id": "rp_naveda_fts_parents",
+    "objective": "Where in Spain was Francisco Naveda Somarriba born or baptized, and who were his parents?",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-06-19",
+    "updated": "2026-06-20"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Francisco Naveda Somarriba (b. ~1832, Spain; emigrated to Mexico; d. Papantla, Veracruz)?",
+      "rationale": "Primary objective. Indexed record searches on the surname have failed; his own baptism is not name-indexed, so the parents must be reached through the origin-country parish registers via full-text search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-06-19",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-06-20",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Cantabria, Spain",
+          "date_range": "1825-1845",
+          "repository": "FamilySearch (full-text)",
+          "rationale": "Indexed surname searches returned only noise and his own baptism is unindexed. Full-text search of the AI-transcribed Cantabrian parish registers on the surname pair should surface the parents' own acts (the child's baptism, a parent's burial or marriage), which name both parents.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

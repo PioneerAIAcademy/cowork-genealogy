@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Father recovered as 'John Wardell', b. abt 1860 Pennsylvania, from the 1910 census (Moroni listed as 'Son'). Identity and birthplace match; no middle name 'Henry' and abt 1860 vs 1859 — accepted as full recovery.",
+    "f2": "Mother recovered as Moroni's parent 'Jane' (Utah birth) with maiden name 'Hill' established via a sibling's 1927 Utah marriage. Tree birth year ~1869 vs expected 1859 (10-yr census age estimate) accepted; maiden name lives in the proof narrative rather than on the tree person."
+  }
+}

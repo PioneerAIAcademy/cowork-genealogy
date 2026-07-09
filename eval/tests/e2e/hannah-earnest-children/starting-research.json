@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_hannah_earnest_children",
+    "objective": "Besides their children John, Hannah Grace, Edwin, William, and James, did Hannah Earnest and Edwin Grice have any other children? Identify each additional child and their birth details.",
+    "subject_person_ids": ["9DJ7-219"],
+    "status": "active",
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-03T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,82 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Gerhard Ferber was the paternal grandfather of Charles Hubert Ferber — that is, the father of William Hubert Ferber. Gerhard was born about 1820 in Germany, immigrated to the United States around 1850, was naturalized in Ohio in 1853, and died 31 May 1917 in Cincinnati, Ohio.",
+      "details": {
+        "subject_person": {
+          "name": "Charles Hubert Ferber"
+        },
+        "relation": "paternal_grandfather",
+        "target_person": {
+          "name": "Gerhard Ferber",
+          "birth": "about 1820, Germany"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for William H Ferber, listing Gerhard Ferber as father.",
+        "Ohio, County Death Records, 1840-2001, entry for Wm. Ferber, died 11 Mar 1903, Cincinnati, Hamilton County, Ohio — separately names Gerhard Ferber as the decedent's father."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Eva Engermann was the paternal grandmother of Charles Hubert Ferber — that is, the mother of William Hubert Ferber and wife of Gerhard Ferber. Eva was born about 1834 in Bavaria and died 1 January 1872 in Cincinnati, Ohio.",
+      "details": {
+        "subject_person": {
+          "name": "Charles Hubert Ferber"
+        },
+        "relation": "paternal_grandmother",
+        "target_person": {
+          "name": "Eva Engermann",
+          "birth": "1834, Bavaria"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for William H Ferber, listing Eva (Engermann) Ferber as mother.",
+        "Ohio, County Death Records, 1840-2001, entry for Wm. Ferber, died 11 Mar 1903, Cincinnati, Hamilton County, Ohio — separately names Eva Ferber as the decedent's mother."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "John Becker was the maternal grandfather of Charles Hubert Ferber — that is, the father of Emma Becker. John was born about January 1845 in Kentucky.",
+      "details": {
+        "subject_person": {
+          "name": "Charles Hubert Ferber"
+        },
+        "relation": "maternal_grandfather",
+        "target_person": {
+          "name": "John Becker",
+          "birth": "about 1845, Kentucky"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for Emma Becker, listing John Becker as father."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Mary Kramer was the maternal grandmother of Charles Hubert Ferber — that is, the mother of Emma Becker and wife of John Becker. Mary was born in Ohio (date not established in the compiled tree).",
+      "details": {
+        "subject_person": {
+          "name": "Charles Hubert Ferber"
+        },
+        "relation": "maternal_grandmother",
+        "target_person": {
+          "name": "Mary Kramer",
+          "birth": "Ohio (date unknown)"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for Emma Becker, listing Mary Kramer as mother."
+      ],
+      "required": true
+    }
+  ]
+}

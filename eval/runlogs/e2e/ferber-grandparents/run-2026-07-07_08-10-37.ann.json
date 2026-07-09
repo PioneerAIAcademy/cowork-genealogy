@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "true",
+    "f3": "false",
+    "f4": "false"
+  },
+  "notes": {
+    "f1": "Relationship correctly established (I10 Gerhard Ferber linked as father of I2 William, who is father of I1 Charles) via death-certificate assertion a_006 (indeterminate quality, single source). A likely-corroborating 1870 census household (head 'Gerhardt Faerber', b. ~1822 Prussia) was found in the research log (log_005) but the run hit a usage-limit error before extracting it into tree facts. No birth, immigration, naturalization, or death facts are recorded anywhere in the final tree for I10.",
+    "f2": "Relationship correctly established (I11 linked as mother of I2 via R14/R12) via the same death-certificate assertion a_007. No birth or death facts recorded, and the maiden name 'Engermann' was not found (research notes explicitly say maiden name unknown, tree only has married name 'Eva Ferber') — genealogist graded true on the core relationship/identity finding despite the missing maiden name and vital facts.",
+    "f3": "No person, relationship, or research-log entry for John Becker anywhere in the final tree or research.json. The run only ever opened q_001 (William Hubert Ferber's parents); a maternal-line question for Emma Becker's parents was never created before the run stopped on a usage-limit error.",
+    "f4": "Same as f3 — Mary Kramer is entirely absent; the maternal line was never reached before the run stopped."
+  }
+}

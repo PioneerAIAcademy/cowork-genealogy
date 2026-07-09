@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_013",
+    "skill": "search-external-sites",
+    "name": "Autonomous run defers a capture-required external search instead of stalling for the user",
+    "type": "positive",
+    "description": "Under --autonomous there is no user to click a link, capture a PDF, or upload it, so the normal click-capture-wait loop cannot complete. The skill must build the URL as a lead, LOG the search as deferred (outcome negative, capture_received false), mark the plan item terminal, and return control so the autonomous run keeps moving — it must NOT present the URL and end the turn waiting for a user who isn't there (that stalls the run). Pins the autonomous-mode branch added to the skill.",
+    "tags": ["autonomous", "external-site", "defer", "no-capture", "ancestry"]
+  },
+  "input": {
+    "user_message": "--autonomous mode. FamilySearch is already exhausted for this question, so the one remaining avenue is an Ancestry-only capture. Execute the external-site plan item: search Ancestry for Patrick Flynn in the 1880 census (Schuylkill County, Pennsylvania). Keep the run moving — there is no user available to click the link or upload a capture, so do not pause for user input.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["place-search-schuylkill-county", "place-search-schuylkill-by-name", "place-search-schuylkill-by-place", "external-links-search-schuylkill"],
+  "judge_context": [
+    "This is an AUTONOMOUS run (the message contains --autonomous, and states no user is available). Autonomous mode INVERTS the normal click-capture-wait expectation: the correct behavior is NOT to present the URL and wait for a user to capture and upload a PDF.",
+    "Correct behavior: build the pre-filled Ancestry search URL (it is a real lead worth recording), then LOG the search as deferred with research_log_append — outcome 'negative', capture_received false, results_examined 0, and notes stating the search is deferred because it requires an interactive user capture and is not obtainable in an autonomous run, with the generated URL recorded in external_site.url_generated.",
+    "The external-site plan item should be marked terminal (status completed) so the autonomous run can proceed to the next step (e.g. research-exhaustiveness).",
+    "INCORRECT (fail): presenting the URL with instructions like 'click this link, save as PDF, and upload it' and then ending the turn waiting for the user — that stalls an autonomous run, which only stops on project.status completed or a logged blocker.",
+    "Because this is autonomous, do NOT penalize the ABSENCE of user-facing capture-workflow instructions on the Capture-guidance dimension — omitting them and deferred-logging instead is exactly right here; this overrides the normal capture-guidance expectation.",
+    "Routing to search-records for a FamilySearch equivalent is not applicable here (the message states FamilySearch is already exhausted), so the deferred-log path is the expected outcome."
+  ]
+}

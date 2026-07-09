@@ -31,6 +31,42 @@ are required.
 
 **Multiple required phrases:** `+"phrase one" +"phrase two"` works.
 
+## Compound (double) surnames — Iberian / Latin-American names
+
+A name of the form `Given Paterno Materno` (e.g. "Francisco **Naveda
+Somarriba**") carries the father's surname *and* the mother's surname.
+To find the **parents**, require the two surnames as a **co-occurrence**,
+not a phrase:
+
+- ✅ `+Naveda +Somarriba` — both must appear, in any position. Matches
+  the child's baptism and the parents' own burial/marriage acts, where
+  the father is named with the paternal surname and the mother with the
+  maternal surname (so the two words are on **different people and not
+  adjacent**).
+- ❌ `+"Naveda Somarriba"` — the phrase (even with one-word slop) only
+  matches where the *child's own* compound name is written out
+  contiguously. It misses the parentage records — exactly the ones you
+  want.
+- Once the mother's fuller form is known, `+"Somarriba González"
+  +Naveda` trims noise while still requiring the father's surname.
+
+The same applies to Portuguese and other double-barrelled naming
+systems. When in doubt which word is paternal vs maternal, run the
+co-occurrence — it does not care about order.
+
+## Do not scope FTS to a record collection ID
+
+`fulltext_search` accepts a `collectionId`, but the full-text corpus is
+partitioned into its **own** auto-generated collections that do **not**
+line up with the indexed-`record_search` collection IDs (or with a
+`collections_search` survey). Passing a `collectionId` guessed from
+those sources frequently excludes the very FTS volume that holds the
+answer, and the search returns zero with no hint that scoping caused it.
+
+Search the **whole corpus first**. Narrow only *after* you have hits,
+using the post-search filters below (`recordPlace*`, `recordType`, year
+range) or a known `imageGroupNumber` — never a borrowed `collectionId`.
+
 ## What is NOT supported
 
 - **No Boolean keywords.** `AND`/`OR`/`NOT` are treated as literal
