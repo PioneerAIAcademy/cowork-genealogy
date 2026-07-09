@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_search_images_005",
+    "skill": "search-images",
+    "name": "Indexed name search should not trigger search-images",
+    "type": "negative",
+    "description": "User wants an indexed name/date/place search of the census. That's search-records — search-images is for browsing UNINDEXED digitized volumes page-by-page, not running indexed queries.",
+    "tags": ["near-miss", "browse-vs-indexed", "boundary"]
+  },
+  "input": {
+    "user_message": "Search the 1850 U.S. census index for Patrick Flynn in Schuylkill County, Pennsylvania.",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": ["search-records"],
+    "explanation": "This is an indexed search by name/date/place — exactly what search-records does. search-images browses unindexed image volumes one page at a time; it should not be used when an index exists."
+  },
+  "judge_context": [
+    "Should route to search-records rather than browsing images — an indexed census query does not require paging through a digitized volume."
+  ]
+}

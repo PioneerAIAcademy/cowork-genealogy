@@ -1,0 +1,505 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "George",
+          "surname": "Thomson",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "george-f1",
+          "type": "Birth",
+          "date": "10 July 1856",
+          "standard_date": "10 Jul 1856",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "george-f2",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "george-f3",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "george-f4",
+          "type": "Marriage",
+          "date": "27 August 1883",
+          "standard_date": "27 Aug 1883",
+          "place": "South Africa",
+          "standard_place": "South Africa"
+        },
+        {
+          "id": "george-f5",
+          "type": "Death",
+          "date": "8 May 1928",
+          "standard_date": "8 May 1928",
+          "place": "Johannesburg, Transvaal, South Africa",
+          "standard_place": "Johannesburg, Transvaal, South Africa"
+        }
+      ]
+    },
+    {
+      "id": "p-john-thomson",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "John",
+          "surname": "Thomson",
+          "id": "p-john-thomson-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "john-f1",
+          "type": "Birth",
+          "date": "about 1826",
+          "standard_date": "abt 1826",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "john-f2",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "john-f3",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "john-f4",
+          "type": "Death",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        }
+      ]
+    },
+    {
+      "id": "p-margaret-simpson",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Margaret",
+          "surname": "Simpson",
+          "id": "p-margaret-simpson-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "margaret-f1",
+          "type": "Birth",
+          "date": "about 1832",
+          "standard_date": "abt 1832",
+          "place": "New Deer, Aberdeenshire, Scotland",
+          "standard_place": "New Deer, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "margaret-f2",
+          "type": "Marriage",
+          "date": "10 January 1856",
+          "standard_date": "10 Jan 1856",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "margaret-f3",
+          "type": "Residence",
+          "date": "1901",
+          "standard_date": "1901",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "margaret-f4",
+          "type": "Death",
+          "date": "1916",
+          "standard_date": "1916",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        }
+      ]
+    },
+    {
+      "id": "p-jessie-thomson",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Jessie",
+          "surname": "Thomson",
+          "id": "p-jessie-thomson-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "jessie-f1",
+          "type": "Marriage",
+          "date": "27 August 1883",
+          "standard_date": "27 Aug 1883",
+          "place": "South Africa",
+          "standard_place": "South Africa"
+        }
+      ]
+    },
+    {
+      "id": "p-william-thomson",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William",
+          "surname": "Thomson",
+          "id": "p-william-thomson-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "william-f1",
+          "type": "Birth",
+          "date": "15 May 1858",
+          "standard_date": "15 May 1858",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        },
+        {
+          "id": "william-f2",
+          "type": "Death",
+          "date": "1927",
+          "standard_date": "1927",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "John",
+          "surname": "Thomson",
+          "id": "N1",
+          "preferred": true
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1789",
+          "standard_date": "abt 1789",
+          "place": "Aberdeenshire, Scotland",
+          "standard_place": "Aberdeenshire, Scotland",
+          "primary": true,
+          "id": "F1"
+        },
+        {
+          "type": "Occupation",
+          "value": "Crofter",
+          "primary": true,
+          "id": "F2"
+        },
+        {
+          "type": "Marriage",
+          "date": "1 August 1826",
+          "standard_date": "1 Aug 1826",
+          "place": "New Deer, Aberdeenshire, Scotland",
+          "standard_place": "New Deer, Aberdeenshire, Scotland",
+          "primary": true,
+          "id": "F3"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Bathia",
+          "surname": "Preslie",
+          "id": "N2",
+          "preferred": true
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1801",
+          "standard_date": "abt 1801",
+          "place": "Aberdeenshire, Scotland",
+          "standard_place": "Aberdeenshire, Scotland",
+          "primary": true,
+          "id": "F4"
+        },
+        {
+          "type": "Marriage",
+          "date": "1 August 1826",
+          "standard_date": "1 Aug 1826",
+          "place": "New Deer, Aberdeenshire, Scotland",
+          "standard_place": "New Deer, Aberdeenshire, Scotland",
+          "primary": true,
+          "id": "F5"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Ann",
+          "surname": "Thomson",
+          "id": "N3",
+          "preferred": true
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "George",
+          "surname": "Thomson",
+          "id": "N4",
+          "preferred": true
+        }
+      ],
+      "id": "I4"
+    },
+    {
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William",
+          "surname": "Thomson",
+          "id": "N5",
+          "preferred": true
+        }
+      ],
+      "id": "I5"
+    },
+    {
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Alexander",
+          "surname": "Thomson",
+          "id": "N6",
+          "preferred": true
+        }
+      ],
+      "id": "I6"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "p-john-thomson",
+      "person2": "p-margaret-simpson",
+      "facts": [
+        {
+          "id": "rel-1-f1",
+          "type": "Marriage",
+          "date": "10 January 1856",
+          "standard_date": "10 Jan 1856",
+          "place": "Methlick, Aberdeenshire, Scotland",
+          "standard_place": "Methlick, Aberdeenshire, Scotland"
+        }
+      ]
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "p-john-thomson",
+      "child": "PID-TODO",
+      "facts": []
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "p-margaret-simpson",
+      "child": "PID-TODO",
+      "facts": []
+    },
+    {
+      "id": "rel-4",
+      "type": "Couple",
+      "person1": "PID-TODO",
+      "person2": "p-jessie-thomson",
+      "facts": [
+        {
+          "id": "rel-4-f1",
+          "type": "Marriage",
+          "date": "27 August 1883",
+          "standard_date": "27 Aug 1883",
+          "place": "South Africa",
+          "standard_place": "South Africa"
+        }
+      ]
+    },
+    {
+      "id": "rel-5",
+      "type": "ParentChild",
+      "parent": "p-john-thomson",
+      "child": "p-william-thomson",
+      "facts": []
+    },
+    {
+      "id": "rel-6",
+      "type": "ParentChild",
+      "parent": "p-margaret-simpson",
+      "child": "p-william-thomson",
+      "facts": []
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "1 August 1826",
+          "standard_date": "1 Aug 1826",
+          "place": "New Deer, Aberdeenshire, Scotland",
+          "standard_place": "New Deer, Aberdeenshire, Scotland"
+        }
+      ],
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "p-john-thomson",
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "p-john-thomson",
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I5",
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I6",
+      "id": "R11"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-1",
+      "title": "Scotland Census 1861, entry for John Thomson and Margaret Thomson, Methlick, Aberdeenshire"
+    },
+    {
+      "id": "src-2",
+      "title": "Scotland Census 1871, entry for John Thomson and Margaret Thomson, Methlick, Aberdeenshire"
+    },
+    {
+      "id": "src-3",
+      "title": "Scotland Census 1881, entry for John Thomson and Margaret Thomson, Methlick, Aberdeenshire"
+    },
+    {
+      "id": "src-4",
+      "title": "Statutory Registers, Births 221/35, Scotlandspeople.gov.uk, entry for George Thomson, 1856"
+    },
+    {
+      "id": "src-5",
+      "title": "Statutory Registers Marriages 221/1, Scotlandspeople.gov.uk, entry for John Thomson and Margaret Simpson, 1856"
+    },
+    {
+      "id": "src-6",
+      "title": "South Africa, Transvaal, Civil Death, 1869-1954, FamilySearch, entry for George Thomson, 8 May 1928"
+    },
+    {
+      "id": "src-7",
+      "title": "South Africa, Civil Marriage Records, 1801-1974, FamilySearch, entry for George Thomson and Jessie Thomson, 27 Aug 1883"
+    },
+    {
+      "title": "Scotland, Census, 1841",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MZD-3MRK",
+      "id": "S1",
+      "citation": "\"Scotland, Census, 1841,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MZD-3MRK : accessed 8 July 2026), entry for John Thomson and Bathia Thomson, Methlick, Aberdeenshire, 1841."
+    },
+    {
+      "title": "Scotland, Marriages, 1561-1910",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MBJL-2VT",
+      "id": "S2",
+      "citation": "\"Scotland, Marriages, 1561-1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MBJL-2VT : accessed 8 July 2026), entry for John Thomson and Bathia Preslie, 1 August 1826, New Deer, Aberdeenshire."
+    }
+  ]
+}
