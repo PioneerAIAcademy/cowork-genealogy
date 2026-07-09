@@ -64,14 +64,33 @@ types or edge cases.
 Record data arrives in one of four ways:
 
 1. **MCP tool response in context** — search-records called `record_search`
-   and Claude holds the structured data in context.
-   This is the most common path.
+   and Claude holds the (compact-stub) results in context. This is the most
+   common path. The stubs are enough to *triage*; for full extraction, get the
+   record's gedcomx from the search **sidecar** via path 2's `resultsRef` — not
+   a fresh live fetch.
 
-2. **Record ARK or entity ID** — the user provides a FamilySearch record
-   ARK (e.g., `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g.,
-   `QVS9-DHDB`). Call `record_read({ recordId: "<ARK or bare ID>" })`
-   to fetch the full simplified GEDCOMX, then extract assertions from
-   the returned persons, relationships, and facts.
+2. **Record ARK or entity ID** — a FamilySearch record ARK (e.g.,
+   `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g., `QVS9-DHDB`). Call
+   `record_read` to get the full simplified GEDCOMX (persons, relationships,
+   facts), then extract assertions from it.
+
+   **Prefer the sidecar for a record that came from a staged `record_search`.**
+   A `record_search` with a `projectPath` stages every result — the full gedcomx
+   lives in that search's log-entry `results_ref` sidecar. Pass the ref to read
+   the record **without a live fetch**:
+   `record_read({ recordId, resultsRef: "<the search log entry's results_ref>", projectPath })`.
+   For **the person you searched**, the sidecar carries the same facts, the
+   source citation, and correctly standardized places (more reliable than a live
+   read, whose place standardization can misfire) — use it for extracting that
+   person's evidence; it saves a network round-trip and never re-fetches a record
+   you already searched. **Do NOT `Read` the sidecar file yourself to find record IDs** — you already hold each `recordId` from the search / ranked results, and `record_read` pulls just the one record you name out of the sidecar; reading the whole `results/<log_id>.json` reloads every staged result's gedcomx into context and defeats the compaction. Do a **live**
+   read (omit `resultsRef`) only when (a) you need the **full facts of a
+   co-resident** — a household member you did NOT search for (a parent, spouse, or
+   sibling in a census). The sidecar fully populates only the person you searched
+   and returns co-residents stubbed to a name plus a fact or two; a live read
+   fills them in. Or (b) the record was not part of a staged search (a bare ARK
+   handed to you). And never `record_read` a record you already read this
+   session — reuse the content you have.
 
 3. **PDF capture** — the user uploaded a PDF from an external site
    (Ancestry, MyHeritage, FindMyPast, FindAGrave). Claude reads the

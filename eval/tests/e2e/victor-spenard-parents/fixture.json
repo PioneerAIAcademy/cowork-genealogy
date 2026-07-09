@@ -1,9 +1,9 @@
 {
   "id": "victor-spenard-parents",
-  "name": "Victor Spénard — parents and paternal grandparents (Quebec, 1896 marriage)",
+  "name": "Victor Spénard — parents (Quebec, 1896 marriage)",
   "source_pid": "PID-TODO",
   "captured": "2026-07-03",
-  "researcher_question": "Who were the parents and paternal grandparents of Victor Spénard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?",
+  "researcher_question": "Who were the parents of Victor Spénard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada? If the records reach a further generation, identify his paternal grandparents as well.",
   "tags": {
     "question_type": "parents",
     "era": "1890s",
@@ -21,5 +21,5 @@
     "max_cost_usd": 15
   },
   "difficulty": "medium",
-  "notes": "French-Canadian Drouin Collection church records and Canadian censuses (1851-1921), both indexed on FamilySearch. The source case study never names the specific parish/town, so disambiguation rests on the uncommon surname Spénard plus the specific 1896 marriage of Victor Spénard and Orise Lesage. The answer spans three generations: parents from the 1896 marriage record (corroborated by the 1891 census), paternal grandparents only from Maximin Spénard's 1819 baptism."
+  "notes": "REQUIRED findings are the two PARENTS (father Maximin Spénard, mother Zoé Brousseau), recoverable from FamilySearch: the 1891 Census of Canada indexes Victor in the household of Maximin & Zoé Spénard (Ste Sophie de Levrard, Nicolet, Quebec — verified 2026-07-08), and the 1896 Drouin marriage names both parents. Disambiguation rests on the uncommon surname Spénard plus the specific 1896 marriage of Victor Spénard and Orise Lesage. SCOPE NOTE (2026-07-08 recoverability probe): the paternal GRANDPARENTS (Jean Baptiste Spénard + Geneviève Payan) are recorded ONLY in Maximin Spénard's 1819 Drouin baptism, which is NOT name-indexed on FamilySearch (0 hits in 'Quebec, Births and Baptisms, 1662-1898') and does NOT surface in full-text search — it lives only in the browse-only Drouin image collections. So f3/f4 are demoted to non-required bonus (credit only if a run reaches the Drouin image). Re-scoped from an earlier 4-required 'parents + grandparents' version."
 }
