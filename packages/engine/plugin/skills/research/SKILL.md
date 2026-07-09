@@ -90,8 +90,9 @@ user as you encounter them.
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
    | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` |
-   | `proof-conclusion` just wrote `<ps_id>` | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
-   | All questions are `resolved` and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
+   | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship is not yet in `tree.gedcomx.json`** | `proof-conclusion` again for the same question — it must encode the relationship before you proceed (see **Tree-encoding gate**) |
+   | `proof-conclusion` wrote `<ps_id>` (and, at tier ≥ probable, its concluded relationship is now in `tree.gedcomx.json`) | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
+   | All questions are `resolved`, **every tier-≥-probable conclusion is encoded in `tree.gedcomx.json`** (see **Tree-encoding gate**), and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    A front-loaded plan is a **prioritized list, not a checklist to
@@ -134,6 +135,36 @@ user as you encounter them.
    directly when an **external/manual** edit touched the files outside the
    writer tools (a hand-edit, or a file the user changed) and you need to
    confirm it still conforms.
+
+## Tree-encoding gate
+
+**A conclusion is not done until the tree reflects it.** `proof-conclusion`
+writes two things — the `proof_summaries` narrative *and* the concluded
+relationship in `tree.gedcomx.json` (its §6, at tier ≥ probable). The narrative
+is the argument; the tree is the deliverable, where the researcher's answer
+actually lives. A proof summary whose relationship is missing from the tree is a
+**found-but-lost** result: the question looks answered on paper while the tree
+still doesn't show it. In long runs the agent sometimes writes the summary and
+skips the tree write — so verify it, don't assume it.
+
+After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
+
+1. **Read `tree.gedcomx.json` and confirm the concluded relationship is present**
+   — a `ParentChild` linking the concluded parent(s) to the child for a
+   parentage question, a `Couple` for a marriage — between the persons the proof
+   concluded.
+2. **If it is missing, re-invoke `proof-conclusion` for the same question** (its
+   §6 writes the relationship). Do this *before* the `proof-critique` mentor
+   review and before anything marks the question resolved.
+3. **This is a hard gate.** Unlike the advisory mentor, it blocks: never let
+   `question-selection` mark the question resolved, and never write
+   `project.status = "completed"`, while any tier-≥-probable conclusion is
+   unencoded in the tree. A run does not finish with a conclusion that never
+   reached the tree.
+
+At tier `possible` / `not_proved` / `disproved` no relationship is expected (the
+conclusion is a documented lead, not a tree assertion), so the gate is satisfied
+trivially.
 
 ## Mentor checkpoints
 
@@ -179,8 +210,9 @@ Otherwise invoke `@plugin:gps-mentor` naming the focus and target_id.
 Stop when one of:
 
 - `project.status == "completed"` — the orchestrator writes this
-  via `research_append` once all questions are `resolved` (see
-  routing table)
+  via `research_append` once all questions are `resolved` **and every
+  tier-≥-probable conclusion is encoded in `tree.gedcomx.json`**
+  (Tree-encoding gate) — see routing table
 - The user explicitly halts you
 - You hit a genuine blocker (no more accessible records, an
   irreducible conflict, missing access to a required repository) —

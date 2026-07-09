@@ -68,9 +68,30 @@ On demand, load:
 |----------------------|----------|-------------|
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** Use when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
+| Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Delegate to search-full-text skill.** When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries. |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
 Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
+
+**If you run `fulltext_search` yourself instead of delegating** (a quick
+check from the main loop), two rules decide success or failure — the
+`search-full-text` skill carries the full version, but at minimum:
+
+- **Compound (Iberian / Latin-American) surnames → co-occurrence, not a
+  phrase.** For a subject named `Given Paterno Materno` (e.g. "Francisco
+  **Naveda Somarriba**"), require the two surnames as separate terms:
+  `+Naveda +Somarriba`. **Never** the adjacent phrase `+"Naveda
+  Somarriba"` — in the parents' own records the father carries the
+  paternal surname and the mother the maternal one, so the two words sit
+  on different people and are never adjacent; the phrase only matches the
+  child's own written-out name and misses every parentage record.
+- **Do not scope a full-text search to a record `collectionId`.** The FTS
+  corpus is partitioned into its own auto-generated collections; a
+  `collectionId` borrowed from `record_search` or a collections survey
+  routinely excludes the FTS volume that holds the answer and the search
+  returns zero. Search the whole corpus first; narrow with
+  `recordPlace*` / `recordType` / year filters (or a known
+  `imageGroupNumber`) only after you have hits.
 
 ## Steps
 
@@ -243,7 +264,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Hand off the `recordId` explicitly.** Each ranked match from `rank_search_matches` (like each `record_search` result) carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The exact format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
 
-1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Parameter name:** always use `recordId` — pass the result's `recordId` field if present, otherwise pass its `arkUrl` value (e.g., `record_read({ recordId: result.arkUrl })`). Do NOT use `arkId`, `ark`, `id`, or `url`.
+1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Read it from the sidecar, not live:** you already staged this search in Step 3, so pass that handle — `record_read({ recordId, resultsRef: staged.resultsRef, projectPath })` — to get the record's full gedcomx **without a network round-trip** (for the person you searched: the same facts, the source citation, and correct standardized places). **Do NOT `Read` the sidecar file yourself** — you already hold each `recordId` from the ranked results; `record_read` pulls just the one record out of the sidecar, whereas reading the whole `results/<log_id>.json` reloads every staged result and defeats the compaction. Omit `resultsRef` for a live read only when you need a **co-resident's** full facts (a household member you didn't search for — the sidecar stubs co-residents to a name plus a fact or two), or the record wasn't part of this staged search. **Parameter name:** always use `recordId` — pass the result's `recordId` field if present, otherwise its `arkUrl` value. Do NOT use `arkId`, `ark`, `id`, or `url`.
 2. If the full record is unavailable but an image exists, record the image URL in the log and pass to record-extraction, which fetches and transcribes.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located."
 
