@@ -147,7 +147,7 @@ Output: `releases/genealogy-mcp.mcpb` (gitignored via `releases/*`).
 
 This proves the packed artifact — not just the source tree — boots and
 advertises its tools, which is the closest programmatic stand-in for an
-end-user install (the GUI "Install Extension" step is a manual layer in
+end-user install (the GUI "Install extension" step is a manual layer in
 `docs/testing-guides/mcpb-install-testing-guide.md`).
 
 ---

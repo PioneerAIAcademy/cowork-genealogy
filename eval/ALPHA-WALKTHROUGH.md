@@ -44,7 +44,7 @@ siblings, migration…), eras, and geographies.
 
 ## One-time install (Windows)
 
-You install three things outside the repo, then run one batch file inside it.
+You install a few things outside the repo, then run three batch files inside it.
 You only do this once per machine.
 
 1. **Git + GitHub Desktop.** Git for Windows (<https://git-scm.com/download/win>,
@@ -59,30 +59,70 @@ You only do this once per machine.
    *first*, paste `https://github.com/PioneerAIAcademy/cowork-genealogy`, pick a
    Local path, click **Clone**.
 
-4. **Run `eval\Setup.bat`.** Get an Anthropic API key first from
+4. **Open the repo in Explorer.** Everything you run from here on is a
+   double-clickable batch file inside the repo's `eval\` folder. In GitHub
+   Desktop, with the repo selected, click **Show files in Explorer** (also at
+   **Repository → Show in Explorer**). An Explorer window opens on the repo
+   root — **double-click into the `eval` folder.** Leave that window open; you
+   come back to it for every step below and for every fixture.
+
+5. **Run `eval\Setup.bat`.** Get an Anthropic API key first from
    <https://console.anthropic.com/settings/keys> (looks like `sk-ant-…`; a new
-   key is shown only once — save it) — the script prompts for it. In GitHub
-   Desktop: **Repository → Show in Explorer**, open `eval\`, double-click
-   `Setup.bat`. It installs `uv`, runs the npm installs, **builds the MCP
-   server**, installs the viewer's dependencies, and saves your key to
-   `eval\.env`.
+   key is shown only once — save it) — the script prompts for it. In the `eval\`
+   Explorer window from step 4, double-click `Setup.bat`. It installs `uv`, runs
+   the npm installs, **builds the MCP server**, installs the viewer's
+   dependencies, and saves your key to `eval\.env`.
 
    > If it stops with `'uv' is not recognized`, close the window and run
    > `Setup.bat` again — a known Windows PATH quirk. The completed steps are
    > no-ops the second time.
 
-5. **Build + install the two Cowork artifacts.** These give Cowork the
-   genealogy tools for the live run (steps 7–8 below). In Explorer, from `eval\`:
+6. **Build + install the two Cowork artifacts.** These give Cowork the
+   genealogy tools for the live run (steps 7–8 below). From the same `eval\`
+   Explorer window:
 
    - Double-click **`BuildMcpb.bat`**. Then in Claude Desktop: **Settings →
-     Extensions → Install Extension** → choose `releases\genealogy-mcp.mcpb`.
+     Extensions → Advanced Settings → Install extension** → choose
+     `releases\genealogy-mcp.mcpb`.
    - Double-click **`BuildPlugin.bat`**. Then in Claude Desktop: **Cowork →
-     Customize → Browse plugins → Upload custom plugin** → choose
-     `releases\genealogy-plugin.zip`.
-   - **Fully quit and reopen Claude Desktop** after installing.
+     Customize → Add → Upload Plugin** → choose `releases\genealogy-plugin.zip`.
+   - **Fully quit and reopen Claude Desktop** after installing. Closing the
+     window is not enough — use the system-tray icon → **Quit**, and confirm no
+     `Claude.exe` remains in Task Manager.
 
-   ⚠️ **Whenever you pull repo changes** that touch the MCP server or the
-   skills, **rebuild and reinstall both**, then quit and reopen Desktop again.
+   ⚠️ **Install the plugin from the Cowork tab, not the Code tab.** Cowork and
+   Claude Code have *separate* plugin systems — Cowork loads the uploaded
+   `.zip`, Claude Code loads loose skill folders from `~/.claude/skills/`. A
+   plugin you added through the Code tab will not appear in Cowork, and vice
+   versa. Use **Cowork → Customize** and nothing else.
+
+   (The `.mcpb` extension is different: it installs once under **Settings →
+   Extensions** and is shared by the whole Desktop app, Cowork and Code tabs
+   alike. You install it once, not once per tab.)
+
+### Updating after you pull
+
+Any time you pull repo changes that touch the MCP server or the skills, redo
+the build + install:
+
+1. Double-click **`BuildMcpb.bat`** and **`BuildPlugin.bat`** again. `BuildMcpb`
+   re-installs npm dependencies and recompiles the server, so it picks up
+   whatever changed.
+2. **The `.mcpb` extension: install straight over the old one.** No uninstall
+   needed — Claude Desktop tracks one copy per extension and replaces it.
+   Settings → Extensions → Advanced Settings → Install extension.
+3. **The plugin: remove the old one first, then upload the new one.** In Cowork
+   → Customize, **remove** the existing Genealogy Research plugin, *then*
+   **Add → Upload Plugin** with the rebuilt `.zip`. Uploading on top of the old
+   plugin may leave you running the old skills; removing first is the reliable
+   way to be sure you got the new ones.
+4. **Fully quit and reopen Claude Desktop.** The MCP server is only re-read on a
+   real restart. Skipping this is the single most common reason a "reinstalled"
+   extension still runs the old code.
+
+> If a batch file now fails on a missing Python or npm dependency, the pull
+> changed the harness dependencies too — re-run `Setup.bat` (have your Anthropic
+> API key handy; it re-prompts and rewrites `eval\.env`).
 
 ---
 
@@ -223,7 +263,13 @@ follow up.
   tab session.
 - **Cowork has no genealogy tools / `/research` degrades to guessing.** The
   `.mcpb` and/or plugin aren't installed, or Desktop wasn't restarted after
-  installing. Re-do install step 5 and **fully quit and reopen** Desktop.
+  installing. Re-do install step 6 and **fully quit and reopen** Desktop.
+- **The plugin is installed but Cowork can't see it.** You installed it in the
+  **Code** tab. Cowork keeps its own plugin list — reinstall via **Cowork →
+  Customize → Add → Upload Plugin** (install step 6).
+- **You pulled, rebuilt, reinstalled — and Claude still runs the old code.**
+  Desktop wasn't *fully* quit. Quit from the system tray, confirm no
+  `Claude.exe` in Task Manager, then reopen. See "Updating after you pull".
 - **`ValidateFixture.bat` prints `WARN` lines.** Each flags a finding that may
   still be present in the starting tree. Review and confirm it's genuinely
   stripped before committing (see step 5).
