@@ -363,10 +363,18 @@ classification:
 it.** A stated age on a 1850 census is `direct` even though the
 informant was a household member, not the subject; *who* reported is
 captured by `informant_proximity` (`household_member`), not by
-`evidence_type`. The exception is the death-certificate parents'-
-names case above, where the certificate creator only records what the
-informant said — and a fact recorded from an informant who didn't
-witness it is `indirect` even when stated.
+`evidence_type`. The exception is the death-certificate case above,
+where the certificate creator only records what the informant said —
+and a fact recorded from an informant who did **not** witness the event
+it describes is `indirect` even when stated. This is **not** limited to
+the parents' names: on a death certificate the *deceased's own* birth
+date, birthplace, and parents are all `indirect` when the informant
+(e.g., the surviving spouse) was not present at that birth abroad and
+is relaying secondhand knowledge. Contrast a census, where a household
+member reporting facts about their own household has firsthand
+knowledge, so those stated facts stay `direct`. The test: did the
+informant have primary knowledge of *this* fact? If not, it is
+`indirect` even though the record states it plainly.
 
 **Age vs. birth year (separate assertions, different evidence types):**
 when the record states "age 32", the `age` assertion (`value: "32"`) is
@@ -424,16 +432,30 @@ before the call fires — the audit log must show the actual
 it. Narrating the persistence then ending the response is a hard test
 failure.
 
-**Tool-first checklist for this step:**
-1. Make the `research_append` call (the batched `ops` from 5a/5b
-   below). Wait for its return.
-2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
-   `add_person` ops). Wait for its return.
+**Tool-first checklist for this step** — the tree source `S` must exist
+*before* `research_append` writes the source entry that references it
+(the source entry's required `gedcomx_source_description_id` is cross-
+checked against `tree.gedcomx.json` on write), so the `tree_edit`
+`add_source` comes FIRST. The 5a–5d labels below group each call's
+*contents*; this checklist is the execution *order*:
+1. Make the `tree_edit` call (5c/5d, `add_source` `S` + any sibling
+   `add_person` ops). Wait for its return and read back the assigned
+   `S` id (and any sibling `I` ids).
+2. Make the `research_append` call (the batched `ops` from 5a/5b
+   below), stamping the source op's `gedcomx_source_description_id`
+   with the `S` id step 1 returned. Wait for its return.
 3. If 5d sibling stubs fired: make the second `tree_edit` call for
-   the `ParentChild` edges. Wait for its return.
+   the `ParentChild` edges (using the sibling `I` ids from step 1).
+   Wait for its return.
 4. **Only after the tool returns are you allowed to summarize
    what was persisted.** Match what you write to what the tool log
    actually shows.
+
+Do **not** call `research_append` first and let its
+`gedcomx_source_description_id` reference an `S` that `tree_edit` has
+not created yet — the write is rejected (`gedcomx_source_description_id
+'S…' not found in tree.gedcomx.json sources`) and nothing persists,
+forcing a wasted retry.
 
 **No post-write re-validation.** `research_append` and `tree_edit`
 validate-on-write and keep a one-deep `.bak`; a successful return is
@@ -457,7 +479,10 @@ op per assertion — including each negative). The batch validates once
 and writes once; on any per-op failure it returns
 `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes NOTHING, so
 surface and fix rather than retrying blindly. The tool assigns each
-id; do not invent one.
+`src_`/assertion `id`; do not invent one. **But** the source op's
+`gedcomx_source_description_id` is not tool-assigned — set it to the
+`S` id the step-1 `tree_edit` `add_source` returned (this is why that
+call runs first); never predict or guess the `S`.
 
 **Intra-batch `source_id` prediction.** The source's assigned id is
 `(highest existing src_ in research.json) + 1`, zero-padded to 3 —
