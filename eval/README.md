@@ -332,11 +332,12 @@ test-improve loop fast: you watch the fix work in minutes instead of waiting
 **First time (and after any skill or MCP-server change):** build and install
 the two artifacts so Cowork has the genealogy tools — `eval\BuildMcpb.bat`
 (`make mcpb`), then install the `.mcpb` in Claude Desktop → Settings →
-Extensions → Advanced Settings → Install extension; and `eval\BuildPlugin.bat`
-(`make plugin`), then upload the plugin in Cowork → Customize → Add → Upload
-Plugin. Upload it from the **Cowork** tab, not the Code tab — they keep
-separate plugin lists. **Fully quit and reopen** Claude Desktop after
-installing. The headless `RunE2E.bat` path doesn't use these (it runs the
+Extensions → Advanced Settings → Install extension (over the old copy — no
+uninstall needed); and `eval\BuildPlugin.bat` (`make plugin`), then **remove any
+existing Genealogy Research plugin** in Cowork → Customize and upload the new
+one via Add → Upload Plugin. Upload it from the **Cowork** tab, not the Code tab
+— they keep separate plugin lists. **Fully quit and reopen** Claude Desktop
+after installing. The headless `RunE2E.bat` path doesn't use these (it runs the
 compiled engine directly), so this is only for the live Cowork loop.
 
 1. `eval\SeedProject.bat` → enter the slug (`make e2e-project TEST=<slug>`).

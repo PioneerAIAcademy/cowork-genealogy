@@ -108,12 +108,15 @@ the build + install:
 1. Double-click **`BuildMcpb.bat`** and **`BuildPlugin.bat`** again. `BuildMcpb`
    re-installs npm dependencies and recompiles the server, so it picks up
    whatever changed.
-2. **Install the new version over the old one** — same menus as step 6. You do
-   **not** need to uninstall first; installing the rebuilt `.mcpb` or uploading
-   the rebuilt `.zip` replaces the version that's there. If the new version
-   doesn't take effect after a restart, *then* remove the old one (Extensions
-   list → remove; Cowork → Customize → remove the plugin) and install again.
-3. **Fully quit and reopen Claude Desktop.** The MCP server is only re-read on a
+2. **The `.mcpb` extension: install straight over the old one.** No uninstall
+   needed — Claude Desktop tracks one copy per extension and replaces it.
+   Settings → Extensions → Advanced Settings → Install extension.
+3. **The plugin: remove the old one first, then upload the new one.** In Cowork
+   → Customize, **remove** the existing Genealogy Research plugin, *then*
+   **Add → Upload Plugin** with the rebuilt `.zip`. Uploading on top of the old
+   plugin may leave you running the old skills; removing first is the reliable
+   way to be sure you got the new ones.
+4. **Fully quit and reopen Claude Desktop.** The MCP server is only re-read on a
    real restart. Skipping this is the single most common reason a "reinstalled"
    extension still runs the old code.
 

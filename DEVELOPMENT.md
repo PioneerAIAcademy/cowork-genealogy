@@ -451,9 +451,13 @@ restart. Order matters:
    `README.md` § "Installation"):
    - **MCP:** Claude Desktop → Settings → Extensions → Advanced Settings
      → "Install extension" → pick the rebuilt
-     `releases/genealogy-mcp.mcpb`.
-   - **Plugin:** Claude Desktop → Cowork tab → Customize → Add → Upload
+     `releases/genealogy-mcp.mcpb`. Installs over the old copy; no
+     uninstall needed.
+   - **Plugin:** Claude Desktop → Cowork tab → Customize → **remove the
+     existing Genealogy Research plugin first**, then Add → Upload
      Plugin → pick the rebuilt `releases/genealogy-plugin.zip`.
+     Uploading on top of the old plugin can leave the old skills in
+     place.
 6. **Fully quit Claude Desktop.** The MCP server is only re-read on a
    real restart — closing the window is not enough:
    - **macOS:** ⌘Q, or right-click the Dock icon → Quit. From a terminal,

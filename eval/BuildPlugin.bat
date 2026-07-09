@@ -8,6 +8,10 @@ echo After it builds, upload it in Claude Desktop -^> Cowork -^> Customize -^>
 echo Add -^> Upload Plugin, then FULLY QUIT and reopen Desktop. Rebuild and
 echo reinstall whenever a skill under packages\engine\plugin changes.
 echo.
+echo Already have an older copy installed? REMOVE it in Cowork -^> Customize
+echo first, then upload the new .zip -- that is the reliable way to be sure
+echo you are running the new skills.
+echo.
 echo Upload it from the COWORK tab, not the Code tab -- they keep separate
 echo plugin lists, and a plugin added in Code will not appear in Cowork.
 echo.
