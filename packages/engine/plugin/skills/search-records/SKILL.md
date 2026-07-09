@@ -142,6 +142,8 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 - Initials (J. Smith)
 - Maiden names for married women
 
+**Secondary names need variants too.** The same variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`, and other secondary-party parameters, not just the principal's own name — an exact-match assumption on a spouse or parent's name can produce a false negative just as easily as one on the principal (e.g. a bride indexed as "Urna" when the tree has "Unna"). If a search that includes a secondary name comes back empty, retry with a spelling variant on that name before concluding a genuine negative.
+
 **Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** Use explicit spelling variants instead.
 
 **Always keep givenName in variant searches.** Do not drop to a surname-only query — it broadens results to all persons of that surname and makes triage impossible. Keep both surname and givenName on every retry; change the spelling of one or both.
