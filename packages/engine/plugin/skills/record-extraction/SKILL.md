@@ -194,13 +194,15 @@ List every person mentioned in the record and assign a `record_role`:
 - **A differently-surnamed household head is a FAN lead, not noise.**
   When the subject's family group is enumerated inside a household
   headed by someone with a different surname, do not default to
-  "boardinghouse" or "lodgers." Note the head as possible kin — in
-  pre-1880 censuses a married couple often lived with the wife's
-  father, making the head's surname a candidate maiden name — and
-  surface the possibility in your presentation as a lead for
-  `hypothesis-tracking`. Other unrelated surnames in the dwelling may
-  still indicate a boardinghouse; report the ambiguity rather than
-  resolving it silently.
+  "boardinghouse" or "lodgers." Note the head as possible kin of
+  unspecified relationship — a parent, sibling, or in-law of either
+  spouse are all plausible, and any of them could surface a maiden
+  name or other lead — and surface the possibility in your
+  presentation for `hypothesis-tracking` to investigate. Do not assert
+  a specific relationship (e.g., "the wife's father") without
+  evidence. Other unrelated surnames in the dwelling may still
+  indicate a boardinghouse; report the ambiguity rather than resolving
+  it silently.
 
 ### 3. Extract assertions
 

@@ -52,9 +52,11 @@ residences) are untouched — they're not part of this fixture's findings.
 
 ## Expected difficulty
 
-Moderate — the parents are well-attested by two censuses (1860 and 1880)
-that place Mary inside her father's Baltimore County household, a
-comparatively easy find. The spouse question is harder: there is no
+Moderate — the parents are inferred from Mary's position in her father's
+Baltimore County household in the 1860 census (no relationship column
+that year, so this is indirect evidence), then directly confirmed by the
+1880 census's explicit relationship column — a comparatively easy find
+once both are searched. The spouse question is harder: there is no
 single indexed marriage record for the 1883 marriage in FamilySearch, so
 the agent must infer it from several census entries co-listing Edward and
 Mary Prizer with matching children, rather than pointing to one
