@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_images_002",
+    "skill": "search-images",
+    "name": "Browse a user-supplied image group without volume_search",
+    "type": "positive",
+    "description": "When the user already has an imageGroupNumber, the skill should call image_search directly without first running volume_search, then log the browse. Tests that the volume-discovery step is correctly skipped when the group is known.",
+    "tags": ["browse", "direct-group"],
+    "holdout": true
+  },
+  "input": {
+    "user_message": "Browse FamilySearch image group 007936749 for me — list its images and log the browse so I can start looking for the Flynn family.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["image-search-schuylkill-probate"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "The user supplied the imageGroupNumber directly. Calling image_search without volume_search is CORRECT here, not a gap — judges must not score partial for skipping volume_search when the group is already known.",
+    "CRITICAL HARNESS LIMITATION: image_read returns no image content in the harness, so the complete browse is: list the images and log the browse. Judges MUST NOT penalize the skill for not viewing pages or not finding a record.",
+    "image_search returns the whole volume in one call — the skill must not retry it with offset/limit/imageId parameters.",
+    "Should append a research_log_append entry recording the browse of image group 007936749."
+  ]
+}

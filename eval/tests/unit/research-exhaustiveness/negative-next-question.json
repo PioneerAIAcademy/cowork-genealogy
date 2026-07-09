@@ -5,7 +5,7 @@
     "name": "Next-question request should not trigger research-exhaustiveness",
     "type": "negative",
     "description": "User asks what to research next. That's question-selection — research-exhaustiveness evaluates whether research on an already-existing question is reasonably exhaustive, not what to research next. The boundary matters because both skills sit at GPS Step 1 and a sloppy classifier could lean on the 'done?'/'next?' overlap.",
-    "tags": ["near-miss", "exhaustiveness-vs-question-selection"]
+    "tags": ["near-miss", "exhaustiveness-vs-question-selection", "no-exhaustive-declaration"]
   },
   "input": {
     "user_message": "What should I research next?",
@@ -13,7 +13,8 @@
   },
   "negative": {
     "correct_skill": ["question-selection"],
-    "explanation": "The user is asking which question to pursue next, not whether existing research on a question is exhaustive. question-selection picks the next research question; research-exhaustiveness writes the `exhaustive_declaration` on an existing question once its plan items are complete. Routing here would either fabricate a declaration on a question whose plan is still in progress or stall without producing the question the user actually wanted."
+    "explanation": "The user is asking which question to pursue next, not whether existing research on a question is exhaustive. question-selection picks the next research question; research-exhaustiveness writes the `exhaustive_declaration` on an existing question once its plan items are complete. Routing here would either fabricate a declaration on a question whose plan is still in progress or stall without producing the question the user actually wanted. Graded on invariant: this is a routing-flaky near-miss — the skill satisfies it by declining, but whether it invokes question-selection vs narrates the handoff is model-variance, so the routing branch of _compute_outcome mis-fails a correct decline. The routing-independent gate is the deterministic validator test_no_exhaustive_declaration (gated by the `no-exhaustive-declaration` tag): it fails the run if any question flips to exhaustive_declared / declared:true.",
+    "grade_on_invariant": true
   },
   "judge_context": [
     "Should route to question-selection rather than evaluating exhaustiveness or writing a declaration"

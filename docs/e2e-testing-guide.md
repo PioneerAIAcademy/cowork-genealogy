@@ -157,6 +157,12 @@ Before running any e2e test:
 
 ## Creating a new e2e test
 
+> **External (alpha) senior genealogist authoring on Windows?** Follow the
+> friendly start-to-PR click-path in
+> [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — it wraps the
+> steps in this section in a single walkthrough (author → validate → watch a
+> live run → open the fixture PR). The material below is the reference behind it.
+
 > **Where these skills live.** `author-e2e-fixture`, `interpret-e2e-result`, and
 > `grade-e2e-run` are repo-local dev tooling under `.claude/skills/` (alongside
 > `compare-state` and `draft-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
@@ -906,5 +912,7 @@ correction of the judge's own labels.
   `starting-tree.gedcomx.json`
 - [`eval/CLAUDE.md`](../eval/CLAUDE.md) — eval framework
   conventions (unit tests; e2e shares the runlog discipline)
+- [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — start-to-PR
+  walkthrough for external (alpha) senior genealogists authoring fixtures
 - [`packages/engine/plugin/skills/research/SKILL.md`](../packages/engine/plugin/skills/research/SKILL.md)
   — the `/research` skill that e2e tests invoke

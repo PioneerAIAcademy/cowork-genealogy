@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_search_images_008",
+    "skill": "search-images",
+    "name": "Recognize an indexed volume and recommend search-records instead of browsing",
+    "type": "positive",
+    "description": "Tests the skill's defining judgment: image browsing is only worthwhile when a volume is NOT searchable. The user asks to browse, but volume_search reveals the volume is 95% record-searchable, so the correct behavior is to recognize it is indexed and recommend search-records rather than paging through hundreds of images. No other test exercises this 'when is browsing the right tool' decision. The skill correctly performs no browse here, so there is no image_search call and no browse log entry.",
+    "tags": ["browse-vs-indexed", "boundary", "searchability-judgment", "redirect-no-browse"],
+    "holdout": true
+  },
+  "input": {
+    "user_message": "Browse the Schuylkill County, Pennsylvania marriage record images to find the Flynns' marriages.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-schuylkill-indexed"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "Calling volume_search is correct and expected — that is how the skill discovers the matched marriage volume is 95% record-searchable (recordSearchablePercent 95).",
+    "THE CORRECT, COMPLETE RESPONSE here is to recognize the volume is indexed and recommend search-records (indexed search) instead of browsing — and to NOT call image_search and NOT log a browse. Browsing a 95%-indexed volume image-by-image is the wrong tool even though the user said 'page through.' Judges MUST NOT penalize the skill for not calling image_search or not writing a browse log entry: there is correctly no browse to perform or log.",
+    "Pass = the skill called volume_search, identified the volume as indexed/record-searchable, and steered the user to search-records (or otherwise clearly said this collection should be searched, not browsed). Fail = the skill proceeded to image_search and browsed the indexed volume anyway."
+  ]
+}

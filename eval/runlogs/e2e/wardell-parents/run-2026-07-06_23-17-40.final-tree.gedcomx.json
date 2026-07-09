@@ -1,0 +1,286 @@
+{
+  "persons": [
+    {
+      "id": "GR1P-492",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "GR1P-492-name-1",
+          "given": "Moroni Nephi",
+          "surname": "Wardell"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-moroni-birth",
+          "type": "Birth",
+          "date": "31 August 1895",
+          "standard_date": "31 Aug 1895",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "f-moroni-res-1900",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cora, Leckie, Pacific, Abbey, New Fork, Fremont, Wyoming, United States",
+          "standard_place": "Fremont, Wyoming, United States"
+        },
+        {
+          "id": "f-moroni-res-1910",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Olson, Fremont, Wyoming, United States",
+          "standard_place": "Fremont, Wyoming, United States"
+        },
+        {
+          "id": "f-moroni-draft",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Lincoln, Wyoming, United States",
+          "standard_place": "Lincoln, Wyoming, United States"
+        },
+        {
+          "id": "f-moroni-res-1920",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Election District 13, Fremont, Wyoming, United States",
+          "standard_place": "Election District 13, Fremont, Wyoming, United States"
+        },
+        {
+          "id": "f-moroni-death",
+          "type": "Death",
+          "date": "18 May 1937",
+          "standard_date": "18 May 1937",
+          "place": "Kemmerer, Lincoln, Wyoming, United States",
+          "standard_place": "Kemmerer, Uinta, Wyoming, United States"
+        },
+        {
+          "id": "f-moroni-burial",
+          "type": "Burial",
+          "date": "20 May 1937",
+          "standard_date": "20 May 1937",
+          "place": "Plainview Cemetery, Big Piney, Sublette, Wyoming, United States",
+          "standard_place": "Pinedale Cemetery, Pinedale, Sublette, Wyoming, United States"
+        }
+      ]
+    },
+    {
+      "id": "GR1P-C75",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "GR1P-C75-name-1",
+          "given": "Stella",
+          "surname": "Wardell"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-stella-birth",
+          "type": "Birth",
+          "date": "22 June 1896",
+          "standard_date": "22 Jun 1896",
+          "place": "Jonesboro, Craighead, Arkansas, United States",
+          "standard_place": "Jonesboro, Craighead, Arkansas, United States"
+        },
+        {
+          "id": "f-stella-death",
+          "type": "Death",
+          "date": "2 December 1952",
+          "standard_date": "2 Dec 1952",
+          "place": "Susanville, Lassen, California, United States",
+          "standard_place": "Susanville, Lassen, California, United States"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "John",
+          "surname": "Wardell",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N1"
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "abt 1860",
+          "standard_date": "Abt 1860",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States",
+          "primary": true,
+          "id": "F2"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Jane",
+          "surname": "Wardell",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N2"
+        },
+        {
+          "given": "Jane",
+          "surname": "Hill",
+          "type": "BirthName",
+          "preferred": false,
+          "id": "N4"
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "abt 1869",
+          "standard_date": "Abt 1869",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States",
+          "primary": true,
+          "id": "F3"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Martin D.",
+          "surname": "Wardell",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N3"
+        }
+      ],
+      "id": "I3",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "28 Oct 1903",
+          "standard_date": "28 Oct 1903",
+          "place": "Big Piney, Sublette, Wyoming, United States",
+          "standard_place": "Big Piney, Sublette, Wyoming, United States",
+          "id": "F1"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "GR1P-492",
+      "person2": "GR1P-C75",
+      "facts": [
+        {
+          "id": "f-marriage-1922",
+          "type": "Marriage",
+          "date": "10 October 1922",
+          "standard_date": "10 Oct 1922",
+          "place": "Kemmerer, Lincoln, Wyoming, United States",
+          "standard_place": "Kemmerer, Uinta, Wyoming, United States"
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "GR1P-492",
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "GR1P-492",
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "id": "R5"
+    }
+  ],
+  "sources": [
+    {
+      "id": "SZY7-23T",
+      "title": "Mroni Nephi Wardell, \"Wyoming, Reclaim the Records, State Archives Vital Records, 1908-1966\"",
+      "citation": "\"Wyoming, Reclaim the Records, State Archives Vital Records, 1908-1966\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7DD1-B1PZ : Sun Mar 10 16:09:52 UTC 2024), Entry for Mroni Nephi Wardell, 18 May 1937.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7DD1-B1PZ"
+    },
+    {
+      "id": "9NYP-TB4",
+      "title": "Moroni Nephi Wardell, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV2Y-XBS6 : Wed Apr 02 04:07:28 UTC 2025), Entry for Moroni Nephi Wardell, 1937.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV2Y-XBS6"
+    },
+    {
+      "id": "QCTB-MSH",
+      "title": "Rone Nephi Wardell, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K687-DZB : Sat Nov 01 05:30:14 UTC 2025), Entry for Rone Nephi Wardell, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K687-DZB"
+    },
+    {
+      "id": "SQ3F-XD9",
+      "title": "Rone Wardell, \"United States, Western States Marriage Index\"",
+      "citation": "\"United States, Western States Marriage Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZV7-NP6 : Tue Feb 11 23:16:08 UTC 2025), Entry for Rone Wardell and Stella M. Cox, 10 Oct 1922.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZV7-NP6"
+    },
+    {
+      "id": "9G82-5YR",
+      "title": "Headstone image of Rone N. Wardell from billiongraves.com",
+      "citation": "Transcription of headstone image from billiongraves.com.  Image taken at Plainview Cemetery (Big Piney, Wyoming, United States) on 09 October 2017",
+      "url": "https://billiongraves.com/grave/Rone-N-Wardell/24796650?utm_campaign=treeconnect&utm_source=familysearch.org&utm_medium=sourcelink"
+    },
+    {
+      "id": "952J-ZMH",
+      "title": "Rone N. Wardell, \"BillionGraves Index\"",
+      "citation": "\"BillionGraves Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL19-XN35 : Thu Oct 02 04:22:14 UTC 2025), Entry for Rone N. Wardell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL19-XN35"
+    },
+    {
+      "id": "952J-C5V",
+      "title": "Rone, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVGN-FWK5 : Wed Apr 02 03:38:20 UTC 2025), Entry for Moroni Nephi Wardell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVGN-FWK5"
+    },
+    {
+      "title": "United States, Census, 1910",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9JXB-1LQ",
+      "id": "S1",
+      "citation": "\"United States, Census, 1910,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MPJJ-X2V : Thu Oct 09 12:35:02 UTC 2025), Entry for John Wardell and Jane Wardell, 1910; household of John Wardell, Olson, Supervisor District 61, Fremont County, Wyoming."
+    },
+    {
+      "title": "Utah, County Marriages, 1871-1941",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH",
+      "id": "S2",
+      "citation": "\"Utah, County Marriages, 1871\u20131941,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9M6P-F3LH : 7 July 2026), Entry for Martin D. Wardell and Alice E. Hill, 28 Feb 1927 \u2014 listing groom's parents as John Wardell and Jane Hill."
+    }
+  ]
+}
