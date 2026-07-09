@@ -190,7 +190,8 @@ def test_q001_disproved_tier(after_state, test):
 # must leave the tree untouched. The two tags below pin both directions:
 #   `no-tree-write`       — the tree must be byte-identical before and after
 #   `tree-write-expected` — the concluded ParentChild relationship must be
-#                           present in the tree afterward
+#                           ADDED by the skill: absent in the pre-state,
+#                           present afterward (catches found-but-lost)
 
 def _tree(state):
     return state.get("tree_gedcomx_json") or state.get("tree_gedcomx")
@@ -213,28 +214,50 @@ def test_no_tree_write_below_probable(before_state, after_state, test):
     )
 
 
-def test_tree_write_present_at_probable_plus(after_state, test):
-    """Tagged `tree-write-expected`: at `probable`/`proved` the concluded
-    parentage must be reflected in the tree as a ParentChild relationship
-    (parent I2 -> child I1). (These scenarios already carry the
-    relationship in their pre-state, so this pins the invariant direction —
-    a regression that dropped or never wrote it would fail here.)"""
+def test_tree_relationship_written_at_probable_plus(before_state, after_state, test):
+    """Tagged `tree-write-expected`: at `probable`/`proved` proof-conclusion
+    must WRITE the concluded parentage into the tree as a ParentChild
+    relationship (parent I2 -> child I1). The scenarios ship the persons
+    (I1, I2) present but with NO parentage relationship, so this verifies the
+    skill actually *added* it — absent in the pre-state, present in the
+    post-state.
+
+    That absent->present check is what catches a "found-but-lost" run that
+    concludes in the proof-summary narrative but skips the tree write
+    (proof-conclusion SKILL.md §6): such a run leaves the persons unlinked and
+    fails here even though it produced a proof_summary. A weaker
+    present-in-after check would pass a skipped write whenever the scenario
+    pre-loaded the link — which is exactly how the elizabeth-geach e2e
+    found-but-lost slipped past the suite."""
     if "tree-write-expected" not in test.get("tags", []):
         pytest.skip("not a tree-write-expected scenario")
-    tree = _tree(after_state)
-    if tree is None:
+    after = _tree(after_state)
+    if after is None:
         pytest.skip("Missing tree.gedcomx.json")
-    rels = tree.get("relationships", [])
-    has_pc = any(
-        r.get("type") == "ParentChild"
-        and r.get("parent") == "I2"
-        and r.get("child") == "I1"
-        for r in rels
+
+    def has_pc(tree):
+        return any(
+            r.get("type") == "ParentChild"
+            and r.get("parent") == "I2"
+            and r.get("child") == "I1"
+            for r in (tree or {}).get("relationships", [])
+        )
+
+    before = _tree(before_state)
+    # Guard the guard: the scenario MUST ship the relationship absent, or a
+    # skipped write is undetectable. Fail loudly if someone re-pre-loads it.
+    assert before is not None and not has_pc(before), (
+        "scenario pre-state already contains the concluded ParentChild "
+        "relationship (parent I2 -> child I1); a `tree-write-expected` "
+        "scenario must ship the persons WITHOUT the relationship so this "
+        "guard can verify the skill *added* it (absent -> present)"
     )
-    assert has_pc, (
-        "expected a ParentChild relationship (parent I2 -> child I1) in "
-        "tree.gedcomx.json for a probable/proved conclusion; got "
-        f"relationships={rels!r}"
+    assert has_pc(after), (
+        "proof-conclusion concluded at probable/proved but did NOT write the "
+        "ParentChild relationship (parent I2 -> child I1) into "
+        "tree.gedcomx.json — the conclusion reached the proof summary but "
+        "never the tree (found-but-lost; see proof-conclusion SKILL.md §6). "
+        f"post-state relationships={after.get('relationships', [])!r}"
     )
 
 

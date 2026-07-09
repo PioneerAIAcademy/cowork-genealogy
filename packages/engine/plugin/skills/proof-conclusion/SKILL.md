@@ -77,13 +77,23 @@ The `narrative_markdown` is the **authoritative GPS conclusion** — if structur
 
 On re-invocation where a proof summary for this question already exists, use `op: "update"` with the existing `ps_` id — **never append a second summary for the same question**. `op: "update"` shallow-merges, so pass `entryId: "ps_NNN"` plus a `fields` object containing ONLY the fields that changed — do NOT regenerate or re-emit the full entry (especially `narrative_markdown`) when just a couple of fields change.
 
-### 6. Update tree.gedcomx.json (tier >= probable)
+### 6. Encode the conclusion in tree.gedcomx.json (tier >= probable)
 
-Use `tree_edit` to add facts (`add_fact` with `primary: true`), relationships (`add_relationship`), and source entries (`add_source` for a new tree source, or `update_source` with its `sourceId` to refine an existing one). A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole `tree_edit` write fails validation). **Batch all of these into ONE `tree_edit` call via its `ops[]` array** rather than one call per edit — the tool applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing), and ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op in the same batch.
+**This step — not the proof summary — is where the conclusion actually lands. Do not skip it.** The `narrative_markdown` you wrote in §5 is the *argument*; the researcher's tree stays unchanged until you write it here. If the question was a parentage (or a marriage), **the relationship that answers it is the primary output of this skill.** A concluded parentage you do NOT write as a tree relationship is an **incomplete conclusion** — the persons sit in the tree unlinked and the question is effectively unanswered in the tree, even though your narrative concluded it.
+
+Use `tree_edit`, **batched into ONE call via its `ops[]` array**, in this order:
+
+1. **The concluded relationship(s) FIRST** — `add_relationship` with a `relationship` object. Parentage: `{ "type": "ParentChild", "parent": "<parentId>", "child": "<childId>" }`. Marriage: `{ "type": "Couple", "person1": "<id>", "person2": "<id>" }`. Endpoints must be **existing** person ids — link the persons already in the tree, don't re-add them (`ParentChild` uses `parent`/`child`, NOT `person1`/`person2`). This is the answer to the question; write it before anything else so it cannot be dropped.
+2. **Facts** — `add_fact` with `primary: true`.
+3. **Source entries** — `add_source` for a new tree source, or `update_source` with its `sourceId` to refine an existing one. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole `tree_edit` write fails validation).
+
+Batching applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing); ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact or relationship added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op in the same batch.
 
 **Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "error"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "warning"` is advisory. Get confirmation, then call `merge_tree_persons` or `merge_record_into_tree`.
 
 After the single batched `tree_edit` (or a merge), run `check-warnings` **once** (see `references/validation-protocol.md`) — not after each op.
+
+**Verify the conclusion landed.** Before you present or mark the project complete, confirm the relationship(s) you concluded are now in the tree — the persons are *linked* by a `ParentChild`/`Couple` relationship, not merely added as unconnected persons. If a concluded parentage or marriage is not linked, the tree does not yet reflect your conclusion: go back and write the relationship.
 
 ### 7. Do not modify the question
 
@@ -109,7 +119,7 @@ Marking the question `resolved` (setting `resolved`, `resolution_assertion_ids`)
 Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
-- **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree (facts / relationships / sources added or removed, with ids/counts) — not the prose. One short line per tool action.
+- **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
 - **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier).
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
