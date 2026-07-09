@@ -3,7 +3,7 @@ import { is } from '@electron-toolkit/utils'
 
 const isMac = process.platform === 'darwin'
 
-const REPO_URL = 'https://github.com/pioneeracademy/cowork-genealogy-ui'
+const REPO_URL = 'https://github.com/PioneerAIAcademy/cowork-genealogy'
 
 const template: Electron.MenuItemConstructorOptions[] = [
   ...(isMac

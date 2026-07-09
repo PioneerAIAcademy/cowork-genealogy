@@ -1,0 +1,25 @@
+{
+  "id": "ferber-grandparents",
+  "name": "Charles Hubert Ferber — grandparents (1820s–1870s)",
+  "source_pid": "G7JB-Y46",
+  "captured": "2026-07-06",
+  "researcher_question": "Who were the grandparents of Charles Hubert Ferber, born 22 June 1891 in Cincinnati, Ohio (the parents of his father William Hubert Ferber and his mother Emma Becker)?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1850s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 3600,
+    "inactivity_seconds": 600,
+    "tool_calls": 200,
+    "max_turns": 100,
+    "max_cost_usd": 15
+  },
+  "difficulty": "moderate",
+  "notes": "Paternal grandparents (Gerhard Ferber, b. ~1820 Germany, immigrated ~1850, d. 1917 Cincinnati; and Eva Engermann, b. 1834 Bavaria, d. 1872 Cincinnati) are independently corroborated in the live source data by both FamilySearch's compiled tree and William Ferber's own 1903 Ohio death record, which separately names them as his parents — a good test of whether the agent cross-checks the compiled tree against a record rather than relying on the tree alone. Maternal grandparents (John Becker, b. ~1845 Kentucky; and Mary Kramer, b. Ohio) rest only on the compiled FamilySearch tree in the live source data and were not independently corroborated during authoring — grade findings on this half more leniently and flag if the agent cannot find supporting records beyond the tree profile."
+}

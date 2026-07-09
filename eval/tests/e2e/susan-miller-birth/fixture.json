@@ -1,0 +1,21 @@
+{
+  "id": "susan-miller-birth",
+  "name": "Susan Miller — birth date and place (1865, Scotland)",
+  "source_pid": "2BLL-3JS",
+  "captured": "2026-07-06",
+  "researcher_question": "When and where was Susan Miller born?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1860s",
+    "geography": "GB-SCT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 5400
+  },
+  "difficulty": "moderate",
+  "notes": "First birth-type fixture in the suite. Susan's exact birth (17 March 1865, Dundee, Angus, Scotland) and the attesting Scotland Births and Baptisms record were stripped; recoverable from the Scottish birth/baptism index and corroborated by the 1871 Scotland census (child in John Miller's household) and the 1881 Scotland/England censuses. Well-anchored by known parents (John Miller, Susan Kidd), spouse, children, and later Canadian records. The birth year and country are inferable from retained context (life sketch, censuses), so the crux is recovering the exact date and confirming Dundee via the record. Some FamilySearch place-standardization noise exists in the source tree (e.g. St Mary's, Forfarshire mis-standardized). Wall-clock cap raised to 90 min (5400s): a first headless run recovered the correct answer but timed out during proof-conclusion at the 60-min default — thorough Scottish-record work (FAN household extraction + original-vs-derivative image checks) legitimately exceeds 60 min here, so the larger budget lets the good work finish rather than cutting it."
+}
