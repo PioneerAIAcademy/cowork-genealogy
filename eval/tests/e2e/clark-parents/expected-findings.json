@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Adam Schreck was the father of Christiana (Schreck) Clark. Born September 1742 in Germany; died 22 October 1830 in Schuylkill County, Pennsylvania (buried Hetzels Church Cemetery, Pine Grove). Recovering him also establishes Christiana's maiden name, Schreck.",
+      "details": {
+        "subject_person": {
+          "name": "Christiana Clark",
+          "pid": "GP3R-215"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Adam Schreck",
+          "birth": "September 1742, Germany"
+        }
+      },
+      "supporting_sources": [
+        "\"Pennsylvania, Births and Christenings, 1709-1950\", FamilySearch — christening of Christina Schreck, 2 Mar 1783, Rehrersburg (Tulpehocken Twp), naming Adam Schreck as father.",
+        "Pennsylvania Historical Society Births and Baptisms — entry for Christina Schreck naming her parents."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Margreth Weber (married name Schreck) was the mother of Christiana (Schreck) Clark. Born 29 May 1749 in Bavaria, Germany; died 26 April 1826 in Pennsylvania.",
+      "details": {
+        "subject_person": {
+          "name": "Christiana Clark",
+          "pid": "GP3R-215"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Margreth Weber",
+          "birth": "29 May 1749, Germany"
+        }
+      },
+      "supporting_sources": [
+        "\"Pennsylvania, Births and Christenings, 1709-1950\", FamilySearch — christening of Christina Schreck, 2 Mar 1783, naming Margreth (Weber) Schreck as mother.",
+        "Pennsylvania Historical Society Births and Baptisms — entry for Christina Schreck naming her parents."
+      ],
+      "required": true
+    }
+  ]
+}

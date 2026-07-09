@@ -20,17 +20,34 @@ const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
 const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
 
-// Ceiling on the raw image bytes we will base64-encode and return inline.
-// The MCP stdio transport decodes one JSON message at a time with a hard
-// ~1 MiB (1,048,576-byte) buffer; base64 inflates the payload ~33%, so a
-// raw image much above ~780 KB produces a response message that overflows
-// the buffer and crashes the *entire session* — an uncatchable transport
-// error, not a per-tool failure (observed killing an e2e run on a 1950
-// census page scan). 700 KB raw → ~933 KB of base64, comfortably under the
-// cap with headroom for the JSON-RPC envelope. Above this we throw an
-// actionable error instead of returning the bytes. (Downscaling to fit so
-// large scans stay readable would require an image-processing dependency in
-// the shipped .mcpb — deferred; see docs/specs/image-read-spec.md.)
+// FLOOR on the raw image bytes we base64-encode inline. This is NOT the
+// primary defense against overflow — it only stops a SINGLE image whose
+// base64 alone is so large it can't fit in one message. 700 KB raw →
+// ~933 KB base64; above this we throw an actionable error instead of the
+// bytes.
+//
+// The real failure mode is *accumulation*, and it is NOT a single MCP
+// response frame overflowing. Each image_read response adds a base64
+// content block to the calling agent's conversation, and the WHOLE
+// conversation is re-serialized and re-sent every turn. So the per-turn
+// payload grows with each image read, and eventually one re-serialized
+// message carrying all the accumulated blobs exceeds the ~1 MiB
+// (1,048,576-byte) buffer and crashes the *entire session* — an
+// uncatchable error — even when every individual image is well under this
+// ceiling. (Observed: an e2e run made 17 image_read calls, each ≤458 KB
+// raw, then crashed on the accumulated pile, not on any one response.)
+//
+// This is why the fix is the `image-reader` subagent
+// (packages/engine/plugin/agents/image-reader.md): it absorbs the base64
+// in an isolated context and returns only text, so the bytes never enter
+// the main conversation to accumulate. It is also why that agent reads
+// exactly ONE image per invocation — two large scans (~458 KB raw →
+// ~610 KB base64 each) already sum past the buffer inside the subagent's
+// own re-serialized conversation. This per-image ceiling is only a floor
+// protecting a single response — main or subagent.
+// (Downscaling to fit so large scans stay readable rather than refused
+// would need an image-processing dependency in the shipped .mcpb —
+// deferred; see docs/specs/image-read-spec.md.)
 const MAX_INLINE_IMAGE_BYTES = 700_000;
 
 export interface ImageReadInput {

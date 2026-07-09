@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_search_images_009",
+    "skill": "search-images",
+    "name": "Planning which volumes to browse should not trigger search-images",
+    "type": "negative",
+    "description": "User asks which unindexed volumes to browse next and to help plan — that's research-plan. search-images executes a browse of a specific volume; it does not decide research strategy.",
+    "tags": ["near-miss", "browse-vs-plan", "boundary"]
+  },
+  "input": {
+    "user_message": "Which unindexed record sets should I browse next for the Flynn research? Help me plan the strategy.",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": ["research-plan"],
+    "explanation": "Deciding which record sets to browse and in what order is planning work — research-plan's job. search-images executes a browse of an already-chosen volume; it does not author or prioritize plan items."
+  },
+  "judge_context": [
+    "Should route to research-plan rather than browsing — the user is asking what to search, not asking to execute a specific browse."
+  ]
+}
