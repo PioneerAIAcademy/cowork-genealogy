@@ -1,0 +1,740 @@
+{
+  "project": {
+    "id": "rp_pauline_shaver_death_burial",
+    "objective": "When did Pauline 'Polly' Wilkins Shaver die, and where is she buried?",
+    "subject_person_ids": [
+      "27HB-Z94"
+    ],
+    "status": "completed",
+    "created": "2026-07-08T00:00:00Z",
+    "updated": "2026-07-08"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When did Pauline 'Polly' Wilkins Shaver (born 9 June 1848, Muhlenberg County, Kentucky; last known alive 1920) die, and where is she buried?",
+      "rationale": "This question directly maps to the project objective. Kentucky death certificates (available from 1911) and cemetery/burial records should provide both the death date and burial location. Her husband Williams Timmons Shaver died 12 July 1922 and is buried at Shavers Cemetery in Muhlenberg County; Polly likely died in roughly the same period and may be buried at the same cemetery. Her last census appearance was 1920, so death records post-1920 are the primary target.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-08",
+      "resolution_assertion_ids": [
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-08"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-08",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1911-1967",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky began statewide death registration in 1911. FamilySearch collection 1417491 ('Kentucky, Deaths, 1911-1967') is indexed and contains over 1.7 million records. Polly was last known alive in the 1920 census; if she died after 1911 a death certificate should exist here, providing both the death date and often the burial location or cemetery name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1930",
+          "repository": "FamilySearch",
+          "rationale": "The 1930 US Federal Census will confirm whether Polly was still alive eight years after her husband's death (1922). Finding her narrows the death window to 1930\u20131940+; not finding her suggests death between 1920 and 1930. Either outcome directly constrains interpretation of the death certificate search.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "cemetery",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1920-1960",
+          "repository": "other",
+          "rationale": "FindAGrave (findagrave.com) and BillionGraves index cemetery headstones and often include death dates and burial locations. Polly's husband Williams Timmons Shaver is buried at Shavers Cemetery, Muhlenberg County; Polly is highly likely to be buried there too. A direct search for Pauline or Polly Shaver in Muhlenberg County cemeteries could confirm burial location and death date independently of civil records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky",
+          "date_range": "1843-1970",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1674848 ('Kentucky, Deaths and Burials, 1843-1970') is a separate compiled index that draws on different source batches than collection 1417491. Searching it as a cross-check may surface a record missed by variant name spelling (e.g., 'Pauline' vs. 'Polly') or indexing gaps in the primary collection.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky",
+          "date_range": "1911-1999",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 2531527 ('Kentucky, Vital Record Indexes, 1911-1999') is a broad index of Kentucky vital records. It may contain entries not yet linked to images in the other collections and serves as an additional cross-check, particularly useful if Polly's name was recorded under an unexpected variant.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1921-1945",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch has digitized Muhlenberg County wills (volume 004819691, 1921\u20131945) and probate administrator bonds (1920\u20131928). If Polly died intestate or left a will, probate records would establish the death date and may name heirs who would provide FAN-cluster leads. The settlement books (004681504, 1922\u20131947) are another probate-adjacent source for the same period.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Kentucky",
+          "date_range": "1911-1967",
+          "repository": "Ancestry",
+          "rationale": "Ancestry hosts a separate Kentucky death index and certificate image set. Its transcription of names and dates may differ from FamilySearch's index, catching entries that name-variant searches on FamilySearch missed. Use as a paid-repository fallback if FamilySearch searches return nil.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "newspaper",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1920-1940",
+          "repository": "other",
+          "rationale": "Local newspaper obituaries (Greenville, KY press; accessible via Newspapers.com or Kentucky newspaper archives) frequently named the deceased, death date, survivors, and burial location. An obituary for Polly Shaver would provide corroborating evidence for the death date and burial site found in official records, and names of surviving children/relatives for FAN follow-up.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-08T10:09:51.104Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, Deaths, 1911-1967 (1417491)",
+        "surname": "Shaver",
+        "givenName": "Pauline",
+        "sex": "Female",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853,
+        "recordSubdivision": "Kentucky"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "2 results returned, both scored ~0.31 (surname 'Shivers', different counties); neither is the subject. Search repeated with nickname 'Polly'."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-08T10:09:58.721Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, Deaths, 1911-1967 (1417491)",
+        "surname": "Shaver",
+        "givenName": "Polly",
+        "sex": "Female",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853,
+        "recordSubdivision": "Kentucky"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 25,
+      "notes": "Strong candidate: ark:/61903/1:1:NSJP-9Q2, indexed as 'Polly Shover' (variant of Shaver), born 1848, died 30 Nov 1935 at Bremen, Muhlenberg, KY. Father listed as 'Eligah [Elijah] Wilkins' \u2014 matches tree father 97YZ-J3D. FamilySearch tree-match to 27HB-Z94 with 5 stars. Proceeding to read full record."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-08T10:20:53.031Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States, Census, 1930 (1810731)",
+        "surname": "Shaver",
+        "givenName": "Polly",
+        "sex": "Female",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853,
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "residencePlace": "Muhlenberg, Kentucky, United States",
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "1 result: ark:/61903/1:1:XMF6-RFC, 'Polly Shaver,' head of household, Bremen, Muhlenberg, KY, 1930, widowed, born 1849 (tree: 1848 \u2014 1-year census rounding). Housemate: Nannie Gill (b.1869), likely a daughter or daughter-in-law. Score 6.92. Confirms subject was alive in 1930, consistent with 1935 death date."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-08T10:25:52.040Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "FamilySearch cemetery/other records",
+        "surname": "Shaver",
+        "givenName": "Polly / Pauline",
+        "sex": "Female",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853,
+        "variants_tried": [
+          "Polly + anyPlace Muhlenberg KY",
+          "Pauline + Kentucky subdivision",
+          "Polly + collectionId 2204988 (Find A Grave Index)"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Three FamilySearch cemetery/other-type searches returned 0 results for Polly/Pauline Shaver in Kentucky. FamilySearch Find A Grave Index (collection 2204988) also returned nil. Escalating to external_links_search and search-external-sites for FindAGrave direct search."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-08T10:26:32.993Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, Deaths and Burials, 1843-1970 (1674848)",
+        "surname": "Shaver",
+        "givenName": "Polly",
+        "sex": "Female",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 5,
+      "notes": "5 results, none matching the subject. Top result 'Mary Shiver' (score 3.62) is Campbell County 1922 \u2014 wrong county, different person. Remaining 4 are unnamed 'Shaver' entries from Louisville 1860. Subject not found in this cross-check collection under 'Polly'. Retrying with 'Pauline'."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-08T10:27:16.605Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, Deaths and Burials, 1843-1970 (1674848)",
+        "surname": "Shaver",
+        "givenName": "Pauline",
+        "sex": "Female",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 4,
+      "notes": "Tried given name 'Pauline' as variant \u2014 same 4 unnamed Louisville 1860 Shaver entries, no match. Collection 1674848 does not contain an entry for subject under either 'Polly' or 'Pauline' Shaver. The primary death record (log_002, NSJP-9Q2) was found in the overlapping collection 1417491; absence here is consistent with incomplete coverage across collections. pli_004 exhausted."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T10:27:21.211Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, Vital Record Indexes, 1911-1999 (2531527)",
+        "surname": "Shaver",
+        "givenName": "Polly",
+        "sex": "Female",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 2,
+      "notes": "2 results: 'Mary Schiver' (Kenton Co., b.1921 mother) and 'Mollie Shavers' (Knox Co., b.1913 mother) \u2014 both different persons in different counties. Subject not in this index under 'Polly Shaver'. pli_005 exhausted."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-08T10:29:09.937Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Shavers +Cemetery +Muhlenberg +Shaver",
+        "yearFrom": null,
+        "yearTo": null
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 2,
+      "notes": "Two results: (1) 1952-1955 Muhlenberg County Deed index confirms 'Trustees of Shaver's Chapel Methodist Church & Shaver's Cemetery' as a legal entity in Muhlenberg County \u2014 confirming the cemetery name and location. (2) 1960 KY death certificate for a 'J. Shaver' from Bremen, Muhlenberg County lists burial at 'Shavers [Cemetery], Muhlenberg Co., Ky.' via Tucker Funeral Home \u2014 confirms the Shaver family of Bremen used Shavers Cemetery for burials. Both results corroborate Shavers Cemetery as the Shaver family burial ground in Muhlenberg County, consistent with Williams Timmons Shaver's documented burial there."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-08T10:30:06.379Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Shaver (wills vol 004819691) and +Shaver (settlement records 008681504)",
+        "note": "Two FTS searches: wills 1921-1945 and property settlement 1922-1947"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Wills vol 004819691: 'Polly Shaver' nil; broad '+Shaver' shows C.P. Shaver and P.A. Shaver Jr. as witnesses to other wills (1924, 1942) but no will or probate record FOR Polly or Pauline Shaver. Settlement records vol 008681504: no Shaver matches. No probate record found for subject. pli_006 exhausted."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-08T10:33:08.537Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Polly +Shaver +Bremen +burial",
+        "count": 5,
+        "note": "Obituary/burial FTS search; separate from probate volume searches"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 6,
+      "notes": "Key finding: genealogy document (United States Genealogy 1996, M9J1-97G) states that the Shaver family who founded Bremen, Muhlenberg County, KY 'are buried in the Shaver Cemetery' \u2014 establishes Shaver Cemetery as THE family burial ground for the Bremen Shavers. This is consistent with Williams Timmons Shaver's documented burial at Shavers Cemetery and the 1960 death cert burial finding. No direct record naming Polly Shaver as buried there, but strong indirect pattern."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-08T10:33:29.601Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Polly +Shaver +obituary",
+        "yearFrom": 1930,
+        "yearTo": 1940
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No obituary results for Polly Shaver 1930-1940 in FamilySearch fulltext. Newspaper archives for Muhlenberg County are not digitized in FamilySearch. Newspapers.com (pli_008 rationale) requires a separate subscription; researcher has none. Burial location not established via newspaper. pli_008 exhausted within available FamilySearch resources."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-08T10:37:38.494Z",
+      "tool": "image_search",
+      "query": {
+        "target": "Kentucky death certificate image for Polly Shover, ark:/61903/3:1:3Q9M-C9YK-VWMJ",
+        "purpose": "Check for burial information on original certificate"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Attempted to access death certificate image (3:1 ARK: 3Q9M-C9YK-VWMJ) to check for burial details. image_read requires NUMBER_NUMBER format; record_read on the 1:2 ARK (M6ZB-MBJ) returned 'not found'; collection 1417491 is not FTS-indexed. The original certificate image could not be retrieved through available MCP tools. This is a documented limitation: the burial location on the original certificate remains unconfirmed. Indirect evidence consistently points to Shavers Cemetery, Muhlenberg County, KY."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Kentucky, Deaths, 1911-1967,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2 : accessed 8 July 2026), entry for Polly Shover [Shaver], died 30 November 1935, Bremen, Muhlenberg County, Kentucky; citing Kentucky State Board of Health, Frankfort.",
+      "citation_detail": {
+        "who": "Kentucky State Board of Health",
+        "what": "Death certificate for Polly Shover [Shaver], died 30 November 1935",
+        "when_created": "November\u2013December 1935",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Kentucky, Deaths, 1911-1967 (collection 1417491), indexed record ark:/61903/1:1:NSJP-9Q2; underlying image at ark:/61903/1:2:M6ZB-MBJ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2",
+      "notes": "FamilySearch index of Kentucky death certificate for Polly Shover (surname is a transcription variant of Shaver; FamilySearch tree-match to 27HB-Z94 with 5 stars). Index captures name, birth year, death date/place, and parents' names. Underlying certificate image (ark:/61903/1:2:M6ZB-MBJ) may contain burial details not in the index.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"United States, Census, 1930,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC : accessed 8 July 2026), entry for Polly Shaver, head of household, Bremen, Muhlenberg, Kentucky.",
+      "citation_detail": {
+        "who": "Polly Shaver, head of household",
+        "what": "United States Federal Census, 1930",
+        "when_created": "1930",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Bremen, Muhlenberg, Kentucky; household of Polly Shaver, ark:/61903/1:1:XMF6-RFC"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC",
+      "log_entry_id": "log_003"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Polly Shover [indexed surname; likely Shaver per FS tree match to 27HB-Z94 with 5 stars]",
+      "structured_value": {
+        "given": "Polly",
+        "surname": "Shover"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown personal informant on death certificate",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Informant unknown; any family member present at death could have reported the name. Since we cannot identify the specific informant, classification is indeterminate per the two-question decision tree."
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1848 (year only, stated on death certificate)",
+      "structured_value": {
+        "year": 1848
+      },
+      "date": "1848",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown personal informant on death certificate",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Informant unknown; birth year on a death certificate is reported from memory, often approximate. Since we cannot identify the specific informant, classification is indeterminate. Evidence is indirect relative to q_001 (death/burial question): the birth year corroborates the subject's identity via inference rather than directly answering when or where she died."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 30 November 1935 at Bremen, Muhlenberg County, Kentucky",
+      "structured_value": {
+        "year": 1935,
+        "place": "Bremen, Muhlenberg, Kentucky, United States"
+      },
+      "date": "30 November 1935",
+      "date_certainty": "exact",
+      "place": "Bremen, Muhlenberg, Kentucky, United States",
+      "standard_place": "Bremen, Muhlenberg, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "attending physician or local registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2",
+      "record_persona_id": null,
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Eligah [Elijah] Wilkins",
+      "structured_value": {
+        "given": "Eligah [Elijah]",
+        "surname": "Wilkins"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown personal informant on death certificate",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Informant unknown. For the father's name, any family member could have known this firsthand. Cannot confirm whether informant had firsthand knowledge, so classification is indeterminate. Corroborates subject identity \u2014 'Eligah [Elijah] Wilkins' matches tree person 97YZ-J3D.",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2",
+      "record_persona_id": null,
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Sallie Millard",
+      "structured_value": {
+        "given": "Sallie",
+        "surname": "Millard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown personal informant on death certificate",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Informant unknown. 'Sallie Millard' appears to be the mother's maiden name (Sally Wilkins, K2BS-YMD in tree, married name Wilkins). Any family member could theoretically have known the mother's name. Classification is indeterminate. Note the surname discrepancy: 'Millard' vs. 'Wilkins' \u2014 the death certificate likely records the maiden name, a common practice on KY death certificates.",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Polly Shaver",
+      "structured_value": {
+        "given": "Polly",
+        "surname": "Shaver"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent identity unknown. Adults typically self-reported or spouse answered.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "residence",
+      "value": "Bremen, Muhlenberg, Kentucky, 1930",
+      "structured_value": {
+        "place": "Bremen, Muhlenberg, Kentucky, United States"
+      },
+      "date": "1930",
+      "date_certainty": "exact",
+      "place": "Bremen, Muhlenberg, Kentucky, United States",
+      "standard_place": "Bremen, Muhlenberg, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "1849, Kentucky",
+      "date": "1849",
+      "date_certainty": "approximate",
+      "place": "Kentucky",
+      "standard_place": "Kentucky, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Birth year derived from age reported. One year later than the 1848 birth date on the death certificate \u2014 consistent with census rounding.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The death record names 'Polly Shover' \u2014 'Polly' is the established nickname for Pauline, and 'Shover' is a transcription variant of 'Shaver' confirmed by FamilySearch's own 5-star tree-match to 27HB-Z94. Birth year 1848 matches the tree exactly. Death occurred at Bremen, Muhlenberg County, KY \u2014 Pauline's documented 1900 and 1910 residence. Father named as 'Eligah [Elijah] Wilkins' matches tree parent 97YZ-J3D; mother 'Sallie Millard' matches K2BS-YMD (maiden name). All five identifiers converge; no conflicting data points.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1848 stated on the death certificate matches Pauline 'Polly' Shaver (27HB-Z94) exactly per tree fact 248eaba5. Combined with name, death place, and parental name corroboration, this is a strong identity confirmation.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death fact \u2014 30 November 1935 at Bremen, Muhlenberg County, KY \u2014 directly answers q_001. The Bremen death place matches Pauline's last known residence area (1900 and 1910 census residences in Bremen, Muhlenberg). Identity confirmed by name, birth year, and parental names all aligning with 27HB-Z94.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "97YZ-J3D",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "'Eligah [Elijah] Wilkins' is a spelling variant of Elijah Wilkins; the indexer's brackets confirm the interpretation. Gender (Male), role (father of deceased), and Muhlenberg County location all match tree person 97YZ-J3D. The tree already records a ParentChild relationship between 97YZ-J3D and 27HB-Z94, making this corroborating evidence for an existing relationship.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The father-of-deceased role assertion names Elijah Wilkins (matched to 97YZ-J3D) as the father of the deceased (matched to 27HB-Z94). This assertion bears on Pauline's parentage, corroborating the existing ParentChild relationship rel-3 in the tree.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "K2BS-YMD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The mother-of-deceased is named 'Sallie Millard.' 'Sallie' is equivalent to 'Sally' (K2BS-YMD's given name). 'Millard' is consistent with a maiden name \u2014 Kentucky death certificates commonly record the mother's maiden name rather than her married name. K2BS-YMD's married surname is Wilkins (by marriage to Elijah Wilkins, 97YZ-J3D). Gender (Female), relationship (mother of deceased), and location (Muhlenberg County) all match. The independent confirmation of the father (Elijah Wilkins) further anchors this identification.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The mother-of-deceased role assertion names Sallie Millard (matched to K2BS-YMD) as the mother of the deceased (matched to 27HB-Z94). This assertion bears on Pauline's matrilineal parentage and corroborates the existing ParentChild relationship rel-4 in the tree.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "rationale": "Name 'Polly Shaver' matches subject's known nickname 'Polly' and married surname 'Shaver'. Record is in Bremen, Muhlenberg, KY, consistent with all other records for this subject. Widowed status is consistent with husband Williams Shaver's death in 1922.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "rationale": "1930 residence in Bremen, Muhlenberg, KY confirms subject was alive and living in her known locale as of 1930, consistent with 1935 death record for same person at same location.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "rationale": "Birth year 1849 (from census age) is consistent with the 1848 birth date recorded on the Kentucky death certificate \u2014 a one-year rounding difference typical in census records.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "27HB-Z94",
+      "confidence": "confident",
+      "rationale": "Widowed status in 1930 is consistent with husband Williams Timmons Shaver's recorded death on 12 July 1922.",
+      "match_score": null,
+      "created": "2026-07-08"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Kentucky Deaths 1911\u20131967 (FamilySearch collection 1417491, primary death certificate index), Kentucky Deaths and Burials 1843\u20131970 (collection 1674848), Kentucky Vital Record Indexes 1911\u20131999 (collection 2531527), 1930 U.S. Federal Census (collection 1810731), FamilySearch Find A Grave Index (collection 2204988) and two additional FamilySearch cemetery searches, Muhlenberg County probate wills 1921\u20131945 and property settlement books 1922\u20131947 (FamilySearch volumes 004819691 and 004681504), and FamilySearch full-text search for obituary and burial mentions. Three critical gaps remain: (1) the original death certificate image (ark:/61903/1:2:M6ZB-MBJ) was inaccessible through available tools \u2014 image_read requires a numeric image group identifier and record_read returned 'not found'; (2) a direct FindAGrave/BillionGraves search of Shavers Cemetery, Muhlenberg County, was not possible through FamilySearch tools; (3) Ancestry's Kentucky death records (pli_007) were skipped due to no subscription. Research is not formally declared exhaustive; these three gaps, if filled, could advance the conclusion to proved.",
+      "narrative_markdown": "## Proof Summary: Death Date and Burial Place of Pauline \"Polly\" Wilkins Shaver\n\n**Research Question (q_001):** When did Pauline \"Polly\" Wilkins Shaver (born 9 June 1848, Muhlenberg County, Kentucky; last known alive 1920) die, and where is she buried?\n\n**Conclusion (Probable):** Pauline \"Polly\" Wilkins Shaver probably died on 30 November 1935 at Bremen, Muhlenberg County, Kentucky, and is probably buried at Shavers Cemetery in Muhlenberg County, Kentucky.\n\n---\n\n### Death Date: 30 November 1935\n\nThe primary evidence is an indexed entry in the FamilySearch \"Kentucky, Deaths, 1911-1967\" collection (collection 1417491), ark:/61903/1:1:NSJP-9Q2, recording the death of \"Polly Shover\" on 30 November 1935 at Bremen, Muhlenberg County, Kentucky.\u00b9 The surname \"Shover\" is a transcription variant of \"Shaver,\" confirmed by FamilySearch's own 5-star tree-match linking this record to Pauline \"Polly\" Wilkins Shaver (27HB-Z94). Five independent identifiers converge on this record as Pauline's death certificate:\n\n1. **Name:** \"Polly\" is the established nickname for Pauline; \"Shover\" is a transcription variant of \"Shaver.\"\n2. **Birth year:** Recorded as 1848, matching the tree's documented birth date of 9 June 1848 exactly.\n3. **Death place:** Bremen, Muhlenberg County, Kentucky \u2014 Pauline's documented residence from 1900 onward.\n4. **Father's name:** \"Eligah [Elijah] Wilkins\" matches tree person Elijah Wilkins (97YZ-J3D), Pauline's documented father.\n5. **Mother's name:** \"Sallie Millard\" is consistent with tree person Sally Wilkins (K2BS-YMD), where \"Millard\" is likely the mother's maiden name (a common Kentucky death certificate practice).\n\nThis death record is a **derivative source** (FamilySearch index derived from the original death certificate) containing **primary information** about the death date and place (recorded by an attending physician or local registrar in their official capacity at the time of death). The death date assertion (a_003) is classified as primary information and direct evidence relative to q_001.\n\nThe underlying original death certificate image (ark:/61903/1:2:M6ZB-MBJ) was inaccessible through available tools: record_read returned \"not found,\" and image_read requires a numeric image group identifier. This is the primary limitation of the current research.\n\nThe 1930 United States Federal Census (FamilySearch, ark:/61903/1:1:XMF6-RFC) independently corroborates identity and narrows the death window.\u00b2 It records \"Polly Shaver,\" widowed, head of household, at Bremen, Muhlenberg County, Kentucky in 1930 \u2014 an **original source** with **indeterminate information quality** (pre-1940 census; respondent unknown). This confirms the subject was alive in April 1930, establishing that death occurred between 1930 and 1935, fully consistent with the 30 November 1935 date. No conflicting death date appears in any searched source. Searches in two additional Kentucky death indexes (collections 1674848 and 2531527) returned no entry for this subject, consistent with the primary record being held in the overlapping collection 1417491.\n\n### Burial Place: Shavers Cemetery, Muhlenberg County, Kentucky\n\nNo record was found that explicitly names Polly Shaver as buried at a specific cemetery. The original death certificate image \u2014 which typically lists the burial location on Kentucky certificates \u2014 was inaccessible. FamilySearch's indexed cemetery collections (including the Find A Grave Index, collection 2204988) returned no entry for this subject.\n\nThree independent lines of indirect evidence converge on Shavers Cemetery, Muhlenberg County:\n\n1. **Husband's burial** (pre-existing tree data): Pauline's husband, Williams Timmons Shaver, is documented as buried at \"Shavers Cemetery, Lynn City, Muhlenberg, Kentucky.\" Married couples are customarily interred in the same family cemetery.\n\n2. **Shaver family collective burial pattern** (log_010): A 1996 genealogy document (FamilySearch film M9J1-97G) states that the Shaver family who founded Bremen, Muhlenberg County, Kentucky \"are buried in the Shaver Cemetery.\" This establishes Shavers Cemetery as the family burial ground for the Bremen Shavers across generations.\n\n3. **Cemetery's continued use by the Bremen Shaver family through the 1935 period** (log_008): A 1952\u20131955 Muhlenberg County deed confirms \"Trustees of Shaver's Chapel Methodist Church & Shaver's Cemetery\" as a legally organized entity; a 1960 Kentucky death certificate for a Shaver family member from Bremen lists burial at \"Shavers [Cemetery], Muhlenberg Co., Ky.\" This confirms the Shaver family of Bremen continued using this cemetery through at least 1960, spanning the 1935 death year.\n\nNo competing burial location was identified in any searched source.\n\n### GPS Assessment\n\nThis conclusion is graded **probable** \u2014 not proved \u2014 for two reasons:\n\n1. **Death date:** The death date rests on a FamilySearch index entry (derivative source). The original certificate image was inaccessible. While five convergent identifiers make this identification highly probable, GPS proof requires verification against an original record or a second independent original source with primary information.\n\n2. **Burial place:** No document directly names Polly Shaver as buried at Shavers Cemetery. The burial conclusion rests on indirect evidence only: husband's documented burial site, a statement about the family's collective burial pattern, and the cemetery's continuing use by the same family.\n\nTo advance to **proved**, two actions are recommended: (a) access the original death certificate image via Ancestry's Kentucky death records collection or a direct request to the Kentucky Department for Libraries and Archives (KDLA); and (b) conduct a direct search of Shavers Cemetery, Muhlenberg County, on FindAGrave or BillionGraves for Pauline/Polly Shaver's headstone entry.\n\n---\n\n\u00b9 \"Kentucky, Deaths, 1911-1967,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2 : accessed 8 July 2026), entry for Polly Shover [Shaver], died 30 November 1935, Bremen, Muhlenberg County, Kentucky; citing Kentucky State Board of Health, Frankfort.\n\n\u00b2 \"United States, Census, 1930,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC : accessed 8 July 2026), entry for Polly Shaver, head of household, Bremen, Muhlenberg, Kentucky."
+    }
+  ],
+  "evaluations": []
+}
