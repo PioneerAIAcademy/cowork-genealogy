@@ -8,7 +8,7 @@
 // editor-spec.md §5–§6 (consumer).
 
 import { writeFile, readFile, readdir, stat, unlink, mkdir } from "fs/promises";
-import { join, resolve } from "path";
+import { join, resolve, dirname } from "path";
 import { randomUUID } from "node:crypto";
 import { isInsideProject, assertInsideProject } from "./project-io.js";
 
@@ -180,4 +180,44 @@ async function pruneStale(stagingDir: string): Promise<void> {
         }
       }),
   );
+}
+
+/**
+ * Read a staged/finalized sidecar's `payload.results` array (read-only — NEVER
+ * unlinks, so a staged handle can still be finalized afterward). Accepts EITHER
+ * a staged handle under `results/.staging/` OR a finalized top-level
+ * `results/<log_id>.json` sidecar — both envelope shapes expose `payload.results`.
+ * Shared by `rank_search_matches` and `record_read`'s sidecar mode; callers cast
+ * the elements to their own result type.
+ */
+export async function readStagedResults(
+  projectPath: string,
+  stagedResultsRef: string,
+): Promise<unknown[]> {
+  const abs = assertInsideProject(projectPath, stagedResultsRef);
+  const stagingDir = join(projectPath, STAGING_SUBDIR);
+  const resultsDir = resolve(projectPath, "results");
+  const underStaging = isInsideProject(stagingDir, abs);
+  const topLevelSidecar = dirname(abs) === resultsDir && abs.endsWith(".json");
+  if (!underStaging && !topLevelSidecar) {
+    throw new Error(
+      `stagedResultsRef '${stagedResultsRef}' must be a staged handle under ` +
+        `${STAGING_SUBDIR}/ or a finalized results/<log_id>.json sidecar.`,
+    );
+  }
+  let envelope: { payload?: { results?: unknown[] } };
+  try {
+    envelope = JSON.parse(await readFile(abs, "utf-8"));
+  } catch {
+    throw new Error(
+      `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON.`,
+    );
+  }
+  const results = envelope?.payload?.results;
+  if (!Array.isArray(results)) {
+    throw new Error(
+      `stagedResultsRef '${stagedResultsRef}' envelope has no payload.results array.`,
+    );
+  }
+  return results;
 }

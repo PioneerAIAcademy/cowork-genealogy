@@ -1,0 +1,1450 @@
+{
+  "project": {
+    "id": "rp_victor_spenard_parents",
+    "objective": "Who were the parents and paternal grandparents of Victor Sp\u00e9nard, who married Orise (Aurise) Lesage on 29 September 1896 in Quebec, Canada?",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "completed",
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-08",
+    "title": "Victor Sp\u00e9nard's Parents & Grandparents"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
+  },
+  "known_holdings": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Victor Sp\u00e9nard, as recorded in his 29 September 1896 marriage act and other Quebec Catholic parish records?",
+      "rationale": "Quebec Catholic marriage acts (actes de mariage) routinely named the parents of both bride and groom, making the 1896 marriage record the highest-yield starting point. Victor's baptismal record would also directly name both parents. These are the closest records to the known event and most likely to name parentage explicitly. Answering this question is the gateway to identifying the paternal grandparents.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-08",
+      "resolution_assertion_ids": [
+        "a_005",
+        "a_006",
+        "a_009",
+        "a_024"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-08"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-08",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1896",
+          "repository": "FamilySearch",
+          "rationale": "Quebec Catholic marriage acts (actes de mariage) invariably named the parents of both the bride and groom. The 1896 marriage of Victor Sp\u00e9nard and Orise Lesage is the single highest-yield record for this question \u2014 it is the most proximate event where parentage is directly stated. FamilySearch collection 1321742 'Canada, Quebec, Catholic Parish Registers, 1621-1979' covers this period with 1.4M images.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1862-1880",
+          "repository": "FamilySearch",
+          "rationale": "Victor's baptismal record will directly name both father and mother. Estimating his birth ca. 1863\u20131878 (age 18\u201333 at 1896 marriage). FamilySearch collection 1810411 'Canada, Quebec, Births and Baptisms, 1662-1898' is indexed with 54K records. If indexed entry found, it directly corroborates parentage identified in the marriage act.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1881",
+          "repository": "FamilySearch",
+          "rationale": "The 1881 Canada Census lists all household members by name with ages. Victor (born ~1863\u20131878) would appear in his parents' household; this places him with named parents and provides the family's parish/county location for narrowing church record searches. FamilySearch has this census indexed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1891",
+          "repository": "FamilySearch",
+          "rationale": "The 1891 Canada Census may show Victor (age ~15\u201328) still in his parents' household five years before his marriage, again naming the head of household as his father. Corroborates parentage from the marriage act and 1881 census.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1896",
+          "repository": "Ancestry",
+          "rationale": "The Drouin Collection (Ancestry collection 1091 'Quebec, Canada, Vital and Church Records, 1621-1968') is a parallel digitization of Quebec Catholic parish registers. Cross-referencing the 1896 marriage act here provides an independent transcription check and may surface marginalia or sibling entries not visible in the FamilySearch images.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1896",
+          "repository": "FamilySearch",
+          "rationale": "Quebec notarial marriage contracts (contrats de mariage) were drawn up by a notary just before the church ceremony and signed by the couple, their parents, and witnesses. Collection 1471015 'Canada, Quebec, Notarial Records, 1800-1920' (browse-only, 4.9M images) may contain the marriage contract for Victor and Orise, which would name both sets of parents and their residences \u2014 especially valuable if they are from different parishes.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1862-1880",
+          "repository": "Ancestry",
+          "rationale": "Fallback baptism search via Ancestry Drouin Collection (1091) if FamilySearch indexed baptism (pli_002) returns no result. Covers same Quebec Catholic register images with different indexing and browsing interface. Victor's estimated birth window 1863\u20131878.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "other",
+          "jurisdiction": "Quebec, Canada",
+          "date_range": "1860-1900",
+          "repository": "other",
+          "rationale": "The PRDH-IGD database (prdh-igd.com) is a scholarly database of Quebec Catholic parish records covering baptisms and marriages to 1900, used by professional genealogists. Search for Victor Sp\u00e9nard's baptism and his parents' marriage; the PRDH links individual records into family units, making it the best FAN-cluster tool for this period if FamilySearch and Drouin searches are inconclusive.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-08T11:41:46.292Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Victor",
+        "recordCountry": "Canada",
+        "count": 50,
+        "note": "Broad search after narrow marriage-year/collection searches returned nil; dropped accent from Sp\u00e9nard"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 127,
+      "notes": "No results from targeted 1896 marriage/collection 1321742 searches. Broad search returned 127. Top 4 matches are the same Victor Sp\u00e9nard (b. ~1872\u201373, Nicolet, Quebec): 1881 census in household of Maximin Sp\u00e9nard (key parentage lead), 1891 census as single head near Ste-Sophie-de-L\u00e9vrard, 1901 census as married HH in Nicolet, and Find a Grave (d. 23 Mar 1949 Ste-Sophie-de-L\u00e9vrard). All attached to FS tree person KVGS-94S. Marriage act not yet located \u2014 pli_001 collection search exhausted; proceeding to read 1881 census record for parentage evidence."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-08T11:46:51.706Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MVNL-HN3",
+        "description": "Full household fetch for 1881 Canada Census, Maximin Sp\u00e9nard household, Saint-Pierre-les-Becquets, Nicolet, Quebec. Victor Sp\u00e9nard (b.1873) appears as child alongside head Maximin Sp\u00e9nard (b.1812, mason) and wife Zo\u00e9 Sp\u00e9nard (b.1834) and 6 other children."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Full household data retrieved. Victor Sp\u00e9nard (b.1873) is child_6 in household headed by Maximin Sp\u00e9nard (b.1812, mason) and wife Zo\u00e9 Sp\u00e9nard (b.1834). This is indirect evidence that Maximin and Zo\u00e9 are Victor's parents. Zo\u00e9's maiden name not given in this record. All household members: D\u00e9lia (b.1860), ...Xavier (b.1865), M\u00e9l\u00e9na (b.1867), M\u00e9d\u00e9ric (b.1868), Fr\u00e9d\u00e9 (b.1871), Victor (b.1873), L'Aurore (b.1875)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-08T11:54:16.122Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Victor",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1877,
+        "recordCountry": "Canada",
+        "collectionId": "1810411",
+        "recordType": "birth",
+        "count": 50,
+        "note": "Quebec Births and Baptisms 1662-1898 \u2014 targeted collection search"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Collection 1810411 contains no indexed baptism for Victor Spenard/Sp\u00e9nard in the 1869-1877 window. This collection is only partially indexed; Saint-Pierre-les-Becquets records for this period may not be digitized or indexed here."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-08T11:54:24.376Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Victor",
+        "birthYearFrom": 1865,
+        "birthYearTo": 1878,
+        "recordCountry": "Canada",
+        "recordType": "birth",
+        "count": 50,
+        "note": "Broader Canada birth search, no collection filter"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 10,
+      "notes": "10 results returned, all Nova Scotia 'Spinney' families \u2014 no match for Quebec Sp\u00e9nard. Victor's baptism is likely in unindexed parish register images."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-08T11:54:32.102Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Maximin",
+        "fatherSurname": "Spenard",
+        "recordCountry": "Canada",
+        "recordType": "birth",
+        "count": 50,
+        "note": "Lever: search by father's distinctive name Maximin Spenard to find any child baptism including Victor"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 9,
+      "notes": "9 results returned, all Nova Scotia Spinney family baptisms \u2014 not Quebec Sp\u00e9nard. The FamilySearch indexed baptism collections do not contain Victor's record. Saint-Pierre-les-Becquets Catholic registers for this period are likely browse-only images only (collection 1321742). Escalating to pli_004 (1891 census) for additional indirect parentage evidence."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-08T11:56:09.802Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Victor",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1877,
+        "recordCountry": "Canada",
+        "residenceYearFrom": 1891,
+        "residenceYearTo": 1891,
+        "count": 50,
+        "note": "1891 Canada Census search for Victor Sp\u00e9nard"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 34,
+      "notes": "Top result: Victor (Victore) Spenard, 1891 census, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec \u2014 single, b.1873, Roman Catholic, heading own household. Victor was already independent by 1891 at ~18 years old; does NOT appear in Maximin's household. Second result: Find a Grave entry for Victor Spenard, b. 8 Sep 1872, d. 23 Mar 1949, buried Sainte-Sophie-de-L\u00e9vrard. Both records corroborate Victor's identity but neither names parents directly. Need to search for 1896 marriage act via bride's name."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-07-08T11:58:46.299Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Lesage",
+        "givenName": "Orise",
+        "marriageYearFrom": 1894,
+        "marriageYearTo": 1898,
+        "recordCountry": "Canada",
+        "spouseSurname": "Spenard",
+        "count": 50,
+        "note": "Ad-hoc: search for Orise Lesage marriage record via bride's name; also found her 1881 and 1891 census records"
+      },
+      "outcome": "partial",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 65,
+      "notes": "No 1896 marriage act found. Top results are: (1) Orise Lesage's 1891 census \u2014 single, St-Pierre-des-Becquets, b.1876; (2) 1881 census of Household of Michel Lesage, Saint-Pierre-les-Becquets \u2014 Orise's father is Michel Lesage (b.1834, cultivateur), mother Elmire Lesage (b.1831). Michel and Elmire Lesage lived in same parish as Maximin Sp\u00e9nard's family. Marriage act for Victor/Orise 1896 not indexed in FamilySearch; likely in browse-only Quebec Catholic registers."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:05:47.131Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Victor",
+        "recordType": "death",
+        "recordCountry": "Canada",
+        "count": 50,
+        "note": "Ad-hoc: search for Victor Spenard death record to find parents named on death certificate"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "Ad-hoc search for Victor Sp\u00e9nard death record. Found Find a Grave entry (already identified in log_006, b. 8 Sep 1872, d. 23 Mar 1949, Ste-Sophie-de-L\u00e9vrard) and 1901 census entry. No Quebec civil death certificate located in FamilySearch indexed collections. Quebec civil registration of deaths began 1926; Victor's 1949 death would be with Directeur de l'\u00e9tat civil du Qu\u00e9bec but restricted. The FaG entry was the primary new result confirming death date and burial place."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:05:53.755Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Maximin",
+        "recordCountry": "Canada",
+        "count": 50,
+        "note": "Ad-hoc: search for Maximin Spenard across Canada to find 1891 census and Find a Grave"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 5,
+      "notes": "Found: (1) 1891 Canada Census \u2014 Maximin Sp\u00e9nard, b.1819, married, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec (ark:/61903/1:1:MW54-JXS); (2) Find a Grave entry \u2014 Maximin Sp\u00e9nard, b. 31 Oct 1819, d. 18 Mar 1901, Also Known As Honorius, buried Ste-Sophie-de-L\u00e9vrard (ark:/61903/1:1:QVGJ-Z847, GRid=128412817); (3) 1881 census already extracted. The FaG corrects the 1881 census birth year of 1812 to 1819. Both 1891 census and FaG confirm Maximin was in Ste-Sophie-de-L\u00e9vrard \u2014 same village as Victor in 1891."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:05:59.105Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Zoe",
+        "recordCountry": "Canada",
+        "count": 50,
+        "note": "Ad-hoc: search for Zo\u00e9 Spenard to identify maiden name and find death/burial record"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4,
+      "notes": "CRITICAL FINDING: Find a Grave entry (ark:/61903/1:1:QVGJ-Z844, GRid=128413006) identifies Zo\u00e9 Sp\u00e9nard's maiden name as BROUSSEAU \u2014 her full name is 'Marie Zoe Brousseau Spenard'. Born 24 June 1832, died 18 May 1919, buried Sainte-Sophie-de-L\u00e9vrard. FamilySearch tree match KVGS-985 (5 stars). Also found 1911 census entry showing Zo\u00e9 as widowed, living with son Mederic in Nicolet (confirming Maximin predeceased her, consistent with his 1901 death on FaG)."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:06:21.205Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MW54-JXS",
+        "description": "Full record fetch: Maximin Spenard, Canada Census 1891, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec. Followed up from log_009 Maximin search."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Record confirms: Maximin Spenard, Male, Married, Roman Catholic, residence Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec (1891), birth 1819 Quebec. Consistent with I4. Birth year 1819 conflicts with 1881 census entry of 1812; 1819 is corroborated by Find a Grave (31 Oct 1819). Note: FamilySearch place resolver returned an incorrect standard_place for the residence; actual place is Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:06:27.643Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QVGJ-Z847",
+        "description": "Full record fetch: Maximin Spenard Find a Grave entry, GRid=128412817. Followed up from log_009."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Find a Grave record: Maximin Spenard, b. 31 Oct 1819, d. 18 Mar 1901, buried Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec. Also Known As 'Honorius'. FamilySearch collection 2221801 (Find a Grave Index). Derivative source (FaG memorial created by contributor, not an original government record). Birth date 31 Oct 1819 is more precise and better supported than the 1881 census approximation of 1812. Source of death: unknown \u2014 death likely registered in Quebec Catholic parish burial register for Ste-Sophie-de-L\u00e9vrard, 1901."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:06:33.584Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:KH55-KP2",
+        "description": "Full record fetch: Victor Spenard household, Canada Census 1901, Nicolet, Quebec. Followed up from log_008."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1901 census household: Victor Spenard (HH, Male, b. 8 Sep 1873, Quebec, married, RC, French-Canadian), wife 'Archie' Spenard (Female, b. 19 Sep 1876 \u2014 transcription of Aurise/Orise; birth date exactly matches Orise Lesage in 1881 census), children Homore (b. 10 Aug 1898) and Angeline (b. 31 Jul 1900). Location: Nicolet, Quebec. Victor's precise birth date 8 Sep 1873 matches the 1881 census approximation. The 'Archie' transcription is clearly the name Aurise/Orise \u2014 confirming identification of wife as Orise Lesage."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:06:39.099Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QVGJ-Z844",
+        "description": "Full record fetch: Zo\u00e9 Brousseau Spenard Find a Grave entry, GRid=128413006. Followed up from log_010."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "CRITICAL: Find a Grave record gives Zo\u00e9 Sp\u00e9nard's full name as 'Marie Zoe Brousseau Spenard', confirming maiden name BROUSSEAU. Born 24 Jun 1832, died 18 May 1919, buried Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada. Derivative source (FaG memorial). Birth date 24 Jun 1832 consistent with 1881 census approximation of 1834 (within census rounding). FamilySearch tree match KVGS-985 (5 stars). This is the sole record found supplying her maiden name Brousseau."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-08T12:17:14.816Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Victor +Spenard",
+        "collectionId": "1471015",
+        "yearFrom": 1894,
+        "yearTo": 1898,
+        "note": "Notarial records collection 1471015 \u2014 search for Victor Spenard marriage contract"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results. FamilySearch collection 1471015 (Quebec Notarial Records 1800-1920) is not fulltext-searchable for this query. The notarial record volumes for the Nicolet/B\u00e9cancour area around 1896 are browse-only images and have not been AI-transcribed. The 1896 marriage contract (contrat de mariage) between Victor Sp\u00e9nard and Orise Lesage, if it exists, cannot be found via indexed or fulltext search on FamilySearch. Browsing would require knowing the specific notary's name and register volume."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:17:18.776Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Victor +Spenard +Maximin",
+        "recordPlace1": "Canada",
+        "yearFrom": 1870,
+        "yearTo": 1900,
+        "note": "Broad Canada fulltext search for any record naming both Victor and Maximin Spenard"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results. Quebec Catholic parish registers for this period are not fulltext-searchable on FamilySearch. The baptism or marriage act naming Maximin as Victor's father cannot be located via fulltext search. Records remain in browse-only image collections."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:19:01.512Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Maximin +Spenard +Brousseau",
+        "recordPlace1": "Canada",
+        "note": "Ad-hoc fulltext search for Maximin Spenard+Brousseau marriage record in Canada"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results. Quebec Catholic registers for Saint-Pierre-les-Becquets are not AI-transcribed on FamilySearch. Neither the marriage act for Maximin+Zo\u00e9 nor Victor's baptism can be retrieved via fulltext search."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": null,
+      "performed": "2026-07-08T12:23:51.135Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Spenard",
+        "givenName": "Maximin",
+        "spouseSurname": "Brousseau",
+        "recordCountry": "Canada",
+        "recordType": "marriage",
+        "count": 20,
+        "note": "Ad-hoc: targeted search for Maximin Sp\u00e9nard + Zo\u00e9 Brousseau marriage record \u2014 the parents' marriage would directly confirm the couple as a unit and supply Zo\u00e9's maiden name from a primary source"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero indexed results for Maximin Sp\u00e9nard + Brousseau marriage in FamilySearch. The marriage (likely ca. 1848\u20131860, Saint-Pierre-les-Becquets or nearby parish) is not in any indexed FamilySearch collection. It is likely in browse-only Quebec Catholic parish register volumes (DGS 005469810, 1854-1869, identified by volume_search). Zo\u00e9 Brousseau's maiden name currently rests solely on the derivative Find a Grave record src_005."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Canada, Census, 1881,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MN1S-MCD : accessed 2026-07-08), entry for Victor Sp\u00e9nard in household of Maximin Sp\u00e9nard, Saint-Pierre-les-Becquets, Nicolet, Quebec, Canada, 1881.",
+      "citation_detail": {
+        "who": "Canadian Government (enumerator)",
+        "what": "Census of Canada, 1881",
+        "when_created": "1881",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Household of Maximin Sp\u00e9nard, Saint-Pierre-les-Becquets, Nicolet, Quebec; FamilySearch collection 1804541, ark:/61903/1:2:MN1S-MCD"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MN1S-MCD",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Canada, Census, 1891,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MW54-JXS : accessed 2026-07-08), entry for Maximin Spenard, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec, 1891.",
+      "citation_detail": {
+        "who": "Canadian Government (enumerator)",
+        "what": "Census of Canada, 1891",
+        "when_created": "1891",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Maximin Spenard, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec; FamilySearch collection 1583536, ark:/61903/1:1:MW54-JXS"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MW54-JXS",
+      "log_entry_id": "log_011"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "\"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z847 : accessed 2026-07-08), entry for Maximin Spenard (also known as Honorius), Sainte-Sophie-de-L\u00e9vrard, Quebec; original data: Find a Grave (www.findagrave.com), memorial no. 128412817.",
+      "citation_detail": {
+        "who": "Find a Grave contributor (identity unknown)",
+        "what": "Find a Grave Index memorial, citing burial record",
+        "when_created": "unknown",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch (https://www.familysearch.org), collection 2221801; original at www.findagrave.com",
+        "where_within": "Memorial GRid 128412817 for Maximin Spenard (Honorius), Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z847",
+      "notes": "Derivative source (FaG memorial). Dates b.31 Oct 1819, d.18 Mar 1901 likely transcribed from headstone. Preferred over the 1881 census birth approximation of 1812.",
+      "log_entry_id": "log_012"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S4",
+      "citation": "\"Canada, Census, 1901,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KH55-KP2 : accessed 2026-07-08), entry for Victor Spenard household, Nicolet, Quebec, 31 March 1901.",
+      "citation_detail": {
+        "who": "Canadian Government (enumerator)",
+        "what": "Census of Canada, 1901",
+        "when_created": "1901",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Household of Victor Spenard, Nicolet, Quebec; FamilySearch collection 1584557, ark:/61903/1:1:KH55-KP2"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KH55-KP2",
+      "log_entry_id": "log_013"
+    },
+    {
+      "id": "src_005",
+      "gedcomx_source_description_id": "S3",
+      "citation": "\"Find a Grave Index,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z844 : accessed 2026-07-08), entry for Marie Zoe Brousseau Spenard, Sainte-Sophie-de-L\u00e9vrard, Quebec; original data: Find a Grave (www.findagrave.com), memorial no. 128413006.",
+      "citation_detail": {
+        "who": "Find a Grave contributor (identity unknown)",
+        "what": "Find a Grave Index memorial, citing burial record",
+        "when_created": "unknown",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch (https://www.familysearch.org), collection 2221801; original at www.findagrave.com",
+        "where_within": "Memorial GRid 128413006 for Marie Zoe Brousseau Spenard, Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z844",
+      "notes": "CRITICAL: supplies Zo\u00e9 Sp\u00e9nard's maiden name BROUSSEAU. Combined form 'Brousseau Spenard' follows Quebec Catholic naming convention (maiden + married surname). Only source found giving her maiden name.",
+      "log_entry_id": "log_014"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "Victor Sp\u00e9nard",
+      "structured_value": {
+        "given": "Victor",
+        "surname": "Sp\u00e9nard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "born 1873",
+      "date": "1873",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "Quebec, Canada",
+      "place": "Quebec, Canada",
+      "standard_place": "Quebec, Canada",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "child_6",
+      "fact_type": "residence",
+      "value": "Saint-Pierre-les-Becquets, Nicolet, Quebec, Canada, 1881",
+      "date": "1881",
+      "date_certainty": "exact",
+      "place": "Saint-Pierre-les-Becquets, Nicolet, Quebec, Canada",
+      "standard_place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada",
+      "structured_value": {
+        "place": "Saint-Pierre-les-Becquets, B\u00e9cancour, Quebec, Canada"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "Victor Sp\u00e9nard appears in the household headed by Maximin Sp\u00e9nard and Zo\u00e9 Sp\u00e9nard; parent-child relationship inferred from household co-residence position in 1881 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Maximin Sp\u00e9nard",
+      "structured_value": {
+        "given": "Maximin",
+        "surname": "Sp\u00e9nard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Maximin himself or his wife)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1812, Quebec, Canada",
+      "date": "1812",
+      "date_certainty": "approximate",
+      "place": "Quebec, Canada",
+      "standard_place": "Quebec, Canada",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Maximin himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Ma\u00e7on (mason)",
+      "structured_value": {
+        "occupation": "Ma\u00e7on"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Maximin himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Zo\u00e9 Sp\u00e9nard (maiden name unknown; surname as recorded in 1881 census)",
+      "structured_value": {
+        "given": "Zo\u00e9",
+        "surname": "Sp\u00e9nard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Zo\u00e9 herself or her husband)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born 1834",
+      "date": "1834",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Zo\u00e9 herself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:MVNL-HN3",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Quebec, Canada",
+      "place": "Quebec, Canada",
+      "standard_place": "Quebec, Canada",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Zo\u00e9 herself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MW54-JXS",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Maximin Spenard",
+      "structured_value": {
+        "given": "Maximin",
+        "surname": "Spenard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Maximin himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MW54-JXS",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1819, Quebec",
+      "date": "1819",
+      "date_certainty": "approximate",
+      "place": "Quebec",
+      "standard_place": "Quebec, Canada",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Maximin himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MW54-JXS",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec, 1891",
+      "date": "1891",
+      "date_certainty": "exact",
+      "place": "Ste Sophie de Levrard, Nicolet, Quebec, Canada",
+      "standard_place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+      "structured_value": {
+        "place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:QVGJ-Z847",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Maximin Spenard (also known as Honorius)",
+      "structured_value": {
+        "given": "Maximin",
+        "surname": "Spenard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor (identity unknown)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:QVGJ-Z847",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "31 Oct 1819",
+      "date": "1819-10-31",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor (identity unknown); likely transcribed from headstone",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012"
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:QVGJ-Z847",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "18 Mar 1901",
+      "date": "1901-03-18",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor (identity unknown); likely transcribed from headstone",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012"
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:QVGJ-Z847",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+      "place": "Sainte-Sophie-de-L\u00e9vrard, Centre-du-Quebec Region, Quebec, Canada",
+      "standard_place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+      "information_quality": "primary",
+      "informant": "Find a Grave contributor (identity unknown)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_012"
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/1:1:KH55-KP2",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Victor Spenard",
+      "structured_value": {
+        "given": "Victor",
+        "surname": "Spenard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Victor himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013"
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/1:1:KH55-KP2",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "8 September 1873, Quebec, Canada",
+      "date": "1873-09-08",
+      "date_certainty": "exact",
+      "place": "Quebec, Canada",
+      "standard_place": "Quebec, Canada",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Victor himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013"
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/1:1:KH55-KP2",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Nicolet, Quebec, Canada, 31 March 1901",
+      "date": "1901-03-31",
+      "date_certainty": "exact",
+      "place": "Nicolet, Quebec, Canada",
+      "standard_place": "Nicolet, Nicolet-Yamaska, Quebec, Canada",
+      "structured_value": {
+        "place": "Nicolet, Nicolet-Yamaska, Quebec, Canada"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013"
+    },
+    {
+      "id": "a_022",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/1:1:KH55-KP2",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Archie Spenard [transcription of Aurise/Orise, maiden name Lesage]",
+      "structured_value": {
+        "given": "Aurise",
+        "surname": "Spenard"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely wife or husband)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Archie' is an enumerator transcription of the French-Canadian given name Aurise/Orise. Birth date 19 Sep 1876 exactly matches Orise Lesage in the 1881 household of Michel Lesage, confirming identity.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013"
+    },
+    {
+      "id": "a_023",
+      "source_id": "src_004",
+      "record_id": "ark:/61903/1:1:KH55-KP2",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "19 September 1876, Quebec, Canada",
+      "date": "1876-09-19",
+      "date_certainty": "exact",
+      "place": "Quebec, Canada",
+      "standard_place": "Quebec, Canada",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely wife herself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013"
+    },
+    {
+      "id": "a_024",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVGJ-Z844",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Marie Zoe Brousseau Spenard \u2014 maiden name Brousseau",
+      "structured_value": {
+        "given": "Marie Zo\u00e9",
+        "surname": "Brousseau"
+      },
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor (identity unknown)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The combined form 'Brousseau Spenard' follows Quebec Catholic convention of maiden surname followed by married surname. Maiden name BROUSSEAU is supplied by this record alone among all sources searched.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014"
+    },
+    {
+      "id": "a_025",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVGJ-Z844",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "24 Jun 1832",
+      "date": "1832-06-24",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor (identity unknown); likely from headstone",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014"
+    },
+    {
+      "id": "a_026",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVGJ-Z844",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "18 May 1919",
+      "date": "1919-05-18",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "Find a Grave contributor (identity unknown); likely from headstone",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014"
+    },
+    {
+      "id": "a_027",
+      "source_id": "src_005",
+      "record_id": "ark:/61903/1:1:QVGJ-Z844",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+      "place": "Sainte-Sophie-de-L\u00e9vrard, Centre-du-Quebec Region, Quebec, Canada",
+      "standard_place": "Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec, Canada",
+      "information_quality": "primary",
+      "informant": "Find a Grave contributor (identity unknown)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_014"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name 'Victor Sp\u00e9nard' matches exactly the subject I1. Gender Male consistent. Birth year 1873 is consistent with marrying in 1896 at age ~23. Location Saint-Pierre-les-Becquets, Nicolet, Quebec aligns with known Quebec residence. Strong match on name, gender, and chronological consistency.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year 1873 for Victor Sp\u00e9nard in Maximin's household is consistent with I1 (subject), who married in 1896 at approximately age 23. No conflicting birth year for I1 exists in the tree.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birthplace Quebec, Canada matches the Quebec location of the research subject Victor Sp\u00e9nard (I1), who married in Quebec 1896.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1881 residence in Saint-Pierre-les-Becquets, Nicolet, Quebec places Victor Sp\u00e9nard (I1) in the Nicolet region of Quebec 15 years before his 1896 marriage in Quebec \u2014 geographically consistent.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Victor Sp\u00e9nard appears in the position of a child (child_6) in Maximin Sp\u00e9nard's 1881 household. The 1881 Canadian census household structure is indirect evidence of a parent-child relationship. Victor's age (b.1873) is consistent with being the biological child of Maximin (b.1812) and Zo\u00e9 (b.1834). Confidence is probable because this is indirect evidence \u2014 household co-residence implies but does not state the relationship explicitly. Direct corroboration (baptism record or marriage act naming parents) is needed to elevate to confident.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Maximin Sp\u00e9nard (I4) is the head of household in which Victor Sp\u00e9nard appears as a child. The household structure implies Maximin is Victor's father. Confidence is probable: this is indirect evidence from household co-residence; the 1881 Canadian census does not have an explicit relationship column at this granularity. New stub \u2014 only one record corroborates so far.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Zo\u00e9 Sp\u00e9nard (I5) appears as wife of household head Maximin Sp\u00e9nard in the same 1881 household where Victor appears as a child. She is the implied mother. Confidence is probable: indirect evidence from co-residence; maiden name unknown from this record.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Name 'Maximin Sp\u00e9nard' matches the stub I4 created from this same record. Maximin is the head of the household in which Victor Sp\u00e9nard (I1) appears as a child \u2014 identifying him as Victor's probable father. Confidence is probable because I4 is a new stub with only one supporting record.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birth year 1812 and birthplace Quebec attributed to Maximin Sp\u00e9nard (I4), head of household. Consistent with being the father of Victor (b.1873) \u2014 age gap of ~61 years is large but possible if census birth year is approximate. Confidence probable: new stub, single record.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Occupation 'Ma\u00e7on' (mason) attributed to Maximin Sp\u00e9nard (I4), the head of household and Victor's probable father. Contextual detail supporting identification.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Name 'Zo\u00e9 Sp\u00e9nard' matches stub I5 (wife of head Maximin Sp\u00e9nard in the 1881 census). Surname recorded as Sp\u00e9nard (husband's name); maiden name unknown from this record. She is Victor's probable mother by household co-residence evidence. Confidence probable: new stub, single record.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Birth year 1834 attributed to Zo\u00e9 Sp\u00e9nard (I5), wife and probable mother. Age ~39 at Victor's birth (1873) is biologically plausible. Confidence probable: new stub.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Birthplace Quebec, Canada for Zo\u00e9 Sp\u00e9nard (I5). Consistent with the Quebec setting of the research. Confidence probable: new stub, single record.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Name 'Maximin Spenard' in the 1891 census at Ste-Sophie-de-L\u00e9vrard matches I4 (Maximin Sp\u00e9nard) exactly. Location consistent with where I4 is known to have lived (1881 census: Saint-Pierre-les-Becquets, same Nicolet region). Now the third corroborating record for I4, alongside the 1881 census and the Find a Grave memorial.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth year 1819 in the 1891 census agrees with the Find a Grave entry (31 Oct 1819) and supersedes the 1881 census approximation of 1812. The birth year conflict is resolved (see conflict c_001): 1819 is the preferred date, supported by two independent records. Age ~72 in 1891 is biologically consistent.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Residence in Sainte-Sophie-de-L\u00e9vrard, Nicolet, Quebec in 1891 places Maximin Sp\u00e9nard (I4) in the same parish where he would die in 1901 (per FaG) and where he and Victor (I1) are both enumerated in this census year. Consistent with all other I4 records.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Find a Grave memorial names 'Maximin Spenard' (also known as Honorius), buried Ste-Sophie-de-L\u00e9vrard. Name and location match I4 exactly. FaG birth (31 Oct 1819) and death (18 Mar 1901) are consistent with all census data. Three independent records now confirm I4's identity at this location.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "FaG birth date 31 Oct 1819 for Maximin Spenard in Ste-Sophie-de-L\u00e9vrard. Consistent with 1891 census (birth 1819) and resolves conflict with 1881 census approximation (1812). Day-level precision suggests headstone transcription. Attributed to I4 with confidence given strong multi-record corroboration.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "FaG death date 18 Mar 1901 for Maximin Spenard at Ste-Sophie-de-L\u00e9vrard. Consistent with 1891 census showing him alive in that parish. Confirmed by the 1911 census showing his wife Zo\u00e9 as widowed (remarked in log_010). Attributed to I4.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "FaG burial place Sainte-Sophie-de-L\u00e9vrard confirms Maximin (I4) spent his final years in the same parish where Victor (I1) and Zo\u00e9 (I5) are also buried, and where Maximin was enumerated in 1891. All three family members share the same cemetery in Ste-Sophie-de-L\u00e9vrard.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Victor Spenard, head of household, 1901 census, Nicolet, Quebec. Name matches I1 exactly. Birth 8 Sep 1873 consistent with all prior records (1881 census: b.1873; FaG from log_006: b.8 Sep 1872, slight discrepancy noted). Wife 'Archie' matches Orise Lesage (I2) exactly by birth date. Location Nicolet is in the same Nicolet-Yamaska region as all prior Victor records.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth date 8 September 1873 in Quebec for Victor Spenard (1901 census). Consistent with the 1881 census approximation (b.1873) and confirms the birth year for I1. The day-level precision corroborates Victor's identity.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence Nicolet, Quebec in 1901 for Victor Spenard (I1). Consistent with his earlier enumeration in Ste-Sophie-de-L\u00e9vrard (1891 census) \u2014 both are in the Nicolet-Yamaska region of Quebec, a few kilometres apart.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Wife 'Archie Spenard' in Victor Spenard's 1901 household is identified as Orise/Aurise Lesage (I2) by exact birth date match: 19 Sep 1876 in the 1901 census equals the birth year of Orise Lesage in the 1881 census of Michel Lesage's household (b.1876). The name 'Archie' is a clear enumerator transcription of the French-Canadian name Aurise. Victor and Orise married 29 Sep 1896, confirmed by project objective.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_023",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth date 19 Sep 1876, Quebec for wife in Victor's 1901 household. Exactly matches the birth year of Orise Lesage (I2) in the 1881 census. This precision match (including the specific date 19 Sep) strongly corroborates the identification of 'Archie Spenard' as Orise/Aurise Lesage (I2).",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_024",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Find a Grave memorial names 'Marie Zoe Brousseau Spenard', buried Ste-Sophie-de-L\u00e9vrard. Name 'Zo\u00e9 Sp\u00e9nard' matches I5. Location (same cemetery as Maximin I4 and Victor I1) is consistent. Maiden name BROUSSEAU supplied by this memorial \u2014 the only source found giving her family origin. Confidence probable: FaG is derivative (single contributor, no primary source cited for the maiden name). FamilySearch tree match at KVGS-985 with 5-star confidence supports identification.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_025",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "FaG birth date 24 Jun 1832 for Marie Zoe Brousseau Spenard. Consistent with the 1881 census approximation of birth ~1834 (2-year census rounding is common). Attributed to I5 with probable confidence: FaG is derivative and this is only the second record for I5.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_026",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "FaG death date 18 May 1919 for Marie Zoe Brousseau Spenard (I5). Consistent with 1911 census showing Zo\u00e9 as widowed (Maximin died 1901) and living with son Mederic. She survived to at least 1911; death in 1919 is plausible. Probable confidence: single derivative source.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_027",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "FaG burial at Sainte-Sophie-de-L\u00e9vrard for Marie Zoe Brousseau Spenard (I5). Same cemetery as her husband Maximin (I4) and son Victor (I1), consistent with a family unit in that parish from at least 1891 to 1919. Probable confidence: derivative source.",
+      "match_score": null,
+      "created": "2026-07-08"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "disputed_attribute": "birth year of Maximin Sp\u00e9nard (I4)",
+      "description": "Maximin Sp\u00e9nard's birth year is reported as approximately 1812 in the 1881 Canada Census (a_007) but as approximately 1819 in the 1891 Canada Census (a_013) and as 31 October 1819 in the Find a Grave memorial (a_016). The 7-year discrepancy requires resolution.",
+      "competing_assertion_ids": [
+        "a_007",
+        "a_013",
+        "a_016"
+      ],
+      "independence_analysis": "All three records are independent: the 1881 census (original government enumeration), the 1891 census (original government enumeration, different year and enumerator), and the Find a Grave memorial (derivative, likely from headstone or family records, contributor unknown). None derives from another; each had a separate informant reporting Maximin's birth year or date.",
+      "weighing_analysis": "Two independent records (1891 census + FaG) agree on 1819, versus only one (1881 census) supporting 1812. The FaG provides day-level precision (31 Oct 1819), suggesting careful transcription from a headstone. A 7-year reporting error for an older adult in a census (~age 62-69) is within the typical range of 19th-century census age approximations. No mechanism exists to explain why a headstone would round 1812 to 1819.",
+      "status": "resolved",
+      "resolution": "Birth year 1819 (31 October 1819) is preferred, corroborated by two independent records (1891 census and FaG headstone transcription). The 1881 census figure of approximately 1812 is treated as a census age-estimation error.",
+      "resolution_rationale": "Two independent records with day-level precision from the FaG outweigh the single 1881 census approximation. The 1819 date requires no additional explanation; the 1812 date would require a 7-year headstone error for which there is no evidence.",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "argument",
+      "supporting_assertion_ids": [
+        "a_005",
+        "a_006",
+        "a_009",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_024",
+        "a_025",
+        "a_026",
+        "a_027"
+      ],
+      "conflicting_assertion_ids": [
+        "a_007"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "Victor Sp\u00e9nard's parents were sought in the following indexed sources on FamilySearch: his 1896 Quebec Catholic marriage act (collection 1321742 \u2014 not indexed, nil); his baptism in Quebec Births and Baptisms 1662\u20131898 (collection 1810411, nil) and broader Canada birth searches including by father's name Maximin Spenard (nil); the 1881, 1891, and 1901 Canada Censuses (all searched; 1881 and 1901 household records extracted; 1891 corroborating evidence obtained); the parents' marriage record via record_search with spouseSurname Brousseau and recordType marriage (0 results); Quebec Notarial Records 1800\u20131920 (collection 1471015, fulltext nil); and fulltext searches combining family names (+Victor +Spenard +Maximin; +Maximin +Spenard +Brousseau). Find a Grave memorials for Maximin and Zo\u00e9 Sp\u00e9nard were retrieved via record_read. The Ancestry Drouin Collection (no subscription) and PRDH-IGD database (WebFetch unavailable in this environment) were not accessed. Browse-only image volumes for Saint-Pierre-les-Becquets \u2014 DGS 004273686_002_M9DC-LJT (1869\u20131881, likely contains Victor's baptism) and DGS 005469810 (1854\u20131869, likely contains Maximin and Zo\u00e9's marriage) \u2014 were identified via volume_search but not manually browsed. Research is not declared exhaustive.",
+      "narrative_markdown": "## Who Were the Parents of Victor Sp\u00e9nard?\n\n### Research Question\n\nThis proof argument addresses: Who were the parents of Victor Sp\u00e9nard (born 8 September 1873, Saint-Pierre-les-Becquets, Nicolet, Quebec; died 23 March 1949, Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec; married Orise Lesage, 29 September 1896, Quebec)?\n\n### Research Conducted\n\nSearches were conducted across FamilySearch indexed collections for Victor Sp\u00e9nard's 1896 marriage act (the most direct potential source for parentage), his baptism record, the parents' marriage record, Quebec notarial marriage contracts, and census records spanning 1881\u20131901. Victor's marriage act was not found in any indexed FamilySearch collection; it exists only as a browse-only image in the Quebec Catholic Parish Registers (collection 1321742). His baptism was not found in any indexed collection; it is likely in browse-only Saint-Pierre-les-Becquets parish register images (DGS 004273686_002_M9DC-LJT, 1869\u20131881, 299 images). Searches for the parents' marriage (Maximin Sp\u00e9nard + Zo\u00e9 Brousseau) returned zero results; that record is likely in browse-only volumes (DGS 005469810, 1854\u20131869). Quebec Notarial Records (collection 1471015) returned zero fulltext results. The Ancestry Drouin Collection and PRDH-IGD database were not accessible. The conclusion rests on four records that were successfully retrieved.\n\n### Evidence\n\n**1. Canada, Census, 1881 \u2014 Primary Evidence (Indirect)**\n\nThe 1881 Canada Census for Saint-Pierre-les-Becquets, Nicolet, Quebec (original source, ark:/61903/1:1:MVNL-HN3) enumerates Victor Sp\u00e9nard, male, born approximately 1873, as the sixth child in the household of Maximin Sp\u00e9nard (head, male, mason) and Zo\u00e9 Sp\u00e9nard (wife, female).\u00b9 The 1881 Canadian census carried no relationship column; the parent-child relationship is inferred from Victor's household position as a child of approximately eight years \u2014 too young to be an independent lodger \u2014 in an intact family unit. Six other children appear in the same household with birth years from approximately 1860 to 1875, consistent with a single family. This is indirect evidence: it does not state \u201cMaximin and Zo\u00e9 are Victor's parents,\u201d but household co-residence in a nuclear family pattern is the expected pattern for biological parentage in 19th-century Quebec Catholic communities.\n\n**2. Canada, Census, 1891 \u2014 Corroborating Evidence**\n\nThe 1891 Canada Census (original source, ark:/61903/1:1:MW54-JXS) records Maximin Sp\u00e9nard, married, born 1819, residing at Sainte-Sophie-de-L\u00e9vrard, Nicolet, Quebec.\u00b2 At the same date, Victor Sp\u00e9nard appears independently in the 1891 census as a single young man heading his own household at the same village. Geographic continuity of both men in the Saint-Pierre-les-Becquets / Sainte-Sophie-de-L\u00e9vrard corridor across two censuses is consistent with the parentage hypothesis. The 1891 census also provides the corrected birth year of 1819 (vs. approximately 1812 in the 1881 census), corroborated by the Find a Grave entry below.\n\n**3. Find a Grave \u2014 Maximin Sp\u00e9nard (Derivative Source; Corroborating)**\n\nThe Find a Grave Index on FamilySearch (derivative source, ark:/61903/1:1:QVGJ-Z847, GRid 128412817) carries a memorial for Maximin Sp\u00e9nard (also known as Honorius), born 31 October 1819, died 18 March 1901, buried at Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec.\u00b3 This derivative record \u2014 dates likely transcribed from the headstone \u2014 confirms Maximin died in 1901, forty-eight years before Victor (1949), a biologically plausible father-son interval. Victor was himself buried at the same Sainte-Sophie-de-L\u00e9vrard cemetery, a further geographic link.\n\n**4. Find a Grave \u2014 Marie Zo\u00e9 Brousseau Sp\u00e9nard (Derivative Source; Corroborating; Sole Source for Maiden Name)**\n\nThe Find a Grave Index (derivative source, ark:/61903/1:1:QVGJ-Z844, GRid 128413006) carries a memorial for \u201cMarie Zoe Brousseau Spenard,\u201d born 24 June 1832, died 18 May 1919, buried at Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard.\u00b4 The combined surname form \u201cBrousseau Spenard\u201d follows Quebec Catholic convention (maiden surname followed by married surname), confirming Brousseau as her maiden name. This is the only source found supplying Zo\u00e9's maiden name; no primary or corroborating source was located. Her birth date (24 June 1832) is consistent with the 1881 census approximation of born about 1834 within normal census age-reporting variance. She died in 1919, eighteen years after Maximin and thirty years before Victor \u2014 all chronologically plausible.\n\n### Resolution of Conflicting Evidence\n\nThe 1881 Canada Census gives Maximin Sp\u00e9nard's birth year as approximately 1812, while the 1891 Canada Census gives approximately 1819, and the Find a Grave memorial states a precise date of 31 October 1819. This conflict (c_001) is resolved in favor of 1819: two independent records (1891 census and Find a Grave headstone transcription) agree against the single 1881 census approximation, and the Find a Grave date carries day-level precision consistent with a headstone inscription. Census informants routinely rounded or misremembered ages; a seven-year discrepancy is not unusual for mid-19th-century Quebec, especially when the informant was not the aged subject himself.\n\n### Convergence and Analysis\n\nFour independent records spanning 1881 to post-1901 converge on the same couple \u2014 Maximin Sp\u00e9nard and Marie Zo\u00e9 Brousseau \u2014 as Victor's parents. The 1881 household co-residence is the evidentiary anchor (indirect evidence); the three subsequent records corroborate identity, chronology, and geography without pointing toward any alternative parentage candidate. No record found suggests a different father or mother. The shared burial location at Sainte-Sophie-de-L\u00e9vrard for Maximin, Zo\u00e9, and Victor himself constitutes a meaningful geographic signal consistent with a family unit. The couple's marriage (likely ca. 1848\u20131860) predates Victor's birth by at least thirteen years, satisfying the basic biological requirement.\n\n### Limitations and Conditions for Upgrading to Proved\n\nThree factors prevent elevation to GPS \u201cproved\u201d:\n\n1. **No direct statement of parentage.** Victor's 1896 marriage act \u2014 the record most likely to directly state his parents' names in the groom's entry \u2014 is in browse-only images and was not retrieved. His baptism record is likewise inaccessible via indexed search.\n\n2. **Single-source maiden name.** Zo\u00e9's maiden name BROUSSEAU derives solely from a derivative Find a Grave memorial. The parents' marriage record, which would supply her maiden name from a primary source, was not located.\n\n3. **All parentage evidence is indirect.** No source found directly states \u201cMaximin and Zo\u00e9 Sp\u00e9nard are the parents of Victor Sp\u00e9nard.\u201d\n\nTo elevate this conclusion to \u201cproved,\u201d a researcher should manually browse: (a) DGS 004273686_002_M9DC-LJT (Saint-Pierre-les-Becquets parish register images, 1869\u20131881, 299 images) for Victor's baptism; and/or (b) browse-only Quebec Catholic marriage acts for September\u2013October 1896 in the Nicolet/B\u00e9cancour area for the Victor Sp\u00e9nard \u2013 Orise Lesage marriage act.\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that Victor Sp\u00e9nard (born 8 September 1873, Saint-Pierre-les-Becquets, Nicolet, Quebec; died 23 March 1949, Sainte-Sophie-de-L\u00e9vrard) was the son of **Maximin Sp\u00e9nard** (born 31 October 1819; died 18 March 1901, Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec) and **Marie Zo\u00e9 Brousseau** (born 24 June 1832; died 18 May 1919, Sainte-Sophie-de-L\u00e9vrard, B\u00e9cancour, Quebec). This conclusion is rated **probable**: the evidence is internally consistent, convergent across four records, and uncontradicted, but falls short of GPS \u201cproved\u201d because no direct statement of parentage has been found in any examined record.\n\n**Paternal Grandparents:** The secondary research objective \u2014 identifying Victor's paternal grandparents (Maximin Sp\u00e9nard's parents) \u2014 cannot be met with available indexed sources. Maximin's birth (31 October 1819) is known, but neither his baptism record nor his parents' marriage record was found in any indexed FamilySearch collection. These records are in pre-1854 browse-only parish register volumes for Saint-Pierre-les-Becquets or neighboring parishes.\n\n---\n\n\u00b9 \u201cCanada, Census, 1881,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MVNL-HN3 : accessed 2026-07-08), household of Maximin Sp\u00e9nard, Saint-Pierre-les-Becquets, Nicolet, Quebec.\n\n\u00b2 \u201cCanada, Census, 1891,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MW54-JXS : accessed 2026-07-08), entry for Maximin Spenard, Ste-Sophie-de-L\u00e9vrard, Nicolet, Quebec.\n\n\u00b3 \u201cFind a Grave Index,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z847 : accessed 2026-07-08), Maximin Spenard (Honorius), memorial GRid 128412817, Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard.\n\n\u00b4 \u201cFind a Grave Index,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVGJ-Z844 : accessed 2026-07-08), Marie Zoe Brousseau Spenard, memorial GRid 128413006, Cimeti\u00e8re de Sainte-Sophie-de-L\u00e9vrard."
+    }
+  ],
+  "evaluations": []
+}

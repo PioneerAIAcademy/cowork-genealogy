@@ -1,0 +1,15 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "false",
+    "f4": "false",
+    "f5": "false",
+    "f6": "partial"
+  },
+  "notes": {
+    "f2": "Mother recovered as 'Marie Zoé Brousseau' with the maiden name Brousseau — full recovery.",
+    "f5": "Not recovered as a distinct fact: the Maximin–Zoé couple is implied (both are Victor's parents), but the 1863 marriage date and the 'widower of Exupine Perrault' detail are absent.",
+    "f6": "Maximin's death is recovered as 18 Mar 1901 vs the expected 20 Mar 1901 — a 2-day discrepancy (spouse Zoé present); death-date-precision partial."
+  }
+}

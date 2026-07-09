@@ -45,7 +45,7 @@
     {
       "id": "f3",
       "type": "relationship",
-      "description": "Victor Spénard's paternal grandfather (Maximin Spénard's father) was Jean Baptiste Spénard.",
+      "description": "Bonus (not required — recoverable only from Maximin's 1819 Drouin baptism image, which is not name-indexed or full-text searchable on FamilySearch): Victor Spénard's paternal grandfather (Maximin Spénard's father) was Jean Baptiste Spénard.",
       "details": {
         "subject_person": {
           "name": "Maximin Spénard",
@@ -60,12 +60,12 @@
       "supporting_sources": [
         "Quebec Drouin Collection, baptism of Maximin Spénard, 31 October 1819: parents Jean Baptiste Spénard, cultivateur (farmer), and Geneviève Payan also known as St-Onge."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f4",
       "type": "relationship",
-      "description": "Victor Spénard's paternal grandmother (Maximin Spénard's mother) was Geneviève Payan, also known as St-Onge.",
+      "description": "Bonus (not required — same 1819 Drouin baptism, not indexed/searchable on FamilySearch): Victor Spénard's paternal grandmother (Maximin Spénard's mother) was Geneviève Payan, also known as St-Onge.",
       "details": {
         "subject_person": {
           "name": "Maximin Spénard",
@@ -80,7 +80,7 @@
       "supporting_sources": [
         "Quebec Drouin Collection, baptism of Maximin Spénard, 31 October 1819: parents Jean Baptiste Spénard and Geneviève Payan also known as St-Onge."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f5",
