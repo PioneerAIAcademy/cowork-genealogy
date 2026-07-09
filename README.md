@@ -330,7 +330,7 @@ You need both pieces.
 
 1. Download `genealogy-mcp.mcpb` from the latest release
 2. Open Claude Desktop → Settings → Extensions
-3. Click "Install Extension..." and select the .mcpb file
+3. Click "Advanced Settings" → "Install extension" and select the .mcpb file
 4. The "Genealogy Research" extension should appear in your list
 
 ### 2. Install the Cowork plugin
@@ -338,7 +338,7 @@ You need both pieces.
 1. Download `genealogy-plugin.zip` from the latest release
 2. Open Claude Desktop → switch to Cowork tab
 3. Click "Customize" in the left sidebar
-4. Click "Browse plugins" → "Upload custom plugin"
+4. Click "Add" → "Upload Plugin"
 5. Select the .zip file
 
 ### Alternative: install in Claude Code
