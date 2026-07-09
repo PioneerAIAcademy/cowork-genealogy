@@ -429,7 +429,11 @@ async def _run_agent(
         bare = _bare_tool_name(tool_name)
         if is_blocked_tree_tool(tool_name):
             blocked_tree_reads.append(
-                {"tool": bare, "args": dict(input_data.get("tool_input") or {})}
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "tree",
+                }
             )
             transcript.append(
                 f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "

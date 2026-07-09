@@ -417,10 +417,11 @@ each call with its arguments and denies by tool name. **A denied call
 does not run, does not count toward the tool-call cap, and does not stop
 the run** — the agent is told to use records instead and continues. Every
 denied attempt is recorded in the run log's `blocked_tree_reads` array
-(`{tool, args}` per entry), so a reviewer can see whether the agent
-*tried* to shortcut research. A non-empty `blocked_tree_reads` doesn't
-invalidate a `pass` (the answer was still earned from records, since the
-read was blocked), but it's worth a look.
+(`{tool, args, blocked_by}` per entry, `blocked_by` ∈ `"tree"` |
+`"fixture"`), so a reviewer can see whether the agent *tried* to
+shortcut research and which block source denied it. A non-empty
+`blocked_tree_reads` doesn't invalidate a `pass` (the answer was still
+earned from records, since the read was blocked), but it's worth a look.
 
 **Per-fixture blocked tools.** A fixture may extend the universal block
 with a `blocked_tools` array in its `fixture.json` (§3.1) — bare
@@ -432,7 +433,8 @@ research tool — the canonical case is a fixture derived from a public
 FamilySearch Wiki case-study article that names the answer, where
 `wiki_search` would surface the article during ordinary planning.
 Denials are recorded in the same `blocked_tree_reads` array with
-`"blocked_by": "fixture"` so a reviewer can tell the two block sources
+`"blocked_by": "fixture"` (universal tree-block denials carry
+`"blocked_by": "tree"`) so a reviewer can tell the two block sources
 apart. Note the asymmetry this creates with production (`/research`
 normally has the tool) and keep the list minimal — blocking a tool the
 answer does NOT leak through just handicaps the benchmark.
