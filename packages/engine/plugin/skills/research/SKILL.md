@@ -81,6 +81,7 @@ user as you encounter them.
    | Objective but no questions | `question-selection` (derive first question) |
    | A question with no plan | `research-plan` |
    | Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question | `search-records` (or `search-external-sites` for non-FS sources) |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | Log entries with no assertions extracted | `record-extraction` |
    | Assertions needing GPS three-layer classification | `assertion-classification` |
    | Assertions not yet linked to persons | `person-evidence` |
