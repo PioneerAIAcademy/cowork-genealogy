@@ -1,0 +1,75 @@
+{
+  "tool": "volume_search",
+  "description": "Returns FOUR digitized Schuylkill-area volumes that are ALL browse-eligible (recordSearchablePercent 0, fulltextSearchable false) — so searchability does not pick a winner; the skill must select by matching place AND record type AND era. The target is a Schuylkill County probate/will browse, so the correct choice is image group 007936749 (Probate Records, Schuylkill PA, 1851-1930, imageCount 15 — pairs with image-search-schuylkill-probate). The other three are scoping traps: 005440021 is Probate but for the WRONG county (Berks, adjacent to Schuylkill); 004288771 (Lutheran Church Records) and 007512883 (Tax Assessment Records) are the right place but the WRONG record type. Drives the Volume selection dimension, which a single-candidate fixture cannot exercise.",
+  "args": {
+    "standardPlace": "~Schuylkill"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "totalResults": 4,
+    "results": [
+      {
+        "imageGroupNumber": "007936749",
+        "imageGroupPrefix": "007936749",
+        "imageCount": 15,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1851–1930",
+            "recordType": "Probate Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "005440021",
+        "imageGroupPrefix": "005440021",
+        "imageCount": 270,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Berks, Pennsylvania, United States",
+            "dateRange": "1860–1900",
+            "recordType": "Probate Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004288771",
+        "imageGroupPrefix": "004288771",
+        "imageCount": 198,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en", "de"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1840–1875",
+            "recordType": "Church Records (Lutheran)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007512883",
+        "imageGroupPrefix": "007512883",
+        "imageCount": 240,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1850–1885",
+            "recordType": "Tax Assessment Records"
+          }
+        ]
+      }
+    ]
+  }
+}

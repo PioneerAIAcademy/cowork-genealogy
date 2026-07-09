@@ -1,0 +1,55 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — browse-only Schuylkill County, Pennsylvania image groups for the MIXED-VOLUME case (ut_search_images_012). The correct film (008116090) is a single image group whose coverages[] lists THREE record sets filmed together as separate item sections — Wills and Estate Records, Land and Property Deeds, and Loose Probate Papers — exactly the real-world case where one film bundles several books/record sets. The will the user wants is one item-section within this mixed film, not the whole volume. The second volume (007512883) is Schuylkill Tax Assessment Records — wrong record type — a decoy that forces the skill to read coverages rather than grab the first Schuylkill result. Both are browse-only (recordSearchablePercent 0, fulltextSearchable false). Note coverages[] is an ARRAY: this fixture is the first to exercise a single group carrying multiple record types. The predicate matches any standardPlace containing 'Schuylkill'; the test loads exactly one volume_search fixture.",
+  "args": {
+    "standardPlace": "~Schuylkill"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "totalResults": 2,
+    "results": [
+      {
+        "imageGroupNumber": "008116090",
+        "imageGroupPrefix": "008116090",
+        "imageCount": 22,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1851–1930",
+            "recordType": "Wills and Estate Records"
+          },
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1851–1930",
+            "recordType": "Land and Property Deeds"
+          },
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1851–1930",
+            "recordType": "Loose Probate Papers"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007512883",
+        "imageGroupPrefix": "007512883",
+        "imageCount": 240,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1850–1885",
+            "recordType": "Tax Assessment Records"
+          }
+        ]
+      }
+    ]
+  }
+}

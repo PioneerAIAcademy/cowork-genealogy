@@ -27,6 +27,15 @@ Evaluates whether research on a single question qualifies as
 the framework (five threshold questions, overturn risk test,
 termination criteria).
 
+**First, confirm this is an exhaustiveness evaluation.** This skill judges
+whether an *already-planned, already-searched* question is reasonably
+exhaustive. If the request is really to pick the **next question** (→
+`question-selection`), to **plan more searches** for an open question (→
+`research-plan`), or to **write the conclusion** (→ `proof-conclusion`),
+**decline and route there — do not run the evaluation below.** The
+declare/proof guidance in this skill applies only *after* you have decided
+this genuinely is an exhaustiveness check.
+
 Only evaluate a question whose plan items are all `completed` or
 `skipped`. If any is `in_progress`, refuse to declare and recommend
 finishing the in-flight work first.
@@ -91,9 +100,20 @@ Write a 1-2 sentence assessment for each:
 
 - **Declare exhaustive** — all criteria met. Persist the declaration
   and set `status: "exhaustive_declared"` in one call (Step 5).
-- **Do not declare** — criteria unmet. Explain what is missing and
-  recommend expanding the plan (`research-plan`) or, if no further
-  sources are available, an honest early termination.
+- **Do not declare** — criteria unmet because a genuinely **unsearched**
+  source remains. Explain what is missing and recommend expanding the plan
+  (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
+  default to `research-plan`.**
+  - *Narrow exception — a source verified **inaccessible*** (a browse-only
+    image over the MCP transport cap, or nil across `record_search` /
+    `fulltext_search` / `image_search` / external sites after the bounded
+    search-records attempts) is *pursued-and-unavailable*, not an unsearched
+    gap. **Only** when the **accessible** evidence already supports a
+    defensible conclusion, do not loop `research-plan` to re-attempt it: set
+    `status: "exhaustive_declared"` (note the limitation in a `stop_criteria`
+    note + `overturn_risk`) and route to `proof-conclusion`, which sets the
+    honest tier the available (often indirect) evidence supports. Documenting
+    an unobtainable source is exhaustive research; re-searching it is not.
 - **Early termination** — valid for resource limits or no further known
   sources, but the declaration must honestly state `declared: false`.
   **Do not change `status`** — leave it `"in_progress"`.

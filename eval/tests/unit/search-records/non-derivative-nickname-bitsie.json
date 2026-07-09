@@ -13,16 +13,18 @@
   },
   "mcp_fixtures": [
     "record-search-jackson-1880-mary",
-    "record-search-jackson-bitsie-no-results"
+    "record-search-jackson-bitsie-no-results",
+    "rank-search-matches-jackson-1880-mary"
   ],
   "judge_context": [
     "Should read tree.gedcomx.json before searching and notice that person I1 has TWO names — BirthName 'Mary Jackson' (preferred) and Nickname 'Bitsie Jackson'",
     "Should recognize that 'Bitsie' does NOT appear in the standard formal-to-nickname equivalences table in references/name-search-mechanics.md (the Mary row lists Polly, Molly, Mamie, May, Mim, Minnie — NOT Bitsie). Therefore the skill cannot rely on FamilySearch's fuzzy nickname expansion to bridge it",
-    "Should issue the record_search using `givenName: 'Mary'` (the formal BirthName from the tree) — NOT 'Bitsie'. The Bitsie search exists as a fixture only to surface the failure mode if the skill ignores the project state",
+    "Should issue the record_search using `givenName: 'Mary'` (the formal BirthName from the tree) — NOT 'Bitsie' — and call it with `projectPath and `count: 50` so the results are staged for ranking. The Bitsie search exists as a fixture only to surface the failure mode if the skill ignores the project state",
+    "After record_search stages the results, the skill should call rank_search_matches with the staged.resultsRef, the subject id ('I1'), and checkAttachments: true — NOT per-result same_person or a separate source_attachments call (rank_search_matches folds match-ranking and the attachment check in). The single staged 1880 candidate re-ranks to matchRank 1 and comes back unattached (attachedToSubject: false) — new evidence to extract, not already in the tree",
     "Should explain to the user WHY the formal name was used: 'Bitsie' is a non-derivative nickname recorded on I1's Nickname name entry; official records (census, vital, etc.) index people by their formal name",
     "May optionally ALSO issue a search using 'Bitsie' to confirm the empty-result fallback — but the formal-name search is the one that recovers the record",
-    "Should report the matched 1880 census record (Mary Jackson in William Jackson's household, Lancaster County) and note that it corresponds to the user's 'Bitsie Jackson' query",
-    "FOCUS GRADING NOTE for the judge: this test exists to verify the NON-DERIVATIVE NICKNAME RESOLUTION behavior (does the skill read the tree's Nickname entry and search by the formal BirthName?). The general search-records hygiene dimensions — Log quality, Sidecar correctness, sidecar payload completeness — are covered by the existing positive tests (execute-census-search, write-result-sidecar). For THIS test, those dimensions should score `pass` as long as the skill correctly issues `record_search` with the formal given name and reports the matched record back to the user. Do NOT score Log quality / Sidecar correctness / Completeness partial here purely on the basis that the skill described rather than executed an exhaustively-shaped log entry or sidecar — that is a general-mechanics concern tested elsewhere, not a nickname-resolution concern"
+    "Should report the matched 1880 census record (Mary Jackson in William Jackson's household, Lancaster County) from the ranked matches — with its match score and attachment status — and note that it corresponds to the user's 'Bitsie Jackson' query",
+    "FOCUS GRADING NOTE for the judge: this test exists to verify the NON-DERIVATIVE NICKNAME RESOLUTION behavior (does the skill read the tree's Nickname entry and search by the formal BirthName?). The general search-records hygiene dimensions — Log quality, Sidecar correctness, sidecar payload completeness — are covered by the existing positive tests (execute-census-search, write-result-sidecar). For THIS test, those dimensions should score `pass` as long as the skill correctly issues `record_search` with the formal given name (then rank_search_matches over the staged results) and reports the matched record back to the user. Do NOT score Log quality / Sidecar correctness / Completeness partial here purely on the basis that the skill described rather than executed an exhaustively-shaped log entry or sidecar — that is a general-mechanics concern tested elsewhere, not a nickname-resolution concern"
   ],
   "execution": {
     "max_wall_clock_seconds": 300
