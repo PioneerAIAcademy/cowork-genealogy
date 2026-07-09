@@ -1,0 +1,29 @@
+{
+  "tool": "image_search",
+  "description": "Lists the image IDs inside Schuylkill County, Pennsylvania probate image group 007936752 — the SECOND of the two browse-only films the Schuylkill probate run is split across (1891-1930; the first is 007936749, 1851-1890, via image-search-schuylkill-probate). Drives the multi-film-span browse (ut_search_images_011): the skill should call image_search on BOTH covering films, so this fixture provides the second film's images. 18 images, sorted by the trailing page number.",
+  "args": {
+    "imageGroupNumber": "007936752"
+  },
+  "response": {
+    "imageIds": [
+      "007936752_00001",
+      "007936752_00002",
+      "007936752_00003",
+      "007936752_00004",
+      "007936752_00005",
+      "007936752_00006",
+      "007936752_00007",
+      "007936752_00008",
+      "007936752_00009",
+      "007936752_00010",
+      "007936752_00011",
+      "007936752_00012",
+      "007936752_00013",
+      "007936752_00014",
+      "007936752_00015",
+      "007936752_00016",
+      "007936752_00017",
+      "007936752_00018"
+    ]
+  }
+}

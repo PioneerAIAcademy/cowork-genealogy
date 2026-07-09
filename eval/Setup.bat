@@ -24,6 +24,11 @@ if errorlevel 1 (
   exit /b 1
 )
 
+REM The uv installer updates the *persistent* user PATH, but this already-
+REM running cmd session won't see it. Add uv's install dir to PATH for the
+REM rest of this script so the "uv sync" step below can find it.
+set "PATH=%USERPROFILE%\.local\bin;%PATH%"
+
 echo.
 echo Installing Node.js dependencies...
 cd app
@@ -84,6 +89,23 @@ call pnpm install
 if errorlevel 1 (
   echo.
   echo ERROR: pnpm install failed. Setup aborted.
+  cd eval
+  pause
+  exit /b 1
+)
+
+REM A warm pnpm store can skip electron's postinstall (the binary download +
+REM path.txt write), so "pnpm install" alone doesn't guarantee a launchable
+REM viewer -- electron-vite then dies with "Error: Electron uninstall". Force
+REM the rebuild so the binary is always materialized in this checkout.
+echo.
+echo Ensuring the Electron viewer binary is installed...
+call pnpm --filter @genealogy/electron rebuild electron
+if errorlevel 1 (
+  echo.
+  echo ERROR: Could not install the Electron binary. Setup aborted.
+  echo Re-run Setup.bat, or from the repo root run:
+  echo   pnpm --filter @genealogy/electron rebuild electron
   cd eval
   pause
   exit /b 1
