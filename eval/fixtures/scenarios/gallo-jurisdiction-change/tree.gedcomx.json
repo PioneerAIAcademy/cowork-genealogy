@@ -1,0 +1,28 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Jan",
+          "surname": "Gallo",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1893",
+          "place": "Šútovo, Turany parish, Turócz, Hungary"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

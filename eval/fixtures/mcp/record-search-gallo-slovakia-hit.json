@@ -1,0 +1,60 @@
+{
+  "tool": "record_search",
+  "description": "record_search scoped to the MODERN country (Slovakia) for Jan Gallo — returns his 1893 Turany baptism, indexed in 'Slovakia, Church and Synagogue Books, 1592-1935', naming father Andrej Gallo and mother Katarina Križko. This is the correct-country search: FamilySearch files the Turócz-County record under present-day Slovakia. The wrong-country (Hungary) search is served the nil fixture.",
+  "args": { "surname": "Gallo", "recordCountry": "Slovakia" },
+  "response": {
+    "query": { "surname": "Gallo", "givenName": "Jan", "recordCountry": "Slovakia" },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:KHWD-N5R",
+        "events": [
+          { "type": "Baptism", "date": "1893", "place": "Turany, Martin, Slovakia" }
+        ],
+        "treeMatches": [ { "treePersonId": "K81J-CMK", "stars": 5 } ],
+        "personName": "Jan Gallo",
+        "score": 5.23,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1554443",
+        "collectionTitle": "Slovakia, Church and Synagogue Books, 1592-1935",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1554443",
+        "recordTitle": "Entry for Jan Gallo, \"Slovakia Church and Synagogue Books, 1592-1935\"",
+        "recordArk": "ark:/61903/1:2:9MFH-2SS5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14050599145",
+              "ark": "ark:/61903/1:1:KHWD-N5R",
+              "gender": "Male",
+              "names": [ { "type": "BirthName", "given": "Jan", "surname": "Gallo" } ],
+              "facts": [
+                { "type": "Baptism", "primary": true, "date": "1893", "standard_date": "1893", "place": "Turany, Martin, Slovakia", "standard_place": "Turany, Martin, Slovakia" }
+              ]
+            },
+            {
+              "id": "p_14050599143",
+              "gender": "Male",
+              "names": [ { "type": "BirthName", "given": "Andrej", "surname": "Gallo" } ]
+            },
+            {
+              "id": "p_14050599144",
+              "gender": "Female",
+              "names": [ { "type": "BirthName", "given": "Katarina", "surname": "Križko" } ]
+            }
+          ],
+          "relationships": [
+            { "type": "ParentChild", "parent": "p_14050599143", "child": "p_14050599145" },
+            { "type": "Couple", "person1": "p_14050599143", "person2": "p_14050599144" },
+            { "type": "ParentChild", "parent": "p_14050599144", "child": "p_14050599145" }
+          ]
+        },
+        "primaryId": "p_14050599145"
+      }
+    ]
+  }
+}
