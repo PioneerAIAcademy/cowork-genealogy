@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Daughter recovered: 'Florence Twohig' linked as Stephen's child (identity matches Mary/Florence, married name Feurfile, via the retained 1910 census). Thin — no birth fact (11 Jun 1886 Manhattan) recorded on the person, but the child relationship is present.",
+    "f2": "Not recovered: the infant son Edward (b. 27 Mar 1891, d. 29 Jan 1892) is entirely absent — the run hit the 60-minute wall-clock timeout before reaching his NYC birth/death indexes, and wrote no proof."
+  }
+}
