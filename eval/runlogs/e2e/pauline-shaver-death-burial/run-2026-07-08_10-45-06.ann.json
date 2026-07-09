@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Place name matches (Shavers Cemetery, Lynn City, Muhlenberg) but established through indirect evidence only — husband's burial pattern and family records; no direct headstone or FindAGrave entry found for subject."
+  },
+  "annotator": "florence"
+}

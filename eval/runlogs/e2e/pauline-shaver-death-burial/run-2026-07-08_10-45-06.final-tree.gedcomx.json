@@ -1,0 +1,260 @@
+{
+  "sources": [
+    {
+      "title": "Kentucky, Deaths, 1911-1967 \u2014 Polly Shover (Shaver), 30 Nov 1935",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2",
+      "id": "S1",
+      "citation": "\"Kentucky, Deaths, 1911-1967,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NSJP-9Q2 : accessed 8 July 2026), entry for Polly Shover [Shaver], died 30 November 1935, Bremen, Muhlenberg County, Kentucky; citing Kentucky State Board of Health, Frankfort."
+    },
+    {
+      "title": "United States Census, 1930 \u2014 Polly Shaver, Bremen, Muhlenberg, Kentucky",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XMF6-RFC",
+      "id": "S2"
+    }
+  ],
+  "persons": [
+    {
+      "id": "27HB-Z94",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Pauline \u201cPolly\u201d",
+          "surname": "Wilkins",
+          "id": "27HB-Z94-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "9 June 1848",
+          "standard_date": "9 Jun 1848",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "1a3232ef-e627-4718-a10d-8059b7497079",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Muhlenberg, Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "f8b0c785-2fd8-4de9-a252-369e3c5466a8",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "District 1, Spencer, Kentucky, United States",
+          "standard_place": "District 1, Spencer, Kentucky, United States"
+        },
+        {
+          "id": "06642a32-9451-4c70-b66f-ca3d45ddc3c9",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Summers, Muhlenberg, Kentucky, United States",
+          "standard_place": "Summer's Magisterial District, Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 58 Magisterial District 1, South Carrolltown, Bremen Precincts Bremen town, Muhlenberg, Kentucky, United States",
+          "standard_place": "Bremen, Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "cddf82c8-fc37-427f-a230-4c0d20a7bfe0",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Bremen, Muhlenberg, Kentucky, United States",
+          "standard_place": "Bremen, Logan, Kentucky, United States"
+        },
+        {
+          "id": "e1ad9c2e-a7c8-4add-9caf-ec20d7cecbba",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "type": "Death",
+          "date": "30 November 1935",
+          "standard_date": "30 Nov 1935",
+          "place": "Bremen, Muhlenberg, Kentucky, United States",
+          "standard_place": "Bremen, Muhlenberg, Kentucky, United States",
+          "primary": true,
+          "id": "F1"
+        },
+        {
+          "type": "Burial",
+          "place": "Shavers Cemetery, Muhlenberg, Kentucky, United States",
+          "standard_place": "Shavers Cemetery, Lynn City, Muhlenberg, Kentucky, United States",
+          "primary": true,
+          "id": "F2"
+        }
+      ]
+    },
+    {
+      "id": "27HB-Z7R",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Williams Timmons",
+          "surname": "Shaver",
+          "id": "27HB-Z7R-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166242",
+          "type": "Birth",
+          "date": "15 September 1850",
+          "standard_date": "15 Sep 1850",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "69f003a4-2055-466c-888f-8ddfb1d2b731",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Summers, Muhlenberg, Kentucky, United States",
+          "standard_place": "Summer's Magisterial District, Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "12 July 1922",
+          "standard_date": "12 Jul 1922",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "Shavers Cemetery, Muhlenberg, Kentucky, United States",
+          "standard_place": "Shavers Cemetery, Lynn City, Muhlenberg, Kentucky, United States"
+        }
+      ]
+    },
+    {
+      "id": "97YZ-J3D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Elijah",
+          "surname": "Wilkins",
+          "id": "97YZ-J3D-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ae8b941e-aabf-4dbb-bbbd-fce7ce87e1a7",
+          "type": "Birth",
+          "date": "1814",
+          "standard_date": "1814",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "bfb9d146-3053-46a1-876a-5ac5c2db2456",
+          "type": "Death",
+          "date": "30 November 1875",
+          "standard_date": "30 Nov 1875",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "26697b22-44c6-41b0-ad07-8eb2ff79e6ed",
+          "type": "Burial",
+          "date": "December 1875",
+          "standard_date": "Dec 1875",
+          "place": "Gish Cemetery, Bremen, Logan, Kentucky, United States",
+          "standard_place": "Gish Cemetery, Bremen, Logan, Kentucky, United States"
+        }
+      ]
+    },
+    {
+      "id": "K2BS-YMD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Sally",
+          "surname": "Wilkins",
+          "id": "K2BS-YMD-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166243",
+          "type": "Birth",
+          "date": "about 1818",
+          "standard_date": "Abt 1818",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c2",
+          "type": "Death",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "27HB-Z7R",
+      "person2": "27HB-Z94",
+      "facts": [
+        {
+          "id": "707f07b9-f1bf-4fa9-a56d-2fdebca46fa0",
+          "type": "Marriage",
+          "date": "8 June 1873",
+          "standard_date": "8 Jun 1873",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        }
+      ],
+      "id": "rel-1"
+    },
+    {
+      "type": "Couple",
+      "person1": "97YZ-J3D",
+      "person2": "K2BS-YMD",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "December 1834",
+          "standard_date": "Dec 1834",
+          "place": "Muhlenberg, Kentucky, United States",
+          "standard_place": "Muhlenberg, Kentucky, United States"
+        }
+      ],
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "97YZ-J3D",
+      "child": "27HB-Z94",
+      "subtype": "Biological",
+      "id": "rel-3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K2BS-YMD",
+      "child": "27HB-Z94",
+      "subtype": "Biological",
+      "id": "rel-4"
+    }
+  ]
+}
