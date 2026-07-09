@@ -1,0 +1,46 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup Sogn, Thisted Amt, Denmark, and determine when the father died",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-08",
+    "updated": "2026-07-08"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the father of Mikkel Nielsen Blyeberg (b. 20 Aug 1779, Stagstrup Sogn, Thisted Amt, Denmark)?",
+      "rationale": "Primary research objective. The subject's patronymic 'Nielsen' implies a father named Niels, but no father is identified in the tree and no records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-08",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

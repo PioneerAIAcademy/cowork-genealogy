@@ -482,6 +482,14 @@ it. Narrating the persistence then ending the response is a hard test
 failure.
 
 **Tool-first checklist for this step:**
+0. **Verify `record_persona_id` on every assertion you're about to append.**
+   Non-null when its `log_entry_id` traces to a `record_search`-tool log
+   entry (the downstream matcher needs it — leaving it null there is a
+   hard failure, not a stylistic choice); null for `record_read`/image/
+   PDF/full-text-sourced assertions. Check this even when the record
+   arrived via a narrow, single-result `record_search` that felt like a
+   direct lookup — the tool used is what decides this field, not how
+   confident the match felt.
 1. Make the `research_append` call (the batched `ops` from 5a/5b
    below). Wait for its return.
 2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
