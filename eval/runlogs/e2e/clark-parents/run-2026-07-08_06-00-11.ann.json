@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "notes": {
+    "f1": "Father Adam Schreck recovered and linked as Christiana's parent, from the 1783 Rehrersburg christening — confirmed against the original Altamaha Lutheran register image (read via the image-reader subagent), not just the derivative index.",
+    "f2": "Mother recovered and correctly linked (Margreth, via the 1783 christening that ties her to Christiana). Graded true on the person per the fixture note. Flagging an over-reach: the agent attached maiden name 'Lescher' from a Tulpehocken marriage register (an Adam Schreck x Margreth Elisabetha Lescher entry) treated as the parents' marriage — likely a different couple, since the records that actually tie Margreth to Christiana name her only 'Margreth' with no surname, and the fixture's maiden name is Weber. Right mother, unsupported maiden surname."
+  },
+  "annotator": "ernest"
+}

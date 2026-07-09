@@ -171,6 +171,16 @@ the log editor behaves exactly as its own spec describes.
   The **skill** recovers by re-running the search (cheap — it re-stages); the
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
+- **Read-only consumers.** Besides `research_log_append` (which finalizes), two
+  tools read the sidecar without consuming it: `rank_search_matches` (scores every
+  staged result against the tree subject) and `record_read` in **sidecar mode**
+  (`record_read({ recordId, resultsRef, projectPath })` returns one record's
+  gedcomx from the staged/finalized sidecar — no live FS fetch — re-applying place
+  standardization so it matches a live read; used by record-extraction /
+  search-records to avoid re-fetching a record they already searched). Both share
+  the dual-location read helper `readStagedResults` (staged handle OR finalized
+  `results/<log_id>.json`) and never unlink, so a staged handle can still be
+  finalized afterward.
 
 ---
 

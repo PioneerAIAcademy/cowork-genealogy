@@ -1,0 +1,60 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized Schuylkill County, Pennsylvania probate image groups, all browse-only (recordSearchablePercent 0, fulltextSearchable false). Drives the multi-FILM-SPAN selection case (ut_search_images_011): TWO of the three volumes are BOTH correct on place AND record type AND era — the Schuylkill probate run is split across two films whose date ranges partition the period (007936749 = 1851-1890, 007936752 = 1891-1930). A probate filed in the late-1880s-to-1890s window straddles the film boundary, so BOTH Schuylkill films jointly cover the target and both must be browsed; picking only one risks missing the will. The third volume (005440021) is Berks County probate — right type, wrong county — a scoping decoy that must NOT be browsed. Contrast with volume-search-schuylkill-multi-browse (single correct winner among wrong-place/wrong-type traps); this fixture exercises the case the reviewer raised where several candidates are ALL matching. The predicate matches any standardPlace containing 'Schuylkill'; the test loads exactly one volume_search fixture.",
+  "args": {
+    "standardPlace": "~Schuylkill"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "007936749",
+        "imageGroupPrefix": "007936749",
+        "imageCount": 15,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1851–1890",
+            "recordType": "Probate Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "007936752",
+        "imageGroupPrefix": "007936752",
+        "imageCount": 18,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Schuylkill, Pennsylvania, United States",
+            "dateRange": "1891–1930",
+            "recordType": "Probate Records"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "005440021",
+        "imageGroupPrefix": "005440021",
+        "imageCount": 270,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Berks, Pennsylvania, United States",
+            "dateRange": "1860–1900",
+            "recordType": "Probate Records"
+          }
+        ]
+      }
+    ]
+  }
+}

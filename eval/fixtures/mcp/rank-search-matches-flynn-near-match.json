@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the single staged 1850-census near-match ('Patrick Flyn', ark VRNT-7M3) against tree subject I1 (Patrick Flynn, b.~1845 Ireland, Schuylkill County). The surname transcription variant ('Flyn' vs 'Flynn') plus an age off by ~3 years pull the match score down into the middling needs-review band (0.52) — high enough that the Schuylkill place/household context still makes it worth human review, low enough that it must NOT be auto-accepted. attachedToSubject is false, so it is an unattached candidate, not already in the tree. Used by the search-records near-match triage test to exercise the match-ranked review surface without a live match API. Matched on subjectId; independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:VRNT-7M3",
+        "primaryId": "VP1",
+        "personName": "Patrick Flyn",
+        "sex": "Male",
+        "birthDate": "1842",
+        "birthPlace": "Ireland",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.52,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,900 @@
+{
+  "persons": [
+    {
+      "id": "2BLL-3JS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Susan",
+          "surname": "Miller",
+          "id": "2BLL-3JS-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1 May 1937",
+          "standard_date": "1 May 1937",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "6d2f5b00-b617-4a7b-91f9-5020da478fd1",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "St Mary'S, Forfarshire (Angus), Scotland",
+          "standard_place": "São Tomé and Príncipe"
+        },
+        {
+          "id": "f716455d-dbc5-4773-8829-748369339526",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "St Vigeans (Landward), Forfarshire (Angus), Scotland",
+          "standard_place": "St Vigeans, Forfarshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Barrow In Furness, Lancashire, England",
+          "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "Immigration",
+          "date": "1900",
+          "standard_date": "1900"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "C, Toronto (west/ouest) (city/cité), Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "4 May     1937",
+          "standard_date": "4 May 1937",
+          "place": "Mount Pleasant Cemetery, Toronto, York, Ontario, Canada",
+          "standard_place": "Mount Pleasant Cemetery, Toronto, Ontario, Canada"
+        },
+        {
+          "id": "06d8c5f8-7e74-410b-a618-1569daf00130",
+          "type": "LifeSketch",
+          "value": "Susan Miller was born in Scotland.  At the time of her marriage she is a factory worker, spinster, 18 years of age in England.  She marries Thomas Davies, a sailor, in 1883 in Baron-in-Furnes.  She was said to have red hair and be rather tall. She came to Canada twice, in 1887 and two children, Margaret Jane and James Hutton Davies were born in Ontario. They came again arriving in Montreal in 1901 on ship Parisian. Her youngest child Gordon was born in Wales in 1900. "
+        }
+      ]
+    },
+    {
+      "id": "2BLB-3WX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "John",
+          "surname": "Miller",
+          "id": "2BLB-3WX-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "20 May 1829",
+          "standard_date": "20 May 1829",
+          "place": "Blairgowerie,, Perthshire, Scotland",
+          "standard_place": "Perthshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "31 May 1829",
+          "standard_date": "31 May 1829",
+          "place": "Blairgowrie, Perth,, Scotland",
+          "standard_place": "Blairgowrie, Perthshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "8d9c047a-889c-4eb5-9ef5-916fcc76108c",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Rattray, Perthshire, Scotland, United Kingdom",
+          "standard_place": "Rattray, Perthshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "a7e071f0-ec0a-4c17-956a-6b735bbe2b1e",
+          "type": "Occupation",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Rattray, Perth, Scotland",
+          "standard_place": "Rattray, Perthshire, Scotland, United Kingdom",
+          "value": "Tinsmith"
+        },
+        {
+          "id": "122fe379-a57e-4f69-a898-7b9da7c5bf52",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Blairgowrie, Perthshire, Scotland",
+          "standard_place": "Blairgowrie, Perthshire, Scotland"
+        },
+        {
+          "id": "0303f77e-e9e3-478c-bbfa-cc12a2a40247",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Dundee 2nd, Forfarshire (Angus), Scotland",
+          "standard_place": "Dundee, Forfarshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "f8934c1a-5dba-4b26-8b6b-e7add25b268f",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "St Mary'S, Forfarshire (Angus), Scotland",
+          "standard_place": "São Tomé and Príncipe"
+        },
+        {
+          "id": "6c8f427d-f1bd-46e9-bf3e-0e69aec026ff",
+          "type": "Occupation",
+          "date": "Entry in the England and Wales Census 1881",
+          "standard_date": "1881",
+          "value": "Tinplate "
+        },
+        {
+          "id": "5e0c1db5-4224-4e3f-ab9d-5b65a05ac0e7",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "St Vigeans (Landward), Forfarshire (Angus), Scotland",
+          "standard_place": "St Vigeans, Forfarshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Barrow In Furness, Lancashire, England",
+          "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MCKX-J9N",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Gordon",
+          "surname": "Davies",
+          "id": "MCKX-J9N-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "28 May 1900",
+          "standard_date": "28 May 1900",
+          "place": "Llangwm, Pembrokeshire, Wales",
+          "standard_place": "Llangwm, Pembrokeshire, Wales, United Kingdom"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "Immigration",
+          "date": "1900",
+          "standard_date": "1900"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "C, Toronto (west/ouest) (city/cité), Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "place": "Canada",
+          "standard_place": "Canada"
+        }
+      ]
+    },
+    {
+      "id": "2BL6-9CR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Thomas",
+          "surname": "Davies",
+          "id": "2BL6-9CR-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "18 December 1856",
+          "standard_date": "18 Dec 1856",
+          "place": "Llangwn,, Pembroke, Wales",
+          "standard_place": "Pembrokeshire, Wales, United Kingdom"
+        },
+        {
+          "id": "66375c0c-e9f6-4ee2-8f37-dbb4ff65f810",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Llangwm, Pembrokeshire, Wales",
+          "standard_place": "Llangwm, Pembrokeshire, Wales, United Kingdom"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Langwm, Langwm, Pembrokeshire, Wales",
+          "standard_place": "Pembrokeshire, Wales, United Kingdom"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "Immigration",
+          "date": "1887",
+          "standard_date": "1887"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "C, Toronto (west/ouest) (city/cité), Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "5 May 1905",
+          "standard_date": "5 May 1905",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "f40d9b3a-edca-4356-8e5b-d008c3879c02",
+          "type": "LifeSketch",
+          "value": "Thomas Davies marriage certificate says he is 24 years old, a bachelor, and occupation is a sailor.  They married in the Baptist church in Barrow-In-Furnes Lancashire, England. Thomas and family immigrated from Wales to Canada in 1900. He died in 1905 leaving his wife and children struggling in poverty. "
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        }
+      ]
+    },
+    {
+      "id": "LH6S-PGR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "James Hutton",
+          "surname": "Davies",
+          "id": "LH6S-PGR-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "21 March 1894",
+          "standard_date": "21 Mar 1894",
+          "place": "Toronto,York,Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "C, Toronto (west/ouest) (city/cité), Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "d1f2433d-c1e9-4a13-8257-5e3e3f05e2ff",
+          "type": "MilitaryService",
+          "date": "1917",
+          "standard_date": "1917",
+          "place": "France and Flanders",
+          "standard_place": "France",
+          "value": "Gunner 1st Brigade Canadian Reserve Artilliary"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "16 May 1932",
+          "standard_date": "16 May 1932",
+          "place": "Toronto, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        }
+      ]
+    },
+    {
+      "id": "KWZV-TKZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William Miller",
+          "surname": "Davies",
+          "suffix": "Sr",
+          "id": "KWZV-TKZ-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "15 July 1883",
+          "standard_date": "15 Jul 1883",
+          "place": "Barrow in Furness, Lancashire, England, United Kingdom",
+          "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "3044b18b-be51-4565-b130-94e7c45781b3",
+          "type": "Immigration",
+          "date": "1900",
+          "standard_date": "1900"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "C, Toronto (west/ouest) (city/cité), Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "31 March 1958",
+          "standard_date": "31 Mar 1958",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "3 Apr 1958",
+          "standard_date": "3 Apr 1958",
+          "place": "Toronto, York, Ontario, Canada,  Prospect Cemetary",
+          "standard_place": "York, Toronto, Ontario, Canada"
+        }
+      ]
+    },
+    {
+      "id": "LQY1-14T",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Susan",
+          "surname": "Kidd",
+          "id": "LQY1-14T-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1832",
+          "standard_date": "1832",
+          "place": "Kirriemuir ,Angus, Scotland, United Kingdom",
+          "standard_place": "Kirriemuir, Forfarshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "aa1b2ee7-1801-41c5-9ab7-d2a8822bb6c8",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Blairgowrie, Perthshire, Scotland",
+          "standard_place": "Blairgowrie, Perthshire, Scotland"
+        },
+        {
+          "id": "2476a0dd-0ca5-4e19-b7a7-fc5dd71df090",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Forfar, Forfarshire (Angus), Scotland",
+          "standard_place": "Forfar, Natal, South Africa"
+        },
+        {
+          "id": "4d5fe3ea-dd73-4895-8ac2-cf4190888575",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "Dundee 2nd, Forfarshire (Angus), Scotland",
+          "standard_place": "Dundee, Forfarshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "97843107-4af9-466b-ba10-b4b3e22f4968",
+          "type": "Residence",
+          "date": "1861",
+          "standard_date": "1861",
+          "place": "St Vigeans (Landward), Forfarshire (Angus), Scotland",
+          "standard_place": "São Tomé and Príncipe"
+        },
+        {
+          "id": "83f17908-4343-4e44-bb8c-9235c7acf69b",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "St Mary'S, Forfarshire (Angus), Scotland",
+          "standard_place": "São Tomé and Príncipe"
+        },
+        {
+          "id": "7d671ab3-9e3a-41b1-82c7-a0518f25e158",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "St Vigeans (Landward), Forfarshire (Angus), Scotland",
+          "standard_place": "St Vigeans, Forfarshire, Scotland, United Kingdom"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Barrow In Furness, Lancashire, England",
+          "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "date": "8 October 1899",
+          "standard_date": "8 Oct 1899",
+          "place": "Monongahela Cemetery, Braddock Hills, Allegheny, Pennsylvania, United States",
+          "standard_place": "Monongahela Cemetery, Braddock Hills, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "October 1899",
+          "standard_date": "Oct 1899"
+        }
+      ]
+    },
+    {
+      "id": "KJWN-6H9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Margaret Jane",
+          "surname": "Davies",
+          "id": "KJWN-6H9-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "8 May 1889",
+          "standard_date": "8 May 1889",
+          "place": "Toronto, Ontario,, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1889",
+          "standard_date": "1889",
+          "place": "Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "C, Toronto (west/ouest) (city/cité), Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "57abcc0a-cbf7-4c46-b09c-499c72d7e419",
+          "type": "Immigration",
+          "date": "1925",
+          "standard_date": "1925"
+        },
+        {
+          "id": "2961db41-8389-47ff-8dea-103cb0076397",
+          "type": "Immigration",
+          "date": "5 Nov 1925",
+          "standard_date": "5 Nov 1925",
+          "place": "Buffalo, Erie, New York, United States",
+          "standard_place": "Buffalo, Erie, New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Lakewood, Cuyahoga, Ohio",
+          "standard_place": "Lakewood, Cuyahoga, Ohio, United States"
+        },
+        {
+          "id": "ad4d8c97-486e-4411-8d60-d7f1e41f2d98",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "1a27c26e-9107-4b9a-a041-271552b6806e",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 2, Lakewood City, Lakewood City, Cuyahoga, Ohio, United States",
+          "standard_place": "Lakewood, Cuyahoga, Ohio, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "3l July 1952",
+          "standard_date": "3 Jul 1952",
+          "place": "Acacia Park Cemetery, Oakland, Michigan, United States",
+          "standard_place": "Acacia Park Cemetery, Beverly Hills, Southfield Township, Oakland, Michigan, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "28 July 1952",
+          "standard_date": "28 Jul 1952",
+          "place": "Detroit, Wayne, Michigan, United States",
+          "standard_place": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "bcaa57d4-4025-411a-87b3-84eed3d159ca",
+          "type": "Obituary",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States",
+          "value": "Obituary"
+        }
+      ]
+    },
+    {
+      "id": "KHB9-DYK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Euphemia",
+          "surname": "Davies",
+          "id": "KHB9-DYK-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "8 October 1885",
+          "standard_date": "8 Oct 1885",
+          "place": "Barrow in Furness, Lancashire, England, United Kingdom",
+          "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "Immigration",
+          "date": "1900",
+          "standard_date": "1900"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "C, Toronto (west/ouest) (city/cité), Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "30 July 1952",
+          "standard_date": "30 Jul 1952",
+          "place": "Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "1 August 1952",
+          "standard_date": "1 Aug 1952",
+          "place": "Park Lawn Cemetery, Toronto, Ontario Canada",
+          "standard_place": "Park Lawn Cemetery, Toronto, Ontario, Canada"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "2BL6-9CR",
+      "person2": "2BLL-3JS",
+      "facts": [
+        {
+          "id": "e573dec0-658e-4a44-8778-6a5b97f18910",
+          "type": "Marriage",
+          "date": "17 March 1882",
+          "standard_date": "17 Mar 1882",
+          "place": "Barrow-In-Furness,  Lancashire, (Baptist Chapel), England",
+          "standard_place": "Barrow, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "17 MAR 1883",
+          "standard_date": "17 Mar 1883",
+          "place": "Barrow In Furness,Lancashire,England",
+          "standard_place": "Barrow in Furness, Lancashire, England, United Kingdom"
+        }
+      ],
+      "id": "rel-couple-2BL6-9CR-2BLL-3JS"
+    },
+    {
+      "type": "Couple",
+      "person1": "2BLB-3WX",
+      "person2": "LQY1-14T",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "25 AUG 1849",
+          "standard_date": "25 Aug 1849",
+          "place": "Rattray,Perth,Scotland",
+          "standard_place": "Rattray, Perthshire, Scotland, United Kingdom"
+        }
+      ],
+      "id": "rel-couple-2BLB-3WX-LQY1-14T"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BLB-3WX",
+      "child": "2BLL-3JS",
+      "subtype": "Biological",
+      "id": "rel-pc-2BLB-3WX-2BLL-3JS"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LQY1-14T",
+      "child": "2BLL-3JS",
+      "subtype": "Biological",
+      "id": "rel-pc-LQY1-14T-2BLL-3JS"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BL6-9CR",
+      "child": "KWZV-TKZ",
+      "subtype": "Biological",
+      "id": "rel-pc-2BL6-9CR-KWZV-TKZ"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BLL-3JS",
+      "child": "KWZV-TKZ",
+      "subtype": "Biological",
+      "id": "rel-pc-2BLL-3JS-KWZV-TKZ"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BL6-9CR",
+      "child": "KHB9-DYK",
+      "subtype": "Biological",
+      "id": "rel-pc-2BL6-9CR-KHB9-DYK"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BLL-3JS",
+      "child": "KHB9-DYK",
+      "subtype": "Biological",
+      "id": "rel-pc-2BLL-3JS-KHB9-DYK"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BL6-9CR",
+      "child": "KJWN-6H9",
+      "subtype": "Biological",
+      "id": "rel-pc-2BL6-9CR-KJWN-6H9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BLL-3JS",
+      "child": "KJWN-6H9",
+      "subtype": "Biological",
+      "id": "rel-pc-2BLL-3JS-KJWN-6H9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BL6-9CR",
+      "child": "LH6S-PGR",
+      "subtype": "Biological",
+      "id": "rel-pc-2BL6-9CR-LH6S-PGR"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BLL-3JS",
+      "child": "LH6S-PGR",
+      "subtype": "Biological",
+      "id": "rel-pc-2BLL-3JS-LH6S-PGR"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BL6-9CR",
+      "child": "MCKX-J9N",
+      "subtype": "Biological",
+      "id": "rel-pc-2BL6-9CR-MCKX-J9N"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2BLL-3JS",
+      "child": "MCKX-J9N",
+      "subtype": "Biological",
+      "id": "rel-pc-2BLL-3JS-MCKX-J9N"
+    }
+  ],
+  "sources": [
+    {
+      "id": "74FM-Q5N",
+      "title": "Susan Davies Mo, \"United States, Border Crossings from Canada to United States, 1895-1956\"",
+      "citation": "\"United States, Border Crossings from Canada to United States, 1895-1956\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XG3H-6ZD : Mon Feb 10 22:58:59 UTC 2025), Entry for Margaret J D Adamson and Willard Adamson Hu, 5 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4QPV-8YT2"
+    },
+    {
+      "id": "SF1C-D5G",
+      "title": "Susan Miller, \"England and Wales, Census, 1881\"",
+      "citation": "\"England and Wales, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q27R-QTJ2 : Wed Mar 06 08:08:10 UTC 2024), Entry for John Miller and Susan Miller, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q27R-QTL9"
+    },
+    {
+      "id": "SXGH-3KY",
+      "title": "Susan Millar, \"Scotland, Census, 1881\"",
+      "citation": "\"Scotland, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KM6G-CWV : Tue Oct 21 03:18:47 UTC 2025), Entry for John Millar and Susan Millar, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KM6G-829"
+    },
+    {
+      "id": "S6R8-S8S",
+      "title": "William Davis (Davies) and Mine (Jemima) Davies ms Jamieson and mother Mary Davies (widow) household in the 1921 Census of Canada Toronto, York, Ontario, Canada",
+      "citation": "Source Citation\nReference Number: RG 31; Folder Number: 79; Census Place: Toronto (City), Parkdale, Ontario; Page Number: 7\nSource Information\nAncestry.com. 1921 Census of Canada [database on-line]. Provo, UT, USA: Ancestry.com Operations Inc, 2013. \nOriginal data: Library and Archives Canada. Sixth Census of Canada, 1921. Ottawa, Ontario, Canada: Library and Archives Canada, 2013. Series RG31. Statistics Canada Fonds.\n\nImages are reproduced with the permission of Library and Archives Canada.",
+      "url": "https://search.ancestry.ca/cgi-bin/sse.dll?db=CanCen1921&indiv=try&h=3174171"
+    },
+    {
+      "id": "S6QT-YP1",
+      "title": "Susan Miller, \"Scotland, Census, 1871\"",
+      "citation": "\"Scotland, Census, 1871\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VB5T-N75 : Mon Oct 28 21:30:21 UTC 2024), Entry for John Miller and Susan Miller, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VB5T-NWS"
+    },
+    {
+      "id": "96SM-5CG",
+      "title": "Susan Miller in entry for James Hutton Davis, \"Canada, Ontario, Births and Baptisms, 1779-1899\"",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMWW-T2F : 13 January 2024), Susan Miller in entry for James Hutton Davis, 1894.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FMWW-T2F"
+    },
+    {
+      "id": "96SM-4R6",
+      "title": "Susan Miller, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZBN-1D4 : Fri Mar 08 18:55:21 UTC 2024), Entry for Allen Henderson and George R Henderson, 25 Jun 1902.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZBN-1DD"
+    },
+    {
+      "id": "969M-ZGY",
+      "title": "Susan Mille, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNG4-ZS5 : Tue Jul 09 16:46:28 UTC 2024), Entry for Margaret Jane Davis and Thomas Davis, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VNG4-ZSP"
+    },
+    {
+      "id": "9D45-94S",
+      "title": "Susan Miller in household of John Miller, \"England and Wales Census, 1881\"",
+      "citation": "\"England and Wales Census, 1881,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XQX3-QVF : 12 July 2021), [name withheld by request], [place withheld by request]; from \"1881 England, Scotland and Wales census,\" database and images, <i>findmypast</i> (http://www.findmypast.com : n.d.); citing p. 29, PRO RG 11/4287 / 18, The National Archives, Kew, Surrey; FHL microfilm 1,342,024.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XQX3-QVF"
+    },
+    {
+      "id": "9D4P-H3T",
+      "title": "Susan Miller, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KSZJ-KVC : Fri Mar 08 04:35:54 UTC 2024), Entry for William Davies and Thomas Davies, 30 Jun 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KSZJ-KV8"
+    },
+    {
+      "id": "9D4Z-TYY",
+      "title": "Susan Davis, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9P-4FH4 : Sat Mar 09 04:16:31 UTC 2024), Entry for Susan Davis and Margaret Davis, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9P-4FH4"
+    },
+    {
+      "id": "9D4Z-TQQ",
+      "title": "Susan Millar, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27ZB-DZW : Sun Jul 06 21:23:22 UTC 2025), Entry for Willard Adamson and Geo Joseph Adamson, 20 Sep 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27ZB-DZ8"
+    },
+    {
+      "id": "9D4Z-RDL",
+      "title": "Thomas Davies and Susan Miller in 8 May 1889 entry for birth of daughter Margaret Jane Davies \"Canada Births and Baptisms, 1661-1959\" Toronto, Ontario, Canada",
+      "citation": "\"Canada, Ontario, Births and Baptisms, 1779-1899\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2LV-LPB : 13 January 2024), Susan Mille... in entry for Margaret Jane Da..., 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2LV-LPB"
+    },
+    {
+      "id": "9D4Z-VY2",
+      "title": "Susan Millar, \"Michigan, Death Certificates, 1921-1952\"",
+      "citation": "\"Michigan, Death Certificates, 1921-1952\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFHV-YBZ : Sun Mar 10 13:13:31 UTC 2024), Entry for Margaret J Adamson and Thomas Davies, 28 Jul 1952.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFHV-YBD"
+    },
+    {
+      "id": "9D4Z-VSL",
+      "title": "Susan Miller, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27DH-1XR : Sun Jul 06 21:24:35 UTC 2025), Entry for James Hutton Davies and Thomas Davies, 21 Sep 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27DH-1XY"
+    },
+    {
+      "id": "9D4Z-CK3",
+      "title": "Susan Davis, \"Canada, Census, 1901\"",
+      "citation": "\"Canada, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHGK-19Y : Tue Jan 21 08:22:37 UTC 2025), Entry for Thomas Davis and Susan Davis, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHGK-19B"
+    },
+    {
+      "id": "9DWZ-81M",
+      "title": "Susan Miller Davies death in the 1 May 1937, \"Ontario Deaths, 1869-1937 and Overseas Deaths, 1939-1947\" Toronto, York, Ontario, Canada",
+      "citation": "\"Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:JKJY-7H7 : Fri Jul 26 12:56:02 UTC 2024), Entry for Susan Miller Davies and Thomas Davies, 1937.",
+      "url": "https://familysearch.org/ark:/61903/1:1:JKJY-7H7"
+    }
+  ]
+}

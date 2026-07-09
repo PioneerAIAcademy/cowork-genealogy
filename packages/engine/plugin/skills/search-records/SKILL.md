@@ -15,6 +15,7 @@ description: Executes searches against FamilySearch historical records per
   (use record-extraction).
 allowed-tools:
   - record_search
+  - rank_search_matches
   - record_read
   - same_person
   - source_attachments
@@ -67,9 +68,30 @@ On demand, load:
 |----------------------|----------|-------------|
 | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `immigration`, `court`, `tax` | `record_search` | Structured searches by person attributes |
 | `newspaper`, or any witness/FAN mention search | — | **Delegate to search-full-text skill.** Use when: searching obituaries/marriage announcements, searching for a person as witness/neighbor/heir/surety/appraiser, pre-1850 US research with thin indexed coverage, Latin American notarial records, or narrative paragraph records |
+| Parish registers where the target is **unindexed** — an emigrant's origin, a compound-surname parentage, any baptism/marriage/burial reachable only by transcript text | — | **Delegate to search-full-text skill.** When indexed `record_search` on the surname has returned only noise (the person is not name-indexed), the answer is usually in the AI-transcribed page text — reachable by a full-text co-occurrence search on the surnames, not by more indexed queries. |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records. Also consider suggesting search-external-sites for FindAGrave |
 
-Additional tools: `same_person` (results triage — match scoring); `source_attachments` (attachment check — which results are already attached to tree persons).
+Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
+
+**If you run `fulltext_search` yourself instead of delegating** (a quick
+check from the main loop), two rules decide success or failure — the
+`search-full-text` skill carries the full version, but at minimum:
+
+- **Compound (Iberian / Latin-American) surnames → co-occurrence, not a
+  phrase.** For a subject named `Given Paterno Materno` (e.g. "Francisco
+  **Naveda Somarriba**"), require the two surnames as separate terms:
+  `+Naveda +Somarriba`. **Never** the adjacent phrase `+"Naveda
+  Somarriba"` — in the parents' own records the father carries the
+  paternal surname and the mother the maternal one, so the two words sit
+  on different people and are never adjacent; the phrase only matches the
+  child's own written-out name and misses every parentage record.
+- **Do not scope a full-text search to a record `collectionId`.** The FTS
+  corpus is partitioned into its own auto-generated collections; a
+  `collectionId` borrowed from `record_search` or a collections survey
+  routinely excludes the FTS volume that holds the answer and the search
+  returns zero. Search the whole corpus first; narrow with
+  `recordPlace*` / `recordType` / year filters (or a known
+  `imageGroupNumber`) only after you have hits.
 
 ## Steps
 
@@ -126,50 +148,77 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 ### 3. Execute the search
 
-Call `record_search` with the constructed params plus `projectPath` (the absolute path of the project directory). Passing `projectPath` causes the tool to stage raw results host-side and return a `staged.resultsRef` handle — pass this to `research_log_append` in Step 5.
+Call `record_search` with the constructed params plus `projectPath` (the absolute path of the project directory) and **`count: 50`**. Passing `projectPath` stages the raw results host-side, returns a `staged.resultsRef` handle (pass it to `rank_search_matches` in Step 4 **and** `research_log_append` in Step 5), and returns the inline results as **compact stubs** — the bulk per-result GedcomX lives in the staged file (so a large result set can't overflow; no flag needed). `count: 50` fetches a deep-enough pool for the match re-ranker.
 
 **If the search fails due to authentication:** Instruct the user to log in: "The search requires FamilySearch authentication. Please ask me to log you in, or type `login`."
 
-### 4. Triage results
+### 4. Triage results — rank by match, then confirm
 
-**Decision rules by hit count:**
-- **>5,000 hits** → narrow by collection, then place, then spouse/parent. See `references/search-strategy-levers.md`.
-- **100–5,000 hits** → add collection filter and sex; add parent name
-- **10–100 hits** → evaluate top results directly
-- **0 hits** → see Step 8 (handle nil results)
+Step 3 returned compact stubs plus a `staged.resultsRef`. **Always call
+`rank_search_matches` after any search that returns one or more results — even
+1–2.** Don't hand-score, eyeball, or skip it for a small result set: one cheap
+host-side call gives a real match score + attachment flag for every candidate
+(which also feeds the match-score log for later threshold calibration) and keeps
+triage uniform.
 
-**Quick triage (by eye):** For each result, check name match, age/birth year (within ±3), place (same county/state), and gender. Discard obvious mismatches.
+**Rank the staged results:**
 
-**Sanity-check the collection.** Verify the returned collection actually answers the question you asked. A search for the 1870 census that returns a 1850-collection result is not a 1870 finding — it's a near-miss the search engine surfaced. When the returned collection doesn't match the query's stated year/jurisdiction/record type, log as effectively negative for the asked-for collection and propose a follow-up (see collection-mismatch in Step 5).
+```
+rank_search_matches({
+  projectPath,
+  stagedResultsRef,        // the staged.resultsRef from Step 3
+  subjectId,               // the research subject's id in tree.gedcomx.json (e.g. "I1")
+  checkAttachments: true
+})
+```
 
-**Quantitative triage:** Call `same_person` for every result that could potentially match the research subject — not just obvious strong matches.
+It scores **every** staged candidate against the subject with FamilySearch's own
+matcher (the engine `same_person` uses), re-orders by real match quality — **not**
+FamilySearch's search rank, which is unreliable — and returns the **top 10** in
+`matches[]`. Each carries `matchRank`, `searchRank` (its original position — shows
+how far the ranker missed), `matchScore` (0–1), `matchConfidence`, the key facts,
+and `attachedToSubject` / `attachedToOther`. The bulk GedcomX stays host-side; the
+old per-result `same_person` loop and the separate `source_attachments` call both
+**collapse into this one call**.
 
-**How to call `same_person`:** Compare each search result against the research subject from `tree.gedcomx.json` (NOT against another search result). Pass:
-- `gedcomx1`: the result's `gedcomx` field (from record_search output)
-- `primaryId1`: the result's `primaryId` field (NOT `personId` or `arkUrl`)
-- `gedcomx2`: the research subject's section from `tree.gedcomx.json`
-- `primaryId2`: the research subject's `id` in `tree.gedcomx.json` (e.g., `"I1"`)
+**The ranked list is a review surface, not an auto-accept.** Match score orders the
+candidates; you still confirm the top ones:
 
-Score thresholds:
-- Score > 0.7: Strong match — prioritize for extraction
-- Score 0.4–0.7: Possible match — examine details; flag as needs-review
-- Score < 0.4: Weak match — skip unless nothing better exists
+- **Logical cross-check every strong match.** Role in the record (a 5-year-old
+  cannot be Head of Household), age/birth year vs. the expected range, place
+  consistency. Flag any impossibility as `needs-review` regardless of score —
+  score is one input, reason is the arbiter.
+- **Needs-review band.** A genuinely *different* same-name/same-place person can
+  land inside the match band, and sparse/dateless records score unstably. When the
+  top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
+  it as `needs-review` and confirm by other means, not on score alone.
+- **Attachment status** is already on each match: attached-to-subject → note and
+  deprioritize; attached-to-other → potentially relevant; unattached → prioritize
+  (new evidence).
+- **Collection sanity-check.** Verify the matched record's collection actually
+  answers the question asked — a 1870-census query returning an 1850 result is a
+  near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
 
-**A low score is one data point** — not grounds to dismiss a result on its own. Always note the reason for dismissal alongside the score.
+**When nothing in the top 10 is a confident match** — or `rank_search_matches`
+returns `subjectResolvable: false` (a thin/unresolvable subject, so its scores
+carry no signal) — do **not** conclude the record is absent:
 
-**Even a high score requires a logical cross-check.** When the score is ≥0.7:
-- Check the person's role in the record (e.g., Head of Household). A 5-year-old cannot be Head of Household — flag as a transcription conflict.
-- Check the age/birth year against the expected range.
-- Flag any logical impossibility as `needs-review` regardless of score. Score is one input; reason is the final arbiter.
+- The pool caps at 50 by FamilySearch's ranker, and re-ranking only re-orders what
+  was fetched — it can't rescue a target FamilySearch buries past rank 50. So
+  **page deeper** (`record_search` with `offset: 50`, then rank again) or **narrow**
+  the query (collection, place, parent/spouse) so the target ranks into the fetched
+  50. For a very broad search (thousands of hits), narrow *first*.
+- On `subjectResolvable: false`, fall back to hand-scoring the promising stubs with
+  `same_person` (`gedcomx1` = the record via `record_read`; `gedcomx2` = the subject
+  from `tree.gedcomx.json`; `primaryId2` = the subject's id) plus the cross-checks
+  above.
 
-**Attachment check:** After narrowing to promising results, call `source_attachments({ uris: [recordId1, recordId2, ...] })`:
-- **Attached to the target person** → note and deprioritize for extraction.
-- **Attached to a different person** → flag as potentially relevant.
-- **Unattached** → prioritize for extraction — this is new evidence.
+**Deduplicate.** Multiple index entries may point to one underlying record; check
+identifiers before treating similar matches as independent.
 
-**Deduplication:** Multiple index entries may point to the same underlying record. Check identifiers and source details before treating similar results as independent.
-
-**Present triage to the user.** Show top results with match quality and attachment status. Let the user confirm which records to examine before extraction.
+**Present triage to the user.** Show the top matches with match score, attachment
+status, and any `needs-review` flags. Let the user confirm which records to examine
+before extraction.
 
 ### 5. Log the search
 
@@ -215,9 +264,9 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves.
 
-**Hand off the `recordId` explicitly.** Each search result from `record_search` carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The exact format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
+**Hand off the `recordId` explicitly.** Each ranked match from `rank_search_matches` (like each `record_search` result) carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The exact format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
 
-1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Parameter name:** always use `recordId` — pass the result's `recordId` field if present, otherwise pass its `arkUrl` value (e.g., `record_read({ recordId: result.arkUrl })`). Do NOT use `arkId`, `ark`, `id`, or `url`.
+1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Read it from the sidecar, not live:** you already staged this search in Step 3, so pass that handle — `record_read({ recordId, resultsRef: staged.resultsRef, projectPath })` — to get the record's full gedcomx **without a network round-trip** (for the person you searched: the same facts, the source citation, and correct standardized places). **Do NOT `Read` the sidecar file yourself** — you already hold each `recordId` from the ranked results; `record_read` pulls just the one record out of the sidecar, whereas reading the whole `results/<log_id>.json` reloads every staged result and defeats the compaction. Omit `resultsRef` for a live read only when you need a **co-resident's** full facts (a household member you didn't search for — the sidecar stubs co-residents to a name plus a fact or two), or the record wasn't part of this staged search. **Parameter name:** always use `recordId` — pass the result's `recordId` field if present, otherwise its `arkUrl` value. Do NOT use `arkId`, `ark`, `id`, or `url`.
 2. If the full record is unavailable but an image exists, record the image URL in the log and pass to record-extraction, which fetches and transcribes.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located."
 

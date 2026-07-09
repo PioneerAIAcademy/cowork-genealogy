@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_images_012",
+    "skill": "search-images",
+    "name": "Recognize a mixed film bundling several record sets",
+    "type": "positive",
+    "description": "volume_search returns the right browse-only film (008116090) whose coverages[] lists THREE record sets filmed together as separate item sections — Wills and Estate Records, Land and Property Deeds, and Loose Probate Papers — plus a wrong-type Schuylkill tax volume (007512883) as a decoy. The will the user wants is one item-section WITHIN the mixed film, not the whole volume. This covers the reviewer's second case: a film/volume often contains several books or record sets filmed together (a will book, land records, loose probate files) as separate item sections. The gradeable behavior is: pick 008116090 (not the tax volume), recognize from coverages[] that the film is mixed and the will is one section within it, frame the browse accordingly, call image_search, and log. image_search returns the whole film with no item-section filter and image_read returns no content, so isolating the exact will pages is out of scope here.",
+    "tags": ["browse", "volume-selection", "mixed-volume", "item-sections", "scoping"]
+  },
+  "input": {
+    "user_message": "Browse the unindexed Schuylkill County, Pennsylvania probate film for Thomas Flynn's will and list its images so I can see what's covered.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-schuylkill-mixed-items", "image-search-schuylkill-mixed-items"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "volume_search returns two browse-only volumes. The correct one is 008116090 — a single image group whose coverages[] lists THREE record types filmed together: Wills and Estate Records, Land and Property Deeds, and Loose Probate Papers. This is a mixed film: several record sets bound onto one roll as separate item sections. The will the user wants is the Wills-and-Estate section within it. The other volume, 007512883, is Tax Assessment Records (wrong record type) and must not be browsed.",
+    "The pass behavior: pick 008116090 (it contains the wills section), AND recognize from its coverages[] that the film is mixed — say that the will book is one item-section among several (land/deeds and loose probate are also on this film) rather than treating the whole film as the will book. Picking 008116090 but describing it as if it were only a will volume — never noticing the bundled land/loose-probate sections — is a Volume selection partial. Browsing the tax volume is a fail.",
+    "CRITICAL HARNESS LIMITATION: image_search returns the WHOLE film's image list in one call — there is NO in-volume / item-section / page-range filter, so the skill cannot jump straight to the wills section, and image_read returns no content so it cannot view pages. The complete, gradeable browse is: select 008116090, recognize and state the mixed structure, call image_search to list the film's image IDs, propose where the wills section likely sits (e.g. read a register/table of contents first), and log. Judges MUST NOT score partial or fail because the skill did not isolate the exact will pages, did not view images, or browsed image IDs that also span the land/probate sections — none of that narrowing is possible in the mock.",
+    "The skill should NOT retry image_search with offset/limit/imageId/recordType/index parameters to try to filter to the wills section (those parameters do not exist) — doing so is a Tool Arguments fault, not thoroughness.",
+    "Should append a research_log_append entry naming the chosen film (008116090), place, and record type (wills/probate), and ideally noting the film is mixed; no results/ sidecar is expected because image_search does not stage results."
+  ]
+}
