@@ -329,6 +329,7 @@ class Suspect:
     person_id: str
     shared: set[str]
     reason: str
+    polarity: str = "recover"  # the finding's polarity (spec §3.4.1)
 
 
 def check_stripping(
@@ -342,6 +343,12 @@ def check_stripping(
     the stripped tree. For `fact`-type findings we additionally require
     the fact type to be present on that person, since a person
     legitimately remains when only one of their facts was stripped.
+
+    Polarity-agnostic on purpose: a `polarity: "avoid"` claim must be
+    just as absent from the starting tree as a `recover` answer (a
+    pre-asserted wrong claim breaks the fixture the other way), and the
+    avoid-guard reuses this matcher against the run's *final* tree. Only
+    the advice differs — see `format_suspect`.
     """
     people = index_tree(tree)
     suspects: list[Suspect] = []
@@ -349,6 +356,7 @@ def check_stripping(
     for finding in expected_findings.get("findings") or []:
         fid = str(finding.get("id", "?"))
         ftype = str(finding.get("type", "?"))
+        polarity = str(finding.get("polarity", "recover"))
         name_bag = finding_name_tokens(finding)
         if not name_bag:
             continue  # nothing nameable to match — can't judge presence
@@ -379,6 +387,7 @@ def check_stripping(
                     person_id=person.person_id,
                     shared=shared_given | shared_surname,
                     reason=reason,
+                    polarity=polarity,
                 )
             )
 
@@ -393,7 +402,14 @@ def format_suspect(fixture_name: str, s: Suspect) -> str:
     and still print the same advice as the standalone linter.
     """
     shared = ", ".join(sorted(s.shared))
-    if s.finding_type == "fact":
+    if s.polarity == "avoid":
+        fix = (
+            f"this is an `avoid` finding — the claim the agent must NOT "
+            f"assert appears to be pre-asserted by the starting tree. Remove "
+            f"it from starting-tree.gedcomx.json (and the identical snapshot "
+            f"on a record-hint fixture), or rewrite the finding."
+        )
+    elif s.finding_type == "fact":
         fix = (
             f"a `fact` finding leaves the person in place, so this is "
             f"only a problem if the stripped fact is still on "
