@@ -49,10 +49,6 @@
         "facts": {
           "type": "array",
           "items": { "$ref": "#/$defs/fact" }
-        },
-        "sources": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/source_reference" }
         }
       }
     },
