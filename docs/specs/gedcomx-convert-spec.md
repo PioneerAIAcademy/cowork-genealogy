@@ -185,7 +185,7 @@ export type SimplifiedRelationship = {
 export type SimplifiedSourceReference = {
   ref?: string;
   page?: string;
-  quality?: string;          // Raw qualifier value, passed through as-is
+  quality?: number;          // GEDCOM QUAY integer 0–3 (string-encoded in the qualifier)
 };
 
 export type SimplifiedSourceDescription = {
@@ -476,13 +476,18 @@ Strip `#` from both resources. `toGedcomX` re-wraps.
   ]
 }
 ↓
-{ "ref": "S1", "page": "1920 Census, ED 47", "quality": "3" }
+{ "ref": "S1", "page": "1920 Census, ED 47", "quality": 3 }
 ```
 
 - `description: "#S1"` → `ref: "S1"` (strip `#`)
 - Qualifier with `name === "http://gedcomx.org/CitationDetail"` → `page`
-- Qualifier with `name === "fsmcp:quality"` → `quality` as **a string**,
-  passed through as-is (no coercion)
+- Qualifier with `name === "fsmcp:quality"` → `quality` as **an integer**.
+  Qualifier values are strings on the wire, but the persisted tree format
+  (tree-gedcomx.schema.json, the shared TS types, simplified-gedcomx-spec.md
+  §4.4) requires an integer 0–3 — a string here silently violated all three
+  and, worse, the reverse direction dropped every integer quality the tree
+  legally carries. A qualifier value that doesn't parse as an integer is
+  dropped, like any other unrecognized qualifier content.
 - All other qualifiers are dropped
 - When the qualifier is absent, **omit** the field
 
@@ -897,7 +902,7 @@ fall into the `fullText` fallback path and emit a warning.
 | 14 | ParentChild round-trips as `parent`/`child` | Rule 8 |
 | 15 | Couple round-trips as `person1`/`person2` | Rule 9 |
 | 16 | `CitationDetail` qualifier → `page`; other (non-quality) qualifiers dropped | Rule 10 |
-| 17 | `fsmcp:quality` qualifier → `quality` as string; passed through unchanged | Rule 10 |
+| 17 | `fsmcp:quality` qualifier → `quality` as integer; non-integer values dropped | Rule 10 |
 | 18 | Source descriptions round-trip with `title`, `citation`, `url` | Rule 11 |
 | 19 | Top-level `places[]` array round-trips | Rule 12 |
 | 20 | Each of the five subtype URIs (Biological/Adoptive/Step/Foster/Guardian) round-trips correctly | Rule 8 |

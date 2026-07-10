@@ -492,9 +492,11 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(result.persons?.[0].sources?.[0].ref).toBe("S1");
   });
 
-  // Test 17 — Rule 10: fsmcp:quality is a string, passed through as-is
-  it("maps fsmcp:quality qualifier to quality as a string, passed through", () => {
-    const numericLike = toSimplified({
+  // Test 17 — Rule 10: fsmcp:quality parses to the integer the tree format
+  // requires; non-integer qualifier content is dropped like any other
+  // unrecognized qualifier.
+  it("maps fsmcp:quality qualifier to quality as an integer; drops non-integer values", () => {
+    const numeric = toSimplified({
       persons: [
         {
           id: "p1",
@@ -507,7 +509,7 @@ describe("gedcomx-convert — transformation rules", () => {
         },
       ],
     });
-    expect(numericLike.persons?.[0].sources?.[0].quality).toBe("3");
+    expect(numeric.persons?.[0].sources?.[0].quality).toBe(3);
 
     const freeText = toSimplified({
       persons: [
@@ -522,12 +524,27 @@ describe("gedcomx-convert — transformation rules", () => {
         },
       ],
     });
-    expect(freeText.persons?.[0].sources?.[0].quality).toBe("high");
+    expect("quality" in (freeText.persons?.[0].sources?.[0] ?? {})).toBe(false);
 
     const absent = toSimplified({
       persons: [{ id: "p1", sources: [{ description: "#S1" }] }],
     });
     expect("quality" in (absent.persons?.[0].sources?.[0] ?? {})).toBe(false);
+  });
+
+  // Rule 10 reverse: an integer quality (the only form the tree schema
+  // accepts) round-trips through the string-valued qualifier — previously it
+  // was silently dropped on toGedcomX, losing QUAY data on the upload path.
+  it("round-trips integer quality through the fsmcp:quality qualifier", () => {
+    const expanded = toGedcomX({
+      persons: [{ id: "p1", sources: [{ ref: "S1", quality: 2 }] }],
+    });
+    expect(expanded.persons?.[0].sources?.[0].qualifiers).toEqual([
+      { name: "fsmcp:quality", value: "2" },
+    ]);
+
+    const back = toSimplified(expanded);
+    expect(back.persons?.[0].sources?.[0].quality).toBe(2);
   });
 
   // Test 18 — Rule 11: source descriptions round-trip
@@ -1112,7 +1129,7 @@ describe("gedcomx-convert — identity round-trips", () => {
               standard_date: "1950",
               place: "Boston",
               sources: [
-                { ref: "S1", page: "p. 7", quality: "3" },
+                { ref: "S1", page: "p. 7", quality: 3 },
               ],
             },
             { id: "f2", type: "Death", date: "2020", standard_date: "2020" },

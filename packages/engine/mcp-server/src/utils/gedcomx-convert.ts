@@ -372,9 +372,14 @@ function simplifySourceRef(
     out.page = citationDetail.value;
   }
 
+  // The qualifier carries QUAY as a string (qualifier values are strings);
+  // the simplified format wants the integer the tree schema requires. A
+  // value that doesn't parse as an integer is dropped, like any other
+  // unrecognized qualifier content.
   const quality = qualifiers.find((q) => q.name === QUALITY_QUALIFIER);
-  if (quality && typeof quality.value === "string") {
-    out.quality = quality.value;
+  if (quality && typeof quality.value === "string" && quality.value.trim() !== "") {
+    const parsed = Number(quality.value.trim());
+    if (Number.isInteger(parsed)) out.quality = parsed;
   }
 
   return out;
@@ -590,8 +595,8 @@ function expandSourceRef(
   if (typeof ref.page === "string") {
     qualifiers.push({ name: CITATION_DETAIL, value: ref.page });
   }
-  if (typeof ref.quality === "string") {
-    qualifiers.push({ name: QUALITY_QUALIFIER, value: ref.quality });
+  if (typeof ref.quality === "number" && Number.isInteger(ref.quality)) {
+    qualifiers.push({ name: QUALITY_QUALIFIER, value: String(ref.quality) });
   }
   if (qualifiers.length > 0) out.qualifiers = qualifiers;
 
