@@ -336,10 +336,11 @@ def test_an_empty_given_is_the_unknown_spelling_and_passes(tmp_path):
 
 
 def test_lint_fixture_rejects_a_lowercase_fact_type(tmp_path):
-    # The fact-type enum is deliberately open, so "move" lints clean under
-    # the schema and then hard-fails tree_edit — the gate mirrors the runtime.
+    # The fact-type value list is open, but the enum's `pattern` pins the
+    # upper-initial the runtime hard-fails on — a lowercase "move" copied
+    # from research.json must die at the lint, not mid-run in tree_edit.
     person = _valid_person("I1", "John", "Smith")
     person["facts"] = [{"id": "F1", "type": "move"}]
     _write_fixture(tmp_path, _valid_tree(person))
     _, errors = lint_fixture(tmp_path)
-    assert any("PascalCase" in e for e in errors)
+    assert any("'move'" in e and "[A-Z]" in e for e in errors)

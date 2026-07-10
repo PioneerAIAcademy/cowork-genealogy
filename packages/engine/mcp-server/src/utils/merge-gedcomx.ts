@@ -96,14 +96,12 @@ function mergeCrossDocument(
       if (!surv.gender && content.gender) surv.gender = content.gender;
       if (content.names.length) (surv.names ??= []).push(...content.names);
       if (content.facts.length) (surv.facts ??= []).push(...content.facts);
-      if (content.sources.length) (surv.sources ??= []).push(...content.sources);
     } else {
       const carried: SimplifiedPerson = { id: personIdMap.get(person.id) };
       if (content.ark !== undefined) carried.ark = content.ark;
       if (content.gender !== undefined) carried.gender = content.gender;
       if (content.names.length) carried.names = content.names;
       if (content.facts.length) carried.facts = content.facts;
-      if (content.sources.length) carried.sources = content.sources;
       result.persons.push(carried);
     }
   }
@@ -113,7 +111,6 @@ function mergeCrossDocument(
     const surv = result.persons.find((p) => p.id === survivorId);
     if (surv?.names) surv.names = mergeNames(surv.names);
     if (surv?.facts) surv.facts = mergeFacts(surv.facts);
-    if (surv?.sources) surv.sources = dedupSourceRefs(surv.sources);
   }
 
   const remappedRels = (candidate.relationships ?? []).map((rel) =>
@@ -124,37 +121,13 @@ function mergeCrossDocument(
     result.relationships = dedupRelationships(combinedRels);
   }
 
-  // Carry candidate places, keeping ids unique (places aren't referenced).
-  const candidatePlaces = candidate.places ?? [];
-  if (candidatePlaces.length > 0) {
-    const usedPlaceIds = new Set(
-      (result.places ?? [])
-        .map((p) => p.id)
-        .filter((id): id is string => id !== undefined),
-    );
-    for (const pl of candidatePlaces) {
-      const cloned = structuredClone(pl);
-      if (cloned.id !== undefined && usedPlaceIds.has(cloned.id)) {
-        cloned.id = freshPlaceId(cloned.id, usedPlaceIds);
-      }
-      if (cloned.id !== undefined) usedPlaceIds.add(cloned.id);
-      (result.places ??= []).push(cloned);
-    }
-  }
+  // Candidate `places[]` are NOT carried: the persisted tree format has no
+  // top-level places section (facts carry place names), so carrying them
+  // would persist a document the tree schema rejects. The tool layer strips
+  // them with a warning before the merge (sanitizeCandidate).
 
   ensureUniqueFactAndNameIds(result);
   return result;
-}
-
-/** A unique place id derived from `base` (places aren't referenced by id). */
-function freshPlaceId(base: string, used: Set<string>): string {
-  let n = 2;
-  let id = `${base}-${n}`;
-  while (used.has(id)) {
-    n += 1;
-    id = `${base}-${n}`;
-  }
-  return id;
 }
 
 // ─── Mode 2: same-document merge ────────────────────────────────────────────
@@ -182,7 +155,6 @@ function mergeSameDocument(
     if (!surv.gender && coll.gender) surv.gender = coll.gender;
     if (coll.names?.length) (surv.names ??= []).push(...structuredClone(coll.names));
     if (coll.facts?.length) (surv.facts ??= []).push(...structuredClone(coll.facts));
-    if (coll.sources?.length) (surv.sources ??= []).push(...structuredClone(coll.sources));
   }
 
   const collapsedIds = new Set(merges.map(([, c]) => c));
@@ -206,7 +178,6 @@ function mergeSameDocument(
     const surv = result.persons.find((p) => p.id === survivorId);
     if (surv?.names) surv.names = mergeNames(surv.names);
     if (surv?.facts) surv.facts = mergeFacts(surv.facts);
-    if (surv?.sources) surv.sources = dedupSourceRefs(surv.sources);
   }
 
   ensureUniqueFactAndNameIds(result);
@@ -219,13 +190,14 @@ interface PersonContent {
   gender?: string;
   names: SimplifiedName[];
   facts: SimplifiedFact[];
-  sources: SimplifiedSourceReference[];
 }
 
 /**
- * Clone a candidate person's names/facts/source-refs with fresh N/F ids and
- * source refs rewritten through `sourceIdMap`. The id itself is assigned by
- * the caller (survivor id for a collapse, fresh I id for a carry).
+ * Clone a candidate person's names/facts with fresh N/F ids and source refs
+ * rewritten through `sourceIdMap`. The id itself is assigned by the caller
+ * (survivor id for a collapse, fresh I id for a carry). Person-level
+ * `sources` are not part of the tree format and are not carried (the tool
+ * layer strips them from candidates before the merge).
  */
 function remapPersonContent(
   person: SimplifiedPerson,
@@ -244,10 +216,7 @@ function remapPersonContent(
     if (c.sources) c.sources = remapSourceRefs(c.sources, sourceIdMap);
     return c;
   });
-  const sources = person.sources
-    ? remapSourceRefs(person.sources, sourceIdMap)
-    : [];
-  return { ark: person.ark, gender: person.gender, names, facts, sources };
+  return { ark: person.ark, gender: person.gender, names, facts };
 }
 
 /** Clone a candidate relationship with a fresh R id and all refs repointed. */
@@ -395,7 +364,9 @@ function mergeNames(names: SimplifiedName[]): SimplifiedName[] {
     const sources = dedupSourceRefs(members.flatMap((m) => m.sources ?? []));
     if (sources.length > 0) rep.sources = sources;
     else delete rep.sources;
-    rep.preferred = false;
+    // `preferred` is `const: true` in the tree schema — absence means false,
+    // and writing `preferred: false` persists a tree the schema rejects.
+    delete rep.preferred;
     return { rep, size: members.length };
   });
 

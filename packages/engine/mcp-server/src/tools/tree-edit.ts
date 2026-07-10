@@ -19,6 +19,7 @@ import type {
   SimplifiedSourceDescription,
 } from "../types/gedcomx.js";
 import { validateParsed } from "../validation/validator.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
@@ -121,14 +122,14 @@ function requirePerson(tree: SimplifiedGedcomX, personId: string | undefined): S
 /** Remove the `primary` flag from the person's other facts of the same type. */
 function clearPrimaryOfType(person: SimplifiedPerson, type: string | undefined, exceptId: string | undefined): void {
   for (const f of person.facts ?? []) {
-    if (f.id !== exceptId && f.type === type && f.primary) delete f.primary;
+    if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
   }
 }
 
 /** Remove the `preferred` flag from the person's other names. */
 function clearPreferred(person: SimplifiedPerson, exceptId: string | undefined): void {
   for (const n of person.names ?? []) {
-    if (n.id !== exceptId && n.preferred) delete n.preferred;
+    if (n.id !== exceptId && "preferred" in n) delete n.preferred;
   }
 }
 
@@ -331,7 +332,14 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
   input.source = coerceJsonArg(input.source) as SimplifiedSourceDescription | undefined;
 
   try {
-    const tree = (await readJson(projectPath, "tree.gedcomx.json")) as SimplifiedGedcomX;
+    // Heal legacy shapes before anything touches the document: the closed
+    // shapes below would otherwise refuse every write on a pre-tightening
+    // tree, with no op able to express the repair. The healed document is
+    // what a successful edit persists — a one-shot migration.
+    const sanitized = sanitizeTree(
+      await readJson(projectPath, "tree.gedcomx.json"),
+    );
+    const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
 
     const treePath = join(projectPath, "tree.gedcomx.json");
@@ -370,7 +378,10 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
         ok: true,
         results,
         filesWritten: ["tree.gedcomx.json"],
-        validation: { valid: true, warnings: [...formatIssues(validation.warnings), ...opWarnings] },
+        validation: {
+          valid: true,
+          warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
+        },
       };
     }
 
@@ -392,7 +403,10 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
       ok: true,
       operation: input.operation,
       filesWritten: ["tree.gedcomx.json"],
-      validation: { valid: true, warnings: [...formatIssues(validation.warnings), ...warnings] },
+      validation: {
+        valid: true,
+        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings],
+      },
     };
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
     return result;
