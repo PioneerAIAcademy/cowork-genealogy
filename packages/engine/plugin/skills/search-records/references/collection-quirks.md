@@ -67,6 +67,31 @@ Quirks affect how queries should be constructed for that collection.
   both "Mueller" and "Müller" (diacritic stripping should handle
   this, but indexed text may store the "ue" spelling)
 
+## Norway Church Books / "Norway, Marriages, 1660-1926" (collection `1468080`)
+
+- Patronymic given names for women are transcribed with unstable
+  vowels — the same underlying name has been observed indexed as
+  **Unna**, **Urna**, and **Udna** across different records in the
+  same collection family (confirmed from two separate live test runs
+  against the real API: the target bride's own marriage entry indexed
+  her as "Urna Halsteinsdr"; an 1801 census entry for the same woman
+  indexed her as "Udna Halstensdatter"). This is a genuine transcription
+  artifact of 18th/19th-century Gothic-script Norwegian handwriting, not
+  a data-entry rule — it recurs across unrelated records for the same
+  person.
+- Both runs that hit this collection changed *which party was
+  principal* and *dropped surname/place filters*, but neither run
+  varied the *spelling of the given name itself* — so a real, findable
+  record was missed twice in a row.
+- **Compensation — do this explicitly, not just structural query
+  changes:** for any Norwegian patronymic given name, run the exact
+  name AND at least these vowel-substituted spellings before widening
+  to other repositories: swap the medial vowel (Unna → Urna → Udna →
+  Anna), and try the single-letter-doubled/undoubled form (Unna → Una).
+  Treat "I varied the query structure" and "I varied the name spelling"
+  as two separate, both-required steps — doing one is not a substitute
+  for the other.
+
 ## Common collection IDs (verify before use)
 
 | Collection | ID |
