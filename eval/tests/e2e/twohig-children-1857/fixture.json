@@ -1,0 +1,18 @@
+{
+  "id": "twohig-children-1857",
+  "name": "Stephen Joseph Twohig's Children",
+  "source_pid": "GQV2-NKK",
+  "captured": "2026-07-07",
+  "researcher_question": "Did Stephen Joseph Twohig have any children beyond the two already linked in the FamilySearch tree (Genevieve \"Jennie\" Ballard and Robert P. Twohig)?",
+  "tags": {
+    "question_type": "children",
+    "era": "1880s",
+    "geography": "US-NY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Ground truth was independently cross-validated by two separate research runs before being finalized. The subject's surname is heavily OCR-garbled across records (Twohig/Toohig/Twoking/Tnohig/Zwohig), which is part of the intended difficulty. Two census sources already attached to the subject's own tree record cite unrelated-looking names (a household member's married surname); recognizing these as genuine multi-person household records rather than dismissing them as misattached is a key part of the task."
+}

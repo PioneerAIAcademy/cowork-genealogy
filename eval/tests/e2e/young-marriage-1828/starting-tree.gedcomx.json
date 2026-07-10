@@ -487,146 +487,146 @@
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-thomas",
+      "parent": "p-thomas",
+      "child": "p-child-thomas",
       "id": "rel-2"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-thomas",
+      "parent": "PID-TODO",
+      "child": "p-child-thomas",
       "id": "rel-3"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-maryann",
+      "parent": "p-thomas",
+      "child": "p-child-maryann",
       "id": "rel-4"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-maryann",
+      "parent": "PID-TODO",
+      "child": "p-child-maryann",
       "id": "rel-5"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-elizabeth",
+      "parent": "p-thomas",
+      "child": "p-child-elizabeth",
       "id": "rel-6"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-elizabeth",
+      "parent": "PID-TODO",
+      "child": "p-child-elizabeth",
       "id": "rel-7"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-sarah",
+      "parent": "p-thomas",
+      "child": "p-child-sarah",
       "id": "rel-8"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-sarah",
+      "parent": "PID-TODO",
+      "child": "p-child-sarah",
       "id": "rel-9"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-george",
+      "parent": "p-thomas",
+      "child": "p-child-george",
       "id": "rel-10"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-george",
+      "parent": "PID-TODO",
+      "child": "p-child-george",
       "id": "rel-11"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-martha",
+      "parent": "p-thomas",
+      "child": "p-child-martha",
       "id": "rel-12"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-martha",
+      "parent": "PID-TODO",
+      "child": "p-child-martha",
       "id": "rel-13"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-john",
+      "parent": "p-thomas",
+      "child": "p-child-john",
       "id": "rel-14"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-john",
+      "parent": "PID-TODO",
+      "child": "p-child-john",
       "id": "rel-15"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-robert",
+      "parent": "p-thomas",
+      "child": "p-child-robert",
       "id": "rel-16"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-robert",
+      "parent": "PID-TODO",
+      "child": "p-child-robert",
       "id": "rel-17"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-evan",
+      "parent": "p-thomas",
+      "child": "p-child-evan",
       "id": "rel-18"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-evan",
+      "parent": "PID-TODO",
+      "child": "p-child-evan",
       "id": "rel-19"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-ellen",
+      "parent": "p-thomas",
+      "child": "p-child-ellen",
       "id": "rel-20"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-ellen",
+      "parent": "PID-TODO",
+      "child": "p-child-ellen",
       "id": "rel-21"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-james",
+      "parent": "p-thomas",
+      "child": "p-child-james",
       "id": "rel-22"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-james",
+      "parent": "PID-TODO",
+      "child": "p-child-james",
       "id": "rel-23"
     },
     {
       "type": "ParentChild",
-      "person1": "p-thomas",
-      "person2": "p-child-william",
+      "parent": "p-thomas",
+      "child": "p-child-william",
       "id": "rel-24"
     },
     {
       "type": "ParentChild",
-      "person1": "PID-TODO",
-      "person2": "p-child-william",
+      "parent": "PID-TODO",
+      "child": "p-child-william",
       "id": "rel-25"
     }
   ],

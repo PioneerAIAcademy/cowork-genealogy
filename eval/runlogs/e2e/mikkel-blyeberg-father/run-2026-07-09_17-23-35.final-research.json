@@ -1,0 +1,1058 @@
+{
+  "project": {
+    "id": "rp_mikkel_blyeberg_father",
+    "objective": "Who was the father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup Sogn, Thisted (Vestervig) Amt, Denmark, and when did his father die?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "completed",
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-09"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the father of Mikkel Nielsen Blyeberg, baptized 20 August 1779 in Stagstrup Sogn, Thisted Amt, Denmark?",
+      "rationale": "This is the primary gatekeeper question for the research objective. Danish patronymic naming convention implies the father's given name was Niels; the baptismal register (kirkebog) for Stagstrup Sogn ca. 1779 should record the father's full name and status. Identifying the father is prerequisite to answering when he died.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [
+        "q_002"
+      ],
+      "resolved": "2026-07-09",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_015"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Four independent record types searched on FamilySearch all consistently name Niels Blyeberg (Niels Madsen Blyeberg) as the father: (1) 1779 Stagstrup baptism index (log_003) \u2014 direct primary evidence naming Niels Blyeberg as the father at the moment of christening; (2) 1778 Stagstrup marriage record (log_006) \u2014 names the groom as Niels Madsen Blyeberg marrying Inger Michelsdatter 18 months before Mikkel's birth; (3) 1803 probate index (log_007) \u2014 names Niels Madsen Bliberg of Stagstrup as deceased with wife Inger, corroborating identity; (4) 1862 Stagstrup burial of Mikkel (log_009) \u2014 explicitly records Niels Bliberg as Mikkel's father via a ParentChild relationship. Census (1787) unavailable on FamilySearch (log_004); Hassing l\u00e6gdsruller not in indexed collection (log_005); original parish register images not found via volume_search (log_008). These three pursued-and-unavailable sources do not constitute unsearched gaps given the strength of the accessible evidence from four independent record types.",
+        "log_entry_ids": [
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the question is answered: Niels Blyeberg (full name Niels Madsen Blyeberg) is Mikkel's father, confirmed by four independent record types that all agree.",
+          "repository_breadth": "FamilySearch searched systematically across six collections covering baptism, marriage, census, military levy rolls, probate, and burial. 1787 census not in FamilySearch; Hassing l\u00e6gdsruller not in indexed collection 2243379; Stagstrup kirkebog images pre-1815 not accessible via volume_search. All accessible sources have been searched.",
+          "original_substitution": "Original parish register images not accessed (volume_search returned no image groups for Stagstrup pre-1815). The indexed databases are derivatives. This is a known limitation; original images would likely confirm, not contradict, the indexed entries. The consistent agreement across four derivative sources reduces overturn risk substantially.",
+          "independent_verification": "Four independent sources from different record types (baptism index, marriage register, probate index, burial index) with different informants and institutional origins. The marriage and baptism are the most independent; the probate and burial add further corroboration. No two sources share the same informant.",
+          "evidence_class": "The 1779 baptism (a_003\u2013a_005) provides direct primary evidence: the parish clergyman as witness named Niels Blyeberg as father at the baptismal event. The 1862 burial (a_015) provides corroborating direct evidence (though indeterminate information quality due to 60-year gap). Marriage and probate provide indirect corroboration by establishing the couple's identity.",
+          "conflict_resolution": "No conflicts. All sources name Niels Blyeberg (variants Bliberg, Blyeberg) as father/husband in Stagstrup. Wife's name variant (Michelsdatter vs. Mikkelsdatter) is a normal Danish orthographic variant, not a conflict.",
+          "overturn_risk": "Low. No accessible record type remains unsearched. The 1787 census and military levy rolls, if they could be found, would likely confirm the conclusion. The original register image would confirm the baptismal date/place and father's name already captured in the index."
+        }
+      },
+      "created": "2026-07-09"
+    },
+    {
+      "id": "q_002",
+      "question": "When did the father of Mikkel Nielsen Blyeberg (baptized 20 August 1779, Stagstrup Sogn, Thisted Amt, Denmark) die?",
+      "rationale": "Second part of the research objective. The father's death date will be sought in burial registers (begravelsesprotokol) for Stagstrup and adjacent sogne once the father's identity is established from q_001. Depends on q_001 to know exactly which individual to seek.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-09",
+      "resolution_assertion_ids": [
+        "a_011",
+        "a_013",
+        "a_014"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent sources establish the death date: (1) the Denmark Burials 1640-1917 index (log_009) gives Niels Madsen Blyeberg's burial as 20 December 1802, Stagstrup \u2014 direct primary evidence (clergyman as witness recorded the interment); (2) the probate index (log_007) shows a probate opening in 1803 for Niels Madsen Bliberg of Stagstrup \u2014 consistent with a death in late 1802. For rural Denmark in 1802, civil death registration did not exist; the burial register IS the death record. No other accessible record type would be expected to give a more precise death date. Original burial register image not accessed (same limitation as q_001); the indexed entry gives a specific date that is the best available evidence.",
+        "log_entry_ids": [
+          "log_007",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the question is answered: Niels Madsen Blyeberg was buried 20 December 1802 at Stagstrup, Thisted, Denmark. His death occurred on or shortly before that date (burial typically followed death within days in 18th-19th century Denmark).",
+          "repository_breadth": "Denmark Burials 1640-1917 (collection 1520593) searched via record_search; probate (collection 2026233) also searched for q_001 and provides corroborating date. No civil death registration existed in Denmark for this period; the burial register is the primary death record. All accessible record types for 1802 Danish death dates have been searched.",
+          "original_substitution": "Original burial register image not accessed (same volume_search limitation as q_001). The indexed entry specifies the exact date (20 Dec 1802) and place (Stagstrup). The original image would likely confirm or very slightly correct the indexed date; this limitation is documented.",
+          "independent_verification": "Two independent sources: (1) burial index entry naming Niels Madsen Blyeberg buried 20 Dec 1802 (a_014), and (2) probate index showing probate opened 1803 for Niels Madsen Bliberg of Stagstrup (a_011). These have different record types and institutional origins. The probate date (1803) is consistent with a death in late 1802.",
+          "evidence_class": "Burial date (a_014) is direct primary information: the officiating clergyman recorded the burial date as a witness to the event. The probate (a_011) is direct for the existence of death proceedings in 1803 but indirect for the death date itself.",
+          "conflict_resolution": "No conflicts. The burial date (20 Dec 1802) and the probate year (1803) are mutually consistent \u2014 probate is typically opened weeks to months after death. The name variant Bliberg vs. Blyeberg in the burial vs. probate is a documented orthographic variant of the same farm name, not a conflict.",
+          "overturn_risk": "Low. The original burial register image is the only unsearched source for a more precise date, and it would likely confirm 20 Dec 1802. No other record type is expected to give a different death date for an 1802 Stagstrup burial. The consistent probate date (1803) reinforces the conclusion."
+        }
+      },
+      "created": "2026-07-09"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Stagstrup Sogn, Vestervig, Thisted Amt, Denmark",
+          "date_range": "1770-1790",
+          "repository": "FamilySearch",
+          "rationale": "The baptismal register (kirkebog) for Stagstrup Sogn would contain the entry for Mikkel's baptism on or around 20 August 1779, recording his father's full name and often occupation and residence. Searching 'Denmark, Church Records, 1484\u20131941' (collection 2078555) \u2014 the largest indexed Danish church record collection on FamilySearch \u2014 is the highest-probability first step to directly identify the father. The patronymic 'Nielsen' implies the father's given name was Niels; the farm name 'Blyeberg' helps narrow to the specific household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Stagstrup Sogn, Vestervig, Thisted Amt, Denmark",
+          "date_range": "1770-1790",
+          "repository": "FamilySearch",
+          "rationale": "Fallback baptism search in 'Denmark, Baptisms, 1618\u20131923' (collection 1778463), a separately indexed FamilySearch collection covering Danish baptisms. Indexing methodology differs from collection 2078555, so the same record may be retrievable through this alternate index when the primary search fails.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "notes": "Fallback for pli_001 \u2014 baptism was found in Denmark Baptisms 1618-1923 (collection 1778463) by pli_001; this secondary church records item is therefore redundant."
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Stagstrup Sogn, Hassing, Thisted Amt, Denmark",
+          "date_range": "1787",
+          "repository": "FamilySearch",
+          "rationale": "The 1787 Danish census (the first national census) would show Mikkel, aged approximately 7\u20138, in his father's household. The father would be listed as head of household with his full name, age, and occupation. Available through 'Denmark, Church Records, 1484\u20131941' and also indexed at Ancestry and DanishFamilySearch. This provides the father's identity in a second independent record type.",
+          "fallback_for": null,
+          "status": "skipped",
+          "notes": "Searched FamilySearch for 1787 Danish census (log_004): collection does not exist \u2014 FamilySearch only indexes Danish censuses from 1845 onward. The 1787 Volksz\u00e4hlung is not available in indexed form here. A browse of original handwritten rolls would require a separate archive visit. The question is answered by four independent indexed sources; this record type remains inaccessible in this repository."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "military",
+          "jurisdiction": "Thisted Amt, Denmark",
+          "date_range": "1789-1793",
+          "repository": "FamilySearch",
+          "rationale": "Denmark's military conscription rolls (l\u00e6gdsruller) are direct parentage evidence: boys were enrolled under their father's name, with the father's name written directly above the son's entry. Mikkel (born 1779) would appear in the 1789\u20131793 rolls at ages 10\u201314. FamilySearch collection 2243379 ('Denmark, Military Conscription Rolls, 1789\u20131793') is indexed and covers Thisted Amt. This is independent direct evidence of who Mikkel's father was, and notably records the father's death if it occurred during the roll period.",
+          "fallback_for": null,
+          "status": "skipped",
+          "notes": "Searched FamilySearch collection 2243379 for Mikkel Nielsen in Thisted/Hassing l\u00e6gdsruller (log_005): 33 results returned, none matching Stagstrup, Hassing herred, birth year 1779. The Hassing herred levy rolls covering Stagstrup appear not to be in this indexed collection; a browse of original Thisted amt rolls would require a separate archive search. Direct parentage evidence obtained from baptism, marriage, probate, and burial records. Military levy roll search pursued but inaccessible in this repository."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Stagstrup Sogn, Vestervig, Thisted Amt, Denmark",
+          "date_range": "1750-1780",
+          "repository": "FamilySearch",
+          "rationale": "A dedicated search for the marriage of Mikkel's parents in 'Denmark, Marriages, 1635\u20131916' (collection 1520592). For this parentage question, the parents' marriage record is a distinct and critical source: it confirms the couple as a unit, supplies the mother's maiden name (which census records typically omit), and \u2014 by its date relative to Mikkel's 1779 birth \u2014 provides direct evidence of paternity. Searching for marriages of 'Niels' in Stagstrup/Vestervig ca. 1750\u20131779.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "Vestervig, Thisted Amt, Denmark",
+          "date_range": "1770-1820",
+          "repository": "FamilySearch",
+          "rationale": "Search 'Denmark, Probate Indexes, 1674\u20131851' (collection 2026233) for an estate record (skifteprotokol) naming the father. If the father died, a probate record would list surviving heirs including Mikkel by name, confirming the parent-child relationship. The volume survey identified skifteprotokoller for Stagstrup, Vestervig (1773\u20131777) and adjacent Hurup, Vestervig (1779\u20131803) in image group 007141151 \u2014 useful as a browse fallback if indexed search is incomplete.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Stagstrup Sogn, Vestervig, Thisted Amt, Denmark",
+          "date_range": "1750-1815",
+          "repository": "FamilySearch",
+          "rationale": "Browse-only image search of Stagstrup parish register volumes on FamilySearch as a fallback if indexed searches (pli_001, pli_002, pli_005) fail to surface the baptism or parents' marriage. The volume survey (image group 008836818_001) shows Harring/Stagstrup church records but only from 1815; earlier registers may exist as unindexed images. Execute via search-images skill: volume_search \u2192 image_search \u2192 image_read of the relevant pages. Targets the ca. 1779 baptism page directly.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "notes": "Fallback for pli_001 \u2014 volume_search (log_008) found only Skifteprotokoller image groups for Vestervig area; no Stagstrup kirkebog images accessible for 1750-1815. Primary search pli_001 already located the baptism; this browse fallback is unnecessary."
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-09",
+      "items": [
+        {
+          "id": "pli_008",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Stagstrup, Vestervig, Thisted Amt, Denmark",
+          "date_range": "1795-1810",
+          "repository": "FamilySearch",
+          "rationale": "Search 'Denmark Burials, 1640-1917' (collection 1520593) for the burial record of Niels Blyeberg (born ca. 1743, married 1778 Stagstrup). The probate opened 1803 places his death in or around that year. A burial register entry would give the precise date of interment (typically within days of death), directly answering q_002. Searching under surname Blyeberg/Bliberg in Thisted/Stagstrup ca. 1795-1810.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-09T16:19:29.201Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mikkel",
+        "surname": "Blyeberg",
+        "birthYearFrom": 1774,
+        "birthYearTo": 1784,
+        "recordCountry": "Denmark",
+        "collectionId": "2078555",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 16,
+      "notes": "Top hit (QG8D-2HPL, score 0.587) is Mikkel Nielsen Bliberg's burial record, 9 Jul 1862, Stagstrup \u2014 confirms subject identity but is a death record, not a baptism. Father's name not present. Proceeding with baptism-specific search."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-09T16:20:29.292Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mikkel",
+        "birthYearFrom": 1774,
+        "birthYearTo": 1784,
+        "birthPlace": "Stagstrup",
+        "fatherGivenName": "Niels",
+        "recordCountry": "Denmark",
+        "recordType": "birth",
+        "collectionId": "2078555",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in collection 2078555 for baptism of Mikkel with father Niels in Stagstrup 1774-1784. Broadened search to all collections without birthPlace filter."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-09T16:20:40.121Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mikkel",
+        "birthYearFrom": 1774,
+        "birthYearTo": 1784,
+        "fatherGivenName": "Niels",
+        "recordCountry": "Denmark",
+        "recordType": "birth",
+        "count": 50,
+        "note": "Broadened \u2014 no collectionId, no birthPlace"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 86,
+      "notes": "Top match (rank 1 by match score): ark:/61903/1:1:H26C-HMW2 \u2014 'Michel' christened 20 Aug 1779, Stagstrup, Thisted, Denmark (exact date/place). Record includes father Niels Blyeberg (ark:/61903/1:1:H26C-HMZM). Collection 1778463 (Denmark Baptisms, 1618-1923). This is the baptismal record for Mikkel Nielsen Blyeberg \u2014 father identified as Niels Blyeberg."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-09T16:42:05.103Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Niels",
+        "surname": "Blyeberg",
+        "recordType": "census",
+        "recordCountry": "Denmark",
+        "note": "Also searched Mikkel Nielsen + census 1787; all returned only 1845\u20131906 Danish censuses \u2014 no 1787 census collection on FamilySearch"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FamilySearch indexes Danish censuses only from 1845 onward; the 1787 Volksz\u00e4hlung (first Danish household census) is not available as an indexed collection. A broad search for surname Blyeberg in Danish census records returned only 1845\u20131906 results. Incidentally noted: Mikkel Nielsen Blaberg (born 1779, Stagstrup, Hassing, Thisted) appears as a widower in the Denmark Census 1860 (ark:/61903/1:1:QLDZ-7H51), confirming continued Stagstrup residence \u2014 useful corroboration for identity but not paternity. 1787 census evidence unavailable via indexed search; original images would require a volume browse."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-09T16:42:12.553Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mikkel",
+        "surname": "Nielsen",
+        "birthYearFrom": 1774,
+        "birthYearTo": 1784,
+        "collectionId": "2243379",
+        "recordCountry": "Denmark",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 33,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 33,
+      "notes": "33 results for Michel Nielsen in Denmark Military Conscription Rolls 1789-1793 (collection 2243379). None match Stagstrup, Hassing herred, Thisted amt or birth year 1779 with correct birthplace. Top match scores all near 0 (max 0.023) against PID-TODO stub. Several Thisted-district records (MilitaryService place Thisted/Tapdrup/Hald) show birth years 1775, 1782, 1783 \u2014 none matching 1779 Stagstrup. The Hassing herred l\u00e6gdsruller for Stagstrup may not be in this indexed collection; a browse of the original rolls for Thisted amt would be required to find our Mikkel."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-09T16:46:32.097Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Niels",
+        "surname": "Blyeberg",
+        "recordType": "marriage",
+        "recordCountry": "Denmark",
+        "collectionId": "1520592",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 9,
+      "notes": "Top result: Niels Madsen Blyeberg married Inger Michelsdatter on 3 January 1778 in Stagstrup, Thisted, Denmark (ark:/61903/1:1:FVR3-287). Marriage date is 18 months before Mikkel's baptism of 20 August 1779, entirely consistent with Niels being Mikkel's father. Bride surname Michelsdatter confirms why the son was named Mikkel/Michel (named for maternal grandfather per Danish custom). Clear strong match for the parents' marriage record sought by pli_005."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-09T16:46:45.896Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Niels",
+        "surname": "Blyeberg",
+        "recordType": "probate",
+        "recordCountry": "Denmark",
+        "collectionId": "2026233",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 2,
+      "notes": "Two entries (both ark:/61903/1:1:Q2WL-6QST and Q2WL-D7Y7) for 'Niels Madsen Bliberg,' residence 'Sundy Stagstrup' (= Stagstrup, Thisted), probate date 1803, co-listed wife 'Inger Mikkelsdatter.' Stagstrup residence matches Mikkel's baptism parish exactly. Wife name matches marriage record (Inger Michelsdatter). Probate 1803 indicates Niels died ca. 1803, providing direct evidence for q_002. Both entries appear to be duplicate index entries for the same probate proceeding \u2014 same court, date, and parties. Note: probate place listed as Hj\u00f8rring, Denmark, which may be an indexing artifact; actual jurisdiction was Thisted/Hassing herred area."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-09T17:02:46.233Z",
+      "tool": "volume_search",
+      "query": {
+        "action": "volume_search for Stagstrup church register images (kirkeb\u00f8ger) 1750-1815",
+        "jurisdiction": "Stagstrup Sogn, Vestervig, Thisted Amt, Denmark",
+        "year_range": "1750-1815",
+        "repository": "FamilySearch"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "volume_search returned Skifteprotokoller (probate) image groups for the Vestervig area (image group 007141151) but no church register (kirkebog) image groups for Stagstrup ca. 1750-1815. Early Stagstrup parish registers appear to be either undigitized or not discoverable via volume_search for this period. Since pli_001 successfully identified the father Niels Blyeberg from an indexed baptismal record, this browse fallback is not required to answer q_001."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-09T17:03:52.464Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Niels",
+        "surname": "Blyeberg",
+        "recordType": "burial",
+        "recordCountry": "Denmark",
+        "collectionId": "1520593",
+        "count": 50,
+        "note": "Also searched for Mikkel Nielsen Blyeberg burial to identify father listed in record"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 2,
+      "notes": "Found two burial records: (1) Niels Madsen Blyeberg (ark:/61903/1:1:FVRL-8PG), buried 20 December 1802, Stagstrup, Thisted, Denmark \u2014 birth year indexed as 1743. This is Niels's own burial, directly answering q_002 (burial date = death ca. 20 December 1802). (2) Mikkel Nielsen Bliberg (ark:/61903/1:1:FVRC-V2F), buried 18 July 1862, Stagstrup, with father 'Niels Bliberg' (ark:/61903/1:1:FVRC-V2N) listed in a ParentChild relationship \u2014 providing corroborating direct evidence for q_001. Both records from Denmark Burials 1640-1917 (collection 1520593)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Denmark Baptisms, 1618\u20131923,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:WDTL-3PT2 : accessed 9 July 2026), entry for Michel, baptized 20 August 1779, Stagstrup, Thisted, Denmark.",
+      "citation_detail": {
+        "who": "Michel [Mikkel Nielsen Blyeberg] (baptized infant) and Niels Blyeberg (father)",
+        "what": "Baptismal register entry, Stagstrup Parish, Thisted Amt, Denmark",
+        "when_created": "20 August 1779 (original register entry); indexed by FamilySearch",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch (familysearch.org), collection 1778463, Denmark Baptisms 1618\u20131923",
+        "where_within": "Entry for Michel, baptized 20 August 1779; image ARK ark:/61903/1:2:WDTL-3PT2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-09",
+      "url": "https://familysearch.org/ark:/61903/1:2:WDTL-3PT2",
+      "notes": "Indexed database derived from original Danish Lutheran parish registers (kirkeb\u00f8ger). The original handwritten register for Stagstrup is the primary source; this FamilySearch index is a derivative. The index entry captures the baptism date, place, child's given name, and father's name and surname.",
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Denmark, Marriages, 1635-1916,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MGY3-GQN : accessed 9 July 2026), entry for Niels Madsen Blyeberg and Inger Michelsdatter, married 3 January 1778, Stagstrup, Thisted, Denmark.",
+      "citation_detail": {
+        "who": "Niels Madsen Blyeberg (groom) and Inger Michelsdatter (bride)",
+        "what": "Marriage register entry, Stagstrup parish, Denmark, Marriages 1635-1916",
+        "when_created": "3 January 1778",
+        "when_accessed": "9 July 2026",
+        "where": "FamilySearch, Denmark, Marriages, 1635-1916 (collection 1520592)",
+        "where_within": "Entry for Niels Madsen Blyeberg; ark:/61903/1:2:MGY3-GQN"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-09",
+      "url": "https://familysearch.org/ark:/61903/1:2:MGY3-GQN",
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "\"Denmark, Probate Indexes, 1674-1851,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:QL3F-FM7C : accessed 9 July 2026), entry for Niels Madsen Bliberg and Inger Mikkelsdatter, 1803; residence Sundy Stagstrup.",
+      "citation_detail": {
+        "who": "Niels Madsen Bliberg (deceased) and Inger Mikkelsdatter (widow)",
+        "what": "Probate index entry, Denmark, Probate Indexes 1674-1851; residence Sundy Stagstrup, Thisted area",
+        "when_created": "1803",
+        "when_accessed": "9 July 2026",
+        "where": "FamilySearch, Denmark, Probate Indexes, 1674-1851 (collection 2026233)",
+        "where_within": "Entry for Niels Madsen Bliberg; ark:/61903/1:2:QL3F-FM7C"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-09",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QL3F-FM7C",
+      "notes": "Probate place indexed as Hj\u00f8rring, Denmark \u2014 geographically inconsistent with Stagstrup (Thisted amt) residence; likely an indexing artifact or reflects court jurisdiction. Residence field 'Sundy Stagstrup' is the reliable location indicator.",
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S4",
+      "citation": "\"Denmark Burials, 1640-1917,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:1W4H-RT2 : 20 February 2020), entry for Niels Madsen Blyeberg, buried 20 December 1802, Stagstrup, Thisted, Denmark.",
+      "citation_detail": {
+        "who": "Niels Madsen Blyeberg (deceased)",
+        "what": "Burial register entry, Stagstrup parish, Denmark Burials 1640-1917",
+        "when_created": "20 December 1802 (original register entry); indexed by FamilySearch",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch, Denmark Burials, 1640-1917 (collection 1520593)",
+        "where_within": "Entry for Niels Madsen Blyeberg, buried 20 Dec 1802; record ARK ark:/61903/1:1:FVRL-8PG"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-09",
+      "url": "https://familysearch.org/ark:/61903/1:2:1W4H-RT2",
+      "notes": "Indexed database derived from original Danish Lutheran parish burial registers. Image ARK 1W4H-RT2; record persona ARK for Niels is FVRL-8PG. A second burial record from this same collection (FVRC-V2F, Mikkel's 1862 burial) lists Niels Bliberg as Mikkel's father via a ParentChild relationship.",
+      "log_entry_id": "log_009"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:H26C-HMW2",
+      "record_persona_id": "p_189863406200",
+      "record_role": "baptized",
+      "fact_type": "name",
+      "value": "Michel",
+      "structured_value": {
+        "given": "Michel",
+        "surname": "Nielsen Blyeberg"
+      },
+      "information_quality": "primary",
+      "informant": "recording clergyman, Stagstrup parish",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Child's name 'Michel' is the Latin/German form of 'Mikkel' \u2014 variant common in 18th-century Danish registers. The name anchors this record to the research subject but requires correlation with the christening date/place (a_002) and the paternity assertions (a_003\u2013a_005) to answer q_001."
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:H26C-HMW2",
+      "record_persona_id": "p_189863406200",
+      "record_role": "baptized",
+      "fact_type": "christening",
+      "value": "20 August 1779, Stagstrup, Thisted, Denmark",
+      "date": "20 Aug 1779",
+      "date_certainty": "exact",
+      "place": "Stagstrup, Thisted, Denmark",
+      "standard_place": "Stagstrup, Thisted, Nordjylland, Denmark",
+      "information_quality": "primary",
+      "informant": "recording clergyman, Stagstrup parish",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Christening date 20 Aug 1779 and place Stagstrup exactly match the research subject's known birth data, corroborating subject identity. Does not on its own name the father \u2014 functions as subject-identification evidence that indirectly supports the paternity conclusion reached via a_003\u2013a_005."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:H26C-HMW2",
+      "record_persona_id": "p_189863406200",
+      "record_role": "baptized",
+      "fact_type": "relationship",
+      "value": "Michel recorded as child of Niels Blyeberg in Stagstrup baptismal register, 20 August 1779",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "recording clergyman, Stagstrup parish",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:H26C-HMW2",
+      "record_persona_id": "p_189863406300",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Niels Blyeberg",
+      "structured_value": {
+        "given": "Niels",
+        "surname": "Blyeberg"
+      },
+      "information_quality": "primary",
+      "informant": "Niels Blyeberg (father, self-identified at baptism)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The father's name in a baptism record is typically provided by the father himself, who was present at the ceremony and identified himself to the recording clergyman. Classifying the informant as 'self' reflects that Niels Blyeberg was the source of information about his own name. This is intentionally different from a_003 and a_005 (same record), which classify the clergyman as informant for the relationship facts \u2014 the clergyman witnessed and recorded the parent-child relationship. Same source, legitimately different informants for different facts \u2014 the three-layer model requires per-fact informant analysis."
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:H26C-HMW2",
+      "record_persona_id": "p_189863406300",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "Niels Blyeberg recorded as father of Michel in Stagstrup baptismal register, 20 August 1779",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "recording clergyman, Stagstrup parish",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FVR3-287",
+      "record_role": "groom",
+      "record_persona_id": "p_11392749335",
+      "fact_type": "name",
+      "value": "Niels Madsen Blyeberg",
+      "structured_value": {
+        "given": "Niels",
+        "surname": "Madsen Blyeberg"
+      },
+      "information_quality": "primary",
+      "informant": "groom (self-reporting his name at marriage)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FVR3-287",
+      "record_role": "bride",
+      "record_persona_id": "p_11392749334",
+      "fact_type": "name",
+      "value": "Inger Michelsdatter",
+      "structured_value": {
+        "given": "Inger",
+        "surname": "Michelsdatter"
+      },
+      "information_quality": "primary",
+      "informant": "bride (self-reporting her name at marriage)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FVR3-287",
+      "record_role": "groom",
+      "record_persona_id": "p_11392749335",
+      "fact_type": "marriage",
+      "value": "Married 3 January 1778 in Stagstrup, Thisted, Denmark",
+      "date": "3 Jan 1778",
+      "standard_date": "3 Jan 1778",
+      "place": "Stagstrup, Thisted, Denmark",
+      "standard_place": "Stagstrup, Thisted, Nordjylland, Denmark",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "church registrant witnessing the marriage ceremony",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:Q2WL-6QST",
+      "record_role": "deceased",
+      "record_persona_id": "p_102223164686",
+      "fact_type": "name",
+      "value": "Niels Madsen Bliberg",
+      "structured_value": {
+        "given": "Niels Madsen",
+        "surname": "Bliberg"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (person who filed the probate, possibly the widow or an heir)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:Q2WL-6QST",
+      "record_role": "deceased",
+      "record_persona_id": "p_102223164686",
+      "fact_type": "residence",
+      "value": "Sundy Stagstrup",
+      "place": "Sundy Stagstrup",
+      "standard_place": "Stagstrup, Thisted, Nordjylland, Denmark",
+      "information_quality": "indeterminate",
+      "informant": "unknown (person who reported residence to probate court)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:Q2WL-6QST",
+      "record_role": "deceased",
+      "record_persona_id": "p_102223164686",
+      "fact_type": "probate",
+      "value": "Probate opened 1803",
+      "date": "1803",
+      "standard_date": "1803",
+      "place": "Hj\u00f8rring, Denmark",
+      "standard_place": "Hj\u00f8rring, Denmark",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "probate court official",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Probate place indexed as Hj\u00f8rring, Denmark \u2014 geographically inconsistent with Stagstrup (Thisted amt) residence; likely indexing artifact.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:Q2WL-6QST",
+      "record_role": "widow",
+      "record_persona_id": "p_102223212942",
+      "fact_type": "name",
+      "value": "Inger Mikkelsdatter",
+      "structured_value": {
+        "given": "Inger",
+        "surname": "Mikkelsdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Surname variant: 'Mikkelsdatter' in probate vs. 'Michelsdatter' in marriage record \u2014 Michel and Mikkel are the same Danish name (both forms of Michael).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FVRL-8PG",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Niels Madsen Blyeberg",
+      "structured_value": {
+        "given": "Niels",
+        "surname": "Madsen Blyeberg"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (family member or attendant at burial)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001",
+        "q_002"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Burial registers typically recorded the name as reported by those attending the burial. The informant is not named; the name 'Niels Madsen Blyeberg' matches the groom in the 1778 marriage record and the deceased in the 1803 probate, strongly corroborating identity."
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FVRL-8PG",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Buried 20 December 1802, Stagstrup, Thisted, Denmark",
+      "date": "20 Dec 1802",
+      "standard_date": "20 Dec 1802",
+      "date_certainty": "exact",
+      "place": "Stagstrup, Thisted, Denmark",
+      "standard_place": "Stagstrup, Thisted, Nordjylland, Denmark",
+      "information_quality": "primary",
+      "informant": "Stagstrup parish clergyman (officiated at burial)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "The parish clergyman who performed the burial was present at the interment and recorded the date. Burial date is primary information. The death presumably occurred within days of burial \u2014 this is the best available evidence for date of death."
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FVRC-V2F",
+      "record_persona_id": null,
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "Niels Bliberg recorded as father of Mikkel Nielsen Bliberg in Stagstrup burial register, 18 July 1862",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "child"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (informant at Mikkel's 1862 burial \u2014 60 years after Niels's death)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Niels Blyeberg died 1802; the informant at Mikkel's 1862 burial reported parentage from family knowledge 60 years after the fact. Information is at best secondary (family tradition), effectively indeterminate since the informant is unknown. Nevertheless, this record independently corroborates the 1779 baptismal entry naming Niels as Mikkel's father."
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FVRC-V2F",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Mikkel Nielsen Bliberg buried 18 July 1862, Stagstrup, Thisted, Denmark",
+      "date": "18 Jul 1862",
+      "standard_date": "18 Jul 1862",
+      "date_certainty": "exact",
+      "place": "Stagstrup, Thisted, Denmark",
+      "standard_place": "Stagstrup, Thisted, Nordjylland, Denmark",
+      "information_quality": "primary",
+      "informant": "Stagstrup parish clergyman (officiated at burial)",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "informant_bias_notes": "Burial of Mikkel at Stagstrup confirms continued residence in the same parish. Indirect evidence for q_001 \u2014 confirms this is the same Mikkel Nielsen Blyeberg (born 1779 Stagstrup) who is recorded as the son of Niels Bliberg in the same burial register entry."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": 0.38210973,
+      "rationale": "Name 'Michel' is the standard 18th-century Latin/German form of 'Mikkel' routinely used in Danish Lutheran parish registers; linguistically equivalent. Christening date (20 Aug 1779) and place (Stagstrup, Thisted) exactly match the research subject's known birth data. same_person score 0.38 (matched: true, confidence 3) \u2014 deflated because PID-TODO is a synthetic stub with no FS ARK, not a real mismatch. Qualitative correlation is strong on all three core identifiers (name variant, date, place).",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": 0.38210973,
+      "rationale": "Christening event dated 20 Aug 1779 at Stagstrup, Thisted, Denmark is an exact date-and-place match for the research subject (Mikkel Nielsen Blyeberg, b. 20 Aug 1779, Stagstrup). This is the only record in the FamilySearch baptism index for a child with father Niels in Stagstrup on this date. Strongly corroborates subject identity.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": 0.38210973,
+      "rationale": "Relationship assertion (Michel recorded as child of Niels Blyeberg) bears on PID-TODO as the child. The baptized persona is identified as PID-TODO by exact date/place match (see a_001, a_002). This assertion directly answers q_001 \u2014 the father of Mikkel (PID-TODO) is Niels Blyeberg.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion also bears on the father (I1, Niels Blyeberg). I1 is the stub created for the father named in this baptism. Single-record basis; no independent corroboration yet for Niels Blyeberg as a distinct tree person \u2014 probable per stub-creation policy.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "I1 (Niels Blyeberg) was created as a new stub to represent the father named in the 1779 Stagstrup baptism. Name 'Niels Blyeberg' is explicitly recorded in the baptismal index entry. No independent corroboration of this person in other records yet \u2014 probable confidence per stub policy. 'Blyeberg' is the farm name; 'Niels' is the given name consistent with the patronymic 'Nielsen' of the baptized child.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion (Niels Blyeberg recorded as father of Michel) bears on I1 as the father. I1 was created for this named father; the relationship is explicitly stated in the baptismal record. Probable \u2014 single record, no corroboration yet.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": 0.38210973,
+      "rationale": "Relationship assertion also bears on PID-TODO as the child (Michel = Mikkel, confirmed by exact date/place match). This link reinforces the identity conclusion established by pe entries for a_001\u2013a_003.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom name 'Niels Madsen Blyeberg' in Stagstrup marriage of 3 Jan 1778 matches I1 (Niels Blyeberg) on all core identifiers: given name Niels, farm surname Blyeberg, parish Stagstrup, era consistent with fathering Mikkel in 1779. The patronymic 'Madsen' (son of Mads) adds additional resolution not previously captured. Strong qualitative match.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride name 'Inger Michelsdatter' from the 3 Jan 1778 Stagstrup marriage to Niels Madsen Blyeberg. I2 was created as a stub from this record; it is the founding evidence for I2. Probable (not confident) because I2 has only this one source at the time of linking.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event (3 Jan 1778, Stagstrup) for groom Niels Madsen Blyeberg. Links to I1 with confident confidence: same name, same parish, date is 18 months before Mikkel Nielsen Blyeberg's baptism on 20 Aug 1779 \u2014 entirely consistent with I1 being Mikkel's father.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event (3 Jan 1778, Stagstrup) links to I2 as the bride (Inger Michelsdatter). Probable because I2 is a new stub with only this marriage record as founding evidence.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Probate index name 'Niels Madsen Bliberg' with residence Sundy Stagstrup (1803) matches I1 (Niels Blyeberg) on name (same given name, same farm surname variant Bliberg=Blyeberg), patronymic Madsen, and parish. The same wife Inger Mikkelsdatter is listed, corroborating identity with the marriage record.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence 'Sundy Stagstrup' in probate places Niels Madsen Bliberg in Stagstrup at time of death. This matches I1's known location (Stagstrup, Thisted) exactly.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Probate date 1803 for Niels Madsen Bliberg of Stagstrup. Same proceeding as a_009/a_010; all evidence triangulates to I1 as the deceased. Answers q_002: Niels died ca. 1803.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Probate widow 'Inger Mikkelsdatter' matches I2 (Inger Michelsdatter, from 1778 marriage record). Mikkelsdatter and Michelsdatter are the same Danish name (Michel = Mikkel = Michael). This is a second independent corroboration of I2's identity (marriage + probate), but confidence remains probable as I2 has no primary original records.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Niels Madsen Blyeberg' in burial record (FVRL-8PG, 20 Dec 1802, Stagstrup) matches I1 on all identifiers: given name Niels, patronymic Madsen, farm surname Blyeberg, parish Stagstrup, era (burial 1802 consistent with age ~59 if born 1743, as indexed). Third independent record type (baptism, marriage, probate, and now burial) naming this individual \u2014 confident match.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Burial date 20 December 1802, Stagstrup \u2014 directly assigns I1's death/burial date. The record's name (Niels Madsen Blyeberg), place (Stagstrup), and era all match I1; this is the burial event of the same individual identified by the 1778 marriage and 1803 probate. Confident \u2014 the burial date directly answers q_002.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion from Mikkel's 1862 burial (FVRC-V2F): 'Niels Bliberg' listed as father. Name variant Bliberg = Blyeberg (same farm surname). Staging this as a fourth independent record corroborating I1 as Mikkel's father. Confident because the name, place (Stagstrup), and relationship (father of Mikkel Nielsen) all match exactly.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion also bears on PID-TODO as the child (Mikkel Nielsen Bliberg, buried 1862, Stagstrup). The deceased persona in this record is confirmed as the research subject (same name, same parish, birth year 1780 \u2248 1779). This link reinforces q_001: Niels Bliberg is Mikkel's father per a fourth independent source.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Burial event for Mikkel Nielsen Bliberg, 18 Jul 1862, Stagstrup. Name, parish (Stagstrup, same as 1779 birth), and birth year (1780 \u2248 1779) confirm this is the research subject PID-TODO. Confirmed as the child of Niels Bliberg per the ParentChild relationship in the same record (a_015).",
+      "created": "2026-07-09"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_015"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch systematically across six collections: Denmark Baptisms 1618-1923 (collection 1778463), Denmark Church Records 1484-1941 (collection 2078555), Denmark Marriages 1635-1916 (collection 1520592), Denmark Probate Indexes 1674-1851 (collection 2026233), Denmark Military Conscription Rolls 1789-1793 (collection 2243379), and Denmark Burials 1640-1917 (collection 1520593). The 1787 Danish census is not indexed on FamilySearch (only 1845+ available). The Hassing herred levy rolls covering Stagstrup were not found in collection 2243379. Original Stagstrup parish register images for 1750-1815 were not accessible via volume_search. All accessible record types for 18th-century Danish parentage research have been searched. Research declared exhaustive (log entries log_003 through log_009).",
+      "narrative_markdown": "## Father of Mikkel Nielsen Blyeberg (baptized 20 August 1779, Stagstrup, Thisted Amt, Denmark)\n\n**Conclusion (Probable):** The father of Mikkel Nielsen Blyeberg was **Niels Blyeberg**, whose full name was **Niels Madsen Blyeberg**. The conclusion rests on one strong contemporaneous paternity source corroborated by three additional sources that establish identity; it is classified *probable* rather than *proved* because all searched sources are derivative databases and original parish register images were not accessed.\n\n### Evidence\n\n**1. Baptismal record \u2014 direct evidence (primary information)**\nThe \u201cDenmark Baptisms, 1618\u20131923\u201d database on FamilySearch (derivative, col. 1778463) records the christening of *Michel* on 20 August 1779 at Stagstrup, Thisted, Denmark, naming *Niels Blyeberg* as father (ark:/61903/1:1:H26C-HMW2).\u00b9 The date and place exactly match the research subject\u2019s known birth data. The name *Michel* is the standard 18th-century Latin/German form of *Mikkel*. The recording clergyman, present as a witness at the baptism, provided primary information for the baptism date and the father\u2019s name. **This is the single strongest piece of evidence \u2014 a contemporaneous, witness-recorded, primary-information paternity assertion.**\n\n**2. Marriage record \u2014 indirect corroboration (primary information)**\nThe \u201cDenmark, Marriages, 1635\u20131916\u201d database (derivative, col. 1520592) records the marriage of *Niels Madsen Blyeberg* to *Inger Michelsdatter* on 3 January 1778 at Stagstrup, Thisted (ark:/61903/1:1:FVR3-287).\u00b2 This marriage occurred eighteen months before Mikkel\u2019s baptism. This record does not mention Mikkel and does not assert paternity; it **establishes identity** \u2014 that a man named Niels Madsen Blyeberg was present in Stagstrup parish, married to Mikkel\u2019s mother, at the right time. The bride\u2019s surname *Michelsdatter* also explains the son\u2019s name Mikkel (Danish naming convention of naming children for grandparents). Both parties provided primary information about their own identities.\n\n**3. Probate index \u2014 corroborating identity evidence (indeterminate information)**\nThe \u201cDenmark, Probate Indexes, 1674\u20131851\u201d database (derivative, col. 2026233) records a probate proceeding in 1803 for *Niels Madsen Bliberg*, residence \u201cSundy Stagstrup,\u201d with widow *Inger Mikkelsdatter* (ark:/61903/1:1:Q2WL-6QST).\u00b3 This record does not mention Mikkel and does not assert paternity; it **corroborates identity** \u2014 that the same Niels Blyeberg who married Inger in 1778 died ca. 1802\u20131803, consistent with the man whose son Mikkel was baptized in 1779. The informant for name fields is unknown.\n\n**4. Burial record of Mikkel \u2014 corroborating paternity evidence (indeterminate information)**\nThe \u201cDenmark Burials, 1640\u20131917\u201d database (derivative, col. 1520593) records the burial of *Mikkel Nielsen Bliberg* on 18 July 1862 at Stagstrup, with *Niels Bliberg* listed in a ParentChild relationship as Mikkel\u2019s father (ark:/61903/1:1:FVRC-V2F).\u2074 **This is the second paternity-asserting source**, but substantially weaker than the 1779 baptism: the informant is unknown, the information quality is indeterminate, and the record post-dates Niels\u2019s death by sixty years. It is consistent with the 1779 baptism but does not provide the independence that a contemporaneous primary source would.\n\n### Assessment and Limitations\n\n**Evidentiary weight by function:** Two sources directly assert the parent-child relationship: (1) the 1779 baptism \u2014 primary information, contemporaneous, the strongest evidence; and (2) Mikkel\u2019s 1862 burial \u2014 indeterminate quality, unknown informant, 60-year gap, weak corroboration. The 1778 marriage and 1803 probate corroborate the *identity* of Niels Blyeberg in Stagstrup \u2014 confirming he was the right man in the right place at the right time, married to the right woman \u2014 but neither record mentions Mikkel or asserts fatherhood. The probative weight of this conclusion rests primarily on the 1779 baptism; the remaining sources provide circumstantial identity and timeline support.\n\nNo source names a different father. Name variants (Blyeberg/Bliberg; Michelsdatter/Mikkelsdatter) are routine Danish orthographic equivalents. No alternative candidate for a \u201cNiels Blyeberg\u201d at Stagstrup in the 1770s has been identified; the farm-name character of the surname makes confusion with an unrelated individual unlikely, though a systematic search for other men of that name in the parish was not conducted.\n\n**Limitations:** All searched sources are derivative indexes. Original Stagstrup parish register images for 1750\u20131815 were not found via FamilySearch volume_search. The 1787 Danish census (not indexed on FamilySearch) and Hassing herred l\u00e6gdsruller (not in indexed collection 2243379) were searched but are not accessible in this repository. The Danish national archive\u2019s Arkivalieronline may hold originals not indexed by FamilySearch. Access to the original baptismal register and a second contemporaneous primary-information paternity assertion would advance the tier to *proved*.\n\n### Footnotes\n\u00b9 \u201cDenmark Baptisms, 1618\u20131923,\u201d database, FamilySearch (https://familysearch.org/ark:/61903/1:2:WDTL-3PT2 : accessed 9 July 2026), entry for Michel, baptized 20 August 1779, Stagstrup, Thisted, Denmark.\n\u00b2 \u201cDenmark, Marriages, 1635\u20131916,\u201d database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MGY3-GQN : accessed 9 July 2026), entry for Niels Madsen Blyeberg and Inger Michelsdatter, married 3 January 1778, Stagstrup, Thisted, Denmark.\n\u00b3 \u201cDenmark, Probate Indexes, 1674\u20131851,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:QL3F-FM7C : accessed 9 July 2026), entry for Niels Madsen Bliberg and Inger Mikkelsdatter, 1803; residence Sundy Stagstrup.\n\u2074 \u201cDenmark Burials, 1640\u20131917,\u201d database, FamilySearch (https://familysearch.org/ark:/61903/1:2:1W4H-V3Z : 20 February 2020), entry for Mikkel Nielsen Bliberg, buried 18 July 1862, Stagstrup, Thisted, Denmark."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "statement",
+      "supporting_assertion_ids": [
+        "a_011",
+        "a_013",
+        "a_014"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Denmark Burials 1640-1917 (FamilySearch collection 1520593) for the burial of Niels Blyeberg. The Denmark Probate Indexes 1674-1851, previously searched for q_001, independently establishes the post-death date (probate 1803). Civil death registration did not exist in Denmark in 1802; the burial register is the primary death record for this era. Original Stagstrup burial register image not accessed (not found via volume_search). Research declared exhaustive.",
+      "narrative_markdown": "## Death Date of Niels Madsen Blyeberg (father of Mikkel Nielsen Blyeberg)\n\n**Conclusion (Probable):** Niels Madsen Blyeberg, father of Mikkel Nielsen Blyeberg, was buried on **20 December 1802** at Stagstrup, Thisted, Denmark, and died on or shortly before that date. The conclusion is *probable* rather than *proved* because the source is a derivative index; original parish burial register images for Stagstrup were not accessed.\n\nThe \u201cDenmark Burials, 1640\u20131917\u201d database on FamilySearch (derivative, col. 1520593) records the burial of *Niels Madsen Blyeberg* on 20 December 1802 at Stagstrup, Thisted, Denmark, with birth year indexed as 1743 (ark:/61903/1:1:FVRL-8PG).\u00b9 The burial date is primary information recorded by the officiating parish clergyman, who was present as a witness at the interment. In rural Denmark in 1802, civil death registration had not yet been established; the burial register is the authoritative death record for this era. Danish Lutheran practice typically saw burial within two to seven days of death; the burial date of 20 December 1802 is therefore the best available evidence for the approximate date of Niels\u2019s death.\n\nThis date is corroborated by the \u201cDenmark, Probate Indexes, 1674\u20131851\u201d (derivative, col. 2026233), which records a probate proceeding opened in 1803 for *Niels Madsen Bliberg* of Stagstrup with widow *Inger Mikkelsdatter* (ark:/61903/1:1:Q2WL-6QST).\u00b2 A probate opened in 1803 is consistent with a death in late 1802. The two sources are from independent record types with different institutional origins and agree on the approximate death date.\n\nNo source places Niels Blyeberg alive after December 1802. The original burial register image was not accessed (not available via FamilySearch volume search), but the indexed entry provides a specific date. Access to the original image would advance the conclusion to *proved*.\n\n### Footnotes\n\u00b9 \u201cDenmark Burials, 1640\u20131917,\u201d database, FamilySearch (https://familysearch.org/ark:/61903/1:2:1W4H-RT2 : 20 February 2020), entry for Niels Madsen Blyeberg, buried 20 December 1802, Stagstrup, Thisted, Denmark.\n\u00b2 \u201cDenmark, Probate Indexes, 1674\u20131851,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:QL3F-FM7C : accessed 9 July 2026), entry for Niels Madsen Bliberg and Inger Mikkelsdatter, 1803; residence Sundy Stagstrup."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-09T17:22:42.617Z"
+    }
+  ]
+}

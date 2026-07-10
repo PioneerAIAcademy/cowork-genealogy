@@ -1,0 +1,14 @@
+{
+  "tool": "record_search",
+  "description": "record_search scoped to the HISTORICAL country (Hungary) for Jan Gallo — returns nil, because FamilySearch indexes the Turócz-County (today Slovakia) parish record under Slovakia, not Hungary. This is the wrong-country search; the modern-country search (Slovakia) is served the hit fixture. Exercises the modern-jurisdiction lever: after this nil, the skill should retry under the present-day country.",
+  "args": { "surname": "Gallo", "recordCountry": "Hungary" },
+  "response": {
+    "query": { "surname": "Gallo", "givenName": "Jan", "recordCountry": "Hungary" },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
