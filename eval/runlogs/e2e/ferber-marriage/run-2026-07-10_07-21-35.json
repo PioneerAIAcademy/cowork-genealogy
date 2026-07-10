@@ -1,0 +1,3750 @@
+{
+  "test_id": "ferber-marriage",
+  "captured_at": "2026-07-10_07-21-35",
+  "verdict": "pass",
+  "stop_reason": "completed",
+  "judge_output": {
+    "per_finding": [
+      {
+        "finding_id": "f1",
+        "matched": "true",
+        "agent_evidence": "Relationship R5 in final_tree.gedcomx.json couples I1 (William Hubert Ferber) with I5 (Emma Becker), with Marriage fact dated 1890 in Hamilton, Ohio. I5 has names with given 'Emma' and surname 'Becker' (BirthName). I1 is the subject person (William Hubert Ferber).",
+        "notes": "The agent recovered Emma Becker as William Hubert Ferber's wife. The couple relationship is documented in the tree with marriage date and place. Emma's maiden name 'Becker' is preserved as her birth name in person I5. Birth date for Emma appears as 'March 1871' in the tree (fact F20), which is a minor discrepancy from the expected 'March 25, 1870' (only the month and year are fully aligned, not the specific day or year), but the essential identification is correct."
+      },
+      {
+        "finding_id": "f2",
+        "matched": "true",
+        "agent_evidence": "Relationship R5 includes a Marriage fact dated '1890' in standard_date, with place 'Hamilton, Ohio, United States'. The marriage is between I1 (William Hubert Ferber) and I5 (Emma Becker).",
+        "notes": "The agent recovered the marriage year (1890) and place (Hamilton, Ohio) as required. The tree does not include the exact day '10 September 1890', but the prompt notes that recovering the year and county is sufficient and the exact day is a bonus. Both required elements are present in relationship R5."
+      }
+    ],
+    "recall_required": 1.0,
+    "recall_total": 1.0,
+    "verdict": "pass",
+    "rationale": "The agent successfully recovered both required findings. Finding f1 (Emma Becker as William Hubert Ferber's spouse) is present in the final tree as relationship R5, coupling I1 and I5, with Emma correctly named as 'Emma Becker' with maiden name 'Becker'. Finding f2 (the 1890 marriage in Hamilton County, Ohio) is documented in the same relationship R5 with the correct date (1890) and place (Hamilton, Ohio, United States). Minor discrepancies in Emma's birth date (March 1871 vs. March 25, 1870) do not prevent the core findings from being matched, as they represent refinements rather than contradictions of the essential answer. Both required findings are present and accurate; recall is complete.",
+    "proof_quality": {
+      "score": 3,
+      "exhaustiveness": "yes",
+      "conflicts_addressed": "yes",
+      "corroboration": "independent",
+      "tier_appropriate": "yes",
+      "rationale": "The proof summary demonstrates sound methodology and reasoning. Exhaustiveness: the agent searched multiple source types (Ohio County Marriages, 1900 Census, Ohio County Death Records, Ohio County Births) and explicitly documented why the birth record search yielded no result (pre-1908 registration gaps). Conflicts_addressed: the agent identified and resolved a minor discrepancy in William's birth year between the death record (1870) and other sources (1869), correctly characterizing it as within normal rounding tolerance. Corroboration: the conclusion rests on two genuinely independent sources (marriage register and 1900 Census) created by different institutions through different processes at different times, with indirect support from the death record. The child Charles Ferber (born June 1891) serves as corroborating context. Tier_appropriate: the agent justifies the 'probable' tier by noting that access to the original register image and discovery of a birth record for Charles naming Emma as mother would advance it to 'proved', but the two independent direct sources with consistent facts and lack of conflicts reasonably support 'probable' rather than 'possible'. The narrative is well-structured, cites sources precisely, and explains the reasoning transparently."
+    }
+  },
+  "usage": {
+    "duration_ms": 2520713,
+    "duration_api_ms": 2490210,
+    "num_turns": 103,
+    "is_error": false,
+    "stop_reason": "end_turn",
+    "total_cost_usd": 5.839099600000002,
+    "usage": {
+      "input_tokens": 150,
+      "cache_creation_input_tokens": 323995,
+      "cache_read_input_tokens": 7573250,
+      "output_tokens": 108426,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 323995,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 351,
+          "cache_read_input_tokens": 166182,
+          "cache_creation_input_tokens": 421,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 421
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "continue_nudges": 1,
+    "session_id": "206e4859-8de1-4bfe-b56d-58547fce03cb",
+    "resumes": 0,
+    "resume_on_stall": true,
+    "timeline": [
+      [
+        2.9,
+        "system:init"
+      ],
+      [
+        8.7,
+        "assistant"
+      ],
+      [
+        10.3,
+        "assistant"
+      ],
+      [
+        10.3,
+        "tool_result"
+      ],
+      [
+        13.6,
+        "assistant"
+      ],
+      [
+        15.5,
+        "assistant"
+      ],
+      [
+        15.5,
+        "tool_result"
+      ],
+      [
+        19.7,
+        "assistant"
+      ],
+      [
+        20.2,
+        "tool_result"
+      ],
+      [
+        20.3,
+        "assistant"
+      ],
+      [
+        20.4,
+        "tool_result"
+      ],
+      [
+        29.4,
+        "assistant"
+      ],
+      [
+        29.4,
+        "assistant"
+      ],
+      [
+        29.6,
+        "assistant"
+      ],
+      [
+        29.6,
+        "tool_result"
+      ],
+      [
+        29.6,
+        "tool_result"
+      ],
+      [
+        32.6,
+        "assistant"
+      ],
+      [
+        35.0,
+        "assistant"
+      ],
+      [
+        35.5,
+        "tool_result"
+      ],
+      [
+        35.8,
+        "assistant"
+      ],
+      [
+        35.8,
+        "tool_result"
+      ],
+      [
+        54.3,
+        "assistant"
+      ],
+      [
+        54.3,
+        "assistant"
+      ],
+      [
+        54.3,
+        "tool_result"
+      ],
+      [
+        61.5,
+        "assistant"
+      ],
+      [
+        69.1,
+        "assistant"
+      ],
+      [
+        69.1,
+        "tool_result"
+      ],
+      [
+        73.0,
+        "assistant"
+      ],
+      [
+        73.4,
+        "assistant"
+      ],
+      [
+        73.8,
+        "assistant"
+      ],
+      [
+        73.8,
+        "tool_result"
+      ],
+      [
+        73.8,
+        "tool_result"
+      ],
+      [
+        80.7,
+        "assistant"
+      ],
+      [
+        82.7,
+        "assistant"
+      ],
+      [
+        82.9,
+        "tool_result"
+      ],
+      [
+        91.0,
+        "assistant"
+      ],
+      [
+        91.4,
+        "assistant"
+      ],
+      [
+        91.4,
+        "tool_result"
+      ],
+      [
+        96.7,
+        "assistant"
+      ],
+      [
+        97.1,
+        "assistant"
+      ],
+      [
+        97.2,
+        "assistant"
+      ],
+      [
+        103.6,
+        "tool_result"
+      ],
+      [
+        104.3,
+        "tool_result"
+      ],
+      [
+        111.0,
+        "assistant"
+      ],
+      [
+        112.0,
+        "assistant"
+      ],
+      [
+        112.2,
+        "assistant"
+      ],
+      [
+        115.2,
+        "tool_result"
+      ],
+      [
+        124.1,
+        "tool_result"
+      ],
+      [
+        140.1,
+        "assistant"
+      ],
+      [
+        140.2,
+        "assistant"
+      ],
+      [
+        140.2,
+        "tool_result"
+      ],
+      [
+        175.4,
+        "assistant"
+      ],
+      [
+        175.9,
+        "assistant"
+      ],
+      [
+        197.9,
+        "assistant"
+      ],
+      [
+        197.9,
+        "tool_result"
+      ],
+      [
+        208.7,
+        "assistant"
+      ],
+      [
+        208.8,
+        "assistant"
+      ],
+      [
+        208.8,
+        "assistant"
+      ],
+      [
+        208.9,
+        "tool_result"
+      ],
+      [
+        208.9,
+        "tool_result"
+      ],
+      [
+        219.7,
+        "assistant"
+      ],
+      [
+        219.7,
+        "assistant"
+      ],
+      [
+        219.8,
+        "tool_result"
+      ],
+      [
+        226.0,
+        "assistant"
+      ],
+      [
+        226.5,
+        "assistant"
+      ],
+      [
+        230.0,
+        "assistant"
+      ],
+      [
+        231.6,
+        "tool_result"
+      ],
+      [
+        243.6,
+        "assistant"
+      ],
+      [
+        243.9,
+        "assistant"
+      ],
+      [
+        246.8,
+        "assistant"
+      ],
+      [
+        249.4,
+        "tool_result"
+      ],
+      [
+        261.4,
+        "assistant"
+      ],
+      [
+        261.4,
+        "assistant"
+      ],
+      [
+        261.7,
+        "assistant"
+      ],
+      [
+        261.7,
+        "tool_result"
+      ],
+      [
+        266.2,
+        "assistant"
+      ],
+      [
+        269.4,
+        "assistant"
+      ],
+      [
+        269.4,
+        "tool_result"
+      ],
+      [
+        281.5,
+        "assistant"
+      ],
+      [
+        281.5,
+        "assistant"
+      ],
+      [
+        287.1,
+        "assistant"
+      ],
+      [
+        287.1,
+        "tool_result"
+      ],
+      [
+        292.5,
+        "assistant"
+      ],
+      [
+        292.5,
+        "tool_result"
+      ],
+      [
+        297.7,
+        "assistant"
+      ],
+      [
+        298.6,
+        "assistant"
+      ],
+      [
+        300.0,
+        "assistant"
+      ],
+      [
+        300.0,
+        "tool_result"
+      ],
+      [
+        300.0,
+        "tool_result"
+      ],
+      [
+        438.3,
+        "assistant"
+      ],
+      [
+        440.8,
+        "assistant"
+      ],
+      [
+        441.1,
+        "assistant"
+      ],
+      [
+        441.1,
+        "tool_result"
+      ],
+      [
+        466.4,
+        "assistant"
+      ],
+      [
+        466.4,
+        "assistant"
+      ],
+      [
+        489.4,
+        "assistant"
+      ],
+      [
+        489.4,
+        "tool_result"
+      ],
+      [
+        522.9,
+        "assistant"
+      ],
+      [
+        523.6,
+        "assistant"
+      ],
+      [
+        526.5,
+        "assistant"
+      ],
+      [
+        526.5,
+        "tool_result"
+      ],
+      [
+        532.8,
+        "assistant"
+      ],
+      [
+        533.3,
+        "assistant"
+      ],
+      [
+        552.5,
+        "assistant"
+      ],
+      [
+        552.6,
+        "tool_result"
+      ],
+      [
+        570.8,
+        "assistant"
+      ],
+      [
+        571.3,
+        "assistant"
+      ],
+      [
+        574.0,
+        "assistant"
+      ],
+      [
+        574.0,
+        "tool_result"
+      ],
+      [
+        586.9,
+        "assistant"
+      ],
+      [
+        589.8,
+        "assistant"
+      ],
+      [
+        589.8,
+        "tool_result"
+      ],
+      [
+        600.5,
+        "system:notification"
+      ],
+      [
+        600.5,
+        "assistant"
+      ],
+      [
+        600.7,
+        "assistant"
+      ],
+      [
+        600.9,
+        "tool_result"
+      ],
+      [
+        600.9,
+        "tool_result"
+      ],
+      [
+        666.6,
+        "assistant"
+      ],
+      [
+        670.4,
+        "assistant"
+      ],
+      [
+        676.2,
+        "assistant"
+      ],
+      [
+        676.2,
+        "tool_result"
+      ],
+      [
+        680.6,
+        "assistant"
+      ],
+      [
+        681.6,
+        "assistant"
+      ],
+      [
+        682.4,
+        "assistant"
+      ],
+      [
+        682.4,
+        "tool_result"
+      ],
+      [
+        682.4,
+        "tool_result"
+      ],
+      [
+        790.8,
+        "assistant"
+      ],
+      [
+        792.5,
+        "assistant"
+      ],
+      [
+        795.7,
+        "assistant"
+      ],
+      [
+        795.7,
+        "tool_result"
+      ],
+      [
+        800.6,
+        "assistant"
+      ],
+      [
+        801.3,
+        "assistant"
+      ],
+      [
+        821.9,
+        "assistant"
+      ],
+      [
+        822.0,
+        "tool_result"
+      ],
+      [
+        832.9,
+        "assistant"
+      ],
+      [
+        832.9,
+        "assistant"
+      ],
+      [
+        832.9,
+        "assistant"
+      ],
+      [
+        832.9,
+        "tool_result"
+      ],
+      [
+        832.9,
+        "tool_result"
+      ],
+      [
+        838.2,
+        "assistant"
+      ],
+      [
+        838.5,
+        "assistant"
+      ],
+      [
+        838.5,
+        "tool_result"
+      ],
+      [
+        842.9,
+        "assistant"
+      ],
+      [
+        845.4,
+        "assistant"
+      ],
+      [
+        845.9,
+        "tool_result"
+      ],
+      [
+        846.4,
+        "assistant"
+      ],
+      [
+        846.9,
+        "tool_result"
+      ],
+      [
+        847.1,
+        "assistant"
+      ],
+      [
+        847.1,
+        "tool_result"
+      ],
+      [
+        858.4,
+        "assistant"
+      ],
+      [
+        859.7,
+        "assistant"
+      ],
+      [
+        860.1,
+        "assistant"
+      ],
+      [
+        860.2,
+        "tool_result"
+      ],
+      [
+        860.2,
+        "tool_result"
+      ],
+      [
+        881.0,
+        "assistant"
+      ],
+      [
+        882.1,
+        "assistant"
+      ],
+      [
+        882.2,
+        "tool_result"
+      ],
+      [
+        934.9,
+        "assistant"
+      ],
+      [
+        942.9,
+        "assistant"
+      ],
+      [
+        943.4,
+        "assistant"
+      ],
+      [
+        943.4,
+        "tool_result"
+      ],
+      [
+        943.4,
+        "tool_result"
+      ],
+      [
+        967.1,
+        "assistant"
+      ],
+      [
+        967.8,
+        "assistant"
+      ],
+      [
+        971.1,
+        "assistant"
+      ],
+      [
+        972.7,
+        "tool_result"
+      ],
+      [
+        987.0,
+        "assistant"
+      ],
+      [
+        987.1,
+        "assistant"
+      ],
+      [
+        993.1,
+        "assistant"
+      ],
+      [
+        995.0,
+        "tool_result"
+      ],
+      [
+        995.0,
+        "system:status"
+      ],
+      [
+        1106.2,
+        "system:status"
+      ],
+      [
+        1106.3,
+        "system:compact_boundary"
+      ],
+      [
+        1106.3,
+        "tool_result"
+      ],
+      [
+        1112.0,
+        "assistant"
+      ],
+      [
+        1112.8,
+        "assistant"
+      ],
+      [
+        1112.8,
+        "tool_result"
+      ],
+      [
+        1118.0,
+        "assistant"
+      ],
+      [
+        1121.9,
+        "assistant"
+      ],
+      [
+        1121.9,
+        "tool_result"
+      ],
+      [
+        1135.0,
+        "assistant"
+      ],
+      [
+        1136.3,
+        "assistant"
+      ],
+      [
+        1144.0,
+        "assistant"
+      ],
+      [
+        1144.1,
+        "tool_result"
+      ],
+      [
+        1147.7,
+        "assistant"
+      ],
+      [
+        1149.1,
+        "assistant"
+      ],
+      [
+        1149.1,
+        "tool_result"
+      ],
+      [
+        1228.5,
+        "assistant"
+      ],
+      [
+        1228.5,
+        "assistant"
+      ],
+      [
+        1256.8,
+        "assistant"
+      ],
+      [
+        1256.8,
+        "tool_result"
+      ],
+      [
+        1316.2,
+        "assistant"
+      ],
+      [
+        1317.3,
+        "assistant"
+      ],
+      [
+        1337.7,
+        "assistant"
+      ],
+      [
+        1337.7,
+        "tool_result"
+      ],
+      [
+        1348.8,
+        "assistant"
+      ],
+      [
+        1348.8,
+        "assistant"
+      ],
+      [
+        1350.5,
+        "assistant"
+      ],
+      [
+        1350.5,
+        "tool_result"
+      ],
+      [
+        1354.5,
+        "assistant"
+      ],
+      [
+        1355.1,
+        "assistant"
+      ],
+      [
+        1355.1,
+        "tool_result"
+      ],
+      [
+        1359.5,
+        "assistant"
+      ],
+      [
+        1359.9,
+        "tool_result"
+      ],
+      [
+        1360.3,
+        "assistant"
+      ],
+      [
+        1360.3,
+        "tool_result"
+      ],
+      [
+        1360.9,
+        "assistant"
+      ],
+      [
+        1360.9,
+        "tool_result"
+      ],
+      [
+        1387.5,
+        "assistant"
+      ],
+      [
+        1388.1,
+        "assistant"
+      ],
+      [
+        1388.9,
+        "assistant"
+      ],
+      [
+        1389.5,
+        "tool_result"
+      ],
+      [
+        1474.8,
+        "assistant"
+      ],
+      [
+        1475.9,
+        "assistant"
+      ],
+      [
+        1478.2,
+        "assistant"
+      ],
+      [
+        1478.3,
+        "system:task_started"
+      ],
+      [
+        1478.3,
+        "tool_result"
+      ],
+      [
+        1490.4,
+        "system:task_notification"
+      ],
+      [
+        1490.4,
+        "tool_result"
+      ],
+      [
+        1526.1,
+        "assistant"
+      ],
+      [
+        1527.1,
+        "assistant"
+      ],
+      [
+        1527.5,
+        "assistant"
+      ],
+      [
+        1529.2,
+        "tool_result"
+      ],
+      [
+        1620.1,
+        "assistant"
+      ],
+      [
+        1620.7,
+        "assistant"
+      ],
+      [
+        1624.0,
+        "assistant"
+      ],
+      [
+        1624.1,
+        "tool_result"
+      ],
+      [
+        1634.6,
+        "assistant"
+      ],
+      [
+        1634.7,
+        "tool_result"
+      ],
+      [
+        1660.5,
+        "assistant"
+      ],
+      [
+        1660.5,
+        "tool_result"
+      ],
+      [
+        1685.7,
+        "assistant"
+      ],
+      [
+        1685.8,
+        "assistant"
+      ],
+      [
+        1697.9,
+        "assistant"
+      ],
+      [
+        1697.9,
+        "tool_result"
+      ],
+      [
+        1721.7,
+        "assistant"
+      ],
+      [
+        1723.8,
+        "assistant"
+      ],
+      [
+        1734.3,
+        "assistant"
+      ],
+      [
+        1734.3,
+        "tool_result"
+      ],
+      [
+        1768.3,
+        "assistant"
+      ],
+      [
+        1772.0,
+        "assistant"
+      ],
+      [
+        1792.0,
+        "assistant"
+      ],
+      [
+        1792.1,
+        "tool_result"
+      ],
+      [
+        1795.7,
+        "assistant"
+      ],
+      [
+        1816.2,
+        "assistant"
+      ],
+      [
+        1816.2,
+        "tool_result"
+      ],
+      [
+        1826.4,
+        "assistant"
+      ],
+      [
+        1826.4,
+        "assistant"
+      ],
+      [
+        1826.4,
+        "assistant"
+      ],
+      [
+        1826.4,
+        "tool_result"
+      ],
+      [
+        1826.4,
+        "tool_result"
+      ],
+      [
+        1909.2,
+        "assistant"
+      ],
+      [
+        1909.4,
+        "assistant"
+      ],
+      [
+        1911.9,
+        "assistant"
+      ],
+      [
+        1912.1,
+        "tool_result"
+      ],
+      [
+        1912.1,
+        "assistant"
+      ],
+      [
+        1912.1,
+        "tool_result"
+      ],
+      [
+        2000.7,
+        "assistant"
+      ],
+      [
+        2001.4,
+        "assistant"
+      ],
+      [
+        2026.7,
+        "assistant"
+      ],
+      [
+        2026.8,
+        "tool_result"
+      ],
+      [
+        2030.9,
+        "assistant"
+      ],
+      [
+        2031.9,
+        "assistant"
+      ],
+      [
+        2037.6,
+        "assistant"
+      ],
+      [
+        2037.6,
+        "tool_result"
+      ],
+      [
+        2054.4,
+        "assistant"
+      ],
+      [
+        2055.0,
+        "assistant"
+      ],
+      [
+        2056.1,
+        "assistant"
+      ],
+      [
+        2056.5,
+        "tool_result"
+      ],
+      [
+        2056.9,
+        "assistant"
+      ],
+      [
+        2056.9,
+        "tool_result"
+      ],
+      [
+        2073.9,
+        "assistant"
+      ],
+      [
+        2074.0,
+        "assistant"
+      ],
+      [
+        2083.5,
+        "assistant"
+      ],
+      [
+        2083.5,
+        "system:task_started"
+      ],
+      [
+        2083.5,
+        "tool_result"
+      ],
+      [
+        2085.7,
+        "system:task_progress"
+      ],
+      [
+        2085.7,
+        "assistant"
+      ],
+      [
+        2086.1,
+        "tool_result"
+      ],
+      [
+        2250.2,
+        "system:task_notification"
+      ],
+      [
+        2250.2,
+        "tool_result"
+      ],
+      [
+        2277.6,
+        "assistant"
+      ],
+      [
+        2277.7,
+        "assistant"
+      ],
+      [
+        2284.0,
+        "assistant"
+      ],
+      [
+        2284.0,
+        "tool_result"
+      ],
+      [
+        2290.7,
+        "assistant"
+      ],
+      [
+        2290.7,
+        "assistant"
+      ],
+      [
+        2291.2,
+        "assistant"
+      ],
+      [
+        2291.3,
+        "tool_result"
+      ],
+      [
+        2296.0,
+        "assistant"
+      ],
+      [
+        2303.8,
+        "assistant"
+      ],
+      [
+        2303.9,
+        "tool_result"
+      ],
+      [
+        2310.6,
+        "assistant"
+      ],
+      [
+        2310.6,
+        "tool_result"
+      ],
+      [
+        2318.0,
+        "assistant"
+      ],
+      [
+        2318.1,
+        "assistant"
+      ],
+      [
+        2319.6,
+        "assistant"
+      ],
+      [
+        2319.6,
+        "tool_result"
+      ],
+      [
+        2323.6,
+        "assistant"
+      ],
+      [
+        2323.8,
+        "tool_result"
+      ],
+      [
+        2327.5,
+        "assistant"
+      ],
+      [
+        2332.0,
+        "assistant"
+      ],
+      [
+        2332.9,
+        "tool_result"
+      ],
+      [
+        2336.6,
+        "assistant"
+      ],
+      [
+        2337.5,
+        "assistant"
+      ],
+      [
+        2339.1,
+        "assistant"
+      ],
+      [
+        2340.4,
+        "tool_result"
+      ],
+      [
+        2385.4,
+        "assistant"
+      ],
+      [
+        2386.0,
+        "assistant"
+      ],
+      [
+        2394.2,
+        "assistant"
+      ],
+      [
+        2394.2,
+        "tool_result"
+      ],
+      [
+        2456.6,
+        "assistant"
+      ],
+      [
+        2456.6,
+        "tool_result"
+      ],
+      [
+        2472.2,
+        "assistant"
+      ],
+      [
+        2472.3,
+        "assistant"
+      ],
+      [
+        2472.4,
+        "assistant"
+      ],
+      [
+        2472.5,
+        "tool_result"
+      ],
+      [
+        2472.5,
+        "tool_result"
+      ],
+      [
+        2501.9,
+        "assistant"
+      ],
+      [
+        2502.3,
+        "assistant"
+      ],
+      [
+        2505.1,
+        "assistant"
+      ],
+      [
+        2505.2,
+        "tool_result"
+      ],
+      [
+        2509.5,
+        "assistant"
+      ],
+      [
+        2510.7,
+        "assistant"
+      ],
+      [
+        2511.7,
+        "assistant"
+      ],
+      [
+        2511.8,
+        "tool_result"
+      ],
+      [
+        2523.5,
+        "assistant"
+      ],
+      [
+        2523.6,
+        "result"
+      ]
+    ],
+    "caps": {
+      "wall_clock_seconds": 7200,
+      "inactivity_seconds": 600,
+      "progress_stall_seconds": 600,
+      "tool_calls": 300,
+      "max_turns": 250,
+      "max_cost_usd": 15.0
+    },
+    "wall_clock_seconds": 2537.378686306998,
+    "real_clock_seconds": 2537.37086892128,
+    "slept_seconds": 0.0,
+    "judge_seconds": 12.812680049974006
+  },
+  "tool_calls": [
+    {
+      "tool": "Glob",
+      "args": {
+        "pattern": "**/*",
+        "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": ".claude/skills/assertion-classification/references/three-layer-model.md\n.claude/skills/assertion-classification/references/validation-protocol.md\n.claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution..."
+    },
+    {
+      "tool": "Glob",
+      "args": {
+        "pattern": "*.json",
+        "path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_ferber_marriage\",\n4\t    \"objective\": \"Who did William Hubert Ferber marry?\",\n5\t    \"subject_person_ids\": [\"I1\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-09T00:00:00Z\",\n8\t    \"updated\": \"2026-07-09T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15\t  \"questions\": [],\n16\t  \"plans\": [],\n17\t  \"log\": [],\n18\t  \"sources\": [],\n19\t  \"asse..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"I1\",\n5\t      \"gender\": \"Male\",\n6\t      \"names\": [\n7\t        { \"id\": \"N1\", \"given\": \"William Hubert\", \"surname\": \"Ferber\", \"preferred\": true }\n8\t      ],\n9\t      \"facts\": [\n10\t        { \"id\": \"F1\", \"type\": \"Birth\", \"date\": \"December 1869\", \"standard_date\": \"Dec 1869\", \"place\": \"Ohio, United States\", \"standard_place\": \"Ohio, United States\", \"sources\": [{ \"ref\": \"S1\", \"quality\": 1 }, { \"ref\": \"S4\", \"quality\": 2 }] },\n11\t        { \"id\": \"F2\", \"type\": \"R..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection"
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/.claude/skills/question-selection/references/question-formulation.md"
+      },
+      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/.claude/skills/question-selection/references/pedigree-analysis.md"
+      },
+      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "questions",
+        "op": "append",
+        "entry": {
+          "question": "Whom did William Hubert Ferber (born December 1869, Cincinnati, Hamilton, Ohio; died 11 March 1903) marry, and when and where was the marriage?",
+          "rationale": "This is the direct decomposition of the project objective. William has a son (Charles Hubert, born 22 June 1891) listed in the tree with no mother identified, and no spouse is linked to him. Hamilton County, Ohio marriage records and census records for c.1888\u20131900 are available on FamilySearch and likely contain the answer. His 1900 census household and the 1890s Ohio marriage records are the highest-priority starting points.",
+          "selection_basis": "objective_decomposition",
+          "priority": "high",
+          "status": "open",
+          "depends_on": [],
+          "unblocks": [],
+          "resolved": null,
+          "resolution_assertion_ids": [],
+          "exhaustive_declaration": {
+            "declared": false,
+            "justification": null,
+            "log_entry_ids": [],
+            "stop_criteria": null
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-plan",
+        "args": "q_001"
+      },
+      "response_summary": "Launching skill: research-plan"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/.claude/skills/research-plan/references/planning-standards.md"
+      },
+      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__wiki_search",
+        "max_results": 5
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__place_search",
+      "args": {
+        "placeName": "Hamilton County",
+        "contextName": "Ohio"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Hamilton, Ohio, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1803/\\\",\\n      \\\"latitude\\\": 39.2,\\n      \\\"longitude\\\": -84.54,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Hamilton&focusedId=393203\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Hamilton_County,_Ohio\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Hamilton, Butler, Ohio, U..."
+    },
+    {
+      "tool": "mcp__genealogy__wiki_search",
+      "args": {
+        "query": "Ohio marriage records genealogy Hamilton County Cincinnati"
+      },
+      "response_summary": "{\"error\":\"Could not reach wiki-query-api at https://malachi.taild68f1b.ts.net/wiki. Is the server running? (fetch failed)\"}"
+    },
+    {
+      "tool": "mcp__genealogy__collections_search",
+      "args": {
+        "standardPlace": "Hamilton, Ohio, United States",
+        "startYear": 1880,
+        "endYear": 1910
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Hamilton, Ohio, United States\\\",\\n    \\\"startYear\\\": 1880,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"scope\\\": \\\"Ohio\\\",\\n  \\\"totalForPlace\\\": 60,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"3315268\\\",\\n      \\\"title\\\": \\\"Ohio, Athens County, Deceased Veteran Grave Registration Card File Index, 1819-1936\\\",\\n      \\\"dateRange\\\": \\\"1819-1936\\\",\\n      \\\"recordCount\\\": 5588,\\n      \\\"personCount\\\": 5591,\\n      \\\"imageCount\\\": 5546,\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__external_links_search",
+      "args": {
+        "standardPlace": "Hamilton, Ohio, United States",
+        "startYear": 1880,
+        "endYear": 1910
+      },
+      "response_summary": "Error: result (289,996 characters across 6,114 lines) exceeds maximum allowed tokens. Output has been saved to /Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-ferber-marriage-e7k53jiv/206e4859-8de1-4bfe-b56d-58547fce03cb/tool-results/mcp-genealogy-external_links_search-1783665682047.txt.\nFormat: Plain text\n- For targeted searches (find a line, locate a string): use grep on the file directly.\n- For analysis or summarization that requires reading the ..."
+    },
+    {
+      "tool": "Grep",
+      "args": {
+        "pattern": "(?i)(marriage|marri|census|1900|1880|1890)",
+        "path": "/Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-ferber-marriage-e7k53jiv/206e4859-8de1-4bfe-b56d-58547fce03cb/tool-results/mcp-genealogy-external_links_search-1783665682047.txt",
+        "output_mode": "content",
+        "head_limit": 60
+      },
+      "response_summary": "4:    \"startYear\": 1880,\n22:      \"url\": \"http://www.archives.gov/research/census/1890/1890.html\",\n23:      \"linkText\": \"NARA The 1890 Census\"\n59:      \"linkText\": \"Honolulu Passenger and Crew Lists, 1900-1959\"\n143:      \"linkText\": \"All US and Canada, Passenger and Immigration Lists Index, 1500s-1900s\"\n162:      \"url\": \"http://www.censusfinder.com/1850-census.htm\",\n163:      \"linkText\": \"1850 Census Questions\"\n187:      \"linkText\": \"Wallace Roll, 1890\"\n190:      \"url\": \"https://www.myheritag..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "plans",
+            "op": "append",
+            "entry": {
+              "question_id": "q_001",
+              "status": "active",
+              "created": "2026-07-09"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 1,
+              "record_type": "vital_record",
+              "jurisdiction": "Hamilton County, Ohio",
+              "date_range": "1885-1903",
+              "repository": "FamilySearch",
+              "rationale": "Ohio, County Marriages, 1789-2016 (collection 1614804) is the primary indexed civil marriage record for Ohio. A marriage license or register entry for William Hubert Ferber in Hamilton County c. 1885-1895 would directly name his bride, the date, and location. With 5.7M records and images it is the first source to exhaust.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 2,
+              "record_type": "census",
+              "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+              "date_range": "1900",
+              "repository": "FamilySearch",
+              "rationale": "The 1900 U.S. census record for William (already cited as S2: ark:/61903/1:1:MM88-DGG) has not been extracted. The census names every household member; if his wife was living with him in 1900 her name will appear. The census also asked 'years married,' narrowing the marriage year. Relationship column may confirm spouse identity.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 3,
+              "record_type": "vital_record",
+              "jurisdiction": "Hamilton County, Ohio",
+              "date_range": "1891",
+              "repository": "FamilySearch",
+              "rationale": "Ohio, County Births, 1841-2003 (collection 1932106) \u2014 the birth record for son Charles Hubert Ferber (22 June 1891, Cincinnati) names both parents and the mother's maiden name, directly identifying William's wife even if no separate marriage record is found.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 4,
+              "record_type": "vital_record",
+              "jurisdiction": "Hamilton County, Ohio",
+              "date_range": "1903",
+              "repository": "FamilySearch",
+              "rationale": "William's death record (S3: ark:/61903/1:1:F66M-8JZ, Ohio County Death Records) has not been extracted. The informant is often the surviving spouse; the record may also state marital status and wife's name. Extracting it fully closes this gap.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 5,
+              "record_type": "probate",
+              "jurisdiction": "Hamilton County, Ohio",
+              "date_range": "1903-1910",
+              "repository": "FamilySearch",
+              "rationale": "Ohio, Probate Records, 1789-1996 (collection 1992421) \u2014 William died 11 March 1903. Probate or estate administration filed in Hamilton County would name his widow and heirs, supplying the wife's name even if she remarried and disappeared from Ferber-name records.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 6,
+              "record_type": "vital_record",
+              "jurisdiction": "Hamilton County, Ohio",
+              "date_range": "1885-1903",
+              "repository": "FamilySearch",
+              "rationale": "Ohio, Hamilton County Records, 1791-1994 (collection 2141016) \u2014 1.5M browse-only images covering the county's historical records, which may include marriage registers not yet indexed in collection 1614804. Fallback if the indexed county marriage search yields no result.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 7,
+              "record_type": "church",
+              "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+              "date_range": "1885-1900",
+              "repository": "FamilySearch",
+              "rationale": "Ohio, Church Records, 1762-2008 (collection 2787827) \u2014 The Ferber family is of German immigrant origin (father born Germany, 1820); German families in Cincinnati often married in Lutheran or Catholic churches. A church marriage register entry would name bride and groom and may predate civil registration or provide detail the civil record lacks.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records",
+        "args": "q_001 pli_001"
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ferber",
+        "givenName": "William",
+        "marriageYearFrom": 1885,
+        "marriageYearTo": 1900,
+        "residencePlace": "Hamilton, Ohio",
+        "collectionId": "1614804",
+        "recordType": "marriage",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"marriageYearFrom\\\": 1885,\\n    \\\"marriageYearTo\\\": 1900,\\n    \\\"residencePlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"collectionId\\\": \\\"1614804\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv\\\"\\n  },\\n  \\\"totalMatches\\\": 36,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "stagedResultsRef": "results/.staging/723deb8d-576d-4076-9a0a-ff465d820db2.json",
+        "subjectId": "I1",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I1\\\",\\n  \\\"scoredCount\\\": 36,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:XZR1-JZP\\\",\\n      \\\"matchScore\\\": 0.7113063,\\n      \\\"primaryId\\\": \\\"p_10470048623\\\",\\n      \\\"personName\\\": \\\"Wm. H. Ferber\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Ohio, County Marriages, 1789-2016\\\",\\n  ..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_read",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:XZR1-JZP",
+        "resultsRef": "results/.staging/723deb8d-576d-4076-9a0a-ff465d820db2.json",
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_10470048623\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZR1-JZP\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Ferber\\\",\\n          \\\"given\\\": \\\"Wm. H.\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_10470048625\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:XZR1-JZR\\\",\\..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "Ohio, County Marriages, 1789-2016",
+          "collectionId": "1614804",
+          "surname": "Ferber",
+          "givenName": "William",
+          "marriageYearFrom": 1885,
+          "marriageYearTo": 1900,
+          "residencePlace": "Hamilton, Ohio",
+          "recordType": "marriage",
+          "count": 50
+        },
+        "outcome": "positive",
+        "resultsExamined": 10,
+        "resultsAvailable": 36,
+        "stagedResultsRef": "results/.staging/723deb8d-576d-4076-9a0a-ff465d820db2.json",
+        "notes": "Top match: \"Wm. H. Ferber and Emma Becker\", marriage 1890, Hamilton, Ohio. matchScore 0.711, confidence 4, 5-star FamilySearch tree match. Father Gerhard Ferber listed on record \u2014 corroborates identity. Record ARK: ark:/61903/1:1:XZR1-JZP. Second-best candidate scores only 0.283 \u2014 clear separation."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-10T06:44:05.045Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 36,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_001",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "record-extraction",
+        "args": "log_001 record ark:/61903/1:1:XZR1-JZP \u2014 Ohio County Marriages 1789-2016, Entry for Wm. H. Ferber and Emma Becker, marriage 1890, Hamilton, Ohio. Groom's father listed as Gerhard Ferber. Subject is I1 (William Hubert Ferber). Plan item pli_001."
+      },
+      "response_summary": "Launching skill: record-extraction"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_edit",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "gedcomx_source_description_id": "S7",
+              "citation": "\"Ohio, County Marriages, 1789-2016,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : accessed 9 July 2026), entry for Wm. H. Ferber and Emma Becker, Hamilton County, Ohio, 1890; citing digitized image at https://www.familysearch.org/ark:/61903/3:1:9392-91SQ-KQ.",
+              "citation_detail": {
+                "who": "Wm. H. Ferber (groom) and Emma Becker (bride)",
+                "what": "Ohio, County Marriages, 1789-2016 \u2014 FamilySearch indexed marriage register entry, Hamilton County",
+                "when_created": "1890",
+                "when_accessed": "2026-07-09",
+                "where": "FamilySearch, https://www.familysearch.org/search/collection/1614804",
+                "where_within": "Entry for Wm. H. Ferber and Emma Becker, 1890"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "2026-07-09",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MXZQ-XX7",
+              "notes": "FamilySearch index entry (derivative of original county marriage register). Original register image available at https://www.familysearch.org/ark:/61903/3:1:9392-91SQ-KQ \u2014 not transcribed at this stage.",
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048623",
+              "record_role": "groom",
+              "fact_type": "Name",
+              "value": "Wm. H. Ferber",
+              "structured_value": {
+                "given": "Wm. H.",
+                "surname": "Ferber"
+              },
+              "information_quality": "primary",
+              "informant": "Wm. H. Ferber (groom, self-reported)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048623",
+              "record_role": "groom",
+              "fact_type": "Marriage",
+              "value": "Wm. H. Ferber married Emma Becker, 1890, Hamilton County, Ohio",
+              "date": "1890",
+              "date_certainty": "approximate",
+              "place": "Hamilton, Ohio, United States",
+              "standard_place": "Hamilton, Ohio, United States",
+              "information_quality": "primary",
+              "informant": "County registrar / officiating clerk",
+              "informant_proximity": "official_duty",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048625",
+              "record_role": "bride",
+              "fact_type": "Name",
+              "value": "Emma Becker",
+              "structured_value": {
+                "given": "Emma",
+                "surname": "Becker"
+              },
+              "information_quality": "primary",
+              "informant": "Emma Becker (bride, self-reported)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048625",
+              "record_role": "bride",
+              "fact_type": "Marriage",
+              "value": "Emma Becker married Wm. H. Ferber, 1890, Hamilton County, Ohio",
+              "date": "1890",
+              "date_certainty": "approximate",
+              "place": "Hamilton, Ohio, United States",
+              "standard_place": "Hamilton, Ohio, United States",
+              "information_quality": "primary",
+              "informant": "County registrar / officiating clerk",
+              "informant_proximity": "official_duty",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048624",
+              "record_role": "father_of_groom",
+              "fact_type": "Name",
+              "value": "Gerhard Ferber",
+              "structured_value": {
+                "given": "Gerhard",
+                "surname": "Ferber"
+              },
+              "information_quality": "primary",
+              "informant": "Wm. H. Ferber (groom, stated his father's name)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": []
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048624",
+              "record_role": "father_of_groom",
+              "fact_type": "Relationship",
+              "value": "Gerhard Ferber listed as father of groom Wm. H. Ferber on marriage record",
+              "structured_value": {
+                "relationship_type": "parent",
+                "related_person_role": "groom"
+              },
+              "information_quality": "primary",
+              "informant": "Wm. H. Ferber (groom, stated his father's name)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": []
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/sources[0]: gedcomx_source_description_id 'S7' not found in tree.gedcomx.json sources\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "operation": "add_source",
+        "source": {
+          "title": "Ohio, County Marriages, 1789-2016",
+          "url": "https://www.familysearch.org/search/collection/1614804"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S7\\\"\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "gedcomx_source_description_id": "S7",
+              "citation": "\"Ohio, County Marriages, 1789-2016,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : accessed 9 July 2026), entry for Wm. H. Ferber and Emma Becker, Hamilton County, Ohio, 1890; citing digitized image at https://www.familysearch.org/ark:/61903/3:1:9392-91SQ-KQ.",
+              "citation_detail": {
+                "who": "Wm. H. Ferber (groom) and Emma Becker (bride)",
+                "what": "Ohio, County Marriages, 1789-2016 \u2014 FamilySearch indexed marriage register entry, Hamilton County",
+                "when_created": "1890",
+                "when_accessed": "2026-07-09",
+                "where": "FamilySearch, https://www.familysearch.org/search/collection/1614804",
+                "where_within": "Entry for Wm. H. Ferber and Emma Becker, 1890"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "2026-07-09",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MXZQ-XX7",
+              "notes": "FamilySearch index entry (derivative of original county marriage register). Original register image available at https://www.familysearch.org/ark:/61903/3:1:9392-91SQ-KQ \u2014 not transcribed at this stage.",
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048623",
+              "record_role": "groom",
+              "fact_type": "Name",
+              "value": "Wm. H. Ferber",
+              "structured_value": {
+                "given": "Wm. H.",
+                "surname": "Ferber"
+              },
+              "information_quality": "primary",
+              "informant": "Wm. H. Ferber (groom, self-reported)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048623",
+              "record_role": "groom",
+              "fact_type": "Marriage",
+              "value": "Wm. H. Ferber married Emma Becker, 1890, Hamilton County, Ohio",
+              "date": "1890",
+              "date_certainty": "approximate",
+              "place": "Hamilton, Ohio, United States",
+              "standard_place": "Hamilton, Ohio, United States",
+              "information_quality": "primary",
+              "informant": "County registrar / officiating clerk",
+              "informant_proximity": "official_duty",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048625",
+              "record_role": "bride",
+              "fact_type": "Name",
+              "value": "Emma Becker",
+              "structured_value": {
+                "given": "Emma",
+                "surname": "Becker"
+              },
+              "information_quality": "primary",
+              "informant": "Emma Becker (bride, self-reported)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048625",
+              "record_role": "bride",
+              "fact_type": "Marriage",
+              "value": "Emma Becker married Wm. H. Ferber, 1890, Hamilton County, Ohio",
+              "date": "1890",
+              "date_certainty": "approximate",
+              "place": "Hamilton, Ohio, United States",
+              "standard_place": "Hamilton, Ohio, United States",
+              "information_quality": "primary",
+              "informant": "County registrar / officiating clerk",
+              "informant_proximity": "official_duty",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": [
+                "q_001"
+              ]
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048624",
+              "record_role": "father_of_groom",
+              "fact_type": "Name",
+              "value": "Gerhard Ferber",
+              "structured_value": {
+                "given": "Gerhard",
+                "surname": "Ferber"
+              },
+              "information_quality": "primary",
+              "informant": "Wm. H. Ferber (groom, stated his father's name)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": []
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+              "record_persona_id": "p_10470048624",
+              "record_role": "father_of_groom",
+              "fact_type": "Relationship",
+              "value": "Gerhard Ferber listed as father of groom Wm. H. Ferber on marriage record",
+              "structured_value": {
+                "relationship_type": "parent",
+                "related_person_role": "groom"
+              },
+              "information_quality": "primary",
+              "informant": "Wm. H. Ferber (groom, stated his father's name)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "log_entry_id": "log_001",
+              "extracted_for_question_ids": []
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_001",
+        "fields": {
+          "status": "completed"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "assertion-classification",
+        "args": "a_001 a_002 a_003 a_004 a_005 a_006"
+      },
+      "response_summary": "Launching skill: assertion-classification"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "assertions",
+            "op": "update",
+            "entryId": "a_005",
+            "fields": {
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "informant_bias_notes": "Groom reported his father's name on the marriage record. Knows own father's name from first-hand family knowledge. Corroborates Gerhard Ferber (I2) already in tree. No significant bias; minor risk of spelling variation (Gerhard vs. Gerard etc.) common in German immigrant names."
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "update",
+            "entryId": "a_006",
+            "fields": {
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "informant_bias_notes": "Groom stated his father's name on the marriage record; the father-son relationship is asserted by the groom. Corroborates existing tree entry I2 (Gerhard Ferber). No incentive to misrepresent."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"a_006\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "person-evidence",
+        "args": "q_001 assertions a_001 through a_006"
+      },
+      "response_summary": "Launching skill: person-evidence"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "operation": "add_person",
+        "person": {
+          "gender": "Female",
+          "names": [
+            {
+              "type": "BirthName",
+              "given": "Emma",
+              "surname": "Becker",
+              "preferred": true
+            }
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_person\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"person\\\": \\\"I5\\\",\\n    \\\"names\\\": [\\n      \\\"N5\\\"\\n    ]\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_001",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.711,
+              "rationale": "Groom named 'Wm. H. Ferber' in Hamilton County, Ohio marriage record, 1890. Name is a standard abbreviation of William Hubert Ferber (I1). I1 is documented in Hamilton County throughout his life (1870 census, 1900 census, 1903 death). Marriage at age ~20 is plausible (born Dec 1869). Father listed on same record as Gerhard Ferber = I2, who is confirmed as I1's father via R1. matchScore 0.711 from rank_search_matches; 5-star FamilySearch tree match. Obvious match \u2014 we searched specifically for this individual."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_002",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.711,
+              "rationale": "Marriage event on same record as a_001 groom persona. Groom 'Wm. H. Ferber' married Emma Becker, 1890, Hamilton County, Ohio. All identifiers align with I1: name, county, period, father Gerhard Ferber (I2). This directly answers q_001 for the groom side."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_002",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Marriage event names Emma Becker as bride alongside groom Wm. H. Ferber. I5 is the new stub created for Emma Becker from this record; no prior record of her exists in the tree. Probable (not confident) because this is the sole record introducing her."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_003",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Bride named 'Emma Becker' in Hamilton County, Ohio marriage record, 1890. I5 (stub) was created for Emma Becker from this record. Probable \u2014 single record introducing a new person; no independent corroboration yet."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_004",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Marriage event for bride Emma Becker, 1890, Hamilton County, Ohio. Linked to I5 (Emma Becker stub). Probable \u2014 single record, new stub."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_004",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Bride-side marriage event names Wm. H. Ferber as groom \u2014 same marriage, same record. This is the other side of a_002's link to I1. Both marriage event assertions bear on I1 as a party to the union. Qualitative alignment is strong (all identifiers consistent); no same_person score for the bride persona against I1, but the groom identification is already confirmed at confident."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_005",
+              "person_id": "I2",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Father of groom listed as 'Gerhard Ferber' \u2014 exact name match to I2 (Gerhard Ferber, born 29 Sep 1820 Germany, resident Cincinnati). R1 in tree already documents I2 as father of I1 (William). Groom on this record has been linked to I1 at confident. The pairing is internally consistent. No same_person score for the father persona against I2, but qualitative case is strong: exact name, confirmed family structure."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_006",
+              "person_id": "I2",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Relationship assertion: Gerhard Ferber listed as father of groom. This bears on I2 as the named father. Consistent with R1 (I2\u2192I1 ParentChild). Strong qualitative match."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_006",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Relationship assertion: Gerhard Ferber listed as father of groom Wm. H. Ferber. This also bears on I1 as the son named in the relationship. Consistent with R1 (I2\u2192I1 ParentChild already in tree). Strong \u2014 both parties confirmed independently."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "check-warnings",
+        "args": "I1 I2 I5"
+      },
+      "response_summary": "Launching skill: check-warnings"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__person_warnings",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I1"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I2"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I5"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I5\\\",\\n      \\\"personName\\\": \\\"Emma Becker\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-exhaustiveness",
+        "args": "q_001"
+      },
+      "response_summary": "Launching skill: research-exhaustiveness"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
+      },
+      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records",
+        "args": "q_001 pli_002"
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ferber",
+        "givenName": "William",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Hamilton, Ohio, United States",
+        "recordType": "census",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"William\\\",\\n    \\\"residenceYearFrom\\\": 1900,\\n    \\\"residenceYearTo\\\": 1900,\\n    \\\"residencePlace\\\": \\\"Hamilton, Ohio, United States\\\",\\n    \\\"recordType\\\": \\\"census\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv\\\"\\n  },\\n  \\\"totalMatches\\\": 27,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 27,\\n  \\\"offset\\\"..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "stagedResultsRef": "results/.staging/9a4f1585-cf0f-436a-9d75-ada3ba4e0c02.json",
+        "subjectId": "I1",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I1\\\",\\n  \\\"scoredCount\\\": 27,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 2,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:MM88-DGG\\\",\\n      \\\"matchScore\\\": 0.91469246,\\n      \\\"primaryId\\\": \\\"p_9218482\\\",\\n      \\\"personName\\\": \\\"William Ferber\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"December 1869\\\",\\n      \\\"birthPlace\\\": \\\"Ohio, ..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_read,mcp__genealogy__research_log_append,mcp__genealogy__research_append",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:MM88-DGG",
+        "resultsRef": "results/.staging/9a4f1585-cf0f-436a-9d75-ada3ba4e0c02.json",
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_9218482\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MM88-DGG\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"William\\\",\\n          \\\"surname\\\": \\\"Ferber\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"MaritalStatus\\\",\\n          \\\"value\\\": \\\"Married\\\"\\n        },\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "surname": "Ferber",
+          "givenName": "William",
+          "birthYearFrom": 1864,
+          "birthYearTo": 1874,
+          "residenceYearFrom": 1900,
+          "residenceYearTo": 1900,
+          "residencePlace": "Hamilton, Ohio",
+          "collectionId": "1325221",
+          "count": 50
+        },
+        "outcome": "positive",
+        "resultsExamined": 10,
+        "resultsAvailable": 27,
+        "stagedResultsRef": "results/.staging/9a4f1585-cf0f-436a-9d75-ada3ba4e0c02.json",
+        "notes": "Top match ark:/61903/1:1:MM88-DGG (matchScore 0.915): William Ferber, head, married, born Dec 1869 Ohio, Cincinnati 1900. Wife Emma Ferber born Mar 1871 Ohio; son Charles born Jun 1891 Ohio. Marriage year recorded as 1890. Strong independent corroboration of Emma Becker/Ferber marriage."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-10T06:58:21.963Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 27,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_002",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "gedcomx_source_description_id": "S2",
+              "citation": "\"United States, Census, 1900\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG : accessed 10 Jul 2026), Entry for William Ferber household, Cincinnati, Hamilton, Ohio.",
+              "citation_detail": {
+                "who": "William Ferber household",
+                "what": "United States Federal Census, 1900",
+                "when_created": "1900",
+                "when_accessed": "10 Jul 2026",
+                "where": "FamilySearch (https://www.familysearch.org)",
+                "where_within": "Household record, Cincinnati Ward 19, Hamilton, Ohio, enumeration district 204"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "2026-07-10",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "notes": "Indexed transcription of original 1900 census schedule. Original image available at FamilySearch ark:/61903/3:1:S3HT-DZ17-L46. Index may contain transcription errors.",
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "head_of_household",
+              "record_persona_id": "p_9218482",
+              "fact_type": "name",
+              "value": "William Ferber",
+              "structured_value": {
+                "given": "William",
+                "surname": "Ferber"
+              },
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; enumerator did not record which household member provided information. Adults typically self-reported or spouse answered.",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "head_of_household",
+              "record_persona_id": "p_9218482",
+              "fact_type": "birth_date",
+              "value": "December 1869",
+              "date": "Dec 1869",
+              "date_certainty": "approximate",
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; respondent unknown. Birth month/year may be self-reported or provided by spouse.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "head_of_household",
+              "record_persona_id": "p_9218482",
+              "fact_type": "birth_place",
+              "value": "Ohio",
+              "place": "Ohio",
+              "standard_place": "Ohio, United States",
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; respondent unknown. Adults may self-report their own birthplace.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "head_of_household",
+              "record_persona_id": "p_9218482",
+              "fact_type": "residence",
+              "value": "Cincinnati, Hamilton, Ohio, United States, 1900",
+              "structured_value": {
+                "place": "Cincinnati, Hamilton, Ohio, United States"
+              },
+              "date": "1900",
+              "date_certainty": "exact",
+              "place": "Cincinnati, Hamilton, Ohio, United States",
+              "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+              "information_quality": "primary",
+              "informant": "census enumerator",
+              "informant_proximity": "witness",
+              "informant_bias_notes": "Enumerator visited the dwelling and recorded the household's address.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "head_of_household",
+              "record_persona_id": "p_9218482",
+              "fact_type": "marriage_date",
+              "value": "1890",
+              "date": "1890",
+              "date_certainty": "approximate",
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "The 1900 census included a column for years married; 1890 is derived from the years-married figure reported by an unknown household respondent. Approximate.",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "wife",
+              "record_persona_id": "p_9218483",
+              "fact_type": "name",
+              "value": "Emma Ferber",
+              "structured_value": {
+                "given": "Emma",
+                "surname": "Ferber"
+              },
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; respondent unknown. Name as recorded in household of William Ferber, consistent with married surname.",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "wife",
+              "record_persona_id": "p_9218483",
+              "fact_type": "birth_date",
+              "value": "March 1871",
+              "date": "Mar 1871",
+              "date_certainty": "approximate",
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; respondent unknown.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "wife",
+              "record_persona_id": "p_9218483",
+              "fact_type": "birth_place",
+              "value": "Ohio",
+              "place": "Ohio",
+              "standard_place": "Ohio, United States",
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; respondent unknown.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "child_1",
+              "record_persona_id": "p_9218484",
+              "fact_type": "name",
+              "value": "Charles Ferber",
+              "structured_value": {
+                "given": "Charles",
+                "surname": "Ferber"
+              },
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; respondent unknown. Child's name likely reported by a parent.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_002",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+              "record_role": "child_1",
+              "record_persona_id": "p_9218484",
+              "fact_type": "birth_date",
+              "value": "June 1891",
+              "date": "Jun 1891",
+              "date_certainty": "approximate",
+              "information_quality": "indeterminate",
+              "informant": "unknown household member",
+              "informant_proximity": "household_member",
+              "informant_bias_notes": "Pre-1940 census; respondent unknown. Child's birth date likely reported by a parent.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_002"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_007\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_008\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_009\\\"\\n    },\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_007",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.91469246,
+              "rationale": "Name 'William Ferber' in the head-of-household role matches I1 William Hubert Ferber. Middle name absent in the census record, a normal omission. Birth December 1869 Ohio confirmed by sibling assertion a_008, exactly matching I1's known birth fact. matchScore 0.915 from rank_search_matches."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_008",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.91469246,
+              "rationale": "Birth month December 1869 matches I1's birth fact (December 1869, Ohio) exactly. Combined with name match and residence in Cincinnati, Hamilton, Ohio, this is the correct person."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_009",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.91469246,
+              "rationale": "Birth place Ohio matches I1's documented birth in Ohio. Consistent with all other identifying attributes of William Hubert Ferber."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_010",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.91469246,
+              "rationale": "Residence Cincinnati, Hamilton, Ohio 1900 consistent with I1's known residence facts (F3: Cincinnati, Hamilton, Ohio, 1900). Corroborates identification."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_011",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.91469246,
+              "rationale": "Marriage date 1890 recorded for the head of household, identified as I1 William Hubert Ferber. The census shows him as married, consistent with the Ohio County Marriage record linking him to Emma Becker in pli_001 results."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_011",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "The marriage date 1890 applies equally to I5 Emma Becker (later Ferber), who is listed as William's wife in the same household. The marriage register (from pli_001) established that William Ferber married Emma Becker; this census date is consistent with that union."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_012",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Name 'Emma Ferber' as wife in William Ferber's household. I5 is a stub created from the Ohio County Marriage register as 'Emma Becker'. The surname Ferber is the expected married name. The role (wife of William Ferber, born Dec 1869 Ohio) matches the marriage register's groom exactly. Probable confidence because I5 is a new stub with no independent birth facts for comparison."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_012",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": 0.91469246,
+              "rationale": "Emma Ferber's name as wife in I1 William Ferber's household directly identifies I1's spouse. The Couple relationship in the census record confirms William and Emma as husband and wife in 1900."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_013",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Birth month March 1871 Ohio is consistent for I5 Emma Becker/Ferber. No conflicting birth data exists in the stub. Probable confidence due to stub status."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_014",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Birth place Ohio consistent for I5 Emma Becker/Ferber. No conflicting place data in the stub."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_015",
+              "person_id": "I4",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Name 'Charles Ferber' as child_1 in William Ferber's household. I4 is Charles Hubert Ferber, born 22 Jun 1891 Cincinnati, Hamilton, Ohio. Name matches; birth month June 1891 Ohio matches I4's known birth fact (F15: 22 Jun 1891, Cincinnati, Hamilton, Ohio) precisely. Gender male consistent."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_016",
+              "person_id": "I4",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Birth month June 1891 Ohio matches I4's known birth fact (F15: 22 Jun 1891, Cincinnati, Hamilton, Ohio) exactly. Combined with name and household position, confident identification."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_010\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_011\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_012\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_002",
+        "fields": {
+          "status": "completed"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__person_warnings",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I1"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I5"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 1,\\n  \\\"warnings\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COHERENCE\\\",\\n      \\\"issueType\\\": \\\"missingFactsAndRelatives\\\",\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"personId\\\": \\\"I5\\\",\\n      \\\"personName\\\": \\\"Emma Becker\\\",\\n      \\\"message\\\": \\\"This person has no facts (other than GenderChange) and no relatives \\u2014 likely an unfinished stub record.\\\"\\n    }\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I4"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_ferber_marriage\",\n4\t    \"objective\": \"Who did William Hubert Ferber marry?\",\n5\t    \"subject_person_ids\": [\n6\t      \"I1\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09T00:00:00Z\",\n10\t    \"updated\": \"2026-07-09T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"quest..."
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "Read original marriage register image",
+        "subagent_type": "image-reader",
+        "prompt": "Read the FamilySearch image at imageId: 9392-91SQ-KQ (image ARK ark:/61903/3:1:9392-91SQ-KQ).\n\nThis is a page from the Ohio, County Marriages collection. I am looking for a marriage register entry for a Ferber groom in Hamilton County, Ohio circa 1890. Please transcribe the full visible page content and extract any relevant facts about names, dates, places, and relationships."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"\\n<function_calls>\\n<invoke name=\\\"image_read\\\">\\n<parameter name=\\\"imageId\\\">ark:/61903/3:1:9392-91SQ-KQ</parameter>\\n<parameter name=\\\"looking_for\\\">marriage register entry for a Ferber groom in Hamilton County, Ohio circa 1890</parameter>\\n</invoke>\\n</function_calls>\\n<function_calls>\\n<invoke name=\\\"image_read\\\">\\n<parameter name=\\\"imageId\\\">9392-91SQ-KQ</parameter>\\n<parameter name=\\\"looking_for\\\">marriage register entry for a Ferber groom in Hamilton County, ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:F66M-8JZ"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_11261440420\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:F66M-8JZ\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"dcc3e6a5-da27-4c1c-a9a7-879e9f3c0cbc\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Ferber\\\",\\n          \\\"given\\\": \\\"Wm.\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"882cd7fe-3b8c-49f9-a672-1be07c1c044c\\\",\\n          \\\"type\\\": \\\"Birth..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_004",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "tool": "record_read",
+        "planItemId": "pli_004",
+        "query": {
+          "recordId": "ark:/61903/1:1:F66M-8JZ",
+          "collection": "Ohio, County Death Records, 1840-2001",
+          "description": "Direct record_read of William Ferber death record, already cited as S3 in tree"
+        },
+        "outcome": "positive",
+        "resultsExamined": 1,
+        "resultsAvailable": 1,
+        "notes": "Death record for Wm. Ferber, 11 Mar 1903, Cincinnati, Hamilton, Ohio. Marital status: Married \u2014 confirms still married at death. Birth listed as 1870 (approximate; known birth Dec 1869). Parents: Gerhard Ferber (father) and Eva Ferber (mother). Wife not named in the index; only marital status 'Married' recorded. Original image at ark:/61903/3:1:S3HT-66TS-SCS."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-10T07:06:32.534Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "gedcomx_source_description_id": "S3",
+              "citation": "\"Ohio, County Death Records, 1840-2001\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 10 Jul 2026), Entry for Wm. Ferber, son of Gerhard Ferber, 11 Mar 1903.",
+              "citation_detail": {
+                "who": "Wm. Ferber (deceased)",
+                "what": "Ohio, County Death Records, 1840-2001",
+                "when_created": "11 Mar 1903",
+                "when_accessed": "2026-07-10",
+                "where": "FamilySearch (https://www.familysearch.org)",
+                "where_within": "Entry for Wm. Ferber, death 11 Mar 1903, Cincinnati, Hamilton, Ohio"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "2026-07-10",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+              "notes": "FamilySearch indexed county death record. Original image at ark:/61903/3:1:S3HT-66TS-SCS. Wife not named in indexed fields; marital status recorded as 'Married'.",
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_003",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+              "record_role": "deceased",
+              "record_persona_id": null,
+              "fact_type": "name",
+              "value": "Wm. Ferber",
+              "structured_value": {
+                "given": "Wm.",
+                "surname": "Ferber"
+              },
+              "information_quality": "indeterminate",
+              "informant": "unknown informant",
+              "informant_proximity": "unknown",
+              "informant_bias_notes": "Informant for name on county death record unknown from index. Likely a family member or the attending physician. 'Wm.' is a standard abbreviation for William.",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_003",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+              "record_role": "deceased",
+              "record_persona_id": null,
+              "fact_type": "death_date",
+              "value": "11 March 1903",
+              "date": "11 Mar 1903",
+              "date_certainty": "exact",
+              "place": "Cincinnati, Hamilton, Ohio, United States",
+              "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+              "information_quality": "primary",
+              "informant": "attending physician or official registrar",
+              "informant_proximity": "witness",
+              "informant_bias_notes": "Death date and place would typically be recorded by the attending physician or county registrar who was present or notified at the time of death.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_003",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+              "record_role": "deceased",
+              "record_persona_id": null,
+              "fact_type": "marital_status",
+              "value": "Married",
+              "information_quality": "indeterminate",
+              "informant": "unknown informant",
+              "informant_proximity": "unknown",
+              "informant_bias_notes": "Informant for marital status unknown. If the surviving spouse Emma provided information, this would be primary; if a neighbor or other relative, secondary. Records 'Married' at time of death 11 Mar 1903, consistent with 1900 census showing Emma Ferber as wife.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_003",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+              "record_role": "father_of_deceased",
+              "record_persona_id": null,
+              "fact_type": "name",
+              "value": "Gerhard Ferber",
+              "structured_value": {
+                "given": "Gerhard",
+                "surname": "Ferber"
+              },
+              "information_quality": "secondary",
+              "informant": "unknown informant (family member who knew decedent's parentage)",
+              "informant_proximity": "family_not_present",
+              "informant_bias_notes": "Informant reporting father's name on death record; likely a family member who knew decedent's parents. Gerhard Ferber was alive in 1903 and may have been the informant himself.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_003",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+              "record_role": "mother_of_deceased",
+              "record_persona_id": null,
+              "fact_type": "name",
+              "value": "Eva Ferber",
+              "structured_value": {
+                "given": "Eva",
+                "surname": "Ferber"
+              },
+              "information_quality": "secondary",
+              "informant": "unknown informant (family member who knew decedent's parentage)",
+              "informant_proximity": "family_not_present",
+              "informant_bias_notes": "Informant reporting mother's name on death record. Eva Engermann Ferber died 1 Jan 1872, so any informant was reporting from memory decades later.",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_003"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_017\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_018\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_019\\\"\\n    },\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_017",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Name 'Wm. Ferber' in the deceased role in Ohio County Death Records, 11 Mar 1903, Cincinnati. Matches I1's known death fact F4 (11 Mar 1903, Cincinnati, Hamilton, Ohio). 'Wm.' is the standard abbreviation for William. Parents Gerhard (I2) and Eva (I3) listed on the same record, corroborating family structure."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_018",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Death date 11 Mar 1903, Cincinnati, Hamilton, Ohio exactly matches I1's known death fact F4. This is the same record already cited as S3 in the tree."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_019",
+              "person_id": "I1",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Marital status 'Married' at 11 Mar 1903 for Wm. Ferber (I1). Consistent with I1 being married to Emma Becker (I5) per the 1900 census and the Ohio County Marriage register. Confirms no divorce or widowing between 1900 and 1903."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_019",
+              "person_id": "I5",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "The 'Married' status recorded for William Ferber at death (11 Mar 1903) implies his wife was still living and no divorce had occurred. The 1900 census established Emma Ferber (I5, n\u00e9e Becker) as his wife. This indirect evidence supports I5 still being his wife in 1903, though she is not named in the record."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_020",
+              "person_id": "I2",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Father of deceased listed as 'Gerhard Ferber' \u2014 exact name match to I2 (Gerhard Ferber, born 29 Sep 1820 Germany, Cincinnati). Corroborates existing R1 (I2\u2192I1 ParentChild). I2 was alive in 1903 (died 31 May 1917) and likely provided information for the death record."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_021",
+              "person_id": "I3",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Mother of deceased listed as 'Eva Ferber' \u2014 I3 is Eva Engermann (married surname Ferber, wife of Gerhard I2). Exact name consistent (death record uses married surname). I3 died 1 Jan 1872, so the informant reported her name from memory. Corroborates existing R2 (I3\u2192I1 ParentChild)."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_022\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_023\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_024\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_004",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "skipped",
+              "skip_reason": "Supplementary corroboration not needed: two independent sources (Ohio County Marriage register, pli_001; 1900 U.S. Census, pli_002) already provide direct and corroborating evidence naming Emma Becker as William's wife. The son's birth record would add a third naming of Emma as mother but would not change the conclusion. Overturn risk is low."
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_005",
+            "fields": {
+              "status": "skipped",
+              "skip_reason": "Supplementary: probate records would name William's widow but two sources already establish Emma Becker as wife. No evidence of divorce or remarriage; death record confirms 'Married' in March 1903. Probate is not needed to answer the research question to GPS standard."
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_006",
+            "fields": {
+              "status": "skipped",
+              "skip_reason": "Fallback for pli_001: pli_001 (Ohio, County Marriages, 1789-2016) found a direct marriage register entry for Wm. H. Ferber and Emma Becker in Hamilton County, 1890. Fallback to browse-only Hamilton County records not needed."
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_007",
+            "fields": {
+              "status": "skipped",
+              "skip_reason": "Fallback for pli_001: pli_001 found a civil marriage register entry. Church records fallback not needed. Civil register and 1900 census independently establish the marriage."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {},
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "exhaustive_declared",
+          "exhaustive_declaration": {
+            "declared": true,
+            "justification": "Searched Ohio County Marriages 1789-2016 (marriage register, direct evidence naming Emma Becker as bride of Wm. H. Ferber, 1890, Hamilton County), 1900 U.S. Census (independent corroboration: Emma Ferber listed as wife of William Ferber in Cincinnati, married since 1890), and Ohio County Death Records 1840-2001 (indirect corroboration: William listed as 'Married' at death 11 Mar 1903). Original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) was attempted via image_read but NOT READ (inaccessible); documented as pursued-and-unavailable. No conflicts found. Overturn risk is low: no unsearched record type plausibly names a different spouse.",
+            "log_entry_ids": [
+              "log_001",
+              "log_002",
+              "log_003"
+            ],
+            "stop_criteria": {
+              "goal_alignment": "Yes \u2014 Ohio County Marriage register (pli_001) directly names Emma Becker as bride of Wm. H. Ferber in 1890, Hamilton County, Ohio. The 1900 census (pli_002) independently lists Emma Ferber as wife of William Ferber in Cincinnati, married since 1890. The 1903 death record (pli_004) confirms 'Married' status, consistent with Emma still being his wife.",
+              "repository_breadth": "Three distinct record types searched via FamilySearch: county marriage register (vital records), federal census, and county death records. Fallbacks (browse-only Hamilton County records pli_006; Ohio church records pli_007) appropriately skipped since primary vital record search succeeded. Son's birth record (pli_003) and probate (pli_005) skipped as supplementary \u2014 overturn risk too low to justify additional searches.",
+              "original_substitution": "Both primary sources (src_001 Ohio marriage index, src_002 1900 census index) are derivative. Original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) was attempted via image_read and returned NOT READ \u2014 pursued-and-unavailable. Multiple independent indexes consistently agree, reducing transcription-error overturn risk.",
+              "independent_verification": "Two sources with direct evidence and genuinely independent provenance: (1) Ohio County Marriage register, 1890 \u2014 created by county clerk, informants are the groom (self) and bride (self); (2) 1900 U.S. Census \u2014 created by federal enumerator, informant is an unknown household member. Different institutions, different creation processes, different informants, different time periods (1890 vs. 1900). A third source (1903 death record) adds indirect corroboration. These constitute independent verification.",
+              "evidence_class": "The Ohio County Marriage register entry (a_002, a_004) provides direct evidence with primary information from the parties themselves (groom self-reported name; county clerk as official_duty informant). The 1900 census (a_012) provides direct evidence from an original enumeration schedule. Both are indexed derivatives but derive from original government records.",
+              "conflict_resolution": "No conflicts found. Minor discrepancy: death record lists birth year '1870' vs. known birth December 1869 \u2014 within normal rounding tolerance for death records; immaterial to the marriage question. Marriage year 1890 is independently consistent across the marriage register and census years-married figure.",
+              "overturn_risk": "Low. The marriage register directly and explicitly names Emma Becker as bride of Wm. H. Ferber with corroborating father identification (Gerhard Ferber = I2). The 1900 census independently places Emma Ferber as his wife 10 years later, with the same approximate marriage year. No plausible scenario exists in which the skipped records (son's birth, probate, church) would name a different wife."
+            }
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "proof-conclusion",
+        "args": "q_001"
+      },
+      "response_summary": "Launching skill: proof-conclusion"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
+      },
+      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_edit",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "proof_summaries",
+        "op": "append",
+        "entry": {
+          "question_id": "q_001",
+          "tier": "probable",
+          "vehicle": "summary",
+          "supporting_assertion_ids": [
+            "a_001",
+            "a_002",
+            "a_003",
+            "a_004",
+            "a_005",
+            "a_007",
+            "a_011",
+            "a_012",
+            "a_017",
+            "a_019"
+          ],
+          "resolved_conflict_ids": [],
+          "exhaustive_search_summary": "Searched Ohio, County Marriages, 1789-2016 (FamilySearch collection 1614804) for Hamilton County 1885-1903; found a direct marriage register entry for Wm. H. Ferber and Emma Becker, circa 1890. Extracted the 1900 U.S. Census household (FamilySearch ark:/61903/1:1:MM88-DGG) confirming Emma Ferber as wife. Read William's Ohio County Death Record (FamilySearch ark:/61903/1:1:F66M-8JZ), confirming 'Married' status at death in March 1903. Attempted original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) via image_read \u2014 NOT READ (inaccessible; pursued-and-unavailable). Son's birth record (Ohio County Births, 1891), probate records (Ohio, Probate Records 1789-1996), browse-only Hamilton County records, and church records were evaluated and skipped: primary vital-record search succeeded; fallbacks and supplementary corroboration not required for a GPS-defensible conclusion at the probable tier.",
+          "narrative_markdown": "## Marriage of William Hubert Ferber and Emma Becker\n\n**Research question:** Whom did William Hubert Ferber (born December 1869, Cincinnati, Hamilton County, Ohio; died 11 March 1903) marry, and when and where was the marriage?\n\n**Conclusion:** The preponderance of evidence establishes that William Hubert Ferber married Emma Becker in Hamilton County, Ohio, in approximately 1890.\n\n### Ohio County Marriage Register, 1890\n\nThe strongest evidence for this conclusion is an entry in \"Ohio, County Marriages, 1789\u20132016\" (FamilySearch collection 1614804, derivative source), indexed as the marriage of \"Wm. H. Ferber\" to \"Emma Becker\" in Hamilton County, Ohio, circa 1890.\u00b9 Both parties are named explicitly, providing direct evidence that answers the research question. The groom\u2019s abbreviated given name (\"Wm. H.\") is a standard short form of William Hubert.\n\nThe entry also names the groom\u2019s father as Gerhard Ferber.\u00b2 Gerhard Ferber \u2014 born 29 September 1820 in Germany, residing Cincinnati, Hamilton County throughout his life, and already documented in the research tree (I2) as William\u2019s father via the 1870 census household \u2014 corroborates that this marriage record belongs to the correct William Ferber and not another individual of the same surname in Hamilton County.\n\nThe groom\u2019s name and marriage facts carry primary information quality: the groom (a party to the marriage) self-reported his name and his father\u2019s name at the time of the event, and the county registrar recorded the entry in his official capacity. However, the source is classified as derivative: FamilySearch provides an indexed transcription of the county register. The original register image (ark:/61903/3:1:9392-91SQ-KQ) was sought but could not be retrieved via FamilySearch\u2019s image reader. The indexed data has not been verified directly against the original document.\n\n### 1900 United States Federal Census\n\nTen years after the marriage, the 1900 United States Census for Cincinnati Ward 19, Hamilton County, Ohio, provides independent corroboration.\u00b3 The household is enumerated as: William Ferber (head, male, born December 1869, Ohio, married); Emma Ferber (wife, female, born March 1871, Ohio); and Charles Ferber (child, male, born June 1891, Ohio). The census records approximately ten years of marriage, consistent with a circa-1890 marriage year.\n\nThis source is genuinely independent of the marriage register: it was created by a different institution (federal government vs. county government), through a different process (decennial household enumeration vs. marriage registration), at a different time (1900 vs. 1890), and with a different informant (an unknown household respondent vs. the marriage parties themselves). The child Charles Ferber (born June 1891) corresponds to I4 in the research tree \u2014 Charles Hubert Ferber, born 22 June 1891, Cincinnati, Hamilton, Ohio \u2014 further corroborating that this is the correct household.\n\nEmma Ferber\u2019s surname in the census reflects her married name; her maiden name Becker, established by the marriage register, is preserved in the research tree (I5) as her birth name. Both sources agree on the approximate marriage year of 1890. The census is a derivative source (FamilySearch index of the original schedule); the informant for the wife\u2019s name is unknown, yielding indeterminate information quality for that fact.\n\n### Ohio County Death Record, 1903\n\nWilliam Ferber\u2019s county death record for 11 March 1903, Cincinnati, Hamilton, Ohio, records his marital status as \u201cMarried.\u201d\u2074 Though the surviving wife is not named in the indexed entry, the \u201cMarried\u201d status provides indirect corroboration: no divorce, widowing, or remarriage is evidenced in the three years between the 1900 census and William\u2019s death. This is consistent with Emma Becker Ferber remaining his wife until his death.\n\n### Discrepancy Note\n\nThe death record lists William\u2019s birth year as \u201c1870,\u201d while the marriage register, census, and established tree facts place his birth in December 1869. This falls within normal rounding tolerance for death-record reporting \u2014 informants commonly round to the nearest year or recall imprecisely decades after the event \u2014 and is immaterial to the marriage question.\n\n### Confidence Tier: Probable\n\nThis conclusion is graded **probable** rather than proved because both primary confirming sources are derivative \u2014 indexed transcriptions rather than original documents. The original marriage register image was pursued but inaccessible. Accessing that original would allow verification of the indexed data and, if it confirms the parties\u2019 own testimony, would support advancing this conclusion to proved. The evidence otherwise preponderates strongly: two independent sources with consistent direct evidence name Emma Becker as William\u2019s wife, a third source provides indirect corroboration, no conflicting evidence was found, and the research is declared reasonably exhaustive.\n\n---\n\u00b9 \"Ohio, County Marriages, 1789-2016,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : accessed 9 July 2026), entry for Wm. H. Ferber and Emma Becker, Hamilton County, Ohio, 1890.\n\u00b2 Ibid., father of groom listed as Gerhard Ferber.\n\u00b3 \"United States, Census, 1900,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG : accessed 10 July 2026), entry for William Ferber household, Cincinnati Ward 19, Hamilton, Ohio, enumeration district 204.\n\u2074 \"Ohio, County Death Records, 1840-2001,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 10 July 2026), entry for Wm. Ferber, 11 Mar 1903, Cincinnati, Hamilton, Ohio."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "operation": "add_relationship",
+            "relationship": {
+              "type": "Couple",
+              "person1": "I1",
+              "person2": "I5",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "date": "1890",
+                  "standard_date": "1890",
+                  "place": "Hamilton, Ohio, United States",
+                  "standard_place": "Hamilton, Ohio, United States",
+                  "sources": [
+                    {
+                      "ref": "S7",
+                      "quality": 2
+                    },
+                    {
+                      "ref": "S2",
+                      "quality": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "operation": "add_fact",
+            "personId": "I5",
+            "fact": {
+              "type": "Birth",
+              "date": "March 1871",
+              "standard_date": "Mar 1871",
+              "place": "Ohio",
+              "standard_place": "Ohio, United States",
+              "sources": [
+                {
+                  "ref": "S2",
+                  "quality": 1
+                }
+              ]
+            }
+          },
+          {
+            "operation": "add_fact",
+            "personId": "I5",
+            "fact": {
+              "type": "Residence",
+              "date": "1900",
+              "standard_date": "1900",
+              "place": "Cincinnati, Hamilton, Ohio, United States",
+              "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+              "sources": [
+                {
+                  "ref": "S2",
+                  "quality": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R5\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F20\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F21\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\":..."
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I1"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "personId": "I5"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "GPS mentor proof-critique",
+        "subagent_type": "gps-mentor",
+        "prompt": "Please provide a GPS proof-critique for the research project at:\n\nProject path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv\n\nThe project has one question (q_001): \"Whom did William Hubert Ferber (born December 1869, Cincinnati, Hamilton, Ohio; died 11 March 1903) marry, and when and where was the marriage?\"\n\nA proof summary (ps_001) has been written at tier \"probable\" using vehicle \"summary\". The conclusion is that William Hubert Ferber married Emma Becker in Hamilton County, Ohio, approximately 1890.\n\nEvidence used:\n- src_001 (Ohio County Marriages 1789-2016, derivative): marriage register entry naming \"Wm. H. Ferber\" and \"Emma Becker\", 1890, Hamilton County, Ohio. Father of groom listed as Gerhard Ferber (corroborating identity).\n- src_002 (1900 U.S. Census, derivative): household listing William Ferber (head, born Dec 1869 Ohio, married), Emma Ferber (wife, born Mar 1871 Ohio), Charles Ferber (child, born Jun 1891 Ohio), married since approx. 1890.\n- src_003 (Ohio County Death Records, derivative): William listed as \"Married\" at death 11 Mar 1903. Wife not named.\n\nOriginal marriage register image was attempted (image_read) but NOT READ (inaccessible). Research declared exhaustive.\n\nPlease read the full project files and provide your assessment of whether the proof meets GPS standards, what tier is appropriate, and any improvements that would strengthen it."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"I read the full project state (`research.json`, all 21 assertions, all `person_evidence` links, the plan items and their skip rationales, and the `ps_001` proof summary in full). Before presenting the review, I need to flag a tooling limitation: **I do not have file-write access in this session** (only `Read` was available to me), so I could not create `evaluations/proof-critique-ps_001-<timestamp>.json` or append the pointer entry to `research.json`'s `evaluations[..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_ferber_marriage\",\n4\t    \"objective\": \"Who did William Hubert Ferber marry?\",\n5\t    \"subject_person_ids\": [\n6\t      \"I1\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-09T00:00:00Z\",\n10\t    \"updated\": \"2026-07-09T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_001\",\n20\t      \"quest..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "evaluations",
+            "op": "append",
+            "entry": {
+              "focus": "proof-critique",
+              "target_id": "ps_001",
+              "target_type": "proof_summary",
+              "verdict": "address_first",
+              "strengths": [
+                "Independence analysis for the 1900 census corroboration correctly identifies different institution, process, time, and informant vs. the marriage register \u2014 genuine GPS Standard 46 execution.",
+                "Cross-checking Charles's census birth date and Gerhard Ferber's name against known tree facts to confirm household identity is sound triangulation beyond the bare marriage question."
+              ],
+              "must_address": [
+                {
+                  "standard": "Standard 32 / Standard 43 \u2014 tier defensibility",
+                  "issue": "Tier rationale states Probable is required because sources are derivative, but pursued-and-unavailable derivative substitution does not itself cap the tier. The real residual risk is that Emma Becker's identity is attested only within one family-context record cluster (marriage register + household census), not by a genuinely independent third-party naming.",
+                  "what_would_change_my_mind": "Rewrite the tier rationale to name the actual residual uncertainty, or execute pli_003 (son Charles's 1891 birth record) which would supply a third, independently-created naming of Emma Becker as mother.",
+                  "specific_action": "Run pli_003 (Ohio, County Births 1841-2003) before finalizing tier."
+                }
+              ],
+              "consider_addressing": [
+                {
+                  "standard": "Standard 14 \u2014 topical breadth",
+                  "issue": "pli_005 (probate, Hamilton County 1903-1910) was skipped as unnecessary at Probable tier \u2014 reasonable now, but would be the natural next search if pursuing Proved.",
+                  "specific_action": "If elevating tier, run pli_005 or log a documented nil before revising to Proved."
+                }
+              ]
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "planned",
+              "skip_reason": null
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'superseded_by'\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "Bash",
+      "args": {
+        "command": "mkdir -p \"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/evaluations\"",
+        "description": "Create evaluations directory"
+      },
+      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+    },
+    {
+      "tool": "Write",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/evaluations/proof-critique-ps_001-2026-07-10.json",
+        "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"address_first\",\n  \"strengths\": [\n    \"Independence analysis for the 1900 census corroboration correctly identifies different institution, process, time, and informant vs. the marriage register \u2014 genuine GPS Standard 46 execution.\",\n    \"Cross-checking Charles's census birth date and Gerhard Ferber's name against known tree facts to confirm household identity is sound triangulation beyond the bare marriage question.\"\n  ],\n  \"must_address\": [\n    {\n      \"standard\": \"Standard 32 / Standard 43 \u2014 tier defensibility\",\n      \"issue\": \"Tier rationale states Probable is required because both primary confirming sources are derivative, but pursued-and-unavailable derivative substitution does not itself cap the tier. The real residual risk is that Emma Becker's identity is attested only within one family-context record cluster (marriage register + the household census), not by a genuinely independent third-party naming.\",\n      \"what_would_change_my_mind\": \"Rewrite the tier rationale to name the actual residual uncertainty, or execute pli_003 (son Charles's 1891 birth record) which would supply a third, independently-created, chronologically-closer naming of Emma Becker as mother.\",\n      \"specific_action\": \"Run pli_003 (Ohio, County Births 1841-2003) before finalizing tier.\"\n    }\n  ],\n  \"consider_addressing\": [\n    {\n      \"standard\": \"Standard 14 \u2014 topical breadth\",\n      \"issue\": \"pli_005 (probate, Hamilton County 1903-1910) was skipped as unnecessary at Probable tier \u2014 reasonable now, but would be the natural next search if pursuing Proved.\",\n      \"specific_action\": \"If elevating tier, run pli_005 or log a documented nil before revising to Proved.\"\n    }\n  ]\n}\n"
+      },
+      "response_summary": "File created successfully at: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv/evaluations/proof-critique-ps_001-2026-07-10.json (file state is current in your context \u2014 no need to Read it back)"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "evaluations",
+            "op": "append",
+            "entry": {
+              "focus": "proof-critique",
+              "target_id": "ps_001",
+              "target_type": "proof_summary",
+              "verdict": "address_first",
+              "file_path": "evaluations/proof-critique-ps_001-2026-07-10.json",
+              "superseded_by": null
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "planned",
+              "skip_reason": null
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"evaluations\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"ev_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_003",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches",
+        "max_results": 2
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ferber",
+        "givenName": "Charles",
+        "birthYearFrom": 1891,
+        "birthYearTo": 1891,
+        "birthPlace": "Hamilton, Ohio",
+        "fatherSurname": "Ferber",
+        "recordType": "birth",
+        "collectionId": "1932106",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"Charles\\\",\\n    \\\"birthYearFrom\\\": 1891,\\n    \\\"birthYearTo\\\": 1891,\\n    \\\"birthPlace\\\": \\\"Hamilton, Ohio\\\",\\n    \\\"fatherSurname\\\": \\\"Ferber\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"collectionId\\\": \\\"1932106\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Ferber",
+        "givenName": "Charles",
+        "birthYearFrom": 1890,
+        "birthYearTo": 1892,
+        "birthPlace": "Ohio",
+        "recordType": "birth",
+        "count": 50,
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Ferber\\\",\\n    \\\"givenName\\\": \\\"Charles\\\",\\n    \\\"birthYearFrom\\\": 1890,\\n    \\\"birthYearTo\\\": 1892,\\n    \\\"birthPlace\\\": \\\"Ohio\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv\\\"\\n  },\\n  \\\"totalMatches\\\": 49,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 49,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"resul..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "tool": "record_search",
+        "planItemId": "pli_003",
+        "query": {
+          "collection": "Ohio, County Births, 1841-2003",
+          "collectionId": "1932106",
+          "surname": "Ferber",
+          "givenName": "Charles",
+          "birthYearFrom": 1890,
+          "birthYearTo": 1892,
+          "birthPlace": "Ohio",
+          "recordType": "birth",
+          "count": 50,
+          "note": "Also tried with collectionId=1932106 and birthPlace=Hamilton,Ohio \u2014 0 results; broadened to all Ohio births 1890-1892, 49 results returned, none matching Charles Ferber in Hamilton County"
+        },
+        "outcome": "negative",
+        "resultsExamined": 49,
+        "resultsAvailable": 49,
+        "notes": "No birth record found for Charles Ferber in Hamilton County, Ohio 1891. Broad search across Ohio births 1890-1892 returned 49 results (Faber, Faerber, Farber variants), none matching Charles Ferber born Cincinnati. Ohio did not require mandatory birth registration until 1908; Hamilton County birth records for 1891 are likely incomplete or unindexed. This is a meaningful negative result \u2014 the collection was searched exhaustively but does not contain the expected record."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-10T07:19:12.076Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "questions",
+            "op": "update",
+            "entryId": "q_001",
+            "fields": {
+              "exhaustive_declaration": {
+                "declared": true,
+                "justification": "Searched Ohio County Marriages 1789-2016 (direct evidence: Emma Becker named as bride of Wm. H. Ferber, 1890, Hamilton County), 1900 U.S. Census (independent corroboration: Emma Ferber listed as wife), Ohio County Death Records 1840-2001 (indirect corroboration: 'Married' at death 1903), and Ohio County Births 1841-2003 (negative result: no birth record found for Charles Ferber in Hamilton County 1891 \u2014 Ohio pre-1908 registration was incomplete). Original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) was pursued via image_read but NOT READ (inaccessible). No conflicts found. Overturn risk is low.",
+                "log_entry_ids": [
+                  "log_001",
+                  "log_002",
+                  "log_003",
+                  "log_004"
+                ],
+                "stop_criteria": {
+                  "goal_alignment": "Yes \u2014 Ohio County Marriage register (pli_001) directly names Emma Becker as bride of Wm. H. Ferber in 1890, Hamilton County, Ohio. The 1900 census (pli_002) independently lists Emma Ferber as wife of William Ferber in Cincinnati, married since 1890. The 1903 death record (pli_004) confirms 'Married' status. The son's 1891 birth record (pli_003) was searched but not found in the indexed collection.",
+                  "repository_breadth": "Four searches conducted: county marriage register, federal census, county death records, and county births. Fallbacks (pli_006, pli_007) appropriately skipped since primary vital-record search succeeded. Probate (pli_005) skipped as supplementary. Ohio pre-1908 birth registration is known to be incomplete, accounting for the pli_003 nil result.",
+                  "original_substitution": "Both primary sources (src_001 marriage index, src_002 census index) are derivative. Original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) pursued via image_read \u2014 NOT READ (pursued-and-unavailable). Multiple independent indexes consistently agree, reducing transcription-error overturn risk.",
+                  "independent_verification": "Two sources with direct evidence and genuinely independent provenance: (1) Ohio County Marriage register, 1890 \u2014 different institution, process, informant from (2) 1900 U.S. Census. Third source (death record, indirect) adds corroboration. Son's birth record (pli_003) not found in indexed collections; Ohio pre-1908 incomplete registration accounts for nil.",
+                  "evidence_class": "Ohio County Marriage register assertions (a_002, a_004) carry primary information quality from the parties themselves. Census (a_012) carries indeterminate quality. Death record (a_019) carries indeterminate quality.",
+                  "conflict_resolution": "No conflicts found. Minor death record birth-year discrepancy (1870 vs. Dec 1869) is within normal tolerance and immaterial.",
+                  "overturn_risk": "Low. The marriage register directly names Emma Becker as bride of Wm. H. Ferber with corroborating father identification (Gerhard Ferber = I2). The 1900 census independently places Emma Ferber as wife 10 years later with consistent marriage year. Birth record not found due to incomplete pre-1908 Ohio registration, not a contradicting record. No plausible scenario names a different wife."
+                }
+              }
+            }
+          },
+          {
+            "section": "proof_summaries",
+            "op": "update",
+            "entryId": "ps_001",
+            "fields": {
+              "supporting_assertion_ids": [
+                "a_001",
+                "a_002",
+                "a_003",
+                "a_004",
+                "a_005",
+                "a_007",
+                "a_011",
+                "a_012",
+                "a_017",
+                "a_019"
+              ],
+              "exhaustive_search_summary": "Searched Ohio, County Marriages, 1789-2016 (FamilySearch collection 1614804) for Hamilton County 1885-1903 and found a direct marriage register entry for Wm. H. Ferber and Emma Becker, circa 1890. Extracted the 1900 U.S. Census household (FamilySearch ark:/61903/1:1:MM88-DGG) confirming Emma Ferber as wife. Read William's Ohio County Death Record (FamilySearch ark:/61903/1:1:F66M-8JZ), confirming 'Married' status in 1903. Searched Ohio, County Births, 1841-2003 for Charles Hubert Ferber (born 22 June 1891, Cincinnati) \u2014 negative result; no record found, consistent with Ohio's incomplete pre-1908 civil birth registration. Attempted original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) via image_read \u2014 NOT READ (inaccessible; pursued-and-unavailable). Probate (pli_005) and church records (pli_007) skipped as supplementary given two confirming independent sources.",
+              "narrative_markdown": "## Marriage of William Hubert Ferber and Emma Becker\n\n**Research question:** Whom did William Hubert Ferber (born December 1869, Cincinnati, Hamilton County, Ohio; died 11 March 1903) marry, and when and where was the marriage?\n\n**Conclusion:** The preponderance of evidence establishes that William Hubert Ferber married Emma Becker in Hamilton County, Ohio, in approximately 1890.\n\n### Ohio County Marriage Register, 1890\n\nThe strongest evidence for this conclusion is an entry in \"Ohio, County Marriages, 1789\u20132016\" (FamilySearch collection 1614804, derivative source), indexed as the marriage of \"Wm. H. Ferber\" to \"Emma Becker\" in Hamilton County, Ohio, circa 1890.\u00b9 Both parties are named explicitly, providing direct evidence that answers the research question. The groom\u2019s abbreviated given name (\"Wm. H.\") is a standard short form of William Hubert.\n\nThe entry also names the groom\u2019s father as Gerhard Ferber.\u00b2 Gerhard Ferber \u2014 born 29 September 1820 in Germany, residing Cincinnati, Hamilton County throughout his life, and already documented in the research tree (I2) as William\u2019s father via the 1870 census household \u2014 corroborates that this marriage record belongs to the correct William Ferber and not another individual of the same surname in Hamilton County.\n\nThe groom\u2019s name and marriage facts carry primary information quality: the groom (a party to the marriage) self-reported his name and his father\u2019s name at the time of the event, and the county registrar recorded the entry in his official capacity. However, the source is classified as derivative: FamilySearch provides an indexed transcription of the county register. The original register image (ark:/61903/3:1:9392-91SQ-KQ) was sought but could not be retrieved via FamilySearch\u2019s image reader.\n\n### 1900 United States Federal Census\n\nTen years after the marriage, the 1900 United States Census for Cincinnati Ward 19, Hamilton County, Ohio, provides independent corroboration.\u00b3 The household is enumerated as: William Ferber (head, male, born December 1869, Ohio, married); Emma Ferber (wife, female, born March 1871, Ohio); and Charles Ferber (child, male, born June 1891, Ohio). The census records approximately ten years of marriage, consistent with a circa-1890 marriage year.\n\nThis source is genuinely independent of the marriage register: it was created by a different institution (federal government vs. county government), through a different process (decennial household enumeration vs. marriage registration), at a different time (1900 vs. 1890), and with a different informant (an unknown household respondent vs. the marriage parties themselves). The child Charles Ferber (born June 1891) corresponds to I4 in the research tree \u2014 Charles Hubert Ferber, born 22 June 1891, Cincinnati, Hamilton, Ohio \u2014 further corroborating that this is the correct household.\n\nEmma Ferber\u2019s surname in the census reflects her married name; her maiden name Becker, established by the marriage register, is preserved in the research tree (I5) as her birth name. Both sources agree on the approximate marriage year of 1890.\n\n### Ohio County Death Record, 1903\n\nWilliam Ferber\u2019s county death record for 11 March 1903, Cincinnati, Hamilton, Ohio, records his marital status as \u201cMarried.\u201d\u2074 Though the surviving wife is not named in the indexed entry, the \u201cMarried\u201d status provides indirect corroboration: no divorce, widowing, or remarriage is evidenced in the three years between the 1900 census and William\u2019s death. This is consistent with Emma Becker Ferber remaining his wife until his death.\n\n### Negative Finding: Son\u2019s Birth Record\n\nA search was conducted in Ohio, County Births, 1841\u20132003 (FamilySearch collection 1932106) for the birth record of Charles Hubert Ferber (born 22 June 1891, Cincinnati, Hamilton County), which would have provided a third independent naming of Emma Becker as mother.  No record was found. Ohio did not mandate civil birth registration until 1908; Hamilton County birth records from the 1880s\u20131890s are incompletely preserved and indexed. This negative finding does not contradict the conclusion\u2014it reflects a documentation gap, not a conflicting source.\n\n### Discrepancy Note\n\nThe death record lists William\u2019s birth year as \u201c1870,\u201d while the marriage register, census, and established tree facts place his birth in December 1869. This falls within normal rounding tolerance for death-record reporting and is immaterial to the marriage question.\n\n### Confidence Tier: Probable\n\nThis conclusion is graded **probable** rather than proved for two related reasons. First, Emma Becker\u2019s identity as William\u2019s wife is attested by sources that both document her within the same family context\u2014the marriage register names her as bride, and the 1900 census lists her as wife in his household. A third, independently-originated naming (such as a birth record for their son Charles listing Emma Becker as mother, created by a physician or midwife informant) would provide corroboration from a genuinely separate informant chain; that record was searched but not found, likely due to Ohio\u2019s incomplete pre-1908 birth registration. Second, the original marriage register image was pursued but inaccessible, preventing direct verification of the indexed transcription. The evidence otherwise preponderates strongly: two independent sources with consistent direct evidence, one indirect corroboration, no conflicts, and research declared reasonably exhaustive. Access to the original register image, or discovery of a birth record for Charles Hubert Ferber naming his mother as Emma Becker, would support advancing this conclusion to proved.\n\n---\n\u00b9 \"Ohio, County Marriages, 1789-2016,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : accessed 9 July 2026), entry for Wm. H. Ferber and Emma Becker, Hamilton County, Ohio, 1890.\n\u00b2 Ibid., father of groom listed as Gerhard Ferber.\n\u00b3 \"United States, Census, 1900,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG : accessed 10 July 2026), entry for William Ferber household, Cincinnati Ward 19, Hamilton, Ohio, enumeration district 204.\n\u2074 \"Ohio, County Death Records, 1840-2001,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 10 July 2026), entry for Wm. Ferber, 11 Mar 1903, Cincinnati, Hamilton, Ohio."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"proof_summaries\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"ps_001\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n ..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection",
+        "args": "resolve q_001"
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "resolved",
+          "resolved": "2026-07-10",
+          "resolution_assertion_ids": [
+            "a_002",
+            "a_004",
+            "a_012"
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-ferber-marriage-e7k53jiv",
+        "section": "project",
+        "op": "update",
+        "fields": {
+          "status": "completed"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    }
+  ],
+  "error": null,
+  "tags": {
+    "question_type": "spouse",
+    "era": "1890s",
+    "geography": "US-OH"
+  },
+  "blocked_tree_reads": []
+}
