@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_search_records_020",
+    "skill": "search-records",
+    "name": "Same-named baptism with a conflicting birth year must not be adopted as the subject (identity drift)",
+    "type": "positive",
+    "description": "Executing pli_001 (a Wiltshire church/baptism search for Job Purnell b. ~1826, to find his parents), record_search returns ONLY a same-named decoy — Job Purnell baptised 1821, son of Samuel Purnall & Eliza Crabb — and rank_search_matches ranks it #1 with a strong score (0.86 / confidence 4). But its birth year (1821) conflicts with the known subject (b. ~1826; married Serena Deacon 1849; son Samuel b. 1850) by about five years. The skill must apply the mandated logical cross-check (birth year vs. the expected range), recognize this is very likely a DIFFERENT same-named Job Purnell, flag it needs-review, and NOT adopt it as the subject's baptism nor hand off Samuel Purnall / Eliza Crabb as Job's parents. Guards against identity drift in a name-crowded parish (from the abandoned purnell-parents e2e finding).",
+    "tags": ["search", "church", "identity", "same-person", "needs-review", "birth-year-conflict", "rank-search-matches", "name-crowding"]
+  },
+  "input": {
+    "user_message": "Execute plan item pli_001 — search FamilySearch's Wiltshire church records for the baptism of Job Purnell (born about 1826 in Trowbridge, Wiltshire) to identify his parents.",
+    "scenario": "job-purnell-parents-identity"
+  },
+  "mcp_fixtures": ["record-search-purnell-1821-decoy", "rank-search-matches-purnell-1821-decoy"],
+  "judge_context": [
+    "Tool Arguments: score 3 if record_search (with projectPath, count ~50) and rank_search_matches (with the staged resultsRef, subjectId I1, checkAttachments) were both called with parameters appropriate to a Job Purnell baptism/church search in Trowbridge/Wiltshire. A validate_research_schema call with a project path is acceptable and expected — do not penalize it. Score 2 only if a required tool (record_search or rank_search_matches) was skipped or had clearly wrong arguments.",
+    "CORE (Correctness): the single returned candidate is a Job Purnell baptised 1821 whose parents are Samuel Purnall & Eliza Crabb. Its birth year (1821) conflicts with the known subject (b. ~1826, married Serena Deacon 1849) by ~5 years. The skill MUST apply the logical cross-check and recognize this is very likely a DIFFERENT same-named person: it must NOT adopt this record as the subject Job's baptism, and MUST NOT conclude or hand off Samuel Purnall / Eliza Crabb as Job's parents. Treating the decoy as a confident match to pass to extraction as the subject's parentage is a FAIL.",
+    "The strong rank/match score (0.86, confidence 4) must NOT override the birth-year conflict — score is one input, the logical cross-check is the arbiter. Concluding it is the subject because the score is high is exactly the failure this test guards against.",
+    "Completeness: the search should be logged honestly (a result WAS returned — outcome positive or partial), with notes recording the ~5-year birth-year conflict and that the candidate is flagged needs-review as a likely different Job Purnell. The skill should keep pli_001 'in_progress' (NOT 'completed') and recommend anchoring further or a narrower ~1826 baptism search, rather than treating the parentage question as answered.",
+    "Do NOT require the skill to find the true baptism — it is not available in this scenario. Recognizing the decoy is the wrong person and declining to adopt it is a complete, correct response; do not penalize the skill for not producing parents.",
+    "Log/Sidecar: do NOT require the skill to print raw log-entry or sidecar JSON. Score log quality 3 if the skill states it wrote results/<log_id>.json and appended a log entry capturing the conflict. This is NOT a nil search (one result was returned), so it should write a sidecar and set results_ref."
+  ]
+}
