@@ -36,6 +36,7 @@ def _valid_person(pid, given, surname):
     return {
         "id": pid,
         "gender": "Male",
+        "living": False,
         "names": [{"id": f"N-{pid}", "given": given, "surname": surname}],
     }
 
@@ -248,3 +249,70 @@ def test_resolve_target_unknown_name_falls_back_to_path(tmp_path, monkeypatch):
     monkeypatch.setattr(vf, "DEFAULT_FIXTURES_ROOT", tmp_path)
     arg = Path("does-not-exist")
     assert _resolve_target(arg) == arg
+
+
+# --- structural integrity (what JSON Schema cannot express) ------------------
+
+
+def test_lint_fixture_rejects_a_dangling_relationship_endpoint(tmp_path):
+    # Lints clean under JSON Schema 2020-12, hard-fails tree_edit mid-run —
+    # the runtime-vs-fixture gate gap the authoring work called out.
+    tree = _valid_tree(_valid_person("I1", "John", "Smith"))
+    tree["relationships"] = [
+        {"id": "R1", "type": "ParentChild", "parent": "I1", "child": "GONE-123"}
+    ]
+    _write_fixture(tmp_path, tree)
+    _, errors = lint_fixture(tmp_path)
+    assert any("GONE-123" in e and "dangling" in e for e in errors)
+
+
+def test_lint_fixture_rejects_a_dangling_source_ref(tmp_path):
+    person = _valid_person("I1", "John", "Smith")
+    person["facts"] = [
+        {"id": "F1", "type": "Birth", "sources": [{"ref": "GONE-SRC"}]}
+    ]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("GONE-SRC" in e for e in errors)
+
+
+def test_lint_fixture_rejects_duplicate_ids(tmp_path):
+    tree = _valid_tree(
+        _valid_person("I1", "John", "Smith"),
+        _valid_person("I1", "Paul", "Smith"),
+    )
+    _write_fixture(tmp_path, tree)
+    _, errors = lint_fixture(tmp_path)
+    assert any("duplicate person id 'I1'" in e for e in errors)
+
+
+def test_lint_fixture_rejects_a_living_person(tmp_path):
+    person = _valid_person("I1", "John", "Smith")
+    person["living"] = True
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("marked living" in e for e in errors)
+
+
+def test_lint_fixture_rejects_a_missing_living_field(tmp_path):
+    # Absent is not deceased — mirrors living_gate rule 2 in e2e.author, so
+    # the per-slug authoring gate and this corpus-wide gate cannot disagree.
+    person = _valid_person("I1", "John", "Smith")
+    del person["living"]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("no `living` field" in e for e in errors)
+
+
+def test_lint_fixture_holds_the_unstripped_tree_to_the_same_bar(tmp_path):
+    # The unstripped tree is committed too — it is where --drop-living
+    # mistakes and living persons would hide.
+    _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")))
+    bad = _valid_tree(_valid_person("I2", "Paul", "Smith"))
+    bad["persons"][0]["living"] = True
+    (tmp_path / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(bad), encoding="utf-8"
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any(e.startswith("unstripped-tree.gedcomx.json:") and "marked living" in e
+               for e in errors)

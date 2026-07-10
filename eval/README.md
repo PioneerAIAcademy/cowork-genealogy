@@ -284,10 +284,12 @@ run on demand.
 Fixtures are authored interactively with the **`/author-e2e-fixture`**
 skill (in `.claude/skills/`), run from the **Code tab** of the Claude
 desktop app (or `claude` in a terminal) opened at the **repo root** —
-not in Cowork, and not a subfolder. The skill needs the host-side MCP
-tools `person_read` + `validate_research_schema`; the committed
-`.mcp.json` at the repo root wires up the `genealogy` MCP server, which
-you **approve once** on first open of the repo.
+not in Cowork, and not a subfolder. The skill shells out to
+`eval/harness/e2e/author.py` (snapshot / strip / scaffold / validate),
+which reuses your FamilySearch login token — no MCP server approval is
+needed. Prerequisites are the ones `Setup.bat` / `make install` already
+cover: Node (for the `person_read` shell-out) and `uv` (for the
+script).
 
 Each step shows the Windows batch file with the macOS/Linux `make`
 equivalent in parentheses:
@@ -302,9 +304,7 @@ equivalent in parentheses:
 3. *(recommended)* `eval\CheckSetup.bat` (`make e2e-preflight`) —
    readiness check before you spend money.
 4. Open the **`cowork-genealogy`** folder (repo **root**) in the Claude
-   desktop **Code tab** — or `claude` at the repo root. **Approve** the
-   `genealogy` MCP prompt on first open (restart an already-open session
-   so it loads `.mcp.json`).
+   desktop **Code tab** — or `claude` at the repo root.
 5. `/author-e2e-fixture` → give a **deceased** person's FamilySearch ID
    → pick the one subset to strip → answer the metadata questions. Writes
    straight to `eval\tests\e2e\<slug>\` — no move needed.

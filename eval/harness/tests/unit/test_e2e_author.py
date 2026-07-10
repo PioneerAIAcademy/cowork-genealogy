@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -465,7 +466,356 @@ def test_differing_ids_alone_are_not_drift(tree):
 def test_npx_is_invoked_through_cmd_on_windows(monkeypatch):
     # `npx` resolves to `npx.cmd`, which subprocess cannot exec (WinError 193),
     # and `tsx` is not resolvable from the engine's node_modules either.
+    # `--yes` keeps a cold npx cache from blocking on an invisible prompt.
     monkeypatch.setattr(author.os, "name", "nt")
-    assert _npx(["tsx", "x.ts"]) == ["cmd", "/c", "npx", "tsx", "x.ts"]
+    assert _npx(["tsx", "x.ts"]) == ["cmd", "/c", "npx", "--yes", "tsx", "x.ts"]
     monkeypatch.setattr(author.os, "name", "posix")
-    assert _npx(["tsx", "x.ts"]) == ["npx", "tsx", "x.ts"]
+    assert _npx(["tsx", "x.ts"]) == ["npx", "--yes", "tsx", "x.ts"]
+
+
+# --- duplicate ids ----------------------------------------------------------
+
+
+def test_normalize_warns_about_duplicate_incoming_ids():
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False),
+            _person("P1", "Paul", "Smith", living=False),
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert any("duplicate person id 'P1'" in w for w in warnings)
+
+
+def test_strip_refuses_a_tree_with_duplicate_fact_ids():
+    # Two facts sharing an id would BOTH be removed by one selector, and the
+    # removals log would list only one — a silent, unrecorded removal from
+    # the benchmark input.
+    person = _person("P1", "John", "Smith", living=False, facts=[
+        {"id": "F1", "type": "Birth", "date": "1900"},
+        {"id": "F1", "type": "Death", "date": "1970"},
+    ])
+    tree = {"persons": [person], "relationships": [], "sources": []}
+    result, removals, _, errors = apply_strip(tree, StripSpec(facts={("P1", "F1")}))
+    assert removals == []
+    assert result == tree
+    assert any("duplicate fact id 'F1'" in e for e in errors)
+
+
+def test_a_duplicate_couple_carrying_the_marriage_fact_keeps_the_fact():
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False),
+            _person("P2", "Jane", "Doe", living=False),
+        ],
+        "relationships": [
+            {"type": "Couple", "person1": "P1", "person2": "P2"},
+            {"type": "Couple", "person1": "P1", "person2": "P2",
+             "facts": [{"type": "Marriage", "date": "1 May 1818"}]},
+        ],
+        "sources": [],
+    }
+    tree, warnings = normalize_tree(raw)
+    assert len(tree["relationships"]) == 1
+    assert tree["relationships"][0]["facts"][0]["type"] == "Marriage"
+    assert any("plus the duplicate's facts" in w for w in warnings)
+
+
+def test_a_relationship_with_an_unknown_type_is_dropped_with_a_warning():
+    raw = {
+        "persons": [_person("P1", "John", "Smith", living=False)],
+        "relationships": [{"id": "R1", "type": "Godparent",
+                           "person1": "P1", "person2": "P1"}],
+        "sources": [],
+    }
+    tree, warnings = normalize_tree(raw)
+    assert tree["relationships"] == []
+    assert any("unknown type 'Godparent'" in w for w in warnings)
+
+
+# --- fetch guards -----------------------------------------------------------
+
+
+def _proc(returncode=0, stdout="", stderr=""):
+    return subprocess.CompletedProcess(
+        args=[], returncode=returncode, stdout=stdout, stderr=stderr
+    )
+
+
+def test_a_malformed_pid_never_reaches_a_subprocess(monkeypatch):
+    # On Windows the PID lands in a `cmd /c npx ...` argv, where subprocess
+    # does not escape cmd.exe metacharacters — `KWZQ-8Q4&calc` would run
+    # `calc`. The shape check must fire before any subprocess call.
+    def boom(*args, **kwargs):
+        raise AssertionError("subprocess must not run for a malformed PID")
+
+    monkeypatch.setattr(author.subprocess, "run", boom)
+    with pytest.raises(AuthorError, match="does not look like"):
+        author.fetch_person_read("KWZQ-8Q4&calc")
+
+
+def test_an_auth_failure_routes_to_the_login_hint(monkeypatch):
+    monkeypatch.setattr(
+        author.subprocess, "run",
+        lambda *a, **kw: _proc(1, stderr="Error: Call the login tool to authenticate."),
+    )
+    with pytest.raises(AuthorError, match="Login.bat"):
+        author.fetch_person_read("KNDX-MKG")
+
+
+def test_a_tsx_crash_is_not_mistaken_for_an_auth_failure(monkeypatch):
+    # "SyntaxError: Unexpected token" is a code bug; sending the author to
+    # re-login over it is a dead end the old bare-"token" regex fell into.
+    monkeypatch.setattr(
+        author.subprocess, "run",
+        lambda *a, **kw: _proc(1, stderr="SyntaxError: Unexpected token ')'"),
+    )
+    with pytest.raises(AuthorError) as excinfo:
+        author.fetch_person_read("KNDX-MKG")
+    assert "Login.bat" not in str(excinfo.value)
+
+
+def test_non_json_stdout_is_a_clear_error(monkeypatch):
+    monkeypatch.setattr(
+        author.subprocess, "run", lambda *a, **kw: _proc(0, stdout="<html>")
+    )
+    with pytest.raises(AuthorError, match="did not return JSON"):
+        author.fetch_person_read("KNDX-MKG")
+
+
+def test_a_missing_npx_is_a_clear_error(monkeypatch):
+    def raise_fnf(*args, **kwargs):
+        raise FileNotFoundError("npx")
+
+    monkeypatch.setattr(author.subprocess, "run", raise_fnf)
+    with pytest.raises(AuthorError, match="npx"):
+        author.fetch_person_read("KNDX-MKG")
+
+
+# --- cli guards (the write-protection paths) --------------------------------
+
+
+@pytest.fixture
+def fixtures_root(tmp_path, monkeypatch):
+    monkeypatch.setattr(author, "FIXTURES_ROOT", tmp_path / "fixtures")
+    (tmp_path / "fixtures").mkdir()
+    return tmp_path / "fixtures"
+
+
+def _raw_tree(**person_kw):
+    return {
+        "persons": [_person("KNDX-MKG", "John", "Smith", **person_kw)],
+        "relationships": [],
+        "sources": [],
+    }
+
+
+def _write_input(tmp_path, data, name="in.json"):
+    path = tmp_path / name
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
+
+
+def test_require_findings_refuses_when_the_file_is_missing(tmp_path):
+    with pytest.raises(AuthorError, match="does not exist"):
+        author._require_findings(tmp_path)
+
+
+def test_require_findings_refuses_an_empty_findings_list(tmp_path):
+    # An empty list would make the stripping linter pass vacuously — the
+    # module's own stated worst failure mode.
+    (tmp_path / "expected-findings.json").write_text(
+        json.dumps({"findings": []}), encoding="utf-8"
+    )
+    with pytest.raises(AuthorError, match="no findings"):
+        author._require_findings(tmp_path)
+
+
+def test_snapshot_refuses_to_overwrite_without_force(fixtures_root, tmp_path, capsys):
+    src = _write_input(tmp_path, _raw_tree(living=False))
+    out = fixtures_root / "t" / "unstripped-tree.gedcomx.json"
+    assert author.main(["snapshot", "--slug", "t", "--from-file", str(src)]) == 0
+    first = out.read_text(encoding="utf-8")
+    assert author.main(["snapshot", "--slug", "t", "--from-file", str(src)]) == 2
+    assert out.read_text(encoding="utf-8") == first
+    assert "already exists" in capsys.readouterr().err
+
+
+def test_snapshot_from_file_refuses_a_tree_with_no_living_fields(fixtures_root, tmp_path, capsys):
+    # Only person_read writes `living`, so a project tree (Path 2) has it on
+    # nobody — the refusal must point at the supported escape hatch.
+    src = _write_input(tmp_path, _raw_tree())
+    assert author.main(["snapshot", "--slug", "t2", "--from-file", str(src)]) == 2
+    assert not (fixtures_root / "t2" / "unstripped-tree.gedcomx.json").exists()
+    assert "--confirm-deceased" in capsys.readouterr().err
+
+
+def test_confirm_deceased_stamps_living_false_and_writes(fixtures_root, tmp_path, capsys):
+    src = _write_input(tmp_path, _raw_tree())
+    rc = author.main(
+        ["snapshot", "--slug", "t3", "--from-file", str(src), "--confirm-deceased"]
+    )
+    assert rc == 0
+    tree = json.loads(
+        (fixtures_root / "t3" / "unstripped-tree.gedcomx.json").read_text(encoding="utf-8")
+    )
+    assert tree["persons"][0]["living"] is False
+    assert "--confirm-deceased stamped" in capsys.readouterr().err
+
+
+def test_confirm_deceased_never_overrides_an_explicit_living_true(fixtures_root, tmp_path):
+    src = _write_input(tmp_path, _raw_tree(living=True))
+    rc = author.main(
+        ["snapshot", "--slug", "t4", "--from-file", str(src), "--confirm-deceased"]
+    )
+    assert rc == 2
+    assert not (fixtures_root / "t4" / "unstripped-tree.gedcomx.json").exists()
+
+
+def test_check_excludes_living_persons_from_the_drift_audit(fixtures_root, tmp_path, capsys):
+    # Committed trees never contain living persons, so a living person in
+    # the live tree must not read as "person added upstream" forever.
+    fixture_dir = fixtures_root / "c"
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(_raw_tree(living=False)), encoding="utf-8"
+    )
+    live = _raw_tree(living=False)
+    live["persons"].append(_person("LF4F-ML8", "Paul", "Smith", living=True))
+    src = _write_input(tmp_path, live, name="live.json")
+    assert author.main(["snapshot", "--slug", "c", "--from-file", str(src), "--check"]) == 0
+    captured = capsys.readouterr()
+    assert "matches the committed unstripped tree" in captured.out
+    assert "excluded 1 living person(s)" in captured.err
+
+
+def test_strip_with_no_selectors_is_an_error(fixtures_root, tree, capsys):
+    fixture_dir = fixtures_root / "s"
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    assert author.main(["strip", "--slug", "s"]) == 2
+    assert "nothing to strip" in capsys.readouterr().err
+
+
+def test_strip_dry_run_writes_nothing_and_still_lints(fixtures_root, tree, capsys):
+    # A clean dry run followed by a WARNing real run would be a trap: when
+    # the findings exist, the dry run lints the in-memory candidate too.
+    fixture_dir = fixtures_root / "s2"
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    (fixture_dir / "expected-findings.json").write_text(
+        json.dumps({"findings": [_finding("f1", "John Smith")]}), encoding="utf-8"
+    )
+    rc = author.main(["strip", "--slug", "s2", "--facts", f"KNDX-MKG:{DEATH_1879}", "--dry-run"])
+    assert rc == 0
+    assert not (fixture_dir / "starting-tree.gedcomx.json").exists()
+    captured = capsys.readouterr()
+    assert "--dry-run: wrote nothing." in captured.out
+    assert "f1" in captured.err  # the linter spoke: John Smith is still present
+
+
+def test_strip_dry_run_still_works_before_the_findings_exist(fixtures_root, tree, capsys):
+    fixture_dir = fixtures_root / "s3"
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    rc = author.main(["strip", "--slug", "s3", "--persons", "M4TT-2BC", "--dry-run"])
+    assert rc == 0
+    assert not (fixture_dir / "starting-tree.gedcomx.json").exists()
+
+
+def test_scaffold_refuses_to_overwrite_without_force(fixtures_root, capsys):
+    args = [
+        "scaffold", "--slug", "t5", "--name", "T5", "--pid", "KNDX-MKG",
+        "--question", "Q?", "--question-type", "parents", "--era", "1850s",
+        "--geography", "US-VA", "--difficulty", "easy",
+    ]
+    assert author.main(args) == 0
+    assert author.main(args) == 2
+    assert "already exist" in capsys.readouterr().err
+
+
+def test_validate_flags_a_subject_id_that_names_nobody_in_the_tree(fixtures_root, tree, capsys):
+    # The engine's runtime cross-file check would fail the agent mid-run on
+    # this; the fixture gate has to catch it first.
+    fixture_dir = fixtures_root / "v"
+    fixture_dir.mkdir()
+    research = author.render_template(
+        "starting-research.json", _scaffold_values(subject_person_id="NOPE-123")
+    )
+    (fixture_dir / "starting-research.json").write_text(
+        json.dumps(research), encoding="utf-8"
+    )
+    stripped, _, _, errors = apply_strip(tree, StripSpec(persons={"M4TT-2BC"}))
+    assert errors == []
+    (fixture_dir / "starting-tree.gedcomx.json").write_text(
+        json.dumps(stripped), encoding="utf-8"
+    )
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    (fixture_dir / "expected-findings.json").write_text(
+        json.dumps({"findings": [_finding("f1", "Mary Jones")]}), encoding="utf-8"
+    )
+    assert author.main(["validate", "--slug", "v"]) == 2
+    assert "subject_person_ids" in capsys.readouterr().err
+
+
+def test_a_slug_with_path_separators_is_rejected():
+    with pytest.raises(SystemExit):
+        author.build_parser().parse_args(["validate", "--slug", "../evil"])
+
+
+# --- drift audit (relationships, sources, values) ----------------------------
+
+
+def test_drift_reports_relationship_and_source_changes(tree):
+    after = copy.deepcopy(tree)
+    after["relationships"] = after["relationships"][1:]
+    after["relationships"].append(
+        {"id": "R9", "type": "ParentChild", "parent": "ZZZZ-AAA", "child": "KNDX-MKG"}
+    )
+    after["sources"] = after["sources"][1:]
+    after["sources"].append({"id": "NEW-SRC", "title": "A new register"})
+    report = diff_trees(tree, after)
+    assert any("relationship gone upstream" in line for line in report)
+    assert any("relationship added upstream" in line for line in report)
+    assert any("source gone upstream" in line for line in report)
+    assert any("source added upstream: A new register" in line for line in report)
+
+
+def test_a_changed_marriage_date_is_drift(tree):
+    # The Couple's facts carry the answer of every marriage fixture — a
+    # changed marriage date must not read as "matches".
+    after = copy.deepcopy(tree)
+    couple = after["relationships"][2]
+    assert couple["type"] == "Couple"
+    couple["facts"][0]["date"] = "1 January 1820"
+    report = diff_trees(tree, after)
+    assert any("relationship changed upstream" in line for line in report)
+
+
+# --- presence mirror (one-half names) ----------------------------------------
+
+
+def test_the_presence_mirror_accepts_a_target_named_by_one_name_half(tree):
+    # An unknown-parent answer is named by surname alone ("the father,
+    # ___ Smith"). Requiring both name halves would hard-fail every such
+    # fixture with a misleading "was never in the tree".
+    findings = {"findings": [_finding("f1", "Unknown Smith")]}
+    assert presence_mirror(findings, tree) == []
+
+
+# --- template substitution edge ----------------------------------------------
+
+
+def test_a_value_containing_literal_braces_is_data_not_a_placeholder():
+    out = _substitute({"notes": "{{notes}}"}, {"notes": "see the {{slug}} docs"})
+    assert out == {"notes": "see the {{slug}} docs"}

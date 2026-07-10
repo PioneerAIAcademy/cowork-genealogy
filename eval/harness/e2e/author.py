@@ -63,9 +63,13 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 from e2e.validate_fixture import (
-    _finding_name_tokens,
+    DEFAULT_FIXTURES_ROOT,
+    REPO_ROOT,
     check_stripping,
+    finding_name_tokens,
+    finding_type_token,
     format_suspect,
+    index_tree,
 )
 from harness.schema_validator import (
     SCHEMAS_DIR,
@@ -74,8 +78,7 @@ from harness.schema_validator import (
 )
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-FIXTURES_ROOT = REPO_ROOT / "eval" / "tests" / "e2e"
+FIXTURES_ROOT = DEFAULT_FIXTURES_ROOT
 ENGINE_DIR = REPO_ROOT / "packages" / "engine" / "mcp-server"
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 
@@ -109,6 +112,25 @@ _SOURCE_REF_FIELDS = ("ref", "page", "quality")
 
 class AuthorError(Exception):
     """A refusal or a hard failure. Printed as ERROR; exits 2."""
+
+
+# The PID is pasted out of a chat message and — on Windows — ends up in a
+# `cmd /c npx ...` argv, where subprocess does NOT escape cmd.exe
+# metacharacters (`&`, `|`, `^`, `%VAR%`): a PID like `KWZQ-8Q4&calc` would
+# execute `calc`. Validate the shape before it reaches any subprocess.
+_VALID_PID = re.compile(r"^[A-Za-z0-9-]+$")
+
+# Slugs become path components under eval/tests/e2e/ — reject separators and
+# dot-traversal outright rather than writing outside the fixtures root.
+_VALID_SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+
+
+def _slug_arg(value: str) -> str:
+    if not _VALID_SLUG.match(value):
+        raise argparse.ArgumentTypeError(
+            f"slug must be kebab-case ([a-z0-9-], no leading dash), got {value!r}"
+        )
+    return value
 
 
 # --- json io ---------------------------------------------------------------
@@ -265,14 +287,31 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     * drops relationships whose endpoints aren't in `persons` — `person_read
       --relatives` returns edges to grandparents and in-laws whose person
       records it did not include, and those are dangling references;
-    * de-duplicates identical relationships.
+    * de-duplicates identical relationships;
+    * warns on duplicate incoming ids — preserved verbatim, so a duplicate
+      makes `strip`'s selectors ambiguous (and `apply_strip` refuses).
 
-    Returns the tree and a list of WARN strings. Never raises on odd input:
-    the schema check in `strip`/`validate` is the gate, not this.
+    Returns the tree and a list of WARN strings. Lenient by design — it
+    warns rather than raising on structurally odd but iterable input; the
+    schema check in `strip`/`validate` is the gate, not this. (Input that
+    isn't shaped like a tree at all — e.g. a person that isn't an object —
+    still raises.)
     """
     warnings: list[str] = []
     dropped: Counter = Counter()
     persons_in, rels_in = raw.get("persons") or [], raw.get("relationships") or []
+
+    for kind, id_list in (
+        ("person", [str(p.get("id")) for p in persons_in if isinstance(p, dict) and p.get("id")]),
+        ("relationship", [str(r.get("id")) for r in rels_in if isinstance(r, dict) and r.get("id")]),
+        ("fact", [str(f.get("id")) for f in _all_facts(raw) if isinstance(f, dict) and f.get("id")]),
+    ):
+        for dup, n in sorted(Counter(id_list).items()):
+            if n > 1:
+                warnings.append(
+                    f"duplicate {kind} id {dup!r} appears {n} times — ids must be "
+                    f"unique, and strip will refuse this tree until they are"
+                )
     name_ids = _backfill_ids("N", _ids_in(n for p in persons_in for n in p.get("names") or []))
     fact_ids = _backfill_ids("F", _ids_in(_all_facts(raw)))
     rel_ids = _backfill_ids("R", _ids_in(rels_in))
@@ -328,7 +367,7 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
 
     # 3. Relationships. Backfill ids, drop danglers, de-dupe.
     relationships: list[dict[str, Any]] = []
-    seen: set[tuple[str, ...]] = set()
+    seen: dict[tuple[str, ...], int] = {}  # key -> index into `relationships`
     dangling = 0
     for entry in raw.get("relationships") or []:
         rel_type = entry.get("type")
@@ -346,21 +385,37 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
             continue
         key = (str(rel_type), *refs)
         if key in seen:
-            warnings.append(f"duplicate {rel_type} {refs[0]}/{refs[1]} — kept the first")
+            kept = relationships[seen[key]]
+            # An upstream duplicate can be the copy that carries the Marriage
+            # fact; dropping it blind would lose the fact silently.
+            if rel_type == "Couple" and (entry.get("facts") or []) and "facts" not in kept:
+                kept["facts"] = [
+                    _normalize_fact(f, fact_ids, src_map, dropped,
+                                    f"relationship {kept['id']}", warnings)
+                    for f in entry.get("facts") or []
+                ]
+                relationships[seen[key]] = {k: kept[k] for k in fields if k in kept}
+                warnings.append(
+                    f"duplicate {rel_type} {refs[0]}/{refs[1]} — kept the first, "
+                    f"plus the duplicate's facts (the first had none)"
+                )
+            else:
+                warnings.append(f"duplicate {rel_type} {refs[0]}/{refs[1]} — kept the first")
             continue
-        seen.add(key)
 
         rel = _prune(entry, fields, dropped)
         if not rel.get("id"):
             rel["id"] = next(rel_ids)
-        rel_facts = [
-            _normalize_fact(f, fact_ids, src_map, dropped, f"relationship {rel['id']}",
-                            warnings)
-            for f in (entry.get("facts") or [])
-        ]
-        if rel_facts and rel_type == "Couple":
-            rel["facts"] = rel_facts
+        if rel_type == "Couple":
+            rel_facts = [
+                _normalize_fact(f, fact_ids, src_map, dropped,
+                                f"relationship {rel['id']}", warnings)
+                for f in (entry.get("facts") or [])
+            ]
+            if rel_facts:
+                rel["facts"] = rel_facts
         _fix_source_refs(rel, src_map, dropped, f"relationship {rel['id']}", warnings)
+        seen[key] = len(relationships)
         relationships.append({k: rel[k] for k in fields if k in rel})
 
     if dangling:
@@ -411,11 +466,32 @@ def _endpoints(rel: dict[str, Any]) -> tuple[str, ...]:
     return tuple(str(rel.get(k, "")) for k in keys)
 
 
+def _remove_persons(
+    tree: dict[str, Any], removed: set[str]
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Drop the named persons and cascade to every relationship touching them.
+
+    Returns (pruned tree, cut relationships). Shared by `--drop-living` and
+    `snapshot --check` (which excludes live-tree living persons from the
+    drift diff so they don't read as permanent false drift).
+    """
+    kept_rels, cut_rels = [], []
+    for rel in tree.get("relationships") or []:
+        (cut_rels if set(_endpoints(rel)) & removed else kept_rels).append(rel)
+    pruned = {
+        **tree,
+        "persons": [p for p in tree.get("persons") or [] if str(p.get("id")) not in removed],
+        "relationships": kept_rels,
+    }
+    return pruned, cut_rels
+
+
 def living_gate(
     tree: dict[str, Any],
     *,
     drop_living: bool = False,
     heuristic: bool = False,
+    confirm_deceased: bool = False,
     today: date | None = None,
 ) -> GateResult:
     """FamilySearch's ToS forbids committing fixtures about living persons.
@@ -428,9 +504,15 @@ def living_gate(
        `living: true` rather than throwing.)
     2. A *missing* `living` field is a refusal. Absent is not deceased, and
        the tree schema does not require the field.
-    3. `drop_living=True` is the escape hatch: remove them, cascade their
-       relationships, say exactly what went.
-    4. `heuristic=True` adds a 110-year WARN. **Only ever pass this for an
+    3. `drop_living=True` is the escape hatch for rule 1: remove them,
+       cascade their relationships, say exactly what went.
+    4. `confirm_deceased=True` is the escape hatch for rule 2, for Path 2:
+       only `person_read` ever writes `living`, so a project tree built by
+       `tree_edit` has it on nobody and would refuse on every person. The
+       flag stamps `living: false` onto each person missing the field —
+       an explicit, auditable assertion by the author that every person in
+       the tree is deceased. It never overrides an explicit `living: true`.
+    5. `heuristic=True` adds a 110-year WARN. **Only ever pass this for an
        unstripped tree.** Stripping a death fact is precisely what makes a
        deceased person look living — run it post-strip and it flags the
        subject of every death-date fixture.
@@ -439,14 +521,34 @@ def living_gate(
     warnings: list[str] = []
     cutoff = (today or date.today()).year - PRESUMED_LIVING_YEARS
 
-    living, missing = [], []
-    for person in tree.get("persons") or []:
+    persons = tree.get("persons") or []
+    if confirm_deceased:
+        stamped, new_persons = [], []
+        for person in persons:
+            if isinstance(person, dict) and "living" not in person:
+                person = {**person, "living": False}
+                ordered = {k: person[k] for k in _PERSON_FIELDS if k in person}
+                ordered.update({k: v for k, v in person.items() if k not in ordered})
+                person = ordered
+                stamped.append(f"{person.get('id', '?')} ({_display_name(person)})")
+            new_persons.append(person)
+        if stamped:
+            tree = {**tree, "persons": new_persons}
+            persons = new_persons
+            warnings.append(
+                f"--confirm-deceased stamped `living: false` on {len(stamped)} "
+                f"person(s): " + ", ".join(stamped)
+            )
+
+    living: list[tuple[str, str]] = []  # (person id, display label)
+    missing: list[str] = []
+    for person in persons:
         pid = str(person.get("id", "?"))
         label = f"{pid} ({_display_name(person)})"
         if "living" not in person:
             missing.append(label)
         elif person["living"] is True:
-            living.append(label)
+            living.append((pid, label))
         elif heuristic and not (_fact_types(person) & DEATH_FACT_TYPES):
             year = _birth_year(person)
             if year is not None and year > cutoff:
@@ -460,32 +562,27 @@ def living_gate(
     if missing:
         errors.append(
             "these persons have no `living` field, and absent is not deceased — "
-            "set `living: false` on each once you have confirmed the death: "
+            "set `living: false` on each once you have confirmed the death "
+            "(or, on Path 2, re-run with --confirm-deceased once you have "
+            "confirmed every person in the tree is deceased): "
             + ", ".join(missing)
         )
 
     if not living:
         return GateResult(tree, errors, warnings)
 
+    labels = [label for _, label in living]
     if not drop_living:
         errors.append(
             "FamilySearch's terms forbid committing data about living persons, "
-            "and these are marked living: " + ", ".join(living) + ". Either pick a "
+            "and these are marked living: " + ", ".join(labels) + ". Either pick a "
             "different subject, or re-run with --drop-living to remove them and "
             "their relationships from the tree."
         )
         return GateResult(tree, errors, warnings)
 
-    removed = {label.split(" ", 1)[0] for label in living}
-    kept_rels, cut_rels = [], []
-    for rel in tree.get("relationships") or []:
-        (cut_rels if set(_endpoints(rel)) & removed else kept_rels).append(rel)
-    pruned = {
-        **tree,
-        "persons": [p for p in tree.get("persons") or [] if str(p.get("id")) not in removed],
-        "relationships": kept_rels,
-    }
-    warnings.append(f"--drop-living removed {len(living)} living person(s): " + ", ".join(living))
+    pruned, cut_rels = _remove_persons(tree, {pid for pid, _ in living})
+    warnings.append(f"--drop-living removed {len(living)} living person(s): " + ", ".join(labels))
     if cut_rels:
         warnings.append(
             f"--drop-living cascaded to {len(cut_rels)} relationship(s): "
@@ -548,12 +645,13 @@ def render_index(tree: dict[str, Any]) -> str:
         for fact in person.get("facts") or []:
             lines.append(_fact_line(fact, 6, widths))
 
+    rel_type_w = _width(r.get("type", "") for r in relationships)
     lines.append(f"RELATIONSHIPS ({len(relationships)})")
     for rel in relationships:
         left, right = _endpoints(rel)
         arrow = "->" if rel.get("type") == "ParentChild" else "<->"
         lines.append(
-            f"  {str(rel.get('id', '?')):<{rel_w}}  {str(rel.get('type', '?')):<11}  "
+            f"  {str(rel.get('id', '?')):<{rel_w}}  {str(rel.get('type', '?')):<{rel_type_w}}  "
             f"{left} {arrow} {right}"
         )
         for fact in rel.get("facts") or []:
@@ -587,6 +685,17 @@ def render_index(tree: dict[str, Any]) -> str:
 # --- drift audit (`snapshot --check`) --------------------------------------
 
 
+def _comparable_facts(holder: dict[str, Any]) -> list[tuple[str, ...]]:
+    return sorted(
+        (
+            str(f.get("type", "")), str(f.get("date", "")),
+            str(f.get("standard_date", "")), str(f.get("place", "")),
+            str(f.get("value", "")),
+        )
+        for f in holder.get("facts") or []
+    )
+
+
 def _comparable_person(person: dict[str, Any]) -> Any:
     """A person's content with minted ids elided, so an upstream insertion
     that shifts every `F`/`N` id doesn't drown the diff in noise."""
@@ -597,10 +706,7 @@ def _comparable_person(person: dict[str, Any]) -> Any:
             (n.get("given", ""), n.get("surname", ""), n.get("type", ""))
             for n in person.get("names") or []
         ),
-        "facts": sorted(
-            (f.get("type", ""), f.get("date", ""), f.get("standard_date", ""), f.get("place", ""))
-            for f in person.get("facts") or []
-        ),
+        "facts": _comparable_facts(person),
     }
 
 
@@ -618,13 +724,22 @@ def diff_trees(old: dict[str, Any], new: dict[str, Any]) -> list[str]:
         if _comparable_person(old_p[pid]) != _comparable_person(new_p[pid]):
             report.append(f"person changed upstream: {pid} ({_display_name(new_p[pid])})")
 
-    def rel_keys(tree: dict[str, Any]) -> set[tuple[str, ...]]:
-        return {(str(r.get("type")), *_endpoints(r)) for r in tree.get("relationships") or []}
+    def rel_map(tree: dict[str, Any]) -> dict[tuple[str, ...], list[tuple[str, ...]]]:
+        return {
+            (str(r.get("type")), *_endpoints(r)): _comparable_facts(r)
+            for r in tree.get("relationships") or []
+        }
 
-    for key in sorted(rel_keys(new) - rel_keys(old)):
+    old_r, new_r = rel_map(old), rel_map(new)
+    for key in sorted(new_r.keys() - old_r.keys()):
         report.append(f"relationship added upstream: {' '.join(key)}")
-    for key in sorted(rel_keys(old) - rel_keys(new)):
+    for key in sorted(old_r.keys() - new_r.keys()):
         report.append(f"relationship gone upstream: {' '.join(key)}")
+    # A Couple's facts carry the answer of every marriage fixture — a changed
+    # marriage date must not read as "matches".
+    for key in sorted(old_r.keys() & new_r.keys()):
+        if old_r[key] != new_r[key]:
+            report.append(f"relationship changed upstream: {' '.join(key)}")
 
     def titles(tree: dict[str, Any]) -> set[str]:
         return {str(s.get("title", "")) for s in tree.get("sources") or []}
@@ -644,7 +759,9 @@ def _npx(args: list[str]) -> list[str]:
     # On Windows `npx` resolves to `npx.cmd`, which subprocess cannot exec
     # directly (WinError 193). `tsx` is not resolvable from the engine's
     # node_modules, so `node --import tsx` is not an option either.
-    return (["cmd", "/c", "npx"] if os.name == "nt" else ["npx"]) + args
+    # `--yes` keeps a cold npx cache from blocking on an "Ok to proceed?"
+    # prompt that capture_output makes invisible (tsx is not an engine dep).
+    return (["cmd", "/c", "npx"] if os.name == "nt" else ["npx"]) + ["--yes"] + args
 
 
 def fetch_person_read(pid: str) -> dict[str, Any]:
@@ -652,6 +769,11 @@ def fetch_person_read(pid: str) -> dict[str, Any]:
     `personReadTool({...})` as JSON to stdout. Auth is the engine's
     `getValidToken()` against `~/.familysearch-mcp/tokens.json`.
     """
+    if not _VALID_PID.match(pid):
+        raise AuthorError(
+            f"{pid!r} does not look like a FamilySearch person id (letters, "
+            f"digits and dashes only, e.g. KNDX-MKG). Check the PID and retry."
+        )
     cmd = _npx(["tsx", "dev/try-person-read.ts", pid, "--relatives", "--sources"])
     try:
         proc = subprocess.run(
@@ -663,7 +785,11 @@ def fetch_person_read(pid: str) -> dict[str, Any]:
 
     if proc.returncode != 0:
         stderr = (proc.stderr or "").strip()
-        if re.search(r"login tool|authenticat|token", stderr, re.I):
+        # Matches the engine's auth errors ("Call the login tool to
+        # authenticate."). Deliberately NOT a bare "token" match — a tsx
+        # crash printing "SyntaxError: Unexpected token" is a code bug, and
+        # sending the author to re-login over it would be a dead end.
+        if re.search(r"login tool|authenticat|not signed in", stderr, re.I):
             raise AuthorError(
                 "Not signed in to FamilySearch. Run `Login.bat` (developers: "
                 "`make e2e-login`), then re-run this command."
@@ -709,7 +835,24 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
     if args.check:
         if not out_path.exists():
             raise AuthorError(f"nothing to check against: {out_path} does not exist")
-        drift = diff_trees(_read_json(out_path), tree)
+        # Committed trees never contain living persons (the gate refuses or
+        # --drop-living removed them), so a living person in the live tree is
+        # not drift — diffing it in would report "person added upstream"
+        # forever and train authors to ignore DRIFT lines.
+        live = {
+            str(p.get("id"))
+            for p in tree.get("persons") or []
+            if isinstance(p, dict) and p.get("living") is True
+        }
+        fresh = tree
+        if live:
+            fresh, _ = _remove_persons(tree, live)
+            print(
+                f"NOTE   [{args.slug}] excluded {len(live)} living person(s) "
+                f"from the drift audit: {', '.join(sorted(live))}",
+                file=sys.stderr,
+            )
+        drift = diff_trees(_read_json(out_path), fresh)
         if not drift:
             print(f"OK     [{args.slug}] FamilySearch matches the committed unstripped tree")
             return 0
@@ -731,13 +874,28 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
             f"or --check to audit for drift."
         )
 
-    gate = living_gate(tree, drop_living=args.drop_living, heuristic=True)
+    gate = living_gate(
+        tree,
+        drop_living=args.drop_living,
+        heuristic=True,
+        confirm_deceased=args.confirm_deceased,
+    )
     _emit(warnings + gate.warnings)
     if gate.errors:
         _emit(gate.errors, "ERROR")
         return 2
 
-    _emit(_schema_errors_for_tree(gate.tree))
+    schema_errors = _schema_errors_for_tree(gate.tree)
+    if schema_errors:
+        # Deliberate soft gate: the snapshot is raw material worth keeping on
+        # disk for inspection, and `strip`/`validate` refuse until it's fixed.
+        # But these are schema violations, not advisories — label them so.
+        _emit(schema_errors, "ERROR")
+        print(
+            f"wrote {_rel(out_path)} anyway — it is committed and hand-editable, "
+            f"and strip/validate will refuse until the errors above are fixed.",
+            file=sys.stderr,
+        )
 
     _write_json(out_path, gate.tree)
     print(render_index(gate.tree))
@@ -805,6 +963,36 @@ def apply_strip(
 
     by_person = {str(p.get("id")): p for p in persons}
     by_rel = {str(r.get("id")): r for r in relationships}
+
+    # Duplicate ids make every selector ambiguous: removing "the fact with id
+    # F1" from a holder carrying two of them deletes both and logs one — the
+    # silent-removal failure mode this module exists to prevent. Refuse.
+    dup_msgs: list[str] = []
+    for kind, id_list in (
+        ("person", [str(p.get("id")) for p in persons if p.get("id")]),
+        ("relationship", [str(r.get("id")) for r in relationships if r.get("id")]),
+    ):
+        dup_msgs += [
+            f"duplicate {kind} id {i!r}"
+            for i, n in sorted(Counter(id_list).items()) if n > 1
+        ]
+    for holder in (*persons, *relationships):
+        hid = str(holder.get("id"))
+        fact_list = [str(f.get("id")) for f in holder.get("facts") or [] if f.get("id")]
+        dup_msgs += [
+            f"duplicate fact id {i!r} on {hid}"
+            for i, n in sorted(Counter(fact_list).items()) if n > 1
+        ]
+    dup_msgs += [
+        f"id {i!r} names both a person and a relationship"
+        for i in sorted(by_person.keys() & by_rel.keys())
+    ]
+    if dup_msgs:
+        errors.append(
+            "strip refuses a tree with ambiguous ids — fix "
+            f"{UNSTRIPPED_TREE} and re-run: " + "; ".join(dup_msgs)
+        )
+        return tree, removals, warnings, errors
 
     for pid in sorted(spec.persons):
         if pid not in by_person:
@@ -927,7 +1115,17 @@ def cmd_strip(args: argparse.Namespace) -> int:
     if spec.is_empty():
         raise AuthorError("nothing to strip — pass at least one of --persons/--relationships/--facts/--sources")
 
-    findings = None if args.dry_run else _require_findings(fixture_dir)
+    if args.dry_run:
+        # A dry run still lints when the findings exist — showing a clean dry
+        # run and then WARNing on the identical real run would be a trap. It
+        # only skips the findings *requirement*, so authors can iterate on a
+        # strip set before expected-findings.json is written.
+        try:
+            findings = _require_findings(fixture_dir)
+        except AuthorError:
+            findings = None
+    else:
+        findings = _require_findings(fixture_dir)
 
     tree, removals, warnings, errors = apply_strip(unstripped, spec)
     if errors:
@@ -977,18 +1175,21 @@ def _substitute(node: Any, values: dict[str, str]) -> Any:
     """Substitute `{{key}}` in every string leaf.
 
     Walking the parsed JSON rather than the raw text means a value containing
-    a quote or a backslash can't break the document.
+    a quote or a backslash can't break the document. Missing keys are caught
+    during substitution of the template string itself — a substituted *value*
+    that happens to contain `{{word}}` is data, not an unfilled placeholder.
     """
     if isinstance(node, dict):
         return {k: _substitute(v, values) for k, v in node.items()}
     if isinstance(node, list):
         return [_substitute(v, values) for v in node]
     if isinstance(node, str):
-        rendered = _PLACEHOLDER.sub(lambda m: values.get(m.group(1), m.group(0)), node)
-        leftover = _PLACEHOLDER.search(rendered)
-        if leftover:
-            raise AuthorError(f"template placeholder {{{{{leftover.group(1)}}}}} has no value")
-        return rendered
+        def fill(match: re.Match[str]) -> str:
+            key = match.group(1)
+            if key not in values:
+                raise AuthorError(f"template placeholder {{{{{key}}}}} has no value")
+            return values[key]
+        return _PLACEHOLDER.sub(fill, node)
     return node
 
 
@@ -1019,7 +1220,7 @@ def cmd_scaffold(args: argparse.Namespace) -> int:
         "notes": args.notes,
     }
 
-    targets = {FIXTURE_JSON: FIXTURE_JSON, STARTING_RESEARCH: "starting-research.json"}
+    targets = (FIXTURE_JSON, STARTING_RESEARCH)
     existing = [n for n in targets if (fixture_dir / n).exists()]
     if existing and not args.force:
         raise AuthorError(f"{', '.join(existing)} already exist(s) in {args.slug}. Pass --force to overwrite.")
@@ -1042,15 +1243,33 @@ def cmd_scaffold(args: argparse.Namespace) -> int:
 def presence_mirror(findings: dict[str, Any], unstripped: dict[str, Any]) -> list[str]:
     """Every expected finding must be *present* in the unstripped tree.
 
-    The exact inverse of the stripping linter's "absent from the starting
-    tree". Catches a finding the author described but never actually stripped,
-    and catches `--drop-living` having removed the answer itself.
+    The inverse of the stripping linter's "absent from the starting tree".
+    Catches a finding the author described but never actually stripped, and
+    catches `--drop-living` having removed the answer itself.
+
+    Matching is deliberately LOOSER than the linter's: presence accepts a
+    single shared name token, where the linter demands overlap on both the
+    given and surname halves. An unknown-parent answer is named by one half
+    ("the father, ___ Geach") — requiring both halves would hard-fail every
+    such fixture with a misleading "was never in the tree". The linter keeps
+    the stricter test because its failure mode is a warn, not a block.
     """
     errors: list[str] = []
+    people = index_tree(unstripped)
     for finding in findings.get("findings") or []:
-        if not _finding_name_tokens(finding):
+        bag = finding_name_tokens(finding)
+        if not bag:
             continue  # nothing nameable to match — same skip the linter makes
-        if not check_stripping({"findings": [finding]}, unstripped):
+        wanted = finding_type_token(finding) if str(finding.get("type")) == "fact" else set()
+        present = False
+        for person in people:
+            if not (bag & person.name_tokens):
+                continue
+            if wanted and not (wanted & person.fact_types):
+                continue  # the person is there, but the answer fact never was
+            present = True
+            break
+        if not present:
             errors.append(
                 f"finding {finding.get('id', '?')} names nobody present in "
                 f"{UNSTRIPPED_TREE} — it was never in the tree, so stripping it "
@@ -1079,6 +1298,19 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
     errors += [f"{STARTING_RESEARCH}: {e}" for e in validate_research_json(research)]
     errors += [f"{STARTING_TREE}: {e}" for e in _schema_errors_for_tree(starting)]
+
+    # The engine's runtime cross-file check requires every subject_person_id
+    # to name a tree person; a typo'd `scaffold --pid` (or a forgotten
+    # `--subject-id` on Path 3, where source_pid stays "PID-TODO") lints
+    # clean here and then fails the agent mid-run.
+    tree_pids = {str(p.get("id")) for p in starting.get("persons") or []}
+    for sid in (research.get("project") or {}).get("subject_person_ids") or []:
+        if str(sid) not in tree_pids:
+            errors.append(
+                f"{STARTING_RESEARCH}: subject_person_ids names {sid!r}, which is "
+                f"not a person in {STARTING_TREE} — the run's tree tools would "
+                f"fail on it. On Path 3, pass `scaffold --subject-id <tree-id>`."
+            )
 
     gate = living_gate(starting)
     errors += [f"{STARTING_TREE}: {e}" for e in gate.errors]
@@ -1119,17 +1351,23 @@ def build_parser() -> argparse.ArgumentParser:
     subs = parser.add_subparsers(dest="command", required=True)
 
     snap = subs.add_parser("snapshot", help="Fetch and normalize the unstripped tree.")
-    snap.add_argument("--slug", required=True)
+    snap.add_argument("--slug", required=True, type=_slug_arg)
     source = snap.add_mutually_exclusive_group(required=True)
     source.add_argument("--pid", help="FamilySearch person id (Path 1).")
     source.add_argument("--from-file", help="A finished project's tree.gedcomx.json (Path 2).")
     snap.add_argument("--force", action="store_true", help=f"Overwrite an existing {UNSTRIPPED_TREE}.")
     snap.add_argument("--drop-living", action="store_true", help="Remove living persons instead of refusing.")
+    snap.add_argument(
+        "--confirm-deceased", action="store_true",
+        help="Stamp `living: false` on persons missing the field (Path 2: only "
+             "person_read writes `living`, so project trees have it on nobody). "
+             "Asserts you have confirmed every person in the tree is deceased.",
+    )
     snap.add_argument("--check", action="store_true", help="Audit FamilySearch drift; write nothing.")
     snap.set_defaults(func=cmd_snapshot)
 
     strip = subs.add_parser("strip", help=f"Derive {STARTING_TREE} from the unstripped tree.")
-    strip.add_argument("--slug", required=True)
+    strip.add_argument("--slug", required=True, type=_slug_arg)
     strip.add_argument("--persons", action="append", metavar="ID[,ID...]")
     strip.add_argument("--relationships", action="append", metavar="ID[,ID...]")
     strip.add_argument("--facts", action="append", metavar="OWNER:FACT", help="e.g. KNDX-MKG:F2 or R4:F12")
@@ -1138,7 +1376,7 @@ def build_parser() -> argparse.ArgumentParser:
     strip.set_defaults(func=cmd_strip)
 
     scaffold = subs.add_parser("scaffold", help=f"Render {FIXTURE_JSON} and {STARTING_RESEARCH}.")
-    scaffold.add_argument("--slug", required=True)
+    scaffold.add_argument("--slug", required=True, type=_slug_arg)
     scaffold.add_argument("--name", required=True)
     scaffold.add_argument("--pid", default="PID-TODO", help="Omit for Path 3.")
     scaffold.add_argument(
@@ -1156,7 +1394,7 @@ def build_parser() -> argparse.ArgumentParser:
     scaffold.set_defaults(func=cmd_scaffold)
 
     validate = subs.add_parser("validate", help="The landing gate for a finished fixture.")
-    validate.add_argument("--slug", required=True)
+    validate.add_argument("--slug", required=True, type=_slug_arg)
     validate.set_defaults(func=cmd_validate)
 
     return parser

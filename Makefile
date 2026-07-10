@@ -339,8 +339,8 @@ e2e-project: ## Seed an editable Cowork project from a fixture's STARTING state 
 e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="snapshot --slug foo --pid ABCD-123"
 	# The mechanical half of /author-e2e-fixture — snapshot, strip, scaffold,
 	# validate. The skill invokes the module directly (genealogists have no
-	# make); this target is a convenience wrapper for developers. `ARGS=""`
-	# prints the subcommand list.
+	# make); this target is a convenience wrapper for developers.
+	# `ARGS="--help"` lists the subcommands (bare `ARGS=""` exits 2 with usage).
 	cd eval/harness && uv run python -m e2e.author $(ARGS)
 
 .PHONY: e2e-validate

@@ -85,6 +85,12 @@ A person's membership in the FamilySearch tree is carried by `ark`, never by
 the form of their `id` — a person with no `ark` is not in the FS tree,
 whatever their id looks like.
 
+Which kind a given document uses is the writer's call, made once per
+document: `person_read` snapshots (e.g. e2e fixture trees) preserve FS PIDs;
+project trees built by `init-project` deliberately synthesize `I` ids for
+**all** persons, FS-seeded ones included (see `init-project/SKILL.md`). Both
+are valid documents under this spec.
+
 ---
 
 ## 4. Section Schemas
@@ -95,7 +101,7 @@ Array of person objects.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Person ID. The FamilySearch PID when the person is in the FS tree (`KNS4-P6W`), otherwise a synthesized id (`I1`). See Section 3 |
+| `id` | string | yes | Person ID. In snapshot-derived documents, the FamilySearch PID when the person is in the FS tree (`KNS4-P6W`), otherwise a synthesized id (`I1`); project trees synthesize `I` ids for all persons. See Section 3 |
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
 | `living` | boolean | no | True when FamilySearch reports the person as living. `person_read` sets it on every person it returns; hand-built trees may omit it. Living people must never appear in a committed e2e fixture (FamilySearch ToS) — the living-person gate in `eval/harness/e2e/author.py` treats both `true` **and** a missing field as a refusal |
 | `names` | object[] | yes | At least one name. See below |

@@ -70,7 +70,12 @@ FamilySearch does not identify, get short synthesized ids.
 
 **Path 2.** Same command, but `--from-file <path-to-tree.gedcomx.json>`
 instead of `--pid`. Read the relevant `proof_summaries` entry first, so
-you know which conclusion you're capturing.
+you know which conclusion you're capturing. A project tree carries no
+`living` fields (only `person_read` writes them), so the gate will
+refuse on every person; confirm with the user that **everyone in the
+tree is deceased**, then re-run with `--confirm-deceased` to stamp
+`living: false` explicitly. The flag never overrides a real
+`living: true`.
 
 **Path 3.** No snapshot — there is nothing to fetch. Read the document
 end to end and separate two things: the **known starting context** (the
@@ -113,7 +118,8 @@ which `PID-TODO` is not.
 ## Step 3 — Write `expected-findings.json`
 
 One finding per thing the agent should recover. This is yours to write;
-fill in `templates/expected-findings.json`.
+fill in `templates/expected-findings.json` (under this skill's own
+folder — `scaffold`'s two templates live in the harness instead).
 
 - `type`: `relationship` for person-to-person links, `fact` for vitals,
   `person` for new persons, `source` for record attachments.
@@ -185,7 +191,8 @@ the answer by accident.
 
 ## Step 5 — Write `README.md`
 
-Fill in `templates/README.md`. `{{stripped_summary}}` is the bullet list
+Fill in `templates/README.md` (under this skill's own folder).
+`{{stripped_summary}}` is the bullet list
 `strip` printed (path 3: describe what you constructed and from which
 document instead). State plainly that the subject is deceased.
 

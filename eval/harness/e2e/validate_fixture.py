@@ -1,12 +1,18 @@
 """Fixture linter for e2e benchmark fixtures — schema + stripping checks.
 
-Two gates, in order:
+Three gates, in order:
 
 1. **JSON Schema** (hard, exit 2). `starting-tree.gedcomx.json` and
    `starting-research.json` are validated against `docs/specs/schemas/`
    via `harness.schema_validator` — the same module `e2e.author validate`
    uses, so the authoring gate and this corpus-wide gate cannot disagree.
-2. **Stripping completeness** (warn-only), described below.
+2. **Structural integrity** (hard, exit 2). What JSON Schema 2020-12
+   cannot express: intra-document reference integrity (a dangling
+   relationship endpoint or source `ref` lints clean and then hard-fails
+   `tree_edit` mid-run), id uniqueness, and the FamilySearch-ToS
+   living-person rule. Applied to the starting tree and, when present,
+   the committed unstripped tree.
+3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
 `expected-findings.json` must be **genuinely absent** from
@@ -39,6 +45,7 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -84,7 +91,7 @@ class TreePerson:
         return self.given_tokens | self.surname_tokens
 
 
-def _index_tree(tree: dict[str, Any]) -> list[TreePerson]:
+def index_tree(tree: dict[str, Any]) -> list[TreePerson]:
     """Collect per-person name tokens (given vs surname) and fact types."""
     people: list[TreePerson] = []
     for person in tree.get("persons") or []:
@@ -148,7 +155,7 @@ def _collect_target_names(value: Any, under_target_key: bool) -> list[str]:
     return out
 
 
-def _finding_name_tokens(finding: dict[str, Any]) -> set[str]:
+def finding_name_tokens(finding: dict[str, Any]) -> set[str]:
     """Best-effort name token bag for the finding's *target* person.
 
     Prefers names under target-ish `details` keys (`target_person`,
@@ -169,7 +176,7 @@ def _finding_name_tokens(finding: dict[str, Any]) -> set[str]:
     return bag
 
 
-def _finding_type_token(finding: dict[str, Any]) -> set[str]:
+def finding_type_token(finding: dict[str, Any]) -> set[str]:
     """A coarse fact-type token for `fact` findings (e.g. birth/death/marriage)."""
     blob = (
         f"{finding.get('description', '')} "
@@ -181,6 +188,116 @@ def _finding_type_token(finding: dict[str, Any]) -> set[str]:
         if kind in blob:
             hits.add(kind)
     return hits
+
+
+# Pre-rename aliases (these started life underscore-private; e2e.author now
+# consumes them, which is what made them public).
+_index_tree = index_tree
+_finding_name_tokens = finding_name_tokens
+_finding_type_token = finding_type_token
+
+
+def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
+    """Structural checks JSON Schema 2020-12 cannot express.
+
+    Mirrors the engine's runtime `validateGedcomx` where the right answer is
+    unambiguous: a fixture that lints clean here but hard-fails `tree_edit`
+    mid-run burns the tokens the fixture pipeline exists to save (the exact
+    bug class of the repaired ParentChild-keys corpus). Three groups:
+
+    * **Reference integrity** — relationship endpoints and source `ref`s
+      must name objects in the document.
+    * **Id uniqueness** — duplicate ids make `strip`'s selectors ambiguous
+      and reads of the document ill-defined.
+    * **Living persons** — FamilySearch's ToS forbids committing fixtures
+      about living persons, and absent is not deceased (mirrors
+      `living_gate` rules 1-2 in `e2e.author`; kept local to avoid an
+      import cycle).
+
+    The runtime's `given`-required and PascalCase-fact-type checks are
+    deliberately NOT ported: whether those divergences should be fixed by
+    tightening this gate or relaxing the runtime (mononyms are legitimate
+    genealogy) is still an open call — see the follow-up tracked in the
+    schema-relaxation PR.
+    """
+    errors: list[str] = []
+    persons = [p for p in tree.get("persons") or [] if isinstance(p, dict)]
+    relationships = [r for r in tree.get("relationships") or [] if isinstance(r, dict)]
+    sources = [s for s in tree.get("sources") or [] if isinstance(s, dict)]
+
+    person_ids = [str(p.get("id")) for p in persons if p.get("id")]
+    rel_ids = [str(r.get("id")) for r in relationships if r.get("id")]
+    source_ids = [str(s.get("id")) for s in sources if s.get("id")]
+
+    for kind, ids in (("person", person_ids), ("relationship", rel_ids), ("source", source_ids)):
+        errors += [
+            f"{filename}: duplicate {kind} id {dup!r} ({n} times)"
+            for dup, n in sorted(Counter(ids).items()) if n > 1
+        ]
+    for holder in (*persons, *relationships):
+        hid = holder.get("id", "?")
+        fact_ids = [
+            str(f.get("id"))
+            for f in holder.get("facts") or []
+            if isinstance(f, dict) and f.get("id")
+        ]
+        errors += [
+            f"{filename}: duplicate fact id {dup!r} on {hid} ({n} times)"
+            for dup, n in sorted(Counter(fact_ids).items()) if n > 1
+        ]
+
+    known_persons, known_sources = set(person_ids), set(source_ids)
+
+    for rel in relationships:
+        rid = rel.get("id", "?")
+        keys = ("parent", "child") if rel.get("type") == "ParentChild" else ("person1", "person2")
+        for key in keys:
+            ref = rel.get(key)
+            if ref is not None and str(ref) not in known_persons:
+                errors.append(
+                    f"{filename}: relationship {rid} {key} {ref!r} is not a "
+                    f"person in the tree — a dangling reference tree_edit "
+                    f"hard-fails on"
+                )
+
+    def check_source_refs(holder: dict[str, Any], where: str) -> None:
+        for sref in holder.get("sources") or []:
+            if isinstance(sref, dict) and str(sref.get("ref")) not in known_sources:
+                errors.append(
+                    f"{filename}: {where} references source {sref.get('ref')!r}, "
+                    f"which is not in the tree"
+                )
+
+    for person in persons:
+        pid = person.get("id", "?")
+        check_source_refs(person, f"person {pid}")
+        for name in person.get("names") or []:
+            if isinstance(name, dict):
+                check_source_refs(name, f"person {pid} name {name.get('id', '?')}")
+        for fact in person.get("facts") or []:
+            if isinstance(fact, dict):
+                check_source_refs(fact, f"person {pid} fact {fact.get('id', '?')}")
+    for rel in relationships:
+        rid = rel.get("id", "?")
+        check_source_refs(rel, f"relationship {rid}")
+        for fact in rel.get("facts") or []:
+            if isinstance(fact, dict):
+                check_source_refs(fact, f"relationship {rid} fact {fact.get('id', '?')}")
+
+    for person in persons:
+        pid = person.get("id", "?")
+        if "living" not in person:
+            errors.append(
+                f"{filename}: person {pid} has no `living` field — absent is "
+                f"not deceased; set `living: false` once the death is confirmed"
+            )
+        elif person["living"] is True:
+            errors.append(
+                f"{filename}: person {pid} is marked living — FamilySearch's "
+                f"terms forbid committing data about living persons"
+            )
+
+    return errors
 
 
 @dataclass
@@ -204,13 +321,13 @@ def check_stripping(
     the fact type to be present on that person, since a person
     legitimately remains when only one of their facts was stripped.
     """
-    people = _index_tree(tree)
+    people = index_tree(tree)
     suspects: list[Suspect] = []
 
     for finding in expected_findings.get("findings") or []:
         fid = str(finding.get("id", "?"))
         ftype = str(finding.get("type", "?"))
-        name_bag = _finding_name_tokens(finding)
+        name_bag = finding_name_tokens(finding)
         if not name_bag:
             continue  # nothing nameable to match — can't judge presence
 
@@ -222,7 +339,7 @@ def check_stripping(
 
             if ftype == "fact":
                 # The person staying is fine; the *fact* must be gone.
-                wanted = _finding_type_token(finding)
+                wanted = finding_type_token(finding)
                 if wanted and not (wanted & person.fact_types):
                     continue  # person present, but the fact's type isn't — OK
                 reason = (
@@ -282,11 +399,12 @@ def _load_json(path: Path) -> dict[str, Any]:
 def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     """Lint one fixture dir. Returns (suspects, hard_errors).
 
-    hard_errors are structural problems — a missing or unparseable file, or a
-    JSON-Schema violation — that should fail the run with exit 2; suspects are
-    warn-only. `e2e.author validate` reaches the same schema check through the
-    same `harness.schema_validator` module, so a fixture cannot pass one gate
-    and fail the other.
+    hard_errors are structural problems — a missing or unparseable file, a
+    JSON-Schema violation, or a `tree_integrity_errors` failure (dangling
+    refs, duplicate ids, living persons) — that should fail the run with
+    exit 2; suspects are warn-only. `e2e.author validate` reaches the same
+    schema check through the same `harness.schema_validator` module, so a
+    fixture cannot pass one gate and fail the other.
     """
     fixture_dir = Path(fixture_dir)
     errors: list[str] = []
@@ -311,6 +429,22 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
         return [], errors
 
     errors += [f"starting-tree.gedcomx.json: {e}" for e in validate_tree_gedcomx_json(tree)]
+    errors += tree_integrity_errors(tree, "starting-tree.gedcomx.json")
+
+    # Optional: only Paths 1/2 have one. It is committed, so it is held to
+    # the same structural and living-person bar as the starting tree.
+    unstripped_path = fixture_dir / "unstripped-tree.gedcomx.json"
+    if unstripped_path.exists():
+        try:
+            unstripped = _load_json(unstripped_path)
+        except (json.JSONDecodeError, OSError) as e:
+            errors.append(f"unstripped-tree.gedcomx.json did not parse: {e}")
+        else:
+            errors += [
+                f"unstripped-tree.gedcomx.json: {e}"
+                for e in validate_tree_gedcomx_json(unstripped)
+            ]
+            errors += tree_integrity_errors(unstripped, "unstripped-tree.gedcomx.json")
 
     # Optional: a Path-3 fixture under construction may not have one yet.
     research_path = fixture_dir / "starting-research.json"
