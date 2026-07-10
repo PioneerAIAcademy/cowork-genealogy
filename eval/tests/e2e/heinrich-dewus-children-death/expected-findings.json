@@ -1,0 +1,70 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Heinrich (Henry) Dewus died on or about 28 August 1936 in Milwaukee, Wisconsin. The tree already carries an undated Death fact; the agent should recover the date (and place) of death.",
+      "details": {
+        "subject_person": "Heinrich Dewus (9VX4-1C3)",
+        "fact_type": "Death",
+        "date": "on or about 28 August 1936",
+        "place": "Milwaukee, Wisconsin, United States"
+      },
+      "supporting_sources": [
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — obituary of 28 Aug 1936, Milwaukee (6906 W. Lloyd St.), jointly indexed under Henry Dewus and Henry Downs"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Heinrich Dewus had a son not yet in the tree: Walter (Dewus), living in Wisconsin when his father died in 1936. The tree's four known children are Alma (b. 1882), Adela (b. 1883), Hedwig (b. 1885), and Heinrich Charles (b. 1889).",
+      "details": {
+        "subject_person": "Heinrich Dewus (9VX4-1C3)",
+        "relation": "child",
+        "target_person": {
+          "name": "Walter Dewus",
+          "birth": "likely 1880s-1890s, Milwaukee, Wisconsin"
+        }
+      },
+      "supporting_sources": [
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names sons Walter and Henry C. (the tree's Heinrich Charles) among the surviving children"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Heinrich Dewus had a daughter not yet in the tree: Ida (Dewes/Dewus), unmarried ('Miss Ida Dewes') when her father died in 1936.",
+      "details": {
+        "subject_person": "Heinrich Dewus (9VX4-1C3)",
+        "relation": "child",
+        "target_person": {
+          "name": "Ida Dewes",
+          "birth": "likely 1880s-1890s, Milwaukee, Wisconsin"
+        }
+      },
+      "supporting_sources": [
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names Miss Ida Dewes among the surviving daughters"
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "The 1936 obituary also names a daughter Miss Eleanor Downs of Chicago, not in the tree. Her surname is indexed under the obituary's variant 'Downs', so her identity is the least certain of the named children — bonus credit if recovered.",
+      "details": {
+        "subject_person": "Heinrich Dewus (9VX4-1C3)",
+        "relation": "child",
+        "target_person": {
+          "name": "Eleanor Downs",
+          "birth": "residing Chicago, Illinois in 1936"
+        }
+      },
+      "supporting_sources": [
+        "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 — the 1936 obituary names Miss Eleanor Downs of Chicago among the surviving daughters"
+      ],
+      "required": false
+    }
+  ]
+}

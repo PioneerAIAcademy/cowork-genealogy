@@ -84,6 +84,26 @@ def test_partial_name_overlap_does_not_flag():
     assert check_stripping(expected, tree) == []
 
 
+def test_an_avoid_finding_still_flags_but_carries_its_polarity():
+    """A `polarity: "avoid"` claim must be as absent from the starting tree
+    as a recover answer (a pre-asserted wrong claim breaks the fixture the
+    other way) — same matcher, but the WARN advice differs (spec §3.4.1)."""
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    tree = {
+        "persons": [
+            _person("I1", "John", "Smith"),
+            _person("I9", "Robert", "Smith"),  # the pre-asserted wrong claim
+        ]
+    }
+    suspects = check_stripping({"findings": [finding]}, tree)
+    assert len(suspects) == 1
+    assert suspects[0].polarity == "avoid"
+    warn = vf.format_suspect("fx", suspects[0])
+    assert "avoid" in warn
+    assert "must NOT" in warn
+
+
 # --- subject-person leak regression (spriggs-parents-1898) -----------
 
 def _rel_finding_with_subject(target_name, subject_name, fid="f1"):

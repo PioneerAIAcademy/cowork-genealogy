@@ -89,6 +89,11 @@ STARTING_RESEARCH = "starting-research.json"
 EXPECTED_FINDINGS = "expected-findings.json"
 FIXTURE_JSON = "fixture.json"
 
+# fixture.json `genre` (spec §3.6). "strip" hides an answer the tree already
+# had; "record-hint" strips nothing — the answer lives in a record, so the
+# committed snapshot must stay identical to the starting tree.
+GENRES = ("strip", "record-hint")
+
 # FamilySearch's own privacy rule: presumed living unless a death is known or
 # the birth is more than this many years ago.
 PRESUMED_LIVING_YEARS = 110
@@ -1054,6 +1059,26 @@ def stripped_summary(removals: list[str]) -> str:
     return "\n".join(f"- Removed {line}" for line in removals)
 
 
+def fixture_genre(fixture_dir: Path) -> str:
+    """The fixture's authoring genre from fixture.json, defaulting to "strip".
+
+    Read leniently — a fixture mid-authoring may not have a fixture.json yet
+    (scaffold can legitimately run after strip) — but an *unknown* genre is a
+    refusal: it means the author intended non-default handling and this code
+    doesn't know which.
+    """
+    path = fixture_dir / FIXTURE_JSON
+    if not path.exists():
+        return "strip"
+    genre = str(_read_json(path).get("genre") or "strip")
+    if genre not in GENRES:
+        raise AuthorError(
+            f"{FIXTURE_JSON} names unknown genre {genre!r} — expected one of: "
+            + ", ".join(GENRES)
+        )
+    return genre
+
+
 def _require_findings(fixture_dir: Path) -> dict[str, Any]:
     """`strip` refuses without findings.
 
@@ -1082,8 +1107,16 @@ def cmd_strip(args: argparse.Namespace) -> int:
     fixture_dir = FIXTURES_ROOT / args.slug
     unstripped = _read_json(fixture_dir / UNSTRIPPED_TREE)
     spec = parse_strip_spec(args)
-    if spec.is_empty():
-        raise AuthorError("nothing to strip — pass at least one of --persons/--relationships/--facts/--sources")
+    if args.none and not spec.is_empty():
+        raise AuthorError(
+            "--none means nothing is stripped — drop the other selectors, or drop --none"
+        )
+    if spec.is_empty() and not args.none:
+        raise AuthorError(
+            "nothing to strip — pass at least one of --persons/--relationships/"
+            "--facts/--sources, or --none for a record-hint fixture (the "
+            "snapshot IS the starting tree)"
+        )
 
     if args.dry_run:
         # A dry run still lints when the findings exist — showing a clean dry
@@ -1131,7 +1164,10 @@ def cmd_strip(args: argparse.Namespace) -> int:
 
     _write_json(fixture_dir / STARTING_TREE, tree)
     print(f"\nwrote {_rel(fixture_dir / STARTING_TREE)}")
-    print(f"\nstripped_summary (paste into README.md):\n{stripped_summary(removals)}")
+    summary = stripped_summary(removals) or (
+        "- Nothing removed — record-hint fixture: the snapshot is the starting tree."
+    )
+    print(f"\nstripped_summary (paste into README.md):\n{summary}")
     return 0
 
 
@@ -1197,6 +1233,15 @@ def cmd_scaffold(args: argparse.Namespace) -> int:
 
     for template_name in targets:
         rendered = render_template(template_name, values)
+        if template_name == FIXTURE_JSON:
+            # Injected rather than templated: the template stays renderable
+            # by callers that predate the genre field.
+            rendered = {
+                "id": rendered.get("id"),
+                "name": rendered.get("name"),
+                "genre": args.genre,
+                **rendered,
+            }
         _write_json(fixture_dir / template_name, rendered)
         print(f"wrote {_rel(fixture_dir / template_name)}")
 
@@ -1227,6 +1272,8 @@ def presence_mirror(findings: dict[str, Any], unstripped: dict[str, Any]) -> lis
     errors: list[str] = []
     people = index_tree(unstripped)
     for finding in findings.get("findings") or []:
+        if str(finding.get("polarity", "recover")) == "avoid":
+            continue  # an avoided claim is wrong by definition — it was never in the tree
         bag = finding_name_tokens(finding)
         if not bag:
             continue  # nothing nameable to match — same skip the linter makes
@@ -1257,6 +1304,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     research = _read_json(fixture_dir / STARTING_RESEARCH)
     starting = _read_json(fixture_dir / STARTING_TREE)
     findings = _require_findings(fixture_dir)
+    genre = fixture_genre(fixture_dir)
 
     # Absent on a PID-less fixture, which constructs its tree from a document:
     # nothing was
@@ -1297,7 +1345,24 @@ def cmd_validate(args: argparse.Namespace) -> int:
         gate = living_gate(unstripped, heuristic=True)
         errors += [f"{UNSTRIPPED_TREE}: {e}" for e in gate.errors]
         warnings += gate.warnings
-        errors += presence_mirror(findings, unstripped)
+        if genre == "record-hint":
+            # Nothing is stripped in this genre, so the presence mirror is
+            # meaningless (the answer lives in a record, not the tree) and
+            # the snapshot must not have drifted from the starting tree.
+            if unstripped != starting:
+                errors.append(
+                    f"genre 'record-hint' declares nothing stripped, but "
+                    f"{UNSTRIPPED_TREE} and {STARTING_TREE} differ — re-run "
+                    f"`strip --slug {args.slug} --none`, or fix the genre."
+                )
+        else:
+            errors += presence_mirror(findings, unstripped)
+    elif genre == "record-hint":
+        warnings.append(
+            f"no {UNSTRIPPED_TREE} — record-hint fixtures should commit the "
+            f"snapshot (identical to {STARTING_TREE}) so `snapshot --check` "
+            f"can audit upstream drift."
+        )
     else:
         warnings.append(
             f"no {UNSTRIPPED_TREE} — assuming a PID-less fixture (tree constructed "
@@ -1341,6 +1406,13 @@ def build_parser() -> argparse.ArgumentParser:
     strip.add_argument("--relationships", action="append", metavar="ID[,ID...]")
     strip.add_argument("--facts", action="append", metavar="OWNER:FACT", help="e.g. KNDX-MKG:F2 or R4:F12")
     strip.add_argument("--sources", action="append", metavar="ID[,ID...]")
+    strip.add_argument(
+        "--none",
+        action="store_true",
+        help=f"Strip nothing: {STARTING_TREE} becomes an exact copy of the "
+             f"snapshot (record-hint fixtures, where the answer lives in a "
+             f"record rather than the tree).",
+    )
     strip.add_argument("--dry-run", action="store_true", help="Print everything, write nothing.")
     strip.set_defaults(func=cmd_strip)
 
@@ -1351,6 +1423,13 @@ def build_parser() -> argparse.ArgumentParser:
     scaffold.add_argument(
         "--subject-id",
         help="The subject's id in the tree. Defaults to --pid; pass `I1` on a PID-less fixture.",
+    )
+    scaffold.add_argument(
+        "--genre",
+        choices=GENRES,
+        default="strip",
+        help="Fixture genre (spec §3.6). Default: strip. Pass record-hint "
+             "when nothing is stripped and the answer lives in a record.",
     )
     scaffold.add_argument("--question", required=True)
     scaffold.add_argument("--question-type", required=True)
