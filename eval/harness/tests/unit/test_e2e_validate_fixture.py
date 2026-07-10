@@ -316,3 +316,30 @@ def test_lint_fixture_holds_the_unstripped_tree_to_the_same_bar(tmp_path):
     _, errors = lint_fixture(tmp_path)
     assert any(e.startswith("unstripped-tree.gedcomx.json:") and "marked living" in e
                for e in errors)
+
+
+def test_lint_fixture_rejects_a_name_without_given(tmp_path):
+    # The mononym alignment: `given` is required by the schema so it agrees
+    # with the runtime validator, the spec table, and the TS types. Unknown
+    # given names are spelled "" (the engine's living-person-stub convention).
+    person = _valid_person("I1", "John", "Smith")
+    del person["names"][0]["given"]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("given" in e for e in errors)
+
+
+def test_an_empty_given_is_the_unknown_spelling_and_passes(tmp_path):
+    _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "", "Smith")))
+    _, errors = lint_fixture(tmp_path)
+    assert errors == []
+
+
+def test_lint_fixture_rejects_a_lowercase_fact_type(tmp_path):
+    # The fact-type enum is deliberately open, so "move" lints clean under
+    # the schema and then hard-fails tree_edit — the gate mirrors the runtime.
+    person = _valid_person("I1", "John", "Smith")
+    person["facts"] = [{"id": "F1", "type": "move"}]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("PascalCase" in e for e in errors)

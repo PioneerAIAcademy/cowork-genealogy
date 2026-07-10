@@ -58,12 +58,12 @@
     },
     "name": {
       "type": "object",
-      "required": ["id", "surname"],
+      "required": ["id", "given", "surname"],
       "additionalProperties": false,
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "preferred": { "type": "boolean", "const": true },
-        "given": { "type": "string" },
+        "given": { "type": "string", "description": "Given name(s). Required; spell an unknown given name as \"\" — the engine's own convention (its living-person stub emits given: \"\")." },
         "surname": { "type": "string" },
         "prefix": { "type": "string", "description": "Name prefix, e.g. `Rev.`. Emitted by person_read when FamilySearch supplies one." },
         "suffix": { "type": "string", "description": "Name suffix, e.g. `Jr.`. Emitted by person_read when FamilySearch supplies one." },

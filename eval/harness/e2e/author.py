@@ -70,6 +70,7 @@ from e2e.validate_fixture import (
     finding_type_token,
     format_suspect,
     index_tree,
+    tree_integrity_errors,
 )
 from harness.schema_validator import (
     SCHEMAS_DIR,
@@ -1106,7 +1107,7 @@ def cmd_strip(args: argparse.Namespace) -> int:
         print(f"  {line}")
     _emit(warnings)
 
-    schema_errors = _schema_errors_for_tree(tree)
+    schema_errors = _schema_errors_for_tree(tree) + tree_integrity_errors(tree, STARTING_TREE)
     if schema_errors:
         _emit(schema_errors, "ERROR")
         print(
@@ -1268,6 +1269,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
     errors += [f"{STARTING_RESEARCH}: {e}" for e in validate_research_json(research)]
     errors += [f"{STARTING_TREE}: {e}" for e in _schema_errors_for_tree(starting)]
+    errors += tree_integrity_errors(starting, STARTING_TREE)
 
     # The engine's runtime cross-file check requires every subject_person_id
     # to name a tree person; a typo'd `scaffold --pid` (or a forgotten
@@ -1289,6 +1291,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
     if unstripped is not None:
         errors += [f"{UNSTRIPPED_TREE}: {e}" for e in _schema_errors_for_tree(unstripped)]
+        errors += tree_integrity_errors(unstripped, UNSTRIPPED_TREE)
         # heuristic=True only here: a stripped death fact makes a deceased
         # person look living, so the 110-year rule must never see a starting tree.
         gate = living_gate(unstripped, heuristic=True)

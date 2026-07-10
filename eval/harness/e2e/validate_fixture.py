@@ -214,11 +214,12 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
       `living_gate` rules 1-2 in `e2e.author`; kept local to avoid an
       import cycle).
 
-    The runtime's `given`-required and PascalCase-fact-type checks are
-    deliberately NOT ported: whether those divergences should be fixed by
-    tightening this gate or relaxing the runtime (mononyms are legitimate
-    genealogy) is still an open call — see the follow-up tracked in the
-    schema-relaxation PR.
+    The runtime's two remaining name/fact checks are handled thus: `given`
+    is required by the JSON Schema itself (now aligned with the runtime, the
+    spec table, and the TS types — spell an unknown given name `""`, the
+    engine's own stub convention), and the runtime's PascalCase fact-type
+    check is mirrored below verbatim. If the runtime ever relaxes either,
+    delete the mirror in the same PR.
     """
     errors: list[str] = []
     persons = [p for p in tree.get("persons") or [] if isinstance(p, dict)]
@@ -283,6 +284,22 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
         for fact in rel.get("facts") or []:
             if isinstance(fact, dict):
                 check_source_refs(fact, f"relationship {rid} fact {fact.get('id', '?')}")
+
+    # Mirror of validator.ts's PascalCase check ("fact type 'x' should be
+    # PascalCase") — the schema's fact-type enum is deliberately open, so a
+    # lowercase type lints clean and then hard-fails tree_edit mid-run.
+    for holder in (*persons, *relationships):
+        hid = holder.get("id", "?")
+        for fact in holder.get("facts") or []:
+            if not isinstance(fact, dict):
+                continue
+            ftype = str(fact.get("type") or "")
+            if ftype and ftype[:1] != ftype[:1].upper():
+                errors.append(
+                    f"{filename}: fact {fact.get('id', '?')} on {hid} has type "
+                    f"{ftype!r} — tree_edit requires PascalCase (e.g. 'Birth', "
+                    f"not 'birth')"
+                )
 
     for person in persons:
         pid = person.get("id", "?")

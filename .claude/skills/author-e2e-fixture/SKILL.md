@@ -169,6 +169,8 @@ holding **only the known starting context**:
 - Relatives who anchor the search but are not themselves the answer.
   `ParentChild` uses the keys `parent` and `child`; `Couple` uses
   `person1` and `person2`.
+- Names need both halves: `given` and `surname` are required. When one
+  is genuinely unknown, use `""` — never omit the field.
 - Ids: any non-empty string, unique within its collection. Nothing reads
   meaning out of an id's shape, so follow the convention — persons `I1`,
   `I2`, …; names `N1`…; facts `F1`…; relationships `R1`…; sources `S1`… —

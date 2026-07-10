@@ -116,7 +116,7 @@ Array of person objects.
 |-------|------|----------|-------------|
 | `id` | string | yes | Name ID. FamilySearch supplies none, so this is always synthesized (`N1`, or `<person-id>-name-1`). See Section 3 |
 | `preferred` | boolean | no | True if this is the preferred name. Omit rather than setting false |
-| `given` | string | yes | Given name(s) |
+| `given` | string | yes | Given name(s). Spell an unknown given name as `""` — the field is required, matching the runtime validator, the TS types, and the engine's living-person stub convention |
 | `surname` | string | yes | Surname |
 | `prefix` | string | no | Name prefix, e.g. `Rev.`. Emitted by `person_read` when FamilySearch supplies one |
 | `suffix` | string | no | Name suffix, e.g. `Jr.`. Emitted by `person_read` when FamilySearch supplies one |

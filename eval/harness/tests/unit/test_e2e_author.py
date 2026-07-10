@@ -797,3 +797,32 @@ def test_the_presence_mirror_accepts_a_target_named_by_one_name_half(tree):
 def test_a_value_containing_literal_braces_is_data_not_a_placeholder():
     out = _substitute({"notes": "{{notes}}"}, {"notes": "see the {{slug}} docs"})
     assert out == {"notes": "see the {{slug}} docs"}
+
+
+def test_validate_runs_the_integrity_gate_not_just_the_schema(fixtures_root, capsys):
+    # A dangling relationship endpoint lints clean under JSON Schema; the
+    # per-slug authoring gate must catch it locally, before CI's corpus
+    # test does.
+    fixture_dir = fixtures_root / "vi"
+    fixture_dir.mkdir()
+    tree = {
+        "persons": [_person("I1", "John", "Smith", living=False)],
+        "relationships": [
+            {"id": "R1", "type": "ParentChild", "parent": "I1", "child": "GONE-1"}
+        ],
+        "sources": [],
+    }
+    (fixture_dir / "starting-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    research = author.render_template(
+        "starting-research.json", _scaffold_values(subject_person_id="I1")
+    )
+    (fixture_dir / "starting-research.json").write_text(
+        json.dumps(research), encoding="utf-8"
+    )
+    (fixture_dir / "expected-findings.json").write_text(
+        json.dumps({"findings": [_finding("f1", "Somebody Else")]}), encoding="utf-8"
+    )
+    assert author.main(["validate", "--slug", "vi"]) == 2
+    assert "dangling" in capsys.readouterr().err
