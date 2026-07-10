@@ -1,0 +1,34 @@
+{
+  "tool": "wiki_search",
+  "description": "wiki_search catch-all for Danish research queries — surfaces the lægdsruller (military levying rolls) and church-records wiki content that live FamilySearch returns for Denmark planning searches.",
+  "args": {
+    "query": "~"
+  },
+  "response": {
+    "query": "Denmark genealogy records research",
+    "total_chunks_searched": 14832,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.91,
+        "chunk_text": "Danish Military Levying Rolls (Lægdsruller), 1789-1861: conscription registers recording all males liable for military service, entered from birth or early childhood. Each boy is registered in his levying district (lægd) with the father's name written directly above the son's entry — the levying-roll naming convention — making the rolls direct evidence of a son's paternity. Annual and triennial sessions track movements between districts, occupation, and family status: notations such as 'gl. M. S.' (gammel mands søn, old man's son) and 'GBES' (gårdbrugerenkes søn, widow's son) record changes in the father's status and can bracket a father's death between sessions.",
+        "page_title": "Denmark Military Records",
+        "page_url": "https://www.familysearch.org/en/wiki/Denmark_Military_Records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.87,
+        "chunk_text": "Danish church records (kirkebøger) are the primary source for births/baptisms, confirmations, marriages, and deaths/burials. Registers were mandated in 1645-46 but survival before 1814 varies by parish; from 1814 duplicate copies were kept. Coverage on FamilySearch is uneven — many rural parish volumes are digitized but only fractionally indexed, so plan to browse the register images when an indexed search fails.",
+        "page_title": "Denmark Church Records",
+        "page_url": "https://www.familysearch.org/en/wiki/Denmark_Church_Records"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.83,
+        "chunk_text": "Danish probate records (skifteprotokoller) were kept by jurisdiction — rural districts (herreder), estates (godser), market towns — and often name the deceased's spouse and all living heirs with their residences, making them strong parentage and kinship evidence. Indexes exist for many districts; the originals are browse-only images for most periods.",
+        "page_title": "Denmark Probate Records",
+        "page_url": "https://www.familysearch.org/en/wiki/Denmark_Probate_Records"
+      }
+    ]
+  }
+}

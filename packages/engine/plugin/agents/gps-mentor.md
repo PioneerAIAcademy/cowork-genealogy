@@ -317,6 +317,17 @@ plan that was too narrow to begin with.
    jurisdiction to identify record types that exist for the
    place+period but were not searched. Flag missing high-value
    types (probate, land, church, newspaper) as must-address.
+   The high-value list is **jurisdiction-specific**, not the generic
+   set above: also check `wiki_place_page`
+   (`section: "research_tips"`) for record systems canonical to the
+   place and era (e.g. conscription/levy rolls — Danish
+   *lægdsruller* — for a male subject in 1789+ Denmark/Norway;
+   notarial records in civil-law countries; manorial records in
+   England) and flag any locally-canonical type that was **never
+   planned at all**. A whole evidence category missing from the plan
+   is the highest-value gap this review exists to catch — the
+   mechanical check only verifies that *planned* searches were
+   executed.
 
 2. **FAN coverage.** Is at least one log entry targeting witnesses,
    neighbors, or associates? If not — and direct-evidence searches

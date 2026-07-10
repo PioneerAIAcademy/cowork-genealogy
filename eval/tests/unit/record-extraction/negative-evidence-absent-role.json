@@ -13,7 +13,7 @@
   },
   "judge_context": [
     "A new source entry for the 1870 census should be created (or referenced if one already exists), and the assertion's source_id should point at it",
-    "For negative evidence (person absent), the informant is 'researcher' or 'research process' — no household member reported the absence. The researcher is the one who searched the index and concluded Patrick was not found. informant_proximity can be 'researcher' or 'analyst'. This is distinct from positive census assertions where household members are the informant."
+    "For negative evidence (person absent), no household member reported the absence, so the informant is the researcher/analyst who searched the index and concluded Patrick was not found (a researcher-type value such as 'researcher' or 'research process'). Because no record informant exists, informant_proximity must be 'unknown': the closed enum is self | witness | household_member | family_not_present | official_duty | unknown, which has no 'researcher'/'analyst' value, and SKILL.md's negative-evidence convention specifies informant_proximity 'unknown' for exactly this case. This is distinct from positive census assertions where household members are the informant."
   ],
   "execution": {
     "max_turns": 40,

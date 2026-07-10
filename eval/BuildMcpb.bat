@@ -5,8 +5,9 @@ echo === Cowork Genealogy - Build the .mcpb desktop extension ===
 echo.
 echo Compiles the MCP server and packs releases\genealogy-mcp.mcpb, the
 echo Claude Desktop extension. After it builds, install it in Claude Desktop
-echo via Settings -^> Extensions -^> Install Extension, then FULLY QUIT and
-echo reopen Desktop. Rebuild and reinstall whenever the MCP server changes.
+echo via Settings -^> Extensions -^> Advanced Settings -^> Install extension,
+echo then FULLY QUIT and reopen Desktop. Rebuild and reinstall whenever the
+echo MCP server changes.
 echo.
 echo This runs scripts\build-mcpb.mjs with Node (same as "make mcpb"). No bash
 echo needed -- just Node, which Setup.bat already installs.

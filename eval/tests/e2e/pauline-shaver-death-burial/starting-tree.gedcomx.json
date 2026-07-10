@@ -204,6 +204,7 @@
       "person2": "K2BS-YMD",
       "facts": [
         {
+          "id": "rel-2-marriage-1",
           "type": "Marriage",
           "date": "December 1834",
           "standard_date": "Dec 1834",
@@ -227,5 +228,6 @@
       "subtype": "Biological",
       "id": "rel-4"
     }
-  ]
+  ],
+  "sources": []
 }
