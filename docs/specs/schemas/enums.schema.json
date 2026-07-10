@@ -177,8 +177,9 @@
       "enum": ["ParentChild", "Couple"]
     },
     "gedcomx_fact_type_recommended": {
-      "description": "Open enum for tree.gedcomx.json facts. PascalCase preserved from GedcomX URI suffixes.",
+      "description": "Open enum for tree.gedcomx.json facts. PascalCase preserved from GedcomX URI suffixes. The pattern enforces only the upper-initial (the part the runtime validator hard-fails on — a lowercase `birth` copied from research.json would lint clean and then fail tree_edit mid-run); the value list stays open.",
       "type": "string",
+      "pattern": "^[A-Z]",
       "examples": [
         "Birth",
         "Death",

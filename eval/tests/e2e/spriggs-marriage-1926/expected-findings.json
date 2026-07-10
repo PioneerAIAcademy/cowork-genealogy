@@ -1,0 +1,55 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Reuben Spencer Spriggs married Nora Alvina Satter. The agent should identify her as his wife and add her and the couple relationship to the tree.",
+      "details": {
+        "subject_person": "Reuben Spencer Spriggs (L64C-QQX)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Nora Alvina Satter",
+          "birth": "7 November 1899, Hartland, Freeborn, Minnesota"
+        }
+      },
+      "supporting_sources": [
+        "1930 United States Census, Belle Prairie Township, Beadle, South Dakota — Spencer R Spriggs household listing wife Nora",
+        "Minnesota marriage record, Hennepin County, 1926"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The marriage took place on 8 November 1926 in Minneapolis, Hennepin, Minnesota.",
+      "details": {
+        "subject_person": "Reuben Spencer Spriggs (L64C-QQX)",
+        "target_person": {
+          "name": "Nora Alvina Satter"
+        },
+        "fact_type": "Marriage",
+        "date": "8 November 1926",
+        "place": "Minneapolis, Hennepin, Minnesota, United States"
+      },
+      "supporting_sources": [
+        "Minnesota marriage record or index entry, Hennepin County, 1926"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "source",
+      "description": "A Minnesota marriage record or index entry for the 1926 Spriggs–Satter marriage is attached as a source for the marriage.",
+      "details": {
+        "subject_person": "Reuben Spencer Spriggs (L64C-QQX)",
+        "target_person": {
+          "name": "Nora Alvina Satter"
+        }
+      },
+      "supporting_sources": [
+        "Minnesota marriage record or index, Hennepin County, 1926"
+      ],
+      "required": false
+    }
+  ]
+}

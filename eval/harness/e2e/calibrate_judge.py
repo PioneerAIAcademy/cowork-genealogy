@@ -58,6 +58,7 @@ from pathlib import Path
 from typing import Any
 
 from e2e import judge as judge_module
+from e2e.judge import derive_verdict  # shared with apply_avoid_guard; re-exported for our callers
 
 
 # NOTE: these mirror e2e.orchestrator's DEFAULT_RUNLOG_ROOT / DEFAULT_FIXTURES_ROOT
@@ -74,32 +75,8 @@ FINDING_LABELS = {"true", "partial", "false"}
 ALLOWED_ANN_KEYS = {"annotator", "per_finding", "proof_quality_score", "notes"}
 
 
-# --------------------------------------------------------------------------- #
-# Verdict derivation
-# --------------------------------------------------------------------------- #
-
-def derive_verdict(per_finding: dict[str, str], findings: list[dict[str, Any]]) -> str:
-    """Roll per-finding labels up to a pass/partial/fail verdict.
-
-    The judge's own rule (spec §7.2), applied to the **required** findings
-    (``required`` is a mandatory field per §3.4, so no default-handling):
-
-    - ``pass``    — every required finding matched (``true``)
-    - ``fail``    — no required finding even partially matched
-    - ``partial`` — anything in between
-
-    Polarity-agnostic: for an ``avoid`` finding, ``true`` already means
-    "correctly avoided", so it rolls up exactly like a recovered finding. A
-    degenerate fixture with no required findings rolls up over all of them.
-    """
-    required_ids = [str(f["id"]) for f in findings if f.get("required")]
-    ids = required_ids or [str(f["id"]) for f in findings]
-    labels = [per_finding.get(fid) for fid in ids]
-    if labels and all(label == "true" for label in labels):
-        return "pass"
-    if not any(label in ("true", "partial") for label in labels):
-        return "fail"
-    return "partial"
+# Verdict derivation lives in e2e.judge (`derive_verdict`, re-exported above) —
+# it is shared with apply_avoid_guard's recompute.
 
 
 # --------------------------------------------------------------------------- #
@@ -160,6 +137,14 @@ def grade_case(
             final_research=case.get("final_research"),
             model=model,
             client=client,
+        )
+        # Calibration must measure the grader the pipeline actually runs,
+        # which is judge + avoid-guard (the deterministic §3.4.1 backstop),
+        # not the raw model output.
+        judge_output = judge_module.apply_avoid_guard(
+            judge_output,
+            expected_findings=case["expected_findings"],
+            final_tree=case["final_tree"],
         )
     except Exception as e:  # noqa: BLE001 — record, don't abort the sweep
         result.error = f"{type(e).__name__}: {e}"

@@ -1,0 +1,12 @@
+{
+  "annotator": "ebigide",
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Father Miguel Caetano de Araujo present in the tree with exact name and a correctly-directed ParentChild link (R1 -> GM4P-TYS). Downgraded to partial: the expected identifying birth detail (1900, Brazil) was not recorded on the parent person, because the 1957 marriage filiacao field names the parent without a birth date.",
+    "f2": "Mother Josefa Florencio de Araujo present in the tree with exact name and a correctly-directed ParentChild link (R2 -> GM4P-TYS). Downgraded to partial: the expected identifying birth detail (1906, Caruaru, Pernambuco) was not recorded on the parent person, same reason as f1."
+  }
+}

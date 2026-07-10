@@ -431,6 +431,25 @@ def test_the_presence_mirror_skips_a_finding_with_no_nameable_target(tree):
     assert presence_mirror({"findings": [{"id": "f1", "type": "fact"}]}, tree) == []
 
 
+def test_the_presence_mirror_skips_an_avoid_finding(tree):
+    # An avoided claim is wrong by definition — it was never in the tree, so
+    # "names nobody present in the unstripped tree" is its correct state,
+    # not an authoring error (spec §3.4.1).
+    finding = _finding("f1", "Ebenezer Ferber")
+    finding["polarity"] = "avoid"
+    assert presence_mirror({"findings": [finding]}, tree) == []
+
+
+def test_the_presence_mirror_sees_a_marriage_fact_held_by_the_couple(tree):
+    # A Marriage lives on the Couple relationship, never on either spouse —
+    # index_tree folds relationship facts onto both endpoints so a marriage
+    # `fact` finding can match. Neither spouse carries a Marriage fact of
+    # their own in the fixture, so without the fold this errored.
+    finding = _finding("f2", "Mary Jones", ftype="fact")
+    finding["details"]["fact_type"] = "Marriage"
+    assert presence_mirror({"findings": [finding]}, tree) == []
+
+
 # --- drift audit -----------------------------------------------------------
 
 
@@ -751,6 +770,108 @@ def test_a_slug_with_path_separators_is_rejected():
         author.build_parser().parse_args(["validate", "--slug", "../evil"])
 
 
+# --- record-hint genre (spec §3.6) -------------------------------------------
+
+
+def _write_record_hint_fixture(fixtures_root, slug, tree, findings=None, genre="record-hint"):
+    """A complete record-hint fixture dir: snapshot == starting tree."""
+    fixture_dir = fixtures_root / slug
+    fixture_dir.mkdir()
+    (fixture_dir / "fixture.json").write_text(
+        json.dumps({"id": slug, "genre": genre}), encoding="utf-8"
+    )
+    research = author.render_template("starting-research.json", _scaffold_values())
+    (fixture_dir / "starting-research.json").write_text(
+        json.dumps(research), encoding="utf-8"
+    )
+    for name in ("starting-tree.gedcomx.json", "unstripped-tree.gedcomx.json"):
+        (fixture_dir / name).write_text(json.dumps(tree), encoding="utf-8")
+    (fixture_dir / "expected-findings.json").write_text(
+        json.dumps(findings or {"findings": [_finding("f1", "Nowhere Nobody")]}),
+        encoding="utf-8",
+    )
+    return fixture_dir
+
+
+def test_strip_none_writes_the_snapshot_verbatim(fixtures_root, tree, capsys):
+    fixture_dir = fixtures_root / "rh"
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    (fixture_dir / "expected-findings.json").write_text(
+        json.dumps({"findings": [_finding("f1", "Nowhere Nobody")]}), encoding="utf-8"
+    )
+    assert author.main(["strip", "--slug", "rh", "--none"]) == 0
+    written = json.loads(
+        (fixture_dir / "starting-tree.gedcomx.json").read_text(encoding="utf-8")
+    )
+    assert written == tree
+    captured = capsys.readouterr()
+    assert "REMOVED (0)" in captured.out
+    assert "Nothing removed — record-hint fixture" in captured.out
+
+
+def test_strip_none_refuses_to_mix_with_selectors(fixtures_root, tree, capsys):
+    fixture_dir = fixtures_root / "rh2"
+    fixture_dir.mkdir()
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(tree), encoding="utf-8"
+    )
+    rc = author.main(["strip", "--slug", "rh2", "--none", "--persons", "KNDX-MKG"])
+    assert rc == 2
+    assert "--none means nothing is stripped" in capsys.readouterr().err
+
+
+def test_scaffold_writes_the_genre(fixtures_root):
+    args = [
+        "scaffold", "--slug", "rh3", "--name", "RH3", "--pid", "KNDX-MKG",
+        "--question", "Q?", "--question-type", "children", "--era", "1870s",
+        "--geography", "US-MI", "--difficulty", "hard",
+    ]
+    assert author.main(args + ["--genre", "record-hint"]) == 0
+    meta = json.loads(
+        (fixtures_root / "rh3" / "fixture.json").read_text(encoding="utf-8")
+    )
+    assert meta["genre"] == "record-hint"
+    assert list(meta)[:3] == ["id", "name", "genre"]
+
+    args[2] = "rh3b"  # default genre is strip
+    assert author.main(args) == 0
+    meta = json.loads(
+        (fixtures_root / "rh3b" / "fixture.json").read_text(encoding="utf-8")
+    )
+    assert meta["genre"] == "strip"
+
+
+def test_validate_record_hint_skips_the_presence_mirror(fixtures_root, tree, capsys):
+    # The finding names nobody in the snapshot — a hard error on a strip
+    # fixture, the *design* of a record-hint one (the answer lives in a
+    # record). Identical trees + extra-tree findings must pass.
+    _write_record_hint_fixture(fixtures_root, "rh4", tree)
+    assert author.main(["validate", "--slug", "rh4"]) == 0
+    assert "never in the tree" not in capsys.readouterr().err
+
+
+def test_validate_record_hint_requires_snapshot_and_starting_tree_to_match(
+    fixtures_root, tree, capsys
+):
+    fixture_dir = _write_record_hint_fixture(fixtures_root, "rh5", tree)
+    stripped, _, _, errors = apply_strip(tree, StripSpec(persons={"M4TT-2BC"}))
+    assert errors == []
+    (fixture_dir / "starting-tree.gedcomx.json").write_text(
+        json.dumps(stripped), encoding="utf-8"
+    )
+    assert author.main(["validate", "--slug", "rh5"]) == 2
+    assert "declares nothing stripped" in capsys.readouterr().err
+
+
+def test_validate_rejects_an_unknown_genre(fixtures_root, tree, capsys):
+    _write_record_hint_fixture(fixtures_root, "rh6", tree, genre="bogus")
+    assert author.main(["validate", "--slug", "rh6"]) == 2
+    assert "unknown genre" in capsys.readouterr().err
+
+
 # --- drift audit (relationships, sources, values) ----------------------------
 
 
@@ -826,3 +947,20 @@ def test_validate_runs_the_integrity_gate_not_just_the_schema(fixtures_root, cap
     )
     assert author.main(["validate", "--slug", "vi"]) == 2
     assert "dangling" in capsys.readouterr().err
+
+
+def test_person_level_sources_are_dropped_with_a_warning():
+    # Persons carry no `sources` in the tree format — references live on
+    # names/facts/relationships. A candidate document that has them (the old
+    # format allowed them) must shed them loudly, not silently.
+    raw = {
+        "persons": [
+            _person("KNDX-MKG", "John", "Smith", living=False,
+                    sources=[{"ref": "7BL6-KLH"}])
+        ],
+        "relationships": [],
+        "sources": [{"id": "7BL6-KLH", "title": "1850 Census"}],
+    }
+    tree, warnings = normalize_tree(raw)
+    assert "sources" not in tree["persons"][0]
+    assert any("'sources'" in w for w in warnings)

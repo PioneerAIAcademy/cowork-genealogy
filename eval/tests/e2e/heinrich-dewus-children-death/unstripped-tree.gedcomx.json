@@ -1,0 +1,312 @@
+{
+  "persons": [
+    {
+      "id": "9VX4-1C3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Heinrich",
+          "surname": "Dewus"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b8b8e8ee-15d6-46e0-8d70-ee407ac30d0e",
+          "type": "Birth",
+          "place": ", Pommerania, Preussen, Germany",
+          "standard_place": "Pomerania, Prussia, Germany"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KJW8-43Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Heinrich Charles",
+          "surname": "Dewus"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6d40a8d2-a21b-4a91-89b6-e906b05d9ed3",
+          "type": "Birth",
+          "date": "2 Aug 1889",
+          "standard_date": "2 Aug 1889",
+          "place": "Milwaukee, Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "3ed08162-0d78-4524-9d64-29155f1f8de6",
+          "type": "Christening",
+          "date": "2 Aug 1889",
+          "standard_date": "2 Aug 1889",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "335bdcb7-fe22-468c-9f49-b12e8b82a6cc",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "26 January 1958",
+          "standard_date": "26 Jan 1958",
+          "place": "Milwaukee, Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        }
+      ]
+    },
+    {
+      "id": "9MNY-WQ1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Alma Friedericka Wilhelmina",
+          "surname": "Dewus"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "13 Feb 1882",
+          "standard_date": "13 Feb 1882",
+          "place": "Milwaukee, Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "794de77d-624a-433f-9240-faccf0b1c46a",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "3b95362a-af01-4189-93d9-3b1783c47e88",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Milwaukee Ward 20, Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "a7c0f6f1-a4c0-430b-9c19-9b4157c5942c",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Wauwatosa, Milwaukee, Wisconsin, United States",
+          "standard_place": "Wauwatosa, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "da90444b-30b3-46e0-b264-4c32b0acfec1",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "357ade1a-31f2-492d-81c3-f99a0cccfb2b",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Wauwatosa, Milwaukee, Wisconsin, United States",
+          "standard_place": "Wauwatosa, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "36a20005-754e-4ac0-85d9-1236eeae2c9c",
+          "type": "Burial",
+          "place": "Pinelawn Memorial Park, Milwaukee, Milwaukee, Wisconsin, United States of America",
+          "standard_place": "Pinelawn Memorial Park, Milwaukee, Milwaukee, Wisconsin, United States"
+        }
+      ]
+    },
+    {
+      "id": "9VX4-1ZR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Augusta",
+          "surname": "Arndt"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "e0cc3635-252c-4418-b909-cf2b2d342e87",
+          "type": "Birth",
+          "place": "Pommerania",
+          "standard_place": "Pomerania, Prussia, Germany"
+        }
+      ]
+    },
+    {
+      "id": "94F3-YQH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Adela Ulricka Augusta",
+          "surname": "Dewus"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 Dec 1883",
+          "standard_date": "23 Dec 1883",
+          "place": "Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9VX4-1H3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Hedwig Bertha Anna",
+          "surname": "Dewus"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "12 Sep 1885",
+          "standard_date": "12 Sep 1885",
+          "place": "Milwaukee, Wisconsin",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9VX4-1C3",
+      "person2": "9VX4-1ZR"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "9MNY-WQ1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "9MNY-WQ1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "94F3-YQH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "94F3-YQH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "9VX4-1H3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "9VX4-1H3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "9VX4-1C3",
+      "child": "KJW8-43Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "9VX4-1ZR",
+      "child": "KJW8-43Q",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MX3X-PMC",
+      "title": "Heinrich Dewus in entry for Adela Ulricka Augusta Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XR1G-2M7 : 30 January 2020), Heinrich Dewus in entry for Adela Ulricka Augusta Dewus, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XR1G-2M7"
+    },
+    {
+      "id": "MXWW-JS1",
+      "title": "Heinrich Dewus in entry for Heinrich Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XRBV-5PD : 30 January 2020), Heinrich Dewus in entry for Heinrich Dewus, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XRBV-5PD"
+    },
+    {
+      "id": "MXSH-YG4",
+      "title": "Heinrich Dewus in entry for Hedwig Bertha Anna Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XR1N-M19 : 30 January 2020), Heinrich Dewus in entry for Hedwig Bertha Anna Dewus, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XR1N-M19"
+    },
+    {
+      "id": "MX3X-N9K",
+      "title": "Heinrich Dewus in entry for Alma Friedericka Wilhelmina Dewus, \"Wisconsin, Births and Christenings, 1826-1926\"",
+      "citation": "\"Wisconsin, Births and Christenings, 1826-1926\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XR1R-GZ7 : 30 January 2020), Heinrich Dewus in entry for Alma Friedericka Wilhelmina Dewus, 1882.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XR1R-GZ7"
+    }
+  ]
+}
