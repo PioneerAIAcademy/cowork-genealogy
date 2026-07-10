@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Pauline 'Polly' Wilkins Shaver died on 30 November 1935 in Muhlenberg, Kentucky, United States.",
+      "details": {
+        "target_person": {
+          "name": "Pauline 'Polly' Wilkins Shaver",
+          "pid": "27HB-Z94"
+        },
+        "fact_type": "Death",
+        "date": "30 November 1935",
+        "place": "Muhlenberg, Kentucky, United States"
+      },
+      "supporting_sources": [
+        "Kentucky Death Records, 1911-1963 — entry for Polly Shover, 30 November 1935",
+        "Kentucky, Vital Record Indexes, 1911-1999 — entry for Polly Shower, 30 Nov 1935"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Pauline 'Polly' Wilkins Shaver was buried at Shavers Cemetery, Lynn City, Muhlenberg, Kentucky, United States.",
+      "details": {
+        "target_person": {
+          "name": "Pauline 'Polly' Wilkins Shaver",
+          "pid": "27HB-Z94"
+        },
+        "fact_type": "Burial",
+        "place": "Shavers Cemetery, Lynn City, Muhlenberg, Kentucky, United States"
+      },
+      "supporting_sources": [
+        "Find a Grave Index — entry for Polly Wilkins Shaver, 1935"
+      ],
+      "required": true
+    }
+  ]
+}

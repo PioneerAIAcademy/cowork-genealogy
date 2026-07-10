@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_pauline_shaver_death_burial",
+    "objective": "When did Pauline 'Polly' Wilkins Shaver die, and where is she buried?",
+    "subject_person_ids": ["27HB-Z94"],
+    "status": "active",
+    "created": "2026-07-08",
+    "updated": "2026-07-08"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

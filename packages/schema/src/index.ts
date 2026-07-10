@@ -361,6 +361,8 @@ export interface GedcomxName {
   preferred?: boolean
   given: string
   surname: string
+  prefix?: string
+  suffix?: string
   type?: string
   sources?: GedcomxSourceRef[]
 }
@@ -377,6 +379,8 @@ export interface GedcomxFact {
 export interface GedcomxPerson {
   id: string
   ark?: string
+  /** True when FamilySearch reports the person as living. Set by `person_read`. */
+  living?: boolean
   gender: 'Male' | 'Female' | 'Unknown'
   names: GedcomxName[]
   facts?: GedcomxFact[]

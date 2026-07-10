@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_search_images_006",
+    "skill": "search-images",
+    "name": "Full-text transcript search should not trigger search-images",
+    "type": "negative",
+    "description": "User wants a full-text search of AI-transcribed document text to find a person as a witness. That's search-full-text — search-images browses raw image pages and has no text-query capability.",
+    "tags": ["near-miss", "browse-vs-fulltext", "boundary"],
+    "holdout": true
+  },
+  "input": {
+    "user_message": "Run a full-text search for Flynn appearing as a witness in Schuylkill County deed transcripts.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-witnesses",
+    "fulltext-search-flynn-witnesses-by-name",
+    "fulltext-search-flynn-flinn-variant",
+    "fulltext-search-flynn-wildcard-variant"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": ["search-full-text"],
+    "explanation": "Searching transcribed document text for a name is search-full-text's job. search-images only lists and views image pages — it cannot query transcript text, so it is the wrong tool when the collection is full-text searchable."
+  },
+  "judge_context": [
+    "Should route to search-full-text rather than browsing images — a transcript text query is faster and more precise than paging through a volume."
+  ]
+}
