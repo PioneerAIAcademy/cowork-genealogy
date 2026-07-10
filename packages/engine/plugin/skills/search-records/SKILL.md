@@ -262,6 +262,8 @@ Narrate from the tool's summary ("logged as log_006; retained 3 results"); do no
 
 ### 6. Update plan item status
 
+**Do this now, in the same turn as Step 5 — before Step 7 or presenting anything.** A logged search with no matching plan-item status update is an incomplete step, not a deferred one: it's easy to log the search and move straight to triage/handoff and simply forget this call. If you executed a search against a plan item, this call happens before you do anything else with the results.
+
 Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `entryId`, and `fields: { status: "..." }`:
 - `in_progress`: Search executed — work continues downstream in record-extraction. Use whenever records were found to pass on, OR the search was exhausted with nil results and re-planning may be needed.
 - `skipped`: The search was determined to be unnecessary.
@@ -274,7 +276,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Hand off the `recordId` explicitly.** Each ranked match from `rank_search_matches` (like each `record_search` result) carries a `recordId` field that record-extraction uses as the assertion `record_id`. Pass it through in the handoff (alongside the persona ids you already hold) so record-extraction does **not** have to recover it by re-running `record_search` — that lets its first `research_append` validate without a re-search. The exact format is the validator's concern (it matches `record_id` by canonical ARK form), so pass `recordId` straight through.
 
-1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Parameter name:** always use `recordId` — pass the result's `recordId` field if present, otherwise pass its `arkUrl` value (e.g., `record_read({ recordId: result.arkUrl })`). Do NOT use `arkId`, `ark`, `id`, or `url`.
+1. If a record ID or ARK is available, call `record_read` to fetch the full simplified GEDCOMX before passing to record-extraction. **Read it from the sidecar, not live:** you already staged this search in Step 3, so pass that handle — `record_read({ recordId, resultsRef: staged.resultsRef, projectPath })` — to get the record's full gedcomx **without a network round-trip** (for the person you searched: the same facts, the source citation, and correct standardized places). **Do NOT `Read` the sidecar file yourself** — you already hold each `recordId` from the ranked results; `record_read` pulls just the one record out of the sidecar, whereas reading the whole `results/<log_id>.json` reloads every staged result and defeats the compaction. Omit `resultsRef` for a live read only when you need a **co-resident's** full facts (a household member you didn't search for — the sidecar stubs co-residents to a name plus a fact or two), or the record wasn't part of this staged search. **Parameter name:** always use `recordId` — pass the result's `recordId` field if present, otherwise its `arkUrl` value. Do NOT use `arkId`, `ark`, `id`, or `url`.
 2. If the full record is unavailable but an image exists, record the image URL in the log and pass to record-extraction, which fetches and transcribes.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located."
 
@@ -287,6 +289,7 @@ Never treat an index entry as equivalent to examining the original record.
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
 2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry as a separate `research_log_append` call immediately after it completes — do not batch log calls at the end.**
    **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
+   **If the place's boundaries changed since the event, search the historical jurisdiction first, then the present-day one.** The general rule for any boundary change (city, county, state, country, or parish renamed, split, or reassigned) is to search the jurisdiction that existed at the event date — the record was created under the boundary then in force. The exception is FamilySearch's own indexing, which sometimes files a collection under the place's **modern** country instead: a birth in 1893 Šútovo (then Turócz County, Kingdom of Hungary; today Slovakia) is indexed under **Slovakia**, so a `recordCountry: "Hungary"` search returns nil however many name variants you try. So when the historical jurisdiction returns nil, switch `recordCountry` to the present-day country (use `place_search_all` to see the succession), and don't assume the historical empire's religion. See the boundary-change lever in `references/search-strategy-levers.md`.
 3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations.
 4. **Assess whether absence is meaningful.** After exhausting variants and levers, explicitly evaluate three conditions:
    (a) the record type existed in this jurisdiction at this time,
@@ -303,11 +306,14 @@ Never treat an index entry as equivalent to examining the original record.
 
 ### 9. Present results
 
+**Accuracy rule — do not overclaim persistence.** This skill's writes are limited to `log[]` entries and plan-item `status` (see Important rules) — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless `record-extraction` has actually run in this turn and returned assigned `src_`/`a_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, not more. This applies even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job — logging a search is not the same action as persisting a source or assertion, and the summary must not blur the two.
+
 - Summarize what was searched and what was found
 - Show the log entries created
-- List records passed to extraction (or explain why none)
+- List records passed to extraction (or explain why none) — and if none, say plainly that no `sources` or `assertions` exist yet for these findings
 - Show plan progress: "3 of 5 plan items completed"
 - Suggest next steps:
+  - Promising results found, not yet extracted → "I found N promising record(s) for <person> — want me to run record-extraction now to turn them into sourced, GPS-classified assertions?" Do not present these results as already persisted beyond the search log.
   - More plan items → "Shall I continue with the next search?"
   - All done → "All planned searches are complete. Would you like me to evaluate whether the research is exhaustive?" (research-exhaustiveness)
   - No results → "FamilySearch is exhausted for this search — shall I generate Ancestry/MyHeritage URLs for it (search-external-sites), or re-plan with different parameters or adjacent jurisdictions (research-plan)?"

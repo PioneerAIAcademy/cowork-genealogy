@@ -148,6 +148,7 @@ are listed in roughly the order you'd use them in a research project.
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
+| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages (`image_read`). | "Browse the unindexed Schuylkill County probate films" |
 | **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com. Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
@@ -231,6 +232,7 @@ don't load it explicitly.
 3. research-plan             "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
+   search-images             ...or browse unindexed digitized image volumes
    search-external-sites     ...or on Ancestry/MyHeritage/FindMyPast
 5. record-extraction         Extract assertions from found records
 6. assertion-classification  Refine evidence classifications
@@ -330,7 +332,7 @@ You need both pieces.
 
 1. Download `genealogy-mcp.mcpb` from the latest release
 2. Open Claude Desktop → Settings → Extensions
-3. Click "Install Extension..." and select the .mcpb file
+3. Click "Advanced Settings" → "Install extension" and select the .mcpb file
 4. The "Genealogy Research" extension should appear in your list
 
 ### 2. Install the Cowork plugin
@@ -338,7 +340,7 @@ You need both pieces.
 1. Download `genealogy-plugin.zip` from the latest release
 2. Open Claude Desktop → switch to Cowork tab
 3. Click "Customize" in the left sidebar
-4. Click "Browse plugins" → "Upload custom plugin"
+4. Click "Add" → "Upload Plugin"
 5. Select the .zip file
 
 ### Alternative: install in Claude Code

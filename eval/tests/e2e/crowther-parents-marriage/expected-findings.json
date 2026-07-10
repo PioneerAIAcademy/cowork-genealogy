@@ -1,0 +1,67 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John Crowther was the father of Mary Crowther. Born 24 August 1831 in Cockeysville, Baltimore County, Maryland; died 11 December 1918 in Maryland.",
+      "details": {
+        "subject_person": {
+          "name": "Mary Crowther",
+          "pid": "218N-WSD"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "John Crowther",
+          "birth": "24 August 1831, Cockeysville, Baltimore County, Maryland"
+        }
+      },
+      "supporting_sources": [
+        "1860 U.S. Census, 8th District, Baltimore County, Maryland — household including John Crowther, with daughter Mary. FamilySearch ark:/61903/1:1:M69G-C7P.",
+        "1880 U.S. Census, Baltimore County, Maryland — household of John Crowther, with Mary Crowther listed among residents. FamilySearch ark:/61903/1:1:MN31-HCJ."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Honor Elizabeth Frances Bosley was the mother of Mary Crowther. Born 24 November 1834 in Maryland; died 26 July 1874 in Cockeysville, Baltimore County, Maryland, when Mary was about 20 years old.",
+      "details": {
+        "subject_person": {
+          "name": "Mary Crowther",
+          "pid": "218N-WSD"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Honor Elizabeth Frances Bosley",
+          "birth": "24 November 1834, Maryland"
+        }
+      },
+      "supporting_sources": [
+        "1860 U.S. Census, 8th District, Baltimore County, Maryland — household including John Crowther and (by marriage) Honor Crowther, with daughter Mary. FamilySearch ark:/61903/1:1:M69G-C7P."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Mary Crowther married Edward Levis Prizer about 1883. He was born 3 March 1856 in West Chester, Chester County, Pennsylvania, and died 13 August 1929 in East Orange, Essex County, New Jersey. The couple's six children (Edward Jr., John Crowther, Mary Constance, Enos, Honor Elizabeth, and William Douglas Prizer) all carry his surname, but no single indexed marriage record exists — the marriage must be inferred from census co-residence.",
+      "details": {
+        "subject_person": {
+          "name": "Mary Crowther",
+          "pid": "218N-WSD"
+        },
+        "relation": "spouse",
+        "target_person": {
+          "name": "Edward Levis Prizer",
+          "birth": "3 March 1856, West Chester, Chester County, Pennsylvania"
+        }
+      },
+      "supporting_sources": [
+        "1900 U.S. Census, Rochester, Monroe County, New York — entry for Edward Prizer and Mary Prizer with their children. FamilySearch ark:/61903/1:1:MSJW-8MY.",
+        "1910 U.S. Census, South Orange, Essex County, New Jersey — entry for Edward Prizer and Mary Prizer. FamilySearch ark:/61903/1:1:MKY7-GXB.",
+        "New Jersey State Census, 1905 and 1915 — entries for Edward Prizer and Mary Prizer, South Orange / East Orange, Essex County, New Jersey."
+      ],
+      "required": true
+    }
+  ]
+}

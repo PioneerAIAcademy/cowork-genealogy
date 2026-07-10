@@ -1,7 +1,9 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
-import type { GedcomX } from "../types/gedcomx.js";
+import { toSimplified } from "../utils/gedcomx-convert.js";
+import { readStagedResults } from "../utils/results-staging.js";
+import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
+import type { RecordSearchResult } from "../types/record-search.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 
 const RECAPI_BASE =
@@ -27,6 +29,25 @@ export const recordReadSchema = {
           '"ark:/61903/1:1:QVS9-DHDB" (feed record_search\'s `recordId` ' +
           'directly). A bare entity ID like "QVS9-DHDB" is also accepted. Required.',
       },
+      resultsRef: {
+        type: "string",
+        description:
+          "Optional. A `staged.resultsRef` handle from record_search (or a " +
+          "finalized results/<log_id>.json ref) — read this record from that " +
+          "sidecar host-side, WITHOUT a live FamilySearch fetch. For the person " +
+          "you searched, the sidecar carries the same facts, the source citation, " +
+          "and correctly standardized places (more reliable than a live read, whose " +
+          "place standardization can misfire). It returns OTHER household members " +
+          "(co-residents) with reduced facts — so omit this (live read) when you " +
+          "need a co-resident's full facts, or for a record that was not part of a " +
+          "staged search. Requires `projectPath`.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Absolute path to the active project directory. Required when " +
+          "`resultsRef` is given (the sidecar lives under the project's results/ dir).",
+      },
     },
     required: ["recordId"],
   },
@@ -37,12 +58,22 @@ export const recordReadSchema = {
 export async function recordReadTool(
   input: RecordReadInput,
 ): Promise<RecordReadResult> {
-  const { recordId } = input;
+  const { recordId, resultsRef, projectPath } = input;
   if (typeof recordId !== "string" || recordId.trim() === "") {
     throw new Error(
       'The record_read tool requires a non-empty recordId string ' +
         '(e.g., "QVS9-DHDB" or "ark:/61903/1:1:QVS9-DHDB").',
     );
+  }
+
+  // Sidecar mode: resolve the record from a staged/finalized search sidecar
+  // instead of a live FS fetch (no network round-trip). The staged gedcomx
+  // carries the same persons, facts, and relationships as a live read (verified);
+  // we re-apply place standardization here (the search stage skips it) so the
+  // result matches a live read. A live read (omit `resultsRef`) additionally
+  // guarantees the authoritative source citation.
+  if (resultsRef !== undefined) {
+    return await readFromSidecar(recordId.trim(), resultsRef, projectPath);
   }
 
   const entityId = extractEntityId(recordId.trim());
@@ -92,10 +123,54 @@ export async function recordReadTool(
   }
 
   const body = (await res.json()) as GedcomX;
-  return await toSimplifiedStandardized(body);
+  // Use toSimplified, NOT toSimplifiedStandardized. The recapi record response
+  // carries no FS-normalized place (only `original` + parsed County/City/State
+  // fields), so re-standardizing would resolve the ambiguous place *name* through
+  // the resolver and mis-place it (observed: "Southampton, NY" -> "Southampton,
+  // England"; "Rochdale, England" -> "Rochdale, South Africa"). Leaving
+  // standard_place unset is correct — never fabricate a wrong one. Records reached
+  // via the search sidecar already carry FS's correct normalized place.
+  return toSimplified(body);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
+
+// Resolve one record's gedcomx from a staged/finalized search sidecar by id,
+// re-applying place standardization so the result matches a live record_read.
+async function readFromSidecar(
+  recordId: string,
+  resultsRef: string,
+  projectPath: string | undefined,
+): Promise<RecordReadResult> {
+  if (typeof projectPath !== "string" || projectPath.trim() === "") {
+    throw new Error(
+      "record_read with `resultsRef` also requires `projectPath` — the sidecar " +
+        "lives under the project's results/ directory.",
+    );
+  }
+  const wanted = extractEntityId(recordId);
+  const results = (await readStagedResults(
+    projectPath,
+    resultsRef,
+  )) as RecordSearchResult[];
+  const match = results.find(
+    (r) =>
+      typeof r?.recordId === "string" && extractEntityId(r.recordId) === wanted,
+  );
+  if (!match || !match.gedcomx) {
+    throw new Error(
+      `record '${recordId}' was not found in staged results '${resultsRef}'. ` +
+        "Do a live read (omit `resultsRef`) instead, or verify the ref/id.",
+    );
+  }
+  // Return the staged record as-is. The search result already carries the
+  // record's standardized places (from FamilySearch), and they are the more
+  // trustworthy value: a live record_read re-standardizes place NAMES through the
+  // resolver, which mis-resolves ambiguous names (observed: "Southampton, NY" ->
+  // "Southampton, England"; "Rochdale, England" -> "Rochdale, South Africa"). So
+  // we deliberately do NOT re-run standardizePlaces here.
+  return match.gedcomx as SimplifiedGedcomX;
+}
 
 // Normalise the caller-supplied record ID to a bare entity ID.
 // Full ARK format: "ark:/61903/1:1:QVS9-DHDB" → "QVS9-DHDB"

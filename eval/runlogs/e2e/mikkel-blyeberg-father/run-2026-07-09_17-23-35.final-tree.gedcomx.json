@@ -1,0 +1,108 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Mikkel",
+          "surname": "Nielsen Blyeberg",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "PID-TODO-fact-birth",
+          "type": "Birth",
+          "date": "20 August 1779",
+          "standard_date": "20 Aug 1779",
+          "place": "Stagstrup Sogn, Vestervig Amt, Denmark",
+          "standard_place": "Stagstrup, Thisted, Denmark"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Niels",
+          "surname": "Madsen Blyeberg",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N1"
+        }
+      ],
+      "id": "I1",
+      "ark": "ark:/61903/1:1:FVR3-287",
+      "facts": [
+        {
+          "type": "Burial",
+          "date": "20 Dec 1802",
+          "standard_date": "20 Dec 1802",
+          "place": "Stagstrup, Thisted, Denmark",
+          "standard_place": "Stagstrup, Thisted, Nordjylland, Denmark",
+          "id": "F1"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Inger",
+          "surname": "Michelsdatter",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N2"
+        }
+      ],
+      "id": "I2"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "PID-TODO",
+      "id": "R2"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-mikkel-birth-known",
+      "title": "Researcher's starting information: Mikkel Nielsen Blyeberg born 20 August 1779, Stagstrup Sogn, Vestervig (later Thisted) Amt, Denmark."
+    },
+    {
+      "title": "Denmark Baptisms, 1618-1923",
+      "url": "https://familysearch.org/collections/1778463",
+      "id": "S1",
+      "citation": "\"Denmark Baptisms, 1618\u20131923,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:WDTL-3PT2 : accessed 9 July 2026), entry for Michel, baptized 20 August 1779, Stagstrup, Thisted, Denmark."
+    },
+    {
+      "title": "Denmark, Marriages, 1635-1916",
+      "url": "https://familysearch.org/collections/1520592",
+      "id": "S2",
+      "citation": "\"Denmark, Marriages, 1635\u20131916,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MGY3-GQN : accessed 9 July 2026), entry for Niels Madsen Blyeberg and Inger Michelsdatter, married 3 January 1778, Stagstrup, Thisted, Denmark."
+    },
+    {
+      "title": "Denmark, Probate Indexes, 1674-1851",
+      "url": "https://www.familysearch.org/service/cds/recapi/collections/2026233",
+      "id": "S3",
+      "citation": "\"Denmark, Probate Indexes, 1674\u20131851,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:QL3F-FM7C : accessed 9 July 2026), entry for Niels Madsen Bliberg and Inger Mikkelsdatter, 1803; residence Sundy Stagstrup."
+    },
+    {
+      "title": "Denmark, Burials, 1640-1917",
+      "url": "https://familysearch.org/collections/1520593",
+      "id": "S4",
+      "citation": "\"Denmark Burials, 1640\u20131917,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:1W4H-RT2 : 20 February 2020), entry for Niels Madsen Blyeberg, buried 20 December 1802, Stagstrup, Thisted, Denmark."
+    }
+  ]
+}

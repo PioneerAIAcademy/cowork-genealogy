@@ -58,7 +58,10 @@ function setupCSP(): void {
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
           "img-src 'self' data:;",
           "font-src 'self' data: https://fonts.gstatic.com;",
-          "connect-src 'self' http://localhost:3000 https://script.google.com https://script.googleusercontent.com;",
+          // Renderer reaches the network only through main-process IPC (the
+          // feedback POST is a main-process fetch, unaffected by CSP), so the
+          // renderer needs no external connect origins.
+          "connect-src 'self';",
           "object-src 'none';",
           "base-uri 'none';",
           "frame-ancestors 'none';"
