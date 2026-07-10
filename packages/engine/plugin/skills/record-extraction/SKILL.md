@@ -151,6 +151,20 @@ Record data arrives in one of four ways:
    the image; when even that is blocked, log the gap and continue via
    indexes rather than stopping the research.
 
+   **A required identifying name you flag as suspect is not confirmed by
+   the index alone.** When the element that *keys identity* — a
+   patronymic, a surname, a father's name on a baptism — is transcribed
+   in a way you judge a likely mistranscription (an out-of-place
+   patronymic, a spelling no other record corroborates), treat the
+   indexed value as a lead, not a conclusion: read the original register
+   image (`image_read`, or `volume_search` to locate it) to confirm the
+   spelling before recording the assertion as established. If the image
+   is unreachable, record the name **tentative** — keep the uncertain
+   text in `value` with `[?]`, explain the doubt in `notes`, and name
+   original-image confirmation as the outstanding step. (This is how an
+   index OCR slip — a patronymic like "Aadnesen" read as "Nadnesen" —
+   becomes a wrong father in the tree.)
+
 ## Steps
 
 **Read inputs once, up front.** Before Step 1, read `research.json` and
@@ -498,10 +512,15 @@ failure.
    arrived via a narrow, single-result `record_search` that felt like a
    direct lookup — the tool used is what decides this field, not how
    confident the match felt.
-1. Make the `research_append` call (the batched `ops` from 5a/5b
-   below). Wait for its return.
-2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
-   `add_person` ops). Wait for its return.
+1. Make the `tree_edit` call FIRST (5c/5d, source `S` + any sibling
+   `add_person` ops) and read back the assigned `S` id. The source you
+   append to research.json carries a required
+   `gedcomx_source_description_id` pointing at this `S` entry, and
+   `research_append` rejects the batch if that `S` id does not yet
+   exist in tree.gedcomx.json — so the tree side must be written first.
+2. Make the `research_append` call (the batched `ops` from 5a/5b),
+   stamping each source op's `gedcomx_source_description_id` with the
+   `S` id from step 1. Wait for its return.
 3. If 5d sibling stubs fired: make the second `tree_edit` call for
    the `ParentChild` edges (using the sibling `I` ids from step 1).
    Wait for its return.
@@ -655,14 +674,11 @@ The subject's own person and ParentChild edges are out of scope —
 
 ### 6. Present results
 
-**OUTPUT ECONOMY (latency).** The source, assertions, and any tree stubs
-are ALREADY persisted — the `research_append` and `tree_edit` returns
-confirm every assigned id. Wall-clock time is ~linear in the tokens the
-model generates (~16-20 ms/token, independent of model tier), so the
-single biggest latency lever is generating fewer tokens. Do NOT reproduce
-the full per-assertion tables, per-field walkthroughs, or the
-classification rationale in chat — that content lives in the persisted
-artifact, and the return already confirmed each assigned id.
+**OUTPUT ECONOMY.** The source, assertions, and tree stubs are ALREADY
+persisted — the `research_append` / `tree_edit` returns confirm every
+assigned id. Do NOT reproduce the full per-assertion tables, per-field
+walkthroughs, or classification rationale in chat; that lives in the
+persisted artifact. Fewer tokens = lower latency.
 
 Present a terse summary, **≤10 lines**:
 - source id (`src_` + `S`),
