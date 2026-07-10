@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Father Andrej Gallo recovered and linked as Jan's parent, direct/primary from the 1893 Turany baptism found in the modern-country collection ('Slovakia, Church and Synagogue Books', 1554443) — the agent searched Slovakia (recordCountry Slovakia / collection 1554443), not the historical Hungary jurisdiction. Note: the agent also made one blocked person_read attempt on Jan's tree match (K81J-CMK) which the harness denied, so the father was earned from the record, not the tree.",
+    "f2": "Bonus brother Ondrej not recovered in the final tree. The agent DID find him during the run — a sibling search surfaced six additional Gallo children (incl. Ondrej, 1895) with father Andrej Gallo — but it did not add Ondrej as a person/relationship to the tree. Bonus finding, so the run still passes."
+  },
+  "annotator": "ernest"
+}

@@ -198,6 +198,14 @@ the offending field — do not blindly retry the same payload.
 - **Exhaustive does not mean exhausting.** Overturn risk is the
   ultimate test: could a real, unsearched source plausibly change the
   conclusion?
+- **Named decisive records gate the declaration.** If a record type
+  directly answers this question type (parentage: the subject's death
+  record, baptism, or a parent's probate; marriage: the marriage
+  record) — or the draft conclusion itself names a record as
+  tier-advancing — do not declare until that record has been searched
+  or the declaration explicitly justifies why it is inaccessible. A
+  known, decisive, accessible record left unsearched fails the
+  overturn-risk test by definition.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary
