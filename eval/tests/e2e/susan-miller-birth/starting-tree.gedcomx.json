@@ -699,6 +699,7 @@
       "person2": "LQY1-14T",
       "facts": [
         {
+          "id": "rel-couple-2BLB-3WX-LQY1-14T-marriage-1",
           "type": "Marriage",
           "date": "25 AUG 1849",
           "standard_date": "25 Aug 1849",

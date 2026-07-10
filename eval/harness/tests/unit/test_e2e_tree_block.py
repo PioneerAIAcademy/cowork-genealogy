@@ -71,6 +71,49 @@ def test_non_genealogy_tool_named_like_a_tree_tool_is_not_blocked():
     assert is_blocked_tree_tool("person_read") is False  # no mcp__ prefix
 
 
+# --- per-fixture blocked tools (spec §6.1 "Per-fixture blocked tools") --
+
+def test_fixture_blocked_tool_matches_bare_name():
+    from e2e.orchestrator import is_fixture_blocked_tool
+    blocked = frozenset({"wiki_search"})
+    assert is_fixture_blocked_tool("mcp__genealogy__wiki_search", blocked) is True
+    assert is_fixture_blocked_tool("mcp__genealogy__record_search", blocked) is False
+
+
+def test_fixture_blocked_tool_ignores_non_mcp_and_empty_set():
+    from e2e.orchestrator import is_fixture_blocked_tool
+    assert is_fixture_blocked_tool("wiki_search", frozenset({"wiki_search"})) is False
+    assert is_fixture_blocked_tool("Read", frozenset({"wiki_search"})) is False
+    assert is_fixture_blocked_tool("mcp__genealogy__wiki_search", frozenset()) is False
+
+
+def test_load_fixture_parses_blocked_tools(tmp_path):
+    """fixture.json blocked_tools round-trips into Fixture.blocked_tools;
+    omitted field defaults to an empty frozenset."""
+    import json
+    from e2e.orchestrator import load_fixture
+
+    base = {
+        "id": "t",
+        "researcher_question": "q?",
+        "tags": {},
+        "model": {},
+    }
+    findings = {"findings": []}
+    for name, extra, want in (
+        ("with-block", {"blocked_tools": ["wiki_search"]}, frozenset({"wiki_search"})),
+        ("without-block", {}, frozenset()),
+    ):
+        d = tmp_path / name
+        d.mkdir()
+        (d / "fixture.json").write_text(
+            json.dumps({**base, "id": name, **extra}), encoding="utf-8"
+        )
+        (d / "expected-findings.json").write_text(json.dumps(findings), encoding="utf-8")
+        fx = load_fixture(d)
+        assert fx.blocked_tools == want, name
+
+
 # --- turn-cap error reclassification ----------------------------------
 
 def test_turn_cap_error_recognized():

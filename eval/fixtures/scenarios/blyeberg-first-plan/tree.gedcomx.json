@@ -1,0 +1,27 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mikkel",
+          "surname": "Nielsen Blyeberg"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "20 August 1779",
+          "standard_date": "20 Aug 1779",
+          "place": "Stagstrup Sogn, Thisted Amt, Denmark",
+          "standard_place": "Stagstrup, Thisted, Denmark"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}
