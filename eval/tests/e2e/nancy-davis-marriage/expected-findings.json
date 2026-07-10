@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Nancy (Angeline) Davis married William Bremer — the tree's William James Brewer, surname spelling varies — on 12 May 1868 in Newton County, Missouri. The couple relationship already exists in the starting tree with no marriage event; the agent should recover the marriage date and place.",
+      "details": {
+        "subject_person": "Nancy Davis (LJK2-JBH)",
+        "fact_type": "Marriage",
+        "date": "12 May 1868",
+        "place": "Newton, Missouri, United States",
+        "target_person": {
+          "name": "William Bremer"
+        }
+      },
+      "supporting_sources": [
+        "Missouri, Marriages, 1750-1920 — entry for William Bremer and Nancy Angeline Davis, married 12 May 1868, Newton County, Missouri"
+      ],
+      "required": true
+    }
+  ]
+}

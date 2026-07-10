@@ -1,0 +1,579 @@
+{
+  "persons": [
+    {
+      "id": "LJK2-JBH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Nancy",
+          "surname": "Davis"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1837",
+          "standard_date": "1837",
+          "place": "Bradley, Tennessee, United States",
+          "standard_place": "Bradley, Tennessee, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        }
+      ]
+    },
+    {
+      "id": "275B-KK6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Elizabeth",
+          "surname": "Glenn"
+        }
+      ],
+      "facts": [
+        {
+          "id": "737ef2a6-fbb2-4ef5-99ac-f445002dbb52",
+          "type": "Birth",
+          "date": "about 1813",
+          "standard_date": "Abt 1813",
+          "place": "South Carolina, United States",
+          "standard_place": "South Carolina, United States"
+        },
+        {
+          "id": "19adc850-2b41-4d14-9928-8b4c224ea0d6",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "db2c1fce-0643-49a1-bd71-77b6775dd3c2",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "b894a354-5aa1-4c0a-878d-73a37d862a21",
+          "type": "Death",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "d06cb475-6949-4776-a86a-c7dab4b364ce",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "G72T-RGR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Thomas Jefferson",
+          "surname": "Davis"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ad9943f1-e773-45b7-a85a-2d122b1964e0",
+          "type": "Birth",
+          "date": "1793",
+          "standard_date": "1793",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States"
+        },
+        {
+          "id": "116f5a15-774d-4f18-8d6c-7d815c4dede5",
+          "type": "Residence",
+          "date": "1821",
+          "standard_date": "1821",
+          "place": "Marlboro District, South Carolina, United States",
+          "standard_place": "Marlboro, South Carolina, United States",
+          "value": "Moved with parents."
+        },
+        {
+          "id": "c6f6ffcb-c148-491f-a5f2-9ec6591657ae",
+          "type": "Residence",
+          "date": "1828",
+          "standard_date": "1828",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "63295c10-6f7d-4d44-9db2-8b7995f95c68",
+          "type": "Residence",
+          "date": "1843",
+          "standard_date": "1843",
+          "place": "Missouri, United States",
+          "standard_place": "Missouri, United States"
+        },
+        {
+          "id": "cb46e5a2-6d57-452d-8ed8-9da6611ebf1e",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LDJC-6D2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Thomas",
+          "surname": "Davis"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ef0eec30-b9a8-4eac-a458-c7909a2b65d7",
+          "type": "Birth",
+          "date": "10 July 1792",
+          "standard_date": "10 Jul 1792",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States"
+        },
+        {
+          "id": "8a9e4129-ccb4-457e-97d1-d0a72aa6594e",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Jefferson, Johnson, Missouri, United States",
+          "standard_place": "Jefferson Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "952297b4-7143-48a9-9002-6e4187ecd13d",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "fb367537-c435-44d8-aa2c-43e9b1d12be4",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri, United States",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "505e7b0d-2417-4f72-aedd-35a4753c8ea7",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry county, Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "62b04003-8c23-4f58-9959-9db61a4a22b1",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Jefferson Township, Johnson, Missouri, United States",
+          "standard_place": "Jefferson Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Jefferson Township, Johnson, Missouri, United States",
+          "standard_place": "Jefferson Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "c90d7fd6-6b69-43ad-a804-06018e37da6e",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "be1b6298-73e0-45f6-8a03-9d151321e2c9",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Post Oak Township, Johnson, Missouri, United States",
+          "standard_place": "Post Oak Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "960c48a3-b928-44a4-bea6-1a00ca0df25b",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Perry Township, Johnson, Arkansas, United States",
+          "standard_place": "Perry Township, Johnson, Arkansas, United States"
+        },
+        {
+          "id": "30564ca5-0687-4449-b99c-18ef43ab796d",
+          "type": "Burial",
+          "date": "1882",
+          "standard_date": "1882",
+          "place": "Macedonia Cemetery, Lamar, Johnson, Arkansas, United States",
+          "standard_place": "Macedonia Cemetery, Lamar, Johnson, Arkansas, United States"
+        },
+        {
+          "id": "9ec96b50-fc96-4e08-bb53-154e946277c1",
+          "type": "Death",
+          "date": "15 October 1882",
+          "standard_date": "15 Oct 1882",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "KD1X-LX5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Rebecca",
+          "surname": "Nix"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1794",
+          "standard_date": "1794",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "15 October 1882",
+          "standard_date": "15 Oct 1882",
+          "place": "Arkansas Township, Arkansas, Arkansas, United States",
+          "standard_place": "Arkansas Township, Arkansas, Arkansas, United States"
+        }
+      ]
+    },
+    {
+      "id": "GSMC-RM1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Mary",
+          "surname": "Moreland"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d9d6abcb-93b7-4b8d-af5b-61286db5adb9",
+          "type": "Birth",
+          "date": "1858",
+          "standard_date": "1858",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "4c24e505-672f-4165-9bda-1a4a7fa61721",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GSMC-RJN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Sarah",
+          "surname": "Moreland"
+        }
+      ],
+      "facts": [
+        {
+          "id": "707d8202-bd70-47e0-8516-57af147b6d28",
+          "type": "Birth",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "8d693d5c-572a-40d8-a201-244f829366bf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LJK2-81K",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "William James",
+          "surname": "Brewer"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1 January 1844",
+          "standard_date": "1 Jan 1844",
+          "place": "Waynesboro, Wayne, Tennessee, United States",
+          "standard_place": "Waynesboro, Wayne, Tennessee, United States"
+        },
+        {
+          "id": "90c780ff-3872-46f0-914d-a7a84325cd2a",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Hood, Cooke, Texas, United States",
+          "standard_place": "Hood, Cooke, Texas, United States"
+        },
+        {
+          "id": "334eddbf-c499-4da2-8fcb-e36856a2bd49",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Liberty Township, Barry, Missouri, United States",
+          "standard_place": "Liberty Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "ef270b71-ef61-4b01-bcc7-a85739963b6b",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 5 (all south of r.r.), Eastland, Texas, United States",
+          "standard_place": "Justice Precinct 5, Eastland, Texas, United States"
+        },
+        {
+          "id": "6c499edb-55e8-47fd-ad6b-a222fb540210",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Rising Star, Eastland, Texas, United States",
+          "standard_place": "Rising Star, Eastland, Texas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "3 March 1925",
+          "standard_date": "3 Mar 1925",
+          "place": "Dallas, Dallas, Texas, United States",
+          "standard_place": "Dallas, Dallas, Texas, United States"
+        },
+        {
+          "id": "23d8b73c-b64e-46fc-b60f-105ed0b94f9f",
+          "type": "Obituary",
+          "date": "04 Mar 1925",
+          "standard_date": "4 Mar 1925",
+          "place": "San Antonio, Texas",
+          "standard_place": "San Antonio, Bexar, Republic of Texas"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "place": "Rising Star Cemetery, Rising Star, Eastland, Texas, United States",
+          "standard_place": "Rising Star Cemetery, Rising Star, Eastland, Texas, United States"
+        },
+        {
+          "id": "85687189-55c1-4c1c-ad56-b1b5dd709142",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "d0443215-1ab3-493b-8c96-a8e90f2fad76",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "G72T-F1D",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Elizabeth",
+          "surname": "Owen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ae3cb2c8-dd94-4cbe-b30d-ad9c50dc83bf",
+          "type": "Birth",
+          "date": "15 November 1799",
+          "standard_date": "15 Nov 1799",
+          "place": "South Carolina, United States",
+          "standard_place": "South Carolina, United States"
+        },
+        {
+          "id": "2571fc72-ba59-430c-ac08-0fe74718cdd2",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri, United States",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "817a84d2-098b-447c-b634-d95ee7d68e11",
+          "type": "Death",
+          "date": "28 July 1858",
+          "standard_date": "28 Jul 1858",
+          "place": "Anderson, Anderson, South Carolina, United States",
+          "standard_place": "Anderson, Anderson, South Carolina, United States"
+        },
+        {
+          "id": "08a3251e-564c-4f2c-b0b6-357412f2c204",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Granby, Newton, Missouri, United States",
+          "standard_place": "Granby, Newton, Missouri, United States"
+        },
+        {
+          "id": "e613000c-7743-463e-b20e-653ca37b42a0",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Granby, Newton, Missouri, United States",
+          "standard_place": "Granby, Newton, Missouri, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LJK2-81K",
+      "person2": "LJK2-JBH"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "G72T-RGR",
+      "person2": "275B-KK6"
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "G72T-RGR",
+      "person2": "G72T-F1D",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "before 1828",
+          "standard_date": "Bef 1828",
+          "place": "Marlboro District, South Carolina, United States",
+          "standard_place": "Marlboro, South Carolina, United States"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "Couple",
+      "person1": "LDJC-6D2",
+      "person2": "KD1X-LX5",
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "1813",
+          "standard_date": "1813",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LJK2-JBH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "G72T-F1D",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LJK2-81K",
+      "child": "GSMC-RM1"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LJK2-JBH",
+      "child": "GSMC-RM1"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LJK2-81K",
+      "child": "GSMC-RJN"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LJK2-JBH",
+      "child": "GSMC-RJN"
+    }
+  ],
+  "sources": [
+    {
+      "id": "98ZW-BBF",
+      "title": "Nancy Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Q73 : Mon Oct 13 13:07:41 UTC 2025), Entry for Thomas J Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Q7C"
+    }
+  ]
+}
