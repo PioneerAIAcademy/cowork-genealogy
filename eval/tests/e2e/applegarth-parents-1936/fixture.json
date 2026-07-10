@@ -1,0 +1,18 @@
+{
+  "id": "applegarth-parents-1936",
+  "name": "Find Alan Glen Applegarth's parents from 1940/1950 census and Utah vital records",
+  "source_pid": "KWZH-XB6",
+  "captured": "2026-07-07",
+  "researcher_question": "Who were the parents of Alan Glen Applegarth, born 29 April 1936 in Ogden, Weber County, Utah, and died 16 May 2023 in Providence, Cache County, Utah?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1930s",
+    "geography": "US-UT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Parents are attested by the 1940 and 1950 U.S. Census (John O. and Olive Applegarth's Ogden/Ada County households, with Alan as a child) and by church census records. A failed run likely means the agent didn't search census or church-membership records for the subject's birth-era Utah/Idaho residence."
+}
