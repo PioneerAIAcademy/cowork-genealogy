@@ -1,0 +1,27 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all — Stagstrup parish with representations (catch-all for this Danish scenario).",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Stagstrup, Thisted, Denmark",
+        "type": "Parish",
+        "dateRange": "+1660/",
+        "latitude": 56.87,
+        "longitude": 8.62,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Stagstrup&focusedId=430285",
+        "representations": [
+          {
+            "repId": "430285",
+            "partOf": "Thisted, Denmark",
+            "dateRange": "+1793/",
+            "notes": "Stagstrup Sogn, Hassing Herred. Under Vestervig Amt before the 1793 county reform, Thisted Amt after."
+          }
+        ]
+      }
+    ]
+  }
+}

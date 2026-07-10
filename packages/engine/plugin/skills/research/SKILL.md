@@ -88,6 +88,24 @@ time, regardless of how directly the request named the destination.
    which are linked to persons, whether conflicts are present, and
    whether each question is resolved.
 
+   **Build the log-vs-assertion cross-reference explicitly — do not
+   eyeball it.** For every `log[]` entry with `outcome: "positive"` or
+   `"partial"`, check whether at least one `assertions[]` entry's
+   `log_entry_id` points back to it. A search you logged and then set
+   aside — often because a *later* search turned up a more exciting
+   find and pulled focus — still needs its own extraction pass; finding
+   new evidence elsewhere does not retroactively excuse an earlier
+   entry. This applies even to log entries that re-examine an
+   already-attached source (e.g. re-reading a census previously flagged
+   as "possibly misattached") — a re-examination that surfaces new
+   facts (household composition, a corrected identification) is exactly
+   as extraction-worthy as a fresh search hit, and citing its findings
+   in a conflict's `weighing_analysis` or a proof's narrative later
+   does **not** substitute for extracting it — a proof resting on facts
+   that exist only as log prose, never as a cited assertion, violates
+   the citation-before-analysis principle even if the prose itself is
+   accurate.
+
 2. **Pick the next sub-skill based on state.** Use these routing
    cues — defer to each sub-skill's own "Use when" guidance when
    state is ambiguous:
@@ -97,7 +115,8 @@ time, regardless of how directly the request named the destination.
    | Objective but no questions | `question-selection` (derive first question) |
    | A question with no plan | `research-plan` |
    | Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question | `search-records` (or `search-external-sites` for non-FS sources) |
-   | Log entries with no assertions extracted | `record-extraction` |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
+   | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` |
    | Assertions needing GPS three-layer classification | `assertion-classification` |
    | Assertions not yet linked to persons | `person-evidence` |
    | Evidence conflicts present | `conflict-resolution` |
@@ -105,6 +124,9 @@ time, regardless of how directly the request named the destination.
    | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | `research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `question-selection` (FAN pivot) |
+   | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | **Mentor gate** (`conclusion-readiness` on `<q_id>`), then `proof-conclusion` |
+   | `proof-conclusion` just wrote `<ps_id>` | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. |
+   | All questions are `resolved` and `project.status` still `active` | **First verify:** does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and `target_id` equal to that `ps_id`? If any resolved question's proof summary has no proof-critique evaluation on record, that question is not actually done — go back and run the mentor gate on it before writing `project.status = "completed"`. Marking a question `resolved` is not, by itself, evidence this check happened. Once verified: write `project.status = "completed"` via `research_append`, then stop. |
    | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` |
    | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship is not yet in `tree.gedcomx.json`** | `proof-conclusion` again for the same question — it must encode the relationship before you proceed (see **Tree-encoding gate**) |
    | `proof-conclusion` wrote `<ps_id>` (and, at tier ≥ probable, its concluded relationship is now in `tree.gedcomx.json`) | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
@@ -137,7 +159,15 @@ time, regardless of how directly the request named the destination.
    phase cold. After a plan item completes and its evidence is analyzed,
    re-assess sufficiency — route to `research-exhaustiveness` once the
    evidence plausibly answers the active question — before reflexively
-   executing the next `planned` item. New evidence may reveal new
+   executing the next `planned` item. **Before that route to
+   `research-exhaustiveness` (or to the pre-exhaustiveness mentor gate),
+   re-run the log-vs-assertion cross-check from Step 1 across the
+   *whole* log, not just the entries from the most recent search.** A
+   run naturally accumulates entries from earlier in the same session —
+   an early re-examination of an already-attached source, a FAN pull —
+   that are easy to consider "settled" once a later, more interesting
+   search captures your attention. They are not settled until each has
+   a linked assertion or an explicit reason it needs none. New evidence may reveal new
    questions — return to `question-selection`. Resolved conflicts may
    unblock `proof-conclusion`. Do not assume the chain is linear; the
    same sub-skill may be invoked multiple times across the run. Do not
@@ -216,6 +246,50 @@ Otherwise invoke `@plugin:gps-mentor` naming the focus and target_id.
 
 ### Verdict handling — advisory, identical in both modes
 
+For each gated transition, check `evaluations/` for an existing
+verdict file matching `<focus>-<target_id>-*.json` that is newer
+than the most recent state change to the target (latest log entry,
+assertion, conflict, plan-item update, or proof_summary edit
+referencing the target). If a current verdict exists, skip the
+re-invocation and act on the existing verdict. Otherwise, invoke
+`@plugin:gps-mentor` with a delegation message naming the focus
+and target_id.
+
+### On-demand invocation
+
+When the user says "review my work", "is this defensible?", "what
+would a senior genealogist say?", "mentor", "second opinion", or
+any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
+and `target_id` set to the most recent question, proof summary, or
+the literal string `"project"` if no specific target is implied.
+
+### Verdict handling protocol
+
+| Verdict | Interactive mode | `--autonomous` mode |
+|---------|------------------|---------------------|
+| `looks_solid` | Print `narrative_for_user`. Proceed to the gated routing step. | Same. |
+| `consider_addressing` | Print `narrative_for_user`. Proceed to the gated routing step. | Same. |
+| `address_first` | Print `narrative_for_user`. Ask the user: "The mentor flagged N item(s) to address before `<gated step>`. Want me to invoke `<suggested_skill of first must_address>` on the first one, or proceed anyway?" **Then end your turn — no further tool calls, no invoking the gated step, no applying the fix yourself.** | Invoke `suggested_skill` on the first `must_address` item. Log the decision and the must_address text in the appropriate `research.json` field (new plan item rationale, log entry note, or conflict analysis) so the audit trail captures it. |
+| `refused` | Print the refusal message. Route to the action it names. | Same. |
+
+**This is the one place in this entire skill where the instruction
+is to stop, not to keep going.** Every other section here —
+"Autonomous mode," "Iterate — without yielding," the repeated
+warnings against ending your turn to announce a next step — tells
+you the opposite: keep working, don't yield, don't stop to ask.
+That instinct is correct everywhere else and wrong here. An
+`address_first` verdict in interactive mode is a deliberate, narrow
+exception: print the question above and then actually yield the
+turn, even mid-run, even if you were several tool calls deep in an
+uninterrupted loop a moment ago. Do not quietly apply the mentor's
+suggested fix yourself and then present the finished result as if
+nothing needed the researcher's input — that is auto-routing past
+the gate in substance even when you never literally invoked the
+named `suggested_skill`. Never auto-route past an `address_first`
+verdict in interactive mode. The mentor's role is to inform the
+researcher's decision, not to make it for them — this is the
+"support, don't replace" contract that distinguishes the mentor
+from a gatekeeper.
 | Verdict | Action |
 |---------|--------|
 | `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
