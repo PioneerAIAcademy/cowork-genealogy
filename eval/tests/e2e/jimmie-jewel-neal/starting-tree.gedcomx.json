@@ -1,0 +1,332 @@
+{
+  "persons": [
+    {
+      "id": "KNXW-M3T",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Jimmie Jewel",
+          "surname": "Neal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "10 July 1884",
+          "standard_date": "10 Jul 1884",
+          "place": "Hillsboro, Hill, Texas, United States",
+          "standard_place": "Hillsboro, Hill, Texas, United States"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6",
+          "type": "Death",
+          "date": "7 March 1938",
+          "standard_date": "7 Mar 1938",
+          "place": "Carlsbad, Eddy, New Mexico, United States",
+          "standard_place": "Carlsbad, Eddy, New Mexico, United States"
+        },
+        {
+          "id": "969cdf18-b625-4dac-8e3f-4c46def68ebc",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Cottle, Texas, United States",
+          "standard_place": "Cottle, Texas, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Loving, Eddy, New Mexico, United States",
+          "standard_place": "Loving, Eddy, New Mexico, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Eddy, New Mexico, United States",
+          "standard_place": "Eddy, New Mexico, United States"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Eddy, New Mexico, United States",
+          "standard_place": "Eddy, New Mexico, United States"
+        },
+        {
+          "id": "fc30de70-823f-4852-91a3-ec94704349dc",
+          "type": "Burial",
+          "date": "9 March 1938",
+          "standard_date": "9 Mar 1938",
+          "place": "Carlsbad Cemetery, Carlsbad, Eddy, New Mexico, United States",
+          "standard_place": "Carlsbad Cemetery, Carlsbad, Eddy, New Mexico, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Loving, Eddy, New Mexico, United States",
+          "standard_place": "Loving, Eddy, New Mexico, United States"
+        },
+        {
+          "id": "89b14047-56bb-480d-9d14-0734ef8e1f6c",
+          "type": "LifeSketch",
+          "value": "Mrs. Elmer Yarbro, 53, resident of Loving for the past 25 years, died last night at a local hospital following a short illness.\nFuneral will be held at 3 o'clock Wednesday afternoon at the First Methodist Church with interment in Carlsbad Cemetery, Rev. C. Frank York will be in charge of the service.\nMrs. Yarbro is survived by her husband and the following seven children: Mrs. Neil Warren of Bisbee, Ariz., Mrs. Hazel Davis of Barstow, Mrs. T.R. Conboy of Carlsbad, Edward, Hayden, Dorothy and Willie May Yarbro, all of Loving."
+        },
+        {
+          "id": "409ffdec-2a43-4859-b473-0c43bc07dbf1",
+          "type": "Reference #",
+          "value": "146"
+        }
+      ]
+    },
+    {
+      "id": "LKYG-VKB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Martha J",
+          "surname": "Wood"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "August 1859",
+          "standard_date": "Aug 1859",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "73b1c845-4802-44fc-873e-8cef88927e3c",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Blount, Alabama, United States",
+          "standard_place": "Blount, Alabama, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 2 (east part), Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "30 May 1906",
+          "standard_date": "30 May 1906",
+          "place": "Files Valley, Hill, Texas, United States",
+          "standard_place": "Files Valley, Hill, Texas, United States"
+        },
+        {
+          "id": "ed36a142-2dc9-4467-a59d-363301451177",
+          "type": "Burial",
+          "date": "1906",
+          "standard_date": "1906",
+          "place": "Files Valley, Hill, Texas, United States of America",
+          "standard_place": "Files Valley, Hill, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "LH8W-LBC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "James Monroe",
+          "surname": "Neal"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1857",
+          "standard_date": "1857",
+          "place": "Yell, Arkansas, United States",
+          "standard_place": "Yell, Arkansas, United States"
+        },
+        {
+          "id": "83bd7041-900a-402f-b870-4be8b458b706",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Hill, Texas, United States",
+          "standard_place": "Hill, Texas, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LH8W-LBC",
+      "person2": "LKYG-VKB",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "31 July 1879",
+          "standard_date": "31 Jul 1879",
+          "place": "Hill, Texas, United States",
+          "standard_place": "Hill, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "LH8W-LBC",
+      "child": "KNXW-M3T"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LKYG-VKB",
+      "child": "KNXW-M3T"
+    }
+  ],
+  "sources": [
+    {
+      "id": "Q8YZ-F2T",
+      "title": "Jimmie J Yarbro, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K4N-5DRZ : Sun Jul 05 14:25:55 UTC 2026), Entry for Willie McGinnis and Elmer B Yarbro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K4N-5DRN"
+    },
+    {
+      "id": "QW4N-YXT",
+      "title": "Jimmie J Neal, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K4H-R4MB : Tue Jun 30 15:41:11 UTC 2026), Entry for Dorothy Helen Barnes and Elmer B Yarbro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K4H-R49Q"
+    },
+    {
+      "id": "Q7ZW-7N6",
+      "title": "Marlene Yarbro, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q576-JYMY : Fri Mar 15 02:18:53 UTC 2024), Entry for Hayden Yarbro and Thelma, 21 Aug 1977.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q576-JY93"
+    },
+    {
+      "id": "3PVD-K5K",
+      "title": "Jewell Neal, \"New Mexico, Deaths, 1889-1945\"",
+      "citation": "\"New Mexico, Deaths, 1889-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLB9-6H1 : Thu Feb 27 18:06:52 UTC 2025), Entry for Curley Grady Warren and John Warren, 05 Oct 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLB9-6C9"
+    },
+    {
+      "id": "9RQ6-7ZZ",
+      "title": "Jimmie Jewel Neal Yarbro, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2SS-WHCX : Mon Jul 06 23:31:09 UTC 2026), Entry for Jimmie Jewel Neal Yarbro.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2SS-WHCX"
+    },
+    {
+      "id": "9PKG-N36",
+      "title": "Jewell Warn, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MK1B-KK6 : Wed Aug 13 17:10:03 UTC 2025), Entry for William S Hamby and William A Hamby, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MK1B-KKN"
+    },
+    {
+      "id": "9ZWV-YCS",
+      "title": "Julia Yarbro, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XCM9-Y4H : Fri Mar 08 08:22:54 UTC 2024), Entry for Elmer Yarbro and Julia Yarbro, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XCM9-Y4C"
+    },
+    {
+      "id": "9ZWV-Y7N",
+      "title": "Jewell Neil, \"New Mexico, Deaths, 1889-1945\"",
+      "citation": "\"New Mexico, Deaths, 1889-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLTX-C48 : Thu Feb 27 18:05:37 UTC 2025), Entry for Fred Yarbro and Elmer B. Yarbro, 15 Jul 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLTX-C46"
+    },
+    {
+      "id": "9ZWV-YMJ",
+      "title": "Jewel Yarbro, \"New Mexico, Deaths, 1889-1945\"",
+      "citation": "\"New Mexico, Deaths, 1889-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLBC-TZW : Thu Feb 27 17:59:17 UTC 2025), Entry for Jewel Yarbro and Jim Neal, 07 Mar 1938.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLBC-TZW"
+    },
+    {
+      "id": "9ZWV-P6S",
+      "title": "Jewel N Yarbro, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4VR-4SR : Sun Jan 19 02:42:40 UTC 2025), Entry for Elmer B Yarbro and Jewel N Yarbro, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M4VR-4ST"
+    },
+    {
+      "id": "W8XJ-L38",
+      "title": "Martha Unknown, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K72-N91N : Mon Jul 06 10:52:42 UTC 2026), Entry for Claude Neal and Jim Neal.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K72-N91L"
+    },
+    {
+      "id": "WWLY-J9X",
+      "title": "M J Wood, \"Texas, County Marriage Records, 1837-2010\"",
+      "citation": "\"Texas, County Marriage Records, 1837-2010\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV1C-Y4F5 : Fri Mar 08 10:33:42 UTC 2024), Entry for W F Lanham and M J Wood, 07 Jan 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV1C-Y4FR"
+    },
+    {
+      "id": "Q3TL-MYF",
+      "title": "Mattie Landham, \"Texas, County Marriage Records, 1837-2010\"",
+      "citation": "\"Texas, County Marriage Records, 1837-2010\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV14-6CNS : Wed Jan 22 12:08:21 UTC 2025), Entry for James M Neal and Mattie Landham, 31 Jul 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV14-6CN3"
+    },
+    {
+      "id": "Q3TL-MHJ",
+      "title": "Mattie Landham, \"Texas, County Marriage Index, 1837-1977\"",
+      "citation": "\"Texas, County Marriage Index, 1837-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK8T-TFWW : Sun Jul 07 08:29:30 UTC 2024), Entry for James M Neal and Mattie Landham, 31 Jul 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK8T-TFW4"
+    },
+    {
+      "id": "M6CT-PB1",
+      "title": "Mattie Landham in entry for James M. Neal, \"Texas, Marriages, 1837-1973\"",
+      "citation": "\"Texas, Marriages, 1837-1973\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V2MS-1F1 : 22 January 2020), Mattie Landham in entry for James M. Neal, 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2MS-1F1"
+    },
+    {
+      "id": "9ZWV-R2X",
+      "title": "Mattie Landham in entry for James M. Neal, \"Texas, Marriages, 1837-1973\"",
+      "citation": "\"Texas, Marriages, 1837-1973\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FXQ7-88J : 22 January 2020), Mattie Landham in entry for James M. Neal, 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FXQ7-88J"
+    },
+    {
+      "id": "Q3ZW-YBN",
+      "title": "Martha Wood, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHDC-LKK : Mon Jul 08 02:33:10 UTC 2024), Entry for M M Wood and Martha Wood, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHDC-LKY"
+    },
+    {
+      "id": "9PKG-FC2",
+      "title": "Martha J. Wood Hamby, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKM-XVCJ : Thu Apr 03 05:34:37 UTC 2025), Entry for Martha J. Wood Hamby, 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKM-XVCJ"
+    },
+    {
+      "id": "9PKG-F48",
+      "title": "Martha Wood, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3QC-81Q : Fri Mar 08 14:23:59 UTC 2024), Entry for H S Hamby and W S Hamby, 18 January 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3QC-81W"
+    },
+    {
+      "id": "9F92-4CP",
+      "title": "Martha J Hamby, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3G5-GWC : Mon Apr 14 12:53:01 UTC 2025), Entry for William S Hamby and Martha J Hamby, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3G5-GWZ"
+    }
+  ]
+}
