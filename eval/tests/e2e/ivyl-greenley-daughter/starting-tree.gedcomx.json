@@ -479,6 +479,7 @@
       "person2": "KNS9-5S7",
       "facts": [
         {
+          "id": "rel-2-marriage-1",
           "type": "Marriage",
           "date": "26 January 1910",
           "standard_date": "26 Jan 1910",

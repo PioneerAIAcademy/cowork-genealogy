@@ -1,0 +1,90 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Jan",
+          "surname": "Gallo",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "PID-TODO-fact-birth",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "\u0160\u00fatovo, Turany parish, Slovakia (Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)",
+          "standard_place": "\u0160\u00fatovo, Slovakia"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Andrej",
+          "surname": "Gallo",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N1"
+        }
+      ],
+      "id": "I1"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Katarina",
+          "surname": "Kri\u017eko",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N2"
+        }
+      ],
+      "id": "I2"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "PID-TODO",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "PID-TODO",
+      "id": "R2"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-jan-birth-known",
+      "title": "Researcher's family group record and pedigree chart (starting information): Jan Gallo born 1893 in \u0160\u00fatovo, Turany Lutheran parish."
+    },
+    {
+      "title": "Slovakia, Church and Synagogue Books, 1592-1935 \u2014 Tur\u00e1ny Lutheran parish baptism register, 1893: Jan Gallo",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MFH-2SS5",
+      "id": "S1",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R : accessed 8 July 2026), entry for Jan Gallo, baptism 1893, Turany, Tur\u00f3cz County; citing \"Hungary, Tur\u00f3cz, Religious, from 1653 to 1951.\""
+    },
+    {
+      "title": "Slovakia, Church and Synagogue Books, 1592-1935 \u2014 Tur\u00e1ny Lutheran parish baptism register, 1895: Ondrej Gallo (sibling corroboration)",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592\u20131935,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS : accessed 8 July 2026), Ondrej Gallo, baptism 1895, Tur\u00e1ny [Turany] Lutheran parish; citing Tur\u00e1ny Lutheran parish, Tur\u00f3cz County, Kingdom of Hungary.",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS",
+      "id": "S2"
+    }
+  ]
+}

@@ -1,0 +1,2105 @@
+{
+  "project": {
+    "id": "rp_twohig_children_1857",
+    "objective": "Did Stephen Joseph Twohig have any children beyond the two already linked in the FamilySearch tree (Genevieve \"Jennie\" Ballard and Robert P. Twohig)?",
+    "subject_person_ids": [
+      "GQV2-NKK"
+    ],
+    "status": "active",
+    "created": "2026-07-07T00:00:00Z",
+    "updated": "2026-07-07T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1900 U.S. federal census show about Stephen Joseph Twohig's household composition and children in the Bronx, New York?",
+      "rationale": "The 1900 census is the most important single record for a completeness question about children. It would capture all living children in the household ca. 1900, and the census also records the mother's fertility count (number of children born vs. number living). Stephen (b. 1857) would be ~43; Jennie (b. ~1886) and Robert (b. ~1889) would both be teenagers still at home. Any additional children born between 1880\u20131900 would appear here if still living. This census has not yet been examined. It is the natural gatekeeper record: its household roster and mother's fertility count together set the baseline for how many children we need to account for.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "Record type breadth insufficient: no NYC birth registrations (1884\u20131889), no Catholic church/baptism records, and the 1910 census (already in tree as 7964-Z1W) not extracted. Overturn risk elevated \u2014 NYC birth records for the period are a real, searchable category and could reveal additional children who died before 1900 or a different father. GJGC-RJZ's absence from both the 1900 and 1905 household censuses is unexplained. Two threshold questions fail: (1) broad range of record types not yet covered; (2) overturn risk is real and concrete.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Partially met. Two censuses consistently show 3 children (Janette b.1884, Florence b.1886, Robert b.1889); no census fertility count available (Stephen was widowed). The completeness objective \u2014 whether other children existed \u2014 cannot be answered without birth/church records.",
+          "repository_breadth": "Not met. Census records (1880\u20131905, 5 attempts) and one vital record (Stephen's death certificate). NYC birth registrations (1884\u20131889), Catholic baptism registers, and the 1910 census extract are absent. All three are realistic and searchable for this population.",
+          "original_substitution": "Partially met. 1900 and 1905 censuses accessed via FamilySearch record_read (derivative indexed GEDCOMX). Death record also derivative. Original schedule images not consulted, which is acceptable for positive household records but less defensible for a completeness claim.",
+          "independent_verification": "Partially met. The 1900 US census and 1905 NY State Census are two independent sources with different enumerators and different collection origins, both showing the same 3 children. Independence is genuine. Limitation: neither census captures children who died or left home before 1900.",
+          "evidence_class": "Partially met. 1900 federal census is an original-class record for household composition. No original-source birth record (civil registration or baptismal) has been examined for any of the three identified children.",
+          "conflict_resolution": "Mostly met. c_001 (Florence Twohig \u2260 GJGC-RJZ) resolved by same_person score 0.003 and different married names. c_002 (Jennie L = Janette = I1) resolved. Unexplained anomaly: GJGC-RJZ absent from both 1900 and 1905 household censuses despite being ~14/~19 at those dates; her relationship to Stephen is assumed from the FS tree but not independently verified in this project.",
+          "overturn_risk": "Elevated. NYC civil birth registration was active 1884\u20131889. A search of those records could reveal (a) additional children who died before 1900 census age, (b) a different father named on a birth record, or (c) GJGC-RJZ appearing under her birth name with Stephen listed as father. These are concrete, searchable outcomes \u2014 not speculative."
+        }
+      },
+      "created": "2026-07-08"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-08",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Bronx, New York City, New York, United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 U.S. federal census is the highest-priority record for this completeness question. It would enumerate every person in Stephen's household ca. June 1900, including all living children, and critically records the mother's fertility count (number of children born vs. number living), which sets a floor on how many children must be accounted for. Stephen (b. 1857, ~43) and Jennie (b. ~1886) and Robert (b. ~1889) should all appear; any additional children born before 1900 who were still living would also be listed. FamilySearch has the 1900 census indexed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Bronx, New York City, New York, United States",
+          "date_range": "1900",
+          "repository": "Ancestry",
+          "rationale": "Ancestry also indexes the 1900 U.S. federal census with its own OCR/transcription pass. If FamilySearch returns no match (possible under variant spellings \u2014 Twohig, Twohy, Twoig, Toohig, Toohey), Ancestry's index may catch a variant not indexed on FamilySearch.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "New York City, New York, United States",
+          "date_range": "1892",
+          "repository": "FamilySearch",
+          "rationale": "The 1890 U.S. federal census was almost entirely destroyed in a 1921 fire. The New York State Census of 1892 (FamilySearch collection 1529100) is the best available substitute for New York residents at this period. In 1892 Jennie would be ~6 and Robert ~3 \u2014 both should appear. Any additional children born before 1892 and still living would also appear. This census bridges the critical 1890 gap.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "New York City, New York, United States",
+          "date_range": "1905",
+          "repository": "FamilySearch",
+          "rationale": "The New York State Census of 1905 (FamilySearch collection 1463113) captures household composition five years after the federal census, between the 1900 and 1910 enumerations. Any children born after 1900 or children who had left home by 1910 but were still at home in 1905 would appear here. The 1910 census source in the tree (7964-Z1W) has not yet been extracted; the 1905 state census is a distinct source offering an independent enumeration.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Bronx, New York City, New York, United States",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 U.S. federal census shows Stephen at approximately age 23. He may already have been married \u2014 Jennie was born ~1886, but an earlier marriage and earlier children are possible. This census would establish who Stephen was living with and whether any children pre-date Jennie. The Bronx (West Farms area) is known from the 1870 record, so a search in Westchester/New York should locate him.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York, United States",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "Stephen J. Twohig's death record (SVMY-C2J, New York City Municipal Deaths, 18 Jan 1920) is already in the tree but has not been extracted as research assertions. The informant on this certificate is likely one of Stephen's surviving children, which would help confirm which children were alive and recognized at his death. This record corroborates Stephen's identity and may name surviving children or the informant's relationship to the deceased.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York, United States",
+          "date_range": "1884-1889",
+          "repository": "FamilySearch",
+          "rationale": "New York City civil birth registration was active for all three identified children's birth years (Janette b.Aug 1884, Florence b.Jun 1886, Robert b.Mar 1889). Birth records would name both parents (confirming Stephen as father and identifying the mother), and a search of the collection could reveal additional registered children not appearing in later censuses because they died in infancy or emigrated.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "census",
+          "jurisdiction": "Bronx, New York City, New York, United States",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "The 1910 census source (7964-Z1W, ark:/61903/1:1:M5HH-9QF) is already attached to the FS tree and records the Florence Feurfile household \u2014 Florence Twohig after her marriage to George Feurfile. Extracting this record via record_read confirms Florence's identity as Stephen's daughter (now in her husband's household), corroborates the post-1905 trajectory, and may reveal other household members. A separate search for Stephen himself in 1910 would show his final household before his Jan 1920 death.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "census",
+          "jurisdiction": "Bronx, New York City, New York, United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886 Bronx) is linked in the FS tree as Stephen's daughter but was absent from his household in both the 1900 and 1905 censuses. A search of the 1900 census under her birth surname (Twohig, b.~1886 female, Bronx/NY) or a search for a female Twohig boarder/servant in NYC would either locate her in another household (explaining the absence) or return nil (deepening the anomaly). This directly bears on the completeness count.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-08T13:01:25.871Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Stephen",
+        "recordType": "census",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "collection": "United States, Census, 1900"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "Strong match (score 0.855): 'Household of Steven Twohig, 1900' (ark:/61903/1:1:MS2W-GPL), Bronx, NY. Household shows 3 children: Janette Twohig (b. Aug 1884, F), Florence Twohig (b. Jun 1886, F), Robert Twohig (b. Mar 1889, M), plus an unattached unknown 5th person (ark:/61903/1:1:62YQ-ZQP5). Tree currently links only 2 children (Genevieve/Jennie b.~1886, Robert b.~1889). Janette (b.1884) appears to be a previously unrecognized child. Stephen listed as widowed in 1900. Marriage fact on record dated 1884. Record attached in FS tree to KCF4-NQ3 (not GQV2-NKK) \u2014 possible duplicate tree profile. 2nd result was a city directory (1899-1900), not a census."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-08T13:24:54.637Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Stephen",
+        "recordType": "census",
+        "residenceYearFrom": 1892,
+        "residenceYearTo": 1892,
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "collectionId": "1529100"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Stephen Twohig in NY State Census 1892 (collection 1529100) with exact parameters."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-08T13:25:00.445Z",
+      "tool": "record_search",
+      "query": {
+        "surname": [
+          "Toohig",
+          "Twohy"
+        ],
+        "givenName": "Stephen",
+        "recordType": "census",
+        "residenceYearFrom": 1892,
+        "residenceYearTo": 1892,
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "note": "spelling variants tried sequentially"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for variant spellings Toohig and Twohy + Stephen in 1892 NY census. Neither variant found Stephen in New York."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-08T13:25:08.285Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "collectionId": "1529100",
+        "note": "surname-only coverage check"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 36,
+      "notes": "Coverage check: 36 Twohig records exist in collection 1529100, all from Brooklyn (Kings County) \u2014 zero from the Bronx or New York City proper. The 1892 NY State Census on FamilySearch does not appear to cover the Bronx district. Stephen Twohig's household in the Bronx is not indexed in this collection. Absence is a collection-coverage gap, not evidence of non-residence. The Bronx portion of the 1892 NY State Census may be on Ancestry or undigitized."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-08T13:26:34.434Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Stephen",
+        "recordType": "census",
+        "residenceYearFrom": 1905,
+        "residenceYearTo": 1905,
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "collectionId": "1463113"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 1,
+      "notes": "Strong match: 'Household of Stephen W Twohig, 1905 NY State Census' (ark:/61903/1:1:SP6F-ZXY), Bronx, AD 35, ED 50. Children: Jennie L (b.1884 F), Florence (b.1886 F), Robert (b.1889 M). Janette from 1900 census (b. Aug 1884) appears to now go by 'Jennie L' \u2014 same birth year. GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886) remains absent. Florence still in household (marries Feurfile between 1905-1910 per existing tree source 7964-Z1W). treeMatches for Stephen: KCF4-NQ3 (5 stars), KCVD-9WP (4 stars), GQV2-NKK (0 stars) \u2014 possible duplicate tree issue."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:35:03.198Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Stephen",
+        "recordType": "census",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 3,
+      "notes": "Collection mismatch: all 3 results are from US City and Business Directories (collection 3754697), not the 1880 census. None are relevant. Will retry with specific 1880 census collection ID."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:36:13.886Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Stephen",
+        "collectionId": "1417683",
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Stephen Twohig in 1880 US Census collection (1417683) with NY residence. Also tried Patrick Twohig (b.1819, father) - returned only a phonetic mis-match (Edwin Twiggs). Suggests the Twohig family may be indexed under a spelling variant in this collection."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:42:32.500Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Toohig",
+        "givenName": "Stephen",
+        "collectionId": "1417683",
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results \u2014 variant spelling Toohig + Stephen in 1880 census (collection 1417683) with NY residence filter."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:42:37.507Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Patrick",
+        "collectionId": "1417683",
+        "residencePlace": "New York",
+        "birthYearFrom": 1814,
+        "birthYearTo": 1824
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results \u2014 searching for father Patrick Twohig (b.1819 Cork) as head of household in 1880 census (collection 1417683) with NY residence filter."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:42:42.582Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohy",
+        "givenName": "Stephen",
+        "collectionId": "1417683",
+        "residencePlace": "New York",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results \u2014 variant spelling Twohy + Stephen in 1880 census with NY residence filter."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:42:48.172Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Toohig",
+        "givenName": "Patrick",
+        "collectionId": "1417683",
+        "residencePlace": "New York",
+        "birthYearFrom": 1814,
+        "birthYearTo": 1824
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results \u2014 variant spelling Toohig for father Patrick in 1880 census with NY filter."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:42:55.513Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Stephen",
+        "collectionId": "1417683",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 4,
+      "notes": "4 results returned without NY geographic filter, but none match Stephen Twohig of Bronx: results are in Maryland (Twigg), West Virginia (Twohig), Vermont (Twigg), and California (Twiligan). The Twohig family does not appear in the 1880 census index for any NY location under this spelling."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:43:00.946Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Twohig",
+        "givenName": "Patrick",
+        "collectionId": "1417683",
+        "birthYearFrom": 1814,
+        "birthYearTo": 1824
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Patrick Twohig (b.1819) without geographic filter in 1880 census. Confirms surname 'Twohig' for Patrick is not indexed in this collection."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:43:08.540Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Tuohy",
+        "givenName": "Stephen",
+        "collectionId": "1417683",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 3,
+      "notes": "3 results for Tuohy + Stephen, none in NY: Nebraska (Touhey, b.1855 NY \u2014 different family), California (Chinese miner \u2014 no match), Illinois (Tuohey \u2014 no match). Irish variant 'Tuohy' also fails to locate Stephen in NY."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-08T13:43:19.430Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Tuohy",
+        "givenName": "Patrick",
+        "collectionId": "1417683",
+        "birthYearFrom": 1814,
+        "birthYearTo": 1824
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 6,
+      "notes": "6 results for Tuohy + Patrick (b.1814-1824), none match Patrick Twohig of Bronx: Flushing Queens NY (b.1817, different family/location), Bradford PA (b.1819 \u2014 birth year matches but wife is Mary b.1829 not Mary b.1826 O'Connell, and in Pennsylvania), Minnesota, Boston MA, Schuyler County NY, Lowell MA. After 9+ FamilySearch variants (Twohig, Toohig, Twohy, Tuohy; Stephen and Patrick; with and without NY filter), the Twohig family from West Farms/Bronx is not locatable in FamilySearch's 1880 census index. Probable cause: indexing gap or highly unusual transcription of the surname in the original schedule."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-08T13:47:32.286Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:2WGS-CB2",
+        "record_type": "New York City Municipal Deaths, 1795-1949"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Death record for Stephen J. Twohig, 18 Jan 1920, Bronx NY. Confirms: b.8 Feb 1857, widowed, occupation Builder, parents Patrick Twohig (b. Ireland) and Mary O'Connell (b. Ireland). No surviving children are named in the indexed record. Record corroborates Stephen's identity and parentage."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"United States, Census, 1900\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL : Fri Apr 25 18:59:17 UTC 2025), Entry for Steven Twohig and Janette Twohig, 1900.",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census",
+        "what": "United States Census, 1900 \u2014 indexed household record for Steven Twohig, The Bronx, NYC",
+        "when_created": "1900",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch, https://www.familysearch.org/search/collection/1325221",
+        "where_within": "Household of Steven Twohig; record ark:/61903/1:1:MS2W-GPL; image ark:/61903/3:1:S3HY-6SGW-WBR"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "notes": "FamilySearch indexed entry derived from the 1900 U.S. federal census schedule (original microfilm image ark:/61903/3:1:S3HY-6SGW-WBR). Stephen listed as Widowed; wife not enumerated \u2014 no female fertility count (children born vs. living) is available. Marriage year ~1884 inferred by FamilySearch indexer from the census 'years married' column.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"New York, State Census, 1905\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY : Fri Jan 31 23:21:00 UTC 2025), Entry for Stephen W Twohig and Jennie L Twohig, 1905.",
+      "citation_detail": {
+        "who": "New York State",
+        "what": "New York State Census, 1905 \u2014 indexed household record for Stephen W Twohig, Bronx, AD 35, ED 50",
+        "when_created": "1905",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch, https://www.familysearch.org/search/collection/1463113",
+        "where_within": "Household of Stephen W Twohig; persona ark:/61903/1:1:SP6F-ZXY; image ark:/61903/3:1:9Q97-YSR3-V71; p. 32, line 10, FHL microfilm 1,414,864"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "notes": "FamilySearch indexed entry derived from the 1905 New York State Census schedule. Stephen listed without wife (consistent with widowed status from 1900). Three children enumerated: Jennie L (b.1884), Florence (b.1886), Robert (b.1889). Birth standard_place mis-resolved by record_read to West Virginia; actual stated birthplace is 'United States' for all persons.",
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "SVMY-C2J",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2 : Wed Mar 26 21:01:25 UTC 2025), Entry for Stephen J. Twohig and Patrick Twohig, 18 Jan 1920.",
+      "citation_detail": {
+        "who": "New York City Department of Health",
+        "what": "New York City Municipal Deaths register, indexed entry for Stephen J. Twohig, 18 Jan 1920",
+        "when_created": "18 Jan 1920",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch, https://www.familysearch.org/search/collection/2240477",
+        "where_within": "Entry for Stephen J. Twohig; record ARK ark:/61903/1:1:2WGS-CB2; image ark:/61903/1:2:997W-DN8K"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "notes": "FamilySearch indexed entry from the New York City Municipal Deaths register. The original register was maintained by the NYC Department of Health. No surviving children are named in the indexed record; the record names parents (Patrick Twohig, Mary O'Connell). Death place standard_place corrected from the API's mis-resolved value to 'The Bronx, New York City, New York, United States'.",
+      "log_entry_id": "log_016"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982511",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Steven Twohig",
+      "structured_value": {
+        "given": "Steven",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Head of household or spouse typically self-reported name to census enumerator; 'Steven' may be a transcription of 'Stephen'.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982511",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born February 1856",
+      "structured_value": {
+        "year": 1856
+      },
+      "date": "Feb 1856",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Adult head of household likely self-reported birth month/year; birth year of 1856 vs. known 1857 may reflect enumerator or indexer rounding.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982511",
+      "record_role": "head_of_household",
+      "fact_type": "birth_place",
+      "value": "New York",
+      "place": "New York",
+      "standard_place": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982511",
+      "record_role": "head_of_household",
+      "fact_type": "census_residence",
+      "value": "The Bronx, New York City, New York (1900 census)",
+      "place": "The Bronx, New York City, New York, United States",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator personally visited the dwelling and recorded the address.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982511",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Widowed status reported for head; wife absent from household, confirming wife was deceased by June 1900.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982511",
+      "record_role": "head_of_household",
+      "fact_type": "marriage",
+      "value": "married approximately 1884, per 'years married' column in 1900 census",
+      "date": "1884",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": 1884
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "FamilySearch indexer computed marriage year from the census 'years married' column (1900 minus ~16 years = ~1884). Wife already deceased by 1900.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982512",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Janette Twohig",
+      "structured_value": {
+        "given": "Janette",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Child's name reported by a household adult; 'Janette' may be a recorded variant of 'Janet' or another form.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982512",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born August 1884",
+      "structured_value": {
+        "year": 1884
+      },
+      "date": "Aug 1884",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Janette (age ~15 in 1900) could have self-reported; alternatively a parent reported. Since any household member could have had first-hand knowledge of a child's birth date, and the respondent is unknown, indeterminate is the correct conservative value per GPS standard.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982512",
+      "record_role": "child_1",
+      "fact_type": "birth_place",
+      "value": "New York",
+      "place": "New York",
+      "standard_place": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. New York birthplace for a child born in the household is a fact most household members would know; however, since respondent is unverifiable, classification is indeterminate."
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982512",
+      "record_role": "child_1",
+      "fact_type": "census_residence",
+      "value": "The Bronx, New York City, New York (1900 census)",
+      "place": "The Bronx, New York City, New York, United States",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982512",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of head of household Steven Twohig, per 1900 census relationship column",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The 1900 census had an explicit 'Relationship to Head of Family' column (introduced 1880), so this is a stated relationship, not inferred from position. However, the respondent who provided it is unknown (pre-1940 census); any household member \u2014 Janette herself, her father, or a sibling \u2014 could have answered. Classification is indeterminate. Evidence type remains direct: the relationship is explicitly stated, not inferred.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982512",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982513",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Florence Twohig",
+      "structured_value": {
+        "given": "Florence",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Child's name reported by a household adult. This person is NOT currently linked in the project tree. May need to reconcile with tree person GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886) who shares the same birth year but carries a different given name \u2014 flag for conflict resolution.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982513",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born June 1886",
+      "structured_value": {
+        "year": 1886
+      },
+      "date": "Jun 1886",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Florence (age ~13 in 1900) could have self-reported; alternatively a parent reported. Since any household member could have had first-hand knowledge of a child's birth date, and the respondent is unknown, indeterminate is the correct conservative value per GPS standard."
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982513",
+      "record_role": "child_2",
+      "fact_type": "birth_place",
+      "value": "New York",
+      "place": "New York",
+      "standard_place": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. New York birthplace for a child born in the household; indeterminate for same reason as a_014."
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982513",
+      "record_role": "child_2",
+      "fact_type": "census_residence",
+      "value": "The Bronx, New York City, New York (1900 census)",
+      "place": "The Bronx, New York City, New York, United States",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982513",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of head of household Steven Twohig, per 1900 census relationship column",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Stated in 1900 census 'Relationship to Head' column; respondent unknown (pre-1940). Florence Twohig may or may not be the same person as tree entry GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886) \u2014 identity conflict unresolved. Evidence type remains direct: stated in relationship column.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982513",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982514",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Robert Twohig",
+      "structured_value": {
+        "given": "Robert",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982514",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born March 1889",
+      "structured_value": {
+        "year": 1889
+      },
+      "date": "Mar 1889",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Robert (age ~11 in 1900) unlikely to have self-reported; a parent probably answered. Nonetheless, respondent unverifiable, so indeterminate per conservative GPS standard."
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982514",
+      "record_role": "child_3",
+      "fact_type": "birth_place",
+      "value": "New York",
+      "place": "New York",
+      "standard_place": "New York, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or the head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. New York birthplace for Robert; indeterminate for same reason as a_020."
+    },
+    {
+      "id": "a_022",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982514",
+      "record_role": "child_3",
+      "fact_type": "census_residence",
+      "value": "The Bronx, New York City, New York (1900 census)",
+      "place": "The Bronx, New York City, New York, United States",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1900",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_023",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982514",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "son of head of household Steven Twohig, per 1900 census relationship column",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Stated in 1900 census 'Relationship to Head' column; respondent unknown (pre-1940). Robert's birth year (Mar 1889) is consistent with tree person GT51-LBD. Evidence type remains direct: stated in relationship column.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_024",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MS2W-GPL",
+      "record_persona_id": "p_64982514",
+      "record_role": "child_3",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_025",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Stephen W Twohig",
+      "structured_value": {
+        "given": "Stephen W",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Head of household likely self-reported name; 'W' middle initial not in tree \u2014 may be a middle name or enumerator initial.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_026",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born 1858",
+      "structured_value": {
+        "year": 1858
+      },
+      "date": "1858",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year 1858 vs known 1857 in tree \u2014 1-year discrepancy typical of census age reporting. Pre-1940 census: respondent unknown.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_027",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "census_residence",
+      "value": "Bronx, AD 35, ED 50, New York, New York (1905 NY State Census)",
+      "place": "Bronx, A.D. 35, E.D. 50, New York, New York",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1905",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator personally visited the dwelling and recorded the address.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_028",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Jennie L Twohig",
+      "structured_value": {
+        "given": "Jennie L",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Name 'Jennie L' \u2014 'Jennie' may be short for Janet/Janette or Genevieve; 'L' is a middle initial not found elsewhere. Identity ambiguous: may be same person as 'Janette Twohig' (b.Aug 1884, 1900 census) or GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_029",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 1884",
+      "structured_value": {
+        "year": 1884
+      },
+      "date": "1884",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Birth year 1884 exactly matches I1 (Janette Twohig, b. Aug 1884); conflicts with GJGC-RJZ tree birth year of 1886 by 2 years.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_030",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_1",
+      "fact_type": "census_residence",
+      "value": "Bronx, AD 35, ED 50, New York, New York (1905 NY State Census)",
+      "place": "Bronx, A.D. 35, E.D. 50, New York, New York",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1905",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_031",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of head of household Stephen W Twohig, per 1905 NY State Census relationship column",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "NY State Census 1905 had explicit relationship column; respondent unknown (pre-1940). Identity of child_1 'Jennie L' ambiguous \u2014 may be I1 (Janette, b.1884) or GJGC-RJZ (Genevieve/Jennie, b.1886).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_032",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Florence Twohig",
+      "structured_value": {
+        "given": "Florence",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_033",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born 1886",
+      "structured_value": {
+        "year": 1886
+      },
+      "date": "1886",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Birth year 1886 consistent with I2 (Florence Twohig, b. Jun 1886 from 1900 census).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_034",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_2",
+      "fact_type": "census_residence",
+      "value": "Bronx, AD 35, ED 50, New York, New York (1905 NY State Census)",
+      "place": "Bronx, A.D. 35, E.D. 50, New York, New York",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1905",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_035",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "daughter of head of household Stephen W Twohig, per 1905 NY State Census relationship column",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_036",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Robert Twohig",
+      "structured_value": {
+        "given": "Robert",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_037",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born 1889",
+      "structured_value": {
+        "year": 1889
+      },
+      "date": "1889",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent or self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census: respondent unknown. Birth year 1889 consistent with GT51-LBD (Robert P Twohig, b. 1889).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_038",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "census_residence",
+      "value": "Bronx, AD 35, ED 50, New York, New York (1905 NY State Census)",
+      "place": "Bronx, A.D. 35, E.D. 50, New York, New York",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "date": "1905",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_039",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:SP6F-ZXY",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "son of head of household Stephen W Twohig, per 1905 NY State Census relationship column",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_040",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Stephen J. Twohig",
+      "structured_value": {
+        "given": "Stephen J.",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (likely family member who reported the death)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "NYC death record circa 1920; informant identity not specified in indexed record. Name likely supplied by whoever reported the death.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_041",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 18 Jan 1920, The Bronx, New York City, New York",
+      "structured_value": {
+        "year": 1920
+      },
+      "date": "18 Jan 1920",
+      "date_certainty": "exact",
+      "place": "The Bronx, New York City, New York, United States",
+      "standard_place": "The Bronx, New York City, New York, United States",
+      "information_quality": "primary",
+      "informant": "registrar / attending official",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "NYC death registry official recorded the death date and place. This is primary information for the death event.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_042",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 8 Feb 1857",
+      "structured_value": {
+        "year": 1857
+      },
+      "date": "8 Feb 1857",
+      "date_certainty": "exact",
+      "place": "U.S.",
+      "standard_place": "United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown (informant on death record, not the decedent)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "A person cannot provide primary information about their own birth. The informant (unknown) reported Stephen's birth date; they may have had first-hand knowledge or may have been guessing.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_043",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown (informant on death record)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_044",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "deceased",
+      "fact_type": "occupation",
+      "value": "Builder",
+      "information_quality": "indeterminate",
+      "informant": "unknown (informant on death record)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_045",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Patrick Twohig",
+      "structured_value": {
+        "given": "Patrick",
+        "surname": "Twohig"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (informant on death record)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The informant named Patrick Twohig as father; they may have known or been told this. Consistent with the tree's LX7R-3QB.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_046",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "father_of_deceased",
+      "fact_type": "birth",
+      "value": "born Ireland",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "information_quality": "secondary",
+      "informant": "unknown (informant on death record)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "No informant could have witnessed Patrick's birth in Ireland; classifying secondary regardless of informant identity.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_047",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Mary O'Connell",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "O'Connell"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (informant on death record)",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Informant named Mary O'Connell as mother. Consistent with tree's GQV2-VRD.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_048",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2",
+      "record_persona_id": null,
+      "record_role": "mother_of_deceased",
+      "fact_type": "birth",
+      "value": "born Ireland",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "information_quality": "secondary",
+      "informant": "unknown (informant on death record)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "No informant could have witnessed Mary's birth in Ireland.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Census head 'Steven Twohig': surname exact match; given name Steven/Stephen variant; birth Feb 1856 vs. 8 Feb 1857 in tree (1-year difference, typical census rounding); widowed status consistent; Bronx NY location consistent with tree. same_person scored 0.855 in search-records. Strong match on name, approximate birth year, and location.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Birth date 'February 1856' from 1900 census head persona. GQV2-NKK known birth 8 Feb 1857 \u2014 1-year discrepancy; census birth year reporting is notoriously imprecise. Supported by strong name and location match.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Birth place 'New York' from 1900 census head. GQV2-NKK tree shows 'U.S.' \u2014 consistent; the 1910 and 1870 census sources already attached to GQV2-NKK also say New York. No conflict.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Census residence The Bronx, New York City, 1900. Consistent with GQV2-NKK's known 1910 Bronx residence and 1920 Bronx death.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Marital status 'Widowed' in 1900 census. Tree shows GQV2-NKK's marital status as Widowed. Consistent with wife being absent/deceased.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Marriage year ~1884 derived from 'years married' column. GQV2-NKK is the head; this bears on his marriage history. No independent corroboration of marriage year yet.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Census child_1 'Janette Twohig' (F, b. Aug 1884): name exact match to stub I1 (Janette Twohig); gender match; listed as daughter of Steven Twohig (GQV2-NKK), who is also I1's parent in tree. matchRelatives score 0.995. Confidence probable per stub rule \u2014 I1 rests on this single record with no independent corroboration yet. Note: stub was created from this same census; high score reflects name identity, not independent confirmation.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Birth date 'August 1884' for census child Janette. Links to I1 (Janette Twohig stub). No independent corroboration yet.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Birth place 'New York' for census child Janette. Links to I1 (Janette Twohig stub).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Residence The Bronx 1900 for census child Janette. Links to I1 (Janette Twohig stub).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Relationship assertion 'daughter of head of household Steven Twohig': child side. Links to I1 (Janette) as the daughter.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Relationship assertion 'daughter of head of household Steven Twohig': parent side. Links to GQV2-NKK as the head/father. Steven Twohig in this record is confidently identified as GQV2-NKK (same_person 0.855).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Marital status 'Single' for census child Janette. Links to I1.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Census child_2 'Florence Twohig' (F, b. Jun 1886): name exact match to stub I2 (Florence Twohig); gender match; listed as daughter of Steven Twohig (GQV2-NKK). matchRelatives score 0.995. Confidence probable per stub rule. Direct same_person comparison with GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886) scored 0.003 (no match) \u2014 Florence and Jennie treated as distinct individuals. GJGC-RJZ was not paired with any 1900 census persona by matchRelatives, and is absent from this census \u2014 potential conflict to investigate.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Birth date 'June 1886' for census child Florence. Links to I2 (Florence Twohig stub).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Birth place 'New York' for census child Florence. Links to I2.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Residence The Bronx 1900 for census child Florence. Links to I2.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Relationship assertion 'daughter of head of household Steven Twohig': child side. Links to I2 (Florence).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Relationship assertion 'daughter of head of household Steven Twohig': parent side. Links to GQV2-NKK as the father.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.995,
+      "rationale": "Marital status 'Single' for census child Florence. Links to I2.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": 0.995,
+      "rationale": "Census child_3 'Robert Twohig' (M, b. Mar 1889): surname exact match; given name Robert match; birth Mar 1889 consistent with tree birth year 1889; Bronx NY location consistent; GT51-LBD already linked as child of GQV2-NKK (Stephen) in tree, consistent with census parent-child relationship. matchRelatives score 0.995. Strong match on name, birth year, location, and family context.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": 0.995,
+      "rationale": "Birth date 'March 1889' for census child Robert. Consistent with GT51-LBD tree birth year 1889.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": 0.995,
+      "rationale": "Birth place 'New York' for census child Robert. Consistent with GT51-LBD tree birth place Bronx, NY.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": 0.995,
+      "rationale": "Residence The Bronx 1900 for census child Robert. Consistent with GT51-LBD known Bronx residence.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_023",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": 0.995,
+      "rationale": "Relationship 'son of head of household Steven Twohig': child side. Links to GT51-LBD (Robert), who is already linked in tree as Stephen's child.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": 0.855,
+      "rationale": "Relationship 'son of head of household Steven Twohig': parent side. Links to GQV2-NKK as the father.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": 0.995,
+      "rationale": "Marital status 'Single' for census child Robert. Links to GT51-LBD.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_025",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Stephen W Twohig' matches GQV2-NKK (Stephen Joseph Twohig). Middle initial 'W' unknown but not conflicting. Location Bronx 1905 consistent with GQV2-NKK's known Bronx residences. record_read source; no same_person score available; correlation analysis supports confident identification.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_026",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1858 vs GQV2-NKK known birth 8 Feb 1857 \u2014 1-year discrepancy, typical census rounding. Corroborated by 1900 census birth year of 1856 (same 1-year range). Supported by name and location match.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_027",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bronx, AD 35, ED 50 residence in 1905 consistent with GQV2-NKK's known Bronx residences in 1900, 1910, 1920 (death).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Jennie L Twohig' (F, b.1884): birth year 1884 matches I1 (Janette Twohig, b. Aug 1884 per 1900 census) exactly. 'Jennie' is a documented American English diminutive/variant of 'Janet/Janette' (both derive from the Jane name family). Same father GQV2-NKK confirmed. Alternative candidate: GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886) \u2014 shares the nickname 'Jennie' but birth year 1886 conflicts with this record's 1884 by 2 years. Birth year exact match favors I1; kept probable because name shift Janette\u2192Jennie L is unexplained without further evidence.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_029",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1884 corroborates I1 (Janette Twohig, b. Aug 1884). Two independent census sources (1900 and 1905) now both show a daughter of Stephen born 1884 in his Bronx household.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bronx 1905 residence for child_1 links to I1 (Janette/Jennie L Twohig).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion 'daughter of Stephen W Twohig' child side \u2014 links to I1 as the daughter. Probable because child identity is probable (see a_028 rationale).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_031",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'daughter of Stephen W Twohig' parent side \u2014 links to GQV2-NKK as the father. Stephen W Twohig is confidently identified as GQV2-NKK.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_032",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Florence Twohig' (F, b.1886): exact name match to I2 (Florence Twohig stub). Birth year 1886 matches I2's known birth Jun 1886 from 1900 census. Two independent census records (1900 and 1905) now confirm Florence Twohig born ~1886 as Stephen's daughter \u2014 sufficient for confident identification. Corroborated by 1910 census source (7964-Z1W) showing Florence Feurfile (n\u00e9e Twohig) in a separate household.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1886 corroborates I2 (Florence Twohig, b. Jun 1886). Consistent across two census records.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_034",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bronx 1905 residence for child_2 links to I2 (Florence Twohig).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_035",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship 'daughter of Stephen W Twohig' child side \u2014 links to I2 (Florence). Confident identification supported by two censuses.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_035",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship 'daughter of Stephen W Twohig' parent side \u2014 links to GQV2-NKK as the father.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_036",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Robert Twohig' (M, b.1889): exact name and birth year match to GT51-LBD (Robert P Twohig, b.1889 Bronx). Corroborated by 1900 census (same name, same birth year, same father). Confident identification.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_037",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year 1889 corroborates GT51-LBD (Robert P Twohig, b.1889). Consistent across two census records.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_038",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bronx 1905 residence for child_3 links to GT51-LBD (Robert P Twohig).",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_039",
+      "person_id": "GT51-LBD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship 'son of Stephen W Twohig' child side \u2014 links to GT51-LBD (Robert). Confident identification supported by two censuses.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_039",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship 'son of Stephen W Twohig' parent side \u2014 links to GQV2-NKK as the father.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_040",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "rationale": "Name 'Stephen J. Twohig' on death record; 'J.' = Joseph. Same ARK (SVMY-C2J) already attached in FS tree to GQV2-NKK. Name, birth date (8 Feb 1857), death date (18 Jan 1920), and Bronx location all agree with the tree person exactly.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_041",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "rationale": "Death date 18 Jan 1920, Bronx NY on the same record confirmed to be GQV2-NKK. Death date exactly matches the fact already on GQV2-NKK's profile.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_042",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "rationale": "Birth date '8 Feb 1857' on death record is an exact match with GQV2-NKK's birth fact. Corroborates all prior sources.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_043",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "rationale": "Widowed status on death record consistent with 1900 and 1905 census records for GQV2-NKK (both show widowed/no wife present).",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_044",
+      "person_id": "GQV2-NKK",
+      "confidence": "confident",
+      "rationale": "Occupation 'Builder' on Stephen's death record; linked to same GQV2-NKK via same record ARK.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_045",
+      "person_id": "LX7R-3QB",
+      "confidence": "confident",
+      "rationale": "Father named 'Patrick Twohig, born Ireland' on Stephen's death record. LX7R-3QB = Patrick Twohig, b.2 Nov 1819, County Cork, Ireland \u2014 name and birthplace exact match. The death record's citation title already notes 'Entry for Stephen J. Twohig and Patrick Twohig.'",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_046",
+      "person_id": "LX7R-3QB",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Ireland' for father Patrick on Stephen's death record. LX7R-3QB is born County Cork, Ireland \u2014 consistent.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_047",
+      "person_id": "GQV2-VRD",
+      "confidence": "confident",
+      "rationale": "Mother named 'Mary O'Connell, born Ireland' on Stephen's death record. GQV2-VRD = Mary O'Connell, b.7 Mar 1826, Ballinhassig, County Cork, Ireland \u2014 name and birthplace exact match.",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_048",
+      "person_id": "GQV2-VRD",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Ireland' for mother Mary on Stephen's death record. GQV2-VRD born County Cork, Ireland \u2014 consistent.",
+      "match_score": null,
+      "created": "2026-07-08"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "The 1900 U.S. census shows a daughter 'Florence Twohig' (b. Jun 1886, Bronx) in Stephen Twohig's household (a_013). The FamilySearch tree already contains GJGC-RJZ (Genevieve 'Jennie' Ballard, b. 1886, Bronx) as Stephen's daughter, linked via rel-4. GJGC-RJZ is entirely absent from the 1900 census household, though she would have been ~14. The identity question is whether Florence Twohig (I2) and GJGC-RJZ are the same individual or two distinct daughters.",
+      "disputed_attribute": null,
+      "identity_question": "Is 'Florence Twohig' (child_2 in the 1900 U.S. census, b. Jun 1886, Bronx, linked as I2) the same person as GJGC-RJZ (Genevieve 'Jennie' Ballard, b. 1886, Bronx, already linked as Stephen Twohig's daughter via rel-4)?",
+      "competing_assertion_ids": [
+        "a_013"
+      ],
+      "independence_analysis": "The evidence bearing on this question comes from two independent source streams. First, the 1900 U.S. census indexed entry (src_001, derivative of the original schedule) establishes 'Florence Twohig' as a daughter in Stephen's household \u2014 a_013 through a_018 capture her name, birth, residence, and relationship. Second, GJGC-RJZ's profile in the FamilySearch tree derives from separate original records: a 1910 census appearance (source 7964-Z1W, showing 'Florence E Feurfile' \u2014 a different individual \u2014 in a separate household), a 1920 census entry (source 7964-HG8, showing William Ballard and James Ballard \u2014 consistent with Jennie having married into the Ballard family), and other residences (1886\u20131940). These two source streams are genuinely independent: neither is derived from the other, and the FamilySearch same_person comparison between the two personas (p_64982513 and GJGC-RJZ) scored 0.003, reflecting the tool's own assessment that they are informationally distinct. The two source streams therefore carry independent evidential weight, and no single informant can have produced both.",
+      "weighing_analysis": "Three factors decisively favor treating Florence and Jennie as different people. (1) Given-name discrepancy: 'Florence' and 'Genevieve/Jennie' share no phonetic overlap, no common nickname, and no documented variant relationship \u2014 this is not the kind of name variation that arises from indexer error or regional custom. (2) same_person algorithm: the FamilySearch comparison of the two personas returned 0.003, functionally zero \u2014 the algorithm found virtually no similarity in name, date, or place data. (3) The 1910 census source already in the tree (7964-Z1W, titled 'Stephen J Twoking, United States, Census, 1910') has its citation entry pointing to the household of George E Feurfile and Florence E Feurfile \u2014 strongly indicating that Florence Twohig married George Feurfile before 1910 and appears in the 1910 census under that surname, as a separately enumerated household. GJGC-RJZ, by contrast, appears with the surname Ballard (from marriage to a Ballard), has a 1910 residence in the Bronx, and is listed with Marital Status: Married \u2014 a trajectory entirely independent of the Feurfile marriage. The only factor shared by Florence and Jennie is the birth year 1886, which is insufficient for identity where names are incompatible.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": "The conflict concerns whether the 1900 census child_2 'Florence Twohig' (I2) is the same person as GJGC-RJZ (Genevieve 'Jennie' Ballard). The 1900 census clearly names this child 'Florence'; the tree person carries the given name 'Genevieve' with nickname 'Jennie' \u2014 there is no documented pathway between those names. The same_person comparison scored 0.003, reflecting near-total informational non-overlap. The 1910 census source already attached to the Stephen Twohig tree profile (7964-Z1W) describes a household of 'George E Feurfile and Florence E Feurfile,' providing affirmative corroboration that Florence Twohig became Florence Feurfile by 1910 \u2014 a distinct life trajectory from GJGC-RJZ, who became Jennie Ballard. These are almost certainly two different daughters of Stephen Twohig, both born ca. 1886 (or with the tree birth year for Jennie being slightly off). GJGC-RJZ's complete absence from the 1900 census is the residual unexplained element. Possible explanations include: (a) Jennie was living away from home in June 1900 \u2014 working as a domestic servant, boarding, or staying with relatives \u2014 which was common for adolescent girls in this period; (b) she was enumerated elsewhere in New York but not yet connected to this family; or (c) the enumerator missed or skipped her. The conflict cannot be marked 'resolved' under the schema because the conclusion is that these are different people (no preferred assertion among the competing set). A targeted 1900 census search for Genevieve or Jennie Twohig in New York would either locate her in a separate enumeration or, if absent, provide negative evidence consistent with being away from home.",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "identity",
+      "description": "The 1905 NY State Census shows 'Jennie L Twohig' (F, b.1884, child_1 of Stephen W Twohig) as assertion a_028. Two candidate identities compete: (A) I1 = Janette Twohig (b. Aug 1884), created from the 1900 census 'Janette Twohig' who also appears as child_1 with exact birth year 1884; (B) GJGC-RJZ = Genevieve 'Jennie' Ballard (b.1886), whose given nickname 'Jennie' matches the 1905 name but whose tree birth year of 1886 conflicts by 2 years.",
+      "disputed_attribute": null,
+      "identity_question": "Is 'Jennie L Twohig' (child_1, 1905 NY State Census, b.1884) the same person as I1 (Janette Twohig, b. Aug 1884 per 1900 census) or GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886)?",
+      "competing_assertion_ids": [
+        "a_028"
+      ],
+      "independence_analysis": "Three independent sources bear on this question. First, the 1900 U.S. census (src_001, derivative indexed) establishes 'Janette Twohig' (F, b. Aug 1884) as child_1 in Stephen's household. Second, the 1905 NY State Census (src_002, derivative indexed) establishes 'Jennie L Twohig' (F, b. 1884) as child_1 in the same household. These two census sources are genuinely independent: different original schedules, different indexing passes, five years apart. Third, the FamilySearch tree profile for GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886) derives from entirely different records (1910 and 1920 censuses, later residence records) and is independent of both censuses. The matchRelatives algorithm paired 'Jennie L' with GJGC-RJZ based on name similarity, but that pairing is an algorithmic heuristic input \u2014 it does not constitute independent corroboration.",
+      "weighing_analysis": "Three factors decisively favor interpreting 'Jennie L Twohig' (1905) as I1 (Janette, b. Aug 1884). (1) Birth year: 1884 matches I1 exactly across two independent censuses (1900 and 1905), while GJGC-RJZ's tree birth year of 1886 conflicts by 2 full years. Census birth year is often off by a year due to age rounding, but a 2-year discrepancy across two records from two different census years is unlikely to be a shared coincidental error. (2) Household continuity: the same household enumerated in 1900 shows 'Janette' (b.1884) as the eldest daughter, and in 1905 shows 'Jennie L' (b.1884) as the eldest daughter. Janette/Janet\u2192Jennie is a well-documented American English nickname equivalence (both derivatives of the Jane name family). A child called 'Janette' at age 15 going by 'Jennie' at age 21 is entirely normal. (3) GJGC-RJZ's persistent absence: GJGC-RJZ is absent from both the 1900 and 1905 censuses. If she were the 'Jennie L' of 1905, she would have been in the household in 1905 but inexplicably absent in 1900 at age 14 \u2014 and her birth year in the tree (1886) would need to be corrected to 1884.",
+      "preferred_assertion_id": "a_028",
+      "resolution_rationale": "The conflict is whether 'Jennie L Twohig' (1905 census, b.1884) is I1 (Janette Twohig, b. Aug 1884) or GJGC-RJZ (Genevieve 'Jennie' Ballard, b.1886). The 1900 and 1905 censuses, taken as a pair, place a daughter of Stephen born 1884 as the eldest child in both enumerations \u2014 first as 'Janette,' then as 'Jennie L.' The birth year is identical across both records, and the names are variants of the same Jane/Janet family. This coheres into a single person using a slightly different name form. GJGC-RJZ, by contrast, has a tree birth year of 1886 that conflicts with both census records' 1884 figure. The matchRelatives algorithm's pairing of 'Jennie L' with GJGC-RJZ reflects name-based scoring and cannot override the birth year evidence from two independent sources. The less-reliable claim \u2014 that GJGC-RJZ was born 1886 \u2014 most likely derives from a single undated tree entry and the 1910 census (where age-reporting errors of 2 years are not unusual). An American woman named 'Genevieve' using the nickname 'Jennie' is well-documented; the same applies to 'Janette' using 'Jennie' informally. Based on birth year exact match across two independent censuses and household continuity, 'Jennie L Twohig' (1905) is identified as I1 (Janette Twohig). GJGC-RJZ's absence from both the 1900 and 1905 Stephen Twohig household censuses remains unexplained and warrants further investigation in q_001-related follow-up.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

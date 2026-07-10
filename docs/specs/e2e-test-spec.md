@@ -40,15 +40,15 @@ certification that the agent does fully sound, verifiable GPS research.
 - An `expected-findings.json` enumerating what the agent should
   recover, derived from the diff between the original (well-
   researched) tree and the stripped starting state
+- On the FamilySearch-sourced path (from a PID), the full original (pre-stripping)
+  `unstripped-tree.gedcomx.json`, from which the starting tree is
+  derived. It is **never** copied into the run workspace — see below.
 - Fixture metadata: id, source PID, tags, model pins (caps are harness
   defaults, not fixture metadata — see §3.1)
 - A README with human notes (PID, what was removed, why)
 
 ### What the test fixture does not contain
 
-- The full original (pre-stripping) tree. The diff that defines the
-  answer is computed once at fixture-creation time and persisted as
-  `expected-findings.json`; the unstripped tree is not retained.
 - Mocked MCP responses. Other than the snapshotted starting tree,
   all the agent's tool calls hit live FamilySearch APIs during the
   test run.
@@ -69,10 +69,31 @@ eval/tests/e2e/smith-parents-1850/
   starting-tree.gedcomx.json
   expected-findings.json
   README.md
+  unstripped-tree.gedcomx.json   (optional; see below)
 ```
 
 Slug convention: `<surname>-<topic>-<year>` where helpful, but any
 short descriptive kebab-case is fine. Slugs are also the test ID.
+
+`unstripped-tree.gedcomx.json` is the committed snapshot of the
+well-researched tree, taken **once** at authoring time. It exists on
+the FamilySearch-sourced authoring path (from a PID) and lets
+`starting-tree.gedcomx.json` be *derived*
+rather than hand-transcribed: re-strip a different subset and the
+starting tree is rebuilt deterministically. It is absent on the
+PID-less path (§6.1), where the starting tree is constructed from a
+research document and there is nothing to strip.
+
+**It is the answer key.** `build_workspace` copies by explicit
+filename, so neither it nor `expected-findings.json` ever reaches the
+agent's workspace. A `copytree`-style "simplification" of that copy
+step would hand every run its own answer and silently pass the whole
+suite; `test_build_workspace_never_copies_the_answer_into_the_workspace`
+guards it.
+
+The snapshot is never refreshed in place — FamilySearch is a mutable
+upstream, and re-fetching would rewrite the test underneath its own
+history, making this month's score incomparable with last month's.
 
 ---
 
@@ -115,6 +136,7 @@ Test metadata.
 | `model.judge` | string | yes | Pinned judge model |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
+| `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
 
 **Stop-condition limits (`caps`) are NOT a fixture field.** They're a
 harness safety concern (don't run forever, don't burn the budget), so
@@ -416,10 +438,27 @@ each call with its arguments and denies by tool name. **A denied call
 does not run, does not count toward the tool-call cap, and does not stop
 the run** — the agent is told to use records instead and continues. Every
 denied attempt is recorded in the run log's `blocked_tree_reads` array
-(`{tool, args}` per entry), so a reviewer can see whether the agent
-*tried* to shortcut research. A non-empty `blocked_tree_reads` doesn't
-invalidate a `pass` (the answer was still earned from records, since the
-read was blocked), but it's worth a look.
+(`{tool, args, blocked_by}` per entry, `blocked_by` ∈ `"tree"` |
+`"fixture"`), so a reviewer can see whether the agent *tried* to
+shortcut research and which block source denied it. A non-empty
+`blocked_tree_reads` doesn't invalidate a `pass` (the answer was still
+earned from records, since the read was blocked), but it's worth a look.
+
+**Per-fixture blocked tools.** A fixture may extend the universal block
+with a `blocked_tools` array in its `fixture.json` (§3.1) — bare
+advertised tool names denied for that fixture's runs by the same
+`PreToolUse` hook, with the same semantics (denied call doesn't run,
+doesn't count toward the cap, doesn't stop the run). Use it when the
+fixture's *ground truth itself* is reachable through a legitimate
+research tool — the canonical case is a fixture derived from a public
+FamilySearch Wiki case-study article that names the answer, where
+`wiki_search` would surface the article during ordinary planning.
+Denials are recorded in the same `blocked_tree_reads` array with
+`"blocked_by": "fixture"` (universal tree-block denials carry
+`"blocked_by": "tree"`) so a reviewer can tell the two block sources
+apart. Note the asymmetry this creates with production (`/research`
+normally has the tool) and keep the list minimal — blocking a tool the
+answer does NOT leak through just handicaps the benchmark.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
 recoverable *from records alone*. The fixture-validity gate (§14) proves
@@ -753,7 +792,7 @@ This is surfaced two ways:
   committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
   warning annotation, so a draft fixture can land with its validity run still
   owed — notably PID-less fixtures authored without FamilySearch access
-  (`author-e2e-fixture` Path 3) whose validity run can only happen on an
+  (`author-e2e-fixture`'s PID-less path) whose validity run can only happen on an
   FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
   workflow also runs a blocking grading gate** (§7.4): a run log *added in the
   PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same

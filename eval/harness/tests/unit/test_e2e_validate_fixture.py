@@ -1,7 +1,9 @@
-"""Unit tests for e2e.validate_fixture — the stripping-completeness linter.
+"""Unit tests for e2e.validate_fixture — the fixture linter.
 
-These exercise the deterministic name-token overlap logic against
-synthetic findings/trees; no fixture files or skill runs involved.
+`lint_fixture` has two gates: the JSON Schemas, and the deterministic
+name-token overlap that catches an answer left un-stripped. These exercise
+both against synthetic findings/trees; no fixture files or skill runs
+involved.
 """
 
 from __future__ import annotations
@@ -21,6 +23,21 @@ def _person(pid, given, surname, fact_types=()):
         "id": pid,
         "names": [{"given": given, "surname": surname}],
         "facts": [{"type": t} for t in fact_types],
+    }
+
+
+def _valid_tree(*persons):
+    """A schema-complete document. `check_stripping` reads only `persons`, but
+    `lint_fixture` validates the whole tree, so its input needs the rest."""
+    return {"persons": list(persons), "relationships": [], "sources": []}
+
+
+def _valid_person(pid, given, surname):
+    return {
+        "id": pid,
+        "gender": "Male",
+        "living": False,
+        "names": [{"id": f"N-{pid}", "given": given, "surname": surname}],
     }
 
 
@@ -163,16 +180,53 @@ def test_lint_fixture_unparseable_tree_is_hard_error(tmp_path):
     assert any("did not parse" in e for e in errors)
 
 
+def _write_fixture(path, tree, findings=None, research=None):
+    (path / "expected-findings.json").write_text(
+        json.dumps(findings or {"findings": [_rel_finding("Robert Smith")]}), encoding="utf-8"
+    )
+    (path / "starting-tree.gedcomx.json").write_text(json.dumps(tree), encoding="utf-8")
+    if research is not None:
+        (path / "starting-research.json").write_text(json.dumps(research), encoding="utf-8")
+
+
 def test_lint_fixture_clean_fixture_passes(tmp_path):
-    (tmp_path / "expected-findings.json").write_text(
-        json.dumps({"findings": [_rel_finding("Robert Smith")]}), encoding="utf-8"
-    )
-    (tmp_path / "starting-tree.gedcomx.json").write_text(
-        json.dumps({"persons": [_person("I1", "John", "Smith")]}), encoding="utf-8"
-    )
+    # No starting-research.json: a PID-less fixture under construction may not
+    # have one yet, and its absence is not an error.
+    _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")))
     suspects, errors = lint_fixture(tmp_path)
     assert errors == []
     assert suspects == []
+
+
+def test_lint_fixture_reports_tree_schema_errors(tmp_path):
+    # The defect that shipped in three committed fixtures: a ParentChild
+    # written with a Couple's endpoint keys. `tree_edit` hard-fails on it, so
+    # the agent had to repair our fixture mid-run before it could write.
+    tree = _valid_tree(_valid_person("I1", "John", "Smith"))
+    tree["relationships"] = [
+        {"id": "R1", "type": "ParentChild", "person1": "I1", "person2": "I1"}
+    ]
+    _write_fixture(tmp_path, tree)
+    _, errors = lint_fixture(tmp_path)
+    assert any("starting-tree.gedcomx.json" in e for e in errors)
+
+
+def test_lint_fixture_reports_research_schema_errors(tmp_path):
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I1", "John", "Smith")),
+        research={"project": {"id": "rp_x"}},  # missing most required keys
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any("starting-research.json" in e for e in errors)
+
+
+def test_lint_fixture_schema_errors_suppress_the_stripping_check(tmp_path):
+    # A tree the schema rejects can't be trusted to answer "was the finding
+    # stripped?" — report the schema first and stop.
+    _write_fixture(tmp_path, {"persons": [_person("I1", "John", "Smith")]})
+    suspects, errors = lint_fixture(tmp_path)
+    assert errors and suspects == []
 
 
 # --- positional-arg resolution (path or bare slug) -------------------
@@ -195,3 +249,97 @@ def test_resolve_target_unknown_name_falls_back_to_path(tmp_path, monkeypatch):
     monkeypatch.setattr(vf, "DEFAULT_FIXTURES_ROOT", tmp_path)
     arg = Path("does-not-exist")
     assert _resolve_target(arg) == arg
+
+
+# --- structural integrity (what JSON Schema cannot express) ------------------
+
+
+def test_lint_fixture_rejects_a_dangling_relationship_endpoint(tmp_path):
+    # Lints clean under JSON Schema 2020-12, hard-fails tree_edit mid-run —
+    # the runtime-vs-fixture gate gap the authoring work called out.
+    tree = _valid_tree(_valid_person("I1", "John", "Smith"))
+    tree["relationships"] = [
+        {"id": "R1", "type": "ParentChild", "parent": "I1", "child": "GONE-123"}
+    ]
+    _write_fixture(tmp_path, tree)
+    _, errors = lint_fixture(tmp_path)
+    assert any("GONE-123" in e and "dangling" in e for e in errors)
+
+
+def test_lint_fixture_rejects_a_dangling_source_ref(tmp_path):
+    person = _valid_person("I1", "John", "Smith")
+    person["facts"] = [
+        {"id": "F1", "type": "Birth", "sources": [{"ref": "GONE-SRC"}]}
+    ]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("GONE-SRC" in e for e in errors)
+
+
+def test_lint_fixture_rejects_duplicate_ids(tmp_path):
+    tree = _valid_tree(
+        _valid_person("I1", "John", "Smith"),
+        _valid_person("I1", "Paul", "Smith"),
+    )
+    _write_fixture(tmp_path, tree)
+    _, errors = lint_fixture(tmp_path)
+    assert any("duplicate person id 'I1'" in e for e in errors)
+
+
+def test_lint_fixture_rejects_a_living_person(tmp_path):
+    person = _valid_person("I1", "John", "Smith")
+    person["living"] = True
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("marked living" in e for e in errors)
+
+
+def test_lint_fixture_rejects_a_missing_living_field(tmp_path):
+    # Absent is not deceased — mirrors living_gate rule 2 in e2e.author, so
+    # the per-slug authoring gate and this corpus-wide gate cannot disagree.
+    person = _valid_person("I1", "John", "Smith")
+    del person["living"]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("no `living` field" in e for e in errors)
+
+
+def test_lint_fixture_holds_the_unstripped_tree_to_the_same_bar(tmp_path):
+    # The unstripped tree is committed too — it is where --drop-living
+    # mistakes and living persons would hide.
+    _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")))
+    bad = _valid_tree(_valid_person("I2", "Paul", "Smith"))
+    bad["persons"][0]["living"] = True
+    (tmp_path / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps(bad), encoding="utf-8"
+    )
+    _, errors = lint_fixture(tmp_path)
+    assert any(e.startswith("unstripped-tree.gedcomx.json:") and "marked living" in e
+               for e in errors)
+
+
+def test_lint_fixture_rejects_a_name_without_given(tmp_path):
+    # The mononym alignment: `given` is required by the schema so it agrees
+    # with the runtime validator, the spec table, and the TS types. Unknown
+    # given names are spelled "" (the engine's living-person-stub convention).
+    person = _valid_person("I1", "John", "Smith")
+    del person["names"][0]["given"]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("given" in e for e in errors)
+
+
+def test_an_empty_given_is_the_unknown_spelling_and_passes(tmp_path):
+    _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "", "Smith")))
+    _, errors = lint_fixture(tmp_path)
+    assert errors == []
+
+
+def test_lint_fixture_rejects_a_lowercase_fact_type(tmp_path):
+    # The fact-type enum is deliberately open, so "move" lints clean under
+    # the schema and then hard-fails tree_edit — the gate mirrors the runtime.
+    person = _valid_person("I1", "John", "Smith")
+    person["facts"] = [{"id": "F1", "type": "move"}]
+    _write_fixture(tmp_path, _valid_tree(person))
+    _, errors = lint_fixture(tmp_path)
+    assert any("PascalCase" in e for e in errors)

@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Tree encodes Peter Geach (person I1) as Elizabeth's father via ParentChild relationship R1, with residence facts placing him in Roxbury Twp, Washington County in 1822 (matching Elizabeth's birthplace and birth year) and Union Twp, Licking County in 1820. Identity fully recovered, though via a circumstantial tax/census/BLM path rather than the expected probate record, which the agent searched and did not find.",
+    "f2": "Tree encodes Rebecca Geach (person I2) as Elizabeth's mother via ParentChild relationship R2, with birth Apr 1801, death 29 Aug 1870, and burial at Maple Grove Cemetery, Granville. Married surname 'Geach' matches what the finding requires; maiden name not required here.",
+    "f3": "Bonus recovered: person I2 carries an alternate name 'Rebecca Benjamin', and the proof narrative cites the Find a Grave memorial ('Rebecca Benjamin Geach') as the out-of-tree source for the maiden name Benjamin, which is the qualifying source path for credit."
+  }
+}

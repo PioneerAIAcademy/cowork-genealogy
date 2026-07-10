@@ -236,6 +236,18 @@ List every person mentioned in the record and assign a `record_role`:
   `not_listed`, or `missing`: downstream validators, search-records
   triage, and proof-conclusion all key off the literal `absent` token
   to recognize a documented null finding
+- **A differently-surnamed household head is a FAN lead, not noise.**
+  When the subject's family group is enumerated inside a household
+  headed by someone with a different surname, do not default to
+  "boardinghouse" or "lodgers." Note the head as possible kin of
+  unspecified relationship — a parent, sibling, or in-law of either
+  spouse are all plausible, and any of them could surface a maiden
+  name or other lead — and surface the possibility in your
+  presentation for `hypothesis-tracking` to investigate. Do not assert
+  a specific relationship (e.g., "the wife's father") without
+  evidence. Other unrelated surnames in the dwelling may still
+  indicate a boardinghouse; report the ambiguity rather than resolving
+  it silently.
 
 ### 3. Extract assertions
 
@@ -477,18 +489,19 @@ before the call fires — the audit log must show the actual
 it. Narrating the persistence then ending the response is a hard test
 failure.
 
-**Tool-first checklist for this step** — the tree source `S` must exist
-*before* `research_append` writes the source entry that references it
-(the source entry's required `gedcomx_source_description_id` is cross-
-checked against `tree.gedcomx.json` on write), so the `tree_edit`
-`add_source` comes FIRST. The 5a–5d labels below group each call's
-*contents*; this checklist is the execution *order*:
-1. Make the `tree_edit` call (5c/5d, `add_source` `S` + any sibling
-   `add_person` ops). Wait for its return and read back the assigned
-   `S` id (and any sibling `I` ids).
-2. Make the `research_append` call (the batched `ops` from 5a/5b
-   below), stamping the source op's `gedcomx_source_description_id`
-   with the `S` id step 1 returned. Wait for its return.
+**Tool-first checklist for this step:**
+0. **Verify `record_persona_id` on every assertion you're about to append.**
+   Non-null when its `log_entry_id` traces to a `record_search`-tool log
+   entry (the downstream matcher needs it — leaving it null there is a
+   hard failure, not a stylistic choice); null for `record_read`/image/
+   PDF/full-text-sourced assertions. Check this even when the record
+   arrived via a narrow, single-result `record_search` that felt like a
+   direct lookup — the tool used is what decides this field, not how
+   confident the match felt.
+1. Make the `research_append` call (the batched `ops` from 5a/5b
+   below). Wait for its return.
+2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
+   `add_person` ops). Wait for its return.
 3. If 5d sibling stubs fired: make the second `tree_edit` call for
    the `ParentChild` edges (using the sibling `I` ids from step 1).
    Wait for its return.

@@ -5,7 +5,11 @@
     "name": "Status report when progress is blocked by unresolved conflicts",
     "type": "positive",
     "description": "Two unresolved conflicts both list `blocks_question_ids: ['q_001']`. A useful status report names the blockers explicitly rather than burying them in narrative.",
-    "tags": ["status", "blocked", "multi-conflict"]
+    "tags": [
+      "status",
+      "blocked",
+      "multi-conflict"
+    ]
   },
   "input": {
     "user_message": "Give me the project status.",
@@ -15,5 +19,8 @@
     "Should explicitly name c_001 (birthplace, fact conflict) and c_002 (identity conflict) as blockers of q_001",
     "Should distinguish the two conflict types in the report — fact-conflict vs identity-conflict matter analytically",
     "Should not pretend the project is on track; honest reporting is the value of this skill"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }
