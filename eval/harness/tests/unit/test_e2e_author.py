@@ -431,6 +431,16 @@ def test_the_presence_mirror_skips_a_finding_with_no_nameable_target(tree):
     assert presence_mirror({"findings": [{"id": "f1", "type": "fact"}]}, tree) == []
 
 
+def test_the_presence_mirror_sees_a_marriage_fact_held_by_the_couple(tree):
+    # A Marriage lives on the Couple relationship, never on either spouse —
+    # index_tree folds relationship facts onto both endpoints so a marriage
+    # `fact` finding can match. Neither spouse carries a Marriage fact of
+    # their own in the fixture, so without the fold this errored.
+    finding = _finding("f2", "Mary Jones", ftype="fact")
+    finding["details"]["fact_type"] = "Marriage"
+    assert presence_mirror({"findings": [finding]}, tree) == []
+
+
 # --- drift audit -----------------------------------------------------------
 
 
