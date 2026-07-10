@@ -73,6 +73,7 @@ interface AssignedIds {
   relationship?: string;
   source?: string;
   names?: string[];
+  facts?: string[];
 }
 
 export type TreeEditResult =
@@ -238,6 +239,21 @@ async function applyOperation(
       if (input.relationship.id) throw new TreeEditError("add_relationship `relationship` must not carry an id");
       const rel: SimplifiedRelationship = { ...input.relationship, id: nextId(tree, "R") };
       tree.relationships = [...(tree.relationships ?? []), rel];
+      // Facts supplied on a new relationship (e.g. a Marriage on a Couple) are
+      // the relationship's own facts: assign each a tool-allocated F id and
+      // resolve its standard_place, exactly as add_fact does. Callers never
+      // supply fact ids — a fact written without an id fails tree schema
+      // validation (fact.id is required).
+      if (rel.facts && rel.facts.length > 0) {
+        const factIds: string[] = [];
+        for (const f of rel.facts) {
+          if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
+          f.id = nextId(tree, "F");
+          await maybeResolvePlace(f, f.standard_place !== undefined);
+          factIds.push(f.id);
+        }
+        assignedIds.facts = factIds;
+      }
       assignedIds.relationship = rel.id;
       break;
     }

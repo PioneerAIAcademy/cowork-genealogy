@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_record_extraction_014",
+    "skill": "record-extraction",
+    "name": "A suspect required-identifier name must be confirmed against the original image, not finalized from the index",
+    "type": "positive",
+    "description": "Extracting the father from an 1817 Stavanger baptism (Kristian Fredrik Tollefsen Birkeland). The index transcribes the father as 'Tollev Nadnesen', but 'Nadnesen' is a likely mistranscription of the patronymic 'Aadnesen' (true father: Tollef Aadneson) — and the father is the required identifying finding. Per the record-extraction rule (SKILL.md, image section), a required identifying name flagged as suspect is a lead, not a conclusion: the skill must route to the original parish-register image to confirm the spelling, or record the name as tentative and name image confirmation as the outstanding step — never finalize 'Nadnesen' as an established father-name assertion. Drawn from a real e2e run (birkeland-parents-1817) where the agent recorded and shipped the suspect index spelling.",
+    "tags": ["record-extraction", "suspect-transcription", "required-identifier", "image-confirmation", "e2e-derived"]
+  },
+  "input": {
+    "user_message": "Extract the father from this FamilySearch baptism, ark:/61903/1:1:68Q3-5SGC — it's the 1817 Stavanger christening of Kristian Fredrik Tollefsen Birkeland, and the father's identity is the finding I need. Heads up: the index transcribes the father as 'Tollev Nadnesen,' but 'Nadnesen' is an odd patronymic and doesn't match anything else I've found — I'm not confident the index got it right.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": ["record-read-birkeland-1817-baptism"],
+  "judge_context": [
+    "The father is the REQUIRED identifying finding, and the researcher has flagged the indexed patronymic 'Nadnesen' as a likely mistranscription (it should be 'Aadnesen' — true father Tollef Aadneson)",
+    "Per SKILL.md, the skill must NOT record 'Nadnesen' as an established/confident father-name assertion on the strength of the index alone — a suspect required-identifier name is a lead, not a conclusion",
+    "The correct next step is to CONFIRM the spelling against the original parish-register IMAGE: the skill should route to the image (call image_read / volume_search for the register image, or explicitly state that the original register image must be read to confirm the father's patronymic) before finalizing",
+    "If the image is unreachable, the skill should record the father-name as TENTATIVE (value marked with [?], notes explaining the transcription is doubtful) and name original-image confirmation as the outstanding step",
+    "It is WRONG to extract 'Tollev Nadnesen' as a confident/established father assertion and stop — that lets an index OCR error become a wrong father in the tree",
+    "Extracting the other assertions normally (the child's christening 11/20 July 1817 Stavanger, and the mother Inger Larsdatter) is fine — the uncertainty gate applies specifically to the suspect required identifier (the father's patronymic)",
+    "GRADING NOTE for the judge: image_read returns raw image bytes, which are not available in the unit-test harness — so do NOT require the model to actually resolve the spelling from an image. Grade on whether the skill (a) declined to finalize the suspect required name as established and (b) routed to original-image confirmation (or treated the name as tentative pending it). The escalation decision is the graded behavior, not the resolved spelling"
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

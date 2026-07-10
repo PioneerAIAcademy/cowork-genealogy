@@ -206,6 +206,24 @@ interface AppliedOp {
  *  place and returns a descriptor; throws ResearchAppendError on any precondition
  *  failure so a batch aborts before anything is written. Does NOT validate or
  *  persist — the caller validates the whole document once and writes once. */
+// The model routinely emits a GedcomX-style date object (`{original, formal}`)
+// for a simplified `date` / `standard_date`, which the schema requires to be a
+// plain string. The `original` (or `formal`) field IS that string, so normalize
+// it at the boundary — a lossless unwrap that keeps a well-formed extraction
+// from being rejected over a wrapper the model added. A string/null value, or
+// an object without a usable string, passes through untouched (the validator
+// then reports the real problem). Mutates `entry` in place.
+function normalizeDateFields(entry: Record<string, unknown>): void {
+  for (const key of ["date", "standard_date"] as const) {
+    const v = entry[key];
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      const o = v as Record<string, unknown>;
+      const s = typeof o.original === "string" ? o.original : typeof o.formal === "string" ? o.formal : undefined;
+      if (s !== undefined) entry[key] = s;
+    }
+  }
+}
+
 function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
   const section = op.section;
   const config = SECTIONS[section];
@@ -288,6 +306,7 @@ function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
     const rest: Record<string, unknown> = { ...entry };
     delete rest.id;
     const newEntry: Record<string, unknown> = { id: entryId, ...rest };
+    normalizeDateFields(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
@@ -335,6 +354,7 @@ function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
       if (k === "id") continue;
       existing[k] = v;
     }
+    normalizeDateFields(existing);
     entryId = op.entryId;
     resultEntry = existing;
   } else {
