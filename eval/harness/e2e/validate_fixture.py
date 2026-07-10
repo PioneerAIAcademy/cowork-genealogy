@@ -84,7 +84,7 @@ class TreePerson:
     person_id: str
     given_tokens: set[str]
     surname_tokens: set[str]
-    fact_types: set[str]  # lowercased fact `type` values on this person
+    fact_types: set[str]  # lowercased fact `type` values on this person or their relationships
 
     @property
     def name_tokens(self) -> set[str]:
@@ -92,7 +92,28 @@ class TreePerson:
 
 
 def index_tree(tree: dict[str, Any]) -> list[TreePerson]:
-    """Collect per-person name tokens (given vs surname) and fact types."""
+    """Collect per-person name tokens (given vs surname) and fact types.
+
+    Relationship-held facts are folded onto both endpoints: a Marriage
+    lives on the Couple relationship, never on either spouse, so without
+    the fold no marriage `fact` finding could ever match a person. (The
+    schema allows facts on Couple only, but the fold reads endpoints
+    generically so a schema change can't silently reopen the gap.)
+    """
+    rel_fact_types: dict[str, set[str]] = {}
+    for rel in tree.get("relationships") or []:
+        types = {
+            str(f.get("type", "")).lower()
+            for f in (rel.get("facts") or [])
+            if f.get("type")
+        }
+        if not types:
+            continue
+        keys = ("parent", "child") if rel.get("type") == "ParentChild" else ("person1", "person2")
+        for key in keys:
+            if rel.get(key) is not None:
+                rel_fact_types.setdefault(str(rel[key]), set()).update(types)
+
     people: list[TreePerson] = []
     for person in tree.get("persons") or []:
         given: set[str] = set()
@@ -104,7 +125,7 @@ def index_tree(tree: dict[str, Any]) -> list[TreePerson]:
             str(f.get("type", "")).lower()
             for f in (person.get("facts") or [])
             if f.get("type")
-        }
+        } | rel_fact_types.get(str(person.get("id", "?")), set())
         people.append(
             TreePerson(
                 person_id=str(person.get("id", "?")),
