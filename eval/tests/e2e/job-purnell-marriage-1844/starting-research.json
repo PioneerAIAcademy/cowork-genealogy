@@ -2,10 +2,12 @@
   "project": {
     "id": "rp_job_purnell_marriage_1844",
     "objective": "When and where did Job Purnell marry his wife Emma?",
-    "subject_person_ids": ["2W2F-CNH"],
+    "subject_person_ids": [
+      "2W2F-CNH"
+    ],
     "status": "active",
-    "created": "2026-07-07T00:00:00Z",
-    "updated": "2026-07-07T00:00:00Z"
+    "created": "2026-07-07",
+    "updated": "2026-07-07"
   },
   "researcher_profile": {
     "experience_level": "intermediate",
