@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_angelina_aiello_parents",
+    "objective": "Who were the parents of Angelina M Aiello, born 1910, who married Anthony Sunseri and lived in Pittsburgh, Allegheny County, Pennsylvania?",
+    "subject_person_ids": [
+      "L4HQ-CBN"
+    ],
+    "status": "active",
+    "created": "2026-07-08",
+    "updated": "2026-07-08"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
