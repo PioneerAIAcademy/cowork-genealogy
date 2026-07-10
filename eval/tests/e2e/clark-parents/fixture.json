@@ -1,0 +1,18 @@
+{
+  "id": "clark-parents",
+  "name": "Christiana Clark — parents (Adam Schreck & Margreth Weber)",
+  "source_pid": "GP3R-215",
+  "captured": "2026-07-06",
+  "researcher_question": "Who were the parents of Christiana Clark, born 29 January 1783 in Pennsylvania, who married William Clark, lived in Coshocton County, Ohio, and died 27 December 1848 in Monroe, Green County, Wisconsin?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1780s",
+    "geography": "US-PA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Pennsylvania-German family. Ground truth (from the FamilySearch tree): father Adam Schreck (b. Sep 1742 Germany, d. 22 Oct 1830 Schuylkill Co., PA), mother Margreth Weber (married name Schreck; b. 29 May 1749 Bavaria, d. 26 Apr 1826 PA). Christiana's MAIDEN NAME (Schreck) is part of the answer and is stripped — the starting tree presents her under her married name, Clark. Recovery hinges on her retained christening fact (2 Mar 1783, Rehrersburg, Tulpehocken Twp, PA): searching PA births/christenings there surfaces 'Christina Schreck, daughter of Adam & Margreth,' which yields both the maiden name and the parents. Friction: pre-1850 censuses list only tick-marks (no named household members), the family is in a different state (PA) from where Christiana lived (OH/WI), and the surname is transcribed many ways (Schreck / Shrake / Schrned). A retained land record names an 'A Shrake' as administrator of the Clark estate — a genuine but indirect lead."
+}

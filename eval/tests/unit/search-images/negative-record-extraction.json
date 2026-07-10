@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_search_images_007",
+    "skill": "search-images",
+    "name": "Extraction of a found record should not trigger search-images",
+    "type": "negative",
+    "description": "User already found the will and wants the assertions extracted and the record added as a source. That's record-extraction — search-images finds and browses images but never writes sources or assertions.",
+    "tags": ["near-miss", "browse-vs-extraction", "boundary"]
+  },
+  "input": {
+    "user_message": "I just found Thomas Flynn's will in the probate records — add it as a source and extract the assertions.",
+    "scenario": "mid-research-flynn"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": ["record-extraction"],
+    "explanation": "Once a record is found, adding it as a source and extracting its assertions is record-extraction's job. search-images hands a found record off to record-extraction; it does not write to sources or assertions itself."
+  },
+  "judge_context": [
+    "Should route to record-extraction rather than re-browsing — the user has the record in hand and wants extraction, not a new browse."
+  ]
+}

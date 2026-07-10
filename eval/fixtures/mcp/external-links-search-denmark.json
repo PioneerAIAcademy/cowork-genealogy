@@ -1,0 +1,27 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search — FS-curated third-party links for Danish research (Rigsarkivet, DDD).",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Thisted, Denmark"
+    },
+    "totalForPlace": 3,
+    "results": [
+      {
+        "url": "https://www.sa.dk/ao-soegesider/en/other/index-creator/71",
+        "linkText": "Rigsarkivet arkivalieronline — Lægdsruller (military levying rolls), free browsable images"
+      },
+      {
+        "url": "https://www.sa.dk/ao-soegesider/en/other/other-collection/16",
+        "linkText": "Rigsarkivet arkivalieronline — Kirkebøger (church books), Thisted Amt"
+      },
+      {
+        "url": "https://ddd.dda.dk/ddd_en.htm",
+        "linkText": "Dansk Demografisk Database — 1787 and 1801 census transcriptions"
+      }
+    ]
+  }
+}

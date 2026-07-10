@@ -16,7 +16,6 @@ description: Extracts atomic GPS-conformant assertions from genealogical
   citations (use citation).
 allowed-tools:
   - record_read
-  - image_read
   - volume_search
   - place_search
   - place_search_all
@@ -65,14 +64,33 @@ types or edge cases.
 Record data arrives in one of four ways:
 
 1. **MCP tool response in context** — search-records called `record_search`
-   and Claude holds the structured data in context.
-   This is the most common path.
+   and Claude holds the (compact-stub) results in context. This is the most
+   common path. The stubs are enough to *triage*; for full extraction, get the
+   record's gedcomx from the search **sidecar** via path 2's `resultsRef` — not
+   a fresh live fetch.
 
-2. **Record ARK or entity ID** — the user provides a FamilySearch record
-   ARK (e.g., `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g.,
-   `QVS9-DHDB`). Call `record_read({ recordId: "<ARK or bare ID>" })`
-   to fetch the full simplified GEDCOMX, then extract assertions from
-   the returned persons, relationships, and facts.
+2. **Record ARK or entity ID** — a FamilySearch record ARK (e.g.,
+   `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g., `QVS9-DHDB`). Call
+   `record_read` to get the full simplified GEDCOMX (persons, relationships,
+   facts), then extract assertions from it.
+
+   **Prefer the sidecar for a record that came from a staged `record_search`.**
+   A `record_search` with a `projectPath` stages every result — the full gedcomx
+   lives in that search's log-entry `results_ref` sidecar. Pass the ref to read
+   the record **without a live fetch**:
+   `record_read({ recordId, resultsRef: "<the search log entry's results_ref>", projectPath })`.
+   For **the person you searched**, the sidecar carries the same facts, the
+   source citation, and correctly standardized places (more reliable than a live
+   read, whose place standardization can misfire) — use it for extracting that
+   person's evidence; it saves a network round-trip and never re-fetches a record
+   you already searched. **Do NOT `Read` the sidecar file yourself to find record IDs** — you already hold each `recordId` from the search / ranked results, and `record_read` pulls just the one record you name out of the sidecar; reading the whole `results/<log_id>.json` reloads every staged result's gedcomx into context and defeats the compaction. Do a **live**
+   read (omit `resultsRef`) only when (a) you need the **full facts of a
+   co-resident** — a household member you did NOT search for (a parent, spouse, or
+   sibling in a census). The sidecar fully populates only the person you searched
+   and returns co-residents stubbed to a name plus a fact or two; a live read
+   fills them in. Or (b) the record was not part of a staged search (a bare ARK
+   handed to you). And never `record_read` a record you already read this
+   session — reuse the content you have.
 
 3. **PDF capture** — the user uploaded a PDF from an external site
    (Ancestry, MyHeritage, FindMyPast, FindAGrave). Claude reads the
@@ -80,18 +98,45 @@ Record data arrives in one of four ways:
    user upload.
 
 4. **Image** — a FamilySearch image ARK (`3:1:.../$dist`) or Image
-   Group Number URL (`dgs:.../dist.jpg`). Call `image_read` to fetch
-   the bytes (image ARKs and DGS URLs only — not persona `1:1:` or
-   record `1:2:` ARKs). Claude reads natively, produces a verbatim
-   transcription using `[?]` / `[illegible]` / `[torn]` for uncertain
-   or damaged areas, presents it for user review, then extracts
-   assertions only after confirmation. Write the confirmed text to the
-   source's `transcription` field.
+   Group Number (`dgs:{DGS}_{IMAGE}/dist.jpg`, i.e. an imageId like
+   `004022578_00190`). **Do not call `image_read` yourself** — delegate
+   to the **`image-reader` subagent** by invoking `@plugin:image-reader`,
+   the same way `/research` invokes `@plugin:gps-mentor`. Invoke it
+   **once per image** (it reads exactly one), with a delegation message
+   naming the single `imageId`. It reads the scan in an isolated context
+   and returns a **full text transcription** of the page plus an
+   extracted-facts list; the raw image never enters your context.
+
+   **`looking_for` is a search key, not the answer.** If you add a
+   `looking_for` note, phrase it as *who or what* to locate on the page —
+   e.g. "the christening entry for a Christina born ~Jan 1783" or "any
+   entry naming a Clark." **Never tell the reader the answer or ask it to
+   "confirm" one** — do not write "confirm the father is Adam Schreck and
+   mother Margreth." The reader transcribes what the page actually says;
+   **you** decide whether the returned transcription contains what you
+   were looking for. Feeding it the expected result invites it to echo
+   your hoped-for answer instead of reading the page.
+
+   Treat the returned transcription exactly as you would your own reading
+   — present it for user review, extract assertions after confirmation,
+   and write it to the source's `transcription` field.
+
+   **If the reader returns `NOT READ`** (an unreachable ARK, or an image
+   over `image_read`'s transport-safety floor), it will include the
+   verbatim error and a pivot recommendation. Do **not** treat a NOT READ
+   as evidence and do **not** retry the image — pivot to indexes (see the
+   paragraph below). Never fill the gap with an assumed reading.
+
+   **Why delegate:** `image_read` returns the page as inline base64, and
+   those blobs accumulate in the conversation, which is re-serialized every
+   turn and eventually overflows the transport's ~1 MiB buffer, crashing
+   the whole run. The subagent absorbs the base64 so only text flows back
+   to you. Hand it **one specific** imageId at a time — narrow to the right
+   page first (below); never ask it to browse a range or a whole volume.
 
    To find images without a URL, use `volume_search` by `standardPlace`
-   + year range to discover digitized volumes (image groups); the user
-   then browses on FamilySearch to pick a specific image
-   (`dgs:{DGS}_{IMAGE}/dist.jpg`).
+   + year range to discover digitized volumes (image groups), then invoke
+   the `image-reader` subagent once for each specific image you land on.
 
    If an image cannot be read — you have no reachable image ARK / DGS
    URL, or `volume_search` / `place_search` fails (common in the sandbox,
@@ -191,6 +236,18 @@ List every person mentioned in the record and assign a `record_role`:
   `not_listed`, or `missing`: downstream validators, search-records
   triage, and proof-conclusion all key off the literal `absent` token
   to recognize a documented null finding
+- **A differently-surnamed household head is a FAN lead, not noise.**
+  When the subject's family group is enumerated inside a household
+  headed by someone with a different surname, do not default to
+  "boardinghouse" or "lodgers." Note the head as possible kin of
+  unspecified relationship — a parent, sibling, or in-law of either
+  spouse are all plausible, and any of them could surface a maiden
+  name or other lead — and surface the possibility in your
+  presentation for `hypothesis-tracking` to investigate. Do not assert
+  a specific relationship (e.g., "the wife's father") without
+  evidence. Other unrelated surnames in the dwelling may still
+  indicate a boardinghouse; report the ambiguity rather than resolving
+  it silently.
 
 ### 3. Extract assertions
 
@@ -425,6 +482,14 @@ it. Narrating the persistence then ending the response is a hard test
 failure.
 
 **Tool-first checklist for this step:**
+0. **Verify `record_persona_id` on every assertion you're about to append.**
+   Non-null when its `log_entry_id` traces to a `record_search`-tool log
+   entry (the downstream matcher needs it — leaving it null there is a
+   hard failure, not a stylistic choice); null for `record_read`/image/
+   PDF/full-text-sourced assertions. Check this even when the record
+   arrived via a narrow, single-result `record_search` that felt like a
+   direct lookup — the tool used is what decides this field, not how
+   confident the match felt.
 1. Make the `research_append` call (the batched `ops` from 5a/5b
    below). Wait for its return.
 2. Make the `tree_edit` call (5c/5d, source `S` + any sibling

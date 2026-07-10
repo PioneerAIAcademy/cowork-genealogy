@@ -10,6 +10,11 @@ import type { SimplifiedGedcomX } from "./gedcomx.js";
 
 export interface RecordReadInput {
   recordId: string;
+  // Optional sidecar mode: when set, resolve the record from this staged
+  // (`results/.staging/<uuid>.json`) or finalized (`results/<log_id>.json`)
+  // search sidecar instead of a live FS fetch. Requires `projectPath`.
+  resultsRef?: string;
+  projectPath?: string;
 }
 
 // The tool returns simplified GEDCOMX directly.

@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_search_images_003",
+    "skill": "search-images",
+    "name": "Empty image group — report no images, log a negative browse",
+    "type": "positive",
+    "description": "image_search resolves the group but returns an empty imageIds array (no images digitized yet). The skill must report the volume as empty and log a negative browse rather than fabricating pages or claiming the record was found.",
+    "tags": ["browse", "negative-result-log", "empty-group"]
+  },
+  "input": {
+    "user_message": "Browse FamilySearch image group 004452257 for the Flynn family.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["image-search-empty-group"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "image_search returns an empty imageIds array. The skill should report that the group has no images and log a negative browse — it must NOT fabricate image contents or claim to have found anything.",
+    "Should append a research_log_append entry with outcome 'negative' and a query object naming the image group browsed."
+  ]
+}

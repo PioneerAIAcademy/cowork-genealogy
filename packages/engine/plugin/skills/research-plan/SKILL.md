@@ -168,6 +168,15 @@ table and contextual factors checklist.
   refute a parent named only by indirect or derivative evidence (a death
   certificate, a single census co-residence). See
   `references/record-type-guide.md` ("Identifying parents").
+- **For a male subject in a conscription country (Denmark/Norway from
+  1789, and similar continental levy systems), plan the military levy
+  rolls as their own item** — Danish *lægdsruller* enroll boys from
+  early childhood **under the father's name**, so the roll is direct
+  parentage evidence for a son even where parish registers are
+  unindexed or lost. Do not treat the rolls as an obscure fallback; in
+  a patronymic-era Scandinavian parentage plan they rank alongside the
+  baptism and the parents' marriage. See
+  `references/record-type-guide.md` ("sons in conscription countries").
 - Include the FAN cluster (relatives, neighbors, associates) — their
   records may contain evidence about the subject.
 - Consider occupation-specific, institutional, and organizational

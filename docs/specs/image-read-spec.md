@@ -96,27 +96,44 @@ The tool returns two content blocks:
 Uses `getValidToken()` from `src/auth/refresh.ts`. Passes the token as
 `Authorization: Bearer {token}`. Do not re-implement token logic.
 
-## Size cap
+## Size cap (a transport floor, not the primary defense)
 
 The MCP stdio transport decodes one JSON message at a time behind a hard
 ~1 MiB (1,048,576-byte) buffer. Base64 encoding inflates the image ~33%, so
 a raw `dist.jpg` much above ~780 KB yields a response message that overflows
 that buffer and crashes the **entire session** — an uncatchable transport
-error, not a per-tool failure. (This was observed killing an e2e run when the
-agent browsed a 1950 census page scan.)
+error, not a per-tool failure.
 
-The tool therefore refuses any image whose raw bytes exceed
-`MAX_INLINE_IMAGE_BYTES` (**700 KB** → ~933 KB of base64, under the cap with
-envelope headroom), throwing the "too large to return inline" error above
-instead of returning the bytes. The check runs **before** base64-encoding, so
-an oversized image is never materialized.
+The tool refuses any image whose raw bytes exceed `MAX_INLINE_IMAGE_BYTES`
+(**700 KB** → ~933 KB of base64, under the cap with envelope headroom),
+throwing the "too large to return inline" error above instead of returning
+the bytes. The check runs **before** base64-encoding, so an oversized image
+is never materialized. This is a refuse-not-degrade guard for a **single**
+response.
 
-This is a refuse-not-degrade guard: a large scan becomes unreadable via this
-tool rather than crashing the run. Making large scans readable would mean
+**The per-image ceiling is a floor, not the accumulation fix.** The failure
+that actually bites is base64 *accumulation*: blobs from successive
+`image_read` calls pile up in the calling agent's context and are re-sent
+every turn, so a later message overflows the 1 MiB buffer even when every
+individual image is well under the ceiling. (Observed: an e2e run made **17**
+`image_read` calls, each ≤458 KB raw, ~5.4 MB of base64 in total, then
+crashed — no single image was near the ceiling.) Lowering the ceiling does
+**not** fix this.
+
+The accumulation fix is the **`image-reader` subagent**
+(`packages/engine/plugin/agents/image-reader.md`, spec:
+`docs/specs/image-reader-agent-spec.md`): callers that need a scan's text
+(currently only `record-extraction`) delegate to it via `Task` instead of
+calling `image_read` directly. The subagent reads the image in an isolated
+context and returns only a text transcription, so the base64 never enters —
+or accumulates in — the main transcript. `image_read` itself is unchanged; it
+keeps the floor above.
+
+Making large scans **readable** (rather than refused) would mean
 downscaling/re-encoding to fit, which needs an image-processing dependency
 (e.g. `sharp`/`jimp`) bundled into the cross-platform `.mcpb`. That is a
 deliberate packaging decision deferred until reading large images is actually
-required.
+required — tracked as a follow-up.
 
 ## What NOT to return
 
