@@ -275,7 +275,7 @@ verified. Three deltas:
    top-level `places[]` section (mandated by merge-gedcomx-spec §6.7 rev. 3)
    that the tree schema, TS types, and prose spec all reject — an
    A-rejects-B-accepts drift through a shipped tool.
-3. **Missed drift: `quality`'s type.** gedcomx-convert-spec rule 17 and the
+3. **Missed drift: `quality`'s type.** gedcomx-convert-spec Rule 10 and the
    engine's `SimplifiedSourceReference` said *string*; A, C, and D say
    integer 0–3. `toGedcomX` silently dropped every integer quality on the
    upload path (round-trip loss on the deliverable file).
@@ -319,7 +319,7 @@ Landed by the follow-up PR (branch `gedcomx-schema-drift`):
 - **Re-audit delta 2** — the merge core no longer carries candidate
   `places[]`; merge-gedcomx-spec §5, §5b.2, §6.3, §6.7, §6.8 updated.
 - **Re-audit delta 3** — `quality` is the QUAY integer end-to-end;
-  gedcomx-convert-spec rule 17 updated (string encoding lives only inside
+  gedcomx-convert-spec Rule 10 updated (string encoding lives only inside
   the `fsmcp:quality` qualifier).
 - **Cross-gate agreement** — shared vectors at
   `docs/specs/schemas/tree-gate-vectors.json` (with passes-all and

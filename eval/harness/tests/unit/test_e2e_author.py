@@ -826,3 +826,20 @@ def test_validate_runs_the_integrity_gate_not_just_the_schema(fixtures_root, cap
     )
     assert author.main(["validate", "--slug", "vi"]) == 2
     assert "dangling" in capsys.readouterr().err
+
+
+def test_person_level_sources_are_dropped_with_a_warning():
+    # Persons carry no `sources` in the tree format — references live on
+    # names/facts/relationships. A candidate document that has them (the old
+    # format allowed them) must shed them loudly, not silently.
+    raw = {
+        "persons": [
+            _person("KNDX-MKG", "John", "Smith", living=False,
+                    sources=[{"ref": "7BL6-KLH"}])
+        ],
+        "relationships": [],
+        "sources": [{"id": "7BL6-KLH", "title": "1850 Census"}],
+    }
+    tree, warnings = normalize_tree(raw)
+    assert "sources" not in tree["persons"][0]
+    assert any("'sources'" in w for w in warnings)

@@ -340,6 +340,11 @@ describe("mergeGedcomx — name equivalence", () => {
     expect(p.names).toHaveLength(2);
     expect((p.names ?? []).map((n) => n.given).sort()).toEqual(["James", "Patrick"]);
     expect(preferred(p)).toHaveLength(1);
+    // The non-preferred name must OMIT the flag entirely: `preferred: false`
+    // persists a tree the schema (const: true) rejects — the exact bug the
+    // old mergeNames shipped. Subset matchers can't see a stray key, so pin
+    // the key count itself.
+    expect(p.names!.filter((n) => "preferred" in n)).toHaveLength(1);
   });
 
   it("marks the most frequent name as preferred when one repeats across inputs", () => {

@@ -486,7 +486,7 @@ Strip `#` from both resources. `toGedcomX` re-wraps.
   (tree-gedcomx.schema.json, the shared TS types, simplified-gedcomx-spec.md
   §4.4) requires an integer 0–3 — a string here silently violated all three
   and, worse, the reverse direction dropped every integer quality the tree
-  legally carries. A qualifier value that doesn't parse as an integer is
+  legally carries. A qualifier value outside the QUAY range 0–3 (or that doesn't parse as an integer at all) is
   dropped, like any other unrecognized qualifier content.
 - All other qualifiers are dropped
 - When the qualifier is absent, **omit** the field

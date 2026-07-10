@@ -1,10 +1,14 @@
 {
-  "$comment": "Shared test vectors pinning the agreement (and the documented seams) between the three tree.gedcomx.json validity gates: `schema` = the JSON Schema (tree-gedcomx.schema.json, run by harness.schema_validator), `integrity` = the fixture gate's structural mirror (tree_integrity_errors in eval/harness/e2e/validate_fixture.py — reference integrity, id uniqueness, and the fixture-only living-person ToS rule), `runtime` = the engine's validateGedcomx (packages/engine/mcp-server/src/validation/validator.ts, the tree_edit write gate). Each expectation is `true` when that gate reports zero errors. Consumed by eval/harness/tests/unit/test_gate_vectors.py (schema + integrity) and packages/engine/mcp-server/tests/validation/gate-vectors.test.ts (runtime) — one gate relaxing or tightening breaks its consumer, forcing this file (and therefore the other gates' review) to be updated in the same PR. The battery deliberately includes a passes-everything control and a fails-everything control so a silently no-opping checker cannot go unnoticed; any future gate audit should keep both. Note the intentional seams the vectors document rather than hide: duplicate ids and the living-person rules are fixture-gate-only (the runtime validator accepts them), and everything under `living` is invisible to the JSON Schema.",
+  "$comment": "Shared test vectors pinning the agreement (and the documented seams) between the three tree.gedcomx.json validity gates: `schema` = the JSON Schema (tree-gedcomx.schema.json, run by harness.schema_validator), `integrity` = the fixture gate's structural mirror (tree_integrity_errors in eval/harness/e2e/validate_fixture.py — reference integrity, id uniqueness, and the fixture-only living-person ToS rule), `runtime` = the engine's validateGedcomx (packages/engine/mcp-server/src/validation/validator.ts, the tree_edit write gate). Each expectation is `true` when that gate reports zero errors. Consumed by eval/harness/tests/unit/test_gate_vectors.py (schema + integrity) and packages/engine/mcp-server/tests/validation/gate-vectors.test.ts (runtime) — one gate relaxing or tightening breaks its consumer, forcing this file (and therefore the other gates' review) to be updated in the same PR. The battery deliberately includes a passes-everything control and a fails-everything control so a silently no-opping checker cannot go unnoticed; any future gate audit should keep both. Note the intentional seams the vectors document rather than hide: duplicate ids and the living-person rules are fixture-gate-only (the runtime validator accepts them), and everything under `living` is invisible to the JSON Schema. The fact-type pattern is NOT a seam: the runtime check mirrors the schema's ^[A-Z] exactly (digit-initial and empty types fail both).",
   "vectors": [
     {
       "name": "sane-control",
-      "description": "A fully-featured valid tree: names with type/prefix/preferred, facts with standard sidecars + quality, a Couple with a sourced Marriage fact, a ParentChild with subtype and notes. Passes every gate — the positive control.",
-      "expect": { "schema": true, "integrity": true, "runtime": true },
+      "description": "A fully-featured valid tree: names with type/prefix/preferred, facts with standard sidecars, source-ref quality at BOTH QUAY boundaries (0 — the falsy value a truthiness slip would drop — and 3), a Couple with a sourced Marriage fact, a ParentChild with subtype and notes. Passes every gate — the positive control.",
+      "expect": {
+        "schema": true,
+        "integrity": true,
+        "runtime": true
+      },
       "tree": {
         "persons": [
           {
@@ -20,7 +24,11 @@
                 "surname": "Flynn",
                 "prefix": "Rev.",
                 "type": "BirthName",
-                "sources": [{ "ref": "S1" }]
+                "sources": [
+                  {
+                    "ref": "S1"
+                  }
+                ]
               }
             ],
             "facts": [
@@ -32,22 +40,44 @@
                 "standard_date": "Abt 1845",
                 "place": "Ireland",
                 "standard_place": "Ireland",
-                "sources": [{ "ref": "S1", "page": "p. 4", "quality": 2 }]
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "page": "p. 4",
+                    "quality": 0
+                  }
+                ]
               },
-              { "id": "F2", "type": "Occupation", "value": "Miner" }
+              {
+                "id": "F2",
+                "type": "Occupation",
+                "value": "Miner"
+              }
             ]
           },
           {
             "id": "I2",
             "living": false,
             "gender": "Female",
-            "names": [{ "id": "N2", "given": "Mary", "surname": "Flynn" }]
+            "names": [
+              {
+                "id": "N2",
+                "given": "Mary",
+                "surname": "Flynn"
+              }
+            ]
           },
           {
             "id": "I3",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N3", "given": "Thomas", "surname": "Flynn" }]
+            "names": [
+              {
+                "id": "N3",
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ]
           }
         ],
         "relationships": [
@@ -57,8 +87,15 @@
             "parent": "I1",
             "child": "I3",
             "subtype": "Biological",
-            "notes": ["Relationship inferred from the 1850 household."],
-            "sources": [{ "ref": "S1", "quality": 2 }]
+            "notes": [
+              "Relationship inferred from the 1850 household."
+            ],
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
           },
           {
             "id": "R2",
@@ -70,37 +107,74 @@
                 "id": "F3",
                 "type": "Marriage",
                 "date": "1867",
-                "sources": [{ "ref": "S1", "page": "line 12" }]
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "page": "line 12"
+                  }
+                ]
               }
             ]
           }
         ],
-        "sources": [{ "id": "S1", "title": "1850 U.S. Federal Census" }]
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1850 U.S. Federal Census"
+          }
+        ]
       }
     },
     {
       "name": "bogus-control",
       "description": "Broken in every dimension: missing sources section, invalid gender, empty names, unknown relationship type, dangling endpoint. Fails every gate — the negative control proving no checker is silently no-opping.",
-      "expect": { "schema": false, "integrity": false, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": false,
+        "runtime": false
+      },
       "tree": {
-        "persons": [{ "id": "I1", "gender": "Hermaphrodite", "names": [] }],
+        "persons": [
+          {
+            "id": "I1",
+            "gender": "Hermaphrodite",
+            "names": []
+          }
+        ],
         "relationships": [
-          { "id": "R1", "type": "Sibling" },
-          { "id": "R2", "type": "ParentChild", "parent": "I1", "child": "I9-GONE" }
+          {
+            "id": "R1",
+            "type": "Sibling"
+          },
+          {
+            "id": "R2",
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I9-GONE"
+          }
         ]
       }
     },
     {
       "name": "mononym-no-given",
       "description": "A name with no `given` key. The schema and the runtime validator require `given` (spell an unknown one \"\"); the integrity mirror does not look at names.",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "surname": "Teach" }]
+            "names": [
+              {
+                "id": "N1",
+                "surname": "Teach"
+              }
+            ]
           }
         ],
         "relationships": [],
@@ -110,14 +184,24 @@
     {
       "name": "empty-given",
       "description": "given: \"\" is the documented spelling of an unknown given name (the engine's living-person stub emits it). Valid everywhere.",
-      "expect": { "schema": true, "integrity": true, "runtime": true },
+      "expect": {
+        "schema": true,
+        "integrity": true,
+        "runtime": true
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Unknown",
-            "names": [{ "id": "N1", "given": "", "surname": "Teach" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "",
+                "surname": "Teach"
+              }
+            ]
           }
         ],
         "relationships": [],
@@ -127,15 +211,31 @@
     {
       "name": "lowercase-fact-type",
       "description": "A research.json-cased fact type ('death'). The schema's pattern and the runtime's PascalCase check both reject it; the integrity mirror leaves fact types to the schema.",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }],
-            "facts": [{ "id": "F1", "type": "death", "date": "1900" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "death",
+                "date": "1900"
+              }
+            ]
           }
         ],
         "relationships": [],
@@ -145,18 +245,33 @@
     {
       "name": "dangling-child",
       "description": "A typo'd ParentChild child id. JSON Schema 2020-12 cannot express intra-document references — this is the drift class the integrity mirror and the runtime validator exist to close.",
-      "expect": { "schema": true, "integrity": false, "runtime": false },
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ]
           }
         ],
         "relationships": [
-          { "id": "R1", "type": "ParentChild", "parent": "I1", "child": "I2-TYPO" }
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I2-TYPO"
+          }
         ],
         "sources": []
       }
@@ -164,20 +279,36 @@
     {
       "name": "dangling-couple-fact-source-ref",
       "description": "A dangling source ref inside a Couple relationship's Marriage fact — the runtime validator's former blind spot: it once passed both the schema (structurally blind to refs) and validateGedcomx (which never walked Couple facts).",
-      "expect": { "schema": true, "integrity": false, "runtime": false },
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ]
           },
           {
             "id": "I2",
             "living": false,
             "gender": "Female",
-            "names": [{ "id": "N2", "given": "Mary", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N2",
+                "given": "Mary",
+                "surname": "Doe"
+              }
+            ]
           }
         ],
         "relationships": [
@@ -187,7 +318,15 @@
             "person1": "I1",
             "person2": "I2",
             "facts": [
-              { "id": "F1", "type": "Marriage", "sources": [{ "ref": "S9-DANGLING" }] }
+              {
+                "id": "F1",
+                "type": "Marriage",
+                "sources": [
+                  {
+                    "ref": "S9-DANGLING"
+                  }
+                ]
+              }
             ]
           }
         ],
@@ -197,15 +336,31 @@
     {
       "name": "typo-fact-key",
       "description": "standrad_date — the closed-shape class: unknown keys must die at write time, not persist and fail a later lint far from the mistake.",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }],
-            "facts": [{ "id": "F1", "type": "Birth", "standrad_date": "2 Oct 1876" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "standrad_date": "2 Oct 1876"
+              }
+            ]
           }
         ],
         "relationships": [],
@@ -215,7 +370,11 @@
     {
       "name": "preferred-false",
       "description": "preferred is const true — omit rather than setting false (the convention that keeps multi-name persons token-lean).",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
@@ -223,7 +382,12 @@
             "living": false,
             "gender": "Male",
             "names": [
-              { "id": "N1", "given": "John", "surname": "Doe", "preferred": false }
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe",
+                "preferred": false
+              }
             ]
           }
         ],
@@ -234,85 +398,173 @@
     {
       "name": "quality-out-of-range",
       "description": "quality: 5 — GEDCOM QUAY is 0-3.",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }],
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
             "facts": [
-              { "id": "F1", "type": "Birth", "sources": [{ "ref": "S1", "quality": 5 }] }
+              {
+                "id": "F1",
+                "type": "Birth",
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "quality": 5
+                  }
+                ]
+              }
             ]
           }
         ],
         "relationships": [],
-        "sources": [{ "id": "S1", "title": "Census" }]
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census"
+          }
+        ]
       }
     },
     {
       "name": "quality-string",
-      "description": "quality: \"3\" — the persisted format wants the QUAY integer; the string form exists only inside the raw-GedcomX fsmcp:quality qualifier (gedcomx-convert-spec rule 17 parses it).",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "description": "quality: \"3\" — the persisted format wants the QUAY integer; the string form exists only inside the raw-GedcomX fsmcp:quality qualifier (gedcomx-convert-spec Rule 10 parses it).",
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }],
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
             "facts": [
-              { "id": "F1", "type": "Birth", "sources": [{ "ref": "S1", "quality": "3" }] }
+              {
+                "id": "F1",
+                "type": "Birth",
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "quality": "3"
+                  }
+                ]
+              }
             ]
           }
         ],
         "relationships": [],
-        "sources": [{ "id": "S1", "title": "Census" }]
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census"
+          }
+        ]
       }
     },
     {
       "name": "person-level-sources",
       "description": "Source references hang off names/facts/relationships, never persons (simplified-gedcomx-spec §4.4; the merge tools strip these from candidates).",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }],
-            "sources": [{ "ref": "S1" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "sources": [
+              {
+                "ref": "S1"
+              }
+            ]
           }
         ],
         "relationships": [],
-        "sources": [{ "id": "S1", "title": "Census" }]
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census"
+          }
+        ]
       }
     },
     {
       "name": "top-level-places",
       "description": "The tree has exactly three sections; a places[] section is record-search context, not tree format (merge-gedcomx-spec §6.7 strips it from candidates).",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ]
           }
         ],
         "relationships": [],
         "sources": [],
-        "places": [{ "id": "PL1", "name": "Ireland" }]
+        "places": [
+          {
+            "id": "PL1",
+            "name": "Ireland"
+          }
+        ]
       }
     },
     {
       "name": "nonarray-persons",
       "description": "A persons section that is an object, not an array. The integrity mirror iterates leniently (sees no persons); the schema and runtime reject the shape.",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
-        "persons": { "id": "I1" },
+        "persons": {
+          "id": "I1"
+        },
         "relationships": [],
         "sources": []
       }
@@ -320,20 +572,36 @@
     {
       "name": "duplicate-person-id",
       "description": "Two persons sharing an id. A documented seam: only the fixture gate rejects it (strip's selectors become ambiguous); JSON Schema cannot express cross-item uniqueness and the runtime validator's id set silently collapses the duplicate.",
-      "expect": { "schema": true, "integrity": false, "runtime": true },
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": true
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ]
           },
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N2", "given": "Jack", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N2",
+                "given": "Jack",
+                "surname": "Doe"
+              }
+            ]
           }
         ],
         "relationships": [],
@@ -343,14 +611,24 @@
     {
       "name": "living-person",
       "description": "living: true. A documented seam: the FamilySearch-ToS rule is fixture-gate-only — live project trees legitimately hold living people, so the schema and runtime accept them.",
-      "expect": { "schema": true, "integrity": false, "runtime": true },
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": true
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": true,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ]
           }
         ],
         "relationships": [],
@@ -360,13 +638,23 @@
     {
       "name": "missing-living",
       "description": "No living field. Same fixture-only seam: absent is not deceased for the ToS gate, while the schema and runtime treat living as optional.",
-      "expect": { "schema": true, "integrity": false, "runtime": true },
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": true
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "gender": "Male",
-            "names": [{ "id": "N1", "given": "John", "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ]
           }
         ],
         "relationships": [],
@@ -376,14 +664,124 @@
     {
       "name": "given-nonstring",
       "description": "given: 42 — scalar type drift between the gates was part of the audit's Tier-2 class; both shape gates reject it now.",
-      "expect": { "schema": false, "integrity": true, "runtime": false },
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
       "tree": {
         "persons": [
           {
             "id": "I1",
             "living": false,
             "gender": "Male",
-            "names": [{ "id": "N1", "given": 42, "surname": "Doe" }]
+            "names": [
+              {
+                "id": "N1",
+                "given": 42,
+                "surname": "Doe"
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": []
+      }
+    },
+    {
+      "name": "primary-false",
+      "description": "primary: false on a fact — the twin of preferred-false. The schema (const: true) and the runtime reject it; absence is how 'not primary' is spelled. The old merge core wrote preferred: false on every merged non-preferred name, so read-time sanitation (tree-sanitize.ts) heals this in legacy documents before validation.",
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Smith"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "primary": false
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": []
+      }
+    },
+    {
+      "name": "digit-initial-fact-type",
+      "description": "A fact type starting with a digit. Both the schema pattern ^[A-Z] and the runtime's aligned check reject it (the runtime's former first-char toUpperCase comparison accepted digit-initial types — a gate seam closed by aligning the runtime to the pattern).",
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Smith"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "1stCommunion"
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": []
+      }
+    },
+    {
+      "name": "empty-fact-type",
+      "description": "A present-but-empty fact type. The schema pattern and the aligned runtime check both reject it; the former runtime check skipped empty strings entirely.",
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Smith"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": ""
+              }
+            ]
           }
         ],
         "relationships": [],

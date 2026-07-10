@@ -12,6 +12,7 @@ import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateParsed } from "../validation/validator.js";
 import { atomicWriteJson } from "../utils/project-io.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   MergeInputError,
   readProjectJson,
@@ -38,10 +39,10 @@ export async function mergeRecordIntoTree(
 
   try {
     // 1. Read the tree fresh from disk (merges checked against current state).
-    const tree = (await readProjectJson(
-      projectPath,
-      "tree.gedcomx.json",
-    )) as SimplifiedGedcomX;
+    const treeSanitized = sanitizeTree(
+      await readProjectJson(projectPath, "tree.gedcomx.json"),
+    );
+    const tree = treeSanitized.tree;
 
     // 2. Sanitize (drop candidate places / person-level source refs — legal
     //    in tool output, not in the tree format), then validate the result.
@@ -96,7 +97,11 @@ export async function mergeRecordIntoTree(
       newRelatives,
       validation: {
         valid: true,
-        warnings: [...sanitizeWarnings, ...formatIssues(validation.warnings)],
+        warnings: [
+          ...treeSanitized.warnings,
+          ...sanitizeWarnings,
+          ...formatIssues(validation.warnings),
+        ],
       },
     };
   } catch (e) {

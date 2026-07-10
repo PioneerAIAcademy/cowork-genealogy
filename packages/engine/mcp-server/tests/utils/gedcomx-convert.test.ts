@@ -1359,3 +1359,62 @@ describe("gedcomx-convert — fact.value preservation", () => {
     expect(fact?.value).toBe("Newpaper Editor");
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// Rule 10 boundaries — QUAY survives the round trip at BOTH ends of the
+// range (0 is falsy: the value a truthiness regression silently drops),
+// and out-of-range values die at the boundary instead of producing a
+// document every validity gate rejects.
+// ────────────────────────────────────────────────────────────────────
+
+describe("fsmcp:quality boundaries", () => {
+  const refWithQualifier = (value: string) =>
+    toSimplified({
+      persons: [
+        { id: "p1", sources: [{ description: "#S1", qualifiers: [{ name: "fsmcp:quality", value }] }] },
+      ],
+    }).persons?.[0].sources?.[0];
+
+  it("parses both QUAY boundaries, including falsy 0", () => {
+    expect(refWithQualifier("0")?.quality).toBe(0);
+    expect(refWithQualifier("3")?.quality).toBe(3);
+  });
+
+  it("drops out-of-range and non-decimal qualifier values", () => {
+    expect(refWithQualifier("7")?.quality).toBeUndefined();
+    expect(refWithQualifier("-1")?.quality).toBeUndefined();
+    expect(refWithQualifier("0x1A")?.quality).toBeUndefined();
+  });
+
+  it("round-trips quality 0 and refuses to upload an out-of-range integer", () => {
+    const zero = toGedcomX({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "J", surname: "S" }],
+          facts: [{ id: "F1", type: "Birth", sources: [{ ref: "S1", quality: 0 }] }],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S1", title: "T" }],
+    } as any);
+    const zeroJson = JSON.stringify(zero);
+    expect(zeroJson).toContain('"fsmcp:quality"');
+    expect(zeroJson).toContain('"value":"0"');
+
+    const seven = toGedcomX({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "J", surname: "S" }],
+          facts: [{ id: "F1", type: "Birth", sources: [{ ref: "S1", quality: 7 }] }],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S1", title: "T" }],
+    } as any);
+    expect(JSON.stringify(seven)).not.toContain('"fsmcp:quality"');
+  });
+});

@@ -18,6 +18,16 @@ import {
   isValid,
 } from "./types.js";
 import { isInsideProject } from "../utils/project-io.js";
+import {
+  TREE_TOP_LEVEL_FIELDS,
+  TREE_PERSON_FIELDS,
+  TREE_NAME_FIELDS,
+  TREE_FACT_FIELDS,
+  TREE_PARENT_CHILD_FIELDS,
+  TREE_COUPLE_FIELDS,
+  TREE_SOURCE_FIELDS,
+  TREE_SOURCE_REF_FIELDS,
+} from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
 
@@ -280,35 +290,12 @@ const NULLABLE_FIELDS = new Set([
   "conflict_ids", "conflict_note", "justification",
 ]);
 
-// Allowed properties per simplified-GedcomX object. Each set mirrors the
-// matching `additionalProperties: false` subschema in tree-gedcomx.schema.json.
-// The runtime checks in validateGedcomx reject any other key so an op that
-// puts data under the wrong field name (e.g. `standrad_date` instead of
-// `standard_date`, or `description` instead of `citation`) fails validation
-// and is not written — instead of persisting a tree that only the fixture
-// lint rejects later, far from the mistake.
-const TREE_TOP_LEVEL_FIELDS = new Set(["persons", "relationships", "sources"]);
-const TREE_PERSON_FIELDS = new Set(["id", "ark", "living", "gender", "names", "facts"]);
-const TREE_NAME_FIELDS = new Set([
-  "id", "preferred", "given", "surname", "prefix", "suffix", "type", "sources",
-]);
-const TREE_FACT_FIELDS = new Set([
-  "id", "type", "primary", "date", "standard_date", "place",
-  "standard_place", "value", "sources",
-]);
-// ParentChild/Couple sets include the other type's endpoint keys so the
-// bespoke "should use 'parent'/'child'" style errors below stay the single
-// report for a swapped-endpoint mistake (no duplicate unknown-key error).
-const TREE_PARENT_CHILD_FIELDS = new Set([
-  "id", "type", "parent", "child", "subtype", "notes", "sources",
-  "person1", "person2",
-]);
-const TREE_COUPLE_FIELDS = new Set([
-  "id", "type", "person1", "person2", "facts", "notes", "sources",
-  "parent", "child",
-]);
-const TREE_SOURCE_FIELDS = new Set(["id", "title", "citation", "author", "url"]);
-const TREE_SOURCE_REF_FIELDS = new Set(["ref", "page", "quality"]);
+// Allowed properties per simplified-GedcomX object live in tree-shape.ts —
+// shared with the read-time sanitizer (tree-sanitize.ts) so the closed shapes
+// the validator enforces and the legacy shapes the sanitizer heals can never
+// disagree. The runtime checks below reject any other key so an op that puts
+// data under the wrong field name (e.g. `standrad_date` instead of
+// `standard_date`) fails validation and is not written.
 
 function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const path = "research.json";
@@ -906,11 +893,11 @@ function checkTreeFact(
   checkTreeKeys(fact, TREE_FACT_FIELDS, "facts", path, report);
   if ("type" in fact && typeof fact.type !== "string") {
     addError(report, path, "'type' must be a string");
-  } else {
-    const ftype = fact.type || "";
-    if (ftype && ftype[0] !== ftype[0].toUpperCase()) {
-      addError(report, path, `fact type '${ftype}' should be PascalCase (e.g., 'Birth' not 'birth')`);
-    }
+  } else if ("type" in fact && !/^[A-Z]/.test(fact.type)) {
+    // Mirrors the schema's `pattern: ^[A-Z]` exactly (the old first-char
+    // toUpperCase comparison passed digit-initial and empty types the
+    // schema rejects — a gate seam for no benefit).
+    addError(report, path, `fact type '${fact.type}' must start with an uppercase letter (PascalCase, e.g. 'Birth' not 'birth')`);
   }
   checkTrueFlag(fact, "primary", path, report);
   checkTreeStrings(

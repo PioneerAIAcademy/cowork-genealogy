@@ -197,6 +197,15 @@ it lands in `tree.gedcomx.json`, drop `notes` and synthesize the missing
 ids — `normalize_tree` in `eval/harness/e2e/author.py` does exactly this
 for fixture authoring, and both validation gates reject a verbatim copy.
 
+**Legacy documents are healed at read, not rejected.** Trees persisted before
+the validator closed these shapes (`preferred: false` written by the old
+merge core, top-level `places[]`, person-level `sources`, unknown keys,
+missing ids, string quality values) are repaired in memory by every engine
+tool that reads `tree.gedcomx.json` (`src/validation/tree-sanitize.ts`), with
+one warning per healed class; the next successful tree write persists the
+healed document. Only unambiguous repairs are made — dangling references,
+swapped relationship endpoint keys, and duplicate ids still fail validation.
+
 ### 4.4 Source References
 
 Source references appear on names, facts, and relationships — deliberately

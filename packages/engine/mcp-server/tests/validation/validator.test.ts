@@ -557,7 +557,7 @@ describe("Project Validator", () => {
       const result = await validateProject(testDir);
       expect(result.valid).toBe(false);
       expect(
-        result.errors.some((e) => e.message.includes("should be PascalCase"))
+        result.errors.some((e) => e.message.includes("must start with an uppercase letter"))
       ).toBe(true);
     });
 

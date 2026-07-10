@@ -75,7 +75,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 | Marriage/couple facts live on the **relationship** (`SimplifiedRelationship.facts`), not the person | `packages/engine/mcp-server/src/types/gedcomx.ts:139` |
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
 | `gedcomx-convert.ts` exports `toSimplified`/`toGedcomX` (+ `collectFacts`/`standardizePlaces`/`toSimplifiedStandardized`) — **no ID-remap or dedup helper there** | `packages/engine/mcp-server/src/utils/gedcomx-convert.ts` |
-| The pure core `mergeGedcomx` (§5–§7) is **already implemented and unit-tested** — only the §5b tool wrappers remain to build | `src/utils/merge-gedcomx.ts` (728 lines), `tests/utils/merge-gedcomx.test.ts` |
+| The pure core `mergeGedcomx` (§5–§7) is **already implemented and unit-tested** — the §5b tool wrappers are shipped | `src/utils/merge-gedcomx.ts` (728 lines), `tests/utils/merge-gedcomx.test.ts` |
 | The hand-done merge protocol this replaces | `packages/engine/plugin/skills/tree-edit/SKILL.md` §"Person merging" |
 
 Richard attached FamilySearch's **`MobMergeUtil.java`** (the match-system merge)
@@ -369,7 +369,10 @@ format has no top-level `places` section (`tree-gedcomx.schema.json` closes the
 root at `persons`/`relationships`/`sources`; facts carry place **names**), so
 carrying them would persist a document the tree schema rejects. The tool layer
 strips candidate places with a warning before the merge (§5b.2); a legacy
-target's own `places` pass through the core untouched.
+target's own `places` never reach the core: every tool heals the on-disk
+tree at read (`src/validation/tree-sanitize.ts` drops the section with a
+warning), so the merge operates on — and its next write persists — the
+healed document.
 
 > *Changed from rev. 3,* which carried candidate places with id-collision
 > renaming. That behavior wrote trees that failed the tree JSON Schema —
@@ -408,7 +411,9 @@ catalogued in §12.
   letters×10 + diacritics — longer, with diacritics, wins).
 - **Preferred** name = the **largest** equivalence class (most frequent across
   inputs); tie-break by `scoreName`. Mark exactly one `preferred: true`; all other
-  distinct names `preferred: false`.
+  distinct names carry no `preferred` flag at all — absence means false, the
+  schema pins the field to `const: true`, and writing `preferred: false`
+  persists a tree the schema rejects.
 
 ### 7.2 Facts (TS: `factsEquivalent` / `mergeFactGroup` / `mergeFacts`)
 - **Equivalent** when **same `type`** AND **dates compatible** AND **places
