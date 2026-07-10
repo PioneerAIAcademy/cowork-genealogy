@@ -549,9 +549,9 @@ describe("mergeGedcomx — mode 2 (same document)", () => {
 // ────────────────────────────────────────────────────────────────────
 
 describe("mergeGedcomx — robustness", () => {
-  it("dedups a survivor's person-level source refs (spec §6.3)", () => {
+  it("does not fold candidate person-level source refs — they are not tree format (spec §6.3)", () => {
     const target: SimplifiedGedcomX = {
-      persons: [{ id: "I1", sources: [{ ref: "S1" }] }],
+      persons: [{ id: "I1" }],
       sources: [{ id: "S1", title: "Census" }],
     };
     const candidate: SimplifiedGedcomX = {
@@ -561,7 +561,9 @@ describe("mergeGedcomx — robustness", () => {
 
     const out = mergeGedcomx(target, candidate, [["I1", "I1"]]);
 
-    expect(out.persons![0].sources).toHaveLength(1);
+    // The tool layer strips person-level sources before merging; the core
+    // must not re-introduce them from an unsanitized candidate either.
+    expect(out.persons![0].sources).toBeUndefined();
     assertIntegrity(out);
   });
 
@@ -594,7 +596,7 @@ describe("mergeGedcomx — robustness", () => {
     assertIntegrity(out);
   });
 
-  it("carries candidate places over, keeping place ids unique on collision (spec §6.7)", () => {
+  it("does not carry candidate places — the tree format has no places[] section (spec §6.7)", () => {
     const target: SimplifiedGedcomX = {
       persons: [{ id: "I1" }],
       places: [{ id: "PL1", name: "Ireland" }],
@@ -606,9 +608,9 @@ describe("mergeGedcomx — robustness", () => {
 
     const out = mergeGedcomx(target, candidate, [["I1", "I1"]]);
 
-    expect((out.places ?? []).map((p) => p.name).sort()).toEqual(["Ireland", "New York"]);
-    const ids = (out.places ?? []).map((p) => p.id);
-    expect(new Set(ids).size).toBe(ids.length); // unique
+    // A legacy target's own places pass through untouched; the candidate's
+    // never enter (the tool layer also strips them before the merge).
+    expect((out.places ?? []).map((p) => p.name)).toEqual(["Ireland"]);
   });
 
   it("handles disjoint ids (no collision) with full referential integrity (spec §9)", () => {

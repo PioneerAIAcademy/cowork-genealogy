@@ -15,6 +15,7 @@ import { atomicWriteJson } from "../utils/project-io.js";
 import {
   MergeInputError,
   readProjectJson,
+  sanitizeCandidate,
   validateCandidateGedcomx,
   derivePairSummaries,
   personMapByIds,
@@ -42,12 +43,15 @@ export async function mergeRecordIntoTree(
       "tree.gedcomx.json",
     )) as SimplifiedGedcomX;
 
-    // 2. Validate the inline candidate before merging anything.
-    const candidateErrors = validateCandidateGedcomx(input.candidateGedcomx);
+    // 2. Sanitize (drop candidate places / person-level source refs — legal
+    //    in tool output, not in the tree format), then validate the result.
+    const { candidate, warnings: sanitizeWarnings } = sanitizeCandidate(
+      input.candidateGedcomx,
+    );
+    const candidateErrors = validateCandidateGedcomx(candidate);
     if (candidateErrors.length > 0) {
       return { ok: false, errors: candidateErrors };
     }
-    const candidate = input.candidateGedcomx;
 
     // 3. Merge in memory. The core throws on empty/duplicate/unknown merges and
     //    on a survivor id absent from the on-disk tree (a staleness signal).
@@ -90,7 +94,10 @@ export async function mergeRecordIntoTree(
       filesWritten: ["tree.gedcomx.json"],
       pairs,
       newRelatives,
-      validation: { valid: true, warnings: formatIssues(validation.warnings) },
+      validation: {
+        valid: true,
+        warnings: [...sanitizeWarnings, ...formatIssues(validation.warnings)],
+      },
     };
   } catch (e) {
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };

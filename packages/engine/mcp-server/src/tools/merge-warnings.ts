@@ -25,6 +25,7 @@ import { calculateWarnings } from "./person-warnings.js";
 import {
   MergeInputError,
   readProjectJson,
+  sanitizeCandidate,
   validateCandidateGedcomx,
   formatIssues,
 } from "./merge-shared.js";
@@ -43,12 +44,13 @@ export async function mergeWarnings(
       "tree.gedcomx.json",
     )) as SimplifiedGedcomX;
 
-    // 2. Validate the inline candidate before touching anything.
-    const candidateErrors = validateCandidateGedcomx(input.candidateGedcomx);
+    // 2. Sanitize + validate the inline candidate exactly as the write path
+    //    does — the dry-run must merge the same document the writer would.
+    const { candidate } = sanitizeCandidate(input.candidateGedcomx);
+    const candidateErrors = validateCandidateGedcomx(candidate);
     if (candidateErrors.length > 0) {
       return { ok: false, errors: candidateErrors };
     }
-    const candidate = input.candidateGedcomx;
 
     // 3. Merge in memory with the SAME core the write path uses. The core
     //    throws on empty/duplicate/unknown/chained merges and on a survivor id
