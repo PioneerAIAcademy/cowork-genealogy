@@ -6,6 +6,7 @@
       "living": false,
       "names": [
         {
+          "id": "name-gm4p-tys-1",
           "given": "Rivanette",
           "surname": "Florencio de Araujo"
         }
@@ -47,6 +48,7 @@
       "living": false,
       "names": [
         {
+          "id": "name-gm45-sdx-1",
           "given": "Amaro",
           "surname": "Gomes de Melo"
         }
@@ -73,6 +75,7 @@
   ],
   "relationships": [
     {
+      "id": "rel-couple-1",
       "type": "Couple",
       "person1": "GM45-SDX",
       "person2": "GM4P-TYS",
