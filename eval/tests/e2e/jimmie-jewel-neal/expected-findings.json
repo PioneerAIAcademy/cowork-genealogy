@@ -1,0 +1,44 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Manley Madison Wood was the maternal grandfather of Jimmie Jewel Neal — that is, the father of her mother Martha J Wood. Manley was born about 1808 in Spartanburg, South Carolina, and died 10 July 1863 in Summit, Blount, Alabama.",
+      "details": {
+        "subject_person": {
+          "name": "Jimmie Jewel Neal"
+        },
+        "relation": "maternal_grandfather",
+        "target_person": {
+          "name": "Manley Madison Wood",
+          "birth": "about 1808, Spartanburg, South Carolina"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for Martha J Wood, listing Manley Madison Wood as father.",
+        "1860 U.S. Census entry for M M Wood and Martha Wood, Blount, Alabama, showing the couple's household."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Martha Patsey Ford was the maternal grandmother of Jimmie Jewel Neal — that is, the mother of Martha J Wood and wife of Manley Madison Wood. Martha Patsey was born 28 October 1814 in Spartanburg, South Carolina, and died 14 August 1863 in Browns Valley, Blount, Alabama.",
+      "details": {
+        "subject_person": {
+          "name": "Jimmie Jewel Neal"
+        },
+        "relation": "maternal_grandmother",
+        "target_person": {
+          "name": "Martha Patsey Ford",
+          "birth": "28 October 1814, Spartanburg, South Carolina"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for Martha J Wood, listing Martha Patsey Ford as mother.",
+        "1860 U.S. Census entry for M M Wood and Martha Wood, Blount, Alabama, showing the couple's household."
+      ],
+      "required": true
+    }
+  ]
+}
