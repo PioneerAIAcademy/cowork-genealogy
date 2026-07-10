@@ -1,0 +1,18 @@
+{
+  "id": "ferber-marriage",
+  "name": "William Hubert Ferber — spouse",
+  "source_pid": "G7JB-YH6",
+  "captured": "2026-07-09",
+  "researcher_question": "Who did William Hubert Ferber marry?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1890s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "William Hubert Ferber (b. Dec 1869 Ohio, d. 11 Mar 1903 Cincinnati) married Emma Becker on 10 Sep 1890 in Hamilton County, Ohio. The spouse person, the couple/marriage relationship, the marriage fact, and the marriage records were stripped. Anchors left intact: his parents (Gerhard Ferber, Eva Engermann), his son Charles Hubert Ferber, his residences/death/burial, the 1900 and 1870 censuses, a 1903 city directory, and Find a Grave. The wife's first name (\"Emma\") is discoverable from the 1900 census / city-directory household, but her maiden surname (Becker) and the marriage date + place come only from the Hamilton County marriage record the agent must find."
+}
