@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Alan Glen Applegarth's father was John Obrien Applegarth, born 7 October 1905 in Oshkosh, Garden County, Nebraska, who died 1 April 1998 in Ogden, Weber County, Utah.",
+      "details": {
+        "subject_person": "Alan Glen Applegarth (KWZH-XB6)",
+        "relation": "parent",
+        "target_person": {
+          "name": "John Obrien Applegarth",
+          "birth": "7 October 1905, Oshkosh, Garden County, Nebraska"
+        }
+      },
+      "supporting_sources": [
+        "1940 U.S. Census, South Boise Election Precinct, Ada County, Idaho — household of John O. and Olive Applegarth, with son Alan",
+        "1950 U.S. Census, Ogden, Weber County, Utah — household of John O and Olive H Applegarth"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Alan Glen Applegarth's mother was Olive Annie Harvey, born 29 July 1906 in Kaysville, Davis County, Utah, who died 19 August 1970 in Ogden, Weber County, Utah.",
+      "details": {
+        "subject_person": "Alan Glen Applegarth (KWZH-XB6)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Olive Annie Harvey",
+          "birth": "29 July 1906, Kaysville, Davis County, Utah"
+        }
+      },
+      "supporting_sources": [
+        "1940 U.S. Census, South Boise Election Precinct, Ada County, Idaho — household of John O. and Olive Applegarth, with son Alan",
+        "Marriage of John Obrien Applegarth and Olive Annie Harvey, 20 October 1926, Ogden, Weber County, Utah"
+      ],
+      "required": true
+    }
+  ]
+}
