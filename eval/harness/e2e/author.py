@@ -98,8 +98,9 @@ BIRTH_FACT_TYPES = frozenset({"Birth", "Christening", "Baptism"})
 _YEAR = re.compile(r"\b(1\d{3}|20\d{2})\b")
 
 # Field allow-lists, in the key order we emit. Mirrors
-# docs/specs/schemas/tree-gedcomx.schema.json.
-_PERSON_FIELDS = ("id", "ark", "gender", "living", "names", "facts", "sources")
+# docs/specs/schemas/tree-gedcomx.schema.json. Persons carry no `sources` —
+# in the tree format, source references hang off names/facts/relationships.
+_PERSON_FIELDS = ("id", "ark", "gender", "living", "names", "facts")
 _NAME_FIELDS = ("id", "preferred", "given", "surname", "prefix", "suffix", "type", "sources")
 _FACT_FIELDS = (
     "id", "type", "primary", "date", "standard_date", "place",
@@ -282,8 +283,8 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
       relationships, which `person_read` does not identify, sometimes for
       facts. Ids are never re-minted; nothing reads meaning out of an id's
       shape (simplified-gedcomx-spec §3);
-    * drops fields the schema forbids (`source.notes`, facts on a
-      `ParentChild`);
+    * drops fields the schema forbids (`source.notes`, person-level
+      `sources`, facts on a `ParentChild`);
     * PascalCases fact types (`move` -> `Move`);
     * drops relationships whose endpoints aren't in `persons` — `person_read
       --relatives` returns edges to grandparents and in-laws whose person
@@ -361,7 +362,6 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
         else:
             person.pop("facts", None)
 
-        _fix_source_refs(person, src_map, dropped, f"person {pid}", warnings)
         persons.append({k: person[k] for k in _PERSON_FIELDS if k in person})
 
     known_ids = {str(p.get("id")) for p in persons}
@@ -637,7 +637,7 @@ def render_index(tree: dict[str, Any]) -> str:
     cites: dict[str, list[str]] = {}
     for person in persons:
         pid = str(person.get("id", "?"))
-        holders = [person, *(person.get("names") or []), *(person.get("facts") or [])]
+        holders = [*(person.get("names") or []), *(person.get("facts") or [])]
         for holder in holders:
             for ref in holder.get("sources") or []:
                 bucket = cites.setdefault(str(ref.get("ref")), [])

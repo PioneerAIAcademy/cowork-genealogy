@@ -4,6 +4,18 @@ This document defines the complete schema for `tree.gedcomx.json`, the deliverab
 
 **Machine-readable schema:** [`docs/specs/schemas/tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json). Enum definitions are shared with `research.json` in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json). This prose document is normative for humans; the JSON Schema files are normative for machine validation.
 
+**The JSON Schema is deliberately weaker than the runtime validator on
+cross-references.** JSON Schema 2020-12 cannot express intra-document
+reference integrity — a typo'd relationship endpoint or a source `ref`
+naming no `sources[]` entry lints clean and then hard-fails `tree_edit`
+mid-run. The engine's `validateGedcomx`
+(`packages/engine/mcp-server/src/validation/validator.ts`) and the fixture
+gate's structural mirror (`tree_integrity_errors` in
+`eval/harness/e2e/validate_fixture.py`) both enforce those checks; the
+shared vectors in
+[`schemas/tree-gate-vectors.json`](schemas/tree-gate-vectors.json) pin the
+gates' agreement. **Never use the JSON Schema alone as a validity gate.**
+
 ## 1. Overview
 
 `tree.gedcomx.json` contains resolved persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the file that eventually uploads to FamilySearch. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
@@ -177,9 +189,32 @@ Array of source description objects. These are the simplified equivalents of Ged
 | `author` | string | no | Creator, agency, or author |
 | `url` | string | no | URL to the digital source |
 
+**`person_read` returns are not directly persistable.** The tool's sources
+may additionally carry a `notes` string array (user-attached FamilySearch
+notes — per `person-read-tool-spec.md`, useful context for the reader), and
+its names and relationships arrive without `id`s (Section 3). Before any of
+it lands in `tree.gedcomx.json`, drop `notes` and synthesize the missing
+ids — `normalize_tree` in `eval/harness/e2e/author.py` does exactly this
+for fixture authoring, and both validation gates reject a verbatim copy.
+
+**Legacy documents are healed at read, not rejected.** Trees persisted before
+the validator closed these shapes (`preferred: false` written by the old
+merge core, top-level `places[]`, person-level `sources`, unknown keys,
+missing ids, string quality values) are repaired in memory by every engine
+tool that reads `tree.gedcomx.json` (`src/validation/tree-sanitize.ts`), with
+one warning per healed class; the next successful tree write persists the
+healed document. Only unambiguous repairs are made — dangling references,
+swapped relationship endpoint keys, and duplicate ids still fail validation.
+
 ### 4.4 Source References
 
-Source references appear on names, facts, and relationships. They link an assertion to a source description with a locator.
+Source references appear on names, facts, and relationships — deliberately
+**not** on persons. Full GedcomX allows person-level source references (a
+FamilySearch record persona typically carries one pointing at its record),
+but in the tree format every reference hangs off the specific name, fact, or
+relationship it attests; the merge tools strip person-level refs from
+candidates rather than carry them (see `merge-gedcomx-spec.md` §6.3). They
+link an assertion to a source description with a locator.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|

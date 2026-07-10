@@ -13,6 +13,7 @@
 import { join } from "path";
 import { readFile } from "fs/promises";
 import { validateParsed } from "../validation/validator.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
@@ -390,7 +391,10 @@ export async function researchAppend(
 
   try {
     const research = await readJson(projectPath, "research.json");
-    const tree = await readJson(projectPath, "tree.gedcomx.json");
+    // Heal legacy tree shapes in memory only — this tool never writes the
+    // tree, but its whole-project validation must not brick research writes
+    // on a pre-tightening tree the tree tools would heal on their next write.
+    const { tree } = sanitizeTree(await readJson(projectPath, "tree.gedcomx.json"));
 
     // ─── Batch form: apply every op in-memory, then validate + write once ─────
     if (input.ops !== undefined) {
