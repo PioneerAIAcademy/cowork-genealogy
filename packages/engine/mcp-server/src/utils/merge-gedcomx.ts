@@ -364,7 +364,9 @@ function mergeNames(names: SimplifiedName[]): SimplifiedName[] {
     const sources = dedupSourceRefs(members.flatMap((m) => m.sources ?? []));
     if (sources.length > 0) rep.sources = sources;
     else delete rep.sources;
-    rep.preferred = false;
+    // `preferred` is `const: true` in the tree schema — absence means false,
+    // and writing `preferred: false` persists a tree the schema rejects.
+    delete rep.preferred;
     return { rep, size: members.length };
   });
 

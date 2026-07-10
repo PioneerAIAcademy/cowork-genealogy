@@ -598,6 +598,118 @@ describe("Project Validator", () => {
       const result = await validateProject(testDir);
       expect(result.valid).toBe(true);
     });
+
+    it("rejects a typo'd fact property, matching the schema's additionalProperties:false", async () => {
+      const tree = {
+        persons: [
+          {
+            id: "P1",
+            gender: "Male",
+            names: [{ id: "N1", given: "John", surname: "Doe" }],
+            facts: [{ id: "F1", type: "Birth", standrad_date: "2 Oct 1876" }],
+          },
+        ],
+        relationships: [],
+        sources: [],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'standrad_date'"))
+      ).toBe(true);
+    });
+
+    it("rejects preferred:false on a name — the schema pins it to const true", async () => {
+      const tree = {
+        persons: [
+          {
+            id: "P1",
+            gender: "Male",
+            names: [{ id: "N1", given: "John", surname: "Doe", preferred: false }],
+          },
+        ],
+        relationships: [],
+        sources: [],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("'preferred' must be true when present"))
+      ).toBe(true);
+    });
+
+    it("rejects an out-of-range quality on a source reference", async () => {
+      const tree = {
+        persons: [
+          {
+            id: "P1",
+            gender: "Male",
+            names: [{ id: "N1", given: "John", surname: "Doe" }],
+            facts: [{ id: "F1", type: "Birth", sources: [{ ref: "S1", quality: 5 }] }],
+          },
+        ],
+        relationships: [],
+        sources: [{ id: "S1", title: "Census" }],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("'quality' must be an integer between 0 and 3"))
+      ).toBe(true);
+    });
+
+    it("resolves source refs inside Couple-relationship facts — a former blind spot", async () => {
+      const tree = {
+        persons: [
+          { id: "P1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Doe" }] },
+          { id: "P2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Doe" }] },
+        ],
+        relationships: [
+          {
+            id: "R1",
+            type: "Couple",
+            person1: "P1",
+            person2: "P2",
+            facts: [{ id: "F1", type: "Marriage", sources: [{ ref: "S9-DANGLING" }] }],
+          },
+        ],
+        sources: [],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("references source 'S9-DANGLING'"))
+      ).toBe(true);
+    });
+
+    it("rejects person-level sources and an unknown top-level section", async () => {
+      const tree = {
+        persons: [
+          {
+            id: "P1",
+            gender: "Male",
+            names: [{ id: "N1", given: "John", surname: "Doe" }],
+            sources: [{ ref: "S1" }],
+          },
+        ],
+        relationships: [],
+        sources: [{ id: "S1", title: "Census" }],
+        places: [{ id: "PL1", name: "Ireland" }],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'sources'"))
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'places'"))
+      ).toBe(true);
+    });
   });
 
   describe("Sidecar validation", () => {
