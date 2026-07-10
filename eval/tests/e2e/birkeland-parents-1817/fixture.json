@@ -1,0 +1,18 @@
+{
+  "id": "birkeland-parents-1817",
+  "name": "Kristian Fredrik Tollefsen Birkeland — parents (b. 1817)",
+  "source_pid": "K87G-T89",
+  "captured": "2026-07-01",
+  "researcher_question": "Who were the parents of Kristian Fredrik Tollefsen Birkeland (born 1817, of Stavanger, Rogaland)?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1810s",
+    "geography": "NO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Both parents (father Tollef Aadneson Aasland, mother Inger Larsdatter Froyland) and the two ParentChild links to the subject were stripped, along with the Couple relationship between the parents and the 1840 marriage source that names the father (Tellef Aadnesen). The FATHER is recoverable — his 1840 marriage-of-groom record names him, and the subject's own patronymic 'Tollefsen' points to a father named Tollef — so the father is a REQUIRED finding. The MOTHER is thinly attested (no source in the tree names her; a groom's marriage record typically names the father, not the mother), so she is a BONUS finding (required:false) and the fixture should not fail if she is not recovered. All father evidence is reachable via FamilySearch record/fulltext search — no external documents. The subject's own death/burial/residence facts, spouse Serine, and six children remain intact as search anchors."
+}

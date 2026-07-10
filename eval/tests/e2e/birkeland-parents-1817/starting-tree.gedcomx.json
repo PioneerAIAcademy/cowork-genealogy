@@ -1,0 +1,835 @@
+{
+  "persons": [
+    {
+      "id": "K87G-T89",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Kristian Fredrik",
+          "surname": "Tollefsen Birkeland",
+          "id": "K87G-T89-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "11 Jul 1817",
+          "standard_date": "11 Jul 1817",
+          "place": "Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "23 DEC 1883",
+          "standard_date": "23 Dec 1883",
+          "place": "of...Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "8d3df667-1bdf-4412-80de-b83ea381d2a2",
+          "type": "Burial",
+          "date": "31 Dec 1883",
+          "standard_date": "31 Dec 1883",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "e79afec6-0a7f-41c8-9789-489a560433db",
+          "type": "Residence",
+          "place": "Stavanger",
+          "standard_place": "Stavanger, Norway"
+        },
+        {
+          "id": "846ae6ce-edcd-4c6d-ab65-ce4ced7ef2f7",
+          "type": "Residence",
+          "place": "Bornolandvig"
+        }
+      ]
+    },
+    {
+      "id": "KC6Q-L93",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Inger Kristine",
+          "surname": "Birkeland",
+          "id": "KC6Q-L93-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b064c9a1-fa3b-4145-be90-1af9d53d8ecb",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "06 Nov 1851",
+          "standard_date": "6 Nov 1851",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "09d10772-cef2-42e8-aef1-cc7927036ba5",
+          "type": "Christening",
+          "date": "23 Nov 1851",
+          "standard_date": "23 Nov 1851",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "670a2de2-0b57-490d-9b7e-f49fd78700a7",
+          "type": "Baptism",
+          "date": "23 Nov 1851",
+          "standard_date": "23 Nov 1851",
+          "place": "Stavanger, Rogaland, Norge",
+          "standard_place": "Stavanger, Norway"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1862",
+          "standard_date": "1862",
+          "place": "of,,Norway",
+          "standard_place": "Norway"
+        }
+      ]
+    },
+    {
+      "id": "L44V-J7M",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Serine Kristoffersdatter",
+          "surname": "Aasland",
+          "id": "L44V-J7M-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "242316f9-b844-443b-9062-762f1d6cf0e7",
+          "type": "Baptism",
+          "date": "19 June 1818",
+          "standard_date": "19 Jun 1818",
+          "place": "Lye, Rogaland, Norway",
+          "standard_place": "Time, Rogaland, Norway"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "04 JUL 1818",
+          "standard_date": "4 Jul 1818"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "19/07/1818",
+          "standard_date": "19 Jul 1818",
+          "place": "Time, Time, Rogaland, Norway",
+          "standard_place": "Time, Rogaland, Norway"
+        },
+        {
+          "id": "bb68868a-6c30-4340-940a-6d67b89b5fd1",
+          "type": "Marriage",
+          "date": "05 Jul 1840",
+          "standard_date": "5 Jul 1840",
+          "place": "Time,Rogaland,Norway",
+          "standard_place": "Time, Rogaland, Norway"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "23/03/1873",
+          "standard_date": "23 Mar 1873",
+          "place": "Norway, Norway",
+          "standard_place": "Norway, Norway, Oxford, Massachusetts, United States"
+        },
+        {
+          "id": "1d035ee2-f7ef-4665-bb2e-4c3b2f9e8aee",
+          "type": "Residence",
+          "place": "Egenos"
+        },
+        {
+          "id": "c2b1d23f-c5b8-4516-8779-5d5cc8cba2d9",
+          "type": "Residence",
+          "place": "Birkland",
+          "standard_place": "Birkland, Peiting, Weilheim-Schongau, Bavaria, Germany"
+        },
+        {
+          "id": "c10a8e4b-ce5f-4a93-b49a-29905b61c44a",
+          "type": "Residence",
+          "place": "Rikeland"
+        },
+        {
+          "id": "2cf0a1a3-2ec4-4cfc-b7c7-1e572e4ff616",
+          "type": "Residence",
+          "place": "Bernhland"
+        },
+        {
+          "id": "509f0d3c-0b0e-474a-b7cf-984df6e13e30",
+          "type": "Residence",
+          "place": "Egnar",
+          "standard_place": "Egnar, San Miguel, Colorado, United States"
+        },
+        {
+          "id": "44d9bee3-bba5-483c-9400-3ebabaa0aca2",
+          "type": "Residence",
+          "place": "Bikkeldat"
+        }
+      ]
+    },
+    {
+      "id": "K824-494",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Inger Serine",
+          "surname": "Birkeland",
+          "id": "K824-494-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "   Apr 1849",
+          "standard_date": "Apr 1849",
+          "place": "Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "4 MAY 1849",
+          "standard_date": "4 May 1849",
+          "place": "of,,Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "87dd0aba-c3d3-414c-b2c6-16ac30c80f5a",
+          "type": "Burial",
+          "date": "11 May 1849",
+          "standard_date": "11 May 1849",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "KHK2-LFC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Tollef",
+          "surname": "Kristiansen Birkeland",
+          "id": "KHK2-LFC-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d6da58b6-2076-46a2-a7d8-30d2e6edaded",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "21 JUL 1841",
+          "standard_date": "21 Jul 1841",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "d5e7f191-face-4926-b12f-06a0be49f367",
+          "type": "Christening",
+          "date": "08 Aug 1841",
+          "standard_date": "8 Aug 1841",
+          "place": "Domkirken, Stavanger, Rogaland, Norway",
+          "standard_place": "Domkirken, Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "0d1efeb0-fed2-412e-b566-aee54e745e0d",
+          "type": "Baptism",
+          "date": "8 Aug 1841",
+          "standard_date": "8 Aug 1841",
+          "place": "Stavanger, Rogaland, Norge",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "01d628b8-9ec1-4b86-9751-571788919cbe",
+          "type": "Marriage",
+          "date": "21 Jul 1872",
+          "standard_date": "21 Jul 1872",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "10 APR 1883",
+          "standard_date": "10 Apr 1883",
+          "place": "of,, Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "8dd97247-9c2f-4b75-bac4-95f180dd43b7",
+          "type": "Burial",
+          "date": "17 Apr 1883",
+          "standard_date": "17 Apr 1883",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "bed5a3c8-3e71-418f-aa1a-0db76eb17ff1",
+          "type": "Residence",
+          "place": "D. Stavanger, Norway",
+          "standard_place": "Stavanger, Norway"
+        }
+      ]
+    },
+    {
+      "id": "KH35-DCY",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Christofer",
+          "surname": "Birkeland",
+          "id": "KH35-DCY-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "cbfc0ed9-4e0d-4e98-8c06-49ac9fbc9e0f",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "08 Aug 1860",
+          "standard_date": "8 Aug 1860",
+          "place": "Domkirken, Stavanger, Rogaland, Norway",
+          "standard_place": "Domkirken, Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "d13170ad-a69e-42a5-800d-689bd026a715",
+          "type": "Christening",
+          "date": "23 Sep 1860",
+          "standard_date": "23 Sep 1860",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "47756ef7-56a3-4cec-9b2e-7c2ec15ebfbd",
+          "type": "Baptism",
+          "date": "23 Sep 1860",
+          "standard_date": "23 Sep 1860",
+          "place": "Stavanger, Rogaland, Norge",
+          "standard_place": "Stavanger, Norway"
+        },
+        {
+          "id": "d4cfb52d-457d-4f94-9869-ee7d31128c39",
+          "type": "Baptism",
+          "date": "23 Sep 1860",
+          "standard_date": "23 Sep 1860",
+          "place": "Domkirken, Stavanger, Rogaland, Norge",
+          "standard_place": "Domkirken, Vår Frelsers, Oslo, Norway"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "24 JUN 1863",
+          "standard_date": "24 Jun 1863",
+          "place": "of,,Norway",
+          "standard_place": "Norway"
+        }
+      ]
+    },
+    {
+      "id": "LCX7-DTC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Martha Marie",
+          "surname": "Christiansen Birkeland",
+          "id": "LCX7-DTC-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "14 March 1844",
+          "standard_date": "14 Mar 1844",
+          "place": "Klepp, Rogaland, Norway",
+          "standard_place": "Klepp, Rogaland, Norway"
+        },
+        {
+          "id": "0f7fc1cc-c19f-4d3a-b5ca-ddeab3fb73a9",
+          "type": "Christening",
+          "date": "24 Mar 1844",
+          "standard_date": "24 Mar 1844",
+          "place": "Domkirken, Stavanger, Rogaland, Norway",
+          "standard_place": "Domkirken, Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "16f978f1-65bf-4418-ab84-ec8c37d346de",
+          "type": "Baptism",
+          "date": "24 Mar 1844",
+          "standard_date": "24 Mar 1844",
+          "place": "Stavanger, Rogaland, Norge",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "f0845d90-38ff-4e22-aecd-96169002abfd",
+          "type": "Residence",
+          "date": "1844",
+          "standard_date": "1844",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "011118bc-3edd-4f4b-b8cb-54fc7edcb7fd",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Stavanger, Rogaland, Norge",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "10603a5e-b23e-4eb0-880d-276ee33f020e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Stavanger, Rogaland, Norge",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "25 JUL 1921",
+          "standard_date": "25 Jul 1921",
+          "place": "of,, Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "4a75cad2-efae-46f6-881d-835ffbee72a2",
+          "type": "Residence",
+          "place": "Birkolm"
+        },
+        {
+          "id": "1a6f0ca4-2ace-4066-b6ec-ed68124339bb",
+          "type": "Residence",
+          "place": "Grude",
+          "standard_place": "Grude, Montenegro"
+        },
+        {
+          "id": "191a6fae-7d05-4ff4-a482-37f45d553884",
+          "type": "Residence",
+          "place": "Løvdalsgaden"
+        },
+        {
+          "id": "56697f99-df8a-461e-becb-9b6c6d274f9a",
+          "type": "Residence",
+          "place": "Lørvoldsgaden"
+        },
+        {
+          "id": "5dea2789-5cf4-4bbd-80a9-2462470893a2",
+          "type": "Residence",
+          "place": "Arneagergaden"
+        },
+        {
+          "id": "0b273666-bccf-44ea-9a8c-69ad970aac91",
+          "type": "Residence",
+          "place": "??Gren",
+          "standard_place": "Angren, Tashkent, Uzbekistan"
+        },
+        {
+          "id": "5aebe5a2-6c52-41c2-a877-a7fa2896c4ef",
+          "type": "Residence",
+          "place": "Griede"
+        },
+        {
+          "id": "a1a66953-9bd8-48a1-9e87-724bc91daec1",
+          "type": "Residence",
+          "place": "Løvdalsgade"
+        }
+      ]
+    },
+    {
+      "id": "KZ11-DJT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Hanna Serine",
+          "surname": "Birkeland",
+          "id": "KZ11-DJT-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "cf5ef88f-26b0-440b-b748-78199464c17b",
+          "type": "Residence",
+          "date": "1855",
+          "standard_date": "1855",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "af454e1c-df19-40b9-805c-d0a14d45e0dd",
+          "type": "Christening",
+          "date": "07 Oct 1855",
+          "standard_date": "7 Oct 1855",
+          "place": "Stavanger, Rogaland, Norway",
+          "standard_place": "Stavanger, Rogaland, Norway"
+        },
+        {
+          "id": "b0072c20-7c65-415a-af7b-d78ec5aa38f4",
+          "type": "Baptism",
+          "date": "7 Oct 1855",
+          "standard_date": "7 Oct 1855",
+          "place": "Stavanger, Rogaland, Norge",
+          "standard_place": "Stavanger, Norway"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": " 9 AUG 1857",
+          "standard_date": "9 Aug 1857",
+          "place": "of,, Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 NOV 1887",
+          "standard_date": "17 Nov 1887",
+          "place": "of,, Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "c0b01591-7cca-4824-b09d-f2b7ca9ec98c",
+          "type": "Residence",
+          "place": "Stokke",
+          "standard_place": "Stokke, Oppland, Norway"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "K87G-T89",
+      "person2": "L44V-J7M",
+      "facts": [
+        {
+          "id": "a91a6b7a-1379-4a54-b795-99b1cce203fa",
+          "type": "Marriage",
+          "date": "05 Jul 1840",
+          "standard_date": "5 Jul 1840",
+          "place": "Time,Rogaland,Norway",
+          "standard_place": "Time, Rogaland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "K87G-T89",
+      "child": "KHK2-LFC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "L44V-J7M",
+      "child": "KHK2-LFC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-4",
+      "type": "ParentChild",
+      "parent": "K87G-T89",
+      "child": "LCX7-DTC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-5",
+      "type": "ParentChild",
+      "parent": "L44V-J7M",
+      "child": "LCX7-DTC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-6",
+      "type": "ParentChild",
+      "parent": "K87G-T89",
+      "child": "K824-494",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-7",
+      "type": "ParentChild",
+      "parent": "L44V-J7M",
+      "child": "K824-494",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-8",
+      "type": "ParentChild",
+      "parent": "K87G-T89",
+      "child": "KC6Q-L93",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-9",
+      "type": "ParentChild",
+      "parent": "L44V-J7M",
+      "child": "KC6Q-L93",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-10",
+      "type": "ParentChild",
+      "parent": "K87G-T89",
+      "child": "KZ11-DJT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-11",
+      "type": "ParentChild",
+      "parent": "L44V-J7M",
+      "child": "KZ11-DJT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-12",
+      "type": "ParentChild",
+      "parent": "K87G-T89",
+      "child": "KH35-DCY",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-13",
+      "type": "ParentChild",
+      "parent": "L44V-J7M",
+      "child": "KH35-DCY",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "SWC5-19J",
+      "title": "Christian Fredrik Tollefsen Birkeland in entry for Christoffer, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7GB-8VB : 23 June 2020), Christian Fredrik Tollefsen Birkeland in entry for Christoffer, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7GB-8VB"
+    },
+    {
+      "id": "SWC5-BCX",
+      "title": "Christian Fredrik Tollefsen Birkeland in entry for Enger Christine, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7RP-6RM : 23 June 2020), Christian Fredrik Tollefsen Birkeland in entry for Enger Christine, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7RP-6RM"
+    },
+    {
+      "id": "SWCR-M37",
+      "title": "Christian F. T. Birkeland in entry for Christopher, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWZC-PSH : 23 June 2020), Christian F. T. Birkeland in entry for Christopher, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWZC-PSH"
+    },
+    {
+      "id": "SWC5-1BV",
+      "title": "Kristian Tolleivsen, \"Norway, Marriages, 1660-1926\"",
+      "citation": "\"Norway, Marriages, 1660-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NW6K-LQH : 20 February 2020), Kristian Tolleivsen, 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NW6K-LQH"
+    },
+    {
+      "id": "SW2Z-CS8",
+      "title": "Christian Fredrik Tollefsen in entry for Hanne Severine, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NWZ4-R75 : 23 June 2020), Christian Fredrik Tollefsen in entry for Hanne Severine, 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWZ4-R75"
+    },
+    {
+      "id": "3R8F-S34",
+      "title": "Christian Tollefsen Birkeland, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Q7-91JZ : Fri Mar 08 06:09:00 UTC 2024), Entry for Joachim Engebretsen Gunde and Ingebret Gulliksen Grudel, 5 Jul 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Q7-91JG"
+    },
+    {
+      "id": "3R8F-S12",
+      "title": "Christian Fredrik Tollefsens, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QQ-TXTQ : Tue Jul 23 07:55:59 UTC 2024), Entry for Inger Serine and Christian Fredrik Tollefsens, 11 May 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68QQ-TXTW"
+    },
+    {
+      "id": "M3P9-4DF",
+      "title": "Christian Frederik Tollefsen in entry for Tollef, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWLB-NQY : 23 June 2020), Christian Frederik Tollefsen in entry for Tollef, 1841.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWLB-NQY"
+    },
+    {
+      "id": "SW2Z-ZGJ",
+      "title": "Christian Frederik Tollefsen in entry for Marthe Marie, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWLB-MVR : 23 June 2020), Christian Frederik Tollefsen in entry for Marthe Marie, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWLB-MVR"
+    },
+    {
+      "id": "SW2X-7QR",
+      "title": "Christian Fredrik Tollefsen in entry for Tollef Christiansen, \"Norway, Marriages, 1660-1926\"",
+      "citation": "\"Norway, Marriages, 1660-1926\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N71Q-13G : 20 February 2020), Christian Fredrik Tollefsen in entry for Tollef Christiansen, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N71Q-13G"
+    },
+    {
+      "id": "3R8X-1H8",
+      "title": "Christian Fr. Tollefsen, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Q3-N9SX : Sun Jan 19 21:37:57 UTC 2025), Entry for Hanne Serine and Christian Fr. Tollefsen, 7 Oct 1855.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Q3-N9SN"
+    },
+    {
+      "id": "QF4S-7SX",
+      "title": "Kristian Fredrik Tollefsen Birkeland, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Q7-KQMV : Mon Jan 06 08:36:44 UTC 2025), Entry for Ole Kristiansen Hoiland and Kristian Endresen, 17 Sep 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Q7-KQML"
+    },
+    {
+      "id": "SW2Z-Z4X",
+      "title": "Christian Fredrik Tollefsen in entry for Inger Christine, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7PM-CFC : 23 June 2020), Christian Fredrik Tollefsen in entry for Inger Christine, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7PM-CFC"
+    },
+    {
+      "id": "3R8F-MTC",
+      "title": "Christian Fredrik Tollefsen, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Q7-8ZH4 : Mon Mar 11 01:26:26 UTC 2024), Entry for Tollef Christiansen Birksland and Christian Fredrik Tollefsen, 21 Jul 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Q7-8ZHH"
+    },
+    {
+      "id": "QJH6-85K",
+      "title": "Christine Frederik Tollefsen, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QQ-6Y65 : Thu Jan 16 20:14:31 UTC 2025), Entry for Marthe Marie and Christine Frederik Tollefsen, 24 Mar 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68QQ-6Y6T"
+    },
+    {
+      "id": "MQV7-RGN",
+      "title": "Christian Frederik Tollefsen in entry for Marthe Marie, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWLB-MVR : 23 June 2020), Christian Frederik Tollefsen in entry for Marthe Marie, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWLB-MVR"
+    },
+    {
+      "id": "SW2Z-4YR",
+      "title": "Christian Frederik Tollefsen in entry for Tollef, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7RL-C8H : 23 June 2020), Christian Frederik Tollefsen in entry for Tollef, 1841.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7RL-C8H"
+    },
+    {
+      "id": "3SV9-LYK",
+      "title": "Christian Fredrik Tollefsen in entry for Inger Serine Tollefsen, \"Norway, Burials, 1666-1927\"",
+      "citation": "\"Norway, Burials, 1666-1927\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NWL9-16L : 20 February 2020), Christian Fredrik Tollefsen in entry for Inger Serine Tollefsen, 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWL9-16L"
+    },
+    {
+      "id": "3R8X-1T4",
+      "title": "Christian Fredrik Tollefsen, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Q3-T1GD : Tue Jul 09 15:25:59 UTC 2024), Entry for Inger Christine and Christian Fredrik Tollefsen, 23 Nov 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Q3-T1GX"
+    },
+    {
+      "id": "3SV9-GGQ",
+      "title": "Christian Tollefsen Birkeland in entry for Joachim Engebretsen Grude, \"Norway, Marriages, 1660-1926\"",
+      "citation": "\"Norway, Marriages, 1660-1926\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N7RW-3DG : 20 February 2020), Christian Tollefsen Birkeland in entry for Joachim Engebretsen Grude, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7RW-3DG"
+    },
+    {
+      "id": "3R8X-1V1",
+      "title": "Christian Frerik Tollefsen, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Q3-5XXC : Fri Jul 12 23:00:29 UTC 2024), Entry for Christoffer and Christian Frerik Tollefsen, 23 Sep 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Q3-5XXD"
+    },
+    {
+      "id": "QJH6-DTY",
+      "title": "Christian T. Birkeland in entry for Joachim Engebretsen Grude, \"Norway, Marriages, 1660-1926\"",
+      "citation": "\"Norway, Marriages, 1660-1926\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N717-HS2 : 20 February 2020), Christian T. Birkeland in entry for Joachim Engebretsen Grude, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N717-HS2"
+    },
+    {
+      "id": "SW2Z-ZC3",
+      "title": "Christian Fredrik Tollefsen in entry for Inger Christine, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7PM-CFC : 23 June 2020), Christian Fredrik Tollefsen in entry for Inger Christine, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7PM-CFC"
+    },
+    {
+      "id": "SW2X-4YR",
+      "title": "Christian Frederik Tollefsen in entry for Tollef Christiansen, \"Norway, Marriages, 1660-1926\"",
+      "citation": "\"Norway, Marriages, 1660-1926\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N7R7-KJZ : 20 February 2020), Christian Frederik Tollefsen in entry for Tollef Christiansen, 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7R7-KJZ"
+    },
+    {
+      "id": "QF4S-7LZ",
+      "title": "Christian Frederik Tollefsen Birkeland, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Q7-N2MT : Tue Jul 16 09:26:57 UTC 2024), Entry for Ole Christiansen Hoiland and Christian Endresen, 17 Sep 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Q7-N293"
+    },
+    {
+      "id": "SW2Z-CVC",
+      "title": "Christian Frederik Tollefsen in entry for Marthe Marie, \"Norway, Baptisms, 1634-1927\"",
+      "citation": "\"Norway, Baptisms, 1634-1927\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N7RL-KRD : 23 June 2020), Christian Frederik Tollefsen in entry for Marthe Marie, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7RL-KRD"
+    },
+    {
+      "id": "3R8F-MQM",
+      "title": "Christian Fredrik Tollefsen, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QS-WPZN : Wed Jul 10 05:03:53 UTC 2024), Entry for Enger Christine and Christian Fredrik Tollefsen, 23 Nov 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68QS-WPZJ"
+    },
+    {
+      "id": "S6NS-6YL",
+      "title": "Kristian Fredrik Tollefsen Birkeland in entry for Ole Kristiansen Höiland, \"Norway, Marriages, 1660-1926\"",
+      "citation": "\"Norway, Marriages, 1660-1926\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:N7BY-JFM : 20 February 2020), Kristian Fredrik Tollefsen Birkeland in entry for Ole Kristiansen Höiland, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N7BY-JFM"
+    },
+    {
+      "id": "3R8F-MJM",
+      "title": "Christian F. J. Berkeland, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QS-CGQ3 : Sun Jan 19 23:17:12 UTC 2025), Entry for Christopher and Christian F. J. Berkeland, 23 Sep 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68QS-CGQQ"
+    },
+    {
+      "id": "QJH6-X7R",
+      "title": "Christian Henrik Tollefsen, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QQ-HWBM : Sun Jan 19 21:34:14 UTC 2025), Entry for Tollef and Christian Henrik Tollefsen, 8 Aug 1841.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68QQ-HWBS"
+    },
+    {
+      "id": "3R8F-MP6",
+      "title": "Christian Frederik Birkeland, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QQ-PP3H : Fri Mar 08 20:45:47 UTC 2024), Entry for Christian Frederik Birkeland, 31 Dec 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68QQ-PP3H"
+    },
+    {
+      "id": "SW2Z-8XQ",
+      "title": "Christian Frederick H. Birkeland, \"Norway, Burials, 1666-1927\"",
+      "citation": "\"Norway, Burials, 1666-1927\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NWVC-G5W : 20 February 2020), Christian Frederick H. Birkeland, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NWVC-G5W"
+    }
+  ]
+}

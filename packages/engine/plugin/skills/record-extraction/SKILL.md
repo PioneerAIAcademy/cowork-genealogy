@@ -151,6 +151,20 @@ Record data arrives in one of four ways:
    the image; when even that is blocked, log the gap and continue via
    indexes rather than stopping the research.
 
+   **A required identifying name you flag as suspect is not confirmed by
+   the index alone.** When the element that *keys identity* — a
+   patronymic, a surname, a father's name on a baptism — is transcribed
+   in a way you judge a likely mistranscription (an out-of-place
+   patronymic, a spelling no other record corroborates), treat the
+   indexed value as a lead, not a conclusion: read the original register
+   image (`image_read`, or `volume_search` to locate it) to confirm the
+   spelling before recording the assertion as established. If the image
+   is unreachable, record the name **tentative** — keep the uncertain
+   text in `value` with `[?]`, explain the doubt in `notes`, and name
+   original-image confirmation as the outstanding step. (This is how an
+   index OCR slip — a patronymic like "Aadnesen" read as "Nadnesen" —
+   becomes a wrong father in the tree.)
+
 ## Steps
 
 **Read inputs once, up front.** Before Step 1, read `research.json` and
@@ -420,10 +434,18 @@ classification:
 it.** A stated age on a 1850 census is `direct` even though the
 informant was a household member, not the subject; *who* reported is
 captured by `informant_proximity` (`household_member`), not by
-`evidence_type`. The exception is the death-certificate parents'-
-names case above, where the certificate creator only records what the
-informant said — and a fact recorded from an informant who didn't
-witness it is `indirect` even when stated.
+`evidence_type`. The exception is the death-certificate case above,
+where the certificate creator only records what the informant said —
+and a fact recorded from an informant who did **not** witness the event
+it describes is `indirect` even when stated. This is **not** limited to
+the parents' names: on a death certificate the *deceased's own* birth
+date, birthplace, and parents are all `indirect` when the informant
+(e.g., the surviving spouse) was not present at that birth abroad and
+is relaying secondhand knowledge. Contrast a census, where a household
+member reporting facts about their own household has firsthand
+knowledge, so those stated facts stay `direct`. The test: did the
+informant have primary knowledge of *this* fact? If not, it is
+`indirect` even though the record states it plainly.
 
 **Age vs. birth year (separate assertions, different evidence types):**
 when the record states "age 32", the `age` assertion (`value: "32"`) is
@@ -490,15 +512,27 @@ failure.
    arrived via a narrow, single-result `record_search` that felt like a
    direct lookup — the tool used is what decides this field, not how
    confident the match felt.
-1. Make the `research_append` call (the batched `ops` from 5a/5b
-   below). Wait for its return.
-2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
-   `add_person` ops). Wait for its return.
+1. Make the `tree_edit` call FIRST (5c/5d, source `S` + any sibling
+   `add_person` ops) and read back the assigned `S` id. The source you
+   append to research.json carries a required
+   `gedcomx_source_description_id` pointing at this `S` entry, and
+   `research_append` rejects the batch if that `S` id does not yet
+   exist in tree.gedcomx.json — so the tree side must be written first.
+2. Make the `research_append` call (the batched `ops` from 5a/5b),
+   stamping each source op's `gedcomx_source_description_id` with the
+   `S` id from step 1. Wait for its return.
 3. If 5d sibling stubs fired: make the second `tree_edit` call for
-   the `ParentChild` edges. Wait for its return.
+   the `ParentChild` edges (using the sibling `I` ids from step 1).
+   Wait for its return.
 4. **Only after the tool returns are you allowed to summarize
    what was persisted.** Match what you write to what the tool log
    actually shows.
+
+Do **not** call `research_append` first and let its
+`gedcomx_source_description_id` reference an `S` that `tree_edit` has
+not created yet — the write is rejected (`gedcomx_source_description_id
+'S…' not found in tree.gedcomx.json sources`) and nothing persists,
+forcing a wasted retry.
 
 **No post-write re-validation.** `research_append` and `tree_edit`
 validate-on-write and keep a one-deep `.bak`; a successful return is
@@ -522,7 +556,10 @@ op per assertion — including each negative). The batch validates once
 and writes once; on any per-op failure it returns
 `{ ok: false, errors: ["ops[i]: <msg>"] }` and writes NOTHING, so
 surface and fix rather than retrying blindly. The tool assigns each
-id; do not invent one.
+`src_`/assertion `id`; do not invent one. **But** the source op's
+`gedcomx_source_description_id` is not tool-assigned — set it to the
+`S` id the step-1 `tree_edit` `add_source` returned (this is why that
+call runs first); never predict or guess the `S`.
 
 **Intra-batch `source_id` prediction.** The source's assigned id is
 `(highest existing src_ in research.json) + 1`, zero-padded to 3 —
@@ -637,14 +674,11 @@ The subject's own person and ParentChild edges are out of scope —
 
 ### 6. Present results
 
-**OUTPUT ECONOMY (latency).** The source, assertions, and any tree stubs
-are ALREADY persisted — the `research_append` and `tree_edit` returns
-confirm every assigned id. Wall-clock time is ~linear in the tokens the
-model generates (~16-20 ms/token, independent of model tier), so the
-single biggest latency lever is generating fewer tokens. Do NOT reproduce
-the full per-assertion tables, per-field walkthroughs, or the
-classification rationale in chat — that content lives in the persisted
-artifact, and the return already confirmed each assigned id.
+**OUTPUT ECONOMY.** The source, assertions, and tree stubs are ALREADY
+persisted — the `research_append` / `tree_edit` returns confirm every
+assigned id. Do NOT reproduce the full per-assertion tables, per-field
+walkthroughs, or classification rationale in chat; that lives in the
+persisted artifact. Fewer tokens = lower latency.
 
 Present a terse summary, **≤10 lines**:
 - source id (`src_` + `S`),

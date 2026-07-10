@@ -12,6 +12,7 @@ import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateParsed } from "../validation/validator.js";
 import { atomicWriteBoth } from "../utils/project-io.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   MergeInputError,
   readProjectJson,
@@ -36,10 +37,10 @@ export async function mergeTreePersons(
 
   try {
     // 1. Read both files fresh from disk.
-    const tree = (await readProjectJson(
-      projectPath,
-      "tree.gedcomx.json",
-    )) as SimplifiedGedcomX;
+    const treeSanitized = sanitizeTree(
+      await readProjectJson(projectPath, "tree.gedcomx.json"),
+    );
+    const tree = treeSanitized.tree;
     const research = await readProjectJson(projectPath, "research.json");
 
     // 2. Capture pre-merge persons (both sides live in the one tree) for the
@@ -90,7 +91,10 @@ export async function mergeTreePersons(
       pairs,
       newRelatives: [],
       researchRefsUpdated,
-      validation: { valid: true, warnings: formatIssues(validation.warnings) },
+      validation: {
+        valid: true,
+        warnings: [...treeSanitized.warnings, ...formatIssues(validation.warnings)],
+      },
     };
   } catch (e) {
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };

@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_person_evidence_019",
+    "skill": "person-evidence",
+    "name": "A degenerate same_person score on an unresolvable tree id must not veto a match",
+    "type": "positive",
+    "description": "Link assertion a_001 — the clean 1850 census record for 'Patrick Flynn' (exact name, age 5, Ireland, Schuylkill County, in Thomas Flynn's household) — to subject I1. The tree candidate I1 is a local stub with no FamilySearch ARK, so same_person cannot resolve it and returns a degenerate near-zero score (0.005). That number reflects the missing ARK, not a real mismatch: unlike ut_person_evidence_013 (where a real 0.32 came from a name variant), here the name and every identifier match exactly and the only reason the score is low is the unresolvable id. person-evidence must treat the score as no-score-available, fall back to qualitative correlation, and still create the link — noting in the rationale that the score was uninformative and why.",
+    "tags": ["person-evidence", "same-person", "degenerate-score", "unresolvable-id", "local-stub"]
+  },
+  "input": {
+    "user_message": "Link assertion a_001 — the clean 1850 census record for 'Patrick Flynn' — to the right person in the tree.",
+    "scenario": "flynn-record-matching"
+  },
+  "mcp_fixtures": ["same-person-flynn-degenerate"],
+  "judge_context": [
+    "same_person returns a degenerate 0.005 because the tree candidate I1 is a local stub with no FamilySearch ARK — the id could not resolve, so the score reflects the missing ARK, not a name/identifier mismatch",
+    "person-evidence must recognize the score as degenerate / uninformative (near-zero from an unresolvable id) rather than reading it as a genuine low-similarity signal",
+    "person-evidence must still create a person_evidence entry linking a_001 to I1 — the qualitative correlation is overwhelming: exact name match (Patrick Flynn), age 5 in 1850, born Ireland, Schuylkill County, in the household of Thomas Flynn",
+    "The rationale should state that the same_person score was uninformative because the tree candidate lacked a resolvable ARK, and that the link rests on qualitative correlation (Step 3), not on the number",
+    "It is WRONG to drop, defer, or flag-as-weak the a_001 link on the basis of the 0.005 score — the degenerate number must not act as a veto"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}
