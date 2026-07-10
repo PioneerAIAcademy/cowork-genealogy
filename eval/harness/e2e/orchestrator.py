@@ -565,6 +565,17 @@ async def _run_agent(
         env={"ENABLE_TOOL_SEARCH": "true", **env_for_sdk(resolve_auth())},
         model=fixture.agent_model,
         max_turns=fixture.caps.max_turns,
+        # The SDK's stdio transport defaults to a 1 MiB max_buffer_size for a
+        # single JSON message (claude_agent_sdk _DEFAULT_MAX_BUFFER_SIZE). A
+        # live image_read response (base64, ~1.33x the raw bytes) plus its
+        # JSON-RPC/MCP envelope can exceed that even when the tool's own
+        # 700KB inline-image guard (packages/engine/mcp-server/src/tools/
+        # image-read.ts MAX_INLINE_IMAGE_BYTES) has already passed the image
+        # through — observed killing this exact e2e run on a real FamilySearch
+        # death-certificate image (2026-07-08). Raised generously here since
+        # this is eval-harness-only config; it does not change production
+        # Cowork behavior or the tool's own inline-image ceiling.
+        max_buffer_size=10 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],
