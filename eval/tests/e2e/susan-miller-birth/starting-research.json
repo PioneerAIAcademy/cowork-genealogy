@@ -4,8 +4,8 @@
     "objective": "When and where was Susan Miller born?",
     "subject_person_ids": ["2BLL-3JS"],
     "status": "active",
-    "created": "2026-07-06T00:00:00Z",
-    "updated": "2026-07-06T00:00:00Z"
+    "created": "2026-07-06",
+    "updated": "2026-07-06"
   },
   "researcher_profile": {
     "experience_level": "intermediate",

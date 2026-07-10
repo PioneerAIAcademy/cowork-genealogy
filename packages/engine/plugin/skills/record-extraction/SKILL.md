@@ -236,6 +236,18 @@ List every person mentioned in the record and assign a `record_role`:
   `not_listed`, or `missing`: downstream validators, search-records
   triage, and proof-conclusion all key off the literal `absent` token
   to recognize a documented null finding
+- **A differently-surnamed household head is a FAN lead, not noise.**
+  When the subject's family group is enumerated inside a household
+  headed by someone with a different surname, do not default to
+  "boardinghouse" or "lodgers." Note the head as possible kin of
+  unspecified relationship — a parent, sibling, or in-law of either
+  spouse are all plausible, and any of them could surface a maiden
+  name or other lead — and surface the possibility in your
+  presentation for `hypothesis-tracking` to investigate. Do not assert
+  a specific relationship (e.g., "the wife's father") without
+  evidence. Other unrelated surnames in the dwelling may still
+  indicate a boardinghouse; report the ambiguity rather than resolving
+  it silently.
 
 ### 3. Extract assertions
 

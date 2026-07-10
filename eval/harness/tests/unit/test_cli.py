@@ -13,6 +13,22 @@ sys.path.insert(0, str(_HARNESS_ROOT))
 import run_tests  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _fresh_mcp_build(monkeypatch):
+    """Isolate these tests from the engine-build preflight.
+
+    Every test here monkeypatches away real execution, so none needs the
+    compiled engine — but main()'s staleness gate checks
+    packages/engine/mcp-server/build/ before anything else. In a checkout
+    without a build (a fresh git worktree; the link-worktree hook links
+    node_modules but not build/), the gate exits 2 and every exit-code
+    assertion fails with `assert 2 == ...` instead of the behavior under
+    test. The gate itself is production behavior, deliberately untested
+    here.
+    """
+    monkeypatch.setattr(run_tests, "_check_mcp_build_fresh", lambda: [])
+
+
 def test_no_args_prints_help_and_exits_zero(capsys):
     rc = run_tests.main([])
     assert rc == 0

@@ -521,6 +521,7 @@
       "person2": "KNSY-35C",
       "facts": [
         {
+          "id": "rel-2-marriage-1",
           "type": "Marriage",
           "date": "16 DEC 1915",
           "standard_date": "16 Dec 1915",
