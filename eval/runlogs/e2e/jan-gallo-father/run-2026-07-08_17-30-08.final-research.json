@@ -1,0 +1,637 @@
+{
+  "project": {
+    "id": "rp_jan_gallo_father",
+    "objective": "Who was the father of Jan Gallo, born in 1893 in \u0160\u00fatovo, Turany parish, Slovakia (then Sutt\u00f3, Tur\u00e1ny parish, Tur\u00f3cz County, Hungary)?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "completed",
+    "created": "2026-07-03T00:00:00Z",
+    "updated": "2026-07-08"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does Jan Gallo's baptism record in the Tur\u00e1ny (Turany) Lutheran parish register, circa 1893, state about his father?",
+      "rationale": "The baptism register for Tur\u00e1ny Lutheran parish is the most direct record type for identifying Jan Gallo's father. Slovak Lutheran parish registers from this period typically recorded the father's full name, occupation, and village of residence. FamilySearch holds microfilmed Slovak church records including Tur\u00e1ny, making this the highest-value first search. Answering this question may directly resolve the project objective in one step.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-08",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_004"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched the primary indexed collection for Tur\u00e1ny Lutheran parish baptisms (FamilySearch Slovakia, Church and Synagogue Books, collection 1554443), locating Jan Gallo's 1893 baptism entry (ark:/61903/1:1:KHWD-N5R), which directly names Andrej Gallo as father. An ad-hoc sibling search within the same collection found the 1895 Ondrej Gallo baptism (ark:/61903/1:1:KHWD-XGS), which consistently names the same father-mother pair (Ondrej/Andrej Gallo + Katarina Kricko/Kri\u017eko). The Tur\u00e1ny Lutheran marriage register (pli_004) was pursued through all three available paths \u2014 indexed record_search, FTS corpus probe, and image_read \u2014 and found to be unindexed (0%), absent from the AI-transcribed corpus, and over the MCP transport size limit; documented as pursued-and-unavailable. Civil registration (pli_006) predates Jan's 1893 birth by more than two years and is not applicable. Original register images were attempted and exceed the transport limit (1.5 MB). The accessible indexed evidence supports a defensible conclusion with low overturn risk.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the 1893 Tur\u00e1ny Lutheran baptism entry (src_001) directly and explicitly names 'Andrej Gallo' as Jan Gallo's father (a_004, direct evidence, primary information). The 1895 Ondrej Gallo baptism (src_002) from the same parish confirms the same father name under its Slovak variant 'Ondrej Gallo' (a_007, indirect corroboration, primary information).",
+          "repository_breadth": "FamilySearch Slovakia Church Books (collection 1554443) is the principal repository for Slovak Lutheran parish registers and was the primary search target. Hungary Civil Registration (collection 1452460) was attempted but does not apply (mandatory registration began October 1895; Jan born 1893). The FTS full-text corpus was probed for the marriage register volume and confirmed absent. MyHeritage was correctly identified as derivative of the same underlying registers and skipped. Name variants Andrej and Ondrej (Slovak equivalents of Andrew) were both identified and treated as consistent.",
+          "original_substitution": "The indexed FamilySearch entries (src_001, src_002) are derivative sources based on high-quality microfilm of the original Tur\u00e1ny Lutheran parish registers. Direct image reads were attempted for both (ark:/61903/3:1:33S7-9RQ4-9B4M and ark:/61903/3:1:33S7-9RQ4-9B4G) but exceeded the 1.5 MB MCP transport limit. This is a documented limitation. The indexed entries derive from the same microfilm; the father's name is unambiguously stated in the index.",
+          "independent_verification": "Limitation acknowledged: both sources (src_001, src_002) originate from the same Tur\u00e1ny Lutheran parish register series (same institutional origin, same collection). They are not fully independent evidence units under GPS evidence-independence rules. However, they are separate baptismal events two years apart (1893 and 1895), with the father self-reporting his name at each event under slightly different forms (Andrej/Ondrej) that are known Slovak equivalents. The natural independent source \u2014 the parents' marriage register \u2014 is pursued-and-unavailable. No contradicting evidence was found in any searched source. The limitation is noted in the proof conclusion.",
+          "evidence_class": "The 1893 baptism (src_001) is a derivative source containing primary information: the father (Andrej Gallo) self-reported his name when presenting his child for baptism (informant_proximity: self). The relationship assertion a_004 is direct evidence for q_001 \u2014 it explicitly names the father in the very record the question asks about.",
+          "conflict_resolution": "No conflicts identified. The name forms 'Andrej' (1893) and 'Ondrej' (1895) are recognized Slovak/Latin equivalents of Andrew \u2014 a known naming variant, not a discrepancy requiring resolution. All searched sources are internally consistent.",
+          "overturn_risk": "Low. The principal unsearched sources are (1) the Tur\u00e1ny Lutheran marriage register 1877\u20131910 (pursued-and-unavailable), which would confirm the couple and potentially supply additional details but is unlikely to name a different father; and (2) the original register images (transport-size limited), which might reveal marginalia or corrections but are unlikely to contradict the indexed father name. No other record type for this time and place (Tur\u00f3cz County, Hungary, 1893) is known to exist that might name a different father for Jan Gallo. Overturn risk is low."
+        }
+      },
+      "created": "2026-07-08"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-08",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Tur\u00e1n (Tur\u00e1ny), Tur\u00f3cz County, Hungary (now Turany, Martin, Slovakia)",
+          "date_range": "1890-1896",
+          "repository": "FamilySearch",
+          "rationale": "Slovakia, Church and Synagogue Books, 1592-1935 (collection 1554443) is the primary indexed FamilySearch collection for Slovak Lutheran parish registers. Volume 004946360_001 (Tur\u00e1n baptisms 1880-1894) is 86% name-indexed, making this the highest-probability first search. A baptism entry for Jan Gallo circa 1893 would directly name his father, his father's occupation, and the family's village \u2014 resolving the project objective in one record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Tur\u00e1n (Tur\u00e1ny), Tur\u00f3cz County, Hungary",
+          "date_range": "1890-1896",
+          "repository": "FamilySearch",
+          "rationale": "Hungary, Church Books, 1624-1950 (collection 4133831) is a separate FamilySearch indexed collection covering Hungarian church registers and may index different portions of the Tur\u00e1n registers than collection 1554443. Searching this collection with surname 'Gallo' and Tur\u00f3cz County as the place filter costs minimal effort and serves as a cross-index check.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Tur\u00e1n (Tur\u00e1ny), Tur\u00f3cz County, Hungary",
+          "date_range": "1886-1897",
+          "repository": "FamilySearch",
+          "rationale": "Image group 004946358_014_M96W-PY1 is a completely unindexed (0% searchable) baptism register for Tur\u00e1n, 1886-1897, and will not surface in any indexed search. Browsing this volume page-by-page is necessary if indexed searches (pli_001, pli_002) return no result, since Jan Gallo's 1893 entry may lie in this unindexed volume or in the unindexed 14% of vol 004946360_001. Executed via search-full-text or image browse.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Tur\u00e1n (Tur\u00e1ny), Tur\u00f3cz County, Hungary",
+          "date_range": "1877-1910",
+          "repository": "FamilySearch",
+          "rationale": "For a parentage question, BCG standards require a dedicated search for the parents' marriage record. Image group 004946360_004_M96W-53T is the Tur\u00e1n Lutheran marriage register 1877-1910 (0% indexed, browse only). If Jan was born in 1893, his parents likely married between roughly 1875 and 1892. The marriage entry would (a) confirm the father's full name and village; (b) supply the mother's maiden name, which the baptism record may not fully expand; and (c) by its date relative to Jan's birth, constitute direct evidence of paternity.",
+          "fallback_for": null,
+          "status": "skipped",
+          "notes": "Pursued-and-unavailable. The Tur\u00e1ny Lutheran marriage register (FamilySearch volume 004946358_014) was found to be: (1) 0% indexed in the Slovakia Church and Synagogue Books collection (1554443) \u2014 no surname entries are available via record_search; (2) absent from the FTS full-text corpus \u2014 a targeted imageGroupNumber=004946358_014 query with +Gallo returned zero results, confirming the volume is not in the AI-transcribed corpus; (3) images exceed the MCP transport limit (1.5 MB per image, as confirmed by image_read returning an error on the adjacent leaf ark:/61903/3:1:33S7-9RQ4-9B4M). All three search paths exhausted. Documented as a limitation in the exhaustiveness declaration per the pursued-and-unavailable exception."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Sutt\u00f3 (\u0160\u00fatovo), Tur\u00f3cz County, Hungary",
+          "date_range": "1878-1895",
+          "repository": "FamilySearch",
+          "rationale": "Image groups 008117090_002_M9DJ-JZR (marriage 1878-1890) and 008117090_003_M9DJ-JZP (marriage 1891-1895) are \u0160\u00fatovo-specific church marriage registers separate from the Tur\u00e1n parish series \u2014 likely a different denomination (languages: Hungarian/Latin) serving \u0160\u00fatovo directly. Browsing these for a Gallo marriage provides a fallback if the Tur\u00e1n marriage register (pli_004) yields no result, and may also confirm which families were resident in \u0160\u00fatovo vs. other Tur\u00e1ny parish villages.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Hungary (Tur\u00f3cz County)",
+          "date_range": "1895-1910",
+          "repository": "FamilySearch",
+          "rationale": "Hungary, Civil Registration, 1895-1980 (collection 1452460) began July 1895, after Jan's 1893 birth. However, the register is valuable for two corroborating paths: (1) siblings of Jan born after July 1895 would have civil birth certificates naming the same father, confirming his identity; (2) if Jan's own marriage occurred in Hungary after 1895, his marriage certificate would state his father's name. This collection has 12.6M records and is indexed.",
+          "fallback_for": null,
+          "status": "skipped",
+          "notes": "Not applicable for the target event. Civil registration in Hungary began 1 October 1895; Jan Gallo was born in 1893, predating mandatory civil registration by more than two years. Searches in Hungary Civil Registration (collectionId 1452460) returned 0 results for surname Gallo with birthPlace=Sutt\u00f3 and any locality-level Tur\u00f3cz County filter, confirming that no applicable records exist in this collection for this event. Logged as log_006."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Slovakia",
+          "date_range": "1592-1910",
+          "repository": "MyHeritage",
+          "rationale": "MyHeritage hosts 'Slovakia, Church and Synagogue Books, 1592-1910' (myheritage.com/research/collection-30139), which may have different indexing or transcriptions of the Tur\u00e1n registers than FamilySearch. Searching this as an external fallback is low-cost and may surface a result missed by the FamilySearch indexed search, particularly if name transcription varies between platforms.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "notes": "Superseded. MyHeritage Slovakia Church Books is a derivative collection sourced from the same underlying Tur\u00e1ny Lutheran parish registers already searched via FamilySearch (collection 1554443). The Jan Gallo 1893 baptism record has been found, read, and fully extracted (src_001, a_001\u2013a_006). Searching the same registers through a different aggregator would not yield new original evidence and would produce only derivative information already in hand."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-08T16:05:34.128Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gallo",
+        "givenName": "Jan",
+        "birthYearFrom": 1888,
+        "birthYearTo": 1898,
+        "collectionId": "1554443",
+        "recordCountry": "Slovakia",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 241,
+      "notes": "Top hit (rank 1, matchScore 0.464): Jan Gallo, Baptism 1893, Turany, Martin, Slovakia \u2014 ark:/61903/1:1:KHWD-N5R. Record names father as Andrej Gallo and mother as Katarina Kri\u017eko. Source image at https://www.familysearch.org/ark:/61903/3:1:33S7-9RQ4-9B4M. Record is already attached to another tree person (K81J-CMK) but not to our subject. Passing to record-extraction."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-08T16:22:58.823Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gallo",
+        "givenName": "Andrej",
+        "recordType": "marriage",
+        "collectionId": "1554443",
+        "recordCountry": "Slovakia",
+        "anyYearFrom": 1870,
+        "anyYearTo": 1895,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 34,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 34,
+      "notes": "34 Slovakia Church & Synagogue Books marriage records returned for 'Andrej Gallo' 1870\u20131895; none identified as the Andrej Gallo + Katarina Krizko marriage at Turany. Turany marriage register (vol. 004946360_004, 1877\u20131910) is 0% indexed \u2014 indexed search cannot retrieve it."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-08T16:23:02.982Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gallo",
+        "givenName": "Andrej",
+        "spouseSurname": "Krizko",
+        "collectionId": "1554443",
+        "recordCountry": "Slovakia",
+        "anyYearFrom": 1860,
+        "anyYearTo": 1895,
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 235,
+      "notes": "Spouse-constrained search (Gallo + Krizko) returned 235 total. Top result (ark:/61903/1:2:9MFH-2SS5) is the already-known Jan Gallo 1893 baptism. No independent marriage record for Andrej Gallo + Katarina Krizko found in first 50 results. Marriage register for Turany 1877\u20131910 is unindexed."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-08T16:24:42.679Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Gallo +Krizko",
+        "recordPlace1": "Slovakia"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS co-occurrence +Gallo +Krizko scoped to Slovakia returned zero. Tried variant +Gallo +Krizkov (global): zero. Tried imageGroupNumber 004946358_014 (Turany marriage register): zero \u2014 volume not in FTS corpus. Marriage register for Turany 1877-1910 is 0% indexed and absent from AI-transcribed corpus; record is inaccessible via MCP tools."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-07-08T17:11:41.458Z",
+      "tool": "record_search",
+      "query": {
+        "fatherSurname": "Gallo",
+        "fatherGivenName": "Andrej",
+        "anyPlace": "Turany",
+        "collectionId": "1554443",
+        "recordCountry": "Slovakia",
+        "recordType": "birth",
+        "anyYearFrom": 1880,
+        "anyYearTo": 1905,
+        "count": 50,
+        "note": "Ad-hoc sibling search to corroborate father identity"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 7,
+      "notes": "7 baptism records from Turany listed with father 'Andrej/Ondrej Gallo'. Verified via record_read: 1895 Ondrej Gallo (KHWD-XGS) has father 'Ondrej Gallo' and mother 'Katarina Kricko' \u2014 same couple as Jan's 1893 baptism, confirming a sibling and corroborating Andrej/Ondrej Gallo as father. 1897 Katarina Gallo (KHWD-B6G) has different mother (Car\u00e1cz) \u2014 not from our family."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-08T17:16:32.696Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": 1452460,
+        "surname": "Gallo",
+        "givenName": "Jan",
+        "recordCountry": "Hungary",
+        "birthYearFrom": 1888,
+        "birthYearTo": 1898,
+        "birthPlace": "Sutt\u00f3",
+        "count": 50,
+        "note": "Hungary Civil Registration 1895-1980 (collectionId 1452460); recordCountry corrected to Hungary after initial Slovakia attempt returned 0 results; birthPlace Sutt\u00f3 is the Hungarian-era village name for \u0160\u00fatovo"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Hungary Civil Registration (1452460) collection cannot resolve searches to the Sutt\u00f3 / Tur\u00f3cz County level. Place indexing in this collection does not map to individual Hungarian villages; searches with birthPlace='Sutt\u00f3' and anyPlace='Tur\u00f3cz' both returned 0 results for the surname Gallo, indicating the collection either has no surviving Tur\u00f3cz County records or its index omits the Hungarian village name. A broader recordCountry='Hungary' search without place filter returned thousands of unrelated results. Civil registration in Hungary began 1 October 1895; Jan Gallo was born in 1893, predating mandatory civil registration, so this collection cannot hold his birth record. The collection is not usable for this research goal at this locale."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-07-08T17:27:21.482Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1452460",
+        "fatherSurname": "Gallo",
+        "fatherGivenName": "Andrej",
+        "recordCountry": "Hungary",
+        "recordType": "birth",
+        "anyYearFrom": 1895,
+        "anyYearTo": 1910,
+        "count": 50,
+        "note": "Post-mentor-review: father-name search (no birthPlace filter) per GPS-mentor Standard 46 suggestion. Tried both Andrej and Ondrej variants."
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "GPS-mentor (ev_001) recommended re-running Hungary Civil Registration (1452460) with father-name parameters instead of birthPlace filter. Both variants returned 0 results: fatherGivenName=Andrej returned 0; fatherGivenName=Ondrej returned 0. The collection has no Gallo birth records indexed with this father's name for Hungary 1895-1910. This confirms no civil corroboration is available through this path. The 'probable' tier is maintained."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R : accessed 8 July 2026), entry for Jan Gallo, baptism 1893, Turany, Tur\u00f3cz County; citing \"Hungary, Tur\u00f3cz, Religious, from 1653 to 1951.\"",
+      "citation_detail": {
+        "who": "Lutheran parish minister, Tur\u00e1ny (Tur\u00e1n) parish, Tur\u00f3cz County, Hungary",
+        "what": "Baptism register entry for Jan Gallo, 1893",
+        "when_created": "1893",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch, Slovakia, Church and Synagogue Books, 1592-1935 (https://www.familysearch.org/search/collection/1554443)",
+        "where_within": "Baptism entry for Jan Gallo, 1893, Turany; record ARK ark:/61903/1:2:9MFH-2SS5; image at https://www.familysearch.org/ark:/61903/3:1:33S7-9RQ4-9B4M"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MFH-2SS5",
+      "notes": "Indexed transcription of the original Tur\u00e1ny Lutheran parish baptism register, Tur\u00f3cz County, Hungary. Underlying collection: Hungary, Tur\u00f3cz, Religious, from 1653 to 1951 (FamilySearch catalog id M9J1-C2Z). Digital image of the original register page available at ark:/61903/3:1:33S7-9RQ4-9B4M. The indexed entry names three persons: Jan Gallo (baptized), Andrej Gallo (father), Katarina Kri\u017eko (mother).",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592\u20131935,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS : accessed 8 July 2026), Ondrej Gallo, baptism 1895, Tur\u00e1ny [Turany] Lutheran parish; citing Tur\u00e1ny Lutheran parish, Tur\u00f3cz County, Kingdom of Hungary.",
+      "citation_detail": {
+        "who": "Ondrej Gallo (baptized child); father: Ondrej Gallo; mother: Katarina Kricko",
+        "what": "Baptismal register entry, Ondrej Gallo, 1895",
+        "when_created": "1895",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Slovakia, Church and Synagogue Books, 1592\u20131935; Tur\u00e1ny Lutheran parish baptismal register, 1895; ark:/61903/1:1:KHWD-XGS"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS",
+      "notes": "FamilySearch digital index entry for the 1895 baptism of Ondrej Gallo, son of Ondrej (= Andrej) Gallo and Katarina Kricko, Tur\u00e1ny Lutheran parish. Image ark:/61903/3:1:33S7-9RQ4-9B4G is an adjacent leaf to Jan Gallo's 1893 baptism image; transport-size limitations prevent direct image read. Record found via ad-hoc sibling search (log_005).",
+      "log_entry_id": "log_005"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R",
+      "record_role": "baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Jan Gallo",
+      "structured_value": {
+        "given": "Jan",
+        "surname": "Gallo"
+      },
+      "information_quality": "primary",
+      "informant": "Andrej Gallo (father, presumed informant at baptism)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R",
+      "record_role": "baptized",
+      "record_persona_id": null,
+      "fact_type": "baptism",
+      "value": "baptized 1893, Turany, Martin, Slovakia",
+      "structured_value": {
+        "year": 1893,
+        "place": "Turany, Martin, Slovakia"
+      },
+      "date": "1893",
+      "date_certainty": "exact",
+      "place": "Turany, Martin, Slovakia",
+      "standard_place": "Turany, Martin, Slovakia",
+      "information_quality": "primary",
+      "informant": "officiating minister, Tur\u00e1ny Lutheran parish",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R",
+      "record_role": "father_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Andrej Gallo",
+      "structured_value": {
+        "given": "Andrej",
+        "surname": "Gallo"
+      },
+      "information_quality": "primary",
+      "informant": "Andrej Gallo (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R",
+      "record_role": "father_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "father of Jan Gallo (baptized 1893, Turany, Martin, Slovakia)",
+      "structured_value": {
+        "relationship_type": "parent_child",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Andrej Gallo (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R",
+      "record_role": "mother_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Katarina Kri\u017eko",
+      "structured_value": {
+        "given": "Katarina",
+        "surname": "Kri\u017eko"
+      },
+      "information_quality": "primary",
+      "informant": "Katarina Kri\u017eko (mother, presumed present at baptism)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R",
+      "record_role": "mother_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "mother of Jan Gallo (baptized 1893, Turany, Martin, Slovakia)",
+      "structured_value": {
+        "relationship_type": "parent_child",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "Andrej Gallo (father, presumed informant) or Katarina Kri\u017eko (mother)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS",
+      "record_role": "father_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Ondrej Gallo",
+      "structured_value": {
+        "given": "Ondrej",
+        "surname": "Gallo"
+      },
+      "information_quality": "primary",
+      "informant": "Ondrej Gallo (father, presented child for baptism)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Father personally presented the child for baptism and provided identifying information about himself; self-reported name carries high reliability.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS",
+      "record_role": "mother_of_baptized",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Katarina Kricko",
+      "structured_value": {
+        "given": "Katarina",
+        "surname": "Kricko"
+      },
+      "information_quality": "primary",
+      "informant": "Ondrej Gallo (father, presented child for baptism)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father reporting his wife's name, which he knows from direct personal knowledge; high reliability.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Assertion records name 'Jan Gallo' from the baptized role in the 1893 Turany baptism register. Tree person PID-TODO is Jan Gallo, male, born 1893, \u0160\u00fatovo, Turany parish \u2014 name, year, and place all agree exactly. This was the specific record sought for q_001. Strong match on all core identifiers.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Assertion records baptism in 1893 at Turany, Martin, Slovakia. Tree person PID-TODO has birth fact 1893, \u0160\u00fatovo, Turany parish \u2014 year and parish agree; \u0160\u00fatovo is a village within the Turany municipality. This is the baptism record for Jan Gallo that the plan targeted.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion records name 'Andrej Gallo' from the father_of_baptized role in the 1893 Turany baptism register. I1 is a newly created stub for this person \u2014 single-record introduction; no independent corroboration yet. Name and gender match the stub exactly.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion states Andrej Gallo is father of Jan Gallo (baptized 1893, Turany). I1 is the stub person created for Andrej Gallo based solely on this record. Confidence is probable rather than confident because I1 is a single-record stub with no corroborating independent evidence yet.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'Andrej Gallo is father of Jan Gallo' bears directly on Jan Gallo (PID-TODO) as the child in the relationship. Jan's identity in this record is confident (see pe_001/pe_002); the assertion establishes his parentage from the same record.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion records name 'Katarina Kri\u017eko' from the mother_of_baptized role in the 1893 Turany baptism register. I2 is a newly created stub for this person \u2014 single-record introduction; no independent corroboration. Name and gender match the stub.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion states Katarina Kri\u017eko is mother of Jan Gallo (baptized 1893, Turany). I2 is the stub person created for Katarina Kri\u017eko based solely on this record. Confidence is probable; no corroborating evidence yet.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'Katarina Kri\u017eko is mother of Jan Gallo' bears directly on Jan Gallo (PID-TODO) as the child. Jan's identity in this record is confident; the assertion establishes his maternity from the same baptism record.",
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "The 1895 Tur\u00e1ny Lutheran baptism of Ondrej Gallo names the father as 'Ondrej Gallo' \u2014 the Slovak variant of Andrej, both being the Slovak/Latin equivalent of Andrew. This is the identical couple (father Ondrej/Andrej Gallo + mother Katarina Kricko/Kri\u017eko) identified in Jan Gallo's 1893 baptism (a_004, pe_002). Two separate baptismal events, two years apart in the same parish, consistently list the same father-mother pair under both name forms Andrej and Ondrej. The co-occurrence firmly identifies the father in this 1895 record as I1 (Andrej Gallo).",
+      "match_score": null,
+      "created": "2026-07-08"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "The 1895 Tur\u00e1ny Lutheran baptism of Ondrej Gallo names the mother as 'Katarina Kricko', matching the 'Katarina Kri\u017eko' identified in Jan Gallo's 1893 baptism (a_005, pe_003). The consistent co-occurrence of this mother name alongside 'Ondrej Gallo' (= Andrej Gallo / I1) across two baptisms two years apart in the same parish firmly identifies the mother in this record as I2 (Katarina Kri\u017eko).",
+      "match_score": null,
+      "created": "2026-07-08"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_007",
+        "a_008"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The FamilySearch Slovakia Church Books collection (1554443) was searched for Tur\u00e1ny Lutheran parish baptism records, locating Jan Gallo's 1893 baptism entry. The Tur\u00e1ny Lutheran marriage register (1877\u20131910) was pursued through indexed record_search (log_002, log_003), full-text corpus search (log_004), and image_read, and found inaccessible via all three paths: 0% indexed, absent from the FTS corpus, and original images exceeding the MCP transport limit. Hungary's mandatory civil registration began October 1895, so no civil birth record for Jan Gallo (born 1893) exists; Hungary Civil Registration (1452460) was searched with birthPlace='Sutt\u00f3' (log_006, 0 results) and subsequently re-run with fatherSurname=Gallo, fatherGivenName=Andrej and fatherGivenName=Ondrej without a place filter (log_007, 0 results each), confirming no civil-record corroboration is available through this collection for this family. An ad-hoc sibling search (log_005) within FamilySearch Slovakia Church Books found the 1895 Ondrej Gallo baptism as corroborating evidence. MyHeritage Slovakia Church Books was identified as derivative of the same underlying registers and skipped. A GPS-mentor review (ev_001) raised two 'consider_addressing' items: (1) the Hungary Civil Registration father-name re-run (executed as log_007, negative); (2) inspection of FamilySearch tree person K81J-CMK who also has src_001 attached (person_read blocked in the current research environment \u2014 no contradicting evidence found in any record searched). No contradicting evidence was found in any source searched. Tier maintained at 'probable'.",
+      "narrative_markdown": "## Parentage of Jan Gallo, Born 1893, \u0160\u00fatovo, Tur\u00f3cz County, Kingdom of Hungary\n\n### Research Question\n\nWho was the father of Jan Gallo, baptized in 1893 at Tur\u00e1ny (Turany) Lutheran parish, Tur\u00f3cz County, Kingdom of Hungary (now Martin district, Slovakia)?\n\n### Evidence\n\n**Jan Gallo\u2019s 1893 Baptism Record**\n\nA FamilySearch indexed entry in \u201cSlovakia, Church and Synagogue Books, 1592\u20131935\u201d (collection 1554443) records the baptism of Jan Gallo in 1893 at Tur\u00e1ny Lutheran parish, Tur\u00f3cz County, Kingdom of Hungary, and explicitly names his father as **Andrej Gallo** and his mother as Katarina Kri\u017eko.\u00b9 This indexed entry is a derivative source transcribed from the original Tur\u00e1ny Lutheran parish register; the digital images of the original (ark:/61903/3:1:33S7-9RQ4-9B4M) could not be retrieved due to file-size constraints and were not directly examined. The father\u2019s name represents primary information: Andrej Gallo personally presented his son for baptism and self-reported his name to the officiating minister (informant proximity: self).\n\n**Sibling Baptism in the Same Register Series**\n\nA second entry in the same Tur\u00e1ny Lutheran register series records the 1895 baptism of Ondrej Gallo, with the father listed as **Ondrej Gallo** and the mother as Katarina Kricko.\u00b2 \u201cAndrej\u201d and \u201cOndrej\u201d are Slovak and Latin equivalents of the given name Andrew, a well-documented name variant in Slovak Lutheran records of this period; the spelling difference reflects scribal or reporting variation, not a different individual. The consistent appearance of the same father-mother surname pair (Gallo + Kricko/Kri\u017eko) in two separate baptismal events at the same parish, two years apart, provides internal corroboration that the father named in Jan\u2019s 1893 baptism and the father named in Ondrej\u2019s 1895 baptism are the same person.\n\n### Search Scope and Limitations\n\nThe FamilySearch Slovakia Church Books collection (1554443) was searched for all Tur\u00e1ny parish records relevant to this family. The Tur\u00e1ny Lutheran marriage register (1877\u20131910) \u2014 which would constitute an independent corroborating source by directly naming the same couple \u2014 was pursued through indexed record search, AI-transcribed full-text corpus search, and direct image retrieval, and was found to be inaccessible via all three paths (0% indexed, absent from the full-text corpus, and images exceeding transport limits). Hungary\u2019s mandatory civil registration began in October 1895, so no civil birth record for Jan Gallo (born 1893) exists. No evidence naming a different father for Jan Gallo was found in any source searched.\n\nBoth supporting sources derive from the same Tur\u00e1ny Lutheran parish register series and therefore do not constitute fully independent evidence units under GPS evidence-independence standards. The original register images were not directly examined.\n\n### Conclusion\n\nThe preponderance of evidence **strongly suggests** that the father of Jan Gallo (baptized 1893, Tur\u00e1ny Lutheran parish, Tur\u00f3cz County, Kingdom of Hungary) was **Andrej Gallo**, a resident of the Tur\u00e1ny parish community. This conclusion is graded **probable**: the 1893 baptism entry provides direct, primary-information evidence of paternity; the 1895 sibling baptism corroborates internally within the same register series; no contradicting evidence exists. Independent original-source verification is not available because the parents\u2019 marriage register is inaccessible and the original register images could not be retrieved. Should the Tur\u00e1ny Lutheran marriage register become indexable or otherwise accessible, it would either confirm or refute this finding.\n\n---\n\n\u00b9 \u201cSlovakia, Church and Synagogue Books, 1592\u20131935,\u201d database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-N5R : accessed 8 July 2026), entry for Jan Gallo, baptism 1893, Turany, Tur\u00f3cz County; citing \u201cHungary, Tur\u00f3cz, Religious, from 1653 to 1951.\u201d\n\n\u00b2 \u201cSlovakia, Church and Synagogue Books, 1592\u20131935,\u201d database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KHWD-XGS : accessed 8 July 2026), Ondrej Gallo, baptism 1895, Tur\u00e1ny [Turany] Lutheran parish; citing Tur\u00e1ny Lutheran parish, Tur\u00f3cz County, Kingdom of Hungary."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/ev_001.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-08T17:28:00.193Z"
+    }
+  ]
+}

@@ -219,16 +219,14 @@
     {
       "id": "rel-2",
       "type": "ParentChild",
-      "person1": "p-john-thomson",
-      "person2": "PID-TODO",
-      "facts": []
+      "parent": "p-john-thomson",
+      "child": "PID-TODO"
     },
     {
       "id": "rel-3",
       "type": "ParentChild",
-      "person1": "p-margaret-simpson",
-      "person2": "PID-TODO",
-      "facts": []
+      "parent": "p-margaret-simpson",
+      "child": "PID-TODO"
     },
     {
       "id": "rel-4",
@@ -249,16 +247,14 @@
     {
       "id": "rel-5",
       "type": "ParentChild",
-      "person1": "p-john-thomson",
-      "person2": "p-william-thomson",
-      "facts": []
+      "parent": "p-john-thomson",
+      "child": "p-william-thomson"
     },
     {
       "id": "rel-6",
       "type": "ParentChild",
-      "person1": "p-margaret-simpson",
-      "person2": "p-william-thomson",
-      "facts": []
+      "parent": "p-margaret-simpson",
+      "child": "p-william-thomson"
     }
   ],
   "sources": [

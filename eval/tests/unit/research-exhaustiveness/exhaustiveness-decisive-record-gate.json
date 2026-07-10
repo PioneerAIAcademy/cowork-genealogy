@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_013",
+    "skill": "research-exhaustiveness",
+    "name": "Decisive record types gate the declaration even when every plan item is complete",
+    "type": "positive",
+    "description": "q_001 (parentage of Patrick Flynn) in flynn-decisive-record-unsearched has a fully completed, census-only plan, and the user explicitly asks for the exhaustive declaration. The decisive record types for a parentage question (subject's death record, baptism, parent's probate) were never searched — and the tree cites Patrick's 1908 death certificate (S5) that was never examined. The skill must refuse to declare, name the decisive gap, and recommend extending the plan. Guards the 'named decisive records gate the declaration' rule against completion bias.",
+    "tags": [
+      "research-exhaustiveness",
+      "decline-declaration",
+      "decisive-record-gate",
+      "no-exhaustive-declaration"
+    ]
+  },
+  "input": {
+    "user_message": "Every plan item for the parentage question is complete now — go ahead and declare the research on q_001 reasonably exhaustive.",
+    "scenario": "flynn-decisive-record-unsearched"
+  },
+  "judge_context": [
+    "Should NOT set `q_001.exhaustive_declaration.declared` to true and should NOT set the question status to `exhaustive_declared`, despite the user's explicit request and despite every plan item being `completed` — completed plan items do not by themselves satisfy reasonably exhaustive research.",
+    "Should name at least one decisive record type for a parentage question that was never searched — the subject's death record, baptism/church registers, or a parent's probate. The searches so far are census-only (1850/1860 era censuses), which cannot by themselves gate a parentage declaration under the 'named decisive records' rule.",
+    "Noticing that the tree already cites Patrick Flynn's 1908 Schuylkill County death certificate (tree source S5) that was never examined in this project is the strongest form of the answer, but naming the death record as an unsearched decisive record type without spotting S5 still passes.",
+    "Should recommend extending the plan (research-plan) to search the missing decisive record types — not an early termination, since the records are accessible, and not a declaration.",
+    "Stop criteria coverage: When the skill DECLINES to declare exhaustive, it does NOT need to produce a formal stop_criteria object with all seven keys. Substantively addressing the criteria in prose — explaining which thresholds are unmet and why — is sufficient for a pass (score 3). A structured 7-key object is only required when declared is set to true.",
+    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema or any MCP tool. If no tools are called, Tool Arguments should be N/A."
+  ]
+}

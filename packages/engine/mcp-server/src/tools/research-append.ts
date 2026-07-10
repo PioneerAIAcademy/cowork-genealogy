@@ -481,8 +481,11 @@ export const researchAppendSchema = {
     "op's failure nothing is written and the error is `ops[i]: <msg>`). Ids assigned by " +
     "an earlier op are visible to later ops, so an assertion may reference a source " +
     "appended earlier in the same batch by its predictable id (e.g. `src_001`); you may " +
-    "NOT update an id created earlier in the same batch. Returns `results: [{section, op, " +
-    "entryId}]`.",
+    "NOT update an id created earlier in the same batch. Fields that reference " +
+    "tree.gedcomx.json ids (e.g. an assertion's `gedcomx_source_description_id`) validate " +
+    "against the tree as it exists ON DISK — create the tree source via tree_edit BEFORE " +
+    "the research_append call that references it, never in the other order. Returns " +
+    "`results: [{section, op, entryId}]`.",
   inputSchema: {
     type: "object" as const,
     properties: {
