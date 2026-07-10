@@ -431,7 +431,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     errors += [f"starting-tree.gedcomx.json: {e}" for e in validate_tree_gedcomx_json(tree)]
     errors += tree_integrity_errors(tree, "starting-tree.gedcomx.json")
 
-    # Optional: only Paths 1/2 have one. It is committed, so it is held to
+    # Optional: only PID-path fixtures have one. It is committed, so it is held to
     # the same structural and living-person bar as the starting tree.
     unstripped_path = fixture_dir / "unstripped-tree.gedcomx.json"
     if unstripped_path.exists():
@@ -446,7 +446,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
             ]
             errors += tree_integrity_errors(unstripped, "unstripped-tree.gedcomx.json")
 
-    # Optional: a Path-3 fixture under construction may not have one yet.
+    # Optional: a PID-less fixture under construction may not have one yet.
     research_path = fixture_dir / "starting-research.json"
     if research_path.exists():
         try:

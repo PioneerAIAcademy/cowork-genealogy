@@ -1,7 +1,7 @@
 ---
 name: author-e2e-fixture
 model: claude-sonnet-4-6
-description: Authors an end-to-end test fixture for the GPS research benchmark. Produces the files an e2e fixture needs (fixture.json, starting-research.json, starting-tree.gedcomx.json, expected-findings.json, README.md, and — on the FamilySearch paths — unstripped-tree.gedcomx.json) directly in eval/tests/e2e/<slug>/. Primary path starts from a FamilySearch person ID — snapshots the well-researched tree, strips a focused subset (the "answer"), and records what was stripped as expected findings. Two secondary paths: convert a just-completed research project, or — when there is no FamilySearch access — build PID-less from a bundled research document (report, research log, proof article), constructing the starting tree from the document and using a placeholder source_pid the author resolves before landing. Use when the user says "save this as an e2e test", "make a benchmark from this PID/research/report", "create an e2e fixture", or "author an e2e test". Do NOT use to interpret the result of an e2e run (use interpret-e2e-result), to run a new research project (use init-project), or to interpret the result of a unit-test run (those are developer-facing JSON files).
+description: Authors an end-to-end test fixture for the GPS research benchmark. Produces the files an e2e fixture needs (fixture.json, starting-research.json, starting-tree.gedcomx.json, expected-findings.json, README.md, and — on the FamilySearch path — unstripped-tree.gedcomx.json) directly in eval/tests/e2e/<slug>/. Primary path starts from a FamilySearch person ID — snapshots the well-researched tree, strips a focused subset (the "answer"), and records what was stripped as expected findings. One secondary path: when there is no FamilySearch access, build PID-less from a bundled research document (report, research log, proof article), constructing the starting tree from the document and using a placeholder source_pid the author resolves before landing. Use when the user says "save this as an e2e test", "make a benchmark from this PID/research/report", "create an e2e fixture", or "author an e2e test". Do NOT use to interpret the result of an e2e run (use interpret-e2e-result), to run a new research project (use init-project), or to interpret the result of a unit-test run (those are developer-facing JSON files).
 allowed-tools:
   - Bash
   - Read
@@ -29,30 +29,29 @@ committed. Confirm it with the user **before** you fetch anything. The
 `snapshot` script re-checks every person in the tree — not just the
 subject — and refuses on any who are living or unmarked.
 
-## Three paths
+## Two paths
 
-1. **From a FamilySearch PID** (primary). The user names a
-   well-researched, deceased person. The FamilySearch tree **is** the
-   ground truth — no prior research project needed. This is how the
-   benchmark suite gets seeded.
-2. **From a finished project** (secondary). `research.json` and
-   `tree.gedcomx.json` exist in the working folder, `research.json` has
-   at least one `proof_summaries` entry, and the user wants to reuse
-   that research. The proof summary is a ready-made statement of the
-   answer.
-3. **From a research document, PID-less** (secondary). The user hands
+1. **From a FamilySearch PID** (primary — "the PID path"). The user
+   names a well-researched, deceased person. The FamilySearch tree
+   **is** the ground truth — no prior research project needed. This is
+   how the benchmark suite gets seeded.
+2. **From a research document, PID-less** (secondary). The user hands
    you a report / research log / proof article / family group record
    and no PID. The **document** is the ground truth. You *construct* the
    starting tree from the document's known starting context rather than
    stripping a snapshot, so there is no unstripped tree and no `strip`
    step.
 
-Prefer path 1 whenever a PID and FamilySearch access are both
-available.
+Prefer the PID path whenever a PID and FamilySearch access are both
+available. Converting a **finished research project** is the PID path
+too: use the subject's PID, and read the project's `proof_summaries`
+entry first — it is a ready-made statement of the answer. Only when
+FamilySearch does not reflect the project's conclusions does the
+project's report become a PID-less document instead.
 
 ## Step 1 — Agree on the question and the metadata
 
-**Path 1.** Confirm the person is deceased, then snapshot:
+**PID path.** Confirm the person is deceased, then snapshot:
 
 ```
 cd eval/harness && uv run python -m e2e.author snapshot --slug <slug> --pid <PID>
@@ -68,16 +67,7 @@ FamilySearch does not identify, get short synthesized ids.
 (Not signed in? Tell the user to run
 `Login.bat`, or `make e2e-login` for developers, then retry.)
 
-**Path 2.** Same command, but `--from-file <path-to-tree.gedcomx.json>`
-instead of `--pid`. Read the relevant `proof_summaries` entry first, so
-you know which conclusion you're capturing. A project tree carries no
-`living` fields (only `person_read` writes them), so the gate will
-refuse on every person; confirm with the user that **everyone in the
-tree is deceased**, then re-run with `--confirm-deceased` to stamp
-`living: false` explicitly. The flag never overrides a real
-`living: true`.
-
-**Path 3.** No snapshot — there is nothing to fetch. Read the document
+**PID-less.** No snapshot — there is nothing to fetch. Read the document
 end to end and separate two things: the **known starting context** (the
 "Background" / "Starting Point" section — what the researcher already
 had) from the **documented conclusion** (the "Research Summary" /
@@ -108,7 +98,7 @@ cd eval/harness && uv run python -m e2e.author scaffold --slug <slug> \
   --difficulty easy --notes "<notes>"
 ```
 
-Writes `fixture.json` and `starting-research.json`. On **path 3** omit
+Writes `fixture.json` and `starting-research.json`. On the **PID-less path** omit
 `--pid` and pass `--subject-id I1` instead. `source_pid` then stays the
 placeholder `PID-TODO` — provenance only, since §6.1 blocks every
 person-keyed tool, so neither the run nor the judge reads it — while
@@ -131,20 +121,19 @@ folder — `scaffold`'s two templates live in the harness instead).
 - `supporting_sources`: free text for the judge's context; one or two.
 - `required`: `true` to pass, `false` for bonus credit.
 
-Pull the names, dates and places from the id index (path 1), the
-`proof_summaries` entry (path 2), or the document's conclusion section
-(path 3). Keep findings short. Avoid record-locator literals like
+Pull the names, dates and places from the id index (PID path) or the
+document's conclusion section (PID-less). Keep findings short. Avoid record-locator literals like
 "ARK 1:1:XXXX" — the agent may reach the right answer by a different
 source path.
 
-On path 3, flag in `notes` any conclusion leaning on evidence the
+On the PID-less path, flag in `notes` any conclusion leaning on evidence the
 FamilySearch tools cannot reach (Ancestry, Find A Grave, county-clerk or
 overseas archives). That shapes the validity run and may need bundled
 `provided-documents/` (spec §6.2).
 
 ## Step 4 — Build `starting-tree.gedcomx.json`
 
-**Paths 1 and 2 — strip.** Name every id from the index that must go.
+**PID path — strip.** Name every id from the index that must go.
 The script cascades, validates, and lints:
 
 ```
@@ -170,7 +159,7 @@ with a different selector set as many times as you like. It prints a
 `stripped_summary` for the README, and a `WARN` for anything that looks
 like an answer left behind. Resolve every `WARN`.
 
-**Path 3 — construct.** Build the simplified-GedcomX shape
+**PID-less — construct.** Build the simplified-GedcomX shape
 (`{persons, relationships, sources}`, per `simplified-gedcomx-spec.md`)
 holding **only the known starting context**:
 
@@ -193,10 +182,10 @@ the answer by accident.
 
 Fill in `templates/README.md` (under this skill's own folder).
 `{{stripped_summary}}` is the bullet list
-`strip` printed (path 3: describe what you constructed and from which
+`strip` printed (PID-less: describe what you constructed and from which
 document instead). State plainly that the subject is deceased.
 
-On **path 3**, add a short authoring note: the starting tree was
+On the **PID-less path**, add a short authoring note: the starting tree was
 constructed from the named document rather than snapshotted, so its
 fidelity should be sanity-checked; `source_pid` is an unused
 placeholder; and the landing gate is the same as for every fixture — a
@@ -209,8 +198,8 @@ cd eval/harness && uv run python -m e2e.author validate --slug <slug>
 ```
 
 Checks both files against the JSON Schemas, re-runs the living-person
-gate over the whole tree, re-runs the stripping linter, and — on paths
-1/2 — confirms every expected finding was actually *present* in the
+gate over the whole tree, re-runs the stripping linter, and — on the
+PID path — confirms every expected finding was actually *present* in the
 unstripped tree before you removed it. Fix anything it reports.
 
 Then report the files written and stop. Do not run, commit, or push.
@@ -232,10 +221,9 @@ Then report the files written and stop. Do not run, commit, or push.
 
 **Writes** into `eval/tests/e2e/<slug>/`: `fixture.json`,
 `starting-research.json`, `starting-tree.gedcomx.json`,
-`expected-findings.json`, `README.md`, plus (paths 1/2)
-`unstripped-tree.gedcomx.json`. Path 2 reads the project's
-`research.json` and `tree.gedcomx.json` as read-only inputs. Path 3
-reads only the supplied document.
+`expected-findings.json`, `README.md`, plus (PID path)
+`unstripped-tree.gedcomx.json`. The PID-less path reads only the
+supplied document.
 
 A fixture is **snapshotted once**. `snapshot` refuses to overwrite an
 existing `unstripped-tree.gedcomx.json`: re-fetching a mutable upstream

@@ -85,8 +85,7 @@ this in order. Each step gates the next.
    e2e test"). Check JSON size; pick a different PID if unwieldy.
 4. **Author the first fixture.** Run `/author-e2e-fixture` and give it
    the PID — it snapshots the tree, you name what to strip, and it
-   writes the fixture files. (You don't need a finished research
-   project; that's the secondary path. Or follow §4 in "Creating a new
+   writes the fixture files. (Or follow §4 in "Creating a new
    e2e test" to author by hand.) Keep it focused (one question, 1–5
    expected findings). Then **run the stripping linter**
    (`uv run python -m e2e.validate_fixture <slug>`; Windows:
@@ -180,10 +179,10 @@ prints an index of every person, relationship, fact and source. You pick
 the focused subset to strip (the "answer"); it strips that subset,
 records it as expected findings, and writes the files **directly into
 `eval/tests/e2e/<slug>/`** (no move needed). No prior research project is
-needed — the tree on FamilySearch is the ground truth. (A secondary path
-converts a research project you just finished, reusing its
-`proof_summaries`; a third builds a fixture from a research document
-when there is no PID.)
+needed — the tree on FamilySearch is the ground truth. (A secondary,
+PID-less path builds a fixture from a research document when there is
+no PID; a finished research project converts via its subject's PID,
+reusing the project's `proof_summaries` for the question and answer.)
 
 The skill's mechanical half is `eval/harness/e2e/author.py`. It
 normalizes the fetched tree to the simplified-GedcomX schema, refuses on

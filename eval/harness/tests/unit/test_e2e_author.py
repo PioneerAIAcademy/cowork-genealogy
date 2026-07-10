@@ -384,9 +384,9 @@ def test_the_scaffolded_research_file_satisfies_the_research_schema():
     assert rendered["project"]["subject_person_ids"] == ["KNDX-MKG"]
 
 
-def test_path_3_points_research_at_a_tree_person_that_exists():
+def test_a_pid_less_fixture_points_research_at_a_tree_person_that_exists():
     """`PID-TODO` stays as the greppable source_pid marker — provenance only,
-    nothing resolves it — while a Path-3 tree is constructed by hand and calls
+    nothing resolves it — while a PID-less tree is constructed by hand and calls
     its subject `I1`. `subject_person_ids` must name a person the tree actually
     contains, so it follows the tree, not the marker."""
     values = _scaffold_values(source_pid="PID-TODO", subject_person_id="I1")
@@ -644,34 +644,12 @@ def test_snapshot_refuses_to_overwrite_without_force(fixtures_root, tmp_path, ca
 
 
 def test_snapshot_from_file_refuses_a_tree_with_no_living_fields(fixtures_root, tmp_path, capsys):
-    # Only person_read writes `living`, so a project tree (Path 2) has it on
-    # nobody — the refusal must point at the supported escape hatch.
+    # Only person_read writes `living` — a hand-supplied tree without it
+    # must refuse; absent is not deceased.
     src = _write_input(tmp_path, _raw_tree())
     assert author.main(["snapshot", "--slug", "t2", "--from-file", str(src)]) == 2
     assert not (fixtures_root / "t2" / "unstripped-tree.gedcomx.json").exists()
-    assert "--confirm-deceased" in capsys.readouterr().err
-
-
-def test_confirm_deceased_stamps_living_false_and_writes(fixtures_root, tmp_path, capsys):
-    src = _write_input(tmp_path, _raw_tree())
-    rc = author.main(
-        ["snapshot", "--slug", "t3", "--from-file", str(src), "--confirm-deceased"]
-    )
-    assert rc == 0
-    tree = json.loads(
-        (fixtures_root / "t3" / "unstripped-tree.gedcomx.json").read_text(encoding="utf-8")
-    )
-    assert tree["persons"][0]["living"] is False
-    assert "--confirm-deceased stamped" in capsys.readouterr().err
-
-
-def test_confirm_deceased_never_overrides_an_explicit_living_true(fixtures_root, tmp_path):
-    src = _write_input(tmp_path, _raw_tree(living=True))
-    rc = author.main(
-        ["snapshot", "--slug", "t4", "--from-file", str(src), "--confirm-deceased"]
-    )
-    assert rc == 2
-    assert not (fixtures_root / "t4" / "unstripped-tree.gedcomx.json").exists()
+    assert "no `living` field" in capsys.readouterr().err
 
 
 def test_check_excludes_living_persons_from_the_drift_audit(fixtures_root, tmp_path, capsys):

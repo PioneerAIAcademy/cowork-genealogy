@@ -40,7 +40,7 @@ certification that the agent does fully sound, verifiable GPS research.
 - An `expected-findings.json` enumerating what the agent should
   recover, derived from the diff between the original (well-
   researched) tree and the stripped starting state
-- On the FamilySearch-sourced paths, the full original (pre-stripping)
+- On the FamilySearch-sourced path (from a PID), the full original (pre-stripping)
   `unstripped-tree.gedcomx.json`, from which the starting tree is
   derived. It is **never** copied into the run workspace — see below.
 - Fixture metadata: id, source PID, tags, model pins (caps are harness
@@ -77,8 +77,8 @@ short descriptive kebab-case is fine. Slugs are also the test ID.
 
 `unstripped-tree.gedcomx.json` is the committed snapshot of the
 well-researched tree, taken **once** at authoring time. It exists on
-the two FamilySearch-sourced authoring paths (from a PID, or from a
-finished project) and lets `starting-tree.gedcomx.json` be *derived*
+the FamilySearch-sourced authoring path (from a PID) and lets
+`starting-tree.gedcomx.json` be *derived*
 rather than hand-transcribed: re-strip a different subset and the
 starting tree is rebuilt deterministically. It is absent on the
 PID-less path (§6.1), where the starting tree is constructed from a
@@ -774,7 +774,7 @@ This is surfaced two ways:
   committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
   warning annotation, so a draft fixture can land with its validity run still
   owed — notably PID-less fixtures authored without FamilySearch access
-  (`author-e2e-fixture` Path 3) whose validity run can only happen on an
+  (`author-e2e-fixture`'s PID-less path) whose validity run can only happen on an
   FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
   workflow also runs a blocking grading gate** (§7.4): a run log *added in the
   PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same

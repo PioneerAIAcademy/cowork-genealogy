@@ -190,7 +190,7 @@ def _write_fixture(path, tree, findings=None, research=None):
 
 
 def test_lint_fixture_clean_fixture_passes(tmp_path):
-    # No starting-research.json: a Path-3 fixture under construction may not
+    # No starting-research.json: a PID-less fixture under construction may not
     # have one yet, and its absence is not an error.
     _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")))
     suspects, errors = lint_fixture(tmp_path)

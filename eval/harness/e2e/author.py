@@ -491,7 +491,6 @@ def living_gate(
     *,
     drop_living: bool = False,
     heuristic: bool = False,
-    confirm_deceased: bool = False,
     today: date | None = None,
 ) -> GateResult:
     """FamilySearch's ToS forbids committing fixtures about living persons.
@@ -506,13 +505,7 @@ def living_gate(
        the tree schema does not require the field.
     3. `drop_living=True` is the escape hatch for rule 1: remove them,
        cascade their relationships, say exactly what went.
-    4. `confirm_deceased=True` is the escape hatch for rule 2, for Path 2:
-       only `person_read` ever writes `living`, so a project tree built by
-       `tree_edit` has it on nobody and would refuse on every person. The
-       flag stamps `living: false` onto each person missing the field —
-       an explicit, auditable assertion by the author that every person in
-       the tree is deceased. It never overrides an explicit `living: true`.
-    5. `heuristic=True` adds a 110-year WARN. **Only ever pass this for an
+    4. `heuristic=True` adds a 110-year WARN. **Only ever pass this for an
        unstripped tree.** Stripping a death fact is precisely what makes a
        deceased person look living — run it post-strip and it flags the
        subject of every death-date fixture.
@@ -522,23 +515,6 @@ def living_gate(
     cutoff = (today or date.today()).year - PRESUMED_LIVING_YEARS
 
     persons = tree.get("persons") or []
-    if confirm_deceased:
-        stamped, new_persons = [], []
-        for person in persons:
-            if isinstance(person, dict) and "living" not in person:
-                person = {**person, "living": False}
-                ordered = {k: person[k] for k in _PERSON_FIELDS if k in person}
-                ordered.update({k: v for k, v in person.items() if k not in ordered})
-                person = ordered
-                stamped.append(f"{person.get('id', '?')} ({_display_name(person)})")
-            new_persons.append(person)
-        if stamped:
-            tree = {**tree, "persons": new_persons}
-            persons = new_persons
-            warnings.append(
-                f"--confirm-deceased stamped `living: false` on {len(stamped)} "
-                f"person(s): " + ", ".join(stamped)
-            )
 
     living: list[tuple[str, str]] = []  # (person id, display label)
     missing: list[str] = []
@@ -562,9 +538,7 @@ def living_gate(
     if missing:
         errors.append(
             "these persons have no `living` field, and absent is not deceased — "
-            "set `living: false` on each once you have confirmed the death "
-            "(or, on Path 2, re-run with --confirm-deceased once you have "
-            "confirmed every person in the tree is deceased): "
+            "set `living: false` on each once you have confirmed the death: "
             + ", ".join(missing)
         )
 
@@ -874,12 +848,7 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
             f"or --check to audit for drift."
         )
 
-    gate = living_gate(
-        tree,
-        drop_living=args.drop_living,
-        heuristic=True,
-        confirm_deceased=args.confirm_deceased,
-    )
+    gate = living_gate(tree, drop_living=args.drop_living, heuristic=True)
     _emit(warnings + gate.warnings)
     if gate.errors:
         _emit(gate.errors, "ERROR")
@@ -1205,10 +1174,10 @@ def cmd_scaffold(args: argparse.Namespace) -> int:
         "slug_underscored": args.slug.replace("-", "_"),
         "name": args.name,
         "source_pid": args.pid,
-        # These may differ on Path 3: `source_pid` is provenance-only and stays
+        # These may differ on a PID-less fixture: `source_pid` is provenance-only and stays
         # the greppable `PID-TODO` marker, while `subject_person_ids` must name a
         # person the constructed tree actually contains. `--subject-id` is how the
-        # author says "the tree calls him I1." Defaulting keeps Paths 1/2, where
+        # author says "the tree calls him I1." Defaulting keeps the PID path, where
         # the tree is keyed by FamilySearch PIDs, pointing at the PID.
         "subject_person_id": args.subject_id or args.pid,
         "captured_date": captured,
@@ -1288,7 +1257,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
     starting = _read_json(fixture_dir / STARTING_TREE)
     findings = _require_findings(fixture_dir)
 
-    # Absent on Path 3, which constructs its tree from a document: nothing was
+    # Absent on a PID-less fixture, which constructs its tree from a document:
+    # nothing was
     # snapshotted, so there is nothing to preserve and no strip to replay.
     unstripped_path = fixture_dir / UNSTRIPPED_TREE
     unstripped = _read_json(unstripped_path) if unstripped_path.exists() else None
@@ -1301,7 +1271,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
     # The engine's runtime cross-file check requires every subject_person_id
     # to name a tree person; a typo'd `scaffold --pid` (or a forgotten
-    # `--subject-id` on Path 3, where source_pid stays "PID-TODO") lints
+    # `--subject-id` on a PID-less fixture, where source_pid stays "PID-TODO")
+    # lints
     # clean here and then fails the agent mid-run.
     tree_pids = {str(p.get("id")) for p in starting.get("persons") or []}
     for sid in (research.get("project") or {}).get("subject_person_ids") or []:
@@ -1309,7 +1280,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
             errors.append(
                 f"{STARTING_RESEARCH}: subject_person_ids names {sid!r}, which is "
                 f"not a person in {STARTING_TREE} — the run's tree tools would "
-                f"fail on it. On Path 3, pass `scaffold --subject-id <tree-id>`."
+                f"fail on it. On a PID-less fixture, pass "
+                f"`scaffold --subject-id <tree-id>`."
             )
 
     gate = living_gate(starting)
@@ -1325,8 +1297,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
         errors += presence_mirror(findings, unstripped)
     else:
         warnings.append(
-            f"no {UNSTRIPPED_TREE} — assuming Path 3 (tree constructed from a "
-            f"document). The presence mirror and the 110-year check are skipped."
+            f"no {UNSTRIPPED_TREE} — assuming a PID-less fixture (tree constructed "
+            f"from a document). The presence mirror and the 110-year check are skipped."
         )
 
     suspects = check_stripping(findings, starting)
@@ -1354,15 +1326,9 @@ def build_parser() -> argparse.ArgumentParser:
     snap.add_argument("--slug", required=True, type=_slug_arg)
     source = snap.add_mutually_exclusive_group(required=True)
     source.add_argument("--pid", help="FamilySearch person id (Path 1).")
-    source.add_argument("--from-file", help="A finished project's tree.gedcomx.json (Path 2).")
+    source.add_argument("--from-file", help="A pre-fetched person_read JSON (developer/testing input).")
     snap.add_argument("--force", action="store_true", help=f"Overwrite an existing {UNSTRIPPED_TREE}.")
     snap.add_argument("--drop-living", action="store_true", help="Remove living persons instead of refusing.")
-    snap.add_argument(
-        "--confirm-deceased", action="store_true",
-        help="Stamp `living: false` on persons missing the field (Path 2: only "
-             "person_read writes `living`, so project trees have it on nobody). "
-             "Asserts you have confirmed every person in the tree is deceased.",
-    )
     snap.add_argument("--check", action="store_true", help="Audit FamilySearch drift; write nothing.")
     snap.set_defaults(func=cmd_snapshot)
 
@@ -1378,10 +1344,10 @@ def build_parser() -> argparse.ArgumentParser:
     scaffold = subs.add_parser("scaffold", help=f"Render {FIXTURE_JSON} and {STARTING_RESEARCH}.")
     scaffold.add_argument("--slug", required=True, type=_slug_arg)
     scaffold.add_argument("--name", required=True)
-    scaffold.add_argument("--pid", default="PID-TODO", help="Omit for Path 3.")
+    scaffold.add_argument("--pid", default="PID-TODO", help="Omit for a PID-less fixture.")
     scaffold.add_argument(
         "--subject-id",
-        help="The subject's id in the tree. Defaults to --pid; pass `I1` on Path 3.",
+        help="The subject's id in the tree. Defaults to --pid; pass `I1` on a PID-less fixture.",
     )
     scaffold.add_argument("--question", required=True)
     scaffold.add_argument("--question-type", required=True)
