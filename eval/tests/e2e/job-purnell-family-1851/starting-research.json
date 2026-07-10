@@ -2,10 +2,12 @@
   "project": {
     "id": "rp_job_purnell_family_1851",
     "objective": "Who was the wife of Job Purnell, and who was their child, as recorded in the 1851 Census of Trowbridge, Wiltshire, England?",
-    "subject_person_ids": ["LHKV-VKD"],
+    "subject_person_ids": [
+      "LHKV-VKD"
+    ],
     "status": "active",
-    "created": "2026-07-09T00:00:00Z",
-    "updated": "2026-07-09T00:00:00Z"
+    "created": "2026-07-09",
+    "updated": "2026-07-09"
   },
   "researcher_profile": {
     "experience_level": "intermediate",
