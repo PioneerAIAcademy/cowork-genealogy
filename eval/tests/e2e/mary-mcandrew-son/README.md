@@ -20,9 +20,12 @@ FamilySearch tree. The starting tree is the live snapshot as-is
 contains five children of Mary and John Mogan — Thomas Frank (b. 1876),
 John Vincent (b. 1879), Anna Irene (b. 1884), Edward Lawrence (b. 1885),
 and Mary L. (b. 1888) — and the hinted sixth child does not appear.
-Because nothing was stripped, no `unstripped-tree.gedcomx.json` is
-committed (the validator's presence-mirror check assumes a strip-based
-fixture); `starting-tree.gedcomx.json` *is* the unmodified snapshot.
+Nothing was stripped (`"genre": "record-hint"` in `fixture.json`):
+`starting-tree.gedcomx.json` is the snapshot as-is (written by
+`strip --none`), and `unstripped-tree.gedcomx.json` is committed
+identical to it so `snapshot --check` can audit upstream drift.
+`validate` enforces the equality and skips the presence mirror
+(spec §3.6).
 
 ## Expected difficulty
 
@@ -47,9 +50,12 @@ Mary Morgan. The genealogist + developer teams must decide:
 - **(b) different answer** — other additional children are documented
   instead: edit `expected-findings.json` accordingly;
 - **(c) no findable answer** — the 1873 birth belongs to a different
-  Morgan family: the fixture's expectation becomes "the agent declares
-  no additional children findable rather than attaching the false
-  record."
+  Morgan family: replace the findings with a `"polarity": "avoid"`
+  guard naming the 1873 John A Morgan birth (spec §3.4.1 — the harness
+  mechanically fails a run whose final tree contains the avoided claim)
+  plus a `required` finding that the agent's report documents that no
+  additional children could be established and why the hint record was
+  rejected.
 
 Points a reviewer should weigh: the tree already has a son **John
 Vincent Mogan, b. 12 May 1879** — if the hint is a true match the
