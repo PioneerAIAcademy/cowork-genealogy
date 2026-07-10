@@ -1,0 +1,381 @@
+{
+  "persons": [
+    {
+      "id": "L64C-QQX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Reuben Spencer",
+          "surname": "Spriggs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7b67460c-14ec-47bd-8806-6d6adebff86d",
+          "type": "Birth",
+          "date": "6 November 1898",
+          "standard_date": "6 Nov 1898",
+          "place": "Maddock, Benson, North Dakota, United States",
+          "standard_place": "Maddock, Benson, North Dakota, United States"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6",
+          "type": "Death",
+          "date": "21 May 1998",
+          "standard_date": "21 May 1998",
+          "place": "Riverside, Riverside, California, United States",
+          "standard_place": "Riverside, Riverside, California, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "5ca751dd-38f3-4bc9-aef2-461fa2d0fc4b",
+          "type": "Residence",
+          "date": "21 May 1998",
+          "standard_date": "21 May 1998",
+          "place": "Riverside, California, United States",
+          "standard_place": "Riverside, California, United States"
+        },
+        {
+          "id": "7f3bdc12-bd2c-4540-bd28-c9191ed9a73c",
+          "type": "Obituary",
+          "date": "29 May 1998",
+          "standard_date": "29 May 1998",
+          "place": "Riverside, California, United States",
+          "standard_place": "Riverside, California, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "place": "South Dakota, United States",
+          "standard_place": "South Dakota, United States"
+        },
+        {
+          "id": "5c6530a8-52d2-4be7-be6f-37cad2b1fb81",
+          "type": "Burial",
+          "place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KNSQ-3GK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Charlotte Marie",
+          "surname": "Westby"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "13 June 1876",
+          "standard_date": "13 Jun 1876",
+          "place": "Akershus, Norway",
+          "standard_place": "Akershus, Norway"
+        },
+        {
+          "id": "67639bbb-6380-492f-a281-d2bc75e402cf",
+          "type": "Immigration",
+          "date": "1877",
+          "standard_date": "1877"
+        },
+        {
+          "id": "9059363c-4af1-428f-af31-d888d8b40770",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "3bb23c7d-a4d2-4aab-be0f-b9ad9345af49",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "16 January 1968",
+          "standard_date": "16 Jan 1968",
+          "place": "Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Sioux Falls, Minnehaha, South Dakota, United States"
+        },
+        {
+          "id": "dd317f3a-21bb-40f8-ad9c-fd4c175e57d9",
+          "type": "Burial",
+          "place": "Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+        },
+        {
+          "id": "3a405f0d-23f9-4aed-bb30-eec81135926f",
+          "type": "Residence",
+          "place": "Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Sioux Falls, Minnehaha, South Dakota, United States"
+        }
+      ]
+    },
+    {
+      "id": "KNSQ-3LB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "John William",
+          "surname": "Spriggs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "17 March 1872",
+          "standard_date": "17 Mar 1872",
+          "place": "Decorah Township, Winneshiek, Iowa, United States",
+          "standard_place": "Decorah Township, Winneshiek, Iowa, United States"
+        },
+        {
+          "id": "954933be-453f-4e96-9bc4-a1f40f681213",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "b9618e89-cc34-4b18-8ead-01c4febcc5f5",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "27 July 1934",
+          "standard_date": "27 Jul 1934",
+          "place": "Canova, Miner, South Dakota, United States",
+          "standard_place": "Canova, Miner, Dakota Territory, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "30 July 1934",
+          "standard_date": "30 Jul 1934",
+          "place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States"
+        }
+      ]
+    },
+    {
+      "id": "LFT9-PXM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Donna Jean",
+          "surname": "Spriggs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1 November 1931",
+          "standard_date": "1 Nov 1931",
+          "place": "Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+        },
+        {
+          "id": "feadeac8-c709-46e5-9683-a41ff506ca9d",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "2efba19d-5391-4946-a1b3-5921067bebbe",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Sioux Falls, Minnehaha, South Dakota, United States"
+        },
+        {
+          "id": "bc02a039-4647-43ef-9f04-8d18aefb89a6",
+          "type": "Residence",
+          "date": "21 May 1998",
+          "standard_date": "21 May 1998",
+          "place": "Riverside, California, United States",
+          "standard_place": "Riverside, California, United States"
+        },
+        {
+          "id": "d4cba096-54ff-4891-957c-6fa34595146d",
+          "type": "Death",
+          "date": "1 May 2022",
+          "standard_date": "1 May 2022",
+          "place": "Riverside, Riverside, California, United States",
+          "standard_place": "Riverside, Riverside, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "LFT9-PDR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Reuben Spencer",
+          "surname": "Spriggs",
+          "suffix": "Jr"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "3 October 1928",
+          "standard_date": "3 Oct 1928",
+          "place": "Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+        },
+        {
+          "id": "c60127f1-b082-44e0-8495-ff98b2cd416c",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Sioux Falls, Minnehaha, South Dakota, United States"
+        },
+        {
+          "id": "bedbddae-d120-4954-ac65-ab11905af16b",
+          "type": "Military+Draft+Registration",
+          "date": "3 October 1946",
+          "standard_date": "3 Oct 1946",
+          "place": "Riverside, Riverside, California, United States",
+          "standard_place": "Riverside, Riverside, California, United States"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "16 May 2015",
+          "standard_date": "16 May 2015",
+          "place": "Dana Point, Orange, California, United States",
+          "standard_place": "Dana Point, Orange, California, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KNSQ-3LB",
+      "person2": "KNSQ-3GK",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "19 August 1898",
+          "standard_date": "19 Aug 1898",
+          "place": "Spokane, Spokane, Washington, United States",
+          "standard_place": "Spokane, Spokane, Washington, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KNSQ-3LB",
+      "child": "L64C-QQX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KNSQ-3GK",
+      "child": "L64C-QQX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L64C-QQX",
+      "child": "LFT9-PDR"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "L64C-QQX",
+      "child": "LFT9-PXM"
+    }
+  ],
+  "sources": [
+    {
+      "id": "9ZX6-HJ9",
+      "title": "Spencer Spriggs, \"South Dakota, State Census, 1915\"",
+      "citation": "\"South Dakota, State Census, 1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMH5-9TH : Mon Jan 20 19:39:34 UTC 2025), Entry for Spencer Spriggs, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MMH5-9TH"
+    },
+    {
+      "id": "9ZX6-4LB",
+      "title": "Spencer Spriggs, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6N2-M3W : Mon Oct 13 00:48:40 UTC 2025), Entry for Will Spriggs and Charlott Spriggs, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6N2-M3H"
+    },
+    {
+      "id": "M39R-56Y",
+      "title": "Rueben S Spriggs, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MPXD-MZ4 : Wed Aug 13 17:11:01 UTC 2025), Entry for John W Spriggs and Charlotte Spriggs, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MPXD-MZC"
+    },
+    {
+      "id": "MMC9-FL7",
+      "title": "Reuben Spencer Spriggs, \"United States World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", database with images, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K68M-VHS : 1 July 2024), Reuben Spencer Spriggs, 1917-1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K68M-VHS"
+    },
+    {
+      "id": "MMML-NNY",
+      "title": "Reuben S Spriggs, \"United States Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V3N4-V2P : 10 January 2021), Reuben S Spriggs, 21 May 1998; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:V3N4-V2P"
+    }
+  ]
+}
