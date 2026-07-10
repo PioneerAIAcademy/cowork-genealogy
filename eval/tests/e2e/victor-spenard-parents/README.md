@@ -23,13 +23,24 @@ Victor Spénard is deceased (married 1896; born c. 1873 or earlier).
 
 ## Expected difficulty
 
-Medium — French-language Drouin Collection church records and Canadian censuses
-(1851–1921) are indexed on FamilySearch, so the evidence is reachable. The
-difficulty is (1) the source case study never names the specific parish/town, so
-disambiguation rests on the uncommon surname Spénard plus the specific 1896
-marriage of Victor Spénard and Orise Lesage, and (2) the answer spans three
-generations — the parents come from the 1896 marriage record (corroborated by the
-1891 census), the grandparents only from Maximin Spénard's 1819 baptism.
+Medium — **required scope is the two PARENTS** (Maximin Spénard + Zoé Brousseau),
+which are reachable on FamilySearch: the 1891 Census of Canada indexes Victor in
+the household of Maximin & Zoé (Ste Sophie de Levrard, Nicolet, Quebec), and the
+1896 Drouin marriage names both parents. The difficulty is that the source case
+study never names the specific parish/town, so disambiguation rests on the
+uncommon surname Spénard plus the specific 1896 marriage of Victor Spénard and
+Orise Lesage.
+
+**Scope note (re-scoped 2026-07-08).** This fixture originally required the
+paternal **grandparents** (Jean Baptiste Spénard + Geneviève Payan) as well.
+A recoverability probe showed those are recorded *only* in Maximin Spénard's 1819
+Drouin baptism, which is **not name-indexed** on FamilySearch (0 hits in "Quebec,
+Births and Baptisms, 1662-1898") and **does not surface in full-text search** — it
+exists only in the browse-only Drouin image collections, unreachable by the agent's
+search tools. The grandparents (f3/f4) were therefore demoted to **non-required
+bonus**; the required findings are the parents (f1/f2). This makes the fixture a
+fair, recoverable "parents" benchmark rather than one that fails on an unindexed
+image.
 
 ## Notes for reviewers
 

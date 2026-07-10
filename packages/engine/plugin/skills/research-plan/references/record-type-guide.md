@@ -10,7 +10,7 @@ contextual factors that affect availability.
 
 | Goal | Primary record types | Secondary/fallback |
 |------|---------------------|-------------------|
-| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism) | Military pension, immigration, land deeds (witnesses) |
+| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), conscription/levy rolls (sons in conscription countries — e.g. Danish lægdsruller) | Military pension, immigration, land deeds (witnesses) |
 | Confirm identity | Census (name/age/place across decades), vital records, church records | Newspaper, tax records, city directories |
 | Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary) | Military records, immigration, delayed birth cert |
 | Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
@@ -32,6 +32,23 @@ who is otherwise named only by indirect or derivative evidence (e.g., a
 death certificate or a single census co-residence). This item belongs in
 essentially every parentage plan, even when a parent already appears in
 the tree from indirect evidence.
+
+**Identifying parents — sons in conscription countries: plan the levy
+rolls.** Where a national conscription system enrolled boys from birth
+or early childhood (Denmark and Norway's *lægdsruller* from 1789;
+similar muster systems elsewhere in continental Europe), the levy roll
+is **direct parentage evidence for a son**: each boy is entered under
+his father's name (in the Danish rolls the father's name is written
+directly above the son's), and session notations track the father's
+death (*gl. M. S.* "old man's son", *GBES* "widow's son") and the
+son's residence and occupation year by year. For a male subject in
+such a jurisdiction and era, add a dedicated conscription-roll plan
+item (`record_type: military`) alongside the baptism and the parents'
+marriage — not as an afterthought or fallback. Access caveat for the
+rationale: many roll collections are browse-only image series, and in
+large indexed roll collections the place fields may rank rather than
+filter results — pair the item with a `volume_search`/browse fallback
+when the indexed search underdelivers.
 
 **Emigrant origin or an unindexed parish register — plan a full-text
 co-occurrence search, routed to the search-full-text skill.** When the

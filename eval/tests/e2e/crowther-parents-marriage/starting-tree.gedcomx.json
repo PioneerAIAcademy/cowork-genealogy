@@ -1,0 +1,648 @@
+{
+  "persons": [
+    {
+      "id": "218N-WSD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary",
+          "surname": "Crowther",
+          "id": "218N-WSD-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "10 July 1854",
+          "standard_date": "10 Jul 1854",
+          "place": "Baltimore, Maryland, United States",
+          "standard_place": "Baltimore, Maryland, United States"
+        },
+        {
+          "id": "1365cf01-dcde-4c49-80df-8bd67e2543eb",
+          "type": "Death",
+          "date": "22 February 1920",
+          "standard_date": "22 Feb 1920",
+          "place": "Southern Pines, Moore, North Carolina, United States",
+          "standard_place": "Southern Pines, Moore, North Carolina, United States"
+        },
+        {
+          "id": "1f59d492-7f7b-489d-a095-2f686d290558",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "8th District, Baltimore, Maryland, United States",
+          "standard_place": "Baltimore, Maryland, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Election District 4 Rochester City Ward 12, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "South Orange, , New Jersey",
+          "standard_place": "Township of South Orange Village, Essex, New Jersey, United States"
+        },
+        {
+          "id": "0a2e382c-a53a-4c0b-9dd6-7c15b586a794",
+          "type": "Burial",
+          "date": "22 February 1920",
+          "standard_date": "22 Feb 1920",
+          "place": "Newark, Essex, New Jersey, United States",
+          "standard_place": "Newark, Essex, New Jersey, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "East Orange Ward 2, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "LJRY-9PY",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William Douglas",
+          "surname": "Prizer",
+          "id": "LJRY-9PY-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 October 1895",
+          "standard_date": "22 Oct 1895",
+          "place": "Rochester, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "aa2525c9-099e-4981-9881-86d01b01691a",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Rochester, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Essex, New Jersey, United States",
+          "standard_place": "Essex, New Jersey, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "South Orange, , New Jersey",
+          "standard_place": "Township of South Orange Village, Essex, New Jersey, United States"
+        },
+        {
+          "id": "57abcc0a-cbf7-4c46-b09c-499c72d7e419",
+          "type": "Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "East Orange City, United States, New Jersey",
+          "standard_place": "Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "e7c917dc-3de2-4986-910c-1b91862dd3e2",
+          "type": "MilitaryService",
+          "date": "11 February 1919",
+          "standard_date": "11 Feb 1919",
+          "place": "St. Louis, Missouri, United States",
+          "standard_place": "St. Louis, Missouri, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "West Orange, Essex, New Jersey",
+          "standard_place": "West Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "ddea6c41-0db7-4030-8673-6d77917fee15",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "508a8091-4631-4bee-a416-05fbc65d0554",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 1, West Orange, West Orange Town, Essex, New Jersey, United States",
+          "standard_place": "West Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "Draft Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "West Orange, Essex, New Jersey",
+          "standard_place": "West Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "bd225955-9029-4516-9a4d-ca562664df4d",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "City of Orange Township, Essex, New Jersey, United States",
+          "standard_place": "City of Orange Township, Essex, New Jersey, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "January 1983",
+          "standard_date": "Jan 1983",
+          "place": "Burlington, New Jersey, United States",
+          "standard_place": "Burlington, New Jersey, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "place": "West Orange, Essex, New Jersey",
+          "standard_place": "West Orange, Essex, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "LJRR-TSY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary Constance",
+          "surname": "Prizer",
+          "id": "LJRR-TSY-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "3 June 1888",
+          "standard_date": "3 Jun 1888",
+          "place": "Rochester, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "b36c5edc-50f6-4a60-86e0-f9e92eeff8a7",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Rochester, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Election District 4 Rochester City Ward 12, Monroe, New York, United States",
+          "standard_place": "Monroe, New York, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Essex, New Jersey, United States",
+          "standard_place": "Essex, New Jersey, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "South Orange, , New Jersey",
+          "standard_place": "Township of South Orange Village, Essex, New Jersey, United States"
+        },
+        {
+          "id": "3db942dd-ff3d-476b-9791-3847aeb26a90",
+          "type": "College Graduation",
+          "date": "1910-1911",
+          "standard_date": "Bet 1910 and 1911",
+          "place": "Poughkeepsie, Dutchess, New York, United States",
+          "standard_place": "Town of Poughkeepsie, Dutchess, New York, United States",
+          "value": "Earned a Bachelor of Arts from Vassar College"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "East Orange, 2 ward, 3 district, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "c8f53861-72fc-4483-9dcd-9c36558e90e0",
+          "type": "MilitaryService",
+          "date": "1917 - 1919",
+          "standard_date": "Bet 1917 and 1919",
+          "place": "United States",
+          "standard_place": "United States",
+          "value": "WWI service in france"
+        },
+        {
+          "id": "ab93f448-37cc-401f-b1c8-739d271affbb",
+          "type": "Passport Application",
+          "date": "1918",
+          "standard_date": "1918",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "East Orange Ward 2, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "23357a7a-ab73-4e6a-bef1-a8faf7cac4bf",
+          "type": "Passport Application",
+          "date": "1921",
+          "standard_date": "1921",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "7290ed64-3007-405b-b8ca-54949c971437",
+          "type": "Residence",
+          "date": "07 Sep 1938",
+          "standard_date": "7 Sep 1938",
+          "place": "East Orange, New Jersey",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "db80d403-10a0-462d-851b-d44d5cbd0656",
+          "type": "Residence",
+          "date": "1 April 1950",
+          "standard_date": "1 Apr 1950",
+          "place": "East Orange, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "6 February 1952",
+          "standard_date": "6 Feb 1952",
+          "place": "South Orange, Essex, New Jersey, United States",
+          "standard_place": "Township of South Orange Village, Essex, New Jersey, United States"
+        },
+        {
+          "id": "96617e30-0e48-4e3b-a6f5-0aab9e788b35",
+          "type": "Residence",
+          "place": "East Orange N J",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "bb4cd346-7296-48f4-8ac5-f78cbc72ad17",
+          "type": "Burial",
+          "place": "Riverside Cemetery, Rochester, Monroe, New York, United States",
+          "standard_place": "Riverside Cemetery, Rochester, Monroe, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "LJT2-7T7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Enos",
+          "surname": "Prizer",
+          "id": "LJT2-7T7-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Riverside Cemetery, Rochester, Monroe, New York, United States",
+          "standard_place": "Riverside Cemetery, Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "c92ca8ce-772b-4edb-8ff1-fe85ddf582fb",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Rochester, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "25 August 1892",
+          "standard_date": "25 Aug 1892",
+          "place": "Rochester, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "LJRR-T9D",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "John Crowther",
+          "surname": "Prizer",
+          "id": "LJRR-T9D-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "6 November 1886",
+          "standard_date": "6 Nov 1886",
+          "place": "Rochester, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Election District 4 Rochester City Ward 12, Monroe, New York, United States",
+          "standard_place": "Rochester, Monroe, New York, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Essex, New Jersey, United States",
+          "standard_place": "Essex, New Jersey, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "South Orange, , New Jersey",
+          "standard_place": "Township of South Orange Village, Essex, New Jersey, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "East Orange, 2 ward, 3 district, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "93ab1fd9-9bf4-4273-aa36-616539d917e7",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "East Orange City, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "54ccfc92-5fd2-4c08-b3cd-860183f12c74",
+          "type": "Passport Application",
+          "date": "1921",
+          "standard_date": "1921",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "dd6dad78-8cdc-4818-b073-e1c0587dd94d",
+          "type": "Immigration",
+          "date": "1926",
+          "standard_date": "1926",
+          "place": "New York, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "91b7a057-3ca5-4b7f-af71-d2df4d470291",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "3dddd948-00c3-41c6-ae7b-e6870409676c",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 2, West Orange, West Orange Town, Essex, New Jersey, United States",
+          "standard_place": "West Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "d4310f0a-73ac-48f8-b8fd-4cfd64fff539",
+          "type": "Military Draft Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "West Orange, Essex, New Jersey, United States",
+          "standard_place": "West Orange Township, Essex, New Jersey, United States"
+        },
+        {
+          "id": "16260fa7-a3f5-468d-a550-312a88b50de5",
+          "type": "Residence",
+          "date": "1947",
+          "standard_date": "1947",
+          "place": "New Jersey, United States",
+          "standard_place": "New Jersey, United States",
+          "value": "Per brother Dana Bartholomew's obituary"
+        },
+        {
+          "id": "e14cf0dd-c57e-47d5-aca9-39f9b4044c39",
+          "type": "Burial",
+          "date": "1961",
+          "standard_date": "1961",
+          "place": "Rosedale Cemetery, Orange, Essex, New Jersey, United States",
+          "standard_place": "Rosedale Cemetery, Montclair, Montclair Town, Essex, New Jersey, United States"
+        },
+        {
+          "id": "8672e6de-b50a-4d30-a5e3-3ac2c87ec243",
+          "type": "Death",
+          "date": "8 August 1961",
+          "standard_date": "8 Aug 1961"
+        },
+        {
+          "id": "ce76e04b-7fc6-4fbc-b1e7-7b26156511b6",
+          "type": "Residence",
+          "place": "West Orange, Essex, New Jersey",
+          "standard_place": "West Orange, Essex, New Jersey, United States"
+        }
+      ]
+    },
+    {
+      "id": "LJRR-T7B",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Honor Elizabeth",
+          "surname": "Prizer",
+          "id": "LJRR-T7B-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 October 1894",
+          "standard_date": "22 Oct 1894",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Election District 4 Rochester City Ward 12, Monroe, New York, United States",
+          "standard_place": "Monroe, New York, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Essex, New Jersey, United States",
+          "standard_place": "Essex, New Jersey, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "South Orange, , New Jersey",
+          "standard_place": "Township of South Orange Village, Essex, New Jersey, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "East Orange, 2 ward, 3 district, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "East Orange Ward 2, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "167a31f2-fce9-4c19-9268-70c326a4e4d4",
+          "type": "Passport Application",
+          "date": "1921",
+          "standard_date": "1921",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "e130df01-8909-41bf-b723-21bfbbf00fc1",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "East Orange, Essex, New Jersey, United States",
+          "standard_place": "East Orange, Essex, New Jersey, United States"
+        },
+        {
+          "id": "d75f3db8-7367-4b51-855f-b044adcd46a9",
+          "type": "Residence",
+          "date": "April 24, 1950",
+          "standard_date": "24 Apr 1950",
+          "place": "Orange Township, Essex, New Jersey, United States",
+          "standard_place": "City of Orange Township, Essex, New Jersey, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "ParentChild",
+      "parent": "218N-WSD",
+      "child": "LJRR-T9D",
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "218N-WSD",
+      "child": "LJRR-TSY",
+      "id": "rel-3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "218N-WSD",
+      "child": "LJT2-7T7",
+      "id": "rel-4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "218N-WSD",
+      "child": "LJRR-T7B",
+      "id": "rel-5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "218N-WSD",
+      "child": "LJRY-9PY",
+      "id": "rel-6"
+    }
+  ],
+  "sources": [
+    {
+      "id": "M91B-YFN",
+      "title": "Legacy NFS Source: Manie Crowther - Government record: Census record: birth-name: Manie Crowther",
+      "citation": "1870 Census"
+    },
+    {
+      "id": "M3MH-QYM",
+      "title": "North Carolina, Deaths, 1931-1994 for Edward Lewis Prizer",
+      "citation": "Reference ID:\tfn 2055 cn 263\nGS Film number:\t1943157",
+      "url": "http://www.myheritage.com/research/collection-30144/north-carolina-deaths-1931-1994?s=259197121&itemId=308977-F&action=showRecord"
+    },
+    {
+      "id": "M3MH-D5J",
+      "title": "North Carolina, Deaths, 1906-1930 for Mary (Crowther) Prizer (d. 1920)",
+      "citation": "GS Film number:\t1892503\nDigital Folder Number:\t4215639\nImage Number:\t83\nReference ID:\tfn 521 cn 76",
+      "url": "http://www.myheritage.com/research/collection-30164/north-carolina-deaths-1906-1930?s=259197121&itemId=564734-S&action=showRecord"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "_comment": "Hand-built `person_read --relatives --sources` output for e2e.author tests. Deliberately carries every gap between what person_read returns and what tree-gedcomx.schema.json accepts: no name ids, no relationship ids, one fact missing an id, FamilySearch UUID fact ids and PID source ids (all preserved verbatim), a `notes` array on a source, a lowercase fact type, a relationship pointing at a person not in `persons`, and a duplicate relationship. The `prefix` on a name is not a gap — the schema carries it — and is here to pin that it survives. Every person here is deceased; the living-person cases are built inline in the tests.",
+  "persons": [
+    {
+      "id": "KNDX-MKG",
+      "gender": "Male",
+      "living": false,
+      "names": [{ "given": "John", "surname": "Smith", "prefix": "Rev." }],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Birth",
+          "date": "1820",
+          "standard_date": "1820",
+          "place": "Augusta Co., Virginia",
+          "sources": [{ "ref": "7BL6-KLH", "page": "dwelling 84" }]
+        },
+        {
+          "type": "death",
+          "date": "11 March 1879",
+          "standard_date": "1879-03-11",
+          "place": "Augusta Co., Virginia"
+        }
+      ]
+    },
+    {
+      "id": "L2QR-9XY",
+      "gender": "Male",
+      "living": false,
+      "names": [{ "given": "Robert", "surname": "Smith" }],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "abt 1795",
+          "standard_date": "1795",
+          "place": "Virginia"
+        },
+        { "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100", "type": "Death", "date": "1861" }
+      ]
+    },
+    {
+      "id": "M4TT-2BC",
+      "gender": "Female",
+      "living": false,
+      "names": [{ "given": "Mary", "surname": "Jones" }],
+      "facts": [{ "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791", "type": "Death", "date": "1868" }]
+    }
+  ],
+  "relationships": [
+    { "type": "ParentChild", "parent": "L2QR-9XY", "child": "KNDX-MKG", "subtype": "Biological" },
+    { "type": "ParentChild", "parent": "M4TT-2BC", "child": "KNDX-MKG" },
+    { "type": "ParentChild", "parent": "L2QR-9XY", "child": "KNDX-MKG" },
+    { "type": "ParentChild", "parent": "ZZZZ-999", "child": "L2QR-9XY" },
+    {
+      "type": "Couple",
+      "person1": "L2QR-9XY",
+      "person2": "M4TT-2BC",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "1818",
+          "place": "Augusta Co., Virginia"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "7BL6-KLH",
+      "title": "1850 U.S. Census, Augusta Co., VA",
+      "citation": "1850 U.S. census, Augusta County, Virginia, population schedule.",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XXXX-XXX",
+      "notes": ["This key is not in the tree schema and must be dropped."]
+    },
+    { "id": "9V1G-YQQ", "title": "Virginia Deaths, 1879" }
+  ]
+}
