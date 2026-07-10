@@ -28,9 +28,11 @@ They married 20 Oct 1926 in Ogden, Weber County, Utah.
   referenced them: the two parent-child links to Alan, their couple
   bond, John's second marriage, Alan's three unhydrated siblings'
   parent-child links, and the parents' own parent-child links to their
-  respective parents. The starting tree retains only Alan, his wife
-  Carole Sue Checketts, and their daughter Shauna Sue Applegarth
-  (living). The `person_read` response also included several
+  respective parents. The starting tree retains only Alan and his wife
+  Carole Sue Checketts. Their daughter Shauna Sue Applegarth is living,
+  so she and her two parent-child links were removed as well —
+  FamilySearch's ToS forbids committing living persons' data, and the
+  fixture gate refuses `living: true`. The `person_read` response also included several
   relationship edges to persons FamilySearch did not hydrate in this
   call (Shauna's spouse, Carole's parents, a grandchild) — these were
   dropped too, since a dangling reference to a person absent from the

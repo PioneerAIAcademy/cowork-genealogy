@@ -144,28 +144,6 @@
           "value": "Carole Sue Checketts Applegarth was a loving and caring wife, mother, grandmother, great-grandmother and special friend to many. Carole was born in Ogden, Utah, on Oct. 25, 1937, to Willard (Bill) Glen and Mina Susan Brown Checketts. She died peacefully in Murray, Utah of natural causes on Sept. 17, 2010. She lived her early life in Ogden and graduated from Ogden High School. She married her high school sweetheart and best friend, Alan Glen Applegarth, on Oct. 28, 1954, in the Salt Lake LDS Temple. They were blessed with two children to whom Carole dedicated her life.\nHer chosen profession was motherhood and homemaking; she also had several other jobs during her life. She worked at Walker Bank as a teller and then at Utah State University Carousel Square food services as an administrative assistant.\nCarole was a devoted member of the Church of Jesus Christ of Latter-day Saints and served in various church positions throughout her life. She enjoyed serving others and spent many hours volunteering at the Logan Regional Hospital, where she was the director of volunteers.\nCarole loved to spend time with people. She enjoyed being surrounded by her friends, family, and loved ones as often as possible and they loved being with her. She filled their hearts with laughter and their stomachs with chocolate. Flowers were her passion, especially the roses from her mother's garden. She was a patient listener, a faithful advisor and an amazing example of faith and perseverance exemplifying great trust in the Lord Jesus Christ. She handled the difficulties in her life with grace, dignity and a cheerful positive attitude.\nCarole is survived by her husband, a meticulous and loving caregiver, Alan Glen Applegarth of Providence; by her two children, Mark Alan (Shauna) Applegarth of Omaha, Neb., and Shauna Sue (Val) Jensen of Santaquin, Utah; and by her brothers W. Craig (Glenda) Checketts of Bountiful, Utah, and Alan G. (Reylyn) Checketts of Eagleville, Penn.; 11 grandchildren, Daniel (Heidi) Applegarth, Keresa (Shane) Walker, Valishia (Steven) Hawkins, Kirsten (Stephan) Taeger, Anjillica (Adam) Navarro, Katelynd (Benjamin) Blake, Braydon Jensen, David Applegarth, Myriah Jensen, Shanelle Applegarth, Shaunese Jensen; and by 12 great-grandchildren.\nShe was preceded in death by her parents and her sister, Gloria Gay Checketts Cummins."
         }
       ]
-    },
-    {
-      "id": "LJX9-98M",
-      "gender": "Female",
-      "living": true,
-      "names": [
-        {
-          "given": "Shauna Sue",
-          "surname": "Applegarth",
-          "id": "LJX9-98M-name-1"
-        }
-      ],
-      "facts": [
-        {
-          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
-          "type": "Birth",
-          "date": "29 October 1960",
-          "standard_date": "29 Oct 1960",
-          "place": "Ogden, Weber, Utah, United States",
-          "standard_place": "Ogden, Weber, Utah, United States"
-        }
-      ]
     }
   ],
   "relationships": [
@@ -184,19 +162,6 @@
         }
       ],
       "id": "rel-couple-KWZH-XB6-KWZH-XBN"
-    },
-    {
-      "type": "ParentChild",
-      "parent": "KWZH-XB6",
-      "child": "LJX9-98M",
-      "subtype": "Biological",
-      "id": "rel-pc-KWZH-XB6-LJX9-98M"
-    },
-    {
-      "type": "ParentChild",
-      "parent": "KWZH-XBN",
-      "child": "LJX9-98M",
-      "id": "rel-pc-KWZH-XBN-LJX9-98M"
     }
   ],
   "sources": [
