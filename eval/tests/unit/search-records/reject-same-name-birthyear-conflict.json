@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_search_records_019",
+    "id": "ut_search_records_020",
     "skill": "search-records",
     "name": "Same-named baptism with a conflicting birth year must not be adopted as the subject (identity drift)",
     "type": "positive",
