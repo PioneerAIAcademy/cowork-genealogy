@@ -1,0 +1,56 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search — FamilySearch record collections for Denmark (Thisted/Stagstrup queries resolve to Denmark scope). Includes the military levying rolls (lægdsruller) collection alongside church, census, and probate.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Stagstrup, Thisted, Denmark"
+    },
+    "scope": "Denmark",
+    "totalForPlace": 4,
+    "results": [
+      {
+        "id": "2078555",
+        "title": "Denmark, Church Books, 1484-1941",
+        "dateRange": "1484-1941",
+        "recordCount": 18234567,
+        "personCount": 15102938,
+        "imageCount": 5231120,
+        "url": "https://www.familysearch.org/search/collection/2078555",
+        "notes": "Parish registers (kirkebøger): baptisms, confirmations, marriages, burials. Indexing coverage varies sharply by parish and period; many rural volumes are browse-only."
+      },
+      {
+        "id": "2513529",
+        "title": "Denmark, Military Levying Rolls (Lægdsruller), 1789-1861",
+        "dateRange": "1789-1861",
+        "recordCount": 200408,
+        "personCount": 200408,
+        "imageCount": 1148210,
+        "url": "https://www.familysearch.org/search/collection/2513529",
+        "notes": "Conscription registers listing males from birth or early childhood under the father's name, tracked across annual/triennial sessions by levying district (lægd)."
+      },
+      {
+        "id": "1401625",
+        "title": "Denmark Census, 1787-1930",
+        "dateRange": "1787-1930",
+        "recordCount": 21033401,
+        "personCount": 21033401,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1401625",
+        "notes": "National censuses beginning 1787 and 1801 — household composition with ages and relationships."
+      },
+      {
+        "id": "2015318",
+        "title": "Denmark, Probate Indexes, 1674-1851",
+        "dateRange": "1674-1851",
+        "recordCount": 1310442,
+        "personCount": 0,
+        "imageCount": 1310442,
+        "url": "https://www.familysearch.org/search/collection/2015318",
+        "notes": "Skifteprotokoller (estate/probate) indexes by district; originals mostly browse-only images."
+      }
+    ]
+  }
+}

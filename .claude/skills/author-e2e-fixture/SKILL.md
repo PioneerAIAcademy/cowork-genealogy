@@ -209,15 +209,19 @@ Then report the files written and stop. Do not run, commit, or push.
 > Fixture written to `eval/tests/e2e/<slug>/`.
 >
 > Next steps (your call — not run yet):
-> 1. **Run once** — `RunE2E.bat` (enter `<slug>`) or
->    `make e2e-run TEST=<slug>` (live; 20–60 min, $3–10).
-> 2. **Verdict** — `/interpret-e2e-result`.
-> 3. If it passes, commit the fixture (and its run log) and open a PR.
->
-> To debug `/research` interactively first: seed an editable Cowork
-> project with `make e2e-project TEST=<slug>` / `SeedProject.bat`, then
-> watch it with `make electron` / `Viewer.bat`. A live run doesn't block
-> the tree-read tools, so the honest pass/fail is always the headless run.
+> 1. **Seed an editable project** — `SeedProject.bat` (enter `<slug>`) or
+>    `make e2e-project TEST=<slug>`. It copies the fixture's starting state
+>    into `eval/e2e-project/<slug>/` (throwaway, never committed).
+> 2. **Watch it run** — open `eval/e2e-project/<slug>/` in the Claude Desktop
+>    **Cowork** tab and run `/research`. Open the same folder in the Research
+>    Viewer (`Viewer.bat` / `make electron`) to follow along.
+> 3. Commit the fixture directory and open a PR.
+
+Do **not** tell the user to run the scored headless test — that is the internal
+team's step, and they run it after the fixture lands. A live `/research` run
+does not block the tree-reading tools, so the agent can read the answer off the
+live tree: the live run tells you the fixture is *sensible and answerable*, it
+is **not** a pass/fail verdict. Say so when you hand off step 2.
 
 ## Re-invocation
 
