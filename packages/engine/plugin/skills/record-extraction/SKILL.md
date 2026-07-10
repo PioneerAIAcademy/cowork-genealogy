@@ -64,14 +64,33 @@ types or edge cases.
 Record data arrives in one of four ways:
 
 1. **MCP tool response in context** — search-records called `record_search`
-   and Claude holds the structured data in context.
-   This is the most common path.
+   and Claude holds the (compact-stub) results in context. This is the most
+   common path. The stubs are enough to *triage*; for full extraction, get the
+   record's gedcomx from the search **sidecar** via path 2's `resultsRef` — not
+   a fresh live fetch.
 
-2. **Record ARK or entity ID** — the user provides a FamilySearch record
-   ARK (e.g., `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g.,
-   `QVS9-DHDB`). Call `record_read({ recordId: "<ARK or bare ID>" })`
-   to fetch the full simplified GEDCOMX, then extract assertions from
-   the returned persons, relationships, and facts.
+2. **Record ARK or entity ID** — a FamilySearch record ARK (e.g.,
+   `ark:/61903/1:1:QVS9-DHDB`) or bare entity ID (e.g., `QVS9-DHDB`). Call
+   `record_read` to get the full simplified GEDCOMX (persons, relationships,
+   facts), then extract assertions from it.
+
+   **Prefer the sidecar for a record that came from a staged `record_search`.**
+   A `record_search` with a `projectPath` stages every result — the full gedcomx
+   lives in that search's log-entry `results_ref` sidecar. Pass the ref to read
+   the record **without a live fetch**:
+   `record_read({ recordId, resultsRef: "<the search log entry's results_ref>", projectPath })`.
+   For **the person you searched**, the sidecar carries the same facts, the
+   source citation, and correctly standardized places (more reliable than a live
+   read, whose place standardization can misfire) — use it for extracting that
+   person's evidence; it saves a network round-trip and never re-fetches a record
+   you already searched. **Do NOT `Read` the sidecar file yourself to find record IDs** — you already hold each `recordId` from the search / ranked results, and `record_read` pulls just the one record you name out of the sidecar; reading the whole `results/<log_id>.json` reloads every staged result's gedcomx into context and defeats the compaction. Do a **live**
+   read (omit `resultsRef`) only when (a) you need the **full facts of a
+   co-resident** — a household member you did NOT search for (a parent, spouse, or
+   sibling in a census). The sidecar fully populates only the person you searched
+   and returns co-residents stubbed to a name plus a fact or two; a live read
+   fills them in. Or (b) the record was not part of a staged search (a bare ARK
+   handed to you). And never `record_read` a record you already read this
+   session — reuse the content you have.
 
 3. **PDF capture** — the user uploaded a PDF from an external site
    (Ancestry, MyHeritage, FindMyPast, FindAGrave). Claude reads the
@@ -217,6 +236,18 @@ List every person mentioned in the record and assign a `record_role`:
   `not_listed`, or `missing`: downstream validators, search-records
   triage, and proof-conclusion all key off the literal `absent` token
   to recognize a documented null finding
+- **A differently-surnamed household head is a FAN lead, not noise.**
+  When the subject's family group is enumerated inside a household
+  headed by someone with a different surname, do not default to
+  "boardinghouse" or "lodgers." Note the head as possible kin of
+  unspecified relationship — a parent, sibling, or in-law of either
+  spouse are all plausible, and any of them could surface a maiden
+  name or other lead — and surface the possibility in your
+  presentation for `hypothesis-tracking` to investigate. Do not assert
+  a specific relationship (e.g., "the wife's father") without
+  evidence. Other unrelated surnames in the dwelling may still
+  indicate a boardinghouse; report the ambiguity rather than resolving
+  it silently.
 
 ### 3. Extract assertions
 
@@ -451,6 +482,14 @@ it. Narrating the persistence then ending the response is a hard test
 failure.
 
 **Tool-first checklist for this step:**
+0. **Verify `record_persona_id` on every assertion you're about to append.**
+   Non-null when its `log_entry_id` traces to a `record_search`-tool log
+   entry (the downstream matcher needs it — leaving it null there is a
+   hard failure, not a stylistic choice); null for `record_read`/image/
+   PDF/full-text-sourced assertions. Check this even when the record
+   arrived via a narrow, single-result `record_search` that felt like a
+   direct lookup — the tool used is what decides this field, not how
+   confident the match felt.
 1. Make the `research_append` call (the batched `ops` from 5a/5b
    below). Wait for its return.
 2. Make the `tree_edit` call (5c/5d, source `S` + any sibling

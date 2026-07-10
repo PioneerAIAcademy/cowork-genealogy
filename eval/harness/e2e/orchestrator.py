@@ -140,6 +140,19 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
+def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
+    """Whether a tool call is denied by THIS fixture's `blocked_tools`.
+
+    Same matching rules as the universal tree block: MCP tools only,
+    matched on the bare advertised name. Used for fixtures whose ground
+    truth a specific tool can surface directly (e.g. `wiki_search` on a
+    fixture built from a wiki case-study article that names the answer).
+    """
+    if not tool_name.startswith("mcp__"):
+        return False
+    return _bare_tool_name(tool_name) in blocked_tools
+
+
 @dataclass
 class FixtureCaps:
     # The DEFAULT caps every fixture inherits for any cap it doesn't set.
@@ -185,6 +198,12 @@ class Fixture:
     expected_findings: dict[str, Any]
     starting_research_path: Path
     starting_tree_path: Path
+    # Extra tools denied for THIS fixture's runs, beyond the universal
+    # BLOCKED_TREE_TOOLS — bare advertised names (e.g. "wiki_search").
+    # For fixtures whose ground truth derives from a source an MCP tool
+    # can surface directly (a wiki case-study article naming the answer).
+    # See e2e-test-spec.md §6.1 "Per-fixture blocked tools".
+    blocked_tools: frozenset = frozenset()
 
 
 def load_fixture(fixture_dir: Path) -> Fixture:
@@ -222,6 +241,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         expected_findings=expected,
         starting_research_path=fixture_dir / "starting-research.json",
         starting_tree_path=fixture_dir / "starting-tree.gedcomx.json",
+        blocked_tools=frozenset(fixture_json.get("blocked_tools") or ()),
     )
 
 
@@ -409,7 +429,11 @@ async def _run_agent(
         bare = _bare_tool_name(tool_name)
         if is_blocked_tree_tool(tool_name):
             blocked_tree_reads.append(
-                {"tool": bare, "args": dict(input_data.get("tool_input") or {})}
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "tree",
+                }
             )
             transcript.append(
                 f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
@@ -425,6 +449,32 @@ async def _run_agent(
                         "tree would hand you the stripped answer for free. "
                         "Recover it through records instead (record_search, "
                         "record_read, fulltext_search, image_search, …)."
+                    ),
+                },
+            }
+        if is_fixture_blocked_tool(tool_name, fixture.blocked_tools):
+            blocked_tree_reads.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "fixture",
+                }
+            )
+            transcript.append(
+                f"\n**[BLOCKED]** `{bare}` denied — disabled by this fixture "
+                "(fixture.json `blocked_tools`).\n"
+            )
+            _emit(f"[blocked fixture tool] {bare}")
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"{bare} is disabled for this benchmark fixture: its "
+                        "ground truth derives from a source this tool can "
+                        "surface directly. Recover the answer through record "
+                        "research instead (record_search, record_read, "
+                        "fulltext_search, image_search, …)."
                     ),
                 },
             }
@@ -515,6 +565,17 @@ async def _run_agent(
         env={"ENABLE_TOOL_SEARCH": "true", **env_for_sdk(resolve_auth())},
         model=fixture.agent_model,
         max_turns=fixture.caps.max_turns,
+        # The SDK's stdio transport defaults to a 1 MiB max_buffer_size for a
+        # single JSON message (claude_agent_sdk _DEFAULT_MAX_BUFFER_SIZE). A
+        # live image_read response (base64, ~1.33x the raw bytes) plus its
+        # JSON-RPC/MCP envelope can exceed that even when the tool's own
+        # 700KB inline-image guard (packages/engine/mcp-server/src/tools/
+        # image-read.ts MAX_INLINE_IMAGE_BYTES) has already passed the image
+        # through — observed killing this exact e2e run on a real FamilySearch
+        # death-certificate image (2026-07-08). Raised generously here since
+        # this is eval-harness-only config; it does not change production
+        # Cowork behavior or the tool's own inline-image ceiling.
+        max_buffer_size=10 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],

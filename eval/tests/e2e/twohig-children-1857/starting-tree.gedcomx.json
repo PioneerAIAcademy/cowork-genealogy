@@ -1,0 +1,336 @@
+{
+  "persons": [
+    {
+      "id": "GQV2-NKK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Stephen Joseph",
+          "surname": "Twohig",
+          "id": "GQV2-NKK-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "02918dd4-3ad9-4923-a783-832c2ea4c5f6",
+          "type": "Birth",
+          "date": "08 Feb 1857",
+          "standard_date": "8 Feb 1857",
+          "place": "U.S.",
+          "standard_place": "United States"
+        },
+        {
+          "id": "bca403bd-4cca-4542-98e5-fc2d4cfd40c5",
+          "type": "Death",
+          "date": "18 Jan 1920",
+          "standard_date": "18 Jan 1920",
+          "place": "Bronx, New York, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "21375df5-f263-479d-8b69-3d3871add683",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "West Farms, Westchester, New York, United States",
+          "standard_place": "West Farms, Westchester, New York, United States"
+        },
+        {
+          "id": "5435f549-0e2d-47f5-b2cd-e434fcf9afc4",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "The Bronx, New York City, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "930d01a3-fa06-46b0-882c-6ea6ee0a0a1d",
+          "type": "Burial",
+          "date": "21 Jan 1920",
+          "standard_date": "21 Jan 1920"
+        },
+        {
+          "id": "b5356c8d-2d76-4acb-90b0-1019c4af67ec",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "The Bronx, New York City, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "d0c07115-d8da-41ae-82c5-290e752cd766",
+          "type": "MaritalStatus",
+          "value": "Widowed"
+        },
+        {
+          "id": "4204bf8f-f596-40a0-8966-fde33ddcddb6",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "LX7R-3QB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Patrick",
+          "surname": "Twohig",
+          "id": "LX7R-3QB-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "2 November 1819",
+          "standard_date": "2 Nov 1819",
+          "place": "County Cork, Ireland",
+          "standard_place": "County Cork, Ireland"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "25 June 1890",
+          "standard_date": "25 Jun 1890",
+          "place": "Residence at 1817 Franklin Ave, New York, NY, United States",
+          "standard_place": "New York City, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "GQV2-VRD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary",
+          "surname": "O'Connell",
+          "id": "GQV2-VRD-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1dd015d2-97a9-413f-879b-a3159c2b7c95",
+          "type": "Birth",
+          "date": "7 Mar 1826",
+          "standard_date": "7 Mar 1826",
+          "place": "Ballinhassig, County Cork, Ireland",
+          "standard_place": "Ballinhassig, Ballinaboy, County Cork, Ireland"
+        },
+        {
+          "id": "2a3bc52d-7192-4238-ae49-924015c838c3",
+          "type": "Christening",
+          "date": "7 March 1826",
+          "standard_date": "7 Mar 1826",
+          "place": "Douglas, Cork, County Cork, Ireland",
+          "standard_place": "Douglas, Cork, County Cork, Ireland"
+        },
+        {
+          "id": "4e5b5dd3-a6a7-42c8-b675-59c72fdf3b57",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "West Farms, Westchester, New York, United States",
+          "standard_place": "West Farms, Westchester, New York, United States"
+        },
+        {
+          "id": "30972cf4-c185-4b9b-a0fe-b381dfbf14b1",
+          "type": "Death",
+          "date": "16 August 1887",
+          "standard_date": "16 Aug 1887",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "GJGC-RJZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Genevieve \"Jennie\"",
+          "surname": "Ballard",
+          "id": "GJGC-RJZ-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "35f8088a-4581-482e-a96d-84be3ea1e295",
+          "type": "Birth",
+          "date": "1886",
+          "standard_date": "1886",
+          "place": "The Bronx, New York City, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "d121b137-4568-47ec-9dfb-164747a89e77",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "The Bronx, New York City, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "832ebeb3-7ccf-4435-8333-7bb3f7d164a2",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York County, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "8993c3e7-7ef7-4aeb-8ca8-81868ccacc97",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Bronx, Bronx, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "af6fa7a1-b56b-441c-97fd-4212b4f6f63f",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Hartford, Hartford, Connecticut, United States",
+          "standard_place": "Hartford, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "f24c88a2-08aa-4a30-b47e-7561b312298a",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "ee767ef6-5e7b-4565-b5bc-d0934580ac3a",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Hartford, Hartford, Connecticut, United States",
+          "standard_place": "Hartford, Hartford, Connecticut, United States"
+        },
+        {
+          "id": "8cf09afb-f4e9-4d84-8df3-9b115cae65a4",
+          "type": "Death"
+        },
+        {
+          "id": "493a7078-f631-4456-acba-2b28f17f12a4",
+          "type": "MaritalStatus",
+          "value": "Married"
+        },
+        {
+          "id": "70e958a7-8518-44f0-9e3c-328a6f7b3757",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GT51-LBD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Robert P",
+          "surname": "Twohig",
+          "id": "GT51-LBD-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e79c881a-6320-4a3d-9ac5-cd271072fca1",
+          "type": "Birth",
+          "date": "1889",
+          "standard_date": "1889",
+          "place": "The Bronx, New York City, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "2edac834-1a06-4f02-ba7a-85ddf3c86d00",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "The Bronx, New York City, New York, United States",
+          "standard_place": "The Bronx, New York City, New York, United States"
+        },
+        {
+          "id": "81cab443-4fd3-4142-8388-7a3097c74066",
+          "type": "Death"
+        },
+        {
+          "id": "e0b5e49b-2267-4013-8f83-4ca34c5ca52f",
+          "type": "MaritalStatus",
+          "value": "Single"
+        },
+        {
+          "id": "80af888c-e544-42f8-ac6a-028f8ee46eea",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "LX7R-3QB",
+      "person2": "GQV2-VRD",
+      "id": "rel-1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LX7R-3QB",
+      "child": "GQV2-NKK",
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GQV2-VRD",
+      "child": "GQV2-NKK",
+      "id": "rel-3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GQV2-NKK",
+      "child": "GJGC-RJZ",
+      "id": "rel-4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GQV2-NKK",
+      "child": "GT51-LBD",
+      "id": "rel-5"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7964-Z1W",
+      "title": "Stephen J Twoking, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5HH-9QD : Wed Aug 13 18:16:05 UTC 2025), Entry for George E Feurfile and Florence E Feurfile, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M5HH-9QF"
+    },
+    {
+      "id": "7964-HG8",
+      "title": "Stephen Toohig, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MJPN-3Q2 : Fri Nov 28 04:58:30 UTC 2025), Entry for William Ballard and James Ballard, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MJPN-3QT"
+    },
+    {
+      "id": "S29R-Q9N",
+      "title": "Stephen Twohig, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M82W-MSF : Tue Jan 21 04:34:43 UTC 2025), Entry for Pat Twohig and Mary Twohig, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M82W-MS2"
+    },
+    {
+      "id": "SVMY-C2J",
+      "title": "Stephen J. Twohig, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WGS-CB2 : Wed Mar 26 21:01:25 UTC 2025), Entry for Stephen J. Twohig and Patrick Twohig, 18 Jan 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WGS-CB2"
+    }
+  ]
+}
