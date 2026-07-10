@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_zabriskie_children",
+    "objective": "Who were the children of John Kenneth Zabriskie (1916-1985) of Nephi, Juab, Utah?",
+    "subject_person_ids": [
+      "KW87-QY7"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,18 @@
+{
+  "id": "zabriskie-children",
+  "name": "John Kenneth Zabriskie",
+  "source_pid": "KW87-QY7",
+  "captured": "2026-07-10",
+  "researcher_question": "Who were the children of John Kenneth Zabriskie (1916-1985) of Nephi, Juab, Utah?",
+  "tags": {
+    "question_type": "children",
+    "era": "1940s",
+    "geography": "US-UT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Ground truth is the two children linked in the FamilySearch tree: Joleen (b.1946, d.2020) and Patricia Ann (b.1948, d.1970), both deceased. The 1950 US census (attached to Kenneth) and Ruth Tolley's 2008 obituary both attest the household. Note: the obituaries also name later children (Terri Kay, Kenny) not present in the stripped tree; those are legitimate bonus finds, not errors."
+}

@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John Kenneth Zabriskie and his wife Ruth Tolley had a daughter, Joleen Zabriskie, born 1 May 1946 in Payson, Utah, Utah (died 23 May 2020, buried Vine Bluff Cemetery, Nephi).",
+      "details": {
+        "subject_person": "John Kenneth Zabriskie (KW87-QY7)",
+        "relation": "child",
+        "target_person": {
+          "name": "Joleen Zabriskie",
+          "birth": "1 May 1946, Payson, Utah, Utah, United States"
+        }
+      },
+      "supporting_sources": [
+        "Ruth Tolley Zabriskie obituary, Deseret News, 17 Jul 2008 — names daughter Joleen Alverson among the surviving children",
+        "United States Census, 1950 — John Kenneth Zabriskie household enumerating young daughter Joleen"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "John Kenneth Zabriskie and his wife Ruth Tolley had a daughter, Patricia Ann Zabriskie, born 21 December 1948 in Nephi, Juab, Utah (died 3 December 1970, buried Vine Bluff Cemetery, Nephi).",
+      "details": {
+        "subject_person": "John Kenneth Zabriskie (KW87-QY7)",
+        "relation": "child",
+        "target_person": {
+          "name": "Patricia Ann Zabriskie",
+          "birth": "21 December 1948, Nephi, Juab, Utah, United States"
+        }
+      },
+      "supporting_sources": [
+        "Ruth Tolley Zabriskie obituary, Deseret News, 17 Jul 2008 — names daughter Patricia Zabriskie among those who predeceased her",
+        "Find A Grave / BillionGraves — Patricia Ann Zabriskie, Vine Bluff Cemetery, Nephi, Juab, Utah"
+      ],
+      "required": true
+    }
+  ]
+}
