@@ -28,6 +28,8 @@ treated as "not applicable to this state" — recorded as passed with a
 skip marker, not as a failure.
 """
 
+from pathlib import Path
+
 import pytest
 
 from harness.schema_validator import (
@@ -483,6 +485,12 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     drift between the frontmatter and what the skill actually called (e.g.,
     a fixture was loaded for a tool the skill shouldn't be using).
 
+    The declared set is widened with the frontmatter `tools:` of every
+    plugin agent the skill's SKILL.md references via `@plugin:<name>` —
+    a delegated agent's MCP calls land in the same session tool_calls log,
+    and they are legitimate exactly when the skill body instructs the
+    delegation. Mirrors harness.allowed_tools.compute_allowed_tools.
+
     Skipped on negative tests: tool calls come from the routed-to skill,
     not the skill under test, so checking against the skill under test's
     allowed-tools would be a false positive.
@@ -495,6 +503,27 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     if not tool_calls:
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
+
+    # Widen with referenced plugin agents' tools (bare MCP names only —
+    # built-in tools like Read never appear in tool_calls).
+    from harness.allowed_tools import agent_refs_for_skill, load_skill_frontmatter
+    from harness.workspace import DEFAULT_PLUGIN_AGENTS
+
+    _repo_root = Path(__file__).resolve().parents[3]
+    _skill_md = (
+        _repo_root / "packages" / "engine" / "plugin" / "skills"
+        / str(test.get("skill", "")) / "SKILL.md"
+    )
+    for _agent in agent_refs_for_skill(_skill_md):
+        _agent_fm = load_skill_frontmatter(DEFAULT_PLUGIN_AGENTS / f"{_agent}.md")
+        for _t in _agent_fm.get("tools", []) or []:
+            # Agent frontmatter lists MCP tools in qualified form
+            # (mcp__genealogy__wikipedia_search — the SDK resolves subagent
+            # tools by exposed name); this validator compares bare names, so
+            # normalize. Built-ins (capitalized) never appear in tool_calls.
+            _bare = _t.split("__")[-1] if "__" in _t else _t
+            if not _bare[:1].isupper():
+                declared.add(_bare)
     if not declared:
         # Skill declared no MCP tools but called some — that's a violation.
         bare = [c["tool"].split("__")[-1] for c in tool_calls]
