@@ -145,6 +145,13 @@ reasonable additions or noise.
 - **n/a (null score):** the test made zero MCP tool calls. Report
   `score: null` and use the rationale to confirm "no tool calls — N/A."
 
+**Recovered validation retries:** when a call was rejected by a tool's
+own validation (an `ok: false` / validation-error result, not
+`fixture_not_found`) and Claude corrected it in an immediate retry that
+succeeded, score at most **partial (2)** — the error was real, so do not
+give full credit, and the clean recovery means do not fail it either.
+This policy is fixed; do not re-litigate it per run.
+
 ────────────────────────────────────────
 # Skill rubric
 

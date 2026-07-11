@@ -7,8 +7,15 @@ Grading dimensions for record-extraction unit tests. Evaluated by the LLM judge 
 Is each assertion a single extractable fact, not a compound claim? "Patrick Flynn, age 5, born Ireland" should produce separate assertions for name, age/birth, and birthplace.
 
 - **pass:** Every assertion is one fact; compound information from the source is decomposed into separate `a_` entries with their own `fact_type`.
-- **partial:** Most assertions are atomic but one or two are compound (e.g., a single assertion with `fact_type: birth` containing both date and place in `value`, when a separate residence assertion would be cleaner).
+- **partial:** Most assertions are atomic but one or two are compound (e.g., a single assertion whose `value` mixes two distinct facts — "age 5, born Ireland" — or mixes a fact with justification narrative).
 - **fail:** Assertions are systematically compound; multiple facts crammed into one `value` field; downstream skills can't query individual facts.
+
+**What is NOT compound:** a single event assertion carrying both its
+`date` and `place` fields (e.g., one death assertion with the death date
+and the death place) — the assertion schema holds both attributes of one
+event by design. Atomicity separates distinct *facts* (age vs
+birthplace), not attributes of one event. Do not penalize date+place on
+one event assertion.
 
 ## Informant identification
 
@@ -25,6 +32,14 @@ Did the skill identify the actual informant (not just "census") and assess their
 
 `unknown` is only a *partial* when a specific reporter clearly exists and should have been named (e.g., age/birthplace facts that a household member must have supplied).
 
+**Death certificates — informant by fact (matches SKILL.md doctrine; grade against this, not intuition):**
+
+- **Attending physician** is the informant for the death event itself — death date, place of death, cause, duration of illness — with proximity `official_duty` (the medical-certification side of the certificate is the physician's attestation).
+- **The named personal informant** (spouse, family member) is the informant for the decedent's biographical facts — name, birth date/place, parents, occupation — with proximity `family_not_present` for events they did not witness.
+- **The funeral director** is the informant for burial facts, proximity `official_duty`.
+
+Do not score the skill down for attributing death date/place to the physician rather than the named personal informant — that attribution is the intended doctrine.
+
 ## Evidence type accuracy
 
 Were direct, indirect, and negative evidence types assigned correctly? A relationship inferred from household position in the 1850 or 1860 census (no relationship column — explicit relationship columns were not introduced until 1880) is indirect evidence. A relationship stated in an 1880+ census (explicit column) is direct evidence.
@@ -38,3 +53,10 @@ Applying this correctly:
 - **A stated age is `direct` evidence of age.** "Age 32" in a census column is an explicitly stated fact → `direct`. Only the *birth year computed from* that age (a separate `~1818` assertion) is `indirect`. Do not mark the `age` assertion itself indirect — that conflates the stated age with the birth-date inference derived from it.
 - **An inferred birth *year* is fine when labeled `indirect`.** Deriving `~1845` from a stated age and marking it `indirect` is correct behavior, not a violation. What is disallowed is computing an exact birth *date* (a specific day/month) from age/death-date arithmetic. Do not penalize an approximate year as if it were a fabricated exact date.
 - **A fact explicitly stated but reported by an informant who did not witness it is `indirect`.** On a derivative record (e.g., a death certificate), the birth date, birthplace, and parents' names the informant supplies about the deceased are secondhand — `indirect` even though stated. This is distinct from a census, where a household member reporting facts about their own household has primary knowledge → `direct`.
+- **A stated residence is `direct`.** The census enumerator recorded the household at that dwelling; the residence column contains the value. Do not mark residence `indirect` — this dimension has been graded both ways in past runs and `direct` is the doctrine.
+
+### Judge context — schema facts (do not penalize these)
+
+- **Dual-id scheme is by design:** `research.json` sources carry `src_NNN` ids while `tree.gedcomx.json` source descriptions carry `S` ids, and a source entry's `gedcomx_source_description_id` points from one to the other. Seeing both id families for one record is correct, not an inconsistency.
+- **Blank columns produce no assertions — required behavior:** if a record's field is blank for a person (e.g., no occupation listed), the skill must NOT create an assertion for it. Absent assertions for blank fields are compliance, not incompleteness. Only penalize a missing assertion when the record actually contains the value.
+- **Recovered validation retries:** a tool call rejected by validation that the skill corrected in an immediate retry scores Tool Arguments at most 2 (partial) — the error was real, the recovery is credited (mirrors the base Tool Arguments policy).

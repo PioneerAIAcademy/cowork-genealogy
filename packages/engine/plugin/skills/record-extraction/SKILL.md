@@ -205,7 +205,10 @@ required keys: `who`, `what`, `when_created`, `when_accessed`, `where`,
 `notes` (provenance/quality), `transcription` (verbatim image text),
 `log_entry_id`. The tool assigns `id`. Do not invent fields —
 `record_id` is an assertion field, not a source field; `record_type`
-is not a field at all.
+is not a field at all. `when_accessed` / `access_date` are the real
+date you accessed the record (today's date for a record you just
+fetched) — never a template placeholder, a raw timestamp, or the
+record's publication date.
 
 Set the source's `log_entry_id` to the search log entry that found
 the record — the same value used for the assertions below. For a
@@ -279,7 +282,10 @@ For each person-role in the record, extract atomic assertions —
 **one fact per assertion.** Separate age/birth year from birthplace:
 these are distinct facts with different informant proximity
 assessments and must be separate `a_` entries. Do not combine them
-into a single assertion like "age 5, born Ireland."
+into a single assertion like "age 5, born Ireland." (An event's `date`
+and `place` are attributes of ONE fact — a single death assertion
+carries both fields. Atomicity separates distinct facts, not
+attributes of one event.)
 
 **Only extract facts that are present in the record.** If a column is
 blank or empty for a person, do **not** create an assertion for that
@@ -353,7 +359,10 @@ persona id to point at.
 
 **`value`** — Human-readable, what the record says (not your
 interpretation). "age 5" not "born 1845". Use `[?]` for uncertain
-readings, `[illegible]`/`[torn]` for damage.
+readings, `[illegible]`/`[torn]` for damage. One fact only, no
+reasoning prose — the justification for an inferred relationship or a
+doubted reading belongs in `informant_bias_notes`, never inside
+`value`.
 
 **`structured_value`** — Machine-readable companion to `value` for
 name (`given`/`surname`), birth/death (`year`/`place`), residence
@@ -389,7 +398,7 @@ who likely reported and why:
 | Name/age/birthplace (child) | unknown household member (likely a parent) | household_member | a child of N could not report own birth info; parent provided it |
 | Occupation (stated) | unknown household member (likely the worker or spouse) | household_member | |
 | Residence | census enumerator | witness | enumerator visited the dwelling |
-| Relationship (pre-1880) | census enumerator | witness | inferred from household position; no relationship column |
+| Relationship (pre-1880) | none — inferred from household position | unknown | no relationship column exists; nobody reported the relationship — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
 
 When the informant is named on the record, use their name. For
 unusual record types or edge cases, load
@@ -552,10 +561,13 @@ not in this skill's allowed-tools) and do NOT re-read `research.json` /
 burns turns and tokens.
 
 **If `research_append` or `tree_edit` are not immediately available** in
-your tool list (e.g., shown as deferred), call ToolSearch first with
-`query: "select:research_append,tree_edit,research_log_append,place_search"`
-to load their schemas, then proceed with the tool-first checklist
-above. **Never fall back to writing `research.json` or
+your tool list (e.g., shown as deferred), call ToolSearch first with the
+fully-qualified names, e.g.
+`query: "select:mcp__genealogy__research_append,mcp__genealogy__tree_edit,mcp__genealogy__research_log_append,mcp__genealogy__place_search"`
+(if your environment surfaces the genealogy tools under a different
+server prefix, use that prefix; a keyword query like
+`"research_append tree_edit"` also works). Then proceed with the
+tool-first checklist above. **Never fall back to writing `research.json` or
 `tree.gedcomx.json` files directly** — direct file writes bypass schema
 validation, id allocation, and the `.bak` safety net, and they fail the
 harness's tool-call validators even when the JSON is shape-correct.
@@ -648,9 +660,15 @@ whether to write any stub:
    here.
 3. **For each sibling on this record** (every other `child_N` role
    besides the subject's), look up by preferred name + gender in the
-   listed persons. Siblings found in the tree are skipped (duplicate-
-   sibling skip). Siblings not found are the in-scope set for the
-   write loop below.
+   listed persons. Match tolerantly — spelling variants and
+   diminutives (Bridget/Biddy, Wm/William) are the same person.
+   Siblings found in the tree are skipped (duplicate-sibling skip).
+   Siblings not found are the in-scope set for the write loop below.
+   If the record's children and the tree's existing children
+   **contradict** each other (different sets that tolerant matching
+   cannot reconcile), do not silently create both sets — stub only the
+   clearly-new children and surface the discrepancy as an identity
+   question for `hypothesis-tracking` in your Step 6 summary.
 4. **Emit a compact enumeration checklist** (required before writing —
    a few lines, no deliberation prose):
    - Parents in tree: `<name> = I<id>`, … (or "none → skip stubs")
@@ -768,7 +786,7 @@ dwelling 84, Thomas Flynn household.
 | a_001 | child_1 | name | Patrick Flynn | indeterminate | unknown household member (likely a parent) | household_member |
 | a_002 | child_1 | birth | age 5 | indeterminate | unknown household member (likely a parent) | household_member |
 | a_003 | child_1 | residence | Schuylkill County, PA | primary | census enumerator | witness |
-| a_004 | child_1 | relationship | position consistent with child | indeterminate | census enumerator | witness |
+| a_004 | child_1 | relationship | position consistent with child | indeterminate | none — inferred from household position | unknown |
 | a_005 | head_of_household | name | Thomas Flynn | indeterminate | unknown household member (likely self or spouse) | household_member |
 
 ## Re-invocation behavior
