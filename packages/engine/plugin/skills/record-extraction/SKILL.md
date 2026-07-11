@@ -237,6 +237,16 @@ When uncertain, load `references/source-classification-guide.md`.
 **Provenance notes:** Use `notes` to trace the path from original to
 the version examined and note image quality or legibility issues.
 
+**"Original not examined" checkpoint — decide it now, not later.** If
+what you examined is a derivative (index entry, abstract, transcript,
+translation) and you did NOT reach the underlying original, make it
+explicit here: set `source_classification: "derivative"`, record
+`"original not examined — <reason: browse-only, image-reader returned
+NOT READ, undigitized, etc.>"` in the source `notes`, and state it
+in your Step 6 summary. This is a first-class extraction finding —
+research-exhaustiveness must inherit it, not rediscover it. Never let a
+derivative-only extraction read as if the original was seen.
+
 ### 2. Identify roles in the record
 
 List every person mentioned in the record and assign a `record_role`:
@@ -684,7 +694,8 @@ Present a terse summary, **≤10 lines**:
 - source id (`src_` + `S`),
 - assertion count grouped by `record_role`,
 - tree changes (persons created, edges added),
-- key findings if any (gaps / conflicts / negative evidence),
+- key findings if any (gaps / conflicts / negative evidence, and any
+  "original not examined" limitation from Step 1),
 - next step: `check-warnings` for genealogical impossibilities, then
   assertion-classification or person-evidence.
 

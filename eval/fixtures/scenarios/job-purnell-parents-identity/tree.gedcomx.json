@@ -1,0 +1,51 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Job", "surname": "Purnell", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "about 1826", "place": "Trowbridge, Wiltshire, England" },
+        { "id": "F2", "type": "Residence", "date": "1851", "place": "Trowbridge, Wiltshire, England" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Serena", "surname": "Deacon", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F3", "type": "Birth", "date": "1825", "place": "Studley, Wiltshire, England" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Samuel Jesse", "surname": "Purnell", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F4", "type": "Birth", "date": "1850", "place": "Studley, Wiltshire, England" }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "RT1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "facts": [
+        { "id": "F5", "type": "Marriage", "date": "15 November 1849", "place": "Trowbridge, Wiltshire, England" }
+      ]
+    },
+    { "id": "RT2", "type": "ParentChild", "parent": "I1", "child": "I3" },
+    { "id": "RT3", "type": "ParentChild", "parent": "I2", "child": "I3" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "England and Wales Census, 1851 — Job Purnell household, Trowbridge, Wiltshire" }
+  ]
+}
