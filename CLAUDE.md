@@ -336,6 +336,15 @@ The `description` in SKILL.md frontmatter is critical — it determines
 when Claude triggers the skill. Be specific about what kinds of user
 requests should activate it.
 
+**Lane rule for skill findings.** Before editing any SKILL.md (or plugin
+agent body) to fix an e2e/eval/user finding, classify the finding:
+(1) tooling defect → MCP tool PR; (2) eval defect (judge/rubric/fixture
+wrong) → eval PR; (3) record-type craft gap → that type's
+playbook/table; (4) core doctrine → the stewarded prose edit, gated by
+the unit suite. Most findings are lanes 1–2; prose edits never
+compensate for a tool or eval bug. Full version:
+`docs/skill-lifecycle.md` §5.
+
 ### Python file I/O: always pass `encoding="utf-8"`
 
 Every Python `read_text()` / `write_text()` / `open()` on a text file
