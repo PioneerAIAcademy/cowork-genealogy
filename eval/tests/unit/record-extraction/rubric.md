@@ -55,7 +55,7 @@ Applying this correctly:
 - **A fact explicitly stated but reported by an informant who did not witness it is `indirect`.** On a derivative record (e.g., a death certificate), the birth date, birthplace, and parents' names the informant supplies about the deceased are secondhand — `indirect` even though stated. This is distinct from a census, where a household member reporting facts about their own household has primary knowledge → `direct`.
 - **A stated residence is `direct`.** The census enumerator recorded the household at that dwelling; the residence column contains the value. Do not mark residence `indirect` — this dimension has been graded both ways in past runs and `direct` is the doctrine.
 
-## Judge context — schema facts (do not penalize these)
+### Judge context — schema facts (do not penalize these)
 
 - **Dual-id scheme is by design:** `research.json` sources carry `src_NNN` ids while `tree.gedcomx.json` source descriptions carry `S` ids, and a source entry's `gedcomx_source_description_id` points from one to the other. Seeing both id families for one record is correct, not an inconsistency.
 - **Blank columns produce no assertions — required behavior:** if a record's field is blank for a person (e.g., no occupation listed), the skill must NOT create an assertion for it. Absent assertions for blank fields are compliance, not incompleteness. Only penalize a missing assertion when the record actually contains the value.
