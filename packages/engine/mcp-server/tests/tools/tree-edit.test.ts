@@ -356,6 +356,221 @@ describe("tree_edit", () => {
     expect(noFields.ok).toBe(false);
   });
 
+  // ── add_person inline facts: F ids assigned like add_relationship's ────────
+  const twoPersonCoupleTree = () => {
+    const tree = onePerson();
+    tree.persons.push({
+      id: "I2",
+      gender: "Female",
+      names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }],
+      facts: [],
+    } as any);
+    (tree as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ id: "F2", type: "Marriage", date: "1840", primary: true }] },
+    ];
+    return tree;
+  };
+
+  it("add_person: assigns F ids to inline facts, resolves standard_place, reports them in assignedIds", async () => {
+    await writeProject(onePerson());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: {
+        gender: "Female",
+        names: [{ given: "Margaret", surname: "Smith" }],
+        facts: [
+          { type: "Birth", date: "1852", place: "Schuylkill County, Pennsylvania" },
+          { type: "Death", date: "1930" },
+        ],
+      } as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("assignedIds" in r)) return;
+    // F1 is taken by I1's birth, so the inline facts get F2, F3.
+    expect(r.assignedIds?.facts).toEqual(["F2", "F3"]);
+    expect(r.assignedIds?.person).toBe("I2");
+    const p2 = (await readTree()).persons.find((p: any) => p.id === "I2");
+    expect(p2.facts.map((f: any) => f.id)).toEqual(["F2", "F3"]);
+    expect(p2.facts[0].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+  });
+
+  it("add_person: rejects an inline fact that carries an id", async () => {
+    await writeProject(onePerson());
+    const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: {
+        gender: "Female",
+        names: [{ given: "Margaret", surname: "Smith" }],
+        facts: [{ id: "F9", type: "Birth", date: "1852" }],
+      } as any,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/must not carry ids/);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+  });
+
+  // ── Facts on existing relationships (relationshipId targeting) ─────────────
+  it("add_fact: relationshipId appends to the Couple's own facts with an F id and the primary swap", async () => {
+    await writeProject(twoPersonCoupleTree());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      relationshipId: "R1",
+      fact: { type: "Marriage", date: "12 May 1843", place: "Schuylkill County, Pennsylvania", primary: true },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("assignedIds" in r)) return;
+    expect(r.assignedIds?.fact).toBe("F3"); // F1 birth, F2 existing marriage
+    const rel = (await readTree()).relationships[0];
+    expect(rel.facts.map((f: any) => f.id)).toEqual(["F2", "F3"]);
+    const f3 = rel.facts.find((f: any) => f.id === "F3");
+    expect(f3.standard_place).toBe("Schuylkill, Pennsylvania, United States");
+    expect(f3.primary).toBe(true);
+    // the older Marriage lost its primary (one primary per type per holder)
+    expect(rel.facts.find((f: any) => f.id === "F2").primary).toBeUndefined();
+    // no fact was duplicated onto either spouse
+    expect((await readTree()).persons.find((p: any) => p.id === "I2").facts ?? []).toHaveLength(0);
+  });
+
+  it("update_fact: relationshipId merges fields onto the Couple-held fact by id", async () => {
+    await writeProject(twoPersonCoupleTree());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "update_fact",
+      relationshipId: "R1",
+      factId: "F2",
+      fact: { date: "3 June 1841" },
+    });
+    expect(r.ok).toBe(true);
+    const f2 = (await readTree()).relationships[0].facts.find((f: any) => f.id === "F2");
+    expect(f2.date).toBe("3 June 1841");
+    expect(f2.id).toBe("F2");
+  });
+
+  it("add_fact/update_fact: reject when both or neither of personId/relationshipId is given", async () => {
+    await writeProject(twoPersonCoupleTree());
+    const both = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      relationshipId: "R1",
+      fact: { type: "Marriage", date: "1843" },
+    });
+    expect(both.ok).toBe(false);
+    if (both.ok) return;
+    expect(both.errors.join(" ")).toMatch(/exactly one of `personId` or `relationshipId`/);
+
+    const neither = await treeEdit({ projectPath: dir, operation: "update_fact", factId: "F2", fact: { date: "1841" } });
+    expect(neither.ok).toBe(false);
+    if (neither.ok) return;
+    expect(neither.errors.join(" ")).toMatch(/exactly one of `personId` or `relationshipId`/);
+  });
+
+  it("add_fact: rejects a ParentChild relationship target and a stale relationshipId", async () => {
+    const tree = twoPersonCoupleTree();
+    (tree as any).relationships.push({ id: "R2", type: "ParentChild", parent: "I1", child: "I2" });
+    await writeProject(tree);
+    const pc = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      relationshipId: "R2",
+      fact: { type: "Marriage", date: "1843" },
+    });
+    expect(pc.ok).toBe(false);
+    if (pc.ok) return;
+    expect(pc.errors.join(" ")).toMatch(/Couple relationships/);
+
+    const stale = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      relationshipId: "R404",
+      fact: { type: "Marriage", date: "1843" },
+    });
+    expect(stale.ok).toBe(false);
+    if (stale.ok) return;
+    expect(stale.errors.join(" ")).toMatch(/'R404' not found/);
+  });
+
+  it("update_fact: errors when the factId is not on the targeted relationship", async () => {
+    await writeProject(twoPersonCoupleTree());
+    // F1 exists, but on person I1 — not on R1.
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "update_fact",
+      relationshipId: "R1",
+      factId: "F1",
+      fact: { date: "1841" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not found on relationship 'R1'/);
+  });
+
+  // ── Date/place shape validation on every fact write path ───────────────────
+  const nestedDate = { original: "2 Oct 1876", formal: "+1876-10-02" };
+
+  it("rejects a nested GedcomX date object on every fact write path, writing nothing", async () => {
+    await writeProject(twoPersonCoupleTree());
+    const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+
+    const attempts = [
+      // add_fact on a person
+      treeEdit({ projectPath: dir, operation: "add_fact", personId: "I1", fact: { type: "Death", date: nestedDate } as any }),
+      // add_fact on a relationship
+      treeEdit({ projectPath: dir, operation: "add_fact", relationshipId: "R1", fact: { type: "Marriage", date: nestedDate } as any }),
+      // update_fact
+      treeEdit({ projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1", fact: { date: nestedDate } as any }),
+      // add_person inline fact
+      treeEdit({
+        projectPath: dir,
+        operation: "add_person",
+        person: { gender: "Male", names: [{ given: "Sam", surname: "Smith" }], facts: [{ type: "Birth", date: nestedDate }] } as any,
+      }),
+      // add_relationship fact
+      treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: { type: "Couple", person1: "I1", person2: "I2", facts: [{ type: "Divorce", date: nestedDate }] } as any,
+      }),
+    ];
+    for (const attempt of attempts) {
+      const r = await attempt;
+      expect(r.ok).toBe(false);
+      if (r.ok) continue;
+      expect(r.errors.join(" ")).toMatch(/`date` must be a plain string/);
+    }
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("rejects a non-string place/standard_date and names the offending field", async () => {
+    await writeProject(onePerson());
+    const badPlace = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1899", place: { original: "Pottsville" } } as any,
+    });
+    expect(badPlace.ok).toBe(false);
+    if (badPlace.ok) return;
+    expect(badPlace.errors.join(" ")).toMatch(/`place` must be a plain string/);
+
+    const badStd = await treeEdit({
+      projectPath: dir,
+      operation: "update_fact",
+      personId: "I1",
+      factId: "F1",
+      fact: { standard_date: null } as any,
+    });
+    expect(badStd.ok).toBe(false);
+    if (badStd.ok) return;
+    expect(badStd.errors.join(" ")).toMatch(/`standard_date` must be a plain string.*got null/);
+  });
+
   it("add_source: a source with no title fails validation and writes nothing", async () => {
     await writeProject(onePerson());
     const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");

@@ -103,10 +103,12 @@ tree_edit({
     | "add_source" | "update_source" | "remove",
 
   // ── targeting (per operation) ──
-  personId?: string,          // add_fact, add_name, update_fact, update_name, update_person
+  personId?: string,          // add_fact/update_fact (person-held facts — exactly one of
+                              //   personId | relationshipId), add_name, update_name, update_person
   factId?: string,            // update_fact, remove
   nameId?: string,            // update_name
-  relationshipId?: string,    // remove
+  relationshipId?: string,    // add_fact/update_fact (Couple-held facts — exactly one of
+                              //   personId | relationshipId), remove
   sourceId?: string,          // update_source
 
   // ── payloads (snake_case, NO id — the tool assigns) ──
@@ -123,25 +125,40 @@ tree_edit({
 
 ### 4.1 Per-operation contract
 
-- **`add_fact`** `{ personId, fact }` — append `fact` to the person's `facts`,
-  assigning the next `F` id above the tree max. If `fact.primary === true`, clear
-  `primary` on every other fact of the **same `type`** on that person. If
+- **`add_fact`** `{ personId | relationshipId, fact }` — append `fact` to the
+  target's `facts`, assigning the next `F` id above the tree max. The target is
+  **exactly one of** `personId` (a person-held fact) or `relationshipId` (a
+  Couple-held fact — Marriage, Divorce, … live on the Couple relationship, never
+  duplicated onto each spouse); supplying both or neither is an input error, and
+  a `relationshipId` that names a `ParentChild` is an input error (the tree
+  schema allows `facts` only on Couples). If `fact.primary === true`, clear
+  `primary` on every other fact of the **same `type`** on that holder. If
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves).
-- **`update_fact`** `{ personId, factId, fact }` — shallow-merge the provided
-  `fact` fields onto the existing fact (id immutable). If `place` changed (and not
-  explicitly accompanied by `standard_place`), re-resolve `standard_place`. If
-  `primary: true` set, run the same-type swap.
+- **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
+  the provided `fact` fields onto the existing fact (id immutable) on the same
+  exactly-one-target contract as `add_fact`; the `factId` must live on the named
+  holder. If `place` changed (and not explicitly accompanied by
+  `standard_place`), re-resolve `standard_place`. If `primary: true` set, run the
+  same-type swap on that holder.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
   `name.preferred === true`, clear `preferred` on the person's other names.
 - **`update_name`** `{ personId, nameId, name }` — shallow-merge fields; preferred
   swap if set true.
 - **`update_person`** `{ personId, gender?, ark? }` — set scalar person fields.
-- **`add_person`** `{ person }` — append a new person, assigning the next `I` id
-  and an `N` id for each nested name (exactly-one `preferred`). Synthesized stubs
-  omit `ark` (`simplified-gedcomx-spec.md` §4.6).
-- **`add_relationship`** `{ relationship }` — append, assign next `R`. Endpoint
+- **`add_person`** `{ person }` — append a new person, assigning the next `I` id,
+  an `N` id for each nested name (exactly-one `preferred`), and an `F` id for each
+  nested fact (reported as `assignedIds.facts`). Inline facts follow the same rules
+  as `add_fact`: a caller-supplied fact `id` is rejected ("add_person facts must not
+  carry ids — the tool assigns them"), and each fact's `standard_place` is resolved
+  from `place` when unset. Synthesized stubs omit `ark`
+  (`simplified-gedcomx-spec.md` §4.6).
+- **`add_relationship`** `{ relationship }` — append, assign next `R`. Facts
+  supplied on a new **Couple** relationship (e.g. its Marriage) get the same
+  treatment as `add_fact`: tool-assigned `F` ids (caller-supplied ids rejected),
+  `standard_place` resolution, `assignedIds.facts`. Facts on a `ParentChild` are an
+  input error. Endpoint
   integrity (`parent`/`child` for `ParentChild`, `person1`/`person2` for `Couple`
   reference existing persons — tree persons or FS ids already present) and shape (no
   `person1` on a `ParentChild`) are enforced by the final whole-tree validation pass
@@ -159,6 +176,18 @@ tree_edit({
   facts and relationships** — a `personId` here is an error (person removal is
   `merge_tree_persons`).
 
+**Fact payload shape (all fact write paths).** On every path that writes a fact —
+`add_fact`, `update_fact`, `add_person` inline facts, `add_relationship` facts —
+the scalar fact fields `date`, `standard_date`, `place`, `standard_place`, and
+`value` must be **plain strings** when present (`simplified-gedcomx-spec.md` §4.1, §4.5).
+Anything else (most commonly a raw-GedcomX nested `date: { original, formal }`
+object, but also `null` or an array) is rejected at write time with an input error
+naming the op, the field, and the expected shape, before validation runs. The final
+whole-tree validation would also reject these (`'date' must be a string`), but the
+write-time check attributes the error to the offending op (`ops[i]: …` in a batch)
+instead of a persons-index path — this closed the e2e failure where an accepted
+malformed nested date later crashed `person_warnings` date parsing.
+
 ### 4.2 Return value (compact — never the tree)
 
 ```typescript
@@ -167,7 +196,9 @@ tree_edit({
   operation: string,
   assignedIds?: {                 // ids the tool allocated, for narration
     person?: string, fact?: string, name?: string,
-    relationship?: string, source?: string, names?: string[],
+    relationship?: string, source?: string,
+    names?: string[],             // add_person nested names
+    facts?: string[],             // add_person / add_relationship nested facts
   },
   filesWritten: ["tree.gedcomx.json"],
   validation: { valid: true, warnings: string[] },
@@ -300,6 +331,10 @@ Sequence (mirrors `merge_record_into_tree`):
 | `add_source` / `update_source` payload carries an `id` | rejected (add) / ignored (update — `id` is immutable) |
 | `add_source` with a source missing `title` | validation failure; write nothing (the shared validate-before-persist pass requires `[id, title]`) |
 | `add_relationship` endpoint references a non-existent person, or field shape mismatches the `type` | input error (also caught by validation) |
+| `add_fact` / `update_fact` with both or neither of `personId` / `relationshipId` | input error — "requires exactly one of `personId` or `relationshipId`" |
+| `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
+| A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
+| `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
 | `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | Resulting tree fails project validation | write nothing; return `{ ok: false, errors }` |
@@ -325,14 +360,25 @@ The caller (`tree-edit` skill) still:
 - **add_fact** — appends with the next `F` id; `primary: true` clears the prior
   same-type primary; `place` set → `standard_place` resolved (mock the resolver);
   only `tree.gedcomx.json` written; `.bak` created; project validates.
+  Relationship-targeted: `relationshipId` appends to the Couple's own `facts`
+  (same F id / primary swap / place resolution; nothing lands on either spouse);
+  both/neither of `personId`/`relationshipId` rejected; `ParentChild` target
+  rejected; stale `relationshipId` rejected.
 - **update_fact** — field merge by `factId`; a place change re-resolves
-  `standard_place`; id unchanged.
+  `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
+  Couple-held fact; a `factId` not on the named holder errors.
 - **add_name / update_name** — `N` id assigned; `preferred: true` clears other
   preferred; exactly one preferred remains.
 - **update_person** — gender/ark set; nothing else changed.
-- **add_person** — `I` id + `N` ids assigned; stub omits `ark`.
+- **add_person** — `I` id + `N` ids assigned; stub omits `ark`; inline facts get
+  `F` ids (surfaced as `assignedIds.facts`) with `standard_place` resolution; an
+  inline fact carrying an id is rejected.
 - **add_relationship** — `R` id assigned; endpoints validated; `ParentChild` with
-  `person1` rejected.
+  `person1` rejected; Couple facts get `F` ids, caller-supplied fact ids rejected.
+- **fact payload shape** — a nested `{ original }` date (or non-string
+  place/standard_date/…) is rejected on every fact write path (add_fact person +
+  relationship, update_fact, add_person inline, add_relationship facts) with an
+  error naming the field; nothing written, no `.bak`.
 - **add_source / update_source** — `S` id assigned above the tree max (S-aware
   `nextId`, so `S1`→`S2`); a caller-supplied `id` is rejected on add; `author`/`url`
   round-trip into the written `S` entry; `update_source` merges by `sourceId` (id

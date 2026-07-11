@@ -337,14 +337,44 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
         ]
         _op_fields = {
             "operation": {"type": "string", "enum": _op_enum},
-            "personId": {"type": "string"},
+            "personId": {
+                "type": "string",
+                "description": (
+                    "Target person id — for add_fact/update_fact (person-held facts; "
+                    "exactly one of personId or relationshipId), add_name, "
+                    "update_name, update_person."
+                ),
+            },
             "factId": {"type": "string"},
             "nameId": {"type": "string"},
-            "relationshipId": {"type": "string"},
+            "relationshipId": {
+                "type": "string",
+                "description": (
+                    "Target relationship id — for add_fact/update_fact on a Couple "
+                    "relationship's own facts (e.g. a Marriage lives on the Couple, "
+                    "not on each spouse; exactly one of personId or relationshipId), "
+                    "and for remove."
+                ),
+            },
             "sourceId": {"type": "string"},
-            "fact": {"type": "object"},
+            "fact": {
+                "type": "object",
+                "description": (
+                    "The fact to add (full, no id) or the fields to set "
+                    "(update_fact). date/standard_date/place/standard_place/value "
+                    'are plain strings (date: "2 October 1876"), never nested '
+                    "objects."
+                ),
+            },
             "name": {"type": "object"},
-            "person": {"type": "object"},
+            "person": {
+                "type": "object",
+                "description": (
+                    "The person to add (gender + at least one name; no ids — the "
+                    "tool assigns I, N, and F ids, including for any inline "
+                    "`facts`)."
+                ),
+            },
             "relationship": {"type": "object"},
             "source": {"type": "object"},
             "gender": {"type": "string"},
