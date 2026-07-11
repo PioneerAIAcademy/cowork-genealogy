@@ -169,12 +169,12 @@ Record data arrives in one of four ways:
 
 **Read inputs once, up front.** Before Step 1, read `research.json` and
 `tree.gedcomx.json` a single time and keep both in context for the whole
-extraction — you reuse them for source-id (`src_`) numbering, duplicate
-checks, and existing-person (`I` id) lookups. Do not re-open either file
-before each such check; the copy you read at the start is authoritative
-for this pass, and `tree_edit` returns the ids it assigns, so you never
-need to re-read to learn a new id. (This is the pre-write counterpart to
-the no-re-read-after-write rule below.)
+extraction — you reuse them for duplicate checks and existing-person
+(`I` id) lookups. Do not re-open either file before each such check; the
+copy you read at the start is authoritative for this pass, and
+`research_append` / `tree_edit` return every id they assign, so you
+never need to re-read to learn a new id. (This is the pre-write
+counterpart to the no-re-read-after-write rule below.)
 
 ### 1. Identify the source
 
@@ -187,40 +187,40 @@ Determine the source of the record:
 - Is this an original, derivative, or authored source?
 
 Create or find the source entry:
-- Check if a source entry (`src_`) already exists in `research.json`
-  for this record accessed from this repository. If one does, reuse it
-  (refine its citation via `research_append` `op: "update"`).
-- If not, append a new source entry in step 5a via `research_append`.
-- Also create or find the corresponding source description in
-  `tree.gedcomx.json` (the `S` prefix entry). Remember: multiple
-  research sources can reference the same GedcomX source description
-  (e.g., same census accessed via FamilySearch and Ancestry).
+- A `src_` entry for this record + repository already in
+  `research.json` → reuse it (refine via `research_append`
+  `op: "update"`); otherwise append it in step 5.
+- The matching `tree.gedcomx.json` `S` entry is created by the same
+  step-5 call (`sourceDescription`) — or reused: multiple research
+  sources can reference the same `gedcomx_source_description_id`
+  (e.g., same census via FamilySearch and Ancestry); pass the
+  existing `S` id instead of `sourceDescription`.
 
 **Source entry fields — closed set, schema rejects extras.**
-**Required:** `gedcomx_source_description_id`, `citation` (working
-Evidence Explained citation), `citation_detail` (object with six
-required keys: `who`, `what`, `when_created`, `when_accessed`, `where`,
-`where_within`), `source_classification` (`original`/`derivative`/`authored`),
-`repository`, `access_date`. **Optional:** `url`, `url_archived`,
+**Required:** `citation` (working Evidence Explained citation),
+`citation_detail` (object with six required keys: `who`, `what`,
+`when_created`, `when_accessed`, `where`, `where_within`),
+`source_classification` (`original`/`derivative`/`authored`),
+`repository`, `access_date`. **Tool-stamped:** `id` and
+`gedcomx_source_description_id` (set the latter yourself only when
+reusing an existing `S`). **Optional:** `url`, `url_archived`,
 `notes` (provenance/quality), `transcription` (verbatim image text),
-`log_entry_id`. The tool assigns `id`. Do not invent fields —
+`log_entry_id`. Do not invent fields —
 `record_id` is an assertion field, not a source field; `record_type`
 is not a field at all. `when_accessed` / `access_date` are the real
 date you accessed the record (today's date for a record you just
 fetched) — never a template placeholder, a raw timestamp, or the
 record's publication date.
 
-Set the source's `log_entry_id` to the search log entry that found
-the record — the same value used for the assertions below. For a
-user-provided record with no prior search, it is the log entry
-created in step 4. This is the source→search provenance link; the
-log entry itself is never modified.
+Set the source's `log_entry_id` to the same step-4 `logId` the
+assertions carry — the source→search provenance link; the log entry
+itself is never modified.
 
 **GedcomX source description (`tree.gedcomx.json` `S` entry):**
-Minimal shape — `additionalProperties: false`. Required: `id` (`S`
-prefix), `title`. Optional: `author`, `url`. **Omit optional fields
-entirely when not applicable** — `"url": null` fails validation
-(must be string or absent). No `description`, `notes`, or other fields.
+created by step 5's `sourceDescription: { title, author?, url? }` —
+`title` required; **omit optional fields entirely when not
+applicable** (`"url": null` fails validation). No `description`,
+`notes`, or other fields, and never an `id` — the tool assigns the `S`.
 
 **Source classification (quick rules):**
 - **Original:** First recording or earliest surviving version of the
@@ -306,36 +306,36 @@ with the same care as supporting ones. Suspend judgment until
 correlation.
 
 **Assertion fields — closed set, schema rejects extras.**
-**Required:** `source_id`, `record_id`, `record_role`, `fact_type`,
+**Required:** `record_id`, `record_role`, `fact_type`,
 `value`, `information_quality`, `informant`, `informant_proximity`,
-`evidence_type`, `extracted_for_question_ids` (empty array if none).
-**Optional:** `record_persona_id` (REQUIRED non-null for
-`record_search` sources, `null` for image/PDF/full-text),
-`structured_value`, `date`, `date_certainty` (closed set:
+`evidence_type`, `extracted_for_question_ids` (empty array if none),
+and `source_id` — though in the step-5 batch the tool auto-stamps
+`source_id` from the batch's source op, so omit it there; supply it
+only when appending outside that batch (e.g. a later standalone
+negative). **Optional:** `record_persona_id` (tool-enforced from the
+sidecar — see below), `structured_value`, `date`, `date_certainty`
+(closed set:
 `exact`/`approximate`/`estimated`/`calculated`/`before`/`after`/`between`
 — do not use `certain`, `about`, `circa`, etc.), `place`,
 `standard_place`, `informant_bias_notes`, `log_entry_id`. The tool
 assigns `id`. Do not invent fields — `notes` is a source field, not
 an assertion field. The per-field craft is detailed below.
 
-**Standardizing places (`standard_place`):** every assertion with a
-non-null `place` should carry a `standard_place` when one can be found.
-- If the source record came from `record_read` / `record_search`, its facts
-  already carry a converter-resolved `standard_place` — **copy that value**
-  for the matching place (no tool call needed).
-- Otherwise (image/PDF/full-text records, or a place not present on the
-  source fact), call `place_search({ placeName: "<place>" })` and use the
-  first result's `standardPlace` field. Resolve each distinct place once.
-- Leave `standard_place` null when `place` is null or nothing resolves.
+**Standardizing places (`standard_place`):** leave it out on
+assertions — `research_append` resolves it at persist time (it copies
+the source record's already-resolved `standard_place` from the search
+sidecar, else geocodes the place text) and echoes every resolution in
+`resolvedPlaces`; sanity-check those (a wrong-country resolution is
+rejected by the tool). Supply a value yourself only when you already
+hold the correct standard form (e.g. copied from a `record_read`
+fact); supply `null` to record a place with no standard form.
 
 **Critical rules for each field:**
 
-**`record_id`** — For FamilySearch `record_search` results, use the
-result's **`arkUrl`** verbatim (the full URL form
-`https://www.familysearch.org/ark:/61903/1:1:<id>`) — downstream
-person-evidence requires the URL form to call `same_person`. For
-`record_read` results, use the response's `recordId` (also a URL or
-ARK; canonical matching makes the form forgiving here). For
+**`record_id`** — For FamilySearch records, copy the result's
+`recordId`; any ARK form is accepted (URL, bare
+`ark:/61903/1:1:<id>`, or entity id) — for sidecar-backed assertions
+`research_append` canonicalizes it to the sidecar's stored form. For
 non-FamilySearch sources use `ancestry:<collection>:<id>` or a
 `capture:<descriptive>` id. Use the same `record_id` on every
 assertion from one record.
@@ -344,18 +344,13 @@ assertion from one record.
 the person is in the research project — that's person-evidence's job.
 Assertions attach to records, not persons.
 
-**`record_persona_id`** — For records that came from `record_search`,
-the GedcomX person `id` of this persona within the search result's
-`gedcomx` document. The focus persona's id is the result's `primaryId`;
-each other person in the record (household members, witnesses) is the
-matching entry in the result's `gedcomx.persons[]`. This lets
-person-evidence hand the right focus person to `same_person`.
-**Required (non-null) for every assertion whose source is a `record_search`
-result** — leaving it null on those breaks the downstream matcher and is
-a hard validator failure. Set it to **null** for image-, PDF-,
-full-text-, and **`record_read`-sourced** records — none of these produce
-the staged `record_search` sidecar the matcher keys on, so there is no
-persona id to point at.
+**`record_persona_id`** — the GedcomX person `id` of this persona in
+the search sidecar. `research_append` enforces it from the assertion's
+`log_entry_id`: sidecar present (`record_search`) → the tool verifies a
+supplied id and auto-fills the searched persona when you omit it; no
+sidecar (`record_read`, image, PDF, full-text) → leave it null —
+supplying one is a hard error. Set it yourself only for non-focus
+household members/witnesses: the matching `gedcomx.persons[]` id.
 
 **`value`** — Human-readable, what the record says (not your
 interpretation). "age 5" not "born 1845". Use `[?]` for uncertain
@@ -497,127 +492,83 @@ For a user-provided record, call `research_log_append` with
 `tool: "user_provided"`. When the record came from a `record_search`
 you ran with `projectPath`, instead pass that response's
 `staged.resultsRef` as `stagedResultsRef` so the host finalizes the
-`results/<log_id>.json` sidecar (the validator needs it to cross-check
-assertions carrying a `record_persona_id`). Use the returned `logId` as
-the `log_entry_id` you stamp on the source and assertions in step 5.
+`results/<log_id>.json` sidecar (step 5's persona enforcement keys on
+it). Use the returned `logId` as step 5's `log_entry_id`. Staged
+handles expire (~24h) — on a stale-handle `{ ok: false }`, re-run the
+search and pass the fresh one.
 
-A record from **`record_read`** (fetched by ARK, not staged from a
-`record_search`) has **no** staged sidecar. Do **not** pass
-`stagedResultsRef`, and do **not** hand-write a `results/<log_id>.json`
-file for it — a manual sidecar with no staged persona is flagged as an
-orphan by the validator and blocks every subsequent write until removed.
-Just call `research_log_append` for it (tool `record_read`) with no
-staged ref; its assertions carry `record_persona_id: null` (step 3), so
-no sidecar is needed.
-
-Staged handles expire (~24h); if `research_log_append` returns
-`{ ok: false }` because the handle no longer resolves, re-run the
-`record_search` and pass the fresh handle.
+A **`record_read`**-fetched record has no staged sidecar: log it (tool
+`record_read`) with no `stagedResultsRef`, and do **not** hand-write a
+`results/<log_id>.json` for it — a manual sidecar is flagged as an
+orphan by the validator and blocks every subsequent write until
+removed. Its assertions carry `record_persona_id: null` (step 3).
 
 ### 5. Persist source and assertions
 
 **Call the tool BEFORE narrating it.** No "Now I'll persist…" preamble
 before the call fires — the audit log must show the actual
-`research_append` / `tree_edit` invocation, not text claiming you made
-it. Narrating the persistence then ending the response is a hard test
-failure.
+`research_append` invocation, not text claiming you made it. Narrating
+the persistence then ending the response is a hard test failure.
 
-**Tool-first checklist for this step:**
-0. **Verify `record_persona_id` on every assertion you're about to append.**
-   Non-null when its `log_entry_id` traces to a `record_search`-tool log
-   entry (the downstream matcher needs it — leaving it null there is a
-   hard failure, not a stylistic choice); null for `record_read`/image/
-   PDF/full-text-sourced assertions. Check this even when the record
-   arrived via a narrow, single-result `record_search` that felt like a
-   direct lookup — the tool used is what decides this field, not how
-   confident the match felt.
-1. Make the `tree_edit` call FIRST (5c/5d, source `S` + any sibling
-   `add_person` ops) and read back the assigned `S` id. The source you
-   append to research.json carries a required
-   `gedcomx_source_description_id` pointing at this `S` entry, and
-   `research_append` rejects the batch if that `S` id does not yet
-   exist in tree.gedcomx.json — so the tree side must be written first.
-2. Make the `research_append` call (the batched `ops` from 5a/5b),
-   stamping each source op's `gedcomx_source_description_id` with the
-   `S` id from step 1. Wait for its return.
-3. If 5d sibling stubs fired: make the second `tree_edit` call for
-   the `ParentChild` edges (using the sibling `I` ids from step 1).
-   Wait for its return.
-4. **Only after the tool returns are you allowed to summarize
-   what was persisted.** Match what you write to what the tool log
-   actually shows.
+**5a/5b. ONE `research_append` call per record**, with top-level
+`sourceDescription: { title, author?, url? }` (omit inapplicable
+fields — never `null`, never an `id`) and `ops` = one `sources` append
+(leave `gedcomx_source_description_id` out — tool-stamped) followed by
+one `assertions` append per persona-fact, negatives included, each
+carrying step 4's `logId` as `log_entry_id`. Every persona-fact is its
+own op — batching changes the number of *calls*, never the per-fact
+granularity.
 
-Do **not** call `research_append` first and let its
-`gedcomx_source_description_id` reference an `S` that `tree_edit` has
-not created yet — the write is rejected (`gedcomx_source_description_id
-'S…' not found in tree.gedcomx.json sources`) and nothing persists,
-forcing a wasted retry.
+The tool assigns every id (`S`, `src_`, `a_`), creates the tree `S`
+entry, stamps the source op's `gedcomx_source_description_id` and each
+assertion's `source_id`, auto-fills `record_persona_id` and
+canonicalizes `record_id` from the search sidecar, resolves
+`standard_place` (sidecar copy first; check the echoed
+`resolvedPlaces`), validates once, and writes both files. Never
+predict an id; never call `tree_edit` for the source.
+
+**Reuse instead of duplicating.** Record already described in the tree
+(same record via another repository): omit `sourceDescription`; set
+the sources op's `gedcomx_source_description_id` to the existing `S`
+id. Same record + same repository already in research.json: an
+`update` op (`entryId: "<src_>"`) instead of the append, with each
+assertion's `source_id` set to that `src_` explicitly (the auto-stamp
+requires a sources append).
+
+**On `{ ok: false, errors, opsReceived }`** nothing was written: fix
+ONLY the ops named in `errors` (`ops[i]: …`), keep the rest identical,
+and resubmit the whole batch; `opsReceived` must match the op count
+you sent (fewer = truncated batch — resend it). Never retry blindly
+or drop unnamed ops.
 
 **No post-write re-validation.** `research_append` and `tree_edit`
 validate-on-write and keep a one-deep `.bak`; a successful return is
-proof the write is valid. Do NOT call `validate_research_schema` (it is
-not in this skill's allowed-tools) and do NOT re-read `research.json` /
+proof the write is valid. Do NOT call `validate_research_schema` (not
+in this skill's allowed-tools) and do NOT re-read `research.json` /
 `tree.gedcomx.json` to "sanity check" a successful write — that only
 burns turns and tokens.
 
-**If `research_append` or `tree_edit` are not immediately available** in
-your tool list (e.g., shown as deferred), call ToolSearch first with the
+**If `research_append` or `tree_edit` are not immediately available**
+(e.g., shown as deferred), call ToolSearch first with the
 fully-qualified names, e.g.
 `query: "select:mcp__genealogy__research_append,mcp__genealogy__tree_edit,mcp__genealogy__research_log_append,mcp__genealogy__place_search"`
-(if your environment surfaces the genealogy tools under a different
-server prefix, use that prefix; a keyword query like
-`"research_append tree_edit"` also works). Then proceed with the
-tool-first checklist above. **Never fall back to writing `research.json` or
-`tree.gedcomx.json` files directly** — direct file writes bypass schema
-validation, id allocation, and the `.bak` safety net, and they fail the
-harness's tool-call validators even when the JSON is shape-correct.
-
-**5a/5b. Append the source and every assertion in ONE batched
-`research_append` call** (`ops`: source append first, then one append
-op per assertion — including each negative). The batch validates once
-and writes once; on any per-op failure it returns
-`{ ok: false, errors: ["ops[i]: <msg>"] }` and writes NOTHING, so
-surface and fix rather than retrying blindly. The tool assigns each
-`src_`/assertion `id`; do not invent one. **But** the source op's
-`gedcomx_source_description_id` is not tool-assigned — set it to the
-`S` id the step-1 `tree_edit` `add_source` returned (this is why that
-call runs first); never predict or guess the `S`.
-
-**Intra-batch `source_id` prediction.** The source's assigned id is
-`(highest existing src_ in research.json) + 1`, zero-padded to 3 —
-**not always `src_001`**. Read `sources[]` and compute it (`src_009`
-present → this is `src_010`). Stamp each assertion op's `source_id`
-with that predicted id and `log_entry_id` with step 4's `logId`.
-Assuming `src_001` on a non-empty project points every assertion at a
-*different* record's source.
-
-If a source for this record already exists, use an `update` op in the
-same batch instead of `append` (with `entryId: "<src_>"` and the
-changed `fields`), and stamp assertions with that existing `src_` id.
-
-Every persona gets one append op — never a range op, never compressed.
-Batching changes the number of *calls*, not the per-fact granularity.
-
-**5c. Write the tree side in ONE batched `tree_edit` call** — the
-source `S` entry plus any sibling `add_person` ops (5d below). The
-`tree_edit` batch is separate from `research_append`'s; the tool
-assigns every id (`S`, `I`, `N`), validates once, writes once with a
-one-deep `.bak`, and on any per-op failure returns
-`{ ok: false, errors: ["ops[i]: <msg>"] }` and writes NOTHING. For the
-`add_source` op, pass `title` (required) plus the optional
-`author`/`url`; omit any field that doesn't apply (never `null`, never
-pass `id`). Correct a later `S` entry via an `update_source` op.
+(adjust the server prefix if yours differs), then proceed with 5a/5b.
+**Never fall back to writing `research.json` or `tree.gedcomx.json`
+directly** — direct writes bypass schema validation, id allocation,
+and the `.bak` safety net, and fail the harness's tool-call validators
+even when the JSON is shape-correct.
 
 **5d. Sibling person stubs — when the subject is a child on a household
 record.** When the subject's `record_role` is `child_N` (i.e., the subject
 appears as a child in a household record such as a census), also create
 minimal person stubs in `tree.gedcomx.json` for the subject's siblings
-on this record (the household's other `child_N` roles). The
-`add_person` ops go in the SAME `tree_edit` batch as the 5c
-`add_source` (one op per sibling); the `add_relationship` edges (one per
-sibling × in-tree parent) follow in a SECOND `tree_edit` batch, because
-each edge references the `I` id the tool assigns to its sibling — see
-the write loop below. This is the
+on this record (the household's other `child_N` roles). This is the one
+tree_edit step left in this skill: a FIRST `tree_edit` batch of
+`add_person` ops (one per sibling — person stubs only; the source `S`
+entry was already created by the 5a/5b composite), then the
+`add_relationship` edges (one per sibling × in-tree parent) in a SECOND
+`tree_edit` batch, because each edge references the `I` id the tool
+assigns to its sibling — see the write loop below. This is the
 upstream half of the warnings-architecture chain Dallan called for: with
 siblings persisted as persons, `buildParentMob` discovers them as
 co-children, `relativesChildBirthRange40` and `person-evidence` can
@@ -683,13 +634,13 @@ mix synthesized + FamilySearch ids and aren't safe to predict, so read
 each sibling's assigned `I` back from the first batch before
 referencing it in the second):
 
-1. **Person stubs — in the SAME batch as the 5c `add_source`.** One
-   `add_person` op per in-scope sibling. Person shape: `gender`
-   (`Male`/`Female`) + a single `names` entry with `given`, `surname`,
-   `preferred: true`, `type: "BirthName"` — no `id`, no facts (facts
-   stay on the per-sibling assertions; later record-extraction passes
-   add more). Read back each assigned `I` id from
-   `results[].assignedIds`.
+1. **Person stubs — one `tree_edit` batch of `add_person` ops** (stubs
+   only, no source op). One `add_person` op per in-scope sibling.
+   Person shape: `gender` (`Male`/`Female`) + a single `names` entry
+   with `given`, `surname`, `preferred: true`, `type: "BirthName"` — no
+   `id`, no facts (facts stay on the per-sibling assertions; later
+   record-extraction passes add more). Read back each assigned `I` id
+   from `results[].assignedIds`.
 2. **ParentChild edges — in a SECOND `tree_edit` batch**, one
    `add_relationship` op per (sibling × in-tree parent) pair:
    `{ type: "ParentChild", parent: "<existing parent I>", child:
@@ -722,12 +673,10 @@ belongs in `research.json`, not echoed here.
 
 ## Decision rules
 
-**When to create a new source vs. reuse existing:**
-- Same record accessed from the same repository -> reuse the `src_` entry
-- Same underlying record accessed from a different repository
-  (e.g., same census via FamilySearch vs. Ancestry) -> new `src_` entry,
-  but same GedcomX source description (`S` entry)
-- Different record entirely -> new `src_` and new `S` entry
+**New vs. reuse:** same record + same repository → reuse the `src_`
+entry; same underlying record via a different repository → new `src_`,
+same `S` entry; different record → new `src_` and new `S` (mechanics
+in step 5, "Reuse instead of duplicating").
 
 **Partial or damaged records:** Extract whatever is legible. Annotate
 gaps with `[illegible]`, `[torn]`, `[stained]`. Do not guess missing data.

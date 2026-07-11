@@ -59,7 +59,7 @@ In scope — the `tree-edit` ad-hoc operations (`SKILL.md:52–124`):
 | `update_person` | gender/ark correction |
 | `add_person` | "Adding a person" |
 | `add_relationship` | "Adding a relationship" |
-| `add_source` / `update_source` | source-description (`S` entry) add/correct — record-extraction step 5c, proof-conclusion step 6 |
+| `add_source` / `update_source` | source-description (`S` entry) add/correct — ad-hoc/manual source work and proof-conclusion step 6. (Record-extraction's per-record `S` entry is created by `research_append`'s composite `sourceDescription` instead — see §4.3 cross-tool ordering.) |
 | `remove` | "Removing concluded data (tier downgrade)" — facts/relationships only |
 
 In scope for sources: the lightweight **tree** `sources[]` entry (the `S`
@@ -240,10 +240,16 @@ Semantics (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
   the predicted `I` id). Endpoint/reference integrity is enforced by the **single final
   whole-tree validation**, not per-op, so an `add_person` + `add_relationship` pair in
   one batch validates because the new person is present by validation time.
-- **Cross-tool ordering is unchanged.** `tree_edit` and `research_append` remain two
-  separate tools/calls; an `add_person` here assigns the `I` id that a later
-  `research_append` `person_evidence` op references, so the `tree_edit` batch must
-  commit before that `research_append` batch.
+- **Cross-tool ordering.** `tree_edit` and `research_append` remain two separate
+  tools/calls; an `add_person` here assigns the `I` id that a later
+  `research_append` `person_evidence` op references, so a `tree_edit` batch must
+  commit before a `research_append` batch that references its new ids. The one
+  exception is the record-extraction **source** flow: `research_append`'s
+  composite persist (`sourceDescription`, research-append spec §3.4) creates the
+  tree `S` entry itself via the shared write layer, so there is **no
+  tree_edit-first step for a new record's source description** — `add_source`
+  here remains for ad-hoc/manual source work and proof-conclusion's own
+  source-writing path, not for the extraction persist.
 
 The persisted tree shape is unchanged — `ops` changes only the number of write calls.
 
@@ -285,6 +291,13 @@ Sequence (mirrors `merge_record_into_tree`):
    `research.json` is untouched (ad-hoc adds create ids nothing references yet;
    corrections change values, not ids; `remove` deletes facts/relationships, not
    persons — so no person-id reference can dangle). This is the Mode-1 write shape.
+
+> **Tree-writer closure.** The tree's writers are the merge tools, `tree_edit`,
+> and — for the one composite case — `research_append`, whose `sourceDescription`
+> input appends an `S` entry through the same shared layer (`nextId`,
+> `backupIfExists`, `atomicWriteBoth`, `validateParsed`; research-append spec
+> §3.4/§4). No other tool writes `tree.gedcomx.json`; all of them share the id
+> allocator and validate-before-persist, so the closure holds.
 
 > **Reuse, don't reinvent.** Id allocation needs the per-prefix max that
 > `merge-gedcomx.ts` already computes privately as `maxIdNum`; with a second
@@ -409,5 +422,6 @@ already the snake_case simplified-GedcomX shape the skill passes).
   (one call per edit) instead of hand-editing JSON + calling
   `validate_research_schema`. The "Person merging" section already routes to the
   merge tools (per `skill-rewrites-for-persistence-tools-spec.md`); this completes
-  the migration of the skill's write paths. Together, `merge_*` + `tree_edit` cover
+  the migration of the skill's write paths. Together, `merge_*` + `tree_edit` +
+  `research_append`'s composite `S`-entry write (research-append spec §3.4) cover
   every write to `tree.gedcomx.json`.
