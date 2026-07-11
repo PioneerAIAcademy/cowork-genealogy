@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Death 23 December 1883 recovered exactly on K87G-T89 and sourced (S1, S2); the Death fact itself carries no place, but the death-place question is answered by the burial at Stavanger (f2).",
+    "f2": "Burial 31 December 1883 at Stavanger, Rogaland, Norway recovered exactly and sourced. proof_quality=2: systematic search but single evidence unit (both burial indexes are the same event) → single-source corroboration; probable tier appropriate."
+  },
+  "annotator": "developer-blind"
+}

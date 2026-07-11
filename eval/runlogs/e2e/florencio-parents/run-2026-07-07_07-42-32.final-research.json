@@ -1,0 +1,580 @@
+{
+  "project": {
+    "id": "rp_florencio_parents",
+    "objective": "Who were Rivanette Florencio de Araujo's parents?",
+    "subject_person_ids": [
+      "GM4P-TYS"
+    ],
+    "status": "completed",
+    "created": "2026-07-02T00:00:00Z",
+    "updated": "2026-07-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does Rivanette Florencio de Araujo's birth registration in Pernambuco, Brazil (30 Nov 1936) say about her parents?",
+      "rationale": "Her birth certificate from the Registro Civil is the most direct record for identifying her parents by name. The 'Brasil, Pernambuco, Registro Civil, 1804-2023' collection on FamilySearch covers this period and place. Answering this question is the gatekeeper step \u2014 it will either name both parents directly or narrow the search to specific parent names for further corroboration.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-07",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All searchable/automated sources exhausted. The 1957 civil marriage registration (src_001) directly names both parents via the filia\u00e7\u00e3o field \u2014 primary information, self-reported by the bride. No conflicting evidence found in any source. Birth registration is not in the indexed portion of col. 2016195 (pli_003 image browse deferred as requiring manual access beyond automated scope). Catholic church records (col. 2177293) do not index 1936 Recife baptisms. FAN children's records (pli_005) contain no grandparent fields. Independent corroboration was not achieved through automated means; the conclusion is honest at probable tier. Overturn risk is low: no positive evidence points to different parents, and the bride's self-reported filia\u00e7\u00e3o carries low bias risk. Future manual browse of pli_003 (unindexed 1936 Recife nascimento volumes) could provide direct corroboration and potentially upgrade the conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Met via proxy. Marriage registration filia\u00e7\u00e3o field directly names both parents; the birth registration was not located but is not required when the marriage record provides the same primary-information answer from the subject herself.",
+          "repository_breadth": "Met for automated research. Two FamilySearch collections (col. 2016195 vital records; col. 2177293 Catholic church records) searched with variant spellings. FAN children's records read. Unindexed image volumes (pli_003) deferred as requiring manual browse \u2014 a known, documented gap.",
+          "original_substitution": "Substantially met. Marriage record accessed as original civil registration. Birth registration not located in indexed form; image-only access would require manual browse.",
+          "independent_verification": "Not achieved via automated means. All parentage assertions (a_003\u2013a_006) share one informant (the bride). Onomastic consistency (compound surname Florencio de Araujo = maternal Florencio + paternal de Araujo) provides internal corroboration. No independent informant found. Conclusion constrained to probable tier accordingly.",
+          "evidence_class": "Met. Original civil registration containing primary information from the principal party (the bride, self-reported parentage).",
+          "conflict_resolution": "Met. No conflicts across any searched source. Tree, marriage record, and naming convention are internally consistent.",
+          "overturn_risk": "Low for a probable-tier conclusion. No positive evidence exists indicating different parents. The bride's self-reported filia\u00e7\u00e3o carries low bias risk (no motive to misname parents at civil marriage). Residual adoption/legitimization risk acknowledged but unsubstantiated. Manual image browse of 1936 Recife nascimentos is the only remaining realistic avenue for contradiction or corroboration."
+        }
+      },
+      "created": "2026-07-07"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-07",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Pernambuco, Brazil",
+          "date_range": "1936",
+          "repository": "FamilySearch",
+          "rationale": "The 'Brazil, Pernambuco, Civil Registration, 1804-2023' collection (col. 2016195) is indexed and contains ~1.3M records. A search for Rivanette Florencio de Araujo born Nov 1936 in Pernambuco is the fastest, most direct path to her birth certificate, which by law names both parents. Variant spellings (Rivanete, Rivaneta) should also be tried.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Recife, Pernambuco, Brazil",
+          "date_range": "1957",
+          "repository": "FamilySearch",
+          "rationale": "Brazilian Registro Civil marriage entries (casamentos) routinely name both spouses' parents in the 'filia\u00e7\u00e3o' field. Rivanette's 1957 marriage to Amaro Gomes de Melo is already partially referenced in tree sources (SSLL-6JM). Viewing the original image from collection 2016195 should reveal her parents' names directly.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Recife, Pernambuco, Brazil",
+          "date_range": "1936",
+          "repository": "FamilySearch",
+          "rationale": "If pli_001 indexed search yields no birth record, browse unindexed birth (nascimentos) image volumes for Recife, November\u2013December 1936. Volume search confirms Recife civil registration is heavily digitized. The birth register for the right district and date range should contain Rivanette's entry.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Recife, Pernambuco, Brazil",
+          "date_range": "1936-1937",
+          "repository": "FamilySearch",
+          "rationale": "Catholic baptism was near-universal in Northeast Brazil in 1936. 'Brazil, Pernambuco, Catholic Church Records, 1762-2019' (col. 2177293) contains ~1.7M records including Recife parish baptisms. Baptism entries name father, mother, and godparents \u2014 a corroborating or substitute source if civil registration is silent.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Recife, Pernambuco, Brazil",
+          "date_range": "1955-1975",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: five children's birth records (sources QJQL-HQS, SSLL-6JM, QJQL-ZR5, 3GHR-PWZ, 79VQ-B53) are already linked in the tree. Brazilian birth certificates in the Registro Civil include the parents' own parentage ('av\u00f3s' \u2014 grandparents of the child) in many periods. Examining the original images may reveal Rivanette's parents as av\u00f3s maternos.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T07:00:21.850Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Rivanette",
+        "surname": "Araujo",
+        "birthYearFrom": 1931,
+        "birthYearTo": 1941,
+        "recordCountry": "Brazil",
+        "collectionId": "2016195",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 40,
+      "notes": "40 results returned but none match Rivanette Florencio de Araujo born Nov 1936. All results are unrelated women named 'de Araujo' from different years and municipalities. Will retry with surname 'Florencio' since that is the first element of her compound surname and may be the indexed form."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T07:00:32.992Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Rivanette",
+        "surname": "Florencio",
+        "birthYearFrom": 1931,
+        "birthYearTo": 1941,
+        "recordCountry": "Brazil",
+        "collectionId": "2016195",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Rivanette Florencio in Pernambuco civil registration births 1931-1941. Will try variant first name spellings: Rivanete, Rivaneta."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T07:01:10.842Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Rivanete",
+        "surname": "Florencio",
+        "recordCountry": "Brazil",
+        "collectionId": "2016195",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 261,
+      "notes": "261 Florencio birth records returned; none named Rivanete/Rivanette. Results are overwhelmingly 19th-century records. Her Nov 1936 birth registration appears not to be indexed in this collection under this name form. The collection has 5.3M images but only 1.3M indexed records \u2014 her birth is likely image-only (unindexed). Pli_003 (browse image volumes) will be needed as fallback."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T07:01:48.045Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Rivanete",
+        "surname": "Florencio",
+        "spouseGivenName": "Amaro",
+        "spouseSurname": "Melo",
+        "marriageYearFrom": 1955,
+        "marriageYearTo": 1960,
+        "recordCountry": "Brazil",
+        "collectionId": "2016195",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 20,
+      "notes": "20 results returned but none match Rivanete/Florencio marriage to Amaro. However, the tree already references ARK QLWC-Y4MM (source SSLL-6JM) as a marriage-related record \u2014 reading that directly via record_read."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T07:02:24.592Z",
+      "tool": "record_search",
+      "query": {
+        "method": "record_read",
+        "recordId": "ark:/61903/1:1:QLWC-Y4MM",
+        "rationale": "ARK already in tree source SSLL-6JM \u2014 reading directly"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Marriage registration for Rivaneta Florencio de Araujo and Amaro Gomes de Melo, 22 Aug 1957, Recife, Pernambuco (collection 2016195, image ARK 3:1:3QS7-99QG-KBTG). Record includes filiacao (parentage) for Rivaneta: father = Miguel Caetano de Araujo (ARK QLWC-Y4MW), mother = Josefa Florencio de Araujo (ARK QLWC-Y4MD). This directly answers q_001 \u2014 Rivanette's parents are Miguel Caetano de Araujo and Josefa Florencio de Araujo. Passing to record-extraction."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-07T07:17:55.521Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Rivanete",
+        "surname": "Araujo",
+        "birthYearFrom": 1935,
+        "birthYearTo": 1938,
+        "recordCountry": "Brazil",
+        "collectionId": "2177293"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 10,
+      "notes": "10 results returned from col. 2177293 (Brazil, Pernambuco, Catholic Church Records, 1762-2019) but all are deeply negative matches (scores \u2264 \u22120.85) from the 1800s\u20131920s, none bearing the name Rivanete or parents Miguel/Josefa de Araujo. The indexed portion of this collection does not appear to include 1936 Recife baptisms."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-07T07:18:03.026Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Rivanete",
+        "surname": "Florencio",
+        "birthYearFrom": 1935,
+        "birthYearTo": 1938,
+        "fatherGivenName": "Miguel",
+        "motherGivenName": "Josefa",
+        "recordCountry": "Brazil",
+        "collectionId": "2177293"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results with maternal surname Florencio and parent given names Miguel/Josefa. Confirms col. 2177293 does not index a baptism for Rivanete circa 1936 Pernambuco. The indexed records in this collection skew heavily toward the 19th century for Recife parishes. Absence is a coverage limitation, not meaningful negative evidence."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-07T07:22:05.114Z",
+      "tool": "record_read",
+      "query": {
+        "records_read": [
+          "ark:/61903/1:1:QLWZ-YN45",
+          "ark:/61903/1:1:QLWC-8B2H",
+          "ark:/61903/1:1:QLW2-RL3Z",
+          "ark:/61903/1:1:QLWZ-VN33"
+        ],
+        "purpose": "Check children birth registrations for avos maternos (maternal grandparent) fields naming Rivanette's parents"
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4,
+      "notes": "Read four children's birth registrations (Claudia Maria 1964, Roberto 1959, Alexandre 1965, Paulo Roberto 1959). All four confirm 'Rivanete de Araujo Melo' as mother and 'Amaro Gomes de Melo' as father, but none include grandparent (av\u00f3s) data in the indexed structured record. The 1950s-1960s Pernambuco civil birth registrations did not routinely record grandparent names in the indexed fields. Result: no independent corroboration of Rivanette's parents from this FAN source. However, four independent registrations confirm her identity as GM4P-TYS via the married surname 'de Araujo Melo' and the known spouse Amaro Gomes de Melo."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "SSLL-6JM",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7 : 7 July 2026), marriage registration for Amaro Gomes de Melo and Rivaneta Florencio de Araujo, 22 agosto 1957, Recife, Pernambuco; citing image ark:/61903/3:1:3QS7-99QG-KBTG.",
+      "citation_detail": {
+        "who": "Amaro Gomes de Melo (groom) and Rivaneta Florencio de Araujo (bride)",
+        "what": "Civil marriage registration (casamento) \u2014 Registro Civil de Pernambuco",
+        "when_created": "22 August 1957",
+        "when_accessed": "7 July 2026",
+        "where": "\"Brasil, Pernambuco, Registro Civil, 1804-2023,\" FamilySearch, collection 2016195",
+        "where_within": "Marriage entry for Recife, Pernambuco; image ARK ark:/61903/3:1:3QS7-99QG-KBTG"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-07",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y4MM",
+      "log_entry_id": "log_005",
+      "notes": "Civil marriage registration from Pernambuco Registro Civil. The filia\u00e7\u00e3o (parentage) field names both spouses' parents. Bride persona ARK QLWC-Y4MM; groom (primary citation) ARK QLWC-Y1P7; image ARK 3:1:3QS7-99QG-KBTG. Retrieved via record_read (no staged sidecar)."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Rivaneta Florencio de Araujo",
+      "structured_value": {
+        "given": "Rivaneta Florencio",
+        "surname": "de Araujo"
+      },
+      "information_quality": "primary",
+      "informant": "Rivaneta Florencio de Araujo (bride, self-reported)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "1936, Pernambuco, Brazil",
+      "structured_value": {
+        "year": 1936,
+        "place": "Pernambuco, Brazil"
+      },
+      "date": "1936",
+      "date_certainty": "approximate",
+      "place": "Pernambuco, Brazil",
+      "standard_place": "Pernambuco, Brazil",
+      "information_quality": "primary",
+      "informant": "Rivaneta Florencio de Araujo (bride, self-reported)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "father named as Miguel Caetano de Araujo in the filia\u00e7\u00e3o (parentage) field of the 1957 marriage registration",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "secondary",
+      "informant": "Rivaneta Florencio de Araujo (bride, self-reported her father's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Assertions a_003, a_004, a_005, a_006 share a single informant (the bride). They form one evidence unit for parentage and together receive no more credibility than the strongest single item. Reclassified to 'secondary': self-reported parentage is knowledge-by-testimony \u2014 the bride was present at her own birth as subject but was not an informed witness to the fact 'these are my parents.' This parallels secondary classification for delayed birth certificates. Contrast with a_001 (bride's name) and a_007 (marriage event), which remain primary. Low bias risk: brides typically have no motive to falsify parents' names at civil marriage. Residual risk: if Rivaneta was adopted or formally legitimized, she may have named legal rather than biological parents."
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "mother named as Josefa Florencio de Araujo in the filia\u00e7\u00e3o (parentage) field of the 1957 marriage registration",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "secondary",
+      "informant": "Rivaneta Florencio de Araujo (bride, self-reported her mother's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Same single-informant evidence unit as a_003. Self-reported parentage is secondary (knowledge-by-testimony). See a_003 for full classification rationale. Low bias risk overall."
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7",
+      "record_role": "father_of_bride",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Miguel Caetano de Araujo",
+      "structured_value": {
+        "given": "Miguel Caetano",
+        "surname": "de Araujo"
+      },
+      "information_quality": "secondary",
+      "informant": "Rivaneta Florencio de Araujo (bride, named her father)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Father's name stated by the bride in the filia\u00e7\u00e3o field. Secondary information: the bride knows her father's name by testimony/upbringing, not by direct witness to her own birth or parentage event. Same evidence unit as a_003."
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7",
+      "record_role": "mother_of_bride",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Josefa Florencio de Araujo",
+      "structured_value": {
+        "given": "Josefa Florencio",
+        "surname": "de Araujo"
+      },
+      "information_quality": "secondary",
+      "informant": "Rivaneta Florencio de Araujo (bride, named her mother)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother's name stated by the bride in the filia\u00e7\u00e3o field. Secondary information: the bride knows her mother's name by testimony/upbringing, not by direct witness. Same evidence unit as a_003."
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7",
+      "record_role": "bride",
+      "record_persona_id": null,
+      "fact_type": "marriage",
+      "value": "married Amaro Gomes de Melo, 22 August 1957, Recife, Pernambuco, Brazil",
+      "structured_value": {
+        "year": 1957,
+        "place": "Recife, Pernambuco, Brazil"
+      },
+      "date": "22 Aug 1957",
+      "date_certainty": "exact",
+      "place": "Recife, Pernambuco, Brasil",
+      "standard_place": "Recife, Pernambuco, Brazil",
+      "information_quality": "primary",
+      "informant": "civil registrar, Recife, Pernambuco",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GM4P-TYS",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The bride named 'Rivaneta Florencio de Araujo' in the 1957 Pernambuco marriage registration is the same person as Rivanette Florencio de Araujo (GM4P-TYS). Name variant 'Rivaneta' vs 'Rivanette' is a minor spelling difference consistent with Brazilian Portuguese transliteration variation. Birth year circa 1936 and birthplace Pernambuco both match. The compound surname 'Florencio de Araujo' \u2014 combining mother's surname Florencio and father's surname de Araujo \u2014 is an exact match to the tree. Marriage date 22 Aug 1957 and spouse Amaro Gomes de Melo match the known couple relationship in tree.gedcomx.json.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "GM4P-TYS",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1936 from the marriage record (bride's age 20 on 22 Aug 1957 \u2192 born ~1937, or age stated as consistent with 1936 birth) aligns with the tree fact of 30 Nov 1936. Birthplace Pernambuco is an exact match. This corroborates the identity established by a_001 \u2014 name, age, and birthplace all converge on GM4P-TYS.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "GM4P-TYS",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The bride-role relationship assertion ('Rivaneta is the child of Miguel Caetano de Araujo') is borne by GM4P-TYS as the bride/child. Her identity as the bride is established confidently by a_001 (name, birth year, birthplace, spouse all match). The parentage claim attaches to her as the named child.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Miguel Caetano de Araujo is named as father (pai) of the bride in the 1957 Pernambuco marriage registration. No prior record corroborates this stub, so confidence is probable rather than confident. The name is an exact match to the I1 stub created from this same record. The compound surname 'de Araujo' carried by Rivanette's paternal side is consistent. No conflicting evidence known.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "GM4P-TYS",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The bride-role relationship assertion ('Rivaneta is the child of Josefa Florencio de Araujo') is borne by GM4P-TYS as the bride/child, established confidently by a_001. The parentage claim attaches to her as the named child.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Josefa Florencio de Araujo is named as mother (m\u00e3e) of the bride in the 1957 Pernambuco marriage registration. No prior record corroborates this stub, so confidence is probable. The name is an exact match to the I2 stub created from this same record. Critically, the surname 'Florencio' is the maternal component of Rivanette's compound surname 'Florencio de Araujo', consistent with Brazilian naming convention. No conflicting evidence known.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The name 'Miguel Caetano de Araujo' extracted from the father-of-bride role links to stub I1. This is the sole record establishing I1; confidence is probable as the stub rests on this one source with no independent corroboration yet. The name on the record matches the stub exactly.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The name 'Josefa Florencio de Araujo' extracted from the mother-of-bride role links to stub I2. This is the sole record establishing I2; confidence is probable as the stub rests on this one source with no independent corroboration yet. The name on the record matches the stub exactly, and the surname 'Florencio' is the maternal component visible in Rivanette's own compound surname.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "GM4P-TYS",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The marriage fact (22 Aug 1957, Recife, Pernambuco) links to GM4P-TYS as bride. The tree already records this couple relationship (rel-GM45-SDX-GM4P-TYS-couple) with the same date and place. Spouse Amaro Gomes de Melo is the same person as GM45-SDX. The marriage event is therefore a direct corroborating link to the subject's identity in this record.",
+      "created": "2026-07-07"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The indexed portion of 'Brasil, Pernambuco, Registro Civil, 1804-2023' (FamilySearch col. 2016195) was searched with three variants for Rivanette's birth registration \u2014 all returned negative, indicating the 1936 birth record is in the unindexed image portion (~5.3M images, only 1.3M indexed). The 1957 marriage registration was located via record_read using a known ARK and read as an original civil record. The Catholic church records collection 'Brazil, Pernambuco, Catholic Church Records, 1762-2019' (col. 2177293) was searched with two baptism variants \u2014 both negative (indexed records skew heavily toward the 19th century; 1936 Recife baptisms not in indexed portion). Four of Rivanette's children's birth registrations (1959\u20131965, FamilySearch col. 2016195) were read directly to check for grandparent fields \u2014 none included av\u00f3s (grandparent) data in the indexed structured record. All automated/searchable sources were exhausted. The unindexed 1936 nascimento image volumes (pli_003) and unindexed Catholic baptism image volumes remain as manual-access avenues for future corroboration.",
+      "narrative_markdown": "## The Parentage of Rivanette Florencio de Araujo (GM4P-TYS)\n\n*Proof Summary \u2014 Probable Tier*\n\n### Conclusion\n\nThe available evidence indicates with probable confidence that Rivanette Florencio de Araujo (born 30 November 1936, Pernambuco, Brazil; died 20 October 2000, Recife; FamilySearch person GM4P-TYS) was the daughter of **Miguel Caetano de Araujo** (father) and **Josefa Florencio de Araujo** (mother). The conclusion is stated at the probable tier because the parentage evidence derives from a single source with a single informant; independent corroboration was not found through the available indexed collections.\n\n### Primary Evidence: The 1957 Pernambuco Marriage Registration\n\nThe central source is the civil marriage registration for Rivaneta Florencio de Araujo and Amaro Gomes de Melo, recorded 22 August 1957, Recife, Pernambuco, Brazil, in the \"Brasil, Pernambuco, Registro Civil, 1804-2023\" collection on FamilySearch (bride persona ARK ark:/61903/1:1:QLWC-Y4MM; collection 2016195; image ARK ark:/61903/3:1:3QS7-99QG-KBTG).\u00b9 The Brazilian Registro Civil marriage entry (*casamento*) includes a *filia\u00e7\u00e3o* (parentage) field in which the bride declared her parents. The *filia\u00e7\u00e3o* field names:\n\n- **Father (*pai*):** Miguel Caetano de Araujo\n- **Mother (*m\u00e3e*):** Josefa Florencio de Araujo\n\nThis record is an **original source** \u2014 a civil registration created contemporaneously with the event it records, not a later index or derivative. The parentage data was self-reported by the bride. Because a person's knowledge of her own parents is acquired by testimony and upbringing rather than by direct witness to her own birth, the parentage information is classified as **secondary information** from an original source. The bride's own name and the marriage event itself, both directly experienced by the informant, are classified as primary information.\n\n### Identity of the Bride as Rivanette Florencio de Araujo (GM4P-TYS)\n\nThe bride named in this registration is identified as Rivanette Florencio de Araujo (GM4P-TYS) with confidence. The given name \"Rivaneta\" is a recognized spelling variant of \"Rivanette\" (also recorded as \"Rivanete\" in indexed records). The bride's birth year approximately 1936 and birthplace Pernambuco are consistent with the known tree facts (born 30 November 1936, Pernambuco). The marriage date of 22 August 1957 and spouse Amaro Gomes de Melo match the known couple relationship in the research tree. Four of Rivanette's children's birth registrations (Roberto, 1959; Paulo Roberto, 1959; Claudia Maria, 1964; Alexandre, 1965)\u00b2 independently confirm \"Rivanete de Araujo Melo\" as mother and \"Amaro Gomes de Melo\" as father, corroborating her post-marriage identity across four separate civil registration events.\n\n### Onomastic Consistency Check\n\nRivanette's compound surname \"Florencio de Araujo\" is internally consistent with the declared parents under the Brazilian naming convention, by which a child typically receives a maternal family surname followed by a paternal family surname. The element \"Florencio\" appears distinctively in the mother's name (Josefa Florencio de Araujo) but not in the father's (Miguel Caetano de Araujo), and it is the first element of Rivanette's compound surname \u2014 consistent with the maternal-surname position in Brazilian nomenclature. The element \"de Araujo\" is shared by both declared parents (the father's surname; also the mother's recorded surname), so it does not independently disentangle the two parental lines. In sum, the surname pattern is consistent with the declared parents and provides internal plausibility for the maternal line in particular, but it is not an independent corroborating source: it derives from the same record and the same informant.\n\n### Searches Conducted\n\nRivanette's birth registration was not located in the indexed portion of the Pernambuco Registro Civil collection. Three search variants \u2014 given names \"Rivanette\" and \"Rivanete,\" surnames \"Araujo\" and \"Florencio,\" birth years 1931\u20131941 \u2014 returned negative results. The collection contains approximately 5.3 million images but only 1.3 million indexed records; the 1936 birth registration is likely present only in the unindexed image portion. The Catholic baptism collection for Pernambuco (FamilySearch col. 2177293) was searched with two variants; both returned no match due to collection coverage limitations (indexed records skew toward the 19th century). These absences are coverage limitations, not meaningful negative evidence.\n\n### Evidence Limitations and Confidence Tier\n\nThe conclusion is stated at the **probable** tier because (1) all parentage evidence derives from one source with one informant \u2014 the bride's self-report in the 1957 marriage registration \u2014 and under the GPS evidence-independence rule, assertions from the same informant constitute one evidence unit; and (2) no second source with a different informant was found through the available indexed collections.\n\nOne residual risk is acknowledged: if Rivanette was adopted or formally legitimized before 1957, the *filia\u00e7\u00e3o* field could name legal rather than biological parents. No evidence of adoption or legitimization was encountered in any record searched; this risk remains theoretical and unquantified, not an active finding.\n\n### Path to Upgrading This Conclusion\n\nTwo avenues could provide independent corroboration to advance this conclusion toward proved: (1) a manual browse of unindexed *nascimento* image volumes for Recife, November\u2013December 1936 (collection 2016195), which would likely locate the birth registration with a different declarant (a parent, rather than the subject herself); and (2) unindexed Catholic church image volumes for Recife parishes circa 1936\u20131937, which could yield a baptism entry with godparent names for FAN research.\n\n---\n\n\u00b9 \"Brasil, Pernambuco, Registro Civil, 1804-2023,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QLWC-Y1P7 : 7 July 2026), marriage registration for Amaro Gomes de Melo and Rivaneta Florencio de Araujo, 22 agosto 1957, Recife, Pernambuco; citing image ark:/61903/3:1:3QS7-99QG-KBTG.\n\n\u00b2 \"Brasil, Pernambuco, Registro Civil, 1804-2023,\" *FamilySearch*: ark:/61903/1:1:QLWC-8B2H (Roberto, 1959); ark:/61903/1:1:QLWZ-VN33 (Paulo Roberto, 1959); ark:/61903/1:1:QLWZ-YN45 (Claudia Maria, 1964); ark:/61903/1:1:QLW2-RL3Z (Alexandre, 1965)."
+    }
+  ],
+  "evaluations": []
+}

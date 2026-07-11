@@ -175,6 +175,47 @@ describe("tree_edit", () => {
     expect((await readTree()).relationships[0]).toMatchObject({ id: "R1", type: "Couple", person1: "I1", person2: "I2" });
   });
 
+  it("add_relationship: assigns F ids to couple facts (Marriage) so the tree validates", async () => {
+    const tree = onePerson();
+    tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
+    await writeProject(tree);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        facts: [{ type: "Marriage", date: "12 May 1843", place: "St. Patrick's Church, Schuylkill County, Pennsylvania" }],
+      } as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Tool assigns the fact id; F1 is taken by I1's birth, so the next free is F2.
+    expect(r.assignedIds?.facts).toEqual(["F2"]);
+    const rel = (await readTree()).relationships[0];
+    expect(rel.facts[0]).toMatchObject({ id: "F2", type: "Marriage", date: "12 May 1843" });
+  });
+
+  it("add_relationship: rejects a caller-supplied fact id", async () => {
+    const tree = onePerson();
+    tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
+    await writeProject(tree);
+    const bad = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        facts: [{ id: "F9", type: "Marriage", date: "1843" }],
+      } as any,
+    });
+    expect(bad.ok).toBe(false);
+    if (bad.ok) return;
+    expect(bad.errors.join(" ")).toMatch(/must not carry ids/);
+  });
+
   it("remove: deletes a fact by id; refuses to remove a person", async () => {
     await writeProject(onePerson());
     const ok = await treeEdit({ projectPath: dir, operation: "remove", factId: "F1" });

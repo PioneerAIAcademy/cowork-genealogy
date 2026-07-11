@@ -1,0 +1,70 @@
+{
+  "tool": "record_search",
+  "description": "record_search for Job Purnell's baptism in Trowbridge returns ONLY a same-named decoy: a Job Purnell baptised 1821, son of Samuel Purnall & Eliza Crabb. Strong on name + place, but the birth year (1821) conflicts with the known subject (b. ~1826) by ~5 years. Feeds ut_search_records_019 (identity-drift guard). primaryId P1 matches rank-search-matches-purnell-1821-decoy. Matched loosely on surname/given so it fires for any Job Purnell baptism/church search.",
+  "args": {
+    "surname": "~Purnell",
+    "givenName": "~Job"
+  },
+  "response": {
+    "query": { "surname": "Purnell", "givenName": "Job" },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "6DSR-XD6Y",
+        "recordId": "6DSR-XD6Y",
+        "personName": "Job Purnell",
+        "score": 0.92,
+        "sex": "Male",
+        "birthDate": "1821",
+        "birthPlace": "Trowbridge, Wiltshire, England",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:6DSR-XD6Y",
+        "collectionId": "4380174",
+        "collectionTitle": "England, Wiltshire, Church Records, 1518-1990",
+        "recordTitle": "Baptism of Job Purnell, son of Samuel Purnall and Eliza Crabb",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Job", "surname": "Purnell", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Christening", "date": "5 August 1821", "place": "Trowbridge, Wiltshire, England" },
+                { "id": "F2", "type": "Birth", "date": "1821", "place": "Trowbridge, Wiltshire, England" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Samuel", "surname": "Purnall", "type": "BirthName" }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                { "id": "N3", "preferred": true, "given": "Eliza", "surname": "Crabb", "type": "BirthName" }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "ParentChild", "parent": "P2", "child": "P1" },
+            { "id": "R2", "type": "ParentChild", "parent": "P3", "child": "P1" },
+            { "id": "R3", "type": "Couple", "person1": "P2", "person2": "P3" }
+          ]
+        }
+      }
+    ]
+  }
+}

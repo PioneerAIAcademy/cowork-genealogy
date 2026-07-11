@@ -1,0 +1,682 @@
+{
+  "project": {
+    "id": "rp_birkeland_parents_1817",
+    "objective": "Who were the parents of Kristian Fredrik Tollefsen Birkeland (born 1817, of Stavanger, Rogaland)?",
+    "subject_person_ids": [
+      "K87G-T89"
+    ],
+    "status": "completed",
+    "created": "2026-07-01T00:00:00Z",
+    "updated": "2026-07-01"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the baptismal record of Kristian Fredrik Tollefsen Birkeland (born 11 July 1817, Rogaland, Norway) say about his parents?",
+      "rationale": "Norwegian church baptism registers for Rogaland are well-preserved and digitized on FamilySearch from the early 1800s. A baptism entry for 1817 in Stavanger or a nearby parish (Time, Hetland, Sokndal) would directly name both parents and likely godparents. His patronymic 'Tollefsen' tells us the father was named Tollef; the farm name 'Birkeland' localises the family. This is the single highest-value gatekeeper record \u2014 if found, it resolves the objective directly.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-01",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The 1817 baptism record for Christian Frederich (ARK 68Q3-5SGC, Norway Church Books 1797-1958) was located in FamilySearch collection 4237104 after systematic searching with name variants (Tollefsen \u2192 Tolleivsen). The record directly names father Tollev Nadnesen (residence Brikeland = Birkeland) and mother Inger Larsdatter. Birth date 11 Jul matches the research subject exactly. Eight plan items were executed across four distinct record types (baptism, marriage, census) and two collections. The question 'what does the baptismal record say about his parents?' is answered. Noted limitation: the original church book image (ark:/61903/1:2:4BX2-DV96) was not accessible via API; manual review of the image is recommended to verify the father's surname transcription 'Nadnesen'.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. Baptism record ARK 68Q3-5SGC found and directly names father as Tollev Nadnesen (at Brikeland) and mother as Inger Larsdatter. Birth date 11 Jul and Stavanger location match the research subject exactly.",
+          "repository_breadth": "FamilySearch searched across Norway Church Books (4237104), Norway Baptisms (1467014), Norway Marriages (1468080), and Norway Census 1801 (3733603). Ancestry (pli_007) and Digitalarkivet (pli_005) skipped as non-blocking after target record found. Multiple name variants tried (Tollefsen, Tolleivsen, Birkeland, Brikeland). FAN marriage search and 1801 census attempted to identify the father independently.",
+          "original_substitution": "Partial gap. Source is a derivative index entry; original image ark:/61903/1:2:4BX2-DV96 exists but was inaccessible via API (newer Norway Church Books digital capture format incompatible with image_read). Manual image verification recommended to confirm father's surname transcription 'Nadnesen'.",
+          "independent_verification": "Single source directly names both parents (the 1817 baptism record). The 1840 marriage record (SWC5-1BV in tree) confirms patronymic Tolleivsen, corroborating the father's given name Tollev/Tolleiv, but does not independently name both parents. Parent names rest on one evidence unit.",
+          "evidence_class": "Derivative index entry referencing an original 1817 Lutheran church register. The underlying original is an original source with primary information from the father as informant. The derivative tier is a limitation; image verification would elevate the evidence quality.",
+          "conflict_resolution": "No conflicts exist. All corroborating details (birth date, location, farm name, father's given name via patronymic) are consistent. The uncertainty in the father's surname transcription ('Nadnesen') is a data quality concern within the single source, not a conflict between sources.",
+          "overturn_risk": "Low. Norwegian parish registers from 1817 Rogaland are exceptionally well-preserved and reliable. The birth date (11 Jul), Stavanger baptism location, Birkeland farm name, and father's given name Tollev are all independently consistent with K87G-T89's known biography. No evidence-based reason to expect the original image to name different parents."
+        }
+      },
+      "created": "2026-07-01"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Rogaland, Norway",
+          "date_range": "1815-1820",
+          "repository": "FamilySearch",
+          "rationale": "Norway, Church Books, 1797\u20131958 (collection 4237104) is the largest and most current indexed collection of Norwegian parish registers on FamilySearch, covering baptisms, confirmations, marriages, and burials with 14M+ indexed records and linked images. Kristian Fredrik was born 11 July 1817; after the 1814 standardization, baptism registers named both parents, the farm of residence, and godparents. Searching for 'Kristian/Christian Fredrik' + father surname variant 'Tollefsen/Tollefsson' born 1817 in Rogaland should surface the entry if indexed. A hit would directly name both parents and resolve the objective.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Rogaland, Norway",
+          "date_range": "1815-1820",
+          "repository": "FamilySearch",
+          "rationale": "Norway, Baptisms, 1634\u20131927 (collection 1467014) is a separate legacy index compiled from various sources including the IGI. It covers a different subset of records than the Church Books collection and may contain entries not in pli_001. Search same parameters: child name 'Kristian/Christian Fredrik', father 'Tollef', circa 1817, Rogaland. Note: this is a legacy index with no linked images; any match must be verified against original images via Digitalarkivet.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Time, Rogaland, Norway",
+          "date_range": "1840",
+          "repository": "FamilySearch",
+          "rationale": "Kristian Fredrik's 1840 marriage record (FamilySearch ARK NW6K-LQH, already cited in tree) is worth reading in full. Post-1814 Norwegian marriage registers routinely recorded the groom's father's name and sometimes his parish of origin. Reading the original image of this record may directly state the father's name and home parish, narrowing the baptismal search considerably. This is an inexpensive step against an already-known source.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Rogaland, Norway",
+          "date_range": "1801",
+          "repository": "FamilySearch",
+          "rationale": "Norway Census, 1801 (collection 3733603) is a complete national census with 878K records and images, fully indexed on FamilySearch. Kristian was born in 1817, so his father Tollef was alive by at least 1816. If Tollef was born circa 1775\u20131790 he would appear in the 1801 census at Birkeland farm in Rogaland. Finding the household would identify Tollef's full name, his wife (Kristian's mother), and the farm name, confirming identity. Search by surname 'Birkeland' or 'Tollefsen' in Rogaland.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Time, Klepp, Hetland, and Stavanger parishes, Rogaland, Norway",
+          "date_range": "1815-1820",
+          "repository": "other",
+          "rationale": "Digitalarkivet (media.digitalarkivet.no/en/kb/browse) holds scanned original church books for all Norwegian parishes. The FamilySearch indexes are incomplete \u2014 many 1817 Rogaland entries exist only as browse-only images. The most likely parishes are: Time (Kristian's 1840 marriage), Klepp (daughter Martha born there 1844), Hetland (adjacent to Stavanger), and Stavanger Domkirken (children baptized there). Browse each parish's baptismal register for July 1817, searching for a child named Kristian/Christian with father Tollef. This step directly accesses original records and resolves any gaps in the indexed collections.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Rogaland, Norway",
+          "date_range": "1795-1820",
+          "repository": "FamilySearch",
+          "rationale": "FAN item \u2014 father's marriage record. Kristian's patronymic 'Tollefsen' confirms his father was named Tollef. Searching Norway, Marriages, 1660\u20131926 (collection 1468080) for Tollef marrying in Rogaland before 1817 would identify the mother's name (Kristian's mother) and the parish, and cross-confirm the Birkeland farm. Post-1814 Norwegian marriage registers named both parties and often their fathers, yielding a two-generation chain. Father likely married circa 1810\u20131816 (Kristian appears to be among the older children).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Rogaland, Norway",
+          "date_range": "1815-1820",
+          "repository": "Ancestry",
+          "rationale": "Ancestry's Norway Church Records, 1812\u20131938 (collection 60606) is a distinct indexed dataset that overlaps with but is not identical to the FamilySearch collections. It covers post-1814 standardized registers and may contain a Rogaland 1817 baptism entry not indexed on FamilySearch. Search as a cross-check after pli_001 and pli_002 are complete. Requires a subscription but is available at most public libraries via remote access.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-01T21:46:33.966Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:NW6K-LQH",
+        "description": "Read full record for Kristian Tolleivsen 1840 marriage, Time, Rogaland"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Index entry only \u2014 records groom as Kristian Tolleivsen, bride as Serine Kristofersdtr, married 5 Jul 1840 at Time, Rogaland. No father/parent information included in this index entry. The underlying image (ark:/61903/1:2:MYQH-7JL) may contain additional detail but was not retrieved. Marriage confirms Time parish as the family's primary jurisdiction."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-01T21:47:35.202Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Church Books, 1797-1958 (4237104)",
+        "givenName": "Kristian Fredrik",
+        "surname": "Birkeland",
+        "fatherGivenName": "Tollef",
+        "birthYearFrom": 1814,
+        "birthYearTo": 1820,
+        "recordCountry": "Norway",
+        "count": 10
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 87,
+      "notes": "87 total matches but no 1817 baptism record in top 10. Results are dominated by later-life records (1880 daughter's marriage, 1883 burial) where he appears as parent/deceased. Baptism record for Kristian Fredrik born 11 July 1817 not surfaced \u2014 likely not indexed under surname Birkeland with father Tollef in this collection. Will try 1801 census (pli_004) to identify father Tollef's full identity."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-01T21:48:04.209Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway Census 1801 (3733603)",
+        "givenName": "Tollef",
+        "surname": "Birkeland",
+        "recordCountry": "Norway",
+        "recordSubdivision": "Rogaland"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Tollef may not have been head of household at Birkeland in 1801, or farm name was not indexed as Birkeland. Will retry without subdivision constraint and without surname."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-01T21:50:26.422Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway Census 1801 (3733603)",
+        "givenName": "Tollef",
+        "recordCountry": "Norway",
+        "residencePlace": "Birkeland, Rogaland, Norway",
+        "residenceYearFrom": 1801,
+        "residenceYearTo": 1801
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 206,
+      "notes": "206 total, but top 20 results are scattered across Rogaland (Strand, Vikedal, Eigersund etc.) \u2014 none at Birkeland. The place filter did not restrict results to Birkeland farm specifically. Father Tollef may not have been householder at Birkeland in 1801, or the farm name was not indexed under that standard place. Pivoting to father's marriage record (pli_006) to identify Tollef's full name and spouse."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-01T21:51:29.848Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway Marriages 1660-1926 (1468080)",
+        "givenName": "Tollef",
+        "surname": "Birkeland",
+        "marriageYearFrom": 1800,
+        "marriageYearTo": 1817,
+        "recordCountry": "Norway",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 5,
+      "notes": "5 results. Most notable: ARK NW9Z-837 \u2014 'Tellef Larsen Birkeland' appears as father of groom Andreas Tellefsen Birkeland (b. 1794) in an 1830 marriage. If Tellef Larsen Birkeland is also Kristian's father (b. 1817), the brothers would be 23 years apart \u2014 possible. ARK N717-HS2 is our subject appearing as father of bride Martha Marie (b. 1844) in her 1865 marriage. No Tollef marriage record from before 1817 returned \u2014 marriage index may not cover his marriage year, or he was indexed under a different name form."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-01T21:55:07.530Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway Baptisms 1634-1927 (1467014)",
+        "givenName": "Kristian",
+        "surname": "Tollefsen",
+        "fatherGivenName": "Tollef",
+        "birthYearFrom": 1815,
+        "birthYearTo": 1819,
+        "birthPlace": "Rogaland, Norway",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 86,
+      "notes": "86 results but all 20 examined show the subject appearing as a PARENT in his children's baptism records (1841-1886) \u2014 not his own 1817 baptism. The legacy index is matching 'Tollefsen' in the surname against fatherGivenName 'Tollef', surfacing records where Christian/Kristian Tollefsen appears as father. The 1817 baptism record is not surfacing through this query shape. Will try family-level search: father 'Tollef' at Birkeland farm, Rogaland, births 1800-1825."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-01T22:08:06.637Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Church Books, 1797-1958 (4237104)",
+        "givenName": "Kristian",
+        "fatherGivenName": "Tolleiv",
+        "recordCountry": "Norway",
+        "recordSubdivision": "Rogaland",
+        "birthYearFrom": 1815,
+        "birthYearTo": 1820,
+        "count": 10
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 57,
+      "notes": "Using variant 'Tolleiv' (from 1840 marriage record spelling 'Tolleivsen') instead of 'Tollef'. Result #6: ARK 68Q3-5SGC \u2014 'Christian Frederich', born 11 Jul, baptized 20 Jul 1817, Stavanger; father 'Tollev Nadnesen' (residence 'Brikeland' = Birkeland); mother 'Inger Larsdr'. Birth date 11 July matches subject exactly. This is the 1817 baptism record for Kristian Fredrik Tollefsen Birkeland. Father's surname 'Nadnesen' requires verification against original image \u2014 may be transcription error for patronymic or farm name."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-01T22:08:31.042Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Marriages, 1660-1926 (1468080)",
+        "givenName": "Tolleiv",
+        "recordCountry": "Norway",
+        "recordSubdivision": "Rogaland",
+        "marriageYearFrom": 1800,
+        "marriageYearTo": 1820,
+        "count": 10
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 507,
+      "notes": "507 results \u2014 too broad. Variant 'Tolleiv' search returns many Rogaland marriages. Result of interest: ARK NW6K-5XW \u2014 'Tolleiv Larsen' married 15 Mar 1818 at Time, Rogaland (too late for a child born 11 Jul 1817 unless pre-marital). No clear match for the father of Kristian Fredrik from these top 10. This search superseded by the baptism record found in log_007 which confirms father as 'Tollev Nadnesen' at Birkeland. Pli_006 contributed indirectly by prompting the Tolleiv variant search."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Norway, Church Books, 1797-1958,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68Q3-5SGC : accessed 1 Jul 2026), entry for Christian Frederich (baptized 20 Jul 1817, Stavanger, Rogaland); parents listed as Tollev Nadnesen (residence Brikeland) and Inger Larsdr; image at ark:/61903/1:2:4BX2-DV96.",
+      "citation_detail": {
+        "who": "Lutheran minister, Stavanger parish church",
+        "what": "Baptismal register entry \u2014 child Christian Frederich, born 11 Jul, baptized 20 Jul 1817",
+        "when_created": "20 Jul 1817",
+        "when_accessed": "2026-07-01",
+        "where": "FamilySearch, Norway, Church Books, 1797-1958 (collection 4237104)",
+        "where_within": "ARK ark:/61903/1:1:68Q3-5SGC; image ark:/61903/1:2:4BX2-DV96"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:68Q3-5SGC",
+      "url_archived": null,
+      "notes": "Index entry extracted from digitized church book image (ark:/61903/1:2:4BX2-DV96). Original is the baptismal register of Stavanger parish, 1817. Father's surname 'Nadnesen' is a potentially erroneous transcription \u2014 requires verification against original image. Father's residence 'Brikeland' (= Birkeland) is consistent with research subject's known surname. Record found by searching collection 4237104 with given name 'Kristian' and father given name 'Tolleiv'.",
+      "transcription": null,
+      "log_entry_id": "log_007"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "baptized_child",
+      "record_persona_id": "p_292429280469",
+      "fact_type": "name",
+      "value": "Christian Frederich",
+      "structured_value": {
+        "given": "Christian Frederich"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "father/parents at baptism",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Parents gave the child's name to the registrar at the baptism ceremony; parents were present as witnesses.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "baptized_child",
+      "record_persona_id": "p_292429280469",
+      "fact_type": "birth",
+      "value": "born 11 Jul 1817 (year inferred from baptism year)",
+      "structured_value": {
+        "year": 1817,
+        "month": 7,
+        "day": 11
+      },
+      "date": "11 Jul 1817",
+      "date_certainty": "approximate",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "father/parents at baptism",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Parents reported birth date to registrar at baptism; year derived from the baptism year 1817 (baptism 20 Jul 1817, born 11 Jul, 9 days before baptism).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "baptized_child",
+      "record_persona_id": "p_292429280469",
+      "fact_type": "baptism",
+      "value": "baptized 20 Jul 1817, Stavanger, Rogaland, Norway",
+      "structured_value": {
+        "year": 1817,
+        "month": 7,
+        "day": 20,
+        "place": "Stavanger, Rogaland, Norway"
+      },
+      "date": "20 Jul 1817",
+      "date_certainty": "exact",
+      "place": "Stavanger, Stavanger, Norway",
+      "standard_place": "Stavanger, Rogaland, Norway",
+      "information_quality": "primary",
+      "informant": "Lutheran minister/registrar, Stavanger parish",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "The registrar was present at the baptism and created the register entry on or near that date.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "father",
+      "record_persona_id": "p_292429280472",
+      "fact_type": "name",
+      "value": "Tollev Nadnesen [surname transcription uncertain]",
+      "structured_value": {
+        "given": "Tollev",
+        "surname": "Nadnesen"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "father (self-reported or known to registrar)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Father reporting his own given name to the minister. 'Tollev' is a variant of Tollef/Tolleiv. The surname 'Nadnesen' is an uncertain indexer transcription of his patronymic or farm name \u2014 requires original image verification. All parent-identifying assertions (a_004\u2013a_008) derive from the father as single informant at the baptism ceremony; they form one evidence unit for the parentage question.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "father",
+      "record_persona_id": "p_292429280472",
+      "fact_type": "residence",
+      "value": "Brikeland (variant spelling of Birkeland)",
+      "structured_value": {
+        "place": "Birkeland, Rogaland, Norway"
+      },
+      "date": "1817",
+      "date_certainty": "approximate",
+      "place": "Brikeland (Birkeland), Rogaland, Norway",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "father (self-reported or known to registrar)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Father reporting his own farm residence. 'Brikeland' is a phonetic/scribal variant of 'Birkeland', consistent with the research subject's known farm surname. Same evidence unit as a_004\u2013a_008.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "father",
+      "record_persona_id": "p_292429280472",
+      "fact_type": "relationship",
+      "value": "Tollev Nadnesen named as father of Christian Frederich in 1817 baptismal register",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "baptized_child"
+      },
+      "date": "20 Jul 1817",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "father (identified himself as father at baptism ceremony)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Father asserting his own paternity. The minister is the record creator, not the informant for this relational fact. Father was present and identified himself as the child's father. Same evidence unit as a_004\u2013a_008.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "mother",
+      "record_persona_id": "p_292429280475",
+      "fact_type": "name",
+      "value": "Inger Larsdr (Inger Larsdatter, daughter of Lars)",
+      "structured_value": {
+        "given": "Inger",
+        "surname": "Larsdatter"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "father (reported mother's name to registrar; standard Norwegian baptism practice 1817)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father reporting his wife's name to the minister \u2014 household-member knowledge, not self-report. He has direct knowledge of his wife's name. Same evidence unit as a_004\u2013a_008: all parent-identifying assertions derive from the father as single informant at the 1817 baptism ceremony.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:68Q3-5SGC",
+      "record_role": "mother",
+      "record_persona_id": "p_292429280475",
+      "fact_type": "relationship",
+      "value": "Inger Larsdr named as mother of Christian Frederich in 1817 baptismal register",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_role": "baptized_child"
+      },
+      "date": "20 Jul 1817",
+      "date_certainty": "exact",
+      "place": null,
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "father (reported wife's maternity to registrar; standard Norwegian baptism practice 1817)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father asserting his wife's maternity \u2014 household-member knowledge of who gave birth to the child. Same evidence unit as a_007.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "rationale": "Name 'Christian Frederich' in baptism record 20 Jul 1817, Stavanger, matches K87G-T89 ('Kristian Fredrik Tollefsen Birkeland'). 'Christian'/'Kristian' and 'Frederich'/'Fredrik' are standard Danish/German\u2192Norwegian spelling variants of the same name. Birth date 11 Jul (year inferred from baptism 1817) matches tree exactly. Baptism at Stavanger matches tree's burial and residence location. Father listed as 'Tollev' at 'Brikeland' (=Birkeland), consistent with patronymic 'Tollefsen/Tolleivsen' carried by K87G-T89 per his 1840 marriage record (SWC5-1BV). same_person API scored 0.007 (technical artifact: partial date in record, name variant distance); correlation analysis overrides, yielding confident identification.",
+      "match_score": 0.007,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "rationale": "Birth date '11 Jul' (year 1817 inferred from baptism date 20 Jul 1817) from the Norway Church Books baptism record matches K87G-T89's tree birth date '11 Jul 1817' exactly. Combined with the exact name match (Christian Frederich = Kristian Fredrik), Stavanger location, and consistent father's name/farm, this is the birth event for K87G-T89.",
+      "match_score": 0.007,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "rationale": "Baptism fact '20 Jul 1817, Stavanger' from Norway Church Books record matches K87G-T89's known location (Stavanger, Rogaland) and birth year 1817. This is the baptism event for K87G-T89. See pe_001 for full correlation analysis.",
+      "match_score": 0.007,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Father named 'Tollev Nadnesen' at residence 'Brikeland (=Birkeland)' in the 1817 baptism record for Christian Frederich. Stub I1 was created from this single record. 'Tollev' is a variant of 'Tollef/Tolleiv' \u2014 consistent with the patronymic 'Tollefsen/Tolleivsen' carried by the child K87G-T89 in later records. The surname 'Nadnesen' is an uncertain indexer transcription, possibly a patronymic or a misread farm name. Single-record stub \u2014 probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "rationale": "The father's name 'Tollev Nadnesen' in the 1817 baptism record names K87G-T89's father (per the ParentChild relationship in the record). This assertion also bears on K87G-T89 since it identifies his father by name at his baptism. The identification of K87G-T89 as the baptized child is confident (see pe_001).",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Father's residence 'Brikeland' (= Birkeland) in the 1817 baptism record. This locates the father at Birkeland farm, Stavanger area, consistent with the Birkeland farm name subsequently carried by his son K87G-T89 as a surname. Single-record stub \u2014 probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "The ParentChild relationship in the 1817 baptism record positions 'Tollev Nadnesen' as father of the baptized child. This relationship assertion links I1 to K87G-T89 as his parent. Single-record stub \u2014 probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "rationale": "Relationship assertion from the 1817 baptism record positions K87G-T89 (Christian Frederich, identified via pe_001) as the child of Tollev Nadnesen (I1). This assertion bears on K87G-T89 as the child in the ParentChild relationship.",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Mother named 'Inger Larsdr (Larsdatter)' in the 1817 baptism record for Christian Frederich (K87G-T89). 'Larsdatter' = daughter of Lars. Stub I2 was created from this single record. No additional corroborating records for this individual yet. Single-record stub \u2014 probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "rationale": "The mother's name 'Inger Larsdr' in the 1817 baptism record names K87G-T89's mother (per the ParentChild relationship in the record). This assertion bears on K87G-T89 since it identifies his mother by name at his baptism. The identification of K87G-T89 as the baptized child is confident (see pe_001).",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The ParentChild relationship in the 1817 baptism record positions 'Inger Larsdr' as mother of the baptized child. This relationship assertion links I2 to K87G-T89 as her child. Single-record stub \u2014 probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-01"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "rationale": "Relationship assertion from the 1817 baptism record positions K87G-T89 (Christian Frederich, identified via pe_001) as the child of Inger Larsdr (I2). This assertion bears on K87G-T89 as the child in the ParentChild relationship.",
+      "match_score": null,
+      "created": "2026-07-01"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Systematic searching was conducted across four FamilySearch collections: Norway, Church Books, 1797\u20131958 (4237104); Norway, Baptisms, 1634\u20131927 (1467014); Norway, Marriages, 1660\u20131926 (1468080); and Norway Census, 1801 (3733603). The subject's 1840 marriage record was read. Multiple name variants were tried for the father's given name (Tollef, Tolleiv, Tollev) and the family's farm surname (Birkeland, Brikeland). The breakthrough came using the variant 'Tolleiv' derived from the 1840 marriage record. Additional repositories identified but not searched: Ancestry Norway Church Records 1812\u20131938 (collection 60606); Digitalarkivet browse-only images. The original church book image (ark:/61903/1:2:4BX2-DV96) could not be retrieved via API due to format incompatibility with the available image_read tool.",
+      "narrative_markdown": "## Parentage of Kristian Fredrik Tollefsen Birkeland (born 11 July 1817, Stavanger, Rogaland, Norway)\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that **Kristian Fredrik Tollefsen Birkeland**, born 11 July 1817 and baptized 20 July 1817 at Stavanger, Rogaland, Norway, was the son of **Tollev [Nadnesen]** (given name also spelled Tolleiv or Tollef), a farmer at Birkeland, and his wife **Inger Larsdatter** (daughter of Lars). This conclusion is graded *probable*: the parentage rests on a single indexed source derived from the original church register, and the original baptismal image has not been directly examined.\n\n### Primary Evidence: The 1817 Baptism Record\n\nThe central evidence is an index entry from the *Norway, Church Books, 1797\u20131958* collection, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68Q3-5SGC, accessed 1 July 2026), for a child named Christian Frederich, baptized 20 July 1817 at Stavanger parish; parents listed as Tollev Nadnesen (residence Brikeland) and Inger Larsdr.\n\nThis source is **derivative** \u2014 a transcribed index entry pointing to the original manuscript church register. The index contains **primary information** for most facts: the father, who presented the child at the baptism ceremony, provided all identifying information to the minister, who recorded it in the register. The evidence type is **direct**: the record explicitly names both parents.\n\nThree elements of the entry confirm this is the baptism record for Kristian Fredrik Tollefsen Birkeland (K87G-T89):\n\n1. **Birth date.** The entry records the child as born 11 July, with baptism on 20 July 1817. The birth date 11 July matches the date on record for K87G-T89 exactly.\n\n2. **Name.** \"Christian Frederich\" is a Danish/German-script rendering of the Norwegian \"Kristian Fredrik,\" a standard orthographic variant in Norwegian Lutheran registers of this period.\n\n3. **Farm name.** The father's residence is recorded as \"Brikeland,\" a phonetic variant of Birkeland \u2014 the farm name that Kristian Fredrik and his descendants carried as a hereditary surname.\n\n### Corroborating Context\n\nThe 1840 marriage record of Kristian Fredrik Tollefsen Birkeland (*Norway, Marriages, 1660\u20131926,* FamilySearch, https://familysearch.org/ark:/61903/1:1:NW6K-LQH) records the groom as \"Kristian Tolleivsen,\" confirming the father's given name was Tolleiv \u2014 a variant of the \"Tollev\" recorded in the 1817 baptism. This is a derivative source from a different record creation event and independently corroborates the father's given name, though it does not name the father in full or name the mother.\n\nThe patronymic pattern is consistent throughout: a son of a man named Tollev/Tolleiv/Tollef in 19th-century Norway would take the surname Tollefsen or Tolleivsen, both forms documented for K87G-T89.\n\n### Informant Analysis and Evidence Independence\n\nAll five parent-identifying assertions from the 1817 baptism record (father's name, father's residence, father-child relationship, mother's name, mother-child relationship) derive from a single informant: the father, who reported this information to the Lutheran minister at the baptism ceremony. These assertions form **one evidence unit** for the parentage question \u2014 they carry no more collective weight than the strongest single item. The 1840 marriage record provides a second evidence unit corroborating the father's given name only.\n\n### Limitations and Path to Proved\n\nThree limitations preclude a *proved* conclusion at this time:\n\n1. **Original image not examined.** The church book image (ark:/61903/1:2:4BX2-DV96) exists on FamilySearch but was inaccessible through the research API. The father's surname \"Nadnesen\" in the index is potentially an erroneous transcription of a patronymic or farm name. Manual examination of the original image is recommended to verify the exact wording and confirm the father's full name.\n\n2. **Single-source parentage.** The names of both parents rest on one evidence unit. Discovery of a second independent source \u2014 such as a sibling's baptism naming the same parents, a confirmation record, or the father's own marriage record \u2014 would provide independent verification.\n\n3. **Father's surname uncertain.** \"Nadnesen\" does not correspond to a known Norwegian farm or patronymic in the Stavanger/Birkeland area. It may be a transcription error for a name that is legible in the original. Until the image is examined, the father's full name remains partially uncertain.\n\n### Summary\n\nThe preponderance of evidence strongly suggests Kristian Fredrik Tollefsen Birkeland (born 11 July 1817, baptized 20 July 1817, Stavanger, Rogaland) was the son of **Tollev [Nadnesen]** of Birkeland farm and **Inger Larsdatter**. The 1817 Stavanger parish baptism record names both parents explicitly and matches the subject's birth date, location, and patronymic with precision. This conclusion is classified *probable* pending examination of the original baptismal image and identification of a second independent source confirming the parentage. No contradicting evidence has been found."
+    }
+  ],
+  "evaluations": []
+}

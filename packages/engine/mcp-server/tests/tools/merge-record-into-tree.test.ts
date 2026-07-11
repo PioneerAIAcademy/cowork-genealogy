@@ -87,6 +87,45 @@ describe("merge_record_into_tree", () => {
     ]);
   });
 
+  it("strips candidate places and person-level sources with a warning, and persists neither", async () => {
+    await writeProject({
+      persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+      relationships: [],
+      sources: [],
+    });
+
+    // A record_read-shaped candidate: persona-level source refs and a
+    // places[] section are legal tool output but not tree format.
+    const result = await mergeRecordIntoTree({
+      projectPath: dir,
+      candidateGedcomx: {
+        persons: [
+          {
+            id: "I1",
+            gender: "Male",
+            names: [{ id: "N1", given: "John", surname: "Smith" }],
+            sources: [{ ref: "S1" }],
+          },
+        ],
+        sources: [{ id: "S1", title: "1850 Census" }],
+        places: [{ id: "PL1", name: "Ireland" }],
+      } as any,
+      merges: [["I1", "I1"]],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.validation.warnings.some((w) => w.includes("place description"))).toBe(true);
+    expect(result.validation.warnings.some((w) => w.includes("person-level source reference"))).toBe(true);
+
+    const tree = await readJson("tree.gedcomx.json");
+    expect(tree.places).toBeUndefined();
+    expect(tree.persons[0].sources).toBeUndefined();
+    // The candidate's source description still merges in — only the
+    // person-level *reference* is dropped.
+    expect(tree.sources.map((s: any) => s.title)).toContain("1850 Census");
+  });
+
   it("reports name/fact merge counts and primarySet matching the merged tree", async () => {
     await writeProject({
       persons: [

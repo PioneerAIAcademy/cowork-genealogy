@@ -536,3 +536,65 @@ describe("merge_warnings tool", () => {
     expect(result.errors.length).toBeGreaterThan(0);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// sanitize parity — the dry-run must merge the same document the writer
+// would, and must surface what sanitation dropped BEFORE the write decision
+// ────────────────────────────────────────────────────────────────────
+
+describe("mergeWarnings sanitize parity", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "merge-warnings-sanitize-"));
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        questions: [], plans: [], log: [], sources: [], assertions: [],
+        person_evidence: [], conflicts: [], hypotheses: [], timelines: [],
+        proof_summaries: [], evaluations: [],
+      }),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [
+          {
+            id: "I1",
+            gender: "Male",
+            names: [{ id: "N1", preferred: false, given: "John", surname: "Smith" }],
+          },
+        ],
+        relationships: [],
+        sources: [],
+      }),
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("accepts a record_read-shaped candidate (person sources + places) and surfaces the drops", async () => {
+    const candidate: any = {
+      persons: [
+        {
+          id: "p1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          sources: [{ ref: "#S9" }],
+        },
+      ],
+      places: [{ id: "P1", name: "Ogden, Utah" }],
+    };
+    const result: any = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: candidate,
+      merges: [["I1", "p1"]],
+    });
+    expect(result.ok).toBe(true);
+    expect(result.sanitizeWarnings.some((w: string) => w.includes("place"))).toBe(true);
+    expect(result.sanitizeWarnings.some((w: string) => w.includes("person-level source"))).toBe(true);
+    // The legacy preferred:false on the on-disk tree is healed in memory too.
+    expect(result.sanitizeWarnings.some((w: string) => w.includes("'preferred: false'"))).toBe(true);
+  });
+});
