@@ -114,6 +114,30 @@ run this periodically and whenever a dimension looks off.
 
 ### 5. Improve the skill body
 
+**The lane rule — classify every finding BEFORE touching skill prose.**
+The 2026-07 record-extraction audit found most of a month's SKILL.md
+edits were tool bugs or eval bugs wearing skill-prose clothing — teams
+patched a 780-line prompt because it was the only lever they held, while
+the real defect lived elsewhere. Every e2e/eval/user finding gets a lane
+first:
+
+1. **Tooling defect** (rejected valid payloads, missing tool capability,
+   silent corruption) → MCP tool PR + vitest; prose never compensates
+   for a tool bug.
+2. **Eval defect** (judge confabulation, rubric contradicting the skill,
+   fixture expecting stale contracts) → rubric / judge-prompt / fixture
+   PR. If the skill followed its instructions and got dinged, the eval
+   is the bug.
+3. **Record-type craft gap** (a death-cert/probate/church nuance) → that
+   record type's playbook/table, not new global prose.
+4. **Core doctrine** (a genuine cross-record-type behavior change) →
+   SKILL.md / agent-body edit, stewarded, gated by the unit suite.
+
+Lanes 1–2 merge conflict-free and in parallel; only lane 4 touches the
+contended prompt. When in doubt between 2 and 4, check whether the
+transcript shows the skill *following* its written instruction — if yes,
+it's lane 2.
+
 **Pair.** Cluster the failures across the skill's tests and revise the
 SKILL.md prose to fix them — explaining the *why*, not bolting on
 another MUST (see the authoring guide). The **skill-improver** agent
