@@ -68,6 +68,49 @@ These MCP tools are shipped, specced, and advertised, but no skill references th
   called by any skill (`tree-edit` uses the match tools + `person_read`, never
   `person_ancestors`). Wire it into the relevant tree/research workflow.
 
+## Record-extraction consolidation follow-ups (2026-07 window)
+Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
+- [ ] **Record-type playbook files + snapshot carve-out** — per-record-type
+  references (census/death/probate/church/marriage) as the parallel-team
+  ownership surface. Blocked on a design decision: inside the skill dir every
+  playbook edit flips the runlog inactive (full re-run+annotation per edit);
+  outside it agents have no reliable load path. Needs a deliberate, documented
+  snapshot carve-out (e.g. a `playbooks/` subdir exclusion) before creating
+  the files. Until then, compact tables live in the extractor agent body.
+- [ ] **Fan-out extractor agents** — the extractor runs serially per record;
+  the latency plan's P3 full form fans out one agent per record with parent
+  batch-persist. Do after per-record overhead is measured on multi-record e2e
+  runs.
+- [ ] **Negative-evidence `informant_proximity` enum value** — skill, rubric,
+  judge, and human annotators still disagree on the informant contract for
+  `record_role: absent` (ut_002's only human correction went against the
+  codified `unknown`). The likely real fix is a new closed-enum value
+  (`researcher`/`analyst`) — full blast radius per CLAUDE.md enum rules (both
+  schema trees, TS union, validator CLOSED_ENUMS, spec prose).
+- [ ] **Extraction→tree materialization gap ownership** — fact-less sibling
+  stubs are never enriched, the 5d trigger can't fire on a family's first
+  record, and no skill promotes extracted facts onto tree persons (8/27 e2e
+  scenarios; judges penalize the thin tree). Needs an ownership spec:
+  `merge_record_into_tree` grows this, or person-evidence does.
+- [ ] **person-evidence epistemic gate** — identity over-reach: pe links
+  written at `confident` from one uncorroborated record with `[?]` readings
+  (clark-parents). The extractor agent got a tentative-cap line; person-evidence
+  needs the equivalent gate + mandatory conflicts entry.
+- [ ] **Upstream sidecar-staging gap** — one e2e run had all 18
+  `record_persona_id`s nulled because the search never staged a sidecar
+  (spriggs). D2 can't auto-fill what was never staged; the fix is
+  search-skill-side (always pass `projectPath` / surface the staging failure).
+- [ ] **Generate the mock input-schema mirror from compiled schemas** —
+  `eval/harness/harness/mock_mcp.py` hand-maintains tool input schemas and has
+  drifted before (missing `ops`). Generate from the compiled build to kill the
+  drift class.
+- [ ] **Bare agent-tool names in gps-mentor.md / image-reader.md** — the
+  agent-mode spike proved bare tool names leave a subagent toolless in the
+  unit-harness SDK path (needs `mcp__genealogy__*`), yet these two agents use
+  bare names and work in Cowork/e2e paths. Reconcile once the PR-3
+  investigation lands: qualify (or dual-list) so all agents work identically
+  in Cowork, the e2e harness, the unit harness, and the hosted web SDK path.
+
 ## Eval framework
 - [ ] **Revisit recovered-retry Tool Arguments scoring** — the judge policy
   (`eval/harness/judge/prompt.md` + the mirror note in
