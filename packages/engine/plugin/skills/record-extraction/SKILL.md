@@ -490,12 +490,22 @@ failure.
    arrived via a narrow, single-result `record_search` that felt like a
    direct lookup — the tool used is what decides this field, not how
    confident the match felt.
-1. Make the `research_append` call (the batched `ops` from 5a/5b
-   below). Wait for its return.
-2. Make the `tree_edit` call (5c/5d, source `S` + any sibling
-   `add_person` ops). Wait for its return.
-3. If 5d sibling stubs fired: make the second `tree_edit` call for
-   the `ParentChild` edges. Wait for its return.
+1. Make the `tree_edit` call (5c/5d, source `S` + any sibling
+   `add_person` ops) **first**. Wait for its return and read the
+   assigned `S` id off `assignedIds` — do not predict it.
+   **This must run before step 2**: a research.json `sources[]` entry's
+   `gedcomx_source_description_id` is validated against
+   `tree.gedcomx.json`'s `sources[]`, so referencing an `S` id that
+   `tree_edit` hasn't created yet fails validation (`"gedcomx_source_
+   description_id '<S>' not found in tree.gedcomx.json sources"`) — this
+   bites hardest on a record's first source, where there is no existing
+   `S` entry to fall back on.
+2. Make the `research_append` call (the batched `ops` from 5a/5b
+   below), stamping the source op's `gedcomx_source_description_id`
+   with the `S` id step 1 returned. Wait for its return.
+3. If 5d sibling stubs fired: make a second `tree_edit` call for
+   the `ParentChild` edges (these reference the `I` ids step 1's
+   `add_person` ops assigned). Wait for its return.
 4. **Only after the tool returns are you allowed to summarize
    what was persisted.** Match what you write to what the tool log
    actually shows.
@@ -634,6 +644,32 @@ referencing it in the second):
 
 The subject's own person and ParentChild edges are out of scope —
 `person-evidence` writes those.
+
+### 5e. Update plan item status
+
+**search-records defers this to record-extraction — do it here, not
+there.** search-records sets the executed plan item to `in_progress`
+and explicitly does not mark it `completed`, on the understanding that
+record-extraction does so "once assertions have been created." Once
+step 5a/5b's batch succeeds, close that handoff:
+
+```
+research_append({
+  projectPath,
+  section: "plan_items",
+  op: "update",
+  planId: "<pl_ of the plan this item belongs to>",
+  entryId: "<pli_ of the plan item this record answers>",
+  fields: { status: "completed" }
+})
+```
+
+Skip this call only when the record didn't come from a plan item at all
+(an ad-hoc extraction with `plan_item_id: null` in its log entry) — there
+is no `pli_` to update. A plan item left at `in_progress` after its
+evidence is fully extracted blocks `research-plan`'s Add-new mode (which
+gates on "all items completed/skipped") from ever re-planning the
+question.
 
 ### 6. Present results
 
