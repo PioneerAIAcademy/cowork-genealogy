@@ -10,7 +10,7 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## What was removed from the starting tree
 
-- Removed the spouse person **Emma Becker** (PID G7JB-2T6) entirely.
+- Removed the spouse **Emma Becker** (PID G7JB-2T6) entirely.
 - Removed the **Couple** relationship between William Hubert Ferber and
   Emma Becker, including its **Marriage** fact (10 September 1890,
   Hamilton County, Ohio).
