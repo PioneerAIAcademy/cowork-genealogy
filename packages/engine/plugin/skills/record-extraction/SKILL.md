@@ -155,6 +155,12 @@ source + assertions in one composite `research_append`, creates sibling
 person stubs when the subject is a child on a household record, and
 returns a ≤10-line summary.
 
+**Match checks belong to the extractor, not you.** When the user asks
+to check FamilySearch matches, relay it as the flag above — never call
+`record_person_matches` / `record_record_matches` yourself (they are
+not in this skill's allowed-tools, and the persona `id` they key on
+lives with the agent's extraction).
+
 **Classification refinement requests route the same way.** "Reclassify
 these evidence types", "is this informant primary or secondary?" — find
 which record(s) the named assertions came from (`record_id` /
