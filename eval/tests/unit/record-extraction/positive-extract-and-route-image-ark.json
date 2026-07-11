@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_record_extraction_014",
+    "id": "ut_record_extraction_015",
     "skill": "record-extraction",
     "name": "Extracts a marriage record and routes its 3:1: image ARK to image_read",
     "type": "positive",

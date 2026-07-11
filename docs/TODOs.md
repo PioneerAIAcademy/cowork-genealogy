@@ -68,6 +68,18 @@ These MCP tools are shipped, specced, and advertised, but no skill references th
   called by any skill (`tree-edit` uses the match tools + `person_read`, never
   `person_ancestors`). Wire it into the relevant tree/research workflow.
 
+## Eval framework
+- [ ] **Revisit recovered-retry Tool Arguments scoring** — the judge policy
+  (`eval/harness/judge/prompt.md` + the mirror note in
+  `eval/tests/unit/record-extraction/rubric.md`) caps a validation-rejected
+  call that Claude cleanly fixed on the first retry at partial (2). Chosen
+  while the suite is *diagnostic*: the retry path is where wasted round-trips
+  and silent op-drops were observed, and scoring it 3 would blind the trend
+  to the failure class the composite-persist work eliminates. Once
+  composite-persist has made validation rejections rare and the suite's role
+  shifts toward regression acceptance (post-alpha), consider full credit for
+  a cleanly-recovered single retry — decide with post-composite data.
+
 ## Done
 - ~~`/v1` FamilySearch token mechanism~~ — **shipped**: `POST /v1/sessions` accepts an
   optional `familysearch_token` ({`access_token`, `refresh_token?`, `expires_in?`}),

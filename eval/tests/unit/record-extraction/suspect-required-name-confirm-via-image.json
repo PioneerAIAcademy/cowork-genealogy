@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_record_extraction_014",
+    "id": "ut_record_extraction_016",
     "skill": "record-extraction",
     "name": "A suspect required-identifier name must be confirmed against the original image, not finalized from the index",
     "type": "positive",
