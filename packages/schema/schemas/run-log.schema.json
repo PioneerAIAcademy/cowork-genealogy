@@ -60,7 +60,7 @@
     "snapshot": {
       "type": "object",
       "additionalProperties": { "type": "string" },
-      "description": "{repo-relative-path: normalized-content} of all skill-side files needed to reproduce this run. Includes plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
+      "description": "{repo-relative-path: normalized-content} of all skill-side files needed to reproduce this run. Includes packages/engine/plugin/skills/<skill>/**, eval/tests/unit/<skill>/**, and referenced scenarios + fixtures."
     },
     "tests": {
       "type": "array",

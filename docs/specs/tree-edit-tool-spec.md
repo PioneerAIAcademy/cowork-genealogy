@@ -236,7 +236,15 @@ Sequence (mirrors `merge_record_into_tree`):
 
 1. Read `tree.gedcomx.json` fresh from disk (ids checked against current state;
    a stale `factId`/`personId`/`relationshipId` is a clear error, not a silent
-   no-op). Read `research.json` too — needed for the cross-file validation pass.
+   no-op), then **heal legacy shapes** (`src/validation/tree-sanitize.ts`):
+   trees written before the validator tightening — `preferred:/primary: false`
+   from the old merge core, top-level `places[]`, person-level `sources`,
+   unknown keys, missing ids, string quality — are repaired in memory with one
+   warning per healed class, so a pre-tightening project is never bricked. A
+   successful edit persists the healed document (a one-shot migration).
+   Ambiguous problems (dangling refs, swapped endpoint keys, duplicate ids)
+   are NOT healed and still fail validation. Read `research.json` too — needed
+   for the cross-file validation pass.
 2. Apply the operation **in memory**: allocate ids, run the primary/preferred
    swaps, resolve `standard_place`.
 3. **Validate** the would-be tree with `validateParsed(research, tree, { projectPath })`

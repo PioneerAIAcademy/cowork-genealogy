@@ -18,6 +18,16 @@ import {
   isValid,
 } from "./types.js";
 import { isInsideProject } from "../utils/project-io.js";
+import {
+  TREE_TOP_LEVEL_FIELDS,
+  TREE_PERSON_FIELDS,
+  TREE_NAME_FIELDS,
+  TREE_FACT_FIELDS,
+  TREE_PARENT_CHILD_FIELDS,
+  TREE_COUPLE_FIELDS,
+  TREE_SOURCE_FIELDS,
+  TREE_SOURCE_REF_FIELDS,
+} from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
 
@@ -280,13 +290,12 @@ const NULLABLE_FIELDS = new Set([
   "conflict_ids", "conflict_note", "justification",
 ]);
 
-// Allowed properties on a simplified-GedcomX tree source. Mirrors
-// `$defs.source_description` in tree-gedcomx.schema.json, which sets
-// `additionalProperties: false`. The runtime check in validateGedcomx rejects
-// any other key so an op that puts citation text under the wrong field name
-// (e.g. `description` instead of `citation`) fails validation and is not
-// written — instead of persisting a tree that later fails the JSON Schema.
-const TREE_SOURCE_FIELDS = new Set(["id", "title", "citation", "author", "url"]);
+// Allowed properties per simplified-GedcomX object live in tree-shape.ts —
+// shared with the read-time sanitizer (tree-sanitize.ts) so the closed shapes
+// the validator enforces and the legacy shapes the sanitizer heals can never
+// disagree. The runtime checks below reject any other key so an op that puts
+// data under the wrong field name (e.g. `standrad_date` instead of
+// `standard_date`) fails validation and is not written.
 
 function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const path = "research.json";
@@ -789,12 +798,137 @@ function validateEvaluations(
   }
 }
 
+function checkTreeKeys(
+  obj: any,
+  allowed: Set<string>,
+  what: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (!obj || typeof obj !== "object") return;
+  for (const key of Object.keys(obj)) {
+    if (!allowed.has(key)) {
+      addError(
+        report,
+        path,
+        `unexpected property '${key}' (${what} allow only ${Array.from(
+          allowed
+        ).join(", ")})`
+      );
+    }
+  }
+}
+
+function checkTreeStrings(
+  obj: any,
+  fields: string[],
+  path: string,
+  report: ValidationReport
+): void {
+  for (const field of fields) {
+    if (field in obj && typeof obj[field] !== "string") {
+      addError(report, path, `'${field}' must be a string`);
+    }
+  }
+}
+
+/** `preferred` on names and `primary` on facts are `const: true` in the schema. */
+function checkTrueFlag(
+  obj: any,
+  field: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (field in obj && obj[field] !== true) {
+    addError(
+      report,
+      path,
+      `'${field}' must be true when present — omit it rather than setting false`
+    );
+  }
+}
+
+function checkTreeSourceRefs(
+  holder: any,
+  path: string,
+  sourceIds: Set<string>,
+  report: ValidationReport
+): void {
+  const refs = Array.isArray(holder.sources) ? holder.sources : [];
+  for (let k = 0; k < refs.length; k++) {
+    const sref = refs[k];
+    const srp = `${path}/sources[${k}]`;
+    if (!sref || typeof sref !== "object") {
+      addError(report, srp, "source reference must be an object");
+      continue;
+    }
+    checkTreeKeys(sref, TREE_SOURCE_REF_FIELDS, "source references", srp, report);
+    if (!("ref" in sref)) {
+      addError(report, srp, "source reference missing 'ref'");
+    } else if (!sourceIds.has(sref.ref)) {
+      addError(report, srp, `references source '${sref.ref}' which does not exist`);
+    }
+    checkTreeStrings(sref, ["page"], srp, report);
+    if (
+      "quality" in sref &&
+      !(Number.isInteger(sref.quality) && sref.quality >= 0 && sref.quality <= 3)
+    ) {
+      addError(report, srp, "'quality' must be an integer between 0 and 3 (GEDCOM QUAY)");
+    }
+  }
+}
+
+/** Shared by person facts and Couple-relationship facts — same subschema. */
+function checkTreeFact(
+  fact: any,
+  path: string,
+  sourceIds: Set<string>,
+  report: ValidationReport
+): void {
+  if (!fact || typeof fact !== "object") {
+    addError(report, path, "fact must be an object");
+    return;
+  }
+  checkRequired(fact, ["id", "type"], path, report, NULLABLE_FIELDS);
+  checkTreeKeys(fact, TREE_FACT_FIELDS, "facts", path, report);
+  if ("type" in fact && typeof fact.type !== "string") {
+    addError(report, path, "'type' must be a string");
+  } else if ("type" in fact && !/^[A-Z]/.test(fact.type)) {
+    // Mirrors the schema's `pattern: ^[A-Z]` exactly (the old first-char
+    // toUpperCase comparison passed digit-initial and empty types the
+    // schema rejects — a gate seam for no benefit).
+    addError(report, path, `fact type '${fact.type}' must start with an uppercase letter (PascalCase, e.g. 'Birth' not 'birth')`);
+  }
+  checkTrueFlag(fact, "primary", path, report);
+  checkTreeStrings(
+    fact,
+    ["date", "standard_date", "place", "standard_place", "value"],
+    path,
+    report
+  );
+  checkTreeSourceRefs(fact, path, sourceIds, report);
+}
+
+function checkTreeNotes(rel: any, path: string, report: ValidationReport): void {
+  if (!("notes" in rel)) return;
+  if (!Array.isArray(rel.notes) || rel.notes.some((n: any) => typeof n !== "string")) {
+    addError(report, path, "'notes' must be an array of strings");
+  }
+}
+
 /**
  * Validate a parsed simplified-GedcomX document (tree or a standalone candidate
  * record) against its structural rules, collecting referenced person/source ids
  * into the returned sets. Exported so the merge tools can validate an inline
  * `candidateGedcomx` argument without re-implementing the checks. Errors and
  * warnings are pushed to `report`; read the verdict via `isValid(report)`.
+ *
+ * Mirrors tree-gedcomx.schema.json's `additionalProperties: false` subschemas
+ * (unknown keys are rejected everywhere, not just on sources) and adds the
+ * checks JSON Schema cannot express: intra-document reference integrity for
+ * relationship endpoints and every source `ref` — including the two spots a
+ * prior version missed, person facts' twins on Couple relationships and the
+ * refs inside them.
  */
 export function validateGedcomx(
   data: any,
@@ -808,8 +942,11 @@ export function validateGedcomx(
   for (const section of ["persons", "relationships", "sources"]) {
     if (!(section in data)) {
       addError(report, path, `missing top-level section '${section}'`);
+    } else if (!Array.isArray(data[section])) {
+      addError(report, path, `'${section}' must be an array`);
     }
   }
+  checkTreeKeys(data, TREE_TOP_LEVEL_FIELDS, "tree documents", path, report);
 
   // Sources
   const sources = Array.isArray(data.sources) ? data.sources : [];
@@ -829,6 +966,7 @@ export function validateGedcomx(
           );
         }
       }
+      checkTreeStrings(src, ["title", "citation", "author", "url"], sp, report);
     }
     if ("id" in src) {
       sourceIds.add(src.id);
@@ -841,6 +979,11 @@ export function validateGedcomx(
     const person = persons[i];
     const pp = `${path}/persons[${i}]`;
     checkRequired(person, ["id", "gender", "names"], pp, report, NULLABLE_FIELDS);
+    checkTreeKeys(person, TREE_PERSON_FIELDS, "persons", pp, report);
+    checkTreeStrings(person, ["ark"], pp, report);
+    if ("living" in person && typeof person.living !== "boolean") {
+      addError(report, pp, "'living' must be a boolean");
+    }
     if ("id" in person) {
       personIds.add(person.id);
     }
@@ -856,37 +999,15 @@ export function validateGedcomx(
       const name = names[j];
       const np = `${pp}/names[${j}]`;
       checkRequired(name, ["id", "given", "surname"], np, report, NULLABLE_FIELDS);
-      const nameSources = Array.isArray(name.sources) ? name.sources : [];
-      for (let k = 0; k < nameSources.length; k++) {
-        const sref = nameSources[k];
-        const srp = `${np}/sources[${k}]`;
-        if (!("ref" in sref)) {
-          addError(report, srp, "source reference missing 'ref'");
-        } else if (!sourceIds.has(sref.ref)) {
-          addError(report, srp, `references source '${sref.ref}' which does not exist`);
-        }
-      }
+      checkTreeKeys(name, TREE_NAME_FIELDS, "names", np, report);
+      checkTrueFlag(name, "preferred", np, report);
+      checkTreeStrings(name, ["given", "surname", "prefix", "suffix", "type"], np, report);
+      checkTreeSourceRefs(name, np, sourceIds, report);
     }
 
     const facts = Array.isArray(person.facts) ? person.facts : [];
     for (let j = 0; j < facts.length; j++) {
-      const fact = facts[j];
-      const fp = `${pp}/facts[${j}]`;
-      checkRequired(fact, ["id", "type"], fp, report, NULLABLE_FIELDS);
-      const ftype = fact.type || "";
-      if (ftype && ftype[0] !== ftype[0].toUpperCase()) {
-        addError(report, fp, `fact type '${ftype}' should be PascalCase (e.g., 'Birth' not 'birth')`);
-      }
-      const factSources = Array.isArray(fact.sources) ? fact.sources : [];
-      for (let k = 0; k < factSources.length; k++) {
-        const sref = factSources[k];
-        const srp = `${fp}/sources[${k}]`;
-        if (!("ref" in sref)) {
-          addError(report, srp, "source reference missing 'ref'");
-        } else if (!sourceIds.has(sref.ref)) {
-          addError(report, srp, `references source '${sref.ref}' which does not exist`);
-        }
-      }
+      checkTreeFact(facts[j], `${pp}/facts[${j}]`, sourceIds, report);
     }
   }
 
@@ -902,6 +1023,7 @@ export function validateGedcomx(
 
     const rtype = rel.type;
     if (rtype === "ParentChild") {
+      checkTreeKeys(rel, TREE_PARENT_CHILD_FIELDS, "ParentChild relationships", rp, report);
       if (!("parent" in rel)) {
         addError(report, rp, "ParentChild relationship missing 'parent'");
       } else if (!personIds.has(rel.parent)) {
@@ -915,7 +1037,10 @@ export function validateGedcomx(
       if ("person1" in rel || "person2" in rel) {
         addError(report, rp, "ParentChild should use 'parent'/'child', not 'person1'/'person2'");
       }
+      checkTreeStrings(rel, ["subtype"], rp, report);
+      checkTreeNotes(rel, rp, report);
     } else if (rtype === "Couple") {
+      checkTreeKeys(rel, TREE_COUPLE_FIELDS, "Couple relationships", rp, report);
       if (!("person1" in rel)) {
         addError(report, rp, "Couple relationship missing 'person1'");
       } else if (!personIds.has(rel.person1)) {
@@ -926,18 +1051,19 @@ export function validateGedcomx(
       } else if (!personIds.has(rel.person2)) {
         addError(report, rp, `person2 '${rel.person2}' not found in persons`);
       }
-    }
-
-    const relSources = Array.isArray(rel.sources) ? rel.sources : [];
-    for (let k = 0; k < relSources.length; k++) {
-      const sref = relSources[k];
-      const srp = `${rp}/sources[${k}]`;
-      if (!("ref" in sref)) {
-        addError(report, srp, "source reference missing 'ref'");
-      } else if (!sourceIds.has(sref.ref)) {
-        addError(report, srp, `references source '${sref.ref}' which does not exist`);
+      if ("parent" in rel || "child" in rel) {
+        addError(report, rp, "Couple should use 'person1'/'person2', not 'parent'/'child'");
+      }
+      checkTreeNotes(rel, rp, report);
+      // Couple facts (Marriage, Divorce, …) share the person-fact subschema —
+      // including reference integrity for their source refs.
+      const relFacts = Array.isArray(rel.facts) ? rel.facts : [];
+      for (let j = 0; j < relFacts.length; j++) {
+        checkTreeFact(relFacts[j], `${rp}/facts[${j}]`, sourceIds, report);
       }
     }
+
+    checkTreeSourceRefs(rel, rp, sourceIds, report);
   }
 
   return { personIds, sourceIds };

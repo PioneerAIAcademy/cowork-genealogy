@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Job Purnell married Emma (Emm) on 27 October 1844 in Norwich, New London County, Connecticut.",
+      "details": {
+        "target_person": {
+          "name": "Job Purnell (PID 2W2F-CNH)"
+        },
+        "fact_type": "Marriage",
+        "date": "27 October 1844",
+        "place": "Norwich, New London, Connecticut, United States"
+      },
+      "supporting_sources": [
+        "\"Connecticut, Vital Records, Prior to 1850\", FamilySearch, entry for Job Purnal and Richard Livesey, 27 October 1844 (marriage of Job Purnal, officiated by Richard Livesey).",
+        "\"Connecticut, Vital Records, Prior to 1850\", FamilySearch, entry for Emma Osborne and Richard Livesey, 27 October 1844 (bride's record for the same marriage)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Job Purnell's wife Emma's maiden name was Osborne — she appears as Emma Osborne in the 1844 Connecticut marriage record.",
+      "details": {
+        "person": {
+          "name": "Emma Osborne",
+          "birth": "about 1822, Rode, Somerset, England"
+        }
+      },
+      "supporting_sources": [
+        "\"Connecticut, Vital Records, Prior to 1850\", FamilySearch, entry for Emma Osborne and Richard Livesey, 27 October 1844.",
+        "Daughter recorded as Sarah Osborne Purnell, carrying the mother's maiden name as a middle name."
+      ],
+      "required": false
+    }
+  ]
+}
