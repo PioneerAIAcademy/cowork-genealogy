@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_proof_conclusion_009",
     "skill": "proof-conclusion",
-    "name": "Informant primary/secondary question should route to assertion-classification",
+    "name": "Informant primary/secondary question should route to record-extraction",
     "type": "negative",
-    "description": "The user asks whether a death-certificate informant is primary or secondary for a fact. That is GPS Step 3 evidence classification (assertion-classification), not writing a proof conclusion.",
+    "description": "The user asks whether a death-certificate informant is primary or secondary for a fact. That is GPS Step 3 evidence classification — owned by record-extraction since the assertion-classification merge (2026-07-11) — not writing a proof conclusion.",
     "tags": ["near-miss", "proof-vs-classification", "boundary"]
   },
   "input": {
@@ -12,10 +12,10 @@
     "scenario": "mid-research-flynn"
   },
   "negative": {
-    "correct_skill": ["assertion-classification"],
-    "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — assertion-classification's job. proof-conclusion uses classifications that already exist on assertions; it does not assign them."
+    "correct_skill": ["record-extraction"],
+    "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — record-extraction's job (it writes classifications at extraction and refines them on request; the former assertion-classification skill was merged into it). proof-conclusion uses classifications that already exist on assertions; it does not assign them."
   },
   "judge_context": [
-    "Should route to assertion-classification rather than producing a GPS proof narrative"
+    "Should route to record-extraction (the classification owner since the assertion-classification merge) rather than producing a GPS proof narrative"
   ]
 }

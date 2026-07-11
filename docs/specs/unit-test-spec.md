@@ -571,7 +571,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | record-extraction | search-records | "search for" vs "analyze this record" |
 | search-records | record-extraction | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
-| conflict-resolution | assertion-classification | conflicting facts vs classifying evidence type |
+| conflict-resolution | record-extraction | conflicting facts vs classifying evidence type (classification is owned by record-extraction since the assertion-classification merge, 2026-07-11) |
 | proof-conclusion | project-status | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.

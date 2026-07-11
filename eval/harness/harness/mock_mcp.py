@@ -31,7 +31,7 @@ Current live tools:
   names instead of the schema's snake_case field names.
 - research_append: calls the compiled TS tool to append/update an entry in a
   research.json section (the post-migration write path for skills like
-  assertion-classification, person-evidence, hypothesis-tracking). It
+  record-extraction, person-evidence, hypothesis-tracking). It
   validates-before-persist and enforces supersede-not-delete, so its result
   reflects the actual file the skill produced — a fixture cannot. Without it
   registered live, the migrated skills' write calls return `fixture_not_found`

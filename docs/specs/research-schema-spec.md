@@ -133,7 +133,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
-| `assertions` | record-extraction, assertion-classification, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
+| `assertions` | record-extraction, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |

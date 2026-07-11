@@ -203,39 +203,15 @@ def test_new_sources_have_citation_detail(before_state, after_state):
     assert not errors, "Incomplete new sources:\n" + "\n".join(errors)
 
 
-# --- Tool allowlist ---
-
-def test_only_allowed_mcp_tools(skill_frontmatter, tool_calls):
-    """Every MCP tool called must be listed in SKILL.md allowed-tools.
-
-    record-extraction legitimately calls record_search and
-    image_transcribe. This check catches accidental calls to MCP tools
-    outside the skill's declared allowlist (e.g., wikipedia_search,
-    fulltext_search).
-
-    Skipped when frontmatter doesn't declare allowed-tools (defensive —
-    some skills omit the field).
-    """
-    declared = skill_frontmatter.get("allowed-tools")
-    if declared is None:
-        pytest.skip("SKILL.md doesn't declare allowed-tools")
-
-    declared_set = set(declared)
-
-    violations = []
-    for tc in tool_calls:
-        full = tc.get("tool", "")
-        if not full.startswith("mcp__"):
-            continue
-        # Strip mcp__<server>__ prefix
-        bare = full.split("__")[-1]
-        if bare not in declared_set:
-            violations.append(bare)
-
-    assert not violations, (
-        f"record-extraction called MCP tools outside its allowed-tools: "
-        f"{sorted(set(violations))}. Declared: {sorted(declared_set)}"
-    )
+# NOTE (2026-07-11, record-extraction consolidation PR 3): the per-skill
+# `test_only_allowed_mcp_tools` check was removed. It duplicated the
+# universal `test_tool_allowlist` in test_universal.py — which, unlike the
+# local copy, unions the frontmatter `tools:` of every plugin agent the
+# skill delegates to via `@plugin:<name>` (record-extraction now delegates
+# persistence to the record-extractor agent, whose research_append /
+# tree_edit / place_search calls land in the same session tool_calls log).
+# Same removal was already applied to conflict-resolution and
+# proof-conclusion for the same redundancy reason.
 
 
 # --- Tag-gated regression checks ---

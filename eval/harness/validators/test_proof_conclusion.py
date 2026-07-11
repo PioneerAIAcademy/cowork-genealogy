@@ -34,7 +34,7 @@ import pytest
 # checks in test_universal.py, which enforce the real invariant: every call
 # must match the skill's declared allowed-tools, and writes stay within
 # proof-conclusion's owned sections. Same removal already applied to
-# conflict-resolution and assertion-classification.
+# conflict-resolution.
 
 
 # --- New proof_summary structural checks ------------------------------

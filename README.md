@@ -155,8 +155,7 @@ are listed in roughly the order you'd use them in a research project.
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription). | "Analyze this record" / "Extract assertions" |
-| **assertion-classification** | Refines three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative). | "Classify this evidence" |
+| **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
 | **citation** | Polishes citations to Evidence Explained standards (Who/What/When/Where/Where-within). | "Fix citations" |
 
 ### Identity resolution and analysis
@@ -235,20 +234,21 @@ don't load it explicitly.
    search-images             ...or browse unindexed digitized image volumes
    search-external-sites     ...or on Ancestry/MyHeritage/FindMyPast
 5. record-extraction         Extract assertions from found records
-6. assertion-classification  Refine evidence classifications
-7. citation                  Polish citations to Evidence Explained standards
-8. person-evidence           Link assertions to persons in the tree
-9. timeline                  Build chronological timeline, find gaps
-10. conflict-resolution      Resolve disagreements between sources
-11. hypothesis-tracking      Track competing candidates
-12. research-exhaustiveness  Gate before proof — applies the GPS 5
+                             (evidence classifications are written
+                             here and are final at extraction)
+6. citation                  Polish citations to Evidence Explained standards
+7. person-evidence           Link assertions to persons in the tree
+8. timeline                  Build chronological timeline, find gaps
+9. conflict-resolution       Resolve disagreements between sources
+10. hypothesis-tracking      Track competing candidates
+11. research-exhaustiveness  Gate before proof — applies the GPS 5
                              threshold questions and 7-point stop
                              criteria. If not yet exhaustive, loop
                              back to step 3 (extend plan) or step 2
                              (FAN pivot). If exhaustive, advance.
-13. proof-conclusion         Write the GPS conclusion
+12. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
-14. project-status           "Where are we? What's next?"
+13. project-status           "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at

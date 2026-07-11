@@ -13,7 +13,7 @@ description: Writes GPS-conformant proof conclusions — selects the
   a question, or when a hypothesis reaches supported status. Do NOT use
   when the user wants to resolve a conflict (use conflict-resolution),
   wants to select the next question (use question-selection), or wants to
-  classify evidence (use assertion-classification).
+  classify evidence (use record-extraction, which owns classification).
 allowed-tools:
   - research_append
   - tree_edit

@@ -37,6 +37,7 @@ REPO_ROOT = HARNESS_DIR.parents[1]
 RUNLOGS_DIR = REPO_ROOT / "eval" / "runlogs" / "unit"
 JUDGE_PROMPT_PATH = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
 PLUGIN_SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
+TESTS_UNIT_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 
 
 # Match `eval/runlogs/unit/<skill>/<file>.json`
@@ -332,6 +333,18 @@ def main() -> int:
     # RUNLOG_GATE_EXEMPT_SKILLS) so a skill-body edit doesn't hard-fail the
     # per-skill rules with no way to clear them.
     touched_skills -= RUNLOG_GATE_EXEMPT_SKILLS
+
+    # Drop DELETED skills: when a PR removes a skill entirely — its skill dir
+    # AND its unit-test dir are both absent from the working tree — there is
+    # nothing left to re-run, so rules 2 + 3 have no gate target. Historical
+    # runlogs under eval/runlogs/unit/<skill>/ may stay behind as history.
+    # A skill with EITHER dir still present is still gated (a half-deleted
+    # skill is an inconsistent state the gate should surface, not skip).
+    touched_skills = {
+        s
+        for s in touched_skills
+        if (PLUGIN_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
+    }
 
     fails = rule1_max_one_released(touched_releases)
 
