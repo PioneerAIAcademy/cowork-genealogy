@@ -305,18 +305,60 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
             "required": ["projectPath", "tool", "query", "outcome", "resultsExamined"],
         }
     if tool_name == "research_append":
+        # Mirror the production tool's input schema (research-append.ts).
+        # Advertising the `ops` batch array, the `sourceDescription` composite
+        # object, and the per-op section/op enums (rather than a single-op-only
+        # stub) keeps eval behaviour matching production — the model batches a
+        # whole record and lets the tool create the tree S entry on its first
+        # call. Hand-maintained: update alongside researchAppendSchema.
+        _section_enum = [
+            "sources",
+            "assertions",
+            "person_evidence",
+            "questions",
+            "plans",
+            "plan_items",
+            "conflicts",
+            "hypotheses",
+            "timelines",
+            "proof_summaries",
+            "evaluations",
+            "known_holdings",
+            "project",
+        ]
+        _ra_op_fields = {
+            "section": {"type": "string", "enum": _section_enum},
+            "op": {"type": "string", "enum": ["append", "update"]},
+            "entry": {"type": "object"},
+            "entryId": {"type": "string"},
+            "fields": {"type": "object"},
+            "planId": {"type": "string"},
+        }
         return {
             "type": "object",
             "properties": {
                 "projectPath": {"type": "string"},
-                "section": {"type": "string"},
-                "op": {"type": "string", "enum": ["append", "update"]},
-                "entry": {"type": "object"},
-                "entryId": {"type": "string"},
-                "fields": {"type": "object"},
-                "planId": {"type": ["string", "null"]},
+                **_ra_op_fields,
+                "ops": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": _ra_op_fields,
+                        "required": ["section", "op"],
+                    },
+                },
+                "sourceDescription": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "author": {"type": "string"},
+                        "url": {"type": "string"},
+                    },
+                    "required": ["title"],
+                },
+                "resolveStandardPlace": {"type": "boolean"},
             },
-            "required": ["projectPath", "section", "op"],
+            "required": ["projectPath"],
         }
     if tool_name == "tree_edit":
         # Mirror the production tool's input schema (tree-edit.ts). Advertising
