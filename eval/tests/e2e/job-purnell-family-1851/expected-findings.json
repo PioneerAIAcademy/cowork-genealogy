@@ -1,0 +1,52 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Job Purnell's wife, recorded living with him in the 1851 census of Trowbridge, was Serena (indexed as 'Serinah') — her maiden name was Deacon.",
+      "details": {
+        "subject_person": "Job Purnell (PID LHKV-VKD)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Serena (Serinah) Deacon",
+          "birth": "~1824-1825, Studley/Wiltshire, England"
+        }
+      },
+      "supporting_sources": [
+        "\"England and Wales, Census, 1851\", FamilySearch, household of Job Purnell, Trowbridge, Wiltshire — wife Serinah Purnell.",
+        "\"England, Wiltshire, Church Records\" / GRO marriage index — Job Purnell married Serena Deacon, 1849 (supplies the maiden name Deacon)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Job and Serena's child recorded in the 1851 census household was Samuel (Jesse) Purnell, an infant born about 1850.",
+      "details": {
+        "person": {
+          "name": "Samuel Jesse Purnell",
+          "birth": "~1850, Wiltshire, England"
+        },
+        "relation_to_subject": "child"
+      },
+      "supporting_sources": [
+        "\"England and Wales, Census, 1851\", FamilySearch, household of Job Purnell, Trowbridge, Wiltshire — son Samuel Purnell, age ~1."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "The wife's maiden name was Deacon (not stated in the 1851 census itself; recoverable from the 1849 marriage record).",
+      "details": {
+        "target_person": { "name": "Serena Deacon" },
+        "fact_type": "maiden_name",
+        "value": "Deacon"
+      },
+      "supporting_sources": [
+        "Job Purnell–Serena Deacon marriage, 1849, Trowbridge / Melksham registration district."
+      ],
+      "required": false
+    }
+  ]
+}

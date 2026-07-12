@@ -1,0 +1,661 @@
+{
+  "persons": [
+    {
+      "id": "2W2F-CNH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Job",
+          "surname": "Purnell",
+          "id": "2W2F-CNH-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "1 December 1819",
+          "standard_date": "1 Dec 1819",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England",
+          "id": "2W2F-CNH-f-birth-1"
+        },
+        {
+          "type": "Death",
+          "date": "9 November 1895",
+          "standard_date": "9 Nov 1895",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2F-CNH-f-death-2"
+        },
+        {
+          "type": "Christening",
+          "date": "5 August 1821",
+          "standard_date": "5 Aug 1821",
+          "place": "Trowbridge,Wiltshire,England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "id": "2W2F-CNH-f-christening-3"
+        },
+        {
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "id": "2W2F-CNH-f-residence-4"
+        },
+        {
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2F-CNH-f-residence-5"
+        },
+        {
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd Ward Portage City, Columbia, Wisconsin, United States",
+          "id": "2W2F-CNH-f-residence-6"
+        },
+        {
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2F-CNH-f-residence-7"
+        },
+        {
+          "type": "Burial",
+          "place": "Silver Lake Cemetery, Lewiston, Columbia, Wiscons",
+          "standard_place": "Silver Lake Cemetery, Portage, Columbia, Wisconsin, United States",
+          "id": "2W2F-CNH-f-burial-8"
+        },
+        {
+          "type": "Marriage",
+          "date": "27 October 1844",
+          "standard_date": "27 Oct 1844",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "primary": true,
+          "id": "F1"
+        }
+      ]
+    },
+    {
+      "id": "2W2D-8X9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Emma",
+          "surname": "Purnell",
+          "id": "2W2D-8X9-name-1"
+        },
+        {
+          "given": "Emma",
+          "surname": "Osborne",
+          "type": "BirthName",
+          "id": "N2"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "22 July 1822",
+          "standard_date": "22 Jul 1822",
+          "place": "Rode, Somerset, England",
+          "standard_place": "Rode, Somerset, England, United Kingdom",
+          "id": "2W2D-8X9-f-birth-1"
+        },
+        {
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2D-8X9-f-residence-2"
+        },
+        {
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd Ward Portage City, Columbia, Wisconsin, United States",
+          "id": "2W2D-8X9-f-residence-3"
+        },
+        {
+          "type": "Death",
+          "date": "3 January 1879",
+          "standard_date": "3 Jan 1879",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2D-8X9-f-death-4"
+        },
+        {
+          "type": "Burial",
+          "place": "Portage, Columbia, Wisconsin, United States of America",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2D-8X9-f-burial-5"
+        },
+        {
+          "type": "Marriage",
+          "date": "27 October 1844",
+          "standard_date": "27 Oct 1844",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "primary": true,
+          "id": "F2"
+        }
+      ]
+    },
+    {
+      "id": "2W2D-81L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Eliza Etta",
+          "surname": "Purnell",
+          "id": "2W2D-81L-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "1 May 1846",
+          "standard_date": "1 May 1846",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2D-81L-f-birth-1"
+        },
+        {
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2D-81L-f-residence-2"
+        },
+        {
+          "type": "Death",
+          "date": "1 June 1927",
+          "standard_date": "1 Jun 1927",
+          "place": "Portage, Columbia, Wisconsin, USA",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2D-81L-f-death-3"
+        }
+      ]
+    },
+    {
+      "id": "2W2D-8H5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary Ann",
+          "surname": "Purnell",
+          "id": "2W2D-8H5-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "14 May 1848",
+          "standard_date": "14 May 1848",
+          "place": "Norwich, New London, Connecticut",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2D-8H5-f-birth-1"
+        },
+        {
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2D-8H5-f-residence-2"
+        },
+        {
+          "type": "Death",
+          "date": "25 October 1908",
+          "standard_date": "25 Oct 1908",
+          "place": "Spokane, Spokane, Washington, United States",
+          "standard_place": "Spokane, Spokane, Washington, United States",
+          "id": "2W2D-8H5-f-death-3"
+        }
+      ]
+    },
+    {
+      "id": "2W2D-8XL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Susan Maria",
+          "surname": "Purnell",
+          "id": "2W2D-8XL-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "27 May 1850",
+          "standard_date": "27 May 1850",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2D-8XL-f-birth-1"
+        },
+        {
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Norwich, New London, Connecticut, United States",
+          "standard_place": "Norwich, New London, Connecticut, United States",
+          "id": "2W2D-8XL-f-residence-2"
+        },
+        {
+          "type": "Death",
+          "date": "6 November 1895",
+          "standard_date": "6 Nov 1895",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2D-8XL-f-death-3"
+        }
+      ]
+    },
+    {
+      "id": "LDTG-KF3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary Belle",
+          "surname": "Purnell",
+          "id": "LDTG-KF3-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "6 March 1852",
+          "standard_date": "6 Mar 1852",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "LDTG-KF3-f-birth-1"
+        },
+        {
+          "type": "Death",
+          "date": "31 January 1919",
+          "standard_date": "31 Jan 1919",
+          "place": "Milwaukee, Wisconsin, United States",
+          "standard_place": "Milwaukee, Milwaukee, Wisconsin, United States",
+          "id": "LDTG-KF3-f-death-2"
+        }
+      ]
+    },
+    {
+      "id": "LDTG-KJ5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Emma O.",
+          "surname": "Purnell",
+          "id": "LDTG-KJ5-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "December 1856",
+          "standard_date": "Dec 1856",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "LDTG-KJ5-f-birth-1"
+        },
+        {
+          "type": "Death",
+          "date": "14 February 1858",
+          "standard_date": "14 Feb 1858",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "LDTG-KJ5-f-death-2"
+        }
+      ]
+    },
+    {
+      "id": "2W2D-D64",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Sarah Osborne",
+          "surname": "Purnell",
+          "id": "2W2D-D64-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "27 December 1861",
+          "standard_date": "27 Dec 1861",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2D-D64-f-birth-1"
+        },
+        {
+          "type": "Death",
+          "date": "21 January 1920",
+          "standard_date": "21 Jan 1920",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2D-D64-f-death-2"
+        }
+      ]
+    },
+    {
+      "id": "2W2D-DF8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Minnie A",
+          "surname": "Purnell",
+          "id": "2W2D-DF8-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "5 January 1867",
+          "standard_date": "5 Jan 1867",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "Portage, Columbia, Wisconsin, United States",
+          "id": "2W2D-DF8-f-birth-1"
+        },
+        {
+          "type": "Death",
+          "date": "25 February 1950",
+          "standard_date": "25 Feb 1950",
+          "place": "Portage, Columbia, Wisconsin, United States",
+          "standard_place": "United States",
+          "id": "2W2D-DF8-f-death-2"
+        }
+      ]
+    },
+    {
+      "id": "2W24-7WR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Samuel",
+          "surname": "Purnall",
+          "id": "2W24-7WR-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Christening",
+          "date": "15 October 1796",
+          "standard_date": "15 Oct 1796",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England",
+          "id": "2W24-7WR-f-christening-1"
+        },
+        {
+          "type": "Birth",
+          "date": "1797",
+          "standard_date": "1797",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England",
+          "id": "2W24-7WR-f-birth-2"
+        },
+        {
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "id": "2W24-7WR-f-residence-3"
+        },
+        {
+          "type": "Death",
+          "id": "2W24-7WR-f-death-4"
+        }
+      ]
+    },
+    {
+      "id": "99M8-FSJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Eliza",
+          "surname": "Crabb",
+          "id": "99M8-FSJ-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "1797",
+          "standard_date": "1797",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England",
+          "id": "99M8-FSJ-f-birth-1"
+        },
+        {
+          "type": "Christening",
+          "date": "12 September 1817",
+          "standard_date": "12 Sep 1817",
+          "place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "id": "99M8-FSJ-f-christening-2"
+        },
+        {
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "id": "99M8-FSJ-f-residence-3"
+        },
+        {
+          "type": "Death",
+          "id": "99M8-FSJ-f-death-4"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Richard",
+          "surname": "Livesey",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N1"
+        }
+      ],
+      "id": "I1"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "2W2F-CNH",
+      "person2": "2W2D-8X9",
+      "facts": [],
+      "id": "rel-couple-2W2F-CNH-2W2D-8X9"
+    },
+    {
+      "type": "Couple",
+      "person1": "2W24-7WR",
+      "person2": "99M8-FSJ",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "05 AUG 1819",
+          "standard_date": "5 Aug 1819",
+          "place": "Trowbridge,Wiltshire,England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "id": "2W24-7WR-99M8-FSJ-mar-1"
+        }
+      ],
+      "id": "rel-couple-2W24-7WR-99M8-FSJ"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W24-7WR",
+      "child": "2W2F-CNH",
+      "subtype": "Biological",
+      "id": "rel-2W24-7WR-2W2F-CNH"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "99M8-FSJ",
+      "child": "2W2F-CNH",
+      "subtype": "Biological",
+      "id": "rel-99M8-FSJ-2W2F-CNH"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2F-CNH",
+      "child": "2W2D-81L",
+      "subtype": "Biological",
+      "id": "rel-2W2F-CNH-2W2D-81L"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2D-8X9",
+      "child": "2W2D-81L",
+      "subtype": "Biological",
+      "id": "rel-2W2D-8X9-2W2D-81L"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2F-CNH",
+      "child": "2W2D-8H5",
+      "subtype": "Biological",
+      "id": "rel-2W2F-CNH-2W2D-8H5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2D-8X9",
+      "child": "2W2D-8H5",
+      "subtype": "Biological",
+      "id": "rel-2W2D-8X9-2W2D-8H5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2F-CNH",
+      "child": "2W2D-8XL",
+      "subtype": "Biological",
+      "id": "rel-2W2F-CNH-2W2D-8XL"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2D-8X9",
+      "child": "2W2D-8XL",
+      "subtype": "Biological",
+      "id": "rel-2W2D-8X9-2W2D-8XL"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2F-CNH",
+      "child": "LDTG-KF3",
+      "id": "rel-2W2F-CNH-LDTG-KF3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2D-8X9",
+      "child": "LDTG-KF3",
+      "id": "rel-2W2D-8X9-LDTG-KF3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2F-CNH",
+      "child": "LDTG-KJ5",
+      "id": "rel-2W2F-CNH-LDTG-KJ5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2D-8X9",
+      "child": "LDTG-KJ5",
+      "id": "rel-2W2D-8X9-LDTG-KJ5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2F-CNH",
+      "child": "2W2D-D64",
+      "subtype": "Biological",
+      "id": "rel-2W2F-CNH-2W2D-D64"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2D-8X9",
+      "child": "2W2D-D64",
+      "subtype": "Biological",
+      "id": "rel-2W2D-8X9-2W2D-D64"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2F-CNH",
+      "child": "2W2D-DF8",
+      "subtype": "Biological",
+      "id": "rel-2W2F-CNH-2W2D-DF8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "2W2D-8X9",
+      "child": "2W2D-DF8",
+      "subtype": "Biological",
+      "id": "rel-2W2D-8X9-2W2D-DF8"
+    }
+  ],
+  "sources": [
+    {
+      "id": "32N2-W6T",
+      "title": "Job Pernell, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MWMR-76P : Mon Jul 08 23:58:36 UTC 2024), Entry for Job Pernell and Emma Pernell, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWMR-76P"
+    },
+    {
+      "id": "32NK-L7R",
+      "title": "Job Parnell, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M68R-B1Q : Tue Jan 21 04:39:19 UTC 2025), Entry for Job Parnell and Emma Parnell, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M68R-B1Q"
+    },
+    {
+      "id": "MMXF-4LW",
+      "title": "Job Purnell, \"United States Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MN97-PWH : Fri Jan 17 19:58:32 UTC 2025), Entry for Job Purnell and Emma Purnell, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN97-PWH"
+    },
+    {
+      "id": "MMXF-4P4",
+      "title": "Job Purnell, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MN4C-SFJ : Sat Oct 11 09:39:29 UTC 2025), Entry for Job Purnell and Serah Purnell, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN4C-SFJ"
+    },
+    {
+      "id": "32N2-3R9",
+      "title": "Job Purnell, \"Wisconsin, State Census, 1875\"",
+      "citation": "\"Wisconsin, State Census, 1875\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MMMT-96B : Sat Oct 18 14:51:54 UTC 2025), Entry for Job Purnell, 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MMMT-96B"
+    },
+    {
+      "id": "9JKR-7BT",
+      "title": "Job Purnell, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVLL-PFC6 : Mon Jul 06 18:23:52 UTC 2026), Entry for Job Purnell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVLL-PFC6"
+    },
+    {
+      "title": "Connecticut, Vital Records, Prior to 1850",
+      "url": "https://www.familysearch.org/search/collection/2843390",
+      "id": "S1"
+    }
+  ]
+}

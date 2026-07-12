@@ -63,6 +63,7 @@
     { "name": "research_log_append" },
     { "name": "convert_calendar" },
     { "name": "tree_edit" },
+    { "name": "tree_correct" },
     { "name": "research_append" },
     { "name": "rank_search_matches" }
   ],

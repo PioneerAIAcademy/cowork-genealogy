@@ -9,14 +9,16 @@
 > JSON path in `tree-edit` becomes a validated, atomic, id-assigning tool call.
 
 ```
-tree_edit({ projectPath, operation, ...operationFields }) -> compact summary
+tree_edit({ projectPath, operation, ...operationFields })    -> compact summary   (additive ops)
+tree_correct({ projectPath, operation, ...operationFields }) -> compact summary   (correction/removal ops)
 ```
 
-A single tool with an `operation` discriminator. The LLM supplies the **content
-judgment** (which fact, what value, which relationship); the tool does the
-error-prone clerical work — id allocation, the primary/preferred flag swaps,
-`standard_place` resolution, array mutation, validate-before-persist, and the
-atomic write.
+Two advertised tools over one shared core, each with an `operation`
+discriminator (see § "The tree_edit / tree_correct split"). The LLM supplies
+the **content judgment** (which fact, what value, which relationship); the tool
+does the error-prone clerical work — id allocation, the primary/preferred flag
+swaps, `standard_place` resolution, array mutation, validate-before-persist,
+and the atomic write.
 
 ---
 
@@ -51,16 +53,49 @@ The merge work already built the machinery (atomic write, `validateParsed`,
 
 In scope — the `tree-edit` ad-hoc operations (`SKILL.md:52–124`):
 
-| Operation | Replaces (SKILL.md) |
-|-----------|---------------------|
-| `add_fact` | "Adding a fact to a person" |
-| `update_fact` | "Correcting a value" (fact date/place/value) |
-| `add_name` / `update_name` | "Correcting a value" (name given/surname) |
-| `update_person` | gender/ark correction |
-| `add_person` | "Adding a person" |
-| `add_relationship` | "Adding a relationship" |
-| `add_source` / `update_source` | source-description (`S` entry) add/correct — record-extraction step 5c, proof-conclusion step 6 |
-| `remove` | "Removing concluded data (tier downgrade)" — facts/relationships only |
+| Operation | Tool | Replaces (SKILL.md) |
+|-----------|------|---------------------|
+| `add_fact` | `tree_edit` | "Adding a fact to a person" |
+| `update_fact` | `tree_correct` | "Correcting a value" (fact date/place/value) |
+| `add_name` / `update_name` | `tree_edit` / `tree_correct` | "Correcting a value" (name given/surname) |
+| `update_person` | `tree_correct` | gender/ark correction |
+| `add_person` | `tree_edit` | "Adding a person" |
+| `add_relationship` | `tree_edit` | "Adding a relationship" |
+| `add_source` / `update_source` | `tree_edit` / `tree_correct` | source-description (`S` entry) add/correct — ad-hoc/manual source work and proof-conclusion step 6. (Record-extraction's per-record `S` entry is created by `research_append`'s composite `sourceDescription` instead — see §4.3 cross-tool ordering.) |
+| `remove` | `tree_correct` | "Removing concluded data (tier downgrade)" — facts/relationships only |
+
+### 2.1 The `tree_edit` / `tree_correct` split
+
+The ten operations are advertised as **two tools** over one shared
+implementation core (`src/tools/tree-edit.ts` `executeTreeOps`;
+`src/tools/tree-correct.ts` is a thin gate module over it):
+
+| Tool | Admitted ops |
+|------|--------------|
+| `tree_edit` | `add_fact`, `add_name`, `add_person`, `add_relationship`, `add_source` — **additive only** |
+| `tree_correct` | `update_fact`, `update_name`, `update_person`, `update_source`, `remove` — **corrections/removals only** |
+
+**Rationale:** extraction must be **structurally unable to rewrite identity**.
+The record-extractor agent holds `tree_edit` to write sibling stubs and
+alternate names, and in the ut_013 rename incident (2026-07-12 runlog) it used
+`update_name` to rename an existing tree person it judged misnamed — an
+identity-resolution act that belongs to person-evidence, hypothesis-tracking,
+and the tree-edit skill. Prose prohibitions do not hold when the model
+believes it is correcting an error; a whole-tool allowlist does. With the op
+set split by mutability, granting a context `tree_edit` but not `tree_correct`
+denies every rename/rewrite/delete at the tool boundary — enforcement is
+allowlist-level everywhere (Cowork `allowed-tools`, agent `tools:`
+frontmatter, the eval harness), not per-run validator prose.
+
+Both tools keep identical batched `ops`, id rules, validate-on-write, and
+`.bak` semantics (everything in §4–§7). An op sent to the wrong tool is
+rejected before anything is applied, with a redirect naming the sibling tool
+(`tree_edit only adds — 'update_name' is a correction/removal op; corrections
+and removals live in tree_correct`, and the mirror-image message on
+`tree_correct`); in a batch the rejection is indexed `ops[i]: …` and nothing
+is written. Each tool's description cross-references the other. Everywhere
+this spec says `tree_edit` about the shared pipeline (§4.1–§7), the behavior
+applies to whichever tool admits the op.
 
 In scope for sources: the lightweight **tree** `sources[]` entry (the `S`
 description in `tree.gedcomx.json`, `simplified-gedcomx-spec.md` §4.3) — `title`,
@@ -103,10 +138,12 @@ tree_edit({
     | "add_source" | "update_source" | "remove",
 
   // ── targeting (per operation) ──
-  personId?: string,          // add_fact, add_name, update_fact, update_name, update_person
+  personId?: string,          // add_fact/update_fact (person-held facts — exactly one of
+                              //   personId | relationshipId), add_name, update_name, update_person
   factId?: string,            // update_fact, remove
   nameId?: string,            // update_name
-  relationshipId?: string,    // remove
+  relationshipId?: string,    // add_fact/update_fact (Couple-held facts — exactly one of
+                              //   personId | relationshipId), remove
   sourceId?: string,          // update_source
 
   // ── payloads (snake_case, NO id — the tool assigns) ──
@@ -123,25 +160,40 @@ tree_edit({
 
 ### 4.1 Per-operation contract
 
-- **`add_fact`** `{ personId, fact }` — append `fact` to the person's `facts`,
-  assigning the next `F` id above the tree max. If `fact.primary === true`, clear
-  `primary` on every other fact of the **same `type`** on that person. If
+- **`add_fact`** `{ personId | relationshipId, fact }` — append `fact` to the
+  target's `facts`, assigning the next `F` id above the tree max. The target is
+  **exactly one of** `personId` (a person-held fact) or `relationshipId` (a
+  Couple-held fact — Marriage, Divorce, … live on the Couple relationship, never
+  duplicated onto each spouse); supplying both or neither is an input error, and
+  a `relationshipId` that names a `ParentChild` is an input error (the tree
+  schema allows `facts` only on Couples). If `fact.primary === true`, clear
+  `primary` on every other fact of the **same `type`** on that holder. If
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves).
-- **`update_fact`** `{ personId, factId, fact }` — shallow-merge the provided
-  `fact` fields onto the existing fact (id immutable). If `place` changed (and not
-  explicitly accompanied by `standard_place`), re-resolve `standard_place`. If
-  `primary: true` set, run the same-type swap.
+- **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
+  the provided `fact` fields onto the existing fact (id immutable) on the same
+  exactly-one-target contract as `add_fact`; the `factId` must live on the named
+  holder. If `place` changed (and not explicitly accompanied by
+  `standard_place`), re-resolve `standard_place`. If `primary: true` set, run the
+  same-type swap on that holder.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
   `name.preferred === true`, clear `preferred` on the person's other names.
 - **`update_name`** `{ personId, nameId, name }` — shallow-merge fields; preferred
   swap if set true.
 - **`update_person`** `{ personId, gender?, ark? }` — set scalar person fields.
-- **`add_person`** `{ person }` — append a new person, assigning the next `I` id
-  and an `N` id for each nested name (exactly-one `preferred`). Synthesized stubs
-  omit `ark` (`simplified-gedcomx-spec.md` §4.6).
-- **`add_relationship`** `{ relationship }` — append, assign next `R`. Endpoint
+- **`add_person`** `{ person }` — append a new person, assigning the next `I` id,
+  an `N` id for each nested name (exactly-one `preferred`), and an `F` id for each
+  nested fact (reported as `assignedIds.facts`). Inline facts follow the same rules
+  as `add_fact`: a caller-supplied fact `id` is rejected ("add_person facts must not
+  carry ids — the tool assigns them"), and each fact's `standard_place` is resolved
+  from `place` when unset. Synthesized stubs omit `ark`
+  (`simplified-gedcomx-spec.md` §4.6).
+- **`add_relationship`** `{ relationship }` — append, assign next `R`. Facts
+  supplied on a new **Couple** relationship (e.g. its Marriage) get the same
+  treatment as `add_fact`: tool-assigned `F` ids (caller-supplied ids rejected),
+  `standard_place` resolution, `assignedIds.facts`. Facts on a `ParentChild` are an
+  input error. Endpoint
   integrity (`parent`/`child` for `ParentChild`, `person1`/`person2` for `Couple`
   reference existing persons — tree persons or FS ids already present) and shape (no
   `person1` on a `ParentChild`) are enforced by the final whole-tree validation pass
@@ -159,6 +211,18 @@ tree_edit({
   facts and relationships** — a `personId` here is an error (person removal is
   `merge_tree_persons`).
 
+**Fact payload shape (all fact write paths).** On every path that writes a fact —
+`add_fact`, `update_fact`, `add_person` inline facts, `add_relationship` facts —
+the scalar fact fields `date`, `standard_date`, `place`, `standard_place`, and
+`value` must be **plain strings** when present (`simplified-gedcomx-spec.md` §4.1, §4.5).
+Anything else (most commonly a raw-GedcomX nested `date: { original, formal }`
+object, but also `null` or an array) is rejected at write time with an input error
+naming the op, the field, and the expected shape, before validation runs. The final
+whole-tree validation would also reject these (`'date' must be a string`), but the
+write-time check attributes the error to the offending op (`ops[i]: …` in a batch)
+instead of a persons-index path — this closed the e2e failure where an accepted
+malformed nested date later crashed `person_warnings` date parsing.
+
 ### 4.2 Return value (compact — never the tree)
 
 ```typescript
@@ -167,7 +231,9 @@ tree_edit({
   operation: string,
   assignedIds?: {                 // ids the tool allocated, for narration
     person?: string, fact?: string, name?: string,
-    relationship?: string, source?: string, names?: string[],
+    relationship?: string, source?: string,
+    names?: string[],             // add_person nested names
+    facts?: string[],             // add_person / add_relationship nested facts
   },
   filesWritten: ["tree.gedcomx.json"],
   validation: { valid: true, warnings: string[] },
@@ -209,10 +275,16 @@ Semantics (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
   the predicted `I` id). Endpoint/reference integrity is enforced by the **single final
   whole-tree validation**, not per-op, so an `add_person` + `add_relationship` pair in
   one batch validates because the new person is present by validation time.
-- **Cross-tool ordering is unchanged.** `tree_edit` and `research_append` remain two
-  separate tools/calls; an `add_person` here assigns the `I` id that a later
-  `research_append` `person_evidence` op references, so the `tree_edit` batch must
-  commit before that `research_append` batch.
+- **Cross-tool ordering.** `tree_edit` and `research_append` remain two separate
+  tools/calls; an `add_person` here assigns the `I` id that a later
+  `research_append` `person_evidence` op references, so a `tree_edit` batch must
+  commit before a `research_append` batch that references its new ids. The one
+  exception is the record-extraction **source** flow: `research_append`'s
+  composite persist (`sourceDescription`, research-append spec §3.4) creates the
+  tree `S` entry itself via the shared write layer, so there is **no
+  tree_edit-first step for a new record's source description** — `add_source`
+  here remains for ad-hoc/manual source work and proof-conclusion's own
+  source-writing path, not for the extraction persist.
 
 The persisted tree shape is unchanged — `ops` changes only the number of write calls.
 
@@ -236,7 +308,15 @@ Sequence (mirrors `merge_record_into_tree`):
 
 1. Read `tree.gedcomx.json` fresh from disk (ids checked against current state;
    a stale `factId`/`personId`/`relationshipId` is a clear error, not a silent
-   no-op). Read `research.json` too — needed for the cross-file validation pass.
+   no-op), then **heal legacy shapes** (`src/validation/tree-sanitize.ts`):
+   trees written before the validator tightening — `preferred:/primary: false`
+   from the old merge core, top-level `places[]`, person-level `sources`,
+   unknown keys, missing ids, string quality — are repaired in memory with one
+   warning per healed class, so a pre-tightening project is never bricked. A
+   successful edit persists the healed document (a one-shot migration).
+   Ambiguous problems (dangling refs, swapped endpoint keys, duplicate ids)
+   are NOT healed and still fail validation. Read `research.json` too — needed
+   for the cross-file validation pass.
 2. Apply the operation **in memory**: allocate ids, run the primary/preferred
    swaps, resolve `standard_place`.
 3. **Validate** the would-be tree with `validateParsed(research, tree, { projectPath })`
@@ -246,6 +326,13 @@ Sequence (mirrors `merge_record_into_tree`):
    `research.json` is untouched (ad-hoc adds create ids nothing references yet;
    corrections change values, not ids; `remove` deletes facts/relationships, not
    persons — so no person-id reference can dangle). This is the Mode-1 write shape.
+
+> **Tree-writer closure.** The tree's writers are the merge tools, `tree_edit`,
+> and — for the one composite case — `research_append`, whose `sourceDescription`
+> input appends an `S` entry through the same shared layer (`nextId`,
+> `backupIfExists`, `atomicWriteBoth`, `validateParsed`; research-append spec
+> §3.4/§4). No other tool writes `tree.gedcomx.json`; all of them share the id
+> allocator and validate-before-persist, so the closure holds.
 
 > **Reuse, don't reinvent.** Id allocation needs the per-prefix max that
 > `merge-gedcomx.ts` already computes privately as `maxIdNum`; with a second
@@ -261,16 +348,19 @@ Sequence (mirrors `merge_record_into_tree`):
 
 ## 6. Decisions recorded
 
-- **One tool with an `operation` discriminator, not one tool per edit.** Follows
-  this repo's "don't create one MCP tool per endpoint — use generic tools with
-  parameters" rule (CLAUDE.md) and keeps Claude's tool list lean. The ten
-  operations share the entire read → apply → validate → backup → write pipeline;
-  only the in-memory mutation differs. *Rejected:* `tree_add_fact`,
+- **Generic tools with an `operation` discriminator, not one tool per edit.**
+  Follows this repo's "don't create one MCP tool per endpoint — use generic
+  tools with parameters" rule (CLAUDE.md) and keeps Claude's tool list lean.
+  The ten operations share the entire read → apply → validate → backup → write
+  pipeline; only the in-memory mutation differs. *Rejected:* `tree_add_fact`,
   `tree_add_person`, … (ten near-identical tools, ten schema entries, more
   context for no behavioral gain). The merge tools are two tools only because they
   have **different side effects** (one writes one file, the other two + a remap);
-  every `tree_edit` operation has the *same* side effect (write the tree), so the
-  split that justified two merge tools does not apply here.
+  every operation here has the *same* side effect (write the tree), so that
+  argument for splitting does not apply. The one split that did land —
+  `tree_edit` (add) vs `tree_correct` (update/remove), §2.1 — is not per
+  endpoint but per **authority level**: it exists so a caller's tool allowlist
+  can grant additive writes without granting identity rewrites/removals.
 - **`standard_place` resolution is internal and on by default.** Removes the
   "call `place_search`, copy the first result's `standardPlace`" hand-step
   (`SKILL.md:68–70`) and makes `place`/`standard_place` atomic. Overridable:
@@ -292,6 +382,10 @@ Sequence (mirrors `merge_record_into_tree`):
 | `add_source` / `update_source` payload carries an `id` | rejected (add) / ignored (update — `id` is immutable) |
 | `add_source` with a source missing `title` | validation failure; write nothing (the shared validate-before-persist pass requires `[id, title]`) |
 | `add_relationship` endpoint references a non-existent person, or field shape mismatches the `type` | input error (also caught by validation) |
+| `add_fact` / `update_fact` with both or neither of `personId` / `relationshipId` | input error — "requires exactly one of `personId` or `relationshipId`" |
+| `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
+| A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
+| `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
 | `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | Resulting tree fails project validation | write nothing; return `{ ok: false, errors }` |
@@ -317,14 +411,25 @@ The caller (`tree-edit` skill) still:
 - **add_fact** — appends with the next `F` id; `primary: true` clears the prior
   same-type primary; `place` set → `standard_place` resolved (mock the resolver);
   only `tree.gedcomx.json` written; `.bak` created; project validates.
+  Relationship-targeted: `relationshipId` appends to the Couple's own `facts`
+  (same F id / primary swap / place resolution; nothing lands on either spouse);
+  both/neither of `personId`/`relationshipId` rejected; `ParentChild` target
+  rejected; stale `relationshipId` rejected.
 - **update_fact** — field merge by `factId`; a place change re-resolves
-  `standard_place`; id unchanged.
+  `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
+  Couple-held fact; a `factId` not on the named holder errors.
 - **add_name / update_name** — `N` id assigned; `preferred: true` clears other
   preferred; exactly one preferred remains.
 - **update_person** — gender/ark set; nothing else changed.
-- **add_person** — `I` id + `N` ids assigned; stub omits `ark`.
+- **add_person** — `I` id + `N` ids assigned; stub omits `ark`; inline facts get
+  `F` ids (surfaced as `assignedIds.facts`) with `standard_place` resolution; an
+  inline fact carrying an id is rejected.
 - **add_relationship** — `R` id assigned; endpoints validated; `ParentChild` with
-  `person1` rejected.
+  `person1` rejected; Couple facts get `F` ids, caller-supplied fact ids rejected.
+- **fact payload shape** — a nested `{ original }` date (or non-string
+  place/standard_date/…) is rejected on every fact write path (add_fact person +
+  relationship, update_fact, add_person inline, add_relationship facts) with an
+  error naming the field; nothing written, no `.bak`.
 - **add_source / update_source** — `S` id assigned above the tree max (S-aware
   `nextId`, so `S1`→`S2`); a caller-supplied `id` is rejected on add; `author`/`url`
   round-trip into the written `S` entry; `update_source` merges by `sourceId` (id
@@ -341,11 +446,13 @@ The caller (`tree-edit` skill) still:
 
 ## 10. Wiring
 
-Standard MCP tool: `src/tools/tree-edit.ts`, schema in `allToolSchemas`
-(`src/tool-schemas.ts`), dispatch in `src/index.ts`, name in `manifest.json`
-(packaging drift test enforces parity). camelCase params at the boundary;
-persisted tree stays snake_case (the tool renames nothing — payload fields are
-already the snake_case simplified-GedcomX shape the skill passes).
+Standard MCP tools: `src/tools/tree-edit.ts` (shared core + `tree_edit`) and
+`src/tools/tree-correct.ts` (thin gate module exporting `tree_correct`),
+schemas in `allToolSchemas` (`src/tool-schemas.ts`), dispatch in
+`src/index.ts`, names in `manifest.json` (packaging drift test enforces
+parity). camelCase params at the boundary; persisted tree stays snake_case
+(the tool renames nothing — payload fields are already the snake_case
+simplified-GedcomX shape the skill passes).
 
 ---
 
@@ -355,5 +462,6 @@ already the snake_case simplified-GedcomX shape the skill passes).
   (one call per edit) instead of hand-editing JSON + calling
   `validate_research_schema`. The "Person merging" section already routes to the
   merge tools (per `skill-rewrites-for-persistence-tools-spec.md`); this completes
-  the migration of the skill's write paths. Together, `merge_*` + `tree_edit` cover
+  the migration of the skill's write paths. Together, `merge_*` + `tree_edit` +
+  `research_append`'s composite `S`-entry write (research-append spec §3.4) cover
   every write to `tree.gedcomx.json`.

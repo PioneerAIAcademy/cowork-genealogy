@@ -2,7 +2,9 @@
 
 Patrick Flynn parentage research, mid-project — extends `mid-research-flynn`
 with a **1900 census** and **Thomas Flynn's will**, to exercise two
-assertion-classification special cases that the base scenario lacks:
+evidence-classification special cases that the base scenario lacks
+(classification is owned by record-extraction since the
+assertion-classification merge, 2026-07-11):
 
 1. **Pre-1940 census, information quality (Layer 2).** The 1900 census
    (src_005) records no respondent. `a_014` (Patrick's age) is correctly

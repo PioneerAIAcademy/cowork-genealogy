@@ -84,6 +84,26 @@ def test_partial_name_overlap_does_not_flag():
     assert check_stripping(expected, tree) == []
 
 
+def test_an_avoid_finding_still_flags_but_carries_its_polarity():
+    """A `polarity: "avoid"` claim must be as absent from the starting tree
+    as a recover answer (a pre-asserted wrong claim breaks the fixture the
+    other way) — same matcher, but the WARN advice differs (spec §3.4.1)."""
+    finding = _rel_finding("Robert Smith")
+    finding["polarity"] = "avoid"
+    tree = {
+        "persons": [
+            _person("I1", "John", "Smith"),
+            _person("I9", "Robert", "Smith"),  # the pre-asserted wrong claim
+        ]
+    }
+    suspects = check_stripping({"findings": [finding]}, tree)
+    assert len(suspects) == 1
+    assert suspects[0].polarity == "avoid"
+    warn = vf.format_suspect("fx", suspects[0])
+    assert "avoid" in warn
+    assert "must NOT" in warn
+
+
 # --- subject-person leak regression (spriggs-parents-1898) -----------
 
 def _rel_finding_with_subject(target_name, subject_name, fid="f1"):
@@ -336,10 +356,11 @@ def test_an_empty_given_is_the_unknown_spelling_and_passes(tmp_path):
 
 
 def test_lint_fixture_rejects_a_lowercase_fact_type(tmp_path):
-    # The fact-type enum is deliberately open, so "move" lints clean under
-    # the schema and then hard-fails tree_edit — the gate mirrors the runtime.
+    # The fact-type value list is open, but the enum's `pattern` pins the
+    # upper-initial the runtime hard-fails on — a lowercase "move" copied
+    # from research.json must die at the lint, not mid-run in tree_edit.
     person = _valid_person("I1", "John", "Smith")
     person["facts"] = [{"id": "F1", "type": "move"}]
     _write_fixture(tmp_path, _valid_tree(person))
     _, errors = lint_fixture(tmp_path)
-    assert any("PascalCase" in e for e in errors)
+    assert any("'move'" in e and "[A-Z]" in e for e in errors)

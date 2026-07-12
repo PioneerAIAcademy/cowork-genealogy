@@ -141,28 +141,148 @@ def test_rule2_skip_zero_does_not_bypass(monkeypatch, capsys):
 # --- Orchestrator-skill exemption (RUNLOG_GATE_EXEMPT_SKILLS) --------------
 
 
+def _patch_diffs(monkeypatch, paths: list[str]) -> None:
+    """Point both git-diff views at a fixed change set: `git_diff_changes`
+    (AR view, rule 1) sees every path as an add; `git_diff_touched_paths`
+    (any-status view, touched-skill detection) sees the same paths."""
+    monkeypatch.setattr(
+        check_runlogs, "git_diff_changes", lambda: [("A", p) for p in paths]
+    )
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: list(paths))
+
+
 def test_exempt_orchestrator_skill_passes(monkeypatch, capsys):
     """Touching an exempt skill's body (no unit suite by design) must not
     fail with 'no run logs' — the per-skill rules are skipped for it."""
     assert "research" in check_runlogs.RUNLOG_GATE_EXEMPT_SKILLS
-    monkeypatch.setattr(
-        check_runlogs,
-        "git_diff_changes",
-        lambda: [("A", "packages/engine/plugin/skills/research/SKILL.md")],
-    )
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/skills/research/SKILL.md"])
     rc = check_runlogs.main()
     assert rc == 0
     assert "research" not in capsys.readouterr().out
 
 
-def test_non_exempt_skill_without_runlogs_still_fails(monkeypatch, capsys):
+def _make_present_skill(tmp_path, monkeypatch, name: str = "present-skill"):
+    """Stage a skills tree containing <name> (dir exists on disk, so the
+    deleted-skill skip does not apply) and point the checker at it. The
+    real RUNLOGS_DIR has no dir for <name>, so rules 2+3 fail with
+    'no run logs'."""
+    skills = tmp_path / "skills"
+    d = skills / name
+    d.mkdir(parents=True)
+    (d / "SKILL.md").write_text(f"---\nname: {name}\n---\nbody\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    return f"packages/engine/plugin/skills/{name}/SKILL.md"
+
+
+def test_non_exempt_skill_without_runlogs_still_fails(monkeypatch, capsys, tmp_path):
     """The gate still bites for a non-exempt skill with no runlog dir — proof
     the exemption didn't widen into a blanket pass."""
+    path = _make_present_skill(tmp_path, monkeypatch)
+    _patch_diffs(monkeypatch, [path])
+    rc = check_runlogs.main()
+    assert rc == 1
+    assert "no run logs" in capsys.readouterr().out
+
+
+def test_modified_skill_file_marks_skill_touched(monkeypatch, capsys, tmp_path):
+    """A *modified* (status M) skill file must gate rules 2 + 3 — the
+    touched-skill detection uses the any-status view, not rule 1's AR view."""
+    path = _make_present_skill(tmp_path, monkeypatch)
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
     monkeypatch.setattr(
-        check_runlogs,
-        "git_diff_changes",
-        lambda: [("A", "packages/engine/plugin/skills/__no_such_skill__/SKILL.md")],
+        check_runlogs, "git_diff_touched_paths", lambda: [path]
     )
     rc = check_runlogs.main()
     assert rc == 1
     assert "no run logs" in capsys.readouterr().out
+
+
+# --- Deleted-skill skip (skill dir AND test dir both absent) ---------------
+
+
+def test_deleted_skill_skips_gate(monkeypatch, capsys, tmp_path):
+    """A PR that deletes a skill entirely — skill dir and unit-test dir both
+    absent from the working tree — must not hard-fail rules 2/3 for it:
+    there is no suite left to re-run. (The assertion-classification
+    deletion, 2026-07-11.)"""
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests-unit")
+    _patch_diffs(
+        monkeypatch,
+        [
+            "packages/engine/plugin/skills/gone-skill/SKILL.md",
+            "eval/tests/unit/gone-skill/rubric.md",
+            "eval/tests/unit/gone-skill/some-test.json",
+        ],
+    )
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+def test_half_deleted_skill_still_gated(monkeypatch, capsys, tmp_path):
+    """A skill whose test dir survives (only the skill dir was removed) is an
+    inconsistent state the gate must surface, not skip."""
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    tests_unit = tmp_path / "tests-unit"
+    (tests_unit / "half-gone").mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    _patch_diffs(
+        monkeypatch, ["packages/engine/plugin/skills/half-gone/SKILL.md"]
+    )
+    rc = check_runlogs.main()
+    assert rc == 1
+    assert "no run logs" in capsys.readouterr().out
+
+
+# --- Plugin-agent → referencing-skill mapping ------------------------------
+
+
+def _make_skills_tree(tmp_path):
+    """Two skills: one delegates to @plugin:spike-echo, one doesn't."""
+    skills = tmp_path / "skills"
+    a = skills / "uses-agent"
+    a.mkdir(parents=True)
+    (a / "SKILL.md").write_text(
+        "---\nname: uses-agent\n---\nDelegate via `@plugin:spike-echo`.\n",
+        encoding="utf-8",
+    )
+    b = skills / "no-agent"
+    b.mkdir(parents=True)
+    (b / "SKILL.md").write_text(
+        "---\nname: no-agent\n---\nNo delegation here.\n", encoding="utf-8"
+    )
+    return skills
+
+
+def test_skills_referencing_agents_maps_by_ref(tmp_path):
+    skills = _make_skills_tree(tmp_path)
+    mapping = check_runlogs.skills_referencing_agents(skills)
+    assert mapping == {"spike-echo": {"uses-agent"}}
+
+
+def test_touched_agent_gates_referencing_skill(monkeypatch, capsys, tmp_path):
+    """Editing packages/engine/plugin/agents/<name>.md must gate every skill
+    whose SKILL.md references @plugin:<name>, exactly like a skill-dir edit."""
+    skills = _make_skills_tree(tmp_path)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(
+        check_runlogs,
+        "git_diff_touched_paths",
+        lambda: ["packages/engine/plugin/agents/spike-echo.md"],
+    )
+    rc = check_runlogs.main()
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "uses-agent" in out  # gated like a skill edit (no run logs → fail)
+    assert "no-agent" not in out  # non-referencing skill untouched
+
+
+def test_touched_agent_without_references_gates_nothing(monkeypatch, capsys, tmp_path):
+    skills = _make_skills_tree(tmp_path)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", skills)
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/agents/unreferenced.md"])
+    rc = check_runlogs.main()
+    assert rc == 0
+    assert "All runlog rules satisfied" in capsys.readouterr().out

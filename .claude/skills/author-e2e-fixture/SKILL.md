@@ -120,6 +120,13 @@ folder — `scaffold`'s two templates live in the harness instead).
   in the tree" from "a relative who shares a surname".
 - `supporting_sources`: free text for the judge's context; one or two.
 - `required`: `true` to pass, `false` for bonus credit.
+- `polarity`: omit for a normal recover-this finding. `"avoid"` marks a
+  claim the agent must **NOT** assert (spec §3.4.1) — the judge passes
+  it when the claim is absent from the final tree, and the harness
+  re-checks that mechanically (a matching person in the final tree
+  forces the finding to fail). Pair a `required` avoid guard with a
+  `required` recover finding that the agent documented the negative
+  conclusion, so a run that does nothing does not pass by default.
 
 Pull the names, dates and places from the id index (PID path) or the
 document's conclusion section (PID-less). Keep findings short. Avoid record-locator literals like
@@ -222,6 +229,27 @@ team's step, and they run it after the fixture lands. A live `/research` run
 does not block the tree-reading tools, so the agent can read the answer off the
 live tree: the live run tells you the fixture is *sensible and answerable*, it
 is **not** a pass/fail verdict. Say so when you hand off step 2.
+
+## Record-hint fixtures (`genre: "record-hint"`)
+
+A third form of the PID path, for when the research objective comes
+from a **record hint**: the answer was never in the tree — it lives in
+a historical record matched to the tree person with unverified
+confidence (spec §3.6). Differences from the strip flow:
+
+1. `snapshot` as usual. The answer must **not** appear in the id
+   index — if it does, this is a normal strip fixture instead.
+2. `scaffold ... --genre record-hint`.
+3. Write `expected-findings.json` from the record's content. When the
+   hint is unverified, say in `notes` and the README that the findings
+   are a draft pending genealogist adjudication — and that a false
+   match converts them to a `polarity: "avoid"` guard plus a required
+   documented-negative-conclusion finding (Step 3).
+4. `strip --slug <slug> --none` — writes the starting tree as an exact
+   copy of the snapshot. Keep `unstripped-tree.gedcomx.json`
+   committed; `validate` requires the two files to be identical in
+   this genre (and skips the presence mirror, since the findings are
+   extra-tree by design).
 
 ## Re-invocation
 

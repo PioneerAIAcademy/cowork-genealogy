@@ -121,6 +121,114 @@ def test_new_assertions_have_required_classification(before_state, after_state):
     assert not errors, "Incomplete new assertions:\n" + "\n".join(errors)
 
 
+def _normalize_classification_token(s):
+    """Strip non-alphanumerics and casefold, so open, model-chosen spellings
+    of the same concept compare equal: `CauseOfDeath` ≡ `cause_of_death`,
+    `BirthPlace` ≡ `birthplace`. record_role and fact_type are open strings
+    (recommended enums, not closed), so a doctrine-perfect run may persist
+    PascalCase GedcomX-style fact types where a matcher says snake_case."""
+    return "".join(ch for ch in str(s or "") if ch.isalnum()).casefold()
+
+
+def _fact_type_matches(got, want):
+    return _normalize_classification_token(got) == _normalize_classification_token(want)
+
+
+def _record_role_matches(got, want):
+    """Normalized equality, plus a prefix relationship in either direction
+    when the longer form continues with 'of': `father` matches
+    `father_of_deceased` (and vice versa), but `deceased` does NOT match
+    `father_of_deceased` (the longer form doesn't continue with 'of' after
+    the shorter), and `father` does NOT match `father_in_law`."""
+    got_n = _normalize_classification_token(got)
+    want_n = _normalize_classification_token(want)
+    if got_n == want_n:
+        return True
+    if not got_n or not want_n:
+        return False
+    longer, shorter = (got_n, want_n) if len(got_n) > len(want_n) else (want_n, got_n)
+    return longer.startswith(shorter) and longer[len(shorter):].startswith("of")
+
+
+def test_expected_classifications(before_state, after_state, test):
+    """Fixture-gated: deterministic per-fixture classification ground truth.
+
+    Gated on the test JSON's optional top-level `expected_classifications`
+    block (threaded into `test` by the orchestrator; see
+    unit-test-spec.md §5.10). Each matcher names a (record_role, fact_type)
+    pair plus expected values for any of `evidence_type`,
+    `informant_proximity`, `information_quality`. Semantics:
+
+      1. At least one NEW assertion (created by this run) with the
+         matcher's record_role + fact_type must exist.
+      2. EVERY new assertion with that record_role + fact_type must carry
+         each classification value the matcher declares.
+
+    record_role / fact_type matching is normalized (see the helpers above)
+    because both are open, model-chosen strings; the classification values
+    themselves (`evidence_type`, `informant_proximity`,
+    `information_quality`) are closed enums and compare exactly. Failure
+    messages always show the ORIGINAL strings, not the normalized forms.
+
+    This makes classification doctrine mechanically checkable per fixture —
+    the LLM judge still grades the dimensions, but these results are the
+    mechanical reference during annotation (they don't invert with judge
+    phrasing).
+    """
+    matchers = test.get("expected_classifications") or []
+    if not matchers:
+        pytest.skip("test declares no expected_classifications")
+
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+    new = [
+        a for a in after.get("assertions", []) if a.get("id") not in before_ids
+    ]
+
+    classification_fields = (
+        "evidence_type",
+        "informant_proximity",
+        "information_quality",
+    )
+
+    errors = []
+    for m in matchers:
+        role = m.get("record_role")
+        fact = m.get("fact_type")
+        matching = [
+            a
+            for a in new
+            if _record_role_matches(a.get("record_role"), role)
+            and _fact_type_matches(a.get("fact_type"), fact)
+        ]
+        if not matching:
+            errors.append(
+                f"no new assertion with record_role='{role}' "
+                f"fact_type='{fact}' (expected at least one)"
+            )
+            continue
+        for a in matching:
+            aid = a.get("id", "?")
+            for field in classification_fields:
+                if field not in m:
+                    continue
+                got = a.get(field)
+                if got != m[field]:
+                    errors.append(
+                        f"assertions[{aid}] (record_role='{role}', "
+                        f"fact_type='{fact}'): {field}='{got}' — "
+                        f"expected '{m[field]}'"
+                    )
+
+    assert not errors, (
+        "expected_classifications violations:\n  - " + "\n  - ".join(errors)
+    )
+
+
 def test_new_assertions_attached_to_record_role(before_state, after_state):
     """Every new assertion must have both record_id and record_role.
 
@@ -203,39 +311,15 @@ def test_new_sources_have_citation_detail(before_state, after_state):
     assert not errors, "Incomplete new sources:\n" + "\n".join(errors)
 
 
-# --- Tool allowlist ---
-
-def test_only_allowed_mcp_tools(skill_frontmatter, tool_calls):
-    """Every MCP tool called must be listed in SKILL.md allowed-tools.
-
-    record-extraction legitimately calls record_search and
-    image_transcribe. This check catches accidental calls to MCP tools
-    outside the skill's declared allowlist (e.g., wikipedia_search,
-    fulltext_search).
-
-    Skipped when frontmatter doesn't declare allowed-tools (defensive —
-    some skills omit the field).
-    """
-    declared = skill_frontmatter.get("allowed-tools")
-    if declared is None:
-        pytest.skip("SKILL.md doesn't declare allowed-tools")
-
-    declared_set = set(declared)
-
-    violations = []
-    for tc in tool_calls:
-        full = tc.get("tool", "")
-        if not full.startswith("mcp__"):
-            continue
-        # Strip mcp__<server>__ prefix
-        bare = full.split("__")[-1]
-        if bare not in declared_set:
-            violations.append(bare)
-
-    assert not violations, (
-        f"record-extraction called MCP tools outside its allowed-tools: "
-        f"{sorted(set(violations))}. Declared: {sorted(declared_set)}"
-    )
+# NOTE (2026-07-11, record-extraction consolidation PR 3): the per-skill
+# `test_only_allowed_mcp_tools` check was removed. It duplicated the
+# universal `test_tool_allowlist` in test_universal.py — which, unlike the
+# local copy, unions the frontmatter `tools:` of every plugin agent the
+# skill delegates to via `@plugin:<name>` (record-extraction now delegates
+# persistence to the record-extractor agent, whose research_append /
+# tree_edit / place_search calls land in the same session tool_calls log).
+# Same removal was already applied to conflict-resolution and
+# proof-conclusion for the same redundancy reason.
 
 
 # --- Tag-gated regression checks ---
@@ -451,28 +535,126 @@ def test_sibling_stubs_created_in_tree(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: record_persona_id on record_search assertions --------
+# --- Sidecar-gated: record_persona_id on record_search assertions ----
+
+def _staged_sidecar_record_ids(state):
+    """Collect the record ids staged in the scenario's search sidecars
+    (results/<log_id>.json in the workspace `files` snapshot), normalized
+    to their `ark:/...` tail so any accepted record_id form matches.
+    Returns a set (empty when the scenario staged no sidecar)."""
+    import json
+
+    ids = set()
+    for rel_path, content in (state.get("files") or {}).items():
+        if not (rel_path.startswith("results/") and rel_path.endswith(".json")):
+            continue
+        try:
+            sidecar = json.loads(content)
+        except (ValueError, TypeError):
+            continue  # malformed sidecar fixtures have their own tests
+        payload = sidecar.get("payload") or {}
+        for result in payload.get("results") or []:
+            for key in ("recordId", "arkUrl"):
+                rid = result.get(key)
+                if rid:
+                    ids.add(_normalize_record_id(rid))
+    return ids
+
+
+def _normalize_record_id(rid):
+    """Reduce a record id to its `ark:/...` tail when present (full arkUrl,
+    bare ark, and entity-prefixed forms all compare equal); non-ark ids
+    compare verbatim."""
+    idx = rid.find("ark:/")
+    return rid[idx:] if idx != -1 else rid
+
 
 def test_record_persona_id_set(before_state, after_state, test):
-    """Tag-gated (record-persona-id): assertions extracted from a
-    record_search result must carry record_persona_id (the GedcomX person
-    id of the persona) and record_id in full arkUrl form — so person-evidence
-    can later resolve the record and call same_person."""
-    if "record-persona-id" not in test.get("tags", []):
-        pytest.skip("not a record-persona-id scenario")
+    """Sidecar-gated: when the scenario staged a search sidecar
+    (results/<log_id>.json), EVERY new assertion whose record_id matches a
+    record staged in that sidecar must carry a non-null record_persona_id
+    — per-assertion coverage, EXPLICITLY INCLUDING the focus persona (the
+    searched person, id = the result's primaryId). "The primary is
+    implied" is the known failure mode; "at least one assertion has it" is
+    not coverage. Those assertions must also carry record_id in full
+    arkUrl form — so person-evidence can later resolve the record and call
+    same_person. Sidecar-less scenarios (record_read / image / PDF
+    extractions) skip: supplying record_persona_id there is a hard error
+    by contract."""
+    sidecar_ids = _staged_sidecar_record_ids(before_state)
+    if not sidecar_ids:
+        pytest.skip("scenario staged no search sidecar")
+
     before = before_state.get("research_json") or {}
     after = after_state.get("research_json") or {}
     before_ids = {a.get("id") for a in before.get("assertions", [])}
     new = [a for a in after.get("assertions", []) if a.get("id") not in before_ids]
-    assert new, "expected new assertions extracted from the record"
+
+    matched = [
+        a for a in new
+        if _normalize_record_id(a.get("record_id") or "") in sidecar_ids
+    ]
+    if "record-persona-id" in test.get("tags", []):
+        assert new, "expected new assertions extracted from the record"
+        assert matched, (
+            "no new assertion's record_id matches the staged sidecar record "
+            "— either nothing was extracted from the staged record or every "
+            "record_id is malformed beyond recognition"
+        )
+    elif not matched:
+        pytest.skip("no new assertions from the staged sidecar record")
+
     errors = []
-    for a in new:
+    for a in matched:
         aid = a.get("id", "?")
         if not a.get("record_persona_id"):
-            errors.append(f"{aid}: missing record_persona_id")
+            errors.append(
+                f"{aid}: missing record_persona_id (per-assertion coverage "
+                f"— the focus persona is NOT implied; its id is the "
+                f"result's primaryId)"
+            )
         rid = a.get("record_id") or ""
         if not rid.startswith("http"):
             errors.append(f"{aid}: record_id {rid!r} is not a full arkUrl")
     assert not errors, (
         "record_search assertions wrongly shaped:\n  - " + "\n  - ".join(errors)
+    )
+
+DESTRUCTIVE_TREE_OPS = {"update_name", "update_person", "remove"}
+
+
+def test_extraction_makes_no_destructive_tree_ops(tool_calls):
+    """Extraction adds evidence; it never renames, rewrites, or removes
+    existing tree entities. Since the tree_edit/tree_correct split, the
+    correction/removal ops (`update_*` / `remove`) live in `tree_correct`,
+    which extraction does not hold — so the primary assertion is simple:
+    an extraction run makes ZERO tree_correct calls. Identity resolution
+    and correction are owned by person-evidence, hypothesis-tracking, and
+    the tree-edit skill. A record persona judged to BE an existing tree
+    person under a variant name gets an `add_name` (alternate,
+    non-preferred) via tree_edit — never an `update_name`. Structural
+    enforcement for the ut_013 rename incident (2026-07-12): prose
+    prohibitions do not hold when the model believes it is correcting an
+    error. The old-shape check (destructive ops smuggled into a tree_edit
+    call) is kept as belt and suspenders."""
+    offending = []
+    for call in tool_calls:
+        tool = (call.get("tool") or "").rsplit("__", 1)[-1]
+        if tool == "tree_correct":
+            offending.append("tree_correct call")
+            continue
+        if tool != "tree_edit":
+            continue
+        args = call.get("args") or {}
+        ops = args.get("ops")
+        if not isinstance(ops, list):
+            ops = [args] if args.get("operation") else []
+        for i, op in enumerate(ops):
+            name = (op or {}).get("operation")
+            if name in DESTRUCTIVE_TREE_OPS:
+                offending.append(f"tree_edit ops[{i}]: {name}")
+    assert not offending, (
+        "extraction run emitted destructive tree ops (identity "
+        "resolution belongs to person-evidence/hypothesis-tracking/"
+        "tree-edit, not extraction): " + "; ".join(offending)
     )
