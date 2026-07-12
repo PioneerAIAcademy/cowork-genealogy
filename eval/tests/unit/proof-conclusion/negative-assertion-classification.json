@@ -4,11 +4,11 @@
     "skill": "proof-conclusion",
     "name": "Informant primary/secondary question should route to record-extraction",
     "type": "negative",
-    "description": "The user asks whether a death-certificate informant is primary or secondary for a fact. That is GPS Step 3 evidence classification — owned by record-extraction since the assertion-classification merge (2026-07-11) — not writing a proof conclusion.",
+    "description": "The user asks whether the informant on a specific persisted death certificate (src_004) is primary or secondary for the father's name. That is GPS Step 3 evidence classification — owned by record-extraction since the assertion-classification merge (2026-07-11) — not writing a proof conclusion. The message is anchored to project state so a generic informant lecture cannot satisfy it.",
     "tags": ["near-miss", "proof-vs-classification", "boundary"]
   },
   "input": {
-    "user_message": "Is the death-certificate informant primary or secondary for the father's name?",
+    "user_message": "Is the informant on src_004 — Patrick's 1908 death certificate — primary or secondary for the father's name? Check what we have on file.",
     "scenario": "mid-research-flynn"
   },
   "negative": {
@@ -16,6 +16,8 @@
     "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — record-extraction's job (it writes classifications at extraction and refines them on request; the former assertion-classification skill was merged into it). proof-conclusion uses classifications that already exist on assertions; it does not assign them."
   },
   "judge_context": [
-    "Should route to record-extraction (the classification owner since the assertion-classification merge) rather than producing a GPS proof narrative"
+    "Should route to record-extraction (the classification owner since the assertion-classification merge) rather than producing a GPS proof narrative",
+    "The question is anchored to persisted project state: src_004 (Patrick's 1908 death certificate) and its father's-name assertion a_013 already exist in research.json with information_quality 'secondary' and informant James Brown (son-in-law). A generic inline lecture about informant classification that never engages what is on file does NOT satisfy the request",
+    "Reporting what a_013 already says on file (with attribution to the stored assertion) alongside the record-extraction redirect is acceptable; any write to research.json from this boundary fails"
   ]
 }

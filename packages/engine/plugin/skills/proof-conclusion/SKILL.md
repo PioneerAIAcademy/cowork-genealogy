@@ -10,7 +10,10 @@ description: Writes GPS-conformant proof conclusions — selects the
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
   "conclude this question", when assertions and person_evidence exist for
-  a question, or when a hypothesis reaches supported status. Do NOT use
+  a question, or when a hypothesis reaches supported status. ALSO use for
+  review of an existing proof — "does my proof meet the GPS", "assess
+  ps_NNN against the GPS components", "review my existing proof summary"
+  (this skill invokes the gps-mentor for the critique). Do NOT use
   when the user wants to resolve a conflict (use conflict-resolution),
   wants to select the next question (use question-selection), or wants to
   classify evidence (use record-extraction, which owns classification).

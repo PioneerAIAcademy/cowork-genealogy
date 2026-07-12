@@ -2,6 +2,8 @@
 
 Grading dimensions for record-extraction unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+**Scoring calibration.** These dimensions are scored on the PERSISTED assertion/source fields — the tool-call arguments and final files — not on how the chat response narrates them. If the persisted fields are correct, the dimension scores 3, regardless of how tersely or verbosely the response describes them. A score of 2 requires the rationale to name a concrete wrong field value on a concrete assertion (e.g., "a_007 has `evidence_type: direct` for a birth year computed from age"). Narrative style, verbosity, and presentation are never grounds for a deduction in these dimensions.
+
 ## Assertion atomicity
 
 Is each assertion a single extractable fact, not a compound claim? "Patrick Flynn, age 5, born Ireland" should produce separate assertions for name, age/birth, and birthplace.

@@ -23,8 +23,9 @@
     "explanation": "Assessing whether information on a record is primary or secondary based on informant proximity is evidence classification — record-extraction's job (classification is first-and-final at extraction and refined there on request; the former assertion-classification skill was merged into it). The citation skill corrects source-vs-information terminology when it appears in a citation string it is formatting, but does not evaluate the weight or quality of information on a source."
   },
   "judge_context": [
-    "Should route to record-extraction, the classification owner since the assertion-classification merge",
-    "May gently note the terminology distinction (primary/secondary applies to information, not sources) but must still redirect",
-    "Should NOT attempt to answer the primary/secondary question itself"
+    "A NO-WRITE inline answer that reports the already-persisted classification (reading back what the stored assertion on src_004 says, with attribution to that assertion) PASSES — the classification already exists on file, and reporting it is not classification work",
+    "Routing to record-extraction (the classification owner since the assertion-classification merge) is required only when the user asks to ASSIGN or CHANGE a classification; this question can be satisfied by either the on-file read-back or the redirect",
+    "Any write to research.json from this boundary still fails — the response may report or redirect, never persist",
+    "May gently note the terminology distinction (primary/secondary applies to information, not sources)"
   ]
 }

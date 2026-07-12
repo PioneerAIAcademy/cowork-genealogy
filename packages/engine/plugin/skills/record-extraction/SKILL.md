@@ -149,6 +149,10 @@ a delegation message carrying:
   "the <element> is a suspect transcription — record it tentative
   pending image confirmation"
 
+Frame delegations neutrally — describe the record and the project state;
+NEVER frame the task as "fix" or "correct" the existing tree (corrective
+framing has induced destructive edits).
+
 One record per invocation; several records = several invocations, each
 carrying its own content. The agent extracts every assertion, writes the
 source + assertions in one composite `research_append`, creates sibling

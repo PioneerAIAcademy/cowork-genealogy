@@ -121,6 +121,11 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   an extraction-scoped op set: add_person/add_relationship/add_source only).
 
 ## Eval framework
+- [ ] **Judge fabrication class — give the judge before-state file content** —
+  three citation fails (2026-07-12) came from the judge claiming on-file text
+  was fabricated or absent; the judge context should include the relevant
+  before-state source entries so "not on file" claims are mechanically
+  checkable.
 - [ ] **Revisit recovered-retry Tool Arguments scoring** — the judge policy
   (`eval/harness/judge/prompt.md` + the mirror note in
   `eval/tests/unit/record-extraction/rubric.md`) caps a validation-rejected

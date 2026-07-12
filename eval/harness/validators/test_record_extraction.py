@@ -427,25 +427,84 @@ def test_sibling_stubs_created_in_tree(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: record_persona_id on record_search assertions --------
+# --- Sidecar-gated: record_persona_id on record_search assertions ----
+
+def _staged_sidecar_record_ids(state):
+    """Collect the record ids staged in the scenario's search sidecars
+    (results/<log_id>.json in the workspace `files` snapshot), normalized
+    to their `ark:/...` tail so any accepted record_id form matches.
+    Returns a set (empty when the scenario staged no sidecar)."""
+    import json
+
+    ids = set()
+    for rel_path, content in (state.get("files") or {}).items():
+        if not (rel_path.startswith("results/") and rel_path.endswith(".json")):
+            continue
+        try:
+            sidecar = json.loads(content)
+        except (ValueError, TypeError):
+            continue  # malformed sidecar fixtures have their own tests
+        payload = sidecar.get("payload") or {}
+        for result in payload.get("results") or []:
+            for key in ("recordId", "arkUrl"):
+                rid = result.get(key)
+                if rid:
+                    ids.add(_normalize_record_id(rid))
+    return ids
+
+
+def _normalize_record_id(rid):
+    """Reduce a record id to its `ark:/...` tail when present (full arkUrl,
+    bare ark, and entity-prefixed forms all compare equal); non-ark ids
+    compare verbatim."""
+    idx = rid.find("ark:/")
+    return rid[idx:] if idx != -1 else rid
+
 
 def test_record_persona_id_set(before_state, after_state, test):
-    """Tag-gated (record-persona-id): assertions extracted from a
-    record_search result must carry record_persona_id (the GedcomX person
-    id of the persona) and record_id in full arkUrl form — so person-evidence
-    can later resolve the record and call same_person."""
-    if "record-persona-id" not in test.get("tags", []):
-        pytest.skip("not a record-persona-id scenario")
+    """Sidecar-gated: when the scenario staged a search sidecar
+    (results/<log_id>.json), EVERY new assertion whose record_id matches a
+    record staged in that sidecar must carry a non-null record_persona_id
+    — per-assertion coverage, EXPLICITLY INCLUDING the focus persona (the
+    searched person, id = the result's primaryId). "The primary is
+    implied" is the known failure mode; "at least one assertion has it" is
+    not coverage. Those assertions must also carry record_id in full
+    arkUrl form — so person-evidence can later resolve the record and call
+    same_person. Sidecar-less scenarios (record_read / image / PDF
+    extractions) skip: supplying record_persona_id there is a hard error
+    by contract."""
+    sidecar_ids = _staged_sidecar_record_ids(before_state)
+    if not sidecar_ids:
+        pytest.skip("scenario staged no search sidecar")
+
     before = before_state.get("research_json") or {}
     after = after_state.get("research_json") or {}
     before_ids = {a.get("id") for a in before.get("assertions", [])}
     new = [a for a in after.get("assertions", []) if a.get("id") not in before_ids]
-    assert new, "expected new assertions extracted from the record"
+
+    matched = [
+        a for a in new
+        if _normalize_record_id(a.get("record_id") or "") in sidecar_ids
+    ]
+    if "record-persona-id" in test.get("tags", []):
+        assert new, "expected new assertions extracted from the record"
+        assert matched, (
+            "no new assertion's record_id matches the staged sidecar record "
+            "— either nothing was extracted from the staged record or every "
+            "record_id is malformed beyond recognition"
+        )
+    elif not matched:
+        pytest.skip("no new assertions from the staged sidecar record")
+
     errors = []
-    for a in new:
+    for a in matched:
         aid = a.get("id", "?")
         if not a.get("record_persona_id"):
-            errors.append(f"{aid}: missing record_persona_id")
+            errors.append(
+                f"{aid}: missing record_persona_id (per-assertion coverage "
+                f"— the focus persona is NOT implied; its id is the "
+                f"result's primaryId)"
+            )
         rid = a.get("record_id") or ""
         if not rid.startswith("http"):
             errors.append(f"{aid}: record_id {rid!r} is not a full arkUrl")

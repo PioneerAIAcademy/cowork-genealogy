@@ -197,12 +197,17 @@ in the project (that's person-evidence's job). Assertions attach to
 records, not persons.
 
 **`record_persona_id`** — the GedcomX person `id` of this persona in the
-search sidecar. `research_append` enforces it from the assertion's
-`log_entry_id`: sidecar present (`record_search`) → the tool verifies a
-supplied id and auto-fills the searched persona when you omit it; no
-sidecar (`record_read`, image, PDF, full-text) → leave it out — supplying
-one is a hard error. Set it yourself only for non-focus household
-members/witnesses: the matching `gedcomx.persons[]` id.
+search sidecar. When the record came from a staged search (the
+assertion's `log_entry_id` has a sidecar), it is **required on EVERY
+assertion** from that record — **explicitly including the focus
+persona**: the searched person's id is the result's `primaryId`. Do NOT
+treat the primary as implied and set it only on the others — that is the
+known failure mode. Non-focus household members/witnesses take the
+matching `gedcomx.persons[]` id. `research_append` verifies every
+supplied id (and auto-fills the searched persona as a safety net — do
+not rely on it; supply the id yourself). No sidecar (`record_read`,
+image, PDF, full-text) → leave it out on every assertion — supplying one
+is a hard error.
 
 **`value`** — human-readable, what the record says, not your
 interpretation: "age 5", not "born 1845". `[?]` for uncertain readings,
@@ -284,10 +289,13 @@ absence, whatever the record type; the table's
   duration of illness. Proximity `official_duty` — the medical
   certification is the physician's attestation.
 - **Personal informant** (named on the cert, often spouse or family):
-  informant for the decedent's name, birth date/place, parents' names,
-  occupation. Proximity `family_not_present` for events they did not
-  witness (decedent's birth abroad, parents' birthplaces); `witness` only
-  for facts they personally observed.
+  informant for the decedent's biographical facts — name, birth
+  date/place, parents' names, **occupation**, and **marital status** —
+  ALL at proximity `family_not_present`. These enumerated rows are
+  fixed: do not upgrade any of them to `witness` on a "they personally
+  observed it" argument — the certificate does not establish
+  observation, and occupation/marital status are reported biography,
+  not witnessed events.
 - **Funeral director:** informant for burial date/location, proximity
   `official_duty`.
 
@@ -368,7 +376,11 @@ resolve it in `informant_bias_notes`, and surface it in your return
 summary as an open conflict/hypothesis lead (naming the corroborating
 step: the original image, a second independent record) rather than
 asserting the identity confidently. A confident wrong father is worse
-than a flagged uncertain one.
+than a flagged uncertain one. When a required-identifier name carries
+`[?]`, the doubt must propagate to any tree stub built from it: carry
+the `[?]` in the stub's name, or defer the stub entirely — never write
+a clean, confident name into the tree from a doubted reading — and name
+original-image confirmation as the outstanding step in your summary.
 
 **`log_entry_id`** — the delegation's `logId`, on the source and every
 assertion. The log is append-only — never modify entries; you normally
@@ -506,7 +518,10 @@ When the delegation message says the user asked, after persisting call
 `record_person_matches({ id: "<persona ID>" })` (is the record already
 attached to a tree person? report accepted/pending) and/or
 `record_record_matches({ id: "<persona ID>" })` (collateral records
-matched to the same person; mention confidence ≥ 4). Match results are
+matched to the same person; mention confidence ≥ 4). Both tools take
+exactly `{ id: "<record persona id, e.g. MXHY-TP4>" }` — no other
+argument shapes (no `recordId`, no `personaId`, no ARK URL wrapper).
+Match results are
 **informational only** — never written to `research.json`, never logged;
 report them in your return summary.
 
