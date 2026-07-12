@@ -22,9 +22,11 @@ import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateParsed } from "../validation/validator.js";
 import { Mob } from "../utils/mob.js";
 import { calculateWarnings } from "./person-warnings.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   MergeInputError,
   readProjectJson,
+  sanitizeCandidate,
   validateCandidateGedcomx,
   formatIssues,
 } from "./merge-shared.js";
@@ -38,17 +40,20 @@ export async function mergeWarnings(
   try {
     // 1. Read the tree fresh (same as merge_record_into_tree, so the dry-run
     //    sees exactly the state a real merge would).
-    const tree = (await readProjectJson(
-      projectPath,
-      "tree.gedcomx.json",
-    )) as SimplifiedGedcomX;
+    const treeSanitized = sanitizeTree(
+      await readProjectJson(projectPath, "tree.gedcomx.json"),
+    );
+    const tree = treeSanitized.tree;
 
-    // 2. Validate the inline candidate before touching anything.
-    const candidateErrors = validateCandidateGedcomx(input.candidateGedcomx);
+    // 2. Sanitize + validate the inline candidate exactly as the write path
+    //    does — the dry-run must merge the same document the writer would.
+    const { candidate, warnings: candidateSanitizeWarnings } = sanitizeCandidate(
+      input.candidateGedcomx,
+    );
+    const candidateErrors = validateCandidateGedcomx(candidate);
     if (candidateErrors.length > 0) {
       return { ok: false, errors: candidateErrors };
     }
-    const candidate = input.candidateGedcomx;
 
     // 3. Merge in memory with the SAME core the write path uses. The core
     //    throws on empty/duplicate/unknown/chained merges and on a survivor id
@@ -105,7 +110,15 @@ export async function mergeWarnings(
       }
     }
 
-    return { ok: true, warningCount: warnings.length, warnings };
+    return {
+      ok: true,
+      warningCount: warnings.length,
+      warnings,
+      // What sanitation did (candidate strips, legacy-tree heals) — surfaced
+      // at the dry-run so the LLM learns about dropped data BEFORE deciding
+      // to write, not after.
+      sanitizeWarnings: [...treeSanitized.warnings, ...candidateSanitizeWarnings],
+    };
   } catch (e) {
     if (e instanceof MergeInputError) return { ok: false, errors: [e.message] };
     throw e;

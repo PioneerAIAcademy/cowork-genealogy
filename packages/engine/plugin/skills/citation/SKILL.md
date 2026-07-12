@@ -1,9 +1,8 @@
 ---
 name: citation
 model: claude-sonnet-4-6
-description: Refines source citations to Evidence Explained standards. Updates
-  the citation and citation_detail fields on existing source entries in
-  research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
+description: Refines source citations to Evidence Explained standards. Updates citation
+  and citation_detail on existing source entries in research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
   when the user says "cite this source", "fix citations", "format citation",
   "Evidence Explained", "improve citations", "who what when where", when
   source entries have rough working citations that need polishing, or to
@@ -13,7 +12,8 @@ description: Refines source citations to Evidence Explained standards. Updates
   to extract assertions from a record or add a newly found record as a
   source (use record-extraction — even if they also ask for the citation;
   the source entry must exist first), or asks whether information or an
-  informant is primary or secondary (use assertion-classification). Never
+  informant is primary or secondary (use record-extraction, which owns
+  evidence classification). Never
   creates source entries — only refines entries created by
   record-extraction.
 allowed-tools:
@@ -35,7 +35,7 @@ Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in 
 
 **Is the user asking to search for or find records?** → Say "That's a search task — please use search-records." Stop.
 
-**Is the user asking whether an informant or source is primary or secondary?** → Say "That's an evidence-quality question — please use assertion-classification." Stop.
+**Is the user asking whether an informant or source is primary or secondary?** → Say "That's an evidence-quality question — please use record-extraction, which owns evidence classification." Stop.
 
 **Otherwise** (user asks to refine/fix/format/improve a citation on an existing source, or to document a nil search result) → proceed.
 
@@ -211,6 +211,17 @@ beats a complete-looking citation with invented detail:
    when the research question is about a child in that household —
    swapping in the research subject creates a locator the index
    doesn't contain.
+8. **The informant never belongs in `who` or in the citation
+   string.** `who` is the record's creator; informant identity and
+   quality live in the source's `notes` (and evidence analysis is
+   record-extraction's job).
+9. **Repository/archive chains must come from the source's OWN entry
+   (or the record image).** Corroborating a repository from a
+   DIFFERENT source entry is an inference — rule 6's cross-referencing
+   covers record data (locators, family numbers, places), not custody
+   chains. Mention the inferred repository in `notes` or flag it
+   needs-verification; never write it into the citation as
+   established fact.
 
 ### Review path is read-only
 
@@ -509,7 +520,7 @@ rebuilt to follow the Evidence Explained census pattern.
 | citation_detail fields contradict the citation string | The `citation_detail` fields are the structured truth; regenerate the `citation` string from them |
 | Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
 | Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
-| User asks to classify or assess source quality | Redirect to assertion-classification. This skill formats citations, it does not evaluate evidence weight |
+| User asks to classify or assess source quality | Redirect to record-extraction (the classification owner). This skill formats citations, it does not evaluate evidence weight |
 | User calls a source "primary" or "secondary" | Apply the terminology guardrail below: correct gently, keep the citation and `source_classification` unchanged, and never write "primary source" into a citation string |
 
 ## Re-invocation behavior

@@ -7,6 +7,14 @@
 // the tool does id assignment, the primary/preferred swaps, standard_place
 // resolution, validate-before-persist, and the atomic write. Writes only
 // tree.gedcomx.json. Spec: docs/specs/tree-edit-tool-spec.md.
+//
+// The op set is split across two advertised tools sharing this core
+// (spec § "The tree_edit / tree_correct split"): `tree_edit` accepts only the
+// ADDITIVE ops (add_*), while `tree_correct` (src/tools/tree-correct.ts)
+// accepts only the CORRECTION/REMOVAL ops (update_*, remove). The split makes
+// write authority allowlist-enforceable: an extraction context granted only
+// tree_edit is structurally unable to rewrite identity (the ut_013 rename
+// incident), instead of merely prose-forbidden from it.
 
 import { join } from "path";
 import { readFile } from "fs/promises";
@@ -19,6 +27,7 @@ import type {
   SimplifiedSourceDescription,
 } from "../types/gedcomx.js";
 import { validateParsed } from "../validation/validator.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
@@ -36,6 +45,39 @@ export type TreeEditOperation =
   | "add_source"
   | "update_source"
   | "remove";
+
+/** The additive ops — the only operations `tree_edit` accepts. */
+export const ADD_OPERATIONS = [
+  "add_fact",
+  "add_name",
+  "add_person",
+  "add_relationship",
+  "add_source",
+] as const;
+
+/** The correction/removal ops — the only operations `tree_correct` accepts. */
+export const CORRECT_OPERATIONS = [
+  "update_fact",
+  "update_name",
+  "update_person",
+  "update_source",
+  "remove",
+] as const;
+
+const ALL_OPERATIONS: ReadonlySet<string> = new Set([...ADD_OPERATIONS, ...CORRECT_OPERATIONS]);
+
+/** Which ops the calling tool admits, and how to phrase a cross-tool redirect. */
+export interface OpGate {
+  allowed: ReadonlySet<string>;
+  rejection: (operation: string) => string;
+}
+
+const EDIT_GATE: OpGate = {
+  allowed: new Set<string>(ADD_OPERATIONS),
+  rejection: (operation) =>
+    `tree_edit only adds — '${operation}' is a correction/removal op; ` +
+    "corrections and removals live in tree_correct",
+};
 
 /** One edit. The body of a single call, or one element of a batch `ops`. */
 export interface TreeEditOp {
@@ -72,6 +114,7 @@ interface AssignedIds {
   relationship?: string;
   source?: string;
   names?: string[];
+  facts?: string[];
 }
 
 export type TreeEditResult =
@@ -91,6 +134,14 @@ export type TreeEditResult =
   | { ok: false; errors: string[] };
 
 class TreeEditError extends Error {}
+
+/** Reject an operation the calling tool does not admit (redirecting to the
+ *  sibling tool when the op exists there), before anything is applied. */
+function gateOperation(operation: string | undefined, gate: OpGate): void {
+  if (!operation || gate.allowed.has(operation)) return;
+  if (ALL_OPERATIONS.has(operation)) throw new TreeEditError(gate.rejection(operation));
+  throw new TreeEditError(`unknown operation '${operation}'`);
+}
 
 function formatIssues(issues: ValidationError[]): string[] {
   return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
@@ -117,17 +168,65 @@ function requirePerson(tree: SimplifiedGedcomX, personId: string | undefined): S
   return p;
 }
 
-/** Remove the `primary` flag from the person's other facts of the same type. */
-function clearPrimaryOfType(person: SimplifiedPerson, type: string | undefined, exceptId: string | undefined): void {
-  for (const f of person.facts ?? []) {
-    if (f.id !== exceptId && f.type === type && f.primary) delete f.primary;
+/** Anything that holds a `facts` array: a person or a Couple relationship. */
+type FactHolder = SimplifiedPerson | SimplifiedRelationship;
+
+/**
+ * Resolve the target of add_fact/update_fact: exactly one of `personId` or
+ * `relationshipId`. Facts on relationships are legal only on Couples
+ * (Marriage, Divorce, …) — the tree schema rejects `facts` on ParentChild.
+ */
+function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: string): FactHolder {
+  const targets = [input.personId, input.relationshipId].filter(Boolean);
+  if (targets.length !== 1) {
+    throw new TreeEditError(`${op} requires exactly one of \`personId\` or \`relationshipId\``);
+  }
+  if (input.personId) return requirePerson(tree, input.personId);
+  const rel = (tree.relationships ?? []).find((r) => r.id === input.relationshipId);
+  if (!rel) throw new TreeEditError(`relationship '${input.relationshipId}' not found in tree`);
+  if (rel.type !== "Couple") {
+    throw new TreeEditError(
+      `facts live only on Couple relationships — '${input.relationshipId}' is ` +
+        `${rel.type ?? "untyped"}; put person facts on the person instead`,
+    );
+  }
+  return rel;
+}
+
+/**
+ * Reject a fact payload whose scalar fields are not the flat strings the
+ * simplified-GedcomX format requires (simplified-gedcomx-spec.md §4.1, §4.5) — most
+ * commonly a raw-GedcomX nested `date: { original, formal }` object, which
+ * would otherwise surface as an opaque whole-project validation error (or,
+ * historically, crash downstream date parsing). Checked on every fact write
+ * path so the error names the op and the expected shape.
+ */
+const FACT_STRING_FIELDS = ["date", "standard_date", "place", "standard_place", "value"] as const;
+function requireFactShape(fact: SimplifiedFact, op: string): void {
+  for (const field of FACT_STRING_FIELDS) {
+    const v = (fact as Record<string, unknown>)[field];
+    if (v !== undefined && typeof v !== "string") {
+      const got = v === null ? "null" : Array.isArray(v) ? "an array" : `a ${typeof v}`;
+      throw new TreeEditError(
+        `${op}: fact \`${field}\` must be a plain string (e.g. date: "2 October 1876", ` +
+          `place: "Schuylkill County, Pennsylvania"), got ${got} — simplified-GedcomX facts ` +
+          `use flat string fields, not nested GedcomX objects like { original, formal }`,
+      );
+    }
+  }
+}
+
+/** Remove the `primary` flag from the holder's other facts of the same type. */
+function clearPrimaryOfType(holder: FactHolder, type: string | undefined, exceptId: string | undefined): void {
+  for (const f of holder.facts ?? []) {
+    if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
   }
 }
 
 /** Remove the `preferred` flag from the person's other names. */
 function clearPreferred(person: SimplifiedPerson, exceptId: string | undefined): void {
   for (const n of person.names ?? []) {
-    if (n.id !== exceptId && n.preferred) delete n.preferred;
+    if (n.id !== exceptId && "preferred" in n) delete n.preferred;
   }
 }
 
@@ -154,28 +253,35 @@ async function applyOperation(
 
   switch (input.operation) {
     case "add_fact": {
-      const person = requirePerson(tree, input.personId);
+      // Target is a person OR an existing Couple relationship (a Marriage
+      // fact lives on the Couple, not duplicated onto each spouse).
+      const holder = requireFactHolder(tree, input, "add_fact");
       if (!input.fact) throw new TreeEditError("add_fact requires a `fact`");
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
+      requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
       await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
-      if (fact.primary === true) clearPrimaryOfType(person, fact.type, fact.id);
-      person.facts = [...(person.facts ?? []), fact];
+      if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
+      holder.facts = [...(holder.facts ?? []), fact];
       assignedIds.fact = fact.id;
       break;
     }
     case "update_fact": {
-      const person = requirePerson(tree, input.personId);
+      const holder = requireFactHolder(tree, input, "update_fact");
       if (!input.factId) throw new TreeEditError("update_fact requires a `factId`");
       if (!input.fact) throw new TreeEditError("update_fact requires `fact` fields to set");
-      const existing = (person.facts ?? []).find((f) => f.id === input.factId);
-      if (!existing) throw new TreeEditError(`fact '${input.factId}' not found on person '${input.personId}'`);
+      requireFactShape(input.fact, "update_fact");
+      const existing = (holder.facts ?? []).find((f) => f.id === input.factId);
+      if (!existing) {
+        const where = input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`;
+        throw new TreeEditError(`fact '${input.factId}' not found on ${where}`);
+      }
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
         (existing as any)[k] = v;
       }
       if (input.fact.place !== undefined) await maybeResolvePlace(existing, input.fact.standard_place !== undefined);
-      if (existing.primary === true) clearPrimaryOfType(person, existing.type, existing.id);
+      if (existing.primary === true) clearPrimaryOfType(holder, existing.type, existing.id);
       break;
     }
     case "add_name": {
@@ -228,6 +334,20 @@ async function applyOperation(
       }
       const person: SimplifiedPerson = { ...input.person, id: personId, names };
       tree.persons = [...(tree.persons ?? []), person];
+      // Facts supplied inline on a new person get tool-allocated F ids and
+      // place resolution, exactly as add_fact does — a fact written without
+      // an id fails tree schema validation (fact.id is required).
+      if (person.facts && person.facts.length > 0) {
+        const factIds: string[] = [];
+        for (const f of person.facts) {
+          if (f.id) throw new TreeEditError("add_person facts must not carry ids — the tool assigns them");
+          requireFactShape(f, "add_person");
+          f.id = nextId(tree, "F");
+          await maybeResolvePlace(f, f.standard_place !== undefined);
+          factIds.push(f.id);
+        }
+        assignedIds.facts = factIds;
+      }
       assignedIds.person = personId;
       assignedIds.names = names.map((n) => n.id!).filter(Boolean);
       break;
@@ -237,6 +357,27 @@ async function applyOperation(
       if (input.relationship.id) throw new TreeEditError("add_relationship `relationship` must not carry an id");
       const rel: SimplifiedRelationship = { ...input.relationship, id: nextId(tree, "R") };
       tree.relationships = [...(tree.relationships ?? []), rel];
+      // Facts supplied on a new relationship (e.g. a Marriage on a Couple) are
+      // the relationship's own facts: assign each a tool-allocated F id and
+      // resolve its standard_place, exactly as add_fact does. Callers never
+      // supply fact ids — a fact written without an id fails tree schema
+      // validation (fact.id is required).
+      if (rel.facts && rel.facts.length > 0) {
+        if (rel.type !== "Couple") {
+          throw new TreeEditError(
+            "facts live only on Couple relationships — a ParentChild relationship cannot carry facts",
+          );
+        }
+        const factIds: string[] = [];
+        for (const f of rel.facts) {
+          if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
+          requireFactShape(f, "add_relationship");
+          f.id = nextId(tree, "F");
+          await maybeResolvePlace(f, f.standard_place !== undefined);
+          factIds.push(f.id);
+        }
+        assignedIds.facts = factIds;
+      }
       assignedIds.relationship = rel.id;
       break;
     }
@@ -301,6 +442,13 @@ async function applyOperation(
 }
 
 export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
+  return executeTreeOps(input, EDIT_GATE);
+}
+
+/** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
+ *  id-assignment, validate-on-write, and `.bak` semantics; only the admitted
+ *  op set (the gate) differs. */
+export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promise<TreeEditResult> {
   const { projectPath } = input;
 
   // Recover object/array args the model serialized as JSON strings (see
@@ -315,7 +463,14 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
   input.source = coerceJsonArg(input.source) as SimplifiedSourceDescription | undefined;
 
   try {
-    const tree = (await readJson(projectPath, "tree.gedcomx.json")) as SimplifiedGedcomX;
+    // Heal legacy shapes before anything touches the document: the closed
+    // shapes below would otherwise refuse every write on a pre-tightening
+    // tree, with no op able to express the repair. The healed document is
+    // what a successful edit persists — a one-shot migration.
+    const sanitized = sanitizeTree(
+      await readJson(projectPath, "tree.gedcomx.json"),
+    );
+    const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
 
     const treePath = join(projectPath, "tree.gedcomx.json");
@@ -330,6 +485,7 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
       for (let i = 0; i < input.ops.length; i++) {
         const op = input.ops[i];
         try {
+          gateOperation(op?.operation, gate);
           const { assignedIds, warnings } = await applyOperation(tree, { ...op, projectPath });
           opWarnings.push(...warnings);
           const r: { operation: TreeEditOperation; assignedIds?: AssignedIds } = { operation: op.operation };
@@ -354,7 +510,10 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
         ok: true,
         results,
         filesWritten: ["tree.gedcomx.json"],
-        validation: { valid: true, warnings: [...formatIssues(validation.warnings), ...opWarnings] },
+        validation: {
+          valid: true,
+          warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
+        },
       };
     }
 
@@ -362,6 +521,7 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
     if (!input.operation) {
       return { ok: false, errors: ["provide either `ops` (batch) or `operation` (single)"] };
     }
+    gateOperation(input.operation, gate);
     const { assignedIds, warnings } = await applyOperation(tree, input);
 
     const validation = await validateParsed(research, tree, { projectPath });
@@ -376,7 +536,10 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
       ok: true,
       operation: input.operation,
       filesWritten: ["tree.gedcomx.json"],
-      validation: { valid: true, warnings: [...formatIssues(validation.warnings), ...warnings] },
+      validation: {
+        valid: true,
+        warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...warnings],
+      },
     };
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
     return result;
@@ -391,11 +554,14 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
 export const treeEditSchema = {
   name: "tree_edit",
   description:
-    "Make a single ad-hoc edit to the project's tree.gedcomx.json — add or correct " +
-    "a fact or name, add a person or relationship, add or correct a source, or remove " +
-    "a fact/relationship on a tier downgrade. Use this for direct corrections; use " +
-    "merge_record_into_tree / merge_tree_persons to fold in a record or collapse " +
-    "duplicate persons (this tool never deletes a person).\n" +
+    "Add to the project's tree.gedcomx.json — add a fact or name, add a person or " +
+    "relationship, add a source. ADDITIVE ONLY: corrections and removals " +
+    "(update_fact/update_name/update_person/update_source/remove) live in the " +
+    "tree_correct tool. add_fact targets a person (personId) or an existing Couple " +
+    "relationship (relationshipId) — a Marriage/Divorce fact lives on the Couple, " +
+    "never duplicated onto each spouse. Use merge_record_into_tree / " +
+    "merge_tree_persons to fold in a record or collapse duplicate persons (this " +
+    "tool never deletes a person).\n" +
     "\n" +
     "Pick the `operation` and supply the content (snake_case simplified-GedcomX " +
     "fields) WITHOUT ids — the tool assigns the next F/N/I/R/S id, swaps the " +
@@ -422,37 +588,42 @@ export const treeEditSchema = {
         type: "string",
         enum: [
           "add_fact",
-          "update_fact",
           "add_name",
-          "update_name",
-          "update_person",
           "add_person",
           "add_relationship",
           "add_source",
-          "update_source",
-          "remove",
         ],
-        description: "The edit to perform.",
+        description: "The addition to perform. Corrections/removals: use tree_correct.",
       },
       personId: {
         type: "string",
-        description: "Target person id — for add_fact, add_name, update_fact, update_name, update_person.",
+        description:
+          "Target person id — for add_fact (person-held facts; exactly one of personId or " +
+          "relationshipId) and add_name.",
       },
-      factId: { type: "string", description: "Target fact id — for update_fact and remove." },
-      nameId: { type: "string", description: "Target name id — for update_name." },
-      relationshipId: { type: "string", description: "Target relationship id — for remove." },
-      sourceId: { type: "string", description: "Target source id — for update_source." },
+      relationshipId: {
+        type: "string",
+        description:
+          "Target relationship id — for add_fact on a Couple relationship's own facts " +
+          "(e.g. a Marriage lives on the Couple, not on each spouse; exactly one of personId or " +
+          "relationshipId).",
+      },
       fact: {
         type: "object",
-        description: "The fact to add (full, no id) or the fields to set (update_fact). Set `primary: true` to make it the primary of its type.",
+        description:
+          "The fact to add (full, no id). date/standard_date/place/" +
+          "standard_place/value are plain strings (date: \"2 October 1876\"), never nested objects. " +
+          "Set `primary: true` to make it the primary of its type.",
       },
       name: {
         type: "object",
-        description: "The name to add (full, no id) or fields to set (update_name). Set `preferred: true` to make it the preferred name.",
+        description: "The name to add (full, no id). Set `preferred: true` to make it the preferred name.",
       },
       person: {
         type: "object",
-        description: "The person to add (gender + at least one name; no ids — the tool assigns I and N ids). Omit `ark` for a synthesized stub.",
+        description:
+          "The person to add (gender + at least one name; no ids — the tool assigns I, N, and F ids, " +
+          "including for any inline `facts`). Omit `ark` for a synthesized stub.",
       },
       relationship: {
         type: "object",
@@ -460,10 +631,8 @@ export const treeEditSchema = {
       },
       source: {
         type: "object",
-        description: "The source description to add (full, no id — the tool assigns the next S id) or the fields to set (update_source). Fields: `title` (required on add), optional `author`, `url`, `citation` — a plain top-level entry, so no place resolution or primary/preferred handling applies. This is the lightweight tree sources[] entry, distinct from the rich research.json source.",
+        description: "The source description to add (full, no id — the tool assigns the next S id). Fields: `title` (required), optional `author`, `url`, `citation` — a plain top-level entry, so no place resolution or primary/preferred handling applies. This is the lightweight tree sources[] entry, distinct from the rich research.json source. To refine an existing S entry, use tree_correct's update_source.",
       },
-      gender: { type: "string", description: "update_person: new gender (Male/Female/Unknown)." },
-      ark: { type: "string", description: "update_person: the FamilySearch ARK to set." },
       resolveStandardPlace: {
         type: "boolean",
         description: "Default true: auto-resolve standard_place when a fact place is set. Pass false to skip the lookup.",
@@ -471,7 +640,7 @@ export const treeEditSchema = {
       ops: {
         type: "array",
         description:
-          "Batch form: apply many edits in one validate-once/write-once call " +
+          "Batch form: apply many additions in one validate-once/write-once call " +
           "(all-or-nothing). When present, the top-level operation/fields are ignored. " +
           "Each op is the same `{ operation, ...fields }` the single form takes.",
         items: {
@@ -481,30 +650,20 @@ export const treeEditSchema = {
               type: "string",
               enum: [
                 "add_fact",
-                "update_fact",
                 "add_name",
-                "update_name",
-                "update_person",
                 "add_person",
                 "add_relationship",
                 "add_source",
-                "update_source",
-                "remove",
               ],
-              description: "The edit to perform.",
+              description: "The addition to perform. Corrections/removals: use tree_correct.",
             },
             personId: { type: "string" },
-            factId: { type: "string" },
-            nameId: { type: "string" },
             relationshipId: { type: "string" },
-            sourceId: { type: "string" },
             fact: { type: "object" },
             name: { type: "object" },
             person: { type: "object" },
             relationship: { type: "object" },
             source: { type: "object" },
-            gender: { type: "string" },
-            ark: { type: "string" },
             resolveStandardPlace: { type: "boolean" },
           },
           required: ["operation"],

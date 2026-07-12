@@ -21,6 +21,13 @@ import path from 'node:path';
 // _MCP_SRC_PREFIX in eval/harness/harness/snapshot.py.
 const MCP_SRC_PREFIX = 'packages/engine/mcp-server/src/';
 
+// Plugin-agent delegation references in a SKILL.md body: `@plugin:<name>`.
+// Mirrors _AGENT_REF_RE / agent_refs_in_text in eval/harness/harness/snapshot.py
+// — build_snapshot embeds `packages/engine/plugin/agents/<name>.md` for each
+// match, so the two scanners must agree (shared test vectors in
+// tests/unit/snapshot.test.ts + tests/unit/test_snapshot.py).
+const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
+
 const COSMETIC_TEST_FIELDS = ['name', 'description', 'tags'] as const;
 const JSON_EXTS = new Set(['.json']);
 const TEXT_EXTS = new Set([
@@ -122,6 +129,20 @@ export function normalize(repoRelativePath: string, content: string | Buffer): s
   // Unknown extension: try UTF-8 decode.
   if (typeof content === 'string') return content;
   return content.toString('utf-8');
+}
+
+/**
+ * Sorted unique plugin-agent names referenced as `@plugin:<name>`.
+ * Shared contract with `agent_refs_in_text` in
+ * eval/harness/harness/snapshot.py — both sides must return the same
+ * names for the same input.
+ */
+export function agentRefsInText(text: string): string[] {
+  const names = new Set<string>();
+  for (const m of text.matchAll(AGENT_REF_RE)) {
+    names.add(m[1]);
+  }
+  return [...names].sort();
 }
 
 export function hashContent(text: string): string {

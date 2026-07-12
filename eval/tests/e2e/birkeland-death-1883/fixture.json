@@ -1,0 +1,18 @@
+{
+  "id": "birkeland-death-1883",
+  "name": "Kristian Fredrik Tollefsen Birkeland — death and burial (1883)",
+  "source_pid": "K87G-T89",
+  "captured": "2026-07-01",
+  "researcher_question": "When and where did Kristian Fredrik Tollefsen Birkeland (born 1817, Stavanger) die, and where was he buried?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1880s",
+    "geography": "NO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Death (23 Dec 1883) and burial (31 Dec 1883, Stavanger) stripped from the subject's facts, together with the two sources that attest them (Norway Church Books burial entry 31 Dec 1883; Norway Burials 1666-1927, 1883). Unlike kenneth-quass-death, all evidence is reachable via FamilySearch record/fulltext search — no external Ancestry/Find A Grave provided-documents are needed. The subject is well-anchored by parents (Tollef Aadneson Aasland, Inger Larsdatter Froyland), spouse (Serine Kristoffersdatter Aasland, m. 1840 Time), and six children, giving a strong search starting point. Note the wide name-spelling variation across the Norwegian indexes (Christian/Kristian, Tollefsen/Tellefsen, Birkeland/Birkland/Berkeland)."
+}

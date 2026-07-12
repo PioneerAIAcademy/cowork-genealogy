@@ -84,7 +84,7 @@ class TreePerson:
     person_id: str
     given_tokens: set[str]
     surname_tokens: set[str]
-    fact_types: set[str]  # lowercased fact `type` values on this person
+    fact_types: set[str]  # lowercased fact `type` values on this person or their relationships
 
     @property
     def name_tokens(self) -> set[str]:
@@ -92,7 +92,28 @@ class TreePerson:
 
 
 def index_tree(tree: dict[str, Any]) -> list[TreePerson]:
-    """Collect per-person name tokens (given vs surname) and fact types."""
+    """Collect per-person name tokens (given vs surname) and fact types.
+
+    Relationship-held facts are folded onto both endpoints: a Marriage
+    lives on the Couple relationship, never on either spouse, so without
+    the fold no marriage `fact` finding could ever match a person. (The
+    schema allows facts on Couple only, but the fold reads endpoints
+    generically so a schema change can't silently reopen the gap.)
+    """
+    rel_fact_types: dict[str, set[str]] = {}
+    for rel in tree.get("relationships") or []:
+        types = {
+            str(f.get("type", "")).lower()
+            for f in (rel.get("facts") or [])
+            if f.get("type")
+        }
+        if not types:
+            continue
+        keys = ("parent", "child") if rel.get("type") == "ParentChild" else ("person1", "person2")
+        for key in keys:
+            if rel.get(key) is not None:
+                rel_fact_types.setdefault(str(rel[key]), set()).update(types)
+
     people: list[TreePerson] = []
     for person in tree.get("persons") or []:
         given: set[str] = set()
@@ -104,7 +125,7 @@ def index_tree(tree: dict[str, Any]) -> list[TreePerson]:
             str(f.get("type", "")).lower()
             for f in (person.get("facts") or [])
             if f.get("type")
-        }
+        } | rel_fact_types.get(str(person.get("id", "?")), set())
         people.append(
             TreePerson(
                 person_id=str(person.get("id", "?")),
@@ -214,12 +235,13 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
       `living_gate` rules 1-2 in `e2e.author`; kept local to avoid an
       import cycle).
 
-    The runtime's two remaining name/fact checks are handled thus: `given`
-    is required by the JSON Schema itself (now aligned with the runtime, the
-    spec table, and the TS types — spell an unknown given name `""`, the
-    engine's own stub convention), and the runtime's PascalCase fact-type
-    check is mirrored below verbatim. If the runtime ever relaxes either,
-    delete the mirror in the same PR.
+    The runtime's two remaining name/fact checks live in the JSON Schema
+    itself, not here: `given` is required by the schema (spell an unknown
+    given name `""`, the engine's own stub convention), and the fact-type
+    enum carries an upper-initial `pattern` that catches the lowercase types
+    the runtime hard-fails on. Cross-gate agreement is pinned by the shared
+    vectors in docs/specs/schemas/tree-gate-vectors.json, consumed by both
+    this side's test_gate_vectors.py and the engine's gate-vectors.test.ts.
     """
     errors: list[str] = []
     persons = [p for p in tree.get("persons") or [] if isinstance(p, dict)]
@@ -271,7 +293,6 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
 
     for person in persons:
         pid = person.get("id", "?")
-        check_source_refs(person, f"person {pid}")
         for name in person.get("names") or []:
             if isinstance(name, dict):
                 check_source_refs(name, f"person {pid} name {name.get('id', '?')}")
@@ -284,22 +305,6 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
         for fact in rel.get("facts") or []:
             if isinstance(fact, dict):
                 check_source_refs(fact, f"relationship {rid} fact {fact.get('id', '?')}")
-
-    # Mirror of validator.ts's PascalCase check ("fact type 'x' should be
-    # PascalCase") — the schema's fact-type enum is deliberately open, so a
-    # lowercase type lints clean and then hard-fails tree_edit mid-run.
-    for holder in (*persons, *relationships):
-        hid = holder.get("id", "?")
-        for fact in holder.get("facts") or []:
-            if not isinstance(fact, dict):
-                continue
-            ftype = str(fact.get("type") or "")
-            if ftype and ftype[:1] != ftype[:1].upper():
-                errors.append(
-                    f"{filename}: fact {fact.get('id', '?')} on {hid} has type "
-                    f"{ftype!r} — tree_edit requires PascalCase (e.g. 'Birth', "
-                    f"not 'birth')"
-                )
 
     for person in persons:
         pid = person.get("id", "?")
@@ -324,6 +329,7 @@ class Suspect:
     person_id: str
     shared: set[str]
     reason: str
+    polarity: str = "recover"  # the finding's polarity (spec §3.4.1)
 
 
 def check_stripping(
@@ -337,6 +343,12 @@ def check_stripping(
     the stripped tree. For `fact`-type findings we additionally require
     the fact type to be present on that person, since a person
     legitimately remains when only one of their facts was stripped.
+
+    Polarity-agnostic on purpose: a `polarity: "avoid"` claim must be
+    just as absent from the starting tree as a `recover` answer (a
+    pre-asserted wrong claim breaks the fixture the other way), and the
+    avoid-guard reuses this matcher against the run's *final* tree. Only
+    the advice differs — see `format_suspect`.
     """
     people = index_tree(tree)
     suspects: list[Suspect] = []
@@ -344,6 +356,7 @@ def check_stripping(
     for finding in expected_findings.get("findings") or []:
         fid = str(finding.get("id", "?"))
         ftype = str(finding.get("type", "?"))
+        polarity = str(finding.get("polarity", "recover"))
         name_bag = finding_name_tokens(finding)
         if not name_bag:
             continue  # nothing nameable to match — can't judge presence
@@ -374,6 +387,7 @@ def check_stripping(
                     person_id=person.person_id,
                     shared=shared_given | shared_surname,
                     reason=reason,
+                    polarity=polarity,
                 )
             )
 
@@ -388,7 +402,14 @@ def format_suspect(fixture_name: str, s: Suspect) -> str:
     and still print the same advice as the standalone linter.
     """
     shared = ", ".join(sorted(s.shared))
-    if s.finding_type == "fact":
+    if s.polarity == "avoid":
+        fix = (
+            f"this is an `avoid` finding — the claim the agent must NOT "
+            f"assert appears to be pre-asserted by the starting tree. Remove "
+            f"it from starting-tree.gedcomx.json (and the identical snapshot "
+            f"on a record-hint fixture), or rewrite the finding."
+        )
+    elif s.finding_type == "fact":
         fix = (
             f"a `fact` finding leaves the person in place, so this is "
             f"only a problem if the stripped fact is still on "

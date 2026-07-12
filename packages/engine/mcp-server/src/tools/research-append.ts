@@ -6,16 +6,34 @@
 // enforces supersede-not-delete (no delete op), runs the section invariants as
 // preconditions, validates the whole project, and writes research.json atomically.
 //
-// Phased per docs/specs/research-append-tool-spec.md §7. This file implements
-// Phase 1 (sources, assertions, person_evidence) plus the framework; phases 2–3
-// extend SECTIONS.
+// Composite persist (D1, record-extraction consolidation): an optional top-level
+// `sourceDescription` lets one call persist a whole record — the tool creates the
+// tree.gedcomx.json `S` entry via the shared write layer, stamps the sources op's
+// `gedcomx_source_description_id`, auto-stamps assertion `source_id`s, enforces
+// the persona/record-id matrix against the log entry's sidecar (D2), resolves
+// `standard_place` (sidecar copy first), and commits BOTH documents together
+// (tree first, then research).
+//
+// Phased per docs/specs/research-append-tool-spec.md §7; SECTIONS now covers
+// all three phases (sources/assertions/person_evidence, the status-transition
+// sections, the phase-3 sections, and the `project` singleton).
 
 import { join } from "path";
 import { readFile } from "fs/promises";
 import { validateParsed } from "../validation/validator.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
-import { atomicWriteJson } from "../utils/project-io.js";
+import {
+  atomicWriteJson,
+  atomicWriteBoth,
+  backupIfExists,
+  isInsideProject,
+} from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { nextId } from "../utils/gedcomx-ids.js";
+import { arkToBareId } from "../utils/ark.js";
+import { resolveStandardPlace } from "../utils/place-resolver.js";
+import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -108,6 +126,14 @@ export interface ResearchAppendOp {
   planId?: string; // required for section = "plan_items"
 }
 
+/** The tree `S` entry payload for the composite persist. camelCase param at the
+ *  boundary; the payload keys are exactly the simplified-GedcomX source fields. */
+export interface SourceDescriptionInput {
+  title: string;
+  author?: string;
+  url?: string;
+}
+
 export interface ResearchAppendInput {
   projectPath: string;
   // Single-op form — supply section + op plus the relevant per-op fields:
@@ -122,6 +148,21 @@ export interface ResearchAppendInput {
   // writes once (all-or-nothing). Ids assigned earlier in the batch are visible
   // to later ops (the allocators scan the live document).
   ops?: ResearchAppendOp[];
+  // Composite persist: create the tree.gedcomx.json `S` entry for this call's
+  // single sources append op and stamp its `gedcomx_source_description_id`.
+  sourceDescription?: SourceDescriptionInput;
+  // Default true: auto-resolve standard_place for an assertion append that has a
+  // `place` but omits `standard_place` (sidecar copy first, then geocoding).
+  // Pass false to skip the geocoding network call (sidecar copy still applies).
+  resolveStandardPlace?: boolean;
+}
+
+/** A place the tool resolved (echoed so the caller can sanity-check geocoding
+ *  without re-reading files). `source` says where the value came from. */
+export interface ResolvedPlaceEcho {
+  place: string;
+  standardPlace: string;
+  source: "sidecar" | "geocoded";
 }
 
 interface SingleSuccess {
@@ -129,16 +170,23 @@ interface SingleSuccess {
   section: string;
   op: "append" | "update";
   entryId: string;
+  sourceDescriptionId?: string;
+  resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
 }
 interface BatchSuccess {
   ok: true;
   results: { section: string; op: "append" | "update"; entryId: string }[];
+  sourceDescriptionId?: string;
+  resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
 }
-export type ResearchAppendResult = SingleSuccess | BatchSuccess | { ok: false; errors: string[] };
+export type ResearchAppendResult =
+  | SingleSuccess
+  | BatchSuccess
+  | { ok: false; errors: string[]; opsReceived?: number };
 
 /** Carries one or more user-facing messages: the single form echoes them
  *  verbatim; the batch form prefixes each with `ops[i]:`. */
@@ -195,6 +243,10 @@ interface AppliedOp {
   section: string;
   op: "append" | "update";
   entryId: string;
+  /** Top-level array index of the touched entry (append or update) for
+   *  mapping whole-document validation errors back to the op that caused
+   *  them. Absent for nested (plan_items) and singleton sections. */
+  arrayIndex?: number;
   /** A settled no-op (e.g. re-declaring an already-exhaustive question): the
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
@@ -205,7 +257,25 @@ interface AppliedOp {
  *  place and returns a descriptor; throws ResearchAppendError on any precondition
  *  failure so a batch aborts before anything is written. Does NOT validate or
  *  persist — the caller validates the whole document once and writes once. */
-function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
+// The model routinely emits a GedcomX-style date object (`{original, formal}`)
+// for a simplified `date` / `standard_date`, which the schema requires to be a
+// plain string. The `original` (or `formal`) field IS that string, so normalize
+// it at the boundary — a lossless unwrap that keeps a well-formed extraction
+// from being rejected over a wrapper the model added. A string/null value, or
+// an object without a usable string, passes through untouched (the validator
+// then reports the real problem). Mutates `entry` in place.
+function normalizeDateFields(entry: Record<string, unknown>): void {
+  for (const key of ["date", "standard_date"] as const) {
+    const v = entry[key];
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      const o = v as Record<string, unknown>;
+      const s = typeof o.original === "string" ? o.original : typeof o.formal === "string" ? o.formal : undefined;
+      if (s !== undefined) entry[key] = s;
+    }
+  }
+}
+
+function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<string>): AppliedOp {
   const section = op.section;
   const config = SECTIONS[section];
   if (!config) {
@@ -273,6 +343,7 @@ function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
 
   let entryId: string;
   let resultEntry: any;
+  let arrayIndex: number | undefined;
 
   if (op.op === "append") {
     const entry = op.entry;
@@ -287,15 +358,27 @@ function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
     const rest: Record<string, unknown> = { ...entry };
     delete rest.id;
     const newEntry: Record<string, unknown> = { id: entryId, ...rest };
+    normalizeDateFields(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
     }
     array.push(newEntry);
+    if (!config.nested) arrayIndex = array.length - 1;
+    appendedThisBatch?.add(entryId);
     resultEntry = newEntry;
   } else if (op.op === "update") {
     if (!op.entryId) {
       throw new ResearchAppendError("update requires an `entryId`");
+    }
+    // §3.3: a later op may reference an id created earlier in the batch, but
+    // may NOT update it — `append` assigns the id internally, so naming it for
+    // an in-batch update means the caller predicted it. Do that update in a
+    // follow-up call.
+    if (appendedThisBatch?.has(op.entryId)) {
+      throw new ResearchAppendError(
+        `entryId '${op.entryId}' was appended earlier in this batch — updates to an id created in the same batch are not allowed; make the update in a follow-up call`,
+      );
     }
     if (!op.entryId.startsWith(config.prefix)) {
       throw new ResearchAppendError(
@@ -308,10 +391,12 @@ function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
     if ("id" in op.fields && op.fields.id !== op.entryId) {
       throw new ResearchAppendError("update `fields` must not change the entry id");
     }
-    const existing = array.find((e) => e && e.id === op.entryId);
-    if (!existing) {
+    const existingIndex = array.findIndex((e) => e && e.id === op.entryId);
+    if (existingIndex === -1) {
       throw new ResearchAppendError(`entryId '${op.entryId}' not found in '${section}'`);
     }
+    const existing = array[existingIndex];
+    if (!config.nested) arrayIndex = existingIndex;
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
     // a no-op — never overwrite a settled GPS Component-1 record. Only when the
@@ -334,6 +419,7 @@ function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
       if (k === "id") continue;
       existing[k] = v;
     }
+    normalizeDateFields(existing);
     entryId = op.entryId;
     resultEntry = existing;
   } else {
@@ -352,8 +438,422 @@ function applyOne(research: any, op: ResearchAppendOp): AppliedOp {
     throw new ResearchAppendError(invariantErrors);
   }
 
-  return { section, op: op.op, entryId };
+  return { section, op: op.op, entryId, arrayIndex };
 }
+
+// ─── Composite persist + enforcement pre-pass ───────────────────────────────
+
+/** Country-token guard for the wrong-geocode theme. Small, conservative alias
+ *  map: only when the assertion's own place TEXT ends in a recognized country
+ *  can a contradiction be declared. */
+const COUNTRY_ALIASES: Record<string, string> = {
+  "united states": "united states",
+  "united states of america": "united states",
+  usa: "united states",
+  us: "united states",
+  america: "united states",
+  "united kingdom": "united kingdom",
+  uk: "united kingdom",
+  "great britain": "united kingdom",
+  england: "england",
+  scotland: "scotland",
+  wales: "wales",
+  "northern ireland": "northern ireland",
+  ireland: "ireland",
+  canada: "canada",
+  australia: "australia",
+  "new zealand": "new zealand",
+  germany: "germany",
+  france: "france",
+  norway: "norway",
+  sweden: "sweden",
+  denmark: "denmark",
+  netherlands: "netherlands",
+  holland: "netherlands",
+  belgium: "belgium",
+  italy: "italy",
+  spain: "spain",
+  portugal: "portugal",
+  poland: "poland",
+  russia: "russia",
+  austria: "austria",
+  hungary: "hungary",
+  switzerland: "switzerland",
+  mexico: "mexico",
+};
+
+const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
+
+function canonicalCountry(segment: string): string | null {
+  const norm = segment.trim().toLowerCase().replace(/\./g, "");
+  return COUNTRY_ALIASES[norm] ?? null;
+}
+
+function placeSegments(place: string): string[] {
+  return place
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+/**
+ * Compare the country the place TEXT names (its trailing token, when that token
+ * is a recognized country) against the standard_place's segments.
+ * - "ok": the input names a country and the standard place is consistent.
+ * - "contradiction": the input names a country the standard place plainly lacks.
+ * - "unverifiable": the input text names no recognized country — cannot compare.
+ */
+export function countryConsistency(place: string, standardPlace: string): "ok" | "contradiction" | "unverifiable" {
+  const inputSegs = placeSegments(place);
+  if (inputSegs.length === 0) return "unverifiable";
+  const inputCountry = canonicalCountry(inputSegs[inputSegs.length - 1]);
+  if (!inputCountry) return "unverifiable";
+
+  const stdCountries = placeSegments(standardPlace)
+    .map(canonicalCountry)
+    .filter((c): c is string => c !== null);
+  if (stdCountries.includes(inputCountry)) return "ok";
+  // UK constituents: "England" is consistent with a standard place that ends in
+  // "United Kingdom" — unless a DIFFERENT constituent is present.
+  if (UK_CONSTITUENTS.has(inputCountry)) {
+    if (stdCountries.some((c) => UK_CONSTITUENTS.has(c) && c !== inputCountry)) return "contradiction";
+    if (stdCountries.includes("united kingdom")) return "ok";
+  }
+  // Historic Irish records: "Ireland" is consistent with "Northern Ireland".
+  if (inputCountry === "ireland" && stdCountries.includes("northern ireland")) return "ok";
+  return "contradiction";
+}
+
+/** Find a converter-resolved standard_place inside a sidecar record's
+ *  simplified gedcomx whose fact `place` matches `place` (trimmed,
+ *  case-insensitive). Never geocode what the source record already resolved. */
+function sidecarStandardPlace(gx: any, place: string): string | null {
+  if (!gx || typeof gx !== "object") return null;
+  const want = place.trim().toLowerCase();
+  const factLists: any[][] = [];
+  for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
+    if (p && Array.isArray(p.facts)) factLists.push(p.facts);
+  }
+  for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
+    if (r && Array.isArray(r.facts)) factLists.push(r.facts);
+  }
+  for (const facts of factLists) {
+    for (const f of facts) {
+      if (
+        f &&
+        typeof f.place === "string" &&
+        f.place.trim().toLowerCase() === want &&
+        typeof f.standard_place === "string" &&
+        f.standard_place.length > 0
+      ) {
+        return f.standard_place;
+      }
+    }
+  }
+  return null;
+}
+
+interface PreparedOps {
+  treeMutated: boolean;
+  sourceDescriptionId?: string;
+  resolvedPlaces: ResolvedPlaceEcho[];
+  warnings: string[];
+}
+
+/**
+ * The composite/enforcement pre-pass. Runs BEFORE the apply loop, mutating the
+ * in-memory `tree` (S entry) and the ops' entries (stamps, auto-fills,
+ * canonicalizations) in place. Collects every op-scoped error (all failing ops
+ * are named at once) and throws a single ResearchAppendError when any exist.
+ *
+ * 1. `sourceDescription` → create the tree `S` entry (shared id allocator) and
+ *    stamp the batch's single sources append op's `gedcomx_source_description_id`.
+ * 2. Every sources append op must reference an S entry that exists (created in
+ *    step 1 or pre-existing — the multi-repository reuse pattern). Op-level
+ *    precondition, NOT a document-validator rule.
+ * 3. Auto-stamp `source_id`: exactly one sources append op in the batch → every
+ *    assertions append op that omits `source_id` gets its (deterministic) id.
+ * 4. D2 persona/record-id matrix per assertions append op (see spec §3.5).
+ * 5. Place levers: sidecar-copy-first standard_place resolution + geocoding,
+ *    and the country-contradiction guard.
+ */
+async function prepareOps(
+  input: ResearchAppendInput,
+  ops: ResearchAppendOp[],
+  research: any,
+  tree: SimplifiedGedcomX,
+  projectPath: string,
+  fmt: (i: number, msg: string) => string,
+): Promise<PreparedOps> {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const resolvedPlaces: ResolvedPlaceEcho[] = [];
+  let treeMutated = false;
+  let sourceDescriptionId: string | undefined;
+
+  const sourcesAppendIdx = ops
+    .map((op, i) => ({ op, i }))
+    .filter(({ op }) => op.section === "sources" && op.op === "append")
+    .map(({ i }) => i);
+
+  // ── 1. sourceDescription → tree S entry ──
+  const sd = input.sourceDescription;
+  if (sd !== undefined) {
+    if (!sd || typeof sd !== "object" || Array.isArray(sd)) {
+      throw new ResearchAppendError("`sourceDescription` must be an object: { title, author?, url? }");
+    }
+    const extras = Object.keys(sd).filter((k) => !["title", "author", "url"].includes(k));
+    if (extras.length > 0) {
+      throw new ResearchAppendError(
+        `sourceDescription accepts only title, author, url (unexpected: ${extras.join(", ")})`,
+      );
+    }
+    if (typeof sd.title !== "string" || sd.title.trim() === "") {
+      throw new ResearchAppendError("sourceDescription.title is required (non-empty string)");
+    }
+    if (sourcesAppendIdx.length !== 1) {
+      throw new ResearchAppendError(
+        `sourceDescription requires exactly one sources append op in the call (found ${sourcesAppendIdx.length})`,
+      );
+    }
+    const srcOp = ops[sourcesAppendIdx[0]];
+    if (srcOp.entry && typeof srcOp.entry === "object") {
+      if ((srcOp.entry as any).gedcomx_source_description_id != null) {
+        throw new ResearchAppendError(
+          fmt(
+            sourcesAppendIdx[0],
+            "carries a gedcomx_source_description_id AND the call supplies sourceDescription — " +
+              "use one: reference the existing S id (drop sourceDescription), or let sourceDescription create it",
+          ),
+        );
+      }
+      const sId = nextId(tree, "S");
+      const sEntry: any = { id: sId, title: sd.title };
+      if (sd.author !== undefined && sd.author !== null) sEntry.author = sd.author;
+      if (sd.url !== undefined && sd.url !== null) sEntry.url = sd.url;
+      tree.sources = [...(tree.sources ?? []), sEntry];
+      (srcOp.entry as any).gedcomx_source_description_id = sId;
+      treeMutated = true;
+      sourceDescriptionId = sId;
+    }
+  }
+
+  // ── 2. Every sources append op must reference an existing S entry ──
+  const treeSourceIds = new Set((tree.sources ?? []).map((s: any) => s?.id).filter(Boolean));
+  for (const i of sourcesAppendIdx) {
+    const entry = ops[i].entry;
+    if (!entry || typeof entry !== "object") continue; // applyOne reports the missing entry
+    const ref = (entry as any).gedcomx_source_description_id;
+    if (ref == null) {
+      errors.push(
+        fmt(
+          i,
+          "a sources append requires either the top-level `sourceDescription` (the tool creates the " +
+            "tree S entry and stamps this field) or a `gedcomx_source_description_id` referencing an existing S entry",
+        ),
+      );
+    } else if (!treeSourceIds.has(ref)) {
+      const known = [...treeSourceIds].slice(0, 8).join(", ") || "none";
+      errors.push(
+        fmt(
+          i,
+          `gedcomx_source_description_id '${ref}' not found in tree.gedcomx.json — pass \`sourceDescription\` ` +
+            `to create the S entry, or reference an existing S id (existing: ${known})`,
+        ),
+      );
+    }
+  }
+
+  // ── 3. Auto-stamp source_id (single-sources-append batches only) ──
+  if (sourcesAppendIdx.length === 1) {
+    const pool = Array.isArray(research.sources) ? research.sources : [];
+    const autoSourceId = nextResearchId(pool, "src_");
+    for (const op of ops) {
+      if (op.section !== "assertions" || op.op !== "append") continue;
+      const entry = op.entry as any;
+      if (!entry || typeof entry !== "object") continue;
+      if (entry.source_id === undefined || entry.source_id === null) {
+        entry.source_id = autoSourceId; // explicit source_id always wins
+      }
+    }
+  }
+
+  // ── 4 + 5. D2 matrix + place levers, per assertions append op ──
+  const logById = new Map<string, any>();
+  for (const e of Array.isArray(research.log) ? research.log : []) {
+    if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
+  }
+  const sidecarCache = new Map<string, any[] | null>();
+  const readSidecarResults = async (ref: string): Promise<any[] | null> => {
+    if (sidecarCache.has(ref)) return sidecarCache.get(ref)!;
+    let results: any[] | null = null;
+    if (isInsideProject(projectPath, ref)) {
+      try {
+        const sc = JSON.parse(await readFile(join(projectPath, ref), "utf-8"));
+        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
+          results = sc.payload.results;
+        }
+      } catch {
+        // unreadable sidecar — the document validator reports it; skip enforcement
+      }
+    }
+    sidecarCache.set(ref, results);
+    return results;
+  };
+
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
+    if (op.section !== "assertions" || op.op !== "append") continue;
+    const entry = op.entry as any;
+    if (!entry || typeof entry !== "object") continue;
+
+    // ── D2: persona/record-id matrix against the log entry's sidecar ──
+    let matchedRecord: any = null;
+    const logId = entry.log_entry_id;
+    const logEntry = typeof logId === "string" ? logById.get(logId) : undefined;
+    if (logEntry) {
+      const ref = logEntry.results_ref;
+      if (!ref) {
+        // No sidecar (record_read, PDF, image, pasted records): the field must
+        // be absent or null — there is no persona document to point at.
+        if (entry.record_persona_id != null) {
+          errors.push(
+            fmt(
+              i,
+              `record_persona_id must be null — log entry '${logId}' has no results sidecar ` +
+                "(results_ref is null; record_read/PDF/image/pasted records carry no persona ids)",
+            ),
+          );
+          continue;
+        }
+      } else if (typeof ref === "string") {
+        const results = await readSidecarResults(ref);
+        if (results) {
+          const key = arkToBareId(String(entry.record_id ?? ""));
+          const matches = results.filter(
+            (r) => r && typeof r === "object" && typeof r.recordId === "string" && arkToBareId(r.recordId) === key,
+          );
+          if (matches.length === 0) {
+            // A record_id outside the sidecar is legal when no persona is
+            // claimed (e.g. a negative assertion naming the collection
+            // searched); with a persona it is a contradiction.
+            if (entry.record_persona_id != null) {
+              const known = results
+                .map((r) => (r && typeof r.recordId === "string" ? r.recordId : null))
+                .filter(Boolean)
+                .slice(0, 5)
+                .join(", ");
+              errors.push(
+                fmt(
+                  i,
+                  `record_id '${entry.record_id}' does not match any result in sidecar '${ref}' — ` +
+                    `expected one of: ${known}`,
+                ),
+              );
+              continue;
+            }
+          } else {
+            matchedRecord = matches[0];
+            // Canonicalize record_id to the sidecar's stored form.
+            if (entry.record_id !== matchedRecord.recordId) {
+              entry.record_id = matchedRecord.recordId;
+            }
+            const personaIds: string[] = (
+              Array.isArray(matchedRecord.gedcomx?.persons) ? matchedRecord.gedcomx.persons : []
+            )
+              .map((p: any) => (p && typeof p.id === "string" ? p.id : null))
+              .filter(Boolean);
+            if (entry.record_persona_id != null) {
+              if (!personaIds.includes(entry.record_persona_id)) {
+                const primary =
+                  typeof matchedRecord.primaryId === "string"
+                    ? ` (primary persona: ${matchedRecord.primaryId})`
+                    : "";
+                errors.push(
+                  fmt(
+                    i,
+                    `record_persona_id '${entry.record_persona_id}' does not resolve to a person in ` +
+                      `record '${matchedRecord.recordId}' — expected one of: ${personaIds.join(", ")}${primary}`,
+                  ),
+                );
+                continue;
+              }
+            } else if (
+              matches.length === 1 &&
+              typeof matchedRecord.primaryId === "string" &&
+              personaIds.includes(matchedRecord.primaryId)
+            ) {
+              // Auto-fill the unambiguous case — never silently null.
+              entry.record_persona_id = matchedRecord.primaryId;
+            }
+          }
+        }
+      }
+    }
+
+    // ── Place lever (b): never geocode what the source record already
+    // resolved — copy the sidecar's standard_place for the same place string.
+    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
+    // only a fully omitted field triggers resolution.
+    let geocoded = false;
+    if (typeof entry.place === "string" && entry.place.trim() !== "" && entry.standard_place === undefined) {
+      let sp: string | null = null;
+      let source: "sidecar" | "geocoded" | null = null;
+      if (matchedRecord) {
+        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
+        if (sp) source = "sidecar";
+      }
+      if (!sp && input.resolveStandardPlace !== false) {
+        // resolveStandardPlace swallows network failures and returns null, so
+        // a miss and a failure look the same here — both warrant the warning
+        // (a silently unresolved place is part of the wrong-geocode theme).
+        try {
+          sp = (await resolveStandardPlace(entry.place)) ?? null;
+        } catch {
+          sp = null;
+        }
+        if (sp) {
+          source = "geocoded";
+          geocoded = true;
+        } else {
+          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
+        }
+      }
+      if (sp && source) {
+        entry.standard_place = sp;
+        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
+      }
+    }
+
+    // ── Place lever (a): country-contradiction guard on the final pair
+    // (supplied or resolved). Skipped when standard_place is null/absent.
+    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
+      const verdict = countryConsistency(entry.place, entry.standard_place);
+      if (verdict === "contradiction") {
+        errors.push(
+          fmt(
+            i,
+            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
+              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
+              "correct standard_place, or set standard_place: null if no standard form exists.",
+          ),
+        );
+        continue;
+      }
+      if (verdict === "unverifiable" && geocoded) {
+        warnings.push(
+          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the place text ` +
+            "names no country, so the resolution could not be cross-checked; verify it is the right place",
+        );
+      }
+    }
+  }
+
+  if (errors.length > 0) throw new ResearchAppendError(errors);
+  return { treeMutated, sourceDescriptionId, resolvedPlaces, warnings };
+}
+
+// ─── Entry point ─────────────────────────────────────────────────────────────
 
 export async function researchAppend(
   input: ResearchAppendInput,
@@ -367,94 +867,138 @@ export async function researchAppend(
   input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
   input.entry = coerceJsonArg(input.entry) as Record<string, unknown> | undefined;
   input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
+  input.sourceDescription = coerceJsonArg(input.sourceDescription) as SourceDescriptionInput | undefined;
+
+  const isBatch = input.ops !== undefined;
+  const opsReceived = isBatch && Array.isArray(input.ops) ? input.ops.length : undefined;
+  const fail = (errors: string[]): ResearchAppendResult =>
+    opsReceived !== undefined ? { ok: false, errors, opsReceived } : { ok: false, errors };
 
   try {
     const research = await readJson(projectPath, "research.json");
-    const tree = await readJson(projectPath, "tree.gedcomx.json");
+    // Heal legacy tree shapes in memory; the healed document is what a
+    // composite write persists (same one-shot migration as tree_edit). A
+    // research-only call still never writes the tree.
+    const sanitized = sanitizeTree(await readJson(projectPath, "tree.gedcomx.json"));
+    const tree = sanitized.tree;
 
-    // ─── Batch form: apply every op in-memory, then validate + write once ─────
-    if (input.ops !== undefined) {
+    let ops: ResearchAppendOp[];
+    if (isBatch) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
-        return { ok: false, errors: ["`ops` must be a non-empty array"] };
+        return fail(["`ops` must be a non-empty array"]);
       }
-      const applied: AppliedOp[] = [];
-      for (let i = 0; i < input.ops.length; i++) {
-        try {
-          applied.push(applyOne(research, input.ops[i]));
-        } catch (e) {
-          if (e instanceof ResearchAppendError) {
-            // Identify the failing op; nothing has been written.
-            return { ok: false, errors: e.errors.map((m) => `ops[${i}]: ${m}`) };
-          }
-          throw e;
+      ops = input.ops;
+    } else {
+      if (!input.section || !input.op) {
+        return fail(["provide either `ops` (batch) or `section` + `op` (single)"]);
+      }
+      ops = [
+        {
+          section: input.section,
+          op: input.op,
+          entry: input.entry,
+          entryId: input.entryId,
+          fields: input.fields,
+          planId: input.planId,
+        },
+      ];
+    }
+
+    const fmt = (i: number, msg: string) => (isBatch ? `ops[${i}]: ${msg}` : msg);
+
+    // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
+    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
+
+    // ─── Apply every op in-memory ─────────────────────────────────────────────
+    const applied: AppliedOp[] = [];
+    const appendedThisBatch = new Set<string>();
+    for (let i = 0; i < ops.length; i++) {
+      try {
+        applied.push(applyOne(research, ops[i], appendedThisBatch));
+      } catch (e) {
+        if (e instanceof ResearchAppendError) {
+          // Identify the failing op; nothing has been written.
+          return fail(e.errors.map((m) => fmt(i, m)));
         }
+        throw e;
       }
-      const opWarnings = applied.flatMap((a) => a.warnings ?? []);
-      const anyMutation = applied.some((a) => !a.noop);
-      let validationWarnings: string[] = [];
-      if (anyMutation) {
-        const validation = await validateParsed(research, tree, { projectPath });
-        if (!validation.valid) {
-          return { ok: false, errors: formatIssues(validation.errors) };
-        }
-        validationWarnings = formatIssues(validation.warnings);
-        await atomicWriteJson(join(projectPath, "research.json"), research);
+    }
+
+    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
+    const anyMutation = applied.some((a) => !a.noop) || prep.treeMutated;
+
+    // ─── Validate once, write once (both files when the tree changed) ────────
+    let validationWarnings: string[] = [];
+    let filesWritten: string[] = [];
+    if (anyMutation) {
+      const validation = await validateParsed(research, tree, { projectPath });
+      if (!validation.valid) {
+        return fail(mapValidationErrors(formatIssues(validation.errors), applied, isBatch));
       }
+      validationWarnings = formatIssues(validation.warnings);
+      const researchPath = join(projectPath, "research.json");
+      if (prep.treeMutated) {
+        const treePath = join(projectPath, "tree.gedcomx.json");
+        await backupIfExists(treePath); // one-deep .bak, same semantics as every tree writer
+        await atomicWriteBoth([
+          { path: treePath, data: tree }, // tree first —
+          { path: researchPath, data: research }, // — then research (commit order)
+        ]);
+        filesWritten = ["tree.gedcomx.json", "research.json"];
+        validationWarnings = [...sanitized.warnings, ...validationWarnings];
+      } else {
+        await atomicWriteJson(researchPath, research);
+        filesWritten = ["research.json"];
+      }
+    }
+
+    const validationBlock = { valid: true as const, warnings: [...validationWarnings, ...opWarnings] };
+    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "resolvedPlaces"> = {};
+    if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
+    if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
+
+    if (isBatch) {
       return {
         ok: true,
         results: applied.map((a) => ({ section: a.section, op: a.op, entryId: a.entryId })),
-        filesWritten: anyMutation ? ["research.json"] : [],
-        validation: { valid: true, warnings: [...validationWarnings, ...opWarnings] },
+        ...extras,
+        filesWritten,
+        validation: validationBlock,
       };
     }
-
-    // ─── Single-op form (behavior unchanged) ─────────────────────────────────
-    if (!input.section || !input.op) {
-      return { ok: false, errors: ["provide either `ops` (batch) or `section` + `op` (single)"] };
-    }
-    let applied: AppliedOp;
-    try {
-      applied = applyOne(research, {
-        section: input.section,
-        op: input.op,
-        entry: input.entry,
-        entryId: input.entryId,
-        fields: input.fields,
-        planId: input.planId,
-      });
-    } catch (e) {
-      if (e instanceof ResearchAppendError) return { ok: false, errors: e.errors };
-      throw e;
-    }
-
-    if (applied.noop) {
-      return {
-        ok: true,
-        section: applied.section,
-        op: applied.op,
-        entryId: applied.entryId,
-        filesWritten: [],
-        validation: { valid: true, warnings: applied.warnings ?? [] },
-      };
-    }
-
-    const validation = await validateParsed(research, tree, { projectPath });
-    if (!validation.valid) {
-      return { ok: false, errors: formatIssues(validation.errors) };
-    }
-    await atomicWriteJson(join(projectPath, "research.json"), research);
     return {
       ok: true,
-      section: applied.section,
-      op: applied.op,
-      entryId: applied.entryId,
-      filesWritten: ["research.json"],
-      validation: { valid: true, warnings: [...formatIssues(validation.warnings), ...(applied.warnings ?? [])] },
+      section: applied[0].section,
+      op: applied[0].op,
+      entryId: applied[0].entryId,
+      ...extras,
+      filesWritten,
+      validation: validationBlock,
     };
   } catch (e) {
-    if (e instanceof ResearchAppendError) return { ok: false, errors: e.errors };
+    if (e instanceof ResearchAppendError) return fail(e.errors);
     throw e;
   }
+}
+
+/** Best-effort mapping of whole-document validation errors back to the batch op
+ *  that touched the offending entry, so failure responses name the failing ops.
+ *  Errors on entries no op touched keep their `research.json/…` path. */
+function mapValidationErrors(errors: string[], applied: AppliedOp[], isBatch: boolean): string[] {
+  if (!isBatch) return errors;
+  const byLocation = new Map<string, number>();
+  for (let k = 0; k < applied.length; k++) {
+    const a = applied[k];
+    if (a.arrayIndex !== undefined) byLocation.set(`${a.section}[${a.arrayIndex}]`, k);
+  }
+  return errors.map((msg) => {
+    const m = msg.match(/^research\.json\/([a-z_]+)\[(\d+)\]/);
+    if (m) {
+      const k = byLocation.get(`${m[1]}[${m[2]}]`);
+      if (k !== undefined) return `ops[${k}]: ${msg}`;
+    }
+    return msg;
+  });
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -462,30 +1006,32 @@ export async function researchAppend(
 export const researchAppendSchema = {
   name: "research_append",
   description:
-    "Write a structured entry to a mutable research.json section — append a new " +
+    "Write structured entries to the mutable research.json sections — append a new " +
     "entry (the tool assigns the id) or update an existing one in place (preserving " +
     "its id; there is no delete — supersede via a status/`superseded_by` field). Use " +
     "this for the analytical sections; use research_log_append for the research log, " +
-    "and the merge / tree_edit tools for tree.gedcomx.json.\n" +
+    "and the merge / tree_edit tools for other tree.gedcomx.json edits.\n" +
     "\n" +
-    "Supply the entry in its persisted snake_case shape WITHOUT an id; the tool " +
+    "Supply each entry in its persisted snake_case shape WITHOUT an id; the tool " +
     "assigns the next `<prefix>NNN`, stamps tool-owned timestamps, validates the " +
-    "whole project, and writes research.json atomically. To revise a person_evidence " +
-    "link, append the new entry then update the old one's `superseded_by`. Returns a " +
-    "compact summary; on a validation failure nothing is written.\n" +
+    "whole project, and writes atomically. Returns a compact summary; on any failure " +
+    "nothing is written.\n" +
     "\n" +
-    "To persist many entries at once (e.g. a record's source + every assertion in one " +
-    "step), pass an `ops` array instead of the top-level section/op: each op is " +
-    "`{ section, op, entry?/entryId?/fields?, planId? }`. The tool applies all ops to " +
-    "one in-memory document, validates ONCE, and writes ONCE — all-or-nothing (on any " +
-    "op's failure nothing is written and the error is `ops[i]: <msg>`). Ids assigned by " +
-    "an earlier op are visible to later ops, so an assertion may reference a source " +
-    "appended earlier in the same batch by its predictable id (e.g. `src_001`); you may " +
-    "NOT update an id created earlier in the same batch. Fields that reference " +
-    "tree.gedcomx.json ids (e.g. an assertion's `gedcomx_source_description_id`) validate " +
-    "against the tree as it exists ON DISK — create the tree source via tree_edit BEFORE " +
-    "the research_append call that references it, never in the other order. Returns " +
-    "`results: [{section, op, entryId}]`.",
+    "To persist a whole record in ONE call, pass an `ops` array (each op is " +
+    "`{ section, op, entry?/entryId?/fields?, planId? }`): one sources append plus one " +
+    "assertions append per fact, with the top-level `sourceDescription: { title, " +
+    "author?, url? }`. The tool then creates the tree.gedcomx.json source description " +
+    "(assigning the S id), stamps the source op's `gedcomx_source_description_id` and " +
+    "every assertion's `source_id`, auto-fills/verifies `record_persona_id` and " +
+    "canonicalizes `record_id` against the log entry's results sidecar, resolves " +
+    "`standard_place` for assertion places (copying the sidecar's resolution when " +
+    "present; resolved values are echoed in `resolvedPlaces`), validates ONCE, and " +
+    "writes tree.gedcomx.json + research.json together. To cite a record whose S entry " +
+    "already exists (e.g. the same record via another repository), omit " +
+    "`sourceDescription` and set the sources op's `gedcomx_source_description_id` to " +
+    "the existing S id — a sources append must have one or the other. Batches are " +
+    "all-or-nothing: on failure nothing is written and errors name the failing ops " +
+    "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -572,6 +1118,30 @@ export const researchAppendSchema = {
           },
           required: ["section", "op"],
         },
+      },
+      sourceDescription: {
+        type: "object",
+        description:
+          "Composite persist: the tree.gedcomx.json source description to create for " +
+          "this call's single sources append op. The tool assigns the S id, writes the " +
+          "S entry, and stamps the source op's gedcomx_source_description_id — never " +
+          "predict or pre-create the S yourself. Omit when the sources op references " +
+          "an S entry that already exists.",
+        properties: {
+          title: { type: "string", description: "Required. The source description title." },
+          author: { type: "string", description: "Optional author. Omit when not applicable (never null)." },
+          url: { type: "string", description: "Optional URL. Omit when not applicable (never null)." },
+        },
+        required: ["title"],
+      },
+      resolveStandardPlace: {
+        type: "boolean",
+        description:
+          "Default true: for an assertion append with a `place` but no `standard_place`, " +
+          "the tool copies the sidecar record's resolved standard_place when available, " +
+          "else geocodes the place text. Pass false to skip the geocoding lookup " +
+          "(sidecar copy still applies). Supply `standard_place: null` on an entry to " +
+          "opt a single assertion out entirely.",
       },
     },
     required: ["projectPath"],

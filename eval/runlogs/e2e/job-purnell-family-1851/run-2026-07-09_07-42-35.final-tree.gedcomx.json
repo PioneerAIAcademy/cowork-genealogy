@@ -1,0 +1,138 @@
+{
+  "persons": [
+    {
+      "id": "LHKV-VKD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Job",
+          "surname": "Purnell",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "from 1826 to 1827",
+          "standard_date": "Bet 1826 and 1827",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "F3",
+          "type": "Death",
+          "date": "1866",
+          "standard_date": "1866",
+          "place": "Melksham, Wiltshire, England",
+          "standard_place": "Melksham, Wiltshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Serinah",
+          "surname": "Purnell",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N2"
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1824",
+          "standard_date": "Abt 1824",
+          "place": "England",
+          "standard_place": "England, United Kingdom",
+          "primary": true,
+          "id": "F4"
+        },
+        {
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "primary": true,
+          "id": "F5"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Samuel",
+          "surname": "Purnell",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N3"
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1851",
+          "standard_date": "Abt 1851",
+          "place": "England",
+          "standard_place": "England, United Kingdom",
+          "primary": true,
+          "id": "F6"
+        },
+        {
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "primary": true,
+          "id": "F7"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "LHKV-VKD",
+      "person2": "I1",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LHKV-VKD",
+      "child": "I2",
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I2",
+      "id": "R3"
+    }
+  ],
+  "sources": [
+    {
+      "title": "England and Wales, Census, 1851",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9B1F-XZ3",
+      "id": "S1",
+      "citation": "\"England and Wales, Census, 1851,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9B1F-XZ3 : accessed 9 July 2026), entry for Job Purnell and Serinah Purnell, 1851, Trowbridge, Wiltshire, England; digital image of original household schedules, The National Archives, Kew."
+    }
+  ]
+}

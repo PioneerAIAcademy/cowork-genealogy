@@ -492,9 +492,11 @@ describe("gedcomx-convert — transformation rules", () => {
     expect(result.persons?.[0].sources?.[0].ref).toBe("S1");
   });
 
-  // Test 17 — Rule 10: fsmcp:quality is a string, passed through as-is
-  it("maps fsmcp:quality qualifier to quality as a string, passed through", () => {
-    const numericLike = toSimplified({
+  // Test 17 — Rule 10: fsmcp:quality parses to the integer the tree format
+  // requires; non-integer qualifier content is dropped like any other
+  // unrecognized qualifier.
+  it("maps fsmcp:quality qualifier to quality as an integer; drops non-integer values", () => {
+    const numeric = toSimplified({
       persons: [
         {
           id: "p1",
@@ -507,7 +509,7 @@ describe("gedcomx-convert — transformation rules", () => {
         },
       ],
     });
-    expect(numericLike.persons?.[0].sources?.[0].quality).toBe("3");
+    expect(numeric.persons?.[0].sources?.[0].quality).toBe(3);
 
     const freeText = toSimplified({
       persons: [
@@ -522,12 +524,27 @@ describe("gedcomx-convert — transformation rules", () => {
         },
       ],
     });
-    expect(freeText.persons?.[0].sources?.[0].quality).toBe("high");
+    expect("quality" in (freeText.persons?.[0].sources?.[0] ?? {})).toBe(false);
 
     const absent = toSimplified({
       persons: [{ id: "p1", sources: [{ description: "#S1" }] }],
     });
     expect("quality" in (absent.persons?.[0].sources?.[0] ?? {})).toBe(false);
+  });
+
+  // Rule 10 reverse: an integer quality (the only form the tree schema
+  // accepts) round-trips through the string-valued qualifier — previously it
+  // was silently dropped on toGedcomX, losing QUAY data on the upload path.
+  it("round-trips integer quality through the fsmcp:quality qualifier", () => {
+    const expanded = toGedcomX({
+      persons: [{ id: "p1", sources: [{ ref: "S1", quality: 2 }] }],
+    });
+    expect(expanded.persons?.[0].sources?.[0].qualifiers).toEqual([
+      { name: "fsmcp:quality", value: "2" },
+    ]);
+
+    const back = toSimplified(expanded);
+    expect(back.persons?.[0].sources?.[0].quality).toBe(2);
   });
 
   // Test 18 — Rule 11: source descriptions round-trip
@@ -1112,7 +1129,7 @@ describe("gedcomx-convert — identity round-trips", () => {
               standard_date: "1950",
               place: "Boston",
               sources: [
-                { ref: "S1", page: "p. 7", quality: "3" },
+                { ref: "S1", page: "p. 7", quality: 3 },
               ],
             },
             { id: "f2", type: "Death", date: "2020", standard_date: "2020" },
@@ -1340,5 +1357,64 @@ describe("gedcomx-convert — fact.value preservation", () => {
     });
     const fact = raw.persons?.[0].facts?.[0];
     expect(fact?.value).toBe("Newpaper Editor");
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// Rule 10 boundaries — QUAY survives the round trip at BOTH ends of the
+// range (0 is falsy: the value a truthiness regression silently drops),
+// and out-of-range values die at the boundary instead of producing a
+// document every validity gate rejects.
+// ────────────────────────────────────────────────────────────────────
+
+describe("fsmcp:quality boundaries", () => {
+  const refWithQualifier = (value: string) =>
+    toSimplified({
+      persons: [
+        { id: "p1", sources: [{ description: "#S1", qualifiers: [{ name: "fsmcp:quality", value }] }] },
+      ],
+    }).persons?.[0].sources?.[0];
+
+  it("parses both QUAY boundaries, including falsy 0", () => {
+    expect(refWithQualifier("0")?.quality).toBe(0);
+    expect(refWithQualifier("3")?.quality).toBe(3);
+  });
+
+  it("drops out-of-range and non-decimal qualifier values", () => {
+    expect(refWithQualifier("7")?.quality).toBeUndefined();
+    expect(refWithQualifier("-1")?.quality).toBeUndefined();
+    expect(refWithQualifier("0x1A")?.quality).toBeUndefined();
+  });
+
+  it("round-trips quality 0 and refuses to upload an out-of-range integer", () => {
+    const zero = toGedcomX({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "J", surname: "S" }],
+          facts: [{ id: "F1", type: "Birth", sources: [{ ref: "S1", quality: 0 }] }],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S1", title: "T" }],
+    } as any);
+    const zeroJson = JSON.stringify(zero);
+    expect(zeroJson).toContain('"fsmcp:quality"');
+    expect(zeroJson).toContain('"value":"0"');
+
+    const seven = toGedcomX({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "J", surname: "S" }],
+          facts: [{ id: "F1", type: "Birth", sources: [{ ref: "S1", quality: 7 }] }],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S1", title: "T" }],
+    } as any);
+    expect(JSON.stringify(seven)).not.toContain('"fsmcp:quality"');
   });
 });
