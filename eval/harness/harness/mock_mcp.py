@@ -31,20 +31,28 @@ Current live tools:
   names instead of the schema's snake_case field names.
 - research_append: calls the compiled TS tool to append/update an entry in a
   research.json section (the post-migration write path for skills like
-  assertion-classification, person-evidence, hypothesis-tracking). It
+  record-extraction, person-evidence, hypothesis-tracking). It
   validates-before-persist and enforces supersede-not-delete, so its result
   reflects the actual file the skill produced — a fixture cannot. Without it
   registered live, the migrated skills' write calls return `fixture_not_found`
   and the model silently fails to persist (it analyzes in text but never
   writes), which the validators and judge then grade as a write failure.
-- tree_edit: calls the compiled TS tool to add/correct facts, names, persons,
+- tree_edit: calls the compiled TS tool to ADD facts, names, persons,
   relationships, and sources on tree.gedcomx.json (single op or a batched
-  `ops` array). Like research_append it validates-before-persist against the
+  `ops` array; additive ops only — the correction/removal ops live in
+  tree_correct). Like research_append it validates-before-persist against the
   actual workspace files, so its result reflects what the skill wrote — a
   fixture cannot. Without it registered live, record-extraction (and any skill
   that writes tree stubs/sources) gets `fixture_not_found` on every tree_edit
   call and either fails to persist or thrashes retrying an unavailable tool
   until it hits the wall-clock cap.
+- tree_correct: the correction/removal half of the tree_edit split — calls the
+  compiled TS tool to update facts/names/persons/sources in place or remove a
+  fact/relationship (update_fact, update_name, update_person, update_source,
+  remove). Same batched-op / validate-before-persist semantics as tree_edit;
+  same live-registration rationale. Kept as a separate tool so a skill's
+  allowed-tools can grant additions without granting identity rewrites (the
+  record-extractor authority split).
 """
 
 from __future__ import annotations
@@ -67,6 +75,7 @@ LIVE_TOOLS: set[str] = {
     "research_log_append",
     "research_append",
     "tree_edit",
+    "tree_correct",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -364,46 +373,44 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
         # Mirror the production tool's input schema (tree-edit.ts). Advertising
         # the `operation` enum and the `ops` batch array (rather than a
         # permissive stub) keeps eval behaviour matching production — the model
-        # picks a valid operation and can batch on its first call.
+        # picks a valid operation and can batch on its first call. Additive ops
+        # only; the correction/removal ops are tree_correct's (the split).
         _op_enum = [
             "add_fact",
-            "update_fact",
             "add_name",
-            "update_name",
-            "update_person",
             "add_person",
             "add_relationship",
             "add_source",
-            "update_source",
-            "remove",
         ]
         _op_fields = {
-            "operation": {"type": "string", "enum": _op_enum},
+            "operation": {
+                "type": "string",
+                "enum": _op_enum,
+                "description": (
+                    "The addition to perform. Corrections/removals: use "
+                    "tree_correct."
+                ),
+            },
             "personId": {
                 "type": "string",
                 "description": (
-                    "Target person id — for add_fact/update_fact (person-held facts; "
-                    "exactly one of personId or relationshipId), add_name, "
-                    "update_name, update_person."
+                    "Target person id — for add_fact (person-held facts; "
+                    "exactly one of personId or relationshipId) and add_name."
                 ),
             },
-            "factId": {"type": "string"},
-            "nameId": {"type": "string"},
             "relationshipId": {
                 "type": "string",
                 "description": (
-                    "Target relationship id — for add_fact/update_fact on a Couple "
+                    "Target relationship id — for add_fact on a Couple "
                     "relationship's own facts (e.g. a Marriage lives on the Couple, "
-                    "not on each spouse; exactly one of personId or relationshipId), "
-                    "and for remove."
+                    "not on each spouse; exactly one of personId or relationshipId)."
                 ),
             },
-            "sourceId": {"type": "string"},
             "fact": {
                 "type": "object",
                 "description": (
-                    "The fact to add (full, no id) or the fields to set "
-                    "(update_fact). date/standard_date/place/standard_place/value "
+                    "The fact to add (full, no id). "
+                    "date/standard_date/place/standard_place/value "
                     'are plain strings (date: "2 October 1876"), never nested '
                     "objects."
                 ),
@@ -418,6 +425,72 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
                 ),
             },
             "relationship": {"type": "object"},
+            "source": {"type": "object"},
+            "resolveStandardPlace": {"type": "boolean"},
+        }
+        return {
+            "type": "object",
+            "properties": {
+                "projectPath": {"type": "string"},
+                **_op_fields,
+                "ops": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": _op_fields,
+                        "required": ["operation"],
+                    },
+                },
+            },
+            "required": ["projectPath"],
+        }
+    if tool_name == "tree_correct":
+        # Mirror the production tool's input schema (tree-correct.ts) — the
+        # correction/removal half of the tree_edit split.
+        _op_enum = [
+            "update_fact",
+            "update_name",
+            "update_person",
+            "update_source",
+            "remove",
+        ]
+        _op_fields = {
+            "operation": {
+                "type": "string",
+                "enum": _op_enum,
+                "description": (
+                    "The correction/removal to perform. Additions: use tree_edit."
+                ),
+            },
+            "personId": {
+                "type": "string",
+                "description": (
+                    "Target person id — for update_fact (person-held facts; "
+                    "exactly one of personId or relationshipId), update_name, "
+                    "update_person."
+                ),
+            },
+            "factId": {"type": "string"},
+            "nameId": {"type": "string"},
+            "relationshipId": {
+                "type": "string",
+                "description": (
+                    "Target relationship id — for update_fact on a Couple "
+                    "relationship's own facts (exactly one of personId or "
+                    "relationshipId), and for remove."
+                ),
+            },
+            "sourceId": {"type": "string"},
+            "fact": {
+                "type": "object",
+                "description": (
+                    "update_fact: the fields to set (id immutable). "
+                    "date/standard_date/place/standard_place/value "
+                    'are plain strings (date: "2 October 1876"), never nested '
+                    "objects."
+                ),
+            },
+            "name": {"type": "object"},
             "source": {"type": "object"},
             "gender": {"type": "string"},
             "ark": {"type": "string"},
@@ -455,7 +528,9 @@ def _make_live_handler(
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
     if tool_name == "tree_edit":
-        return _make_tree_edit_handler(workspace, call_log)
+        return _make_tree_write_handler("tree_edit", "tree-edit.js", "treeEdit", workspace, call_log)
+    if tool_name == "tree_correct":
+        return _make_tree_write_handler("tree_correct", "tree-correct.js", "treeCorrect", workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -665,8 +740,15 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
     return handler
 
 
-def _make_tree_edit_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
-    """Build the live handler for tree_edit.
+def _make_tree_write_handler(
+    tool_name: str,
+    js_filename: str,
+    export_symbol: str,
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+):
+    """Build the live handler for a tree-writing tool (tree_edit / tree_correct
+    — the two halves of the op split share this builder).
 
     Calls the compiled TS tool via `node --input-type=module` against the
     workspace path. The skill passes its own projectPath arg, but we always
@@ -675,18 +757,18 @@ def _make_tree_edit_handler(workspace: Path | None, call_log: list[dict[str, Any
     Input is piped via stdin (as JSON) to avoid shell/JS string escaping
     issues with values that may contain quotes, backslashes, or newlines.
     """
-    tree_edit_js = _MCP_BUILD / "tools" / "tree-edit.js"
+    tool_js = _MCP_BUILD / "tools" / js_filename
 
-    async def handler(args, _ws=workspace, _tjs=tree_edit_js):
+    async def handler(args, _ws=workspace, _tjs=tool_js):
         if _ws is None or not _tjs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
             response: dict[str, Any] = {
                 "ok": False,
-                "errors": [f"tree_edit: {reason}"],
+                "errors": [f"{tool_name}: {reason}"],
             }
         else:
             tjs_posix = str(_tjs).replace("\\", "/").replace("'", "\\'")
-            tree_edit_url = ("file:///" + tjs_posix) if sys.platform == "win32" else tjs_posix
+            tool_url = ("file:///" + tjs_posix) if sys.platform == "win32" else tjs_posix
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
@@ -694,10 +776,10 @@ def _make_tree_edit_handler(workspace: Path | None, call_log: list[dict[str, Any
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             script = (
-                f"import {{ treeEdit }} from '{tree_edit_url}';"
+                f"import {{ {export_symbol} }} from '{tool_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await treeEdit(input);"
+                f" const r = await {export_symbol}(input);"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -712,20 +794,20 @@ def _make_tree_edit_handler(workspace: Path | None, call_log: list[dict[str, Any
                     stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
                     response = {
                         "ok": False,
-                        "errors": [f"tree_edit: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                        "errors": [f"{tool_name}: node produced no output (exit {proc.returncode}): {stderr_msg}"],
                     }
             except Exception as e:
                 response = {
                     "ok": False,
-                    "errors": [f"tree_edit: {e}"],
+                    "errors": [f"{tool_name}: {e}"],
                 }
 
         entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__tree_edit",
+            "tool": f"mcp__genealogy__{tool_name}",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
-            "response_fixture": "live:tree_edit",
+            "response_fixture": f"live:{tool_name}",
             "response": response,
         }
         call_log.append(entry)

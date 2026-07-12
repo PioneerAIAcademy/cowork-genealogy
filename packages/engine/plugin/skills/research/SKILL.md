@@ -100,8 +100,7 @@ user as you encounter them.
    | A question with no plan | `research-plan` |
    | Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question | `search-records` (or `search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
-   | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` |
-   | Assertions needing GPS three-layer classification | `assertion-classification` |
+   | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
    | Assertions not yet linked to persons | `person-evidence` |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `hypothesis-tracking` |
@@ -116,6 +115,41 @@ user as you encounter them.
    | `proof-conclusion` wrote `<ps_id>` (and, at tier ≥ probable, its concluded relationship is now in `tree.gedcomx.json`) | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
    | All questions are `resolved`, **every tier-≥-probable conclusion is encoded in `tree.gedcomx.json`** (see **Tree-encoding gate**), and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
+
+   **Record-extraction contract — enforced, not advisory.** Inline
+   extraction is **forbidden**: you never write sources, assertions, or
+   classifications from this context, no matter how small the record or
+   how deep into the run you are. Every positive/partial log entry that
+   lacks a linked assertion routes through the `record-extraction`
+   skill — invoke it **once per batch of pending records** (it delegates
+   internally, one `record-extractor` agent per record). Classification
+   is **final at extraction**: there is no downstream classification
+   pass, so never re-derive or "refine" `evidence_type` /
+   `information_quality` yourself — conflict-resolution and
+   proof-conclusion trust what is recorded.
+
+   **Hard rules held in this context** (for any residual inline
+   judgment — reading state, weighing routes — never for writing):
+
+   - Closed enums, exactly these values, nothing else:
+     `evidence_type` ∈ `direct|indirect|negative` ·
+     `information_quality` ∈ `primary|secondary|indeterminate` ·
+     `informant_proximity` ∈ `self|witness|household_member|family_not_present|researcher|official_duty|unknown` ·
+     `date_certainty` ∈ `exact|approximate|estimated|calculated|before|after|between` ·
+     `source_classification` ∈ `original|derivative|authored`.
+     There is no `no_evidence`, `analyst`, or `inferred_from_structure` value.
+   - **Never write `research.json` or `tree.gedcomx.json` directly** —
+     all writes go through the writer tools (`research_append`,
+     `research_log_append`, `tree_edit`, `tree_correct`), which
+     validate-on-write.
+   - **One `research_append` call per record** (composite: source +
+     assertions together); never predict an id (`S`, `src_`, `a_`, `I`)
+     — the tools assign and return them.
+   - On `{ ok: false, errors, opsReceived }` nothing was written: fix
+     only the ops named in `errors` and check `opsReceived` equals the
+     op count sent (fewer = truncated batch — resend whole).
+   - `value` holds one fact, no reasoning prose; reasoning goes in
+     `informant_bias_notes`.
 
    A front-loaded plan is a **prioritized list, not a checklist to
    drain.** Consult `research-exhaustiveness` as soon as analyzed
@@ -158,7 +192,8 @@ user as you encounter them.
    loop, not the end.
 
 4. **Don't insert defensive validate passes.** Every writer tool
-   (`research_append`, `research_log_append`, `tree_edit`) validates the
+   (`research_append`, `research_log_append`, `tree_edit`,
+   `tree_correct`) validates the
    **whole** project before it persists and writes nothing on failure, so
    a separate periodic `validate_research_schema` pass between sub-skills
    is pure redundancy — skip it. Only run `validate_research_schema`
@@ -308,10 +343,10 @@ of "What to do" and invoke the next sub-skill. (See "Autonomous mode".)
 - It does not introduce new GPS logic. Every sub-skill encodes its
   own portion of the GPS standard; this skill only routes between
   them.
-- It does not skip steps. GPS depends on the full chain —
-  classification precedes person-linking, person-linking precedes
-  conflict detection, conflict resolution precedes proof. Shortcuts
-  break the audit trail.
+- It does not skip steps. GPS depends on the full chain — extraction
+  (which writes final evidence classifications) precedes
+  person-linking, person-linking precedes conflict detection, conflict
+  resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
   `research.json` does not exist, route to `init-project` first.
 

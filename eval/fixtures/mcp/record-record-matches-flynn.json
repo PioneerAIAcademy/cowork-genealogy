@@ -1,6 +1,37 @@
 {
   "tool": "record_record_matches",
   "description": "Collateral record matches for 1850 census Patrick Flynn persona (MXHY-TP4): 2 pending matches",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Bare personId (e.g. \"KNDX-MKG\") or full FamilySearch ARK. The tool wraps a bare id with the correct ARK prefix automatically."
+      },
+      "minConfidence": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "Lowest match confidence to return (1..5). Default 2."
+      },
+      "status": {
+        "type": "array",
+        "items": { "type": "string", "enum": ["accepted", "pending", "rejected"] },
+        "description": "Which resolution statuses to return. Default is all three. The upstream API silently defaults to \"pending\" only when omitted — this tool overrides that to \"all\" for a more useful default."
+      },
+      "includeSummary": {
+        "type": "boolean",
+        "description": "Attach the matched entity's GEDCOMX summary. Default false."
+      },
+      "count": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 50,
+        "description": "Max number of matches to return (1..50). Default 20."
+      }
+    },
+    "required": ["id"]
+  },
   "args": { "id": "MXHY-TP4" },
   "response": {
     "queryArk": "ark:/61903/1:1:MXHY-TP4",

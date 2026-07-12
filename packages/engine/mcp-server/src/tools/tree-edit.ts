@@ -7,6 +7,14 @@
 // the tool does id assignment, the primary/preferred swaps, standard_place
 // resolution, validate-before-persist, and the atomic write. Writes only
 // tree.gedcomx.json. Spec: docs/specs/tree-edit-tool-spec.md.
+//
+// The op set is split across two advertised tools sharing this core
+// (spec § "The tree_edit / tree_correct split"): `tree_edit` accepts only the
+// ADDITIVE ops (add_*), while `tree_correct` (src/tools/tree-correct.ts)
+// accepts only the CORRECTION/REMOVAL ops (update_*, remove). The split makes
+// write authority allowlist-enforceable: an extraction context granted only
+// tree_edit is structurally unable to rewrite identity (the ut_013 rename
+// incident), instead of merely prose-forbidden from it.
 
 import { join } from "path";
 import { readFile } from "fs/promises";
@@ -37,6 +45,39 @@ export type TreeEditOperation =
   | "add_source"
   | "update_source"
   | "remove";
+
+/** The additive ops — the only operations `tree_edit` accepts. */
+export const ADD_OPERATIONS = [
+  "add_fact",
+  "add_name",
+  "add_person",
+  "add_relationship",
+  "add_source",
+] as const;
+
+/** The correction/removal ops — the only operations `tree_correct` accepts. */
+export const CORRECT_OPERATIONS = [
+  "update_fact",
+  "update_name",
+  "update_person",
+  "update_source",
+  "remove",
+] as const;
+
+const ALL_OPERATIONS: ReadonlySet<string> = new Set([...ADD_OPERATIONS, ...CORRECT_OPERATIONS]);
+
+/** Which ops the calling tool admits, and how to phrase a cross-tool redirect. */
+export interface OpGate {
+  allowed: ReadonlySet<string>;
+  rejection: (operation: string) => string;
+}
+
+const EDIT_GATE: OpGate = {
+  allowed: new Set<string>(ADD_OPERATIONS),
+  rejection: (operation) =>
+    `tree_edit only adds — '${operation}' is a correction/removal op; ` +
+    "corrections and removals live in tree_correct",
+};
 
 /** One edit. The body of a single call, or one element of a batch `ops`. */
 export interface TreeEditOp {
@@ -93,6 +134,14 @@ export type TreeEditResult =
   | { ok: false; errors: string[] };
 
 class TreeEditError extends Error {}
+
+/** Reject an operation the calling tool does not admit (redirecting to the
+ *  sibling tool when the op exists there), before anything is applied. */
+function gateOperation(operation: string | undefined, gate: OpGate): void {
+  if (!operation || gate.allowed.has(operation)) return;
+  if (ALL_OPERATIONS.has(operation)) throw new TreeEditError(gate.rejection(operation));
+  throw new TreeEditError(`unknown operation '${operation}'`);
+}
 
 function formatIssues(issues: ValidationError[]): string[] {
   return issues.map((e) => (e.path ? `${e.path}: ${e.message}` : e.message));
@@ -393,6 +442,13 @@ async function applyOperation(
 }
 
 export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
+  return executeTreeOps(input, EDIT_GATE);
+}
+
+/** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
+ *  id-assignment, validate-on-write, and `.bak` semantics; only the admitted
+ *  op set (the gate) differs. */
+export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promise<TreeEditResult> {
   const { projectPath } = input;
 
   // Recover object/array args the model serialized as JSON strings (see
@@ -429,6 +485,7 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
       for (let i = 0; i < input.ops.length; i++) {
         const op = input.ops[i];
         try {
+          gateOperation(op?.operation, gate);
           const { assignedIds, warnings } = await applyOperation(tree, { ...op, projectPath });
           opWarnings.push(...warnings);
           const r: { operation: TreeEditOperation; assignedIds?: AssignedIds } = { operation: op.operation };
@@ -464,6 +521,7 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
     if (!input.operation) {
       return { ok: false, errors: ["provide either `ops` (batch) or `operation` (single)"] };
     }
+    gateOperation(input.operation, gate);
     const { assignedIds, warnings } = await applyOperation(tree, input);
 
     const validation = await validateParsed(research, tree, { projectPath });
@@ -496,13 +554,14 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
 export const treeEditSchema = {
   name: "tree_edit",
   description:
-    "Make a single ad-hoc edit to the project's tree.gedcomx.json — add or correct " +
-    "a fact or name, add a person or relationship, add or correct a source, or remove " +
-    "a fact/relationship on a tier downgrade. add_fact/update_fact target a person " +
-    "(personId) or an existing Couple relationship (relationshipId) — a Marriage/Divorce " +
-    "fact lives on the Couple, never duplicated onto each spouse. Use this for direct " +
-    "corrections; use merge_record_into_tree / merge_tree_persons to fold in a record or " +
-    "collapse duplicate persons (this tool never deletes a person).\n" +
+    "Add to the project's tree.gedcomx.json — add a fact or name, add a person or " +
+    "relationship, add a source. ADDITIVE ONLY: corrections and removals " +
+    "(update_fact/update_name/update_person/update_source/remove) live in the " +
+    "tree_correct tool. add_fact targets a person (personId) or an existing Couple " +
+    "relationship (relationshipId) — a Marriage/Divorce fact lives on the Couple, " +
+    "never duplicated onto each spouse. Use merge_record_into_tree / " +
+    "merge_tree_persons to fold in a record or collapse duplicate persons (this " +
+    "tool never deletes a person).\n" +
     "\n" +
     "Pick the `operation` and supply the content (snake_case simplified-GedcomX " +
     "fields) WITHOUT ids — the tool assigns the next F/N/I/R/S id, swaps the " +
@@ -529,44 +588,36 @@ export const treeEditSchema = {
         type: "string",
         enum: [
           "add_fact",
-          "update_fact",
           "add_name",
-          "update_name",
-          "update_person",
           "add_person",
           "add_relationship",
           "add_source",
-          "update_source",
-          "remove",
         ],
-        description: "The edit to perform.",
+        description: "The addition to perform. Corrections/removals: use tree_correct.",
       },
       personId: {
         type: "string",
         description:
-          "Target person id — for add_fact/update_fact (person-held facts; exactly one of personId or " +
-          "relationshipId), add_name, update_name, update_person.",
+          "Target person id — for add_fact (person-held facts; exactly one of personId or " +
+          "relationshipId) and add_name.",
       },
-      factId: { type: "string", description: "Target fact id — for update_fact and remove." },
-      nameId: { type: "string", description: "Target name id — for update_name." },
       relationshipId: {
         type: "string",
         description:
-          "Target relationship id — for add_fact/update_fact on a Couple relationship's own facts " +
+          "Target relationship id — for add_fact on a Couple relationship's own facts " +
           "(e.g. a Marriage lives on the Couple, not on each spouse; exactly one of personId or " +
-          "relationshipId), and for remove.",
+          "relationshipId).",
       },
-      sourceId: { type: "string", description: "Target source id — for update_source." },
       fact: {
         type: "object",
         description:
-          "The fact to add (full, no id) or the fields to set (update_fact). date/standard_date/place/" +
+          "The fact to add (full, no id). date/standard_date/place/" +
           "standard_place/value are plain strings (date: \"2 October 1876\"), never nested objects. " +
           "Set `primary: true` to make it the primary of its type.",
       },
       name: {
         type: "object",
-        description: "The name to add (full, no id) or fields to set (update_name). Set `preferred: true` to make it the preferred name.",
+        description: "The name to add (full, no id). Set `preferred: true` to make it the preferred name.",
       },
       person: {
         type: "object",
@@ -580,10 +631,8 @@ export const treeEditSchema = {
       },
       source: {
         type: "object",
-        description: "The source description to add (full, no id — the tool assigns the next S id) or the fields to set (update_source). Fields: `title` (required on add), optional `author`, `url`, `citation` — a plain top-level entry, so no place resolution or primary/preferred handling applies. This is the lightweight tree sources[] entry, distinct from the rich research.json source.",
+        description: "The source description to add (full, no id — the tool assigns the next S id). Fields: `title` (required), optional `author`, `url`, `citation` — a plain top-level entry, so no place resolution or primary/preferred handling applies. This is the lightweight tree sources[] entry, distinct from the rich research.json source. To refine an existing S entry, use tree_correct's update_source.",
       },
-      gender: { type: "string", description: "update_person: new gender (Male/Female/Unknown)." },
-      ark: { type: "string", description: "update_person: the FamilySearch ARK to set." },
       resolveStandardPlace: {
         type: "boolean",
         description: "Default true: auto-resolve standard_place when a fact place is set. Pass false to skip the lookup.",
@@ -591,7 +640,7 @@ export const treeEditSchema = {
       ops: {
         type: "array",
         description:
-          "Batch form: apply many edits in one validate-once/write-once call " +
+          "Batch form: apply many additions in one validate-once/write-once call " +
           "(all-or-nothing). When present, the top-level operation/fields are ignored. " +
           "Each op is the same `{ operation, ...fields }` the single form takes.",
         items: {
@@ -601,30 +650,20 @@ export const treeEditSchema = {
               type: "string",
               enum: [
                 "add_fact",
-                "update_fact",
                 "add_name",
-                "update_name",
-                "update_person",
                 "add_person",
                 "add_relationship",
                 "add_source",
-                "update_source",
-                "remove",
               ],
-              description: "The edit to perform.",
+              description: "The addition to perform. Corrections/removals: use tree_correct.",
             },
             personId: { type: "string" },
-            factId: { type: "string" },
-            nameId: { type: "string" },
             relationshipId: { type: "string" },
-            sourceId: { type: "string" },
             fact: { type: "object" },
             name: { type: "object" },
             person: { type: "object" },
             relationship: { type: "object" },
             source: { type: "object" },
-            gender: { type: "string" },
-            ark: { type: "string" },
             resolveStandardPlace: { type: "boolean" },
           },
           required: ["operation"],

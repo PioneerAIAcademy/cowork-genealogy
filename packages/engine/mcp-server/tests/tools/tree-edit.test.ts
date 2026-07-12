@@ -12,6 +12,7 @@ vi.mock("../../src/utils/place-resolver.js", () => ({
 }));
 
 import { treeEdit } from "../../src/tools/tree-edit.js";
+import { treeCorrect } from "../../src/tools/tree-correct.js";
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -86,9 +87,9 @@ describe("tree_edit", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
   });
 
-  it("update_fact: merges fields by id and re-resolves standard_place on a place change", async () => {
+  it("update_fact (tree_correct): merges fields by id and re-resolves standard_place on a place change", async () => {
     await writeProject(onePerson());
-    const r = await treeEdit({
+    const r = await treeCorrect({
       projectPath: dir,
       operation: "update_fact",
       personId: "I1",
@@ -216,14 +217,14 @@ describe("tree_edit", () => {
     expect(bad.errors.join(" ")).toMatch(/must not carry ids/);
   });
 
-  it("remove: deletes a fact by id; refuses to remove a person", async () => {
+  it("remove (tree_correct): deletes a fact by id; refuses to remove a person", async () => {
     await writeProject(onePerson());
-    const ok = await treeEdit({ projectPath: dir, operation: "remove", factId: "F1" });
+    const ok = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" });
     // removing the only Birth is structurally fine (person still has a name); validates.
     expect(ok.ok).toBe(true);
     expect((await readTree()).persons[0].facts).toHaveLength(0);
 
-    const bad = await treeEdit({ projectPath: dir, operation: "remove", personId: "I1" });
+    const bad = await treeCorrect({ projectPath: dir, operation: "remove", personId: "I1" });
     expect(bad.ok).toBe(false);
     if (bad.ok) return;
     expect(bad.errors.join(" ")).toMatch(/merge_tree_persons/);
@@ -232,10 +233,82 @@ describe("tree_edit", () => {
   it("rejects a stale target id and writes nothing", async () => {
     await writeProject(onePerson());
     const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
-    const r = await treeEdit({ projectPath: dir, operation: "update_fact", personId: "I1", factId: "F999", fact: { date: "1800" } });
+    const r = await treeCorrect({ projectPath: dir, operation: "update_fact", personId: "I1", factId: "F999", fact: { date: "1800" } });
     expect(r.ok).toBe(false);
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  // ── Op gating: the tree_edit / tree_correct split ───────────────────────────
+  it("tree_edit rejects a correction/removal op with a redirect to tree_correct, writing nothing", async () => {
+    await writeProject(onePerson());
+    const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+
+    const single = await treeEdit({
+      projectPath: dir,
+      operation: "update_name",
+      personId: "I1",
+      nameId: "N1",
+      name: { given: "Renamed" },
+    });
+    expect(single.ok).toBe(false);
+    if (single.ok) return;
+    expect(single.errors.join(" ")).toMatch(/corrections and removals live in tree_correct/);
+    expect(single.errors.join(" ")).toMatch(/'update_name'/);
+
+    // batch form: the rejection is indexed ops[i] and nothing is written
+    const batch = await treeEdit({
+      projectPath: dir,
+      ops: [
+        { operation: "add_source", source: { title: "ok" } },
+        { operation: "remove", factId: "F1" },
+      ],
+    });
+    expect(batch.ok).toBe(false);
+    if (batch.ok) return;
+    expect(batch.errors[0]).toMatch(/^ops\[1\]:.*tree_correct/);
+
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("tree_correct rejects an additive op with a redirect to tree_edit, writing nothing", async () => {
+    await writeProject(onePerson());
+    const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+
+    const single = await treeCorrect({
+      projectPath: dir,
+      operation: "add_person",
+      person: { gender: "Female", names: [{ given: "Margaret", surname: "Smith" }] },
+    });
+    expect(single.ok).toBe(false);
+    if (single.ok) return;
+    expect(single.errors.join(" ")).toMatch(/additions live in tree_edit/);
+    expect(single.errors.join(" ")).toMatch(/'add_person'/);
+
+    const batch = await treeCorrect({
+      projectPath: dir,
+      ops: [{ operation: "add_fact", personId: "I1", fact: { type: "Death", date: "1899" } }],
+    });
+    expect(batch.ok).toBe(false);
+    if (batch.ok) return;
+    expect(batch.errors[0]).toMatch(/^ops\[0\]:.*tree_edit/);
+
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("both tools still reject an operation neither admits as unknown", async () => {
+    await writeProject(onePerson());
+    const a = await treeEdit({ projectPath: dir, operation: "rename_person" as any });
+    expect(a.ok).toBe(false);
+    if (a.ok) return;
+    expect(a.errors.join(" ")).toMatch(/unknown operation 'rename_person'/);
+
+    const b = await treeCorrect({ projectPath: dir, operation: "rename_person" as any });
+    expect(b.ok).toBe(false);
+    if (b.ok) return;
+    expect(b.errors.join(" ")).toMatch(/unknown operation 'rename_person'/);
   });
 
   it("rejects an add_person payload that carries an id", async () => {
@@ -317,12 +390,12 @@ describe("tree_edit", () => {
     });
   });
 
-  it("update_source: merges fields, leaves others intact, refuses to change id, errors on unknown id", async () => {
+  it("update_source (tree_correct): merges fields, leaves others intact, refuses to change id, errors on unknown id", async () => {
     const tree = onePerson();
     (tree as any).sources = [{ id: "S1", title: "Original Title", author: "Old Author" }];
     await writeProject(tree);
 
-    const r = await treeEdit({
+    const r = await treeCorrect({
       projectPath: dir,
       operation: "update_source",
       sourceId: "S1",
@@ -337,7 +410,7 @@ describe("tree_edit", () => {
     // no S99 was created
     expect((await readTree()).sources.map((s: any) => s.id)).toEqual(["S1"]);
 
-    const bad = await treeEdit({
+    const bad = await treeCorrect({
       projectPath: dir,
       operation: "update_source",
       sourceId: "S404",
@@ -350,9 +423,9 @@ describe("tree_edit", () => {
     await writeProject(onePerson());
     const noSource = await treeEdit({ projectPath: dir, operation: "add_source" });
     expect(noSource.ok).toBe(false);
-    const noId = await treeEdit({ projectPath: dir, operation: "update_source", source: { title: "X" } });
+    const noId = await treeCorrect({ projectPath: dir, operation: "update_source", source: { title: "X" } });
     expect(noId.ok).toBe(false);
-    const noFields = await treeEdit({ projectPath: dir, operation: "update_source", sourceId: "S1" });
+    const noFields = await treeCorrect({ projectPath: dir, operation: "update_source", sourceId: "S1" });
     expect(noFields.ok).toBe(false);
   });
 
@@ -436,9 +509,9 @@ describe("tree_edit", () => {
     expect((await readTree()).persons.find((p: any) => p.id === "I2").facts ?? []).toHaveLength(0);
   });
 
-  it("update_fact: relationshipId merges fields onto the Couple-held fact by id", async () => {
+  it("update_fact (tree_correct): relationshipId merges fields onto the Couple-held fact by id", async () => {
     await writeProject(twoPersonCoupleTree());
-    const r = await treeEdit({
+    const r = await treeCorrect({
       projectPath: dir,
       operation: "update_fact",
       relationshipId: "R1",
@@ -464,7 +537,7 @@ describe("tree_edit", () => {
     if (both.ok) return;
     expect(both.errors.join(" ")).toMatch(/exactly one of `personId` or `relationshipId`/);
 
-    const neither = await treeEdit({ projectPath: dir, operation: "update_fact", factId: "F2", fact: { date: "1841" } });
+    const neither = await treeCorrect({ projectPath: dir, operation: "update_fact", factId: "F2", fact: { date: "1841" } });
     expect(neither.ok).toBe(false);
     if (neither.ok) return;
     expect(neither.errors.join(" ")).toMatch(/exactly one of `personId` or `relationshipId`/);
@@ -495,10 +568,10 @@ describe("tree_edit", () => {
     expect(stale.errors.join(" ")).toMatch(/'R404' not found/);
   });
 
-  it("update_fact: errors when the factId is not on the targeted relationship", async () => {
+  it("update_fact (tree_correct): errors when the factId is not on the targeted relationship", async () => {
     await writeProject(twoPersonCoupleTree());
     // F1 exists, but on person I1 — not on R1.
-    const r = await treeEdit({
+    const r = await treeCorrect({
       projectPath: dir,
       operation: "update_fact",
       relationshipId: "R1",
@@ -522,8 +595,8 @@ describe("tree_edit", () => {
       treeEdit({ projectPath: dir, operation: "add_fact", personId: "I1", fact: { type: "Death", date: nestedDate } as any }),
       // add_fact on a relationship
       treeEdit({ projectPath: dir, operation: "add_fact", relationshipId: "R1", fact: { type: "Marriage", date: nestedDate } as any }),
-      // update_fact
-      treeEdit({ projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1", fact: { date: nestedDate } as any }),
+      // update_fact (tree_correct — same shared shape check)
+      treeCorrect({ projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1", fact: { date: nestedDate } as any }),
       // add_person inline fact
       treeEdit({
         projectPath: dir,
@@ -559,7 +632,7 @@ describe("tree_edit", () => {
     if (badPlace.ok) return;
     expect(badPlace.errors.join(" ")).toMatch(/`place` must be a plain string/);
 
-    const badStd = await treeEdit({
+    const badStd = await treeCorrect({
       projectPath: dir,
       operation: "update_fact",
       personId: "I1",

@@ -79,6 +79,7 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
+import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
 import {
   researchAppend,
   type ResearchAppendInput,
@@ -599,6 +600,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeEditInput;
       const result = await treeEdit(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "tree_correct") {
+    try {
+      const args = request.params.arguments as unknown as TreeCorrectInput;
+      const result = await treeCorrect(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

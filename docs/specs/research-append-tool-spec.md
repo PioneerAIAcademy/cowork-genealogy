@@ -398,7 +398,7 @@ only refuses to persist a structurally incoherent combination.
 
 **Suggested phase 1** (highest frequency, unblocks the most skill rewrites):
 `sources`, `assertions`, `person_evidence` (the `record-extraction` /
-`assertion-classification` / `person-evidence` write paths — the multi-entry
+`person-evidence` write paths — the multi-entry
 re-serialize hazard). **Phase 2:** `questions`, `plans`/`plan_items`, `conflicts`,
 `hypotheses` (the status-transition + invariant sections). **Phase 3 / deferred:**
 `timelines` (its *build* — supersede-filter + chronological sort + gap/impossibility
@@ -475,8 +475,9 @@ parity). Reuses `atomicWriteJson` + `validateParsed`; share the per-prefix max-i
 helper with `tree_edit`/the merge core (lift `maxIdNum` to a shared util).
 
 Consumers — the skills whose hand-written section writes it replaces:
-`record-extraction` (sources + assertions), `assertion-classification` (classification
-field updates), `person-evidence` (`pe_` links + supersede), `conflict-resolution`
+`record-extraction` (sources + assertions + classification field updates —
+classification merged from the former assertion-classification skill,
+2026-07-11), `person-evidence` (`pe_` links + supersede), `conflict-resolution`
 (conflict append + resolve), `hypothesis-tracking`, `research-exhaustiveness`
 (exhaustive_declaration), `question-selection`/`research-plan` (questions, plans,
 plan-items), `proof-conclusion` (question resolution). Their SKILL.md rewrites are a

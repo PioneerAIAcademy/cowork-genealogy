@@ -76,7 +76,7 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `project_status` | `active`, `paused`, `completed` | project |
 | `priority` | `high`, `medium`, `low` | questions |
 | `selection_basis` | `timeline_gap`, `unresolved_conflict`, `fan_pivot`, `hypothesis_test`, `objective_decomposition`, `new_evidence`, `record_found_incidentally`, `user_directed` | questions |
-| `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, `unknown` | assertions |
+| `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, `unknown` | assertions |
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
 | `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
@@ -133,7 +133,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
-| `assertions` | record-extraction, assertion-classification, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
+| `assertions` | record-extraction, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
@@ -392,7 +392,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. On assertion appends `research_append` resolves an omitted value itself — sidecar copy first, else geocoding, with a country-contradiction guard (research-append spec §3.6); null if unresolvable or `place` is null; supply `null` explicitly to opt out. |
 | `information_quality` | `information_quality` | yes | Primary, Secondary, or Indeterminate — classified at the assertion level |
 | `informant` | string | yes | Who provided this specific information (e.g., "census enumerator", "attending physician", "son-in-law James Brown", "unknown household member") |
-| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, or `unknown` |
+| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified |
 | `informant_bias_notes` | string or null | no | Notes on potential bias (e.g., "may have misreported age for military eligibility") |
 | `evidence_type` | `evidence_type` | yes | Direct, Indirect, or Negative |
 | `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
