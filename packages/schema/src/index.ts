@@ -55,6 +55,7 @@ export type InformantProximity =
   | 'witness'
   | 'household_member'
   | 'family_not_present'
+  | 'researcher'
   | 'official_duty'
   | 'unknown'
 

@@ -25,12 +25,12 @@ Did the skill identify the actual informant (not just "census") and assess their
 - **partial:** Informant is identified but proximity is generic — using `unknown` when the assertion type (e.g., age, birthplace) implies a household member must have reported it.
 - **fail:** Informant is the recorder (census enumerator listed as informant for birth/age facts), or informant is blank when the source has enough context to identify it.
 
-`informant_proximity` is a **closed enum**: `self | witness | household_member | family_not_present | official_duty | unknown`. Grade only against these values — do not require or reward values outside the set (there is no `researcher`, `analyst`, or `inferred_from_structure`). In particular, `unknown` is the **correct** value, not a partial, in these cases:
+`informant_proximity` is a **closed enum**: `self | witness | household_member | family_not_present | researcher | official_duty | unknown`. Grade only against these values — do not require or reward values outside the set (there is no `analyst` or `inferred_from_structure`). `researcher` is the **correct** value, not a partial, whenever the asserted value is the researcher's own conclusion rather than something a record informant reported:
 
-- **Negative evidence** (person absent): no record informant exists, so `informant_proximity: "unknown"` is correct. The researcher is named in the `informant` free-text field; proximity stays `unknown`.
-- **Relationships inferred from household structure** (e.g., a pre-1880 census with no relationship column): no informant explicitly stated the relationship, so `unknown` (or an omitted proximity) is correct — do not penalize it for not naming a reporter.
+- **Negative evidence** (person absent): no record informant exists — `informant: "the researcher"` (or equivalent), `informant_proximity: "researcher"`. Naming a record party (e.g. the enumerator) as informant for an absence is a fail-level error.
+- **Relationships inferred from household structure** (e.g., a pre-1880 census with no relationship column): nobody stated the relationship — informant "none — inferred from household position", proximity `researcher`.
 
-`unknown` is only a *partial* when a specific reporter clearly exists and should have been named (e.g., age/birthplace facts that a household member must have supplied).
+`unknown` means a record informant exists but cannot be identified. It is a *partial* when a specific reporter clearly exists and should have been named (age/birthplace facts a household member must have supplied), and wrong where `researcher` applies (researcher conclusions).
 
 **Death certificates — informant by fact (matches SKILL.md doctrine; grade against this, not intuition):**
 

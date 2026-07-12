@@ -134,7 +134,7 @@ user as you encounter them.
    - Closed enums, exactly these values, nothing else:
      `evidence_type` ∈ `direct|indirect|negative` ·
      `information_quality` ∈ `primary|secondary|indeterminate` ·
-     `informant_proximity` ∈ `self|witness|household_member|family_not_present|official_duty|unknown` ·
+     `informant_proximity` ∈ `self|witness|household_member|family_not_present|researcher|official_duty|unknown` ·
      `date_certainty` ∈ `exact|approximate|estimated|calculated|before|after|between` ·
      `source_classification` ∈ `original|derivative|authored`.
      There is no `no_evidence`, `analyst`, or `researcher` value.

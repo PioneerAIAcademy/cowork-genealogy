@@ -250,9 +250,12 @@ Rules that sharpen the tree:
 
 **`informant` and `informant_proximity`** — required on every assertion,
 never omitted. **`informant_proximity`** ∈ `self` | `witness` |
-`household_member` | `family_not_present` | `official_duty` | `unknown`
-(closed set — there is no `analyst`, `researcher`, or
-`inferred_from_structure` value). The informant is whoever provided THIS
+`household_member` | `family_not_present` | `researcher` |
+`official_duty` | `unknown` (closed set — there is no `analyst` or
+`inferred_from_structure` value). `researcher` = the value is the
+researcher's own conclusion (negative evidence, structure-inferred
+relationships) — no record informant exists. `unknown` = a record
+informant exists but cannot be identified. The informant is whoever provided THIS
 specific fact — not who created the record; indexers and transcribers are
 never the informant (look through derivatives to the original provider).
 The recorder and informant are different people: on a census the
@@ -268,12 +271,13 @@ reporting, secondhand relay, social pressure, duress.
 | Name/age/birthplace (child) | unknown household member (likely a parent) | household_member | a child of N could not report own birth info |
 | Occupation (stated) | unknown household member (likely the worker or spouse) | household_member | |
 | Residence | census enumerator | witness | enumerator visited the dwelling |
-| Relationship (pre-1880) | none — inferred from household position | unknown | no relationship column exists; nobody reported it — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
+| Relationship (pre-1880) | none — inferred from household position | researcher | no relationship column exists; nobody reported it — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
 
 This table describes facts a record STATES. A **negative** assertion
-(`record_role: "absent"`) always takes `informant_proximity: "unknown"`
-— no record informant reported an absence, whatever the record type;
-the table's `witness`/`household_member` rows never apply to one.
+(`record_role: "absent"`) always takes `informant: "the researcher"` +
+`informant_proximity: "researcher"` — no record informant reported an
+absence, whatever the record type; the table's
+`witness`/`household_member` rows never apply to one.
 
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
@@ -443,8 +447,17 @@ skipped; not-found siblings are the in-scope set. If the record's
 children and the tree's children **contradict** beyond tolerant matching,
 STILL stub every clearly-new child (the trigger fired; writing the stubs
 is mandatory) and ALSO surface the discrepancy as an identity question
-in your summary — the flag supplements the stubs, never replaces them,
-and never delete or rewrite the existing tree children yourself. Then emit a compact enumeration
+in your summary. When you judge a record persona to BE an existing tree
+person under a different name (e.g. that person already cites this very
+source), record the record's name as an **alternate name** — a
+`tree_edit add_name` op with `preferred` omitted — and say so in the
+summary. **Never** rename or rewrite existing tree persons: extraction
+adds evidence (`add_person`, `add_relationship`, `add_name`,
+`add_fact` on entities you created this pass); `update_name`,
+`update_person`, and `remove` are identity-resolution and correction
+acts that belong to person-evidence, hypothesis-tracking, and the
+tree-edit skill — a deterministic validator fails the run if you emit
+them. Then emit a compact enumeration
 checklist (required before writing, a few lines): `Parents in tree:
 <name> = I<id>, …` (or "none → skip"); `Siblings: <name> → create /
 <name> → already I<id>`. Never claim "all siblings already existed"

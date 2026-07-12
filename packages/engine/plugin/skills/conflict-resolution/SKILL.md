@@ -267,7 +267,13 @@ preferred answer, the resolution must follow the evidence.
 **If more evidence is needed (Standard 49):** Deferral is a
 documented finding, not a stopping point — persist it to the
 conflict record (a `research_append` `op: "update"` call as above),
-not only to your reply. On the same write, fill
+not only to your reply. **Gate before any `status: "resolved"`
+write:** can independent evidence actually break the tie? When every
+competing assertion traces to a single source or a single informant,
+weighing cannot resolve the conflict — no matter how thorough your
+analysis reads — so keep `status: "unresolved"` /
+`preferred_assertion_id: null` and name the decisive record types.
+Completing a strong analysis is not, by itself, grounds to resolve. On the same write, fill
 `independence_analysis` and `weighing_analysis` with the work you
 did (these are required regardless of outcome — you analyzed the
 conflict even if you could not resolve it), keep `status:

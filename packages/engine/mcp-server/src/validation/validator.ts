@@ -50,7 +50,7 @@ const CLOSED_ENUMS = {
   priority: new Set(["high", "medium", "low"]),
   informant_proximity: new Set([
     "self", "witness", "household_member",
-    "family_not_present", "official_duty", "unknown",
+    "family_not_present", "researcher", "official_duty", "unknown",
   ]),
   gender: new Set(["Male", "Female", "Unknown"]),
   relationship_type: new Set(["ParentChild", "Couple"]),
