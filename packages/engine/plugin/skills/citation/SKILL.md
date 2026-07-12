@@ -212,6 +212,17 @@ beats a complete-looking citation with invented detail:
    when the research question is about a child in that household —
    swapping in the research subject creates a locator the index
    doesn't contain.
+8. **The informant never belongs in `who` or in the citation
+   string.** `who` is the record's creator; informant identity and
+   quality live in the source's `notes` (and evidence analysis is
+   record-extraction's job).
+9. **Repository/archive chains must come from the source's OWN entry
+   (or the record image).** Corroborating a repository from a
+   DIFFERENT source entry is an inference — rule 6's cross-referencing
+   covers record data (locators, family numbers, places), not custody
+   chains. Mention the inferred repository in `notes` or flag it
+   needs-verification; never write it into the citation as
+   established fact.
 
 ### Review path is read-only
 

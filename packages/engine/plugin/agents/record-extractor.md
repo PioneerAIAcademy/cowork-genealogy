@@ -329,13 +329,17 @@ stated-vs-inferred value with `extracted_for_question_ids: []`.)
 **Stated-vs-inferred, NOT who reported it.** A stated age on a 1850
 census is `direct` even though a household member (not the subject)
 reported it — *who* reported is `informant_proximity`'s job. The
-exception: a fact recorded from an informant who did **not** witness the
-event it describes is `indirect` even when stated plainly. On a death
+exception: a fact recorded from a **third-party** informant relaying
+**another person's** facts on a derivative record is `indirect` even
+when stated plainly. On a death
 certificate the decedent's own birth date, birthplace, and parents are
 all `indirect` when the informant (e.g. the surviving spouse) is relaying
 secondhand knowledge — not just the parents' names. Contrast a census,
 where a household member reporting on their own household has firsthand
-knowledge → stated facts stay `direct`. The test: did the informant have
+knowledge → stated facts stay `direct`; likewise a party stating their
+OWN age, birthplace, or parents to the clerk on a marriage or
+civil-registration record stays `direct` — they are relaying their own
+facts, not another person's. The test: did the informant have
 primary knowledge of *this* fact?
 
 **Age vs. birth year — separate assertions, different types:** "age 32"
@@ -479,9 +483,13 @@ without this list.
 FamilySearch ids — never predict them):
 1. **Person stubs — one batch of `add_person` ops**, one per in-scope
    sibling: `gender` (`Male`/`Female`) + a single `names` entry with
-   `given`, `surname`, `preferred: true`, `type: "BirthName"` — no `id`,
-   no facts (facts stay on the per-sibling assertions). Read each
-   assigned `I` id back from `results[].assignedIds`.
+   `given`, `surname`, `preferred: true`, `type: "BirthName"` — no `id`.
+   **Hard rule: the stub is `gender` + ONE `names` entry ONLY — a
+   `facts` array on a stub fails validation. Do NOT copy the shape of
+   existing tree persons (they carry facts/sources; stubs never do);
+   the record's facts and the S source ref live on the per-sibling
+   assertions in research.json.** Read each assigned `I` id back from
+   `results[].assignedIds`.
 2. **ParentChild edges — a SECOND batch**, one `add_relationship` op per
    (sibling × in-tree parent) pair: `{ type: "ParentChild", parent:
    "<parent I>", child: "<sibling I from batch 1>" }`. Two ops per

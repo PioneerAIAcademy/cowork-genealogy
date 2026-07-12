@@ -2,7 +2,7 @@
 
 Grading dimensions for record-extraction unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-**Scoring calibration.** These dimensions are scored on the PERSISTED assertion/source fields — the tool-call arguments and final files — not on how the chat response narrates them. If the persisted fields are correct, the dimension scores 3, regardless of how tersely or verbosely the response describes them. A score of 2 requires the rationale to name a concrete wrong field value on a concrete assertion (e.g., "a_007 has `evidence_type: direct` for a birth year computed from age"). Narrative style, verbosity, and presentation are never grounds for a deduction in these dimensions.
+**Scoring calibration.** These dimensions are scored on the PERSISTED assertion/source fields — the tool-call arguments and final files — not on how the chat response narrates them. If the persisted fields are correct, the dimension scores 3, regardless of how tersely or verbosely the response describes them. A score of 2 requires the rationale to name a concrete wrong field value on a concrete assertion (e.g., "a_007 has `evidence_type: direct` for a birth year computed from age"). Narrative style, verbosity, and presentation are never grounds for a deduction in these dimensions. A deduction is never justified by calling a fixture-correct value "imprecise" or naming a hypothetically-better value — if the persisted value matches this rubric or the test's judge context, the dimension scores 3.
 
 ## Assertion atomicity
 
@@ -21,11 +21,13 @@ one event assertion.
 
 ## Informant identification
 
-Did the skill identify the actual informant (not just "census") and assess their proximity to the event? The census enumerator is the recorder — the household member who provided the information is the informant.
+Did the skill identify the actual informant (not just "census") and assess their proximity to the event? For facts a household member reported (name/age/birthplace/occupation), the census enumerator is the recorder — the household member who provided the information is the informant. This recorder-vs-informant split does NOT apply to residence, where the enumerator is a true witness (see the residence bullet below).
 
 - **pass:** `informant` field names a specific informant (or "unknown household member" with reasoning) and `informant_proximity` distinguishes the recorder from the actual reporter.
 - **partial:** Informant is identified but proximity is generic — using `unknown` when the assertion type (e.g., age, birthplace) implies a household member must have reported it.
 - **fail:** Informant is the recorder (census enumerator listed as informant for birth/age facts), or informant is blank when the source has enough context to identify it.
+
+- For Residence facts, `informant: "census enumerator"` with proximity `witness` is CORRECT — the enumerator personally observed the household at the dwelling. This has been graded both ways; enumerator/witness is the doctrine.
 
 `informant_proximity` is a **closed enum**: `self | witness | household_member | family_not_present | researcher | official_duty | unknown`. Grade only against these values — do not require or reward values outside the set (there is no `analyst` or `inferred_from_structure`). `researcher` is the **correct** value, not a partial, whenever the asserted value is the researcher's own conclusion rather than something a record informant reported:
 
