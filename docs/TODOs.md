@@ -111,6 +111,15 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   investigation lands: qualify (or dual-list) so all agents work identically
   in Cowork, the e2e harness, the unit harness, and the hosted web SDK path.
 
+- [ ] **Extractor write authority is too broad (op-level restriction)** — the
+  record-extractor agent holds whole-tool `tree_edit` access and used
+  `update_name` to rename existing tree persons it judged misnamed
+  (ut_013, 2026-07-12 runlog) — an identity-resolution call that belongs to
+  person-evidence/hypothesis-tracking. Prose prohibitions don't hold when the
+  agent believes it's correcting an error. Structural fix: op-level
+  authorization on `tree_edit` (e.g. an `allowedOperations` caller contract or
+  an extraction-scoped op set: add_person/add_relationship/add_source only).
+
 ## Eval framework
 - [ ] **Revisit recovered-retry Tool Arguments scoring** — the judge policy
   (`eval/harness/judge/prompt.md` + the mirror note in
