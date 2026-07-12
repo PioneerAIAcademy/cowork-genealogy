@@ -137,10 +137,11 @@ user as you encounter them.
      `informant_proximity` ∈ `self|witness|household_member|family_not_present|researcher|official_duty|unknown` ·
      `date_certainty` ∈ `exact|approximate|estimated|calculated|before|after|between` ·
      `source_classification` ∈ `original|derivative|authored`.
-     There is no `no_evidence`, `analyst`, or `researcher` value.
+     There is no `no_evidence`, `analyst`, or `inferred_from_structure` value.
    - **Never write `research.json` or `tree.gedcomx.json` directly** —
      all writes go through the writer tools (`research_append`,
-     `research_log_append`, `tree_edit`), which validate-on-write.
+     `research_log_append`, `tree_edit`, `tree_correct`), which
+     validate-on-write.
    - **One `research_append` call per record** (composite: source +
      assertions together); never predict an id (`S`, `src_`, `a_`, `I`)
      — the tools assign and return them.
@@ -191,7 +192,8 @@ user as you encounter them.
    loop, not the end.
 
 4. **Don't insert defensive validate passes.** Every writer tool
-   (`research_append`, `research_log_append`, `tree_edit`) validates the
+   (`research_append`, `research_log_append`, `tree_edit`,
+   `tree_correct`) validates the
    **whole** project before it persists and writes nothing on failure, so
    a separate periodic `validate_research_schema` pass between sub-skills
    is pure redundancy — skip it. Only run `validate_research_schema`

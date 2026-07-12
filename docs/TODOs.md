@@ -111,14 +111,28 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   investigation lands: qualify (or dual-list) so all agents work identically
   in Cowork, the e2e harness, the unit harness, and the hosted web SDK path.
 
-- [ ] **Extractor write authority is too broad (op-level restriction)** — the
-  record-extractor agent holds whole-tool `tree_edit` access and used
-  `update_name` to rename existing tree persons it judged misnamed
-  (ut_013, 2026-07-12 runlog) — an identity-resolution call that belongs to
-  person-evidence/hypothesis-tracking. Prose prohibitions don't hold when the
-  agent believes it's correcting an error. Structural fix: op-level
-  authorization on `tree_edit` (e.g. an `allowedOperations` caller contract or
-  an extraction-scoped op set: add_person/add_relationship/add_source only).
+- [x] **Extractor write authority is too broad (op-level restriction)** —
+  **superseded by the `tree_edit`/`tree_correct` split (this commit,
+  2026-07-12)**: the mutating ops (`update_fact`/`update_name`/`update_person`/
+  `update_source`/`remove`) moved to a new `tree_correct` tool; `tree_edit`
+  keeps only the additive ops, so the record-extractor agent (tree_edit only)
+  is structurally unable to rename/rewrite/remove existing tree entities
+  (the ut_013 rename incident). Residual gap: **per-op authorization within a
+  single tool is still unavailable** — if a finer split is ever needed (e.g.
+  add_name but not add_person), there is no `allowedOperations` caller
+  contract; the only lever is splitting tools again.
+- [ ] **Enum-drift lint** — grep prose enum enumerations (agent bodies, cribs,
+  rubrics) against `enums.schema.json` in CI, following the places-guidance
+  byte-lint pattern. Two drift instances shipped 2026-07-12 (the /research crib
+  listed `researcher` as invalid after it became a valid
+  `informant_proximity`; record-extractor's negative-evidence section still
+  said `unknown`).
+- [ ] **`image_read` callable by the main session** — prose failed 3x (rx_015):
+  the record-extraction skill tells the MAIN session not to call `image_read`
+  itself (delegate to image-reader), but no environment can currently deny a
+  main session a tool an agent needs — Cowork allowed-tools are per-skill, not
+  per-context. Wants a per-context tool-policy design (main-session denylist
+  while an agent holds the tool).
 
 ## Eval framework
 - [ ] **Judge fabrication class — give the judge before-state file content** —

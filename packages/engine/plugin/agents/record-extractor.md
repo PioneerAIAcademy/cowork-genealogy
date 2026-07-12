@@ -99,12 +99,15 @@ classification.
 (closed set — exactly these three values):
 - **original** — first recording or earliest surviving version of the
   event itself. Digital images/microfilm of originals count. Census
-  schedules, marriage licenses, deeds: original.
-- **derivative** — created from another source or from informant
-  testimony about events the recorder didn't witness — indexes,
-  abstracts, transcripts, translations, AND **death certificates** (the
-  creator records what informants told them about birth, parents, etc.).
-  Each step from the original adds error risk.
+  schedules, marriage licenses, deeds: original. A contemporaneous
+  **death certificate** (the record itself or its image) is ORIGINAL —
+  it is the first recording of both the death and the informant's
+  statements. The informant's secondhand knowledge is captured at the
+  information/evidence layers (`family_not_present`, `indirect`), never
+  by demoting the source layer.
+- **derivative** — created from another source — indexes, abstracts,
+  transcripts, translations, including an index/abstract/transcript OF
+  a death certificate. Each step from the original adds error risk.
 - **authored** — compiled works with the author's own analysis (family
   histories, online trees, county histories).
 
@@ -289,7 +292,7 @@ absence, whatever the record type; the table's
   duration of illness. Proximity `official_duty` — the medical
   certification is the physician's attestation.
 - **Personal informant** (named on the cert, often spouse or family):
-  informant for the decedent's biographical facts — name, birth
+  informant for the decedent's biographical facts — name, **age**, birth
   date/place, parents' names, **occupation**, and **marital status** —
   ALL at proximity `family_not_present`. These enumerated rows are
   fixed: do not upgrade any of them to `witness` on a "they personally
@@ -330,11 +333,11 @@ stated-vs-inferred value with `extracted_for_question_ids: []`.)
 census is `direct` even though a household member (not the subject)
 reported it — *who* reported is `informant_proximity`'s job. The
 exception: a fact recorded from a **third-party** informant relaying
-**another person's** facts on a derivative record is `indirect` even
-when stated plainly. On a death
-certificate the decedent's own birth date, birthplace, and parents are
-all `indirect` when the informant (e.g. the surviving spouse) is relaying
-secondhand knowledge — not just the parents' names. Contrast a census,
+**another person's** facts is `indirect` even when stated plainly,
+whatever the source layer says. On a death certificate the decedent's
+own birth date, birthplace, parents, AND stated age are all `indirect`
+when the informant (e.g. the surviving spouse) is relaying secondhand
+knowledge — not just the parents' names. Contrast a census,
 where a household member reporting on their own household has firsthand
 knowledge → stated facts stay `direct`; likewise a party stating their
 OWN age, birthplace, or parents to the clerk on a marriage or
@@ -342,11 +345,14 @@ civil-registration record stays `direct` — they are relaying their own
 facts, not another person's. The test: did the informant have
 primary knowledge of *this* fact?
 
-**Age vs. birth year — separate assertions, different types:** "age 32"
-→ the `age` assertion (`value: "32"`) is `direct`; the separate `birth`
-assertion (`value: "~1818"`, computed) is `indirect`. Prefer not to
-compute exact birth dates from death-cert age arithmetic at all — a year
-is enough.
+**Age vs. birth year — separate assertions, different types:** on a
+census, "age 32" → the `age` assertion (`value: "32"`) is `direct` (a
+household member has household knowledge); the separate `birth`
+assertion (`value: "~1818"`, computed) is `indirect`. On a death
+certificate the family-reported age is `indirect` too
+(informant-knowledge test — same as birth date/birthplace/parents), and
+so is any birth year computed from it. Prefer not to compute exact
+birth dates from death-cert age arithmetic at all — a year is enough.
 
 **Pre-1880 census relationships are always `indirect`** — the 1850/1860
 census have no relationship column; relationships are inferred from
@@ -472,8 +478,9 @@ adds evidence (`add_person`, `add_relationship`, `add_name`,
 `add_fact` on entities you created this pass); `update_name`,
 `update_person`, and `remove` are identity-resolution and correction
 acts that belong to person-evidence, hypothesis-tracking, and the
-tree-edit skill — a deterministic validator fails the run if you emit
-them. Then emit a compact enumeration
+tree-edit skill — they live in the `tree_correct` tool, which is not
+in your tool set, and the eval suite's validator fails any run that
+emits them. Then emit a compact enumeration
 checklist (required before writing, a few lines): `Parents in tree:
 <name> = I<id>, …` (or "none → skip"); `Siblings: <name> → create /
 <name> → already I<id>`. Never claim "all siblings already existed"
@@ -510,8 +517,8 @@ assertion in the same Step-4 batch (or standalone with explicit
 - `value`: the **expected-but-missing** fact — "Patrick Flynn absent from
   1870 Schuylkill County census where expected" — never blank, never just
   "absent".
-- `informant`: the researcher/analyst who concluded absence;
-  `informant_proximity: "unknown"` (no record informant reported the
+- `informant: "the researcher"`;
+  `informant_proximity: "researcher"` (no record informant reported the
   absence). Explain the inference in `informant_bias_notes`, including
   alternative explanations (relocation, enumerator error, indexing
   omission, damaged pages).

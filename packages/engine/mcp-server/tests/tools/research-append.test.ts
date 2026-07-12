@@ -779,6 +779,9 @@ describe("research_append (batch ops)", () => {
       ],
     });
     expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // mapValidationErrors remaps the whole-doc validation error onto the op that induced it
+    expect(r.errors.some((e) => e.startsWith("ops[1]:"))).toBe(true);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before); // including the valid op #0
   });
 

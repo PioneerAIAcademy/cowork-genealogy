@@ -517,17 +517,24 @@ DESTRUCTIVE_TREE_OPS = {"update_name", "update_person", "remove"}
 
 def test_extraction_makes_no_destructive_tree_ops(tool_calls):
     """Extraction adds evidence; it never renames, rewrites, or removes
-    existing tree entities. `update_name` / `update_person` / `remove`
-    are identity-resolution and correction acts owned by person-evidence,
-    hypothesis-tracking, and the tree-edit skill. A record persona judged
-    to BE an existing tree person under a variant name gets an `add_name`
-    (alternate, non-preferred) — never an `update_name`. Structural
+    existing tree entities. Since the tree_edit/tree_correct split, the
+    correction/removal ops (`update_*` / `remove`) live in `tree_correct`,
+    which extraction does not hold — so the primary assertion is simple:
+    an extraction run makes ZERO tree_correct calls. Identity resolution
+    and correction are owned by person-evidence, hypothesis-tracking, and
+    the tree-edit skill. A record persona judged to BE an existing tree
+    person under a variant name gets an `add_name` (alternate,
+    non-preferred) via tree_edit — never an `update_name`. Structural
     enforcement for the ut_013 rename incident (2026-07-12): prose
     prohibitions do not hold when the model believes it is correcting an
-    error."""
+    error. The old-shape check (destructive ops smuggled into a tree_edit
+    call) is kept as belt and suspenders."""
     offending = []
     for call in tool_calls:
         tool = (call.get("tool") or "").rsplit("__", 1)[-1]
+        if tool == "tree_correct":
+            offending.append("tree_correct call")
+            continue
         if tool != "tree_edit":
             continue
         args = call.get("args") or {}
@@ -537,9 +544,9 @@ def test_extraction_makes_no_destructive_tree_ops(tool_calls):
         for i, op in enumerate(ops):
             name = (op or {}).get("operation")
             if name in DESTRUCTIVE_TREE_OPS:
-                offending.append(f"ops[{i}]: {name}")
+                offending.append(f"tree_edit ops[{i}]: {name}")
     assert not offending, (
-        "extraction run emitted destructive tree_edit ops (identity "
+        "extraction run emitted destructive tree ops (identity "
         "resolution belongs to person-evidence/hypothesis-tracking/"
         "tree-edit, not extraction): " + "; ".join(offending)
     )

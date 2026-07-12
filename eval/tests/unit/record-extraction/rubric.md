@@ -39,7 +39,7 @@ Did the skill identify the actual informant (not just "census") and assess their
 **Death certificates — informant by fact (matches SKILL.md doctrine; grade against this, not intuition):**
 
 - **Attending physician** is the informant for the death event itself — death date, place of death, cause, duration of illness — with proximity `official_duty` (the medical-certification side of the certificate is the physician's attestation).
-- **The named personal informant** (spouse, family member) is the informant for the decedent's biographical facts — name, birth date/place, parents, occupation — with proximity `family_not_present` for events they did not witness.
+- **The named personal informant** (spouse, family member) is the informant for the decedent's biographical facts — name, age, birth date/place, parents, occupation — with proximity `family_not_present` for events they did not witness.
 - **The funeral director** is the informant for burial facts, proximity `official_duty`.
 
 Do not score the skill down for attributing death date/place to the physician rather than the named personal informant — that attribution is the intended doctrine.
@@ -56,7 +56,7 @@ Applying this correctly:
 
 - **A stated age is `direct` evidence of age.** "Age 32" in a census column is an explicitly stated fact → `direct`. Only the *birth year computed from* that age (a separate `~1818` assertion) is `indirect`. Do not mark the `age` assertion itself indirect — that conflates the stated age with the birth-date inference derived from it.
 - **An inferred birth *year* is fine when labeled `indirect`.** Deriving `~1845` from a stated age and marking it `indirect` is correct behavior, not a violation. What is disallowed is computing an exact birth *date* (a specific day/month) from age/death-date arithmetic. Do not penalize an approximate year as if it were a fabricated exact date.
-- **A fact explicitly stated but reported by an informant who did not witness it is `indirect`.** On a derivative record (e.g., a death certificate), the birth date, birthplace, and parents' names the informant supplies about the deceased are secondhand — `indirect` even though stated. This is distinct from a census, where a household member reporting facts about their own household has primary knowledge → `direct`.
+- **A fact explicitly stated but reported by an informant who did not witness it is `indirect`.** A death certificate is an ORIGINAL source (the first recording of the death and of the informant's statements), but its named personal informant relays secondhand facts: the birth date, birthplace, parents' names, AND age they supply about the deceased are `indirect` even though stated. Scoping: a census stated age is `direct` (a household member reporting on their own household has firsthand knowledge); a death certificate's family-reported age is `indirect`.
 - **A stated residence is `direct`.** The census enumerator recorded the household at that dwelling; the residence column contains the value. Do not mark residence `indirect` — this dimension has been graded both ways in past runs and `direct` is the doctrine.
 
 ### Judge context — schema facts (do not penalize these)
