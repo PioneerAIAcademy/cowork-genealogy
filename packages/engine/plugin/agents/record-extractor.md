@@ -270,6 +270,11 @@ reporting, secondhand relay, social pressure, duress.
 | Residence | census enumerator | witness | enumerator visited the dwelling |
 | Relationship (pre-1880) | none — inferred from household position | unknown | no relationship column exists; nobody reported it — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
 
+This table describes facts a record STATES. A **negative** assertion
+(`record_role: "absent"`) always takes `informant_proximity: "unknown"`
+— no record informant reported an absence, whatever the record type;
+the table's `witness`/`household_member` rows never apply to one.
+
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
   duration of illness. Proximity `official_duty` — the medical
@@ -436,8 +441,10 @@ way, matching tolerantly — spelling variants and diminutives
 (Bridget/Biddy, Wm/William) are the same person. Found siblings are
 skipped; not-found siblings are the in-scope set. If the record's
 children and the tree's children **contradict** beyond tolerant matching,
-stub only the clearly-new children and surface the discrepancy as an
-identity question in your summary. Then emit a compact enumeration
+STILL stub every clearly-new child (the trigger fired; writing the stubs
+is mandatory) and ALSO surface the discrepancy as an identity question
+in your summary — the flag supplements the stubs, never replaces them,
+and never delete or rewrite the existing tree children yourself. Then emit a compact enumeration
 checklist (required before writing, a few lines): `Parents in tree:
 <name> = I<id>, …` (or "none → skip"); `Siblings: <name> → create /
 <name> → already I<id>`. Never claim "all siblings already existed"
