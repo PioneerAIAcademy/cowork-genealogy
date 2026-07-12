@@ -10,7 +10,7 @@ import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
-import { treeEdit } from "../../src/tools/tree-edit.js";
+import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 
 const minimalResearch = {
@@ -55,7 +55,9 @@ describe("tree_edit on a legacy (pre-tightening) tree", () => {
   });
 
   it("heals the tree, persists the healed document, and narrates the repairs", async () => {
-    const result: any = await treeEdit({
+    // update_person lives in tree_correct since the op split; the heal
+    // logic is in the shared core, so this also covers tree_edit.
+    const result: any = await treeCorrect({
       operation: "update_person",
       projectPath: dir,
       personId: "I1",

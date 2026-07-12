@@ -81,12 +81,6 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   the latency plan's P3 full form fans out one agent per record with parent
   batch-persist. Do after per-record overhead is measured on multi-record e2e
   runs.
-- [ ] **Negative-evidence `informant_proximity` enum value** — skill, rubric,
-  judge, and human annotators still disagree on the informant contract for
-  `record_role: absent` (ut_002's only human correction went against the
-  codified `unknown`). The likely real fix is a new closed-enum value
-  (`researcher`/`analyst`) — full blast radius per CLAUDE.md enum rules (both
-  schema trees, TS union, validator CLOSED_ENUMS, spec prose).
 - [ ] **Extraction→tree materialization gap ownership** — fact-less sibling
   stubs are never enriched, the 5d trigger can't fire on a family's first
   record, and no skill promotes extracted facts onto tree persons (8/27 e2e
@@ -111,7 +105,35 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   investigation lands: qualify (or dual-list) so all agents work identically
   in Cowork, the e2e harness, the unit harness, and the hosted web SDK path.
 
+- [x] **Extractor write authority is too broad (op-level restriction)** —
+  **superseded by the `tree_edit`/`tree_correct` split (this commit,
+  2026-07-12)**: the mutating ops (`update_fact`/`update_name`/`update_person`/
+  `update_source`/`remove`) moved to a new `tree_correct` tool; `tree_edit`
+  keeps only the additive ops, so the record-extractor agent (tree_edit only)
+  is structurally unable to rename/rewrite/remove existing tree entities
+  (the ut_013 rename incident). Residual gap: **per-op authorization within a
+  single tool is still unavailable** — if a finer split is ever needed (e.g.
+  add_name but not add_person), there is no `allowedOperations` caller
+  contract; the only lever is splitting tools again.
+- [ ] **Enum-drift lint** — grep prose enum enumerations (agent bodies, cribs,
+  rubrics) against `enums.schema.json` in CI, following the places-guidance
+  byte-lint pattern. Two drift instances shipped 2026-07-12 (the /research crib
+  listed `researcher` as invalid after it became a valid
+  `informant_proximity`; record-extractor's negative-evidence section still
+  said `unknown`).
+- [ ] **`image_read` callable by the main session** — prose failed 3x (rx_015):
+  the record-extraction skill tells the MAIN session not to call `image_read`
+  itself (delegate to image-reader), but no environment can currently deny a
+  main session a tool an agent needs — Cowork allowed-tools are per-skill, not
+  per-context. Wants a per-context tool-policy design (main-session denylist
+  while an agent holds the tool).
+
 ## Eval framework
+- [ ] **Judge fabrication class — give the judge before-state file content** —
+  three citation fails (2026-07-12) came from the judge claiming on-file text
+  was fabricated or absent; the judge context should include the relevant
+  before-state source entries so "not on file" claims are mechanically
+  checkable.
 - [ ] **Revisit recovered-retry Tool Arguments scoring** — the judge policy
   (`eval/harness/judge/prompt.md` + the mirror note in
   `eval/tests/unit/record-extraction/rubric.md`) caps a validation-rejected
@@ -124,6 +146,16 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   a cleanly-recovered single retry — decide with post-composite data.
 
 ## Done
+- ~~Negative-evidence `informant_proximity` enum value~~ — **shipped**
+  (2026-07-12, the tree_edit/tree_correct + enum-drift-fixes window):
+  `researcher` is a valid `informant_proximity` closed-enum value with the
+  full blast radius applied — both `enums.schema.json` trees, the TS union in
+  `packages/schema/src/index.ts`, validator `CLOSED_ENUMS`, and the
+  `research-schema-spec.md` prose (`researcher` = the value is the
+  researcher's own conclusion — negative evidence, structure-inferred
+  relationships; `unknown` = a record informant exists but can't be
+  identified). Residual prose-drift policing is the separate "Enum-drift
+  lint" item above.
 - ~~`/v1` FamilySearch token mechanism~~ — **shipped**: `POST /v1/sessions` accepts an
   optional `familysearch_token` ({`access_token`, `refresh_token?`, `expires_in?`}),
   injected straight into the sandbox at create and **not** persisted. Include the

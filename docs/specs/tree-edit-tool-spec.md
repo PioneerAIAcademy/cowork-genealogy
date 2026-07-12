@@ -9,14 +9,16 @@
 > JSON path in `tree-edit` becomes a validated, atomic, id-assigning tool call.
 
 ```
-tree_edit({ projectPath, operation, ...operationFields }) -> compact summary
+tree_edit({ projectPath, operation, ...operationFields })    -> compact summary   (additive ops)
+tree_correct({ projectPath, operation, ...operationFields }) -> compact summary   (correction/removal ops)
 ```
 
-A single tool with an `operation` discriminator. The LLM supplies the **content
-judgment** (which fact, what value, which relationship); the tool does the
-error-prone clerical work — id allocation, the primary/preferred flag swaps,
-`standard_place` resolution, array mutation, validate-before-persist, and the
-atomic write.
+Two advertised tools over one shared core, each with an `operation`
+discriminator (see § "The tree_edit / tree_correct split"). The LLM supplies
+the **content judgment** (which fact, what value, which relationship); the tool
+does the error-prone clerical work — id allocation, the primary/preferred flag
+swaps, `standard_place` resolution, array mutation, validate-before-persist,
+and the atomic write.
 
 ---
 
@@ -51,16 +53,49 @@ The merge work already built the machinery (atomic write, `validateParsed`,
 
 In scope — the `tree-edit` ad-hoc operations (`SKILL.md:52–124`):
 
-| Operation | Replaces (SKILL.md) |
-|-----------|---------------------|
-| `add_fact` | "Adding a fact to a person" |
-| `update_fact` | "Correcting a value" (fact date/place/value) |
-| `add_name` / `update_name` | "Correcting a value" (name given/surname) |
-| `update_person` | gender/ark correction |
-| `add_person` | "Adding a person" |
-| `add_relationship` | "Adding a relationship" |
-| `add_source` / `update_source` | source-description (`S` entry) add/correct — ad-hoc/manual source work and proof-conclusion step 6. (Record-extraction's per-record `S` entry is created by `research_append`'s composite `sourceDescription` instead — see §4.3 cross-tool ordering.) |
-| `remove` | "Removing concluded data (tier downgrade)" — facts/relationships only |
+| Operation | Tool | Replaces (SKILL.md) |
+|-----------|------|---------------------|
+| `add_fact` | `tree_edit` | "Adding a fact to a person" |
+| `update_fact` | `tree_correct` | "Correcting a value" (fact date/place/value) |
+| `add_name` / `update_name` | `tree_edit` / `tree_correct` | "Correcting a value" (name given/surname) |
+| `update_person` | `tree_correct` | gender/ark correction |
+| `add_person` | `tree_edit` | "Adding a person" |
+| `add_relationship` | `tree_edit` | "Adding a relationship" |
+| `add_source` / `update_source` | `tree_edit` / `tree_correct` | source-description (`S` entry) add/correct — ad-hoc/manual source work and proof-conclusion step 6. (Record-extraction's per-record `S` entry is created by `research_append`'s composite `sourceDescription` instead — see §4.3 cross-tool ordering.) |
+| `remove` | `tree_correct` | "Removing concluded data (tier downgrade)" — facts/relationships only |
+
+### 2.1 The `tree_edit` / `tree_correct` split
+
+The ten operations are advertised as **two tools** over one shared
+implementation core (`src/tools/tree-edit.ts` `executeTreeOps`;
+`src/tools/tree-correct.ts` is a thin gate module over it):
+
+| Tool | Admitted ops |
+|------|--------------|
+| `tree_edit` | `add_fact`, `add_name`, `add_person`, `add_relationship`, `add_source` — **additive only** |
+| `tree_correct` | `update_fact`, `update_name`, `update_person`, `update_source`, `remove` — **corrections/removals only** |
+
+**Rationale:** extraction must be **structurally unable to rewrite identity**.
+The record-extractor agent holds `tree_edit` to write sibling stubs and
+alternate names, and in the ut_013 rename incident (2026-07-12 runlog) it used
+`update_name` to rename an existing tree person it judged misnamed — an
+identity-resolution act that belongs to person-evidence, hypothesis-tracking,
+and the tree-edit skill. Prose prohibitions do not hold when the model
+believes it is correcting an error; a whole-tool allowlist does. With the op
+set split by mutability, granting a context `tree_edit` but not `tree_correct`
+denies every rename/rewrite/delete at the tool boundary — enforcement is
+allowlist-level everywhere (Cowork `allowed-tools`, agent `tools:`
+frontmatter, the eval harness), not per-run validator prose.
+
+Both tools keep identical batched `ops`, id rules, validate-on-write, and
+`.bak` semantics (everything in §4–§7). An op sent to the wrong tool is
+rejected before anything is applied, with a redirect naming the sibling tool
+(`tree_edit only adds — 'update_name' is a correction/removal op; corrections
+and removals live in tree_correct`, and the mirror-image message on
+`tree_correct`); in a batch the rejection is indexed `ops[i]: …` and nothing
+is written. Each tool's description cross-references the other. Everywhere
+this spec says `tree_edit` about the shared pipeline (§4.1–§7), the behavior
+applies to whichever tool admits the op.
 
 In scope for sources: the lightweight **tree** `sources[]` entry (the `S`
 description in `tree.gedcomx.json`, `simplified-gedcomx-spec.md` §4.3) — `title`,
@@ -313,16 +348,19 @@ Sequence (mirrors `merge_record_into_tree`):
 
 ## 6. Decisions recorded
 
-- **One tool with an `operation` discriminator, not one tool per edit.** Follows
-  this repo's "don't create one MCP tool per endpoint — use generic tools with
-  parameters" rule (CLAUDE.md) and keeps Claude's tool list lean. The ten
-  operations share the entire read → apply → validate → backup → write pipeline;
-  only the in-memory mutation differs. *Rejected:* `tree_add_fact`,
+- **Generic tools with an `operation` discriminator, not one tool per edit.**
+  Follows this repo's "don't create one MCP tool per endpoint — use generic
+  tools with parameters" rule (CLAUDE.md) and keeps Claude's tool list lean.
+  The ten operations share the entire read → apply → validate → backup → write
+  pipeline; only the in-memory mutation differs. *Rejected:* `tree_add_fact`,
   `tree_add_person`, … (ten near-identical tools, ten schema entries, more
   context for no behavioral gain). The merge tools are two tools only because they
   have **different side effects** (one writes one file, the other two + a remap);
-  every `tree_edit` operation has the *same* side effect (write the tree), so the
-  split that justified two merge tools does not apply here.
+  every operation here has the *same* side effect (write the tree), so that
+  argument for splitting does not apply. The one split that did land —
+  `tree_edit` (add) vs `tree_correct` (update/remove), §2.1 — is not per
+  endpoint but per **authority level**: it exists so a caller's tool allowlist
+  can grant additive writes without granting identity rewrites/removals.
 - **`standard_place` resolution is internal and on by default.** Removes the
   "call `place_search`, copy the first result's `standardPlace`" hand-step
   (`SKILL.md:68–70`) and makes `place`/`standard_place` atomic. Overridable:
@@ -408,11 +446,13 @@ The caller (`tree-edit` skill) still:
 
 ## 10. Wiring
 
-Standard MCP tool: `src/tools/tree-edit.ts`, schema in `allToolSchemas`
-(`src/tool-schemas.ts`), dispatch in `src/index.ts`, name in `manifest.json`
-(packaging drift test enforces parity). camelCase params at the boundary;
-persisted tree stays snake_case (the tool renames nothing — payload fields are
-already the snake_case simplified-GedcomX shape the skill passes).
+Standard MCP tools: `src/tools/tree-edit.ts` (shared core + `tree_edit`) and
+`src/tools/tree-correct.ts` (thin gate module exporting `tree_correct`),
+schemas in `allToolSchemas` (`src/tool-schemas.ts`), dispatch in
+`src/index.ts`, names in `manifest.json` (packaging drift test enforces
+parity). camelCase params at the boundary; persisted tree stays snake_case
+(the tool renames nothing — payload fields are already the snake_case
+simplified-GedcomX shape the skill passes).
 
 ---
 
