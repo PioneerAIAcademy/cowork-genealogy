@@ -121,6 +121,78 @@ def test_new_assertions_have_required_classification(before_state, after_state):
     assert not errors, "Incomplete new assertions:\n" + "\n".join(errors)
 
 
+def test_expected_classifications(before_state, after_state, test):
+    """Fixture-gated: deterministic per-fixture classification ground truth.
+
+    Gated on the test JSON's optional top-level `expected_classifications`
+    block (threaded into `test` by the orchestrator; see
+    unit-test-spec.md §5.10). Each matcher names a (record_role, fact_type)
+    pair plus expected values for any of `evidence_type`,
+    `informant_proximity`, `information_quality`. Semantics:
+
+      1. At least one NEW assertion (created by this run) with the
+         matcher's record_role + fact_type must exist.
+      2. EVERY new assertion with that record_role + fact_type must carry
+         each classification value the matcher declares.
+
+    This makes classification doctrine mechanically checkable per fixture —
+    the LLM judge still grades the dimensions, but these results are the
+    mechanical reference during annotation (they don't invert with judge
+    phrasing).
+    """
+    matchers = test.get("expected_classifications") or []
+    if not matchers:
+        pytest.skip("test declares no expected_classifications")
+
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    before_ids = {a.get("id") for a in before.get("assertions", [])}
+    new = [
+        a for a in after.get("assertions", []) if a.get("id") not in before_ids
+    ]
+
+    classification_fields = (
+        "evidence_type",
+        "informant_proximity",
+        "information_quality",
+    )
+
+    errors = []
+    for m in matchers:
+        role = m.get("record_role")
+        fact = m.get("fact_type")
+        matching = [
+            a
+            for a in new
+            if a.get("record_role") == role and a.get("fact_type") == fact
+        ]
+        if not matching:
+            errors.append(
+                f"no new assertion with record_role='{role}' "
+                f"fact_type='{fact}' (expected at least one)"
+            )
+            continue
+        for a in matching:
+            aid = a.get("id", "?")
+            for field in classification_fields:
+                if field not in m:
+                    continue
+                got = a.get(field)
+                if got != m[field]:
+                    errors.append(
+                        f"assertions[{aid}] (record_role='{role}', "
+                        f"fact_type='{fact}'): {field}='{got}' — "
+                        f"expected '{m[field]}'"
+                    )
+
+    assert not errors, (
+        "expected_classifications violations:\n  - " + "\n  - ".join(errors)
+    )
+
+
 def test_new_assertions_attached_to_record_role(before_state, after_state):
     """Every new assertion must have both record_id and record_role.
 

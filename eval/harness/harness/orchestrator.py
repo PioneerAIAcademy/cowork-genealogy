@@ -408,7 +408,16 @@ async def _execute_single_run(
         },
         tool_calls=result.tool_calls,
         skill_frontmatter=skill_frontmatter,
-        test=spec.raw.get("test", {}),
+        test={
+            **spec.raw.get("test", {}),
+            # Top-level validator-facing block threaded in alongside the
+            # inner test metadata: deterministic classification ground
+            # truth for test_expected_classifications
+            # (unit-test-spec.md §5.10).
+            "expected_classifications": spec.raw.get(
+                "expected_classifications", []
+            ),
+        },
     )
     validators_passed = compute_validators_passed(
         validator_results, intentionally_invalid=spec.intentionally_invalid

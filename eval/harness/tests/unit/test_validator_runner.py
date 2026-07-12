@@ -203,6 +203,126 @@ def test_ownership_table_allows_owned_writes():
     assert ownership.passed is True, f"unexpected failure: {ownership.error}"
 
 
+def _classification_state(assertions):
+    """State pair for expected_classifications tests: empty before,
+    `assertions` appended after."""
+    before = _empty_research_state()
+    before["files"] = {}
+    after = _empty_research_state()
+    after["files"] = {}
+    after["research_json"] = {
+        **after["research_json"],
+        "assertions": assertions,
+    }
+    return before, after
+
+
+def _run_expected_classifications(assertions, matchers):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": [], "expected_classifications": matchers},
+    )
+    result = next(
+        (r for r in results if r.name == "test_expected_classifications"), None
+    )
+    assert result is not None, "test_expected_classifications did not run"
+    return result
+
+
+def test_expected_classifications_pass_when_matchers_satisfied():
+    """Existence + declared-value conformity on every matching new
+    assertion → pass. A second assertion with a different pair is
+    untouched by the matcher."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "evidence_type": "indirect",
+            "informant_proximity": "family_not_present",
+            "information_quality": "secondary",
+        },
+        {
+            "id": "a_2",
+            "record_role": "deceased",
+            "fact_type": "death",
+            "evidence_type": "direct",
+            "informant_proximity": "official_duty",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "deceased",
+                "fact_type": "age",
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            },
+            {
+                "record_role": "deceased",
+                "fact_type": "death",
+                "evidence_type": "direct",
+                "informant_proximity": "official_duty",
+            },
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+    assert not (result.error or "").startswith("skipped")
+
+
+def test_expected_classifications_fail_names_assertion_field_got_expected():
+    """EVERY new assertion matching the pair must conform — a violation
+    is reported with the assertion id, field, got, and expected."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "evidence_type": "direct",  # doctrine says indirect
+            "informant_proximity": "family_not_present",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "deceased",
+                "fact_type": "age",
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            }
+        ],
+    )
+    assert result.passed is False
+    for fragment in ("a_1", "evidence_type", "direct", "indirect"):
+        assert fragment in (result.error or ""), (
+            f"failure message missing {fragment!r}: {result.error}"
+        )
+
+
+def test_expected_classifications_fail_when_pair_missing_and_skip_when_absent():
+    """A matcher whose (record_role, fact_type) pair no new assertion
+    carries fails the existence half; a test without the block skips."""
+    result = _run_expected_classifications(
+        [],
+        [{"record_role": "deceased", "fact_type": "age", "evidence_type": "indirect"}],
+    )
+    assert result.passed is False
+    assert "no new assertion" in (result.error or "")
+    assert "record_role='deceased'" in (result.error or "")
+
+    skipped = _run_expected_classifications([], [])
+    assert skipped.passed is True
+    assert "skipped" in (skipped.error or "").lower()
+
+
 def test_pytest_skip_is_treated_as_pass_with_skipped_marker(tmp_path):
     """Validators using `pytest.skip()` should not abort the run."""
     bad = tmp_path / "test_universal.py"

@@ -275,6 +275,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `input` | required | required |
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
+| `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `negative` | omit | required |
 
 ### JSON Schema
@@ -376,6 +377,22 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "type": "array",
       "items": { "type": "string" },
       "description": "Per-test background notes the LLM judge reads to ground its rationales for the base + rubric dimensions. NOT a separate scored source — the judge does not emit a `criteria` dimension. Deterministic checks belong in validators. May be empty."
+    },
+    "expected_classifications": {
+      "type": "array",
+      "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications). Per matcher: at least one NEW assertion with the matcher's record_role + fact_type must exist, and every new assertion with that pair must carry each declared classification value. See Section 5.10.",
+      "items": {
+        "type": "object",
+        "required": ["record_role", "fact_type"],
+        "properties": {
+          "record_role": { "type": "string" },
+          "fact_type": { "type": "string" },
+          "evidence_type": { "type": "string" },
+          "informant_proximity": { "type": "string" },
+          "information_quality": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
     },
     "negative": {
       "type": "object",
@@ -555,6 +572,10 @@ Optional boolean (default `false`). When `true`, the harness includes the **actu
 Enable it for skills whose graded deliverable is **written to a file rather than echoed in the chat reply** — e.g. `proof-conclusion`, whose proof lives in `proof_summaries[].narrative_markdown`. Without it, when the skill writes a correct proof to the file but only thinly summarizes it in chat, the judge has nothing to grade and fails a correct run — a variance the skill prompt alone can't reliably remove.
 
 Default `false` reproduces the legacy counts-only judge input **byte-for-byte for every other test and skill**, so enabling it for one skill changes grading nowhere else and does not affect `judge_prompt_hash`. It is a real (non-cosmetic) field, so it is snapshot-tracked: toggling it invalidates the content hash and forces a re-run, like `test.holdout`.
+
+### 5.10 `expected_classifications`
+
+Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `evidence_type`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
 
 ---
 

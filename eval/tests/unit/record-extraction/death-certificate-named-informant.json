@@ -16,6 +16,17 @@
     "user_message": "Extract assertions from this death certificate for Patrick Flynn:\n\nCommonwealth of Pennsylvania — Certificate of Death\nRegistration District No. 2436 · File No. 89072\n\nFull name: Patrick Flynn\nSex: Male\nColor or race: White\nDate of death: March 12, 1908\nAge: 63 years, 2 months, 10 days\nOccupation: Coal miner\nBirthplace: Ireland\nFather's name: Thomas Flynn\nFather's birthplace: Ireland\nMother's maiden name: Mary Brennan\nMother's birthplace: Ireland\nInformant: Mary Flynn (wife), 214 Main St, Shenandoah, PA\nCause of death: Miners' asthma (pneumoconiosis)\nDuration of last illness: 3 years\nPlace of death: Shenandoah, Schuylkill County, Pennsylvania\nDate of burial: March 15, 1908\nPlace of burial: Annunciation Cemetery, Shenandoah, PA\nUndertaker: J.J. Franey, Shenandoah, PA\nAttending physician: Dr. William H. Stein",
     "scenario": "empty-project-just-created"
   },
+  "expected_classifications": [
+    { "record_role": "deceased", "fact_type": "death", "evidence_type": "direct", "informant_proximity": "official_duty" },
+    { "record_role": "deceased", "fact_type": "cause_of_death", "evidence_type": "direct", "informant_proximity": "official_duty" },
+    { "record_role": "deceased", "fact_type": "age", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "deceased", "fact_type": "birth", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "deceased", "fact_type": "birthplace", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "father_of_deceased", "fact_type": "name", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "father_of_deceased", "fact_type": "birthplace", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "mother_of_deceased", "fact_type": "name", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "mother_of_deceased", "fact_type": "birthplace", "evidence_type": "indirect", "informant_proximity": "family_not_present" }
+  ],
   "judge_context": [
     "The death certificate names Mary Flynn (wife) as the informant — this should appear in the informant field for facts she reported, not 'unknown'",
     "Informant assignment follows the settled death-certificate doctrine (matches SKILL.md/agent and rubric — grade against this, not intuition): the attending physician (Dr. William H. Stein) is the informant for the death event itself — death date, death place, cause, duration of illness — with proximity official_duty; Mary Flynn (wife) is the informant for the decedent's biographical facts — name, birthplace, parents' names, occupation — with proximity family_not_present for events she did not witness (Patrick's birth in Ireland); the undertaker (J.J. Franey) is the informant for burial date/place, proximity official_duty",
