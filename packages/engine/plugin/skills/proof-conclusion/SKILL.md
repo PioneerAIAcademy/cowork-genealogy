@@ -1,19 +1,19 @@
 ---
 name: proof-conclusion
 model: claude-sonnet-4-6
-description: Writes GPS-conformant proof conclusions — selects the
-  confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses
-  the proof conclusion form (Statement/Summary/Argument), and produces a
-  self-contained narrative markdown that can be uploaded to FamilySearch.
-  Updates tree.gedcomx.json when the tier reaches probable or higher.
+description: Writes GPS-conformant proof conclusions — selects the tier
+  (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
+  (Statement/Summary/Argument), and writes a self-contained narrative
+  markdown uploadable to FamilySearch. Updates tree.gedcomx.json at tier
+  probable or higher.
   GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
   "conclude this question", when assertions and person_evidence exist for
-  a question, or when a hypothesis reaches supported status. ALSO use for
+  a question or a hypothesis reaches supported status. ALSO for
   review of an existing proof — "does my proof meet the GPS", "assess
   ps_NNN against the GPS components", "review my existing proof summary"
-  (this skill invokes the gps-mentor for the critique). Do NOT use
+  (invokes the gps-mentor critique). Do NOT use
   when the user wants to resolve a conflict (use conflict-resolution),
   wants to select the next question (use question-selection), or wants to
   classify evidence (use record-extraction, which owns classification).

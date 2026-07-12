@@ -3,10 +3,10 @@ name: record-extraction
 model: claude-sonnet-4-6
 description: >-
   Extracts GPS-conformant assertions from genealogical records and owns
-  their evidence classifications. Acquires and triages the record (MCP
-  search result, record ARK, captured PDF, or image), then delegates each
-  record to the record-extractor agent, which extracts atomic assertions
-  with first-and-final three-layer classifications. GPS Step 2 (citation)
+  their evidence classifications. Acquires and triages the record (search
+  result, ARK, PDF, or image), then delegates each to the record-extractor
+  agent for atomic assertions with first-and-final three-layer
+  classifications. GPS Step 2 (citation)
   and Step 3 (analysis). Use when the user says "extract assertions",
   "analyze this record", "what does this record say", "process this
   record", after search-records or search-external-sites finds a record,
