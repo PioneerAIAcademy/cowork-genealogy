@@ -297,6 +297,115 @@ const NULLABLE_FIELDS = new Set([
 // data under the wrong field name (e.g. `standrad_date` instead of
 // `standard_date`) fails validation and is not written.
 
+// Allowed properties per research.json object — one set per
+// `additionalProperties: false` subschema in research.schema.json (and its
+// packages/schema mirror). The hand-maintained validator must reject unknown
+// keys at exactly the sites the JSON Schema does: a run once persisted
+// `citation_detail.location` and only the harness's JSON-Schema gate caught
+// it, because these checks were missing. Keep each set in sync with the
+// matching `$defs` entry's `properties`. (`assertion.structured_value` and
+// `log_entry.query` are open objects in the schema — no set for their
+// insides.) Exported for the shape-parity test in
+// tests/validation/validator.test.ts.
+export const RESEARCH_SHAPES = {
+  document: new Set([
+    "project", "researcher_profile", "known_holdings", "questions", "plans",
+    "log", "sources", "assertions", "person_evidence", "conflicts",
+    "hypotheses", "timelines", "proof_summaries", "evaluations",
+  ]),
+  project: new Set([
+    "id", "title", "objective", "subject_person_ids", "status",
+    "created", "updated",
+  ]),
+  researcher_profile: new Set([
+    "experience_level", "subscriptions", "narration_guidance",
+  ]),
+  known_holding: new Set([
+    "id", "holding_type", "description", "relates_to_person_ids",
+    "relevant_facts", "confidence", "promoted", "created",
+  ]),
+  question: new Set([
+    "id", "question", "rationale", "selection_basis", "priority", "status",
+    "depends_on", "unblocks", "created", "resolved",
+    "resolution_assertion_ids", "exhaustive_declaration",
+  ]),
+  exhaustive_declaration: new Set([
+    "declared", "log_entry_ids", "stop_criteria", "justification",
+  ]),
+  stop_criteria: new Set([
+    "goal_alignment", "repository_breadth", "original_substitution",
+    "independent_verification", "evidence_class", "conflict_resolution",
+    "overturn_risk",
+  ]),
+  plan: new Set(["id", "question_id", "status", "created", "items"]),
+  plan_item: new Set([
+    "id", "sequence", "record_type", "jurisdiction", "date_range",
+    "repository", "rationale", "fallback_for", "status",
+  ]),
+  log_entry: new Set([
+    "id", "plan_item_id", "performed", "tool", "query", "outcome",
+    "results_examined", "results_ref", "results_available", "notes",
+    "external_site",
+  ]),
+  external_site_detail: new Set([
+    "site", "url_generated", "capture_received", "capture_filename",
+  ]),
+  source: new Set([
+    "id", "gedcomx_source_description_id", "citation", "citation_detail",
+    "source_classification", "repository", "access_date", "url",
+    "url_archived", "notes", "transcription", "log_entry_id",
+  ]),
+  citation_detail: new Set([
+    "who", "what", "when_created", "when_accessed", "where", "where_within",
+  ]),
+  assertion: new Set([
+    "id", "source_id", "record_id", "record_role", "record_persona_id",
+    "fact_type", "value", "structured_value", "date", "date_certainty",
+    "place", "standard_place", "information_quality", "informant",
+    "informant_proximity", "informant_bias_notes", "evidence_type",
+    "log_entry_id", "extracted_for_question_ids",
+  ]),
+  person_evidence_entry: new Set([
+    "id", "assertion_id", "person_id", "confidence", "rationale",
+    "match_score", "created", "superseded_by",
+  ]),
+  conflict: new Set([
+    "id", "conflict_type", "description", "disputed_attribute",
+    "identity_question", "competing_assertion_ids", "status",
+    "preferred_assertion_id", "resolution_rationale",
+    "independence_analysis", "weighing_analysis", "blocks_question_ids",
+  ]),
+  hypothesis: new Set([
+    "id", "claim", "status", "supporting_assertion_ids",
+    "contradicting_assertion_ids", "ruled_out", "ruled_out_reason",
+    "related_question_ids", "notes",
+  ]),
+  timeline: new Set([
+    "id", "label", "person_ids", "hypothesis_id", "generated", "events",
+    "gaps", "impossibilities",
+  ]),
+  timeline_event: new Set([
+    "date", "date_certainty", "event_type", "description", "place",
+    "standard_place", "assertion_ids", "conflict_ids", "conflict_note",
+    "distance_from_previous_km",
+  ]),
+  timeline_gap: new Set([
+    "start", "end", "expected_events", "severity", "notes",
+  ]),
+  timeline_impossibility: new Set([
+    "description", "event_1_assertion_id", "event_2_assertion_id",
+  ]),
+  proof_summary: new Set([
+    "id", "question_id", "tier", "vehicle", "supporting_assertion_ids",
+    "resolved_conflict_ids", "exhaustive_search_summary",
+    "narrative_markdown",
+  ]),
+  evaluation_entry: new Set([
+    "id", "focus", "target_id", "target_type", "verdict", "file_path",
+    "timestamp", "superseded_by",
+  ]),
+};
+
 function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const path = "research.json";
 
@@ -326,6 +435,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, path, `missing top-level section '${section}'`);
     }
   }
+  checkAllowedKeys(data, RESEARCH_SHAPES.document, "research documents", path, report);
 
   if (typeof data.project !== "object" || data.project === null) {
     addError(report, path, "project must be an object");
@@ -336,6 +446,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const p = data.project;
   const projPath = `${path}/project`;
   checkRequired(p, ["id", "objective", "status", "created", "updated"], projPath, report, NULLABLE_FIELDS);
+  checkAllowedKeys(p, RESEARCH_SHAPES.project, "project objects", projPath, report);
   if ("id" in p) {
     checkIdPrefix(p.id, ID_PREFIXES.project, projPath, report);
   }
@@ -350,6 +461,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (typeof rp !== "object") {
       addError(report, rpPath, "researcher_profile must be an object");
     } else {
+      checkAllowedKeys(rp, RESEARCH_SHAPES.researcher_profile, "researcher_profile objects", rpPath, report);
       if ("experience_level" in rp && rp.experience_level !== null) {
         checkEnum(rp.experience_level, "experience_level", rpPath, report);
       }
@@ -384,6 +496,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         checkRequired(kh, [
           "id", "holding_type", "description", "confidence", "promoted", "created",
         ], khPath, report, NULLABLE_FIELDS);
+        checkAllowedKeys(kh, RESEARCH_SHAPES.known_holding, "known_holdings entries", khPath, report);
         if ("id" in kh) {
           checkIdPrefix(kh.id, ID_PREFIXES.known_holdings, khPath, report);
         }
@@ -414,6 +527,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "status", "depends_on", "unblocks", "created", "resolved",
       "resolution_assertion_ids", "exhaustive_declaration",
     ], qp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(q, RESEARCH_SHAPES.question, "questions", qp, report);
 
     if ("id" in q) {
       checkIdPrefix(q.id, ID_PREFIXES.questions, qp, report);
@@ -433,6 +547,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     const ed = q.exhaustive_declaration;
     if (typeof ed === "object" && ed !== null) {
       checkRequired(ed, ["declared", "log_entry_ids"], `${qp}/exhaustive_declaration`, report, NULLABLE_FIELDS);
+      checkAllowedKeys(ed, RESEARCH_SHAPES.exhaustive_declaration, "exhaustive_declaration objects", `${qp}/exhaustive_declaration`, report);
       if (ed.declared && (!ed.log_entry_ids || ed.log_entry_ids.length === 0)) {
         addError(report, `${qp}/exhaustive_declaration`, "declared is true but log_entry_ids is empty");
       }
@@ -449,6 +564,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           }
         }
       }
+      if (typeof ed.stop_criteria === "object" && ed.stop_criteria !== null) {
+        checkAllowedKeys(ed.stop_criteria, RESEARCH_SHAPES.stop_criteria, "stop_criteria objects", `${qp}/exhaustive_declaration/stop_criteria`, report);
+      }
     }
   }
 
@@ -458,6 +576,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     const pl = plans[i];
     const pp = `${path}/plans[${i}]`;
     checkRequired(pl, ["id", "question_id", "status", "created", "items"], pp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(pl, RESEARCH_SHAPES.plan, "plans", pp, report);
     if ("id" in pl) {
       checkIdPrefix(pl.id, ID_PREFIXES.plans, pp, report);
       ids.plans.add(pl.id);
@@ -477,6 +596,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         "id", "sequence", "record_type", "jurisdiction",
         "date_range", "repository", "rationale", "fallback_for", "status",
       ], ip, report, NULLABLE_FIELDS);
+      checkAllowedKeys(item, RESEARCH_SHAPES.plan_item, "plan items", ip, report);
       if ("id" in item) {
         checkIdPrefix(item.id, ID_PREFIXES.plan_items, ip, report);
         ids.plan_items.add(item.id);
@@ -496,6 +616,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "id", "plan_item_id", "performed", "tool", "query",
       "outcome", "results_examined", "external_site",
     ], lp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(entry, RESEARCH_SHAPES.log_entry, "log entries", lp, report);
     if ("id" in entry) {
       checkIdPrefix(entry.id, ID_PREFIXES.log, lp, report);
       ids.log.add(entry.id);
@@ -510,6 +631,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if (typeof ext === "object" && ext !== null) {
       checkRequired(ext, ["site", "url_generated", "capture_received"], `${lp}/external_site`, report, NULLABLE_FIELDS);
+      checkAllowedKeys(ext, RESEARCH_SHAPES.external_site_detail, "external_site objects", `${lp}/external_site`, report);
       if ("site" in ext && !EXTERNAL_SITE_VALUES.has(ext.site)) {
         addError(report, `${lp}/external_site`, `'${ext.site}' is not a valid site`);
       }
@@ -526,6 +648,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "citation_detail", "source_classification", "repository",
       "access_date",
     ], sp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(src, RESEARCH_SHAPES.source, "sources", sp, report);
     if ("id" in src) {
       checkIdPrefix(src.id, ID_PREFIXES.sources, sp, report);
       ids.sources.add(src.id);
@@ -541,6 +664,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (typeof cd === "object" && cd !== null) {
       checkRequired(cd, ["who", "what", "when_created", "when_accessed", "where", "where_within"],
                    `${sp}/citation_detail`, report, NULLABLE_FIELDS);
+      checkAllowedKeys(cd, RESEARCH_SHAPES.citation_detail, "citation_detail objects", `${sp}/citation_detail`, report);
     }
   }
 
@@ -554,6 +678,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "value", "information_quality", "informant", "informant_proximity",
       "evidence_type", "extracted_for_question_ids",
     ], ap, report, NULLABLE_FIELDS);
+    checkAllowedKeys(a, RESEARCH_SHAPES.assertion, "assertions", ap, report);
     if ("id" in a) {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
       ids.assertions.add(a.id);
@@ -589,6 +714,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "id", "assertion_id", "person_id", "confidence",
       "rationale", "created",
     ], pp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(pe, RESEARCH_SHAPES.person_evidence_entry, "person_evidence entries", pp, report);
     if ("id" in pe) {
       checkIdPrefix(pe.id, ID_PREFIXES.person_evidence, pp, report);
       ids.person_evidence.add(pe.id);
@@ -610,6 +736,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "id", "conflict_type", "description", "competing_assertion_ids",
       "status", "blocks_question_ids",
     ], cp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(c, RESEARCH_SHAPES.conflict, "conflicts", cp, report);
     if ("id" in c) {
       checkIdPrefix(c.id, ID_PREFIXES.conflicts, cp, report);
       ids.conflicts.add(c.id);
@@ -645,6 +772,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "id", "claim", "status", "supporting_assertion_ids",
       "contradicting_assertion_ids", "ruled_out", "related_question_ids",
     ], hp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(h, RESEARCH_SHAPES.hypothesis, "hypotheses", hp, report);
     if ("id" in h) {
       checkIdPrefix(h.id, ID_PREFIXES.hypotheses, hp, report);
       ids.hypotheses.add(h.id);
@@ -666,6 +794,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "id", "label", "person_ids", "generated", "events", "gaps",
       "impossibilities",
     ], tp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(t, RESEARCH_SHAPES.timeline, "timelines", tp, report);
     if ("id" in t) {
       checkIdPrefix(t.id, ID_PREFIXES.timelines, tp, report);
       ids.timelines.add(t.id);
@@ -676,6 +805,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const ev = events[j];
       const ep = `${tp}/events[${j}]`;
       checkRequired(ev, ["date", "date_certainty", "event_type", "description", "assertion_ids"], ep, report, NULLABLE_FIELDS);
+      checkAllowedKeys(ev, RESEARCH_SHAPES.timeline_event, "timeline events", ep, report);
       if ("date_certainty" in ev && !DATE_CERTAINTY_TIMELINE.has(ev.date_certainty)) {
         const sorted = Array.from(DATE_CERTAINTY_TIMELINE).sort();
         addError(report, ep, `'${ev.date_certainty}' is not valid for timeline events (use: ${sorted.join(', ')})`);
@@ -687,9 +817,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       const gap = gaps[j];
       const gp = `${tp}/gaps[${j}]`;
       checkRequired(gap, ["start", "end", "expected_events", "severity"], gp, report, NULLABLE_FIELDS);
+      checkAllowedKeys(gap, RESEARCH_SHAPES.timeline_gap, "timeline gaps", gp, report);
       if ("severity" in gap) {
         checkEnum(gap.severity, "severity", gp, report);
       }
+    }
+
+    const impossibilities = Array.isArray(t.impossibilities) ? t.impossibilities : [];
+    for (let j = 0; j < impossibilities.length; j++) {
+      checkAllowedKeys(
+        impossibilities[j], RESEARCH_SHAPES.timeline_impossibility,
+        "timeline impossibilities", `${tp}/impossibilities[${j}]`, report,
+      );
     }
   }
 
@@ -703,6 +842,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "supporting_assertion_ids", "resolved_conflict_ids",
       "exhaustive_search_summary", "narrative_markdown",
     ], psp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(ps, RESEARCH_SHAPES.proof_summary, "proof_summaries", psp, report);
     if ("id" in ps) {
       checkIdPrefix(ps.id, ID_PREFIXES.proof_summaries, psp, report);
       ids.proof_summaries.add(ps.id);
@@ -748,6 +888,7 @@ function validateEvaluations(
       "id", "focus", "target_id", "target_type", "verdict",
       "file_path", "timestamp", "superseded_by",
     ], ep, report, NULLABLE_FIELDS);
+    checkAllowedKeys(ev, RESEARCH_SHAPES.evaluation_entry, "evaluations", ep, report);
 
     if ("id" in ev) {
       checkIdPrefix(ev.id, ID_PREFIXES.evaluations, ep, report);
@@ -798,7 +939,7 @@ function validateEvaluations(
   }
 }
 
-function checkTreeKeys(
+function checkAllowedKeys(
   obj: any,
   allowed: Set<string>,
   what: string,
@@ -862,7 +1003,7 @@ function checkTreeSourceRefs(
       addError(report, srp, "source reference must be an object");
       continue;
     }
-    checkTreeKeys(sref, TREE_SOURCE_REF_FIELDS, "source references", srp, report);
+    checkAllowedKeys(sref, TREE_SOURCE_REF_FIELDS, "source references", srp, report);
     if (!("ref" in sref)) {
       addError(report, srp, "source reference missing 'ref'");
     } else if (!sourceIds.has(sref.ref)) {
@@ -890,7 +1031,7 @@ function checkTreeFact(
     return;
   }
   checkRequired(fact, ["id", "type"], path, report, NULLABLE_FIELDS);
-  checkTreeKeys(fact, TREE_FACT_FIELDS, "facts", path, report);
+  checkAllowedKeys(fact, TREE_FACT_FIELDS, "facts", path, report);
   if ("type" in fact && typeof fact.type !== "string") {
     addError(report, path, "'type' must be a string");
   } else if ("type" in fact && !/^[A-Z]/.test(fact.type)) {
@@ -946,7 +1087,7 @@ export function validateGedcomx(
       addError(report, path, `'${section}' must be an array`);
     }
   }
-  checkTreeKeys(data, TREE_TOP_LEVEL_FIELDS, "tree documents", path, report);
+  checkAllowedKeys(data, TREE_TOP_LEVEL_FIELDS, "tree documents", path, report);
 
   // Sources
   const sources = Array.isArray(data.sources) ? data.sources : [];
@@ -979,7 +1120,7 @@ export function validateGedcomx(
     const person = persons[i];
     const pp = `${path}/persons[${i}]`;
     checkRequired(person, ["id", "gender", "names"], pp, report, NULLABLE_FIELDS);
-    checkTreeKeys(person, TREE_PERSON_FIELDS, "persons", pp, report);
+    checkAllowedKeys(person, TREE_PERSON_FIELDS, "persons", pp, report);
     checkTreeStrings(person, ["ark"], pp, report);
     if ("living" in person && typeof person.living !== "boolean") {
       addError(report, pp, "'living' must be a boolean");
@@ -999,7 +1140,7 @@ export function validateGedcomx(
       const name = names[j];
       const np = `${pp}/names[${j}]`;
       checkRequired(name, ["id", "given", "surname"], np, report, NULLABLE_FIELDS);
-      checkTreeKeys(name, TREE_NAME_FIELDS, "names", np, report);
+      checkAllowedKeys(name, TREE_NAME_FIELDS, "names", np, report);
       checkTrueFlag(name, "preferred", np, report);
       checkTreeStrings(name, ["given", "surname", "prefix", "suffix", "type"], np, report);
       checkTreeSourceRefs(name, np, sourceIds, report);
@@ -1023,7 +1164,7 @@ export function validateGedcomx(
 
     const rtype = rel.type;
     if (rtype === "ParentChild") {
-      checkTreeKeys(rel, TREE_PARENT_CHILD_FIELDS, "ParentChild relationships", rp, report);
+      checkAllowedKeys(rel, TREE_PARENT_CHILD_FIELDS, "ParentChild relationships", rp, report);
       if (!("parent" in rel)) {
         addError(report, rp, "ParentChild relationship missing 'parent'");
       } else if (!personIds.has(rel.parent)) {
@@ -1040,7 +1181,7 @@ export function validateGedcomx(
       checkTreeStrings(rel, ["subtype"], rp, report);
       checkTreeNotes(rel, rp, report);
     } else if (rtype === "Couple") {
-      checkTreeKeys(rel, TREE_COUPLE_FIELDS, "Couple relationships", rp, report);
+      checkAllowedKeys(rel, TREE_COUPLE_FIELDS, "Couple relationships", rp, report);
       if (!("person1" in rel)) {
         addError(report, rp, "Couple relationship missing 'person1'");
       } else if (!personIds.has(rel.person1)) {

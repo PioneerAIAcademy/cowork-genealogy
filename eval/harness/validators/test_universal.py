@@ -538,3 +538,75 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     assert not bad, (
         f"skill called MCP tools not in allowed-tools frontmatter: {sorted(set(bad))}"
     )
+
+
+# --- Hand-edit detection (project files must go through writer tools) ---
+#
+# The full set of MCP tools that legitimately write research.json /
+# tree.gedcomx.json. Matched on the tool-name tail after the mcp prefix
+# (mcp__genealogy__research_append → research_append).
+PROJECT_WRITER_TOOLS = {
+    "research_append",
+    "research_log_append",
+    "tree_edit",
+    "tree_correct",
+    "merge_record_into_tree",
+    "merge_tree_persons",
+}
+
+
+def test_project_file_changes_route_through_writer_tools(
+    before_state, after_state, tool_calls
+):
+    """Universal: a modified research.json / tree.gedcomx.json requires at
+    least one writer-tool call in the session.
+
+    The writer tools validate-before-persist, allocate ids, and keep the
+    `.bak` safety copy; a direct file write (Write/Edit/python) bypasses
+    all three. Evidence this happens: tree-edit ut_012 (2026-07-12) made
+    ZERO tool calls yet research.json grew a person_evidence entry with a
+    fabricated `created` date — and every validator passed, because
+    nothing checked the write PATH, only the resulting state.
+
+    This is deliberately coarse: any writer-tool call legitimizes the
+    session's project-file changes (research_append can touch both files
+    via composite persist, so per-file attribution would false-positive).
+    The zero-calls case is the unambiguous hand-edit signal.
+    """
+    changed = []
+    diffable = []
+
+    before_research = before_state.get("research_json")
+    after_research = after_state.get("research_json")
+    if before_research is not None and after_research is not None:
+        diffable.append("research.json")
+        if before_research != after_research:
+            changed.append("research.json")
+
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
+        "tree_gedcomx"
+    )
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get(
+        "tree_gedcomx"
+    )
+    if before_tree is not None and after_tree is not None:
+        diffable.append("tree.gedcomx.json")
+        if before_tree != after_tree:
+            changed.append("tree.gedcomx.json")
+
+    if not diffable:
+        pytest.skip("Missing research.json/tree.gedcomx.json for diff")
+    if not changed:
+        return
+
+    writer_calls = [
+        c
+        for c in (tool_calls or [])
+        if (c.get("tool") or "").rsplit("__", 1)[-1] in PROJECT_WRITER_TOOLS
+    ]
+    assert writer_calls, (
+        f"project file {' and '.join(changed)} modified with no writer-tool "
+        f"call — direct file writes bypass validation/id-allocation/.bak; "
+        f"route through the writer tools "
+        f"({', '.join(sorted(PROJECT_WRITER_TOOLS))})"
+    )

@@ -248,6 +248,30 @@ describe("research_append (Phase 1)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/not supported/);
   });
+
+  it("refuses to write a source whose citation_detail carries an unknown key, and writes nothing", async () => {
+    // The persisted-location incident: a run appended a source with
+    // citation_detail.location and the hand-maintained validator let it
+    // through — only the harness's JSON-Schema gate (additionalProperties:
+    // false on citation_detail) caught it. The closed-shape check must stop
+    // it at the tool boundary.
+    await writeProject();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: {
+        ...sourceNoId,
+        citation_detail: { ...citationDetail, location: "district 40, p. 3" },
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/unexpected property 'location'/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
 });
 
 // ─── Phase 2 ───────────────────────────────────────────────────────────────

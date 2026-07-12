@@ -121,6 +121,35 @@ def test_new_assertions_have_required_classification(before_state, after_state):
     assert not errors, "Incomplete new assertions:\n" + "\n".join(errors)
 
 
+def _normalize_classification_token(s):
+    """Strip non-alphanumerics and casefold, so open, model-chosen spellings
+    of the same concept compare equal: `CauseOfDeath` ≡ `cause_of_death`,
+    `BirthPlace` ≡ `birthplace`. record_role and fact_type are open strings
+    (recommended enums, not closed), so a doctrine-perfect run may persist
+    PascalCase GedcomX-style fact types where a matcher says snake_case."""
+    return "".join(ch for ch in str(s or "") if ch.isalnum()).casefold()
+
+
+def _fact_type_matches(got, want):
+    return _normalize_classification_token(got) == _normalize_classification_token(want)
+
+
+def _record_role_matches(got, want):
+    """Normalized equality, plus a prefix relationship in either direction
+    when the longer form continues with 'of': `father` matches
+    `father_of_deceased` (and vice versa), but `deceased` does NOT match
+    `father_of_deceased` (the longer form doesn't continue with 'of' after
+    the shorter), and `father` does NOT match `father_in_law`."""
+    got_n = _normalize_classification_token(got)
+    want_n = _normalize_classification_token(want)
+    if got_n == want_n:
+        return True
+    if not got_n or not want_n:
+        return False
+    longer, shorter = (got_n, want_n) if len(got_n) > len(want_n) else (want_n, got_n)
+    return longer.startswith(shorter) and longer[len(shorter):].startswith("of")
+
+
 def test_expected_classifications(before_state, after_state, test):
     """Fixture-gated: deterministic per-fixture classification ground truth.
 
@@ -134,6 +163,12 @@ def test_expected_classifications(before_state, after_state, test):
          matcher's record_role + fact_type must exist.
       2. EVERY new assertion with that record_role + fact_type must carry
          each classification value the matcher declares.
+
+    record_role / fact_type matching is normalized (see the helpers above)
+    because both are open, model-chosen strings; the classification values
+    themselves (`evidence_type`, `informant_proximity`,
+    `information_quality`) are closed enums and compare exactly. Failure
+    messages always show the ORIGINAL strings, not the normalized forms.
 
     This makes classification doctrine mechanically checkable per fixture —
     the LLM judge still grades the dimensions, but these results are the
@@ -167,7 +202,8 @@ def test_expected_classifications(before_state, after_state, test):
         matching = [
             a
             for a in new
-            if a.get("record_role") == role and a.get("fact_type") == fact
+            if _record_role_matches(a.get("record_role"), role)
+            and _fact_type_matches(a.get("fact_type"), fact)
         ]
         if not matching:
             errors.append(
