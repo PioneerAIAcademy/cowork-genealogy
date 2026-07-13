@@ -49,6 +49,7 @@ import { treeEditSchema } from "./tools/tree-edit.js";
 import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { researchAppendSchema } from "./tools/research-append.js";
 import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
+import { projectContextSchema } from "./tools/project-context.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -92,4 +93,5 @@ export const allToolSchemas = [
   treeCorrectSchema,
   researchAppendSchema,
   rankSearchMatchesSchema,
+  projectContextSchema,
 ];

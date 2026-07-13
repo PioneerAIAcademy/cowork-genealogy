@@ -44,7 +44,8 @@ export type TreeEditOperation =
   | "add_relationship"
   | "add_source"
   | "update_source"
-  | "remove";
+  | "remove"
+  | "add_household_children";
 
 /** The additive ops — the only operations `tree_edit` accepts. */
 export const ADD_OPERATIONS = [
@@ -53,6 +54,7 @@ export const ADD_OPERATIONS = [
   "add_person",
   "add_relationship",
   "add_source",
+  "add_household_children",
 ] as const;
 
 /** The correction/removal ops — the only operations `tree_correct` accepts. */
@@ -79,6 +81,22 @@ const EDIT_GATE: OpGate = {
     "corrections and removals live in tree_correct",
 };
 
+/** One record-side household member for `add_household_children` — the name
+ *  and gender as the RECORD states them; the tool does the tree matching. */
+export interface HouseholdMemberInput {
+  given?: string;
+  surname?: string;
+  gender?: string;
+}
+
+/** The `add_household_children` checklist — compact, relayable verbatim. */
+export interface HouseholdChecklist {
+  parentsMatched: { name: string; id: string }[];
+  created: { name: string; id: string }[];
+  skipped: { name: string; reason: string; id?: string }[];
+  edgesAdded: number;
+}
+
 /** One edit. The body of a single call, or one element of a batch `ops`. */
 export interface TreeEditOp {
   operation: TreeEditOperation;
@@ -94,6 +112,9 @@ export interface TreeEditOp {
   source?: SimplifiedSourceDescription;
   gender?: string;
   ark?: string;
+  /** add_household_children: the record's parent / child_N rosters. */
+  parents?: HouseholdMemberInput[];
+  children?: HouseholdMemberInput[];
   /** Auto-resolve standard_place when a place is set (default true). */
   resolveStandardPlace?: boolean;
 }
@@ -115,19 +136,27 @@ interface AssignedIds {
   source?: string;
   names?: string[];
   facts?: string[];
+  /** add_household_children stub persons / ParentChild edges. */
+  persons?: string[];
+  relationships?: string[];
+}
+
+interface PerOpResult {
+  operation: TreeEditOperation;
+  assignedIds?: AssignedIds;
+  household?: HouseholdChecklist;
+  action?: "skipped_no_parent_in_tree";
 }
 
 export type TreeEditResult =
-  | {
+  | ({
       ok: true;
-      operation: TreeEditOperation;
-      assignedIds?: AssignedIds;
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
-    }
+    } & PerOpResult)
   | {
       ok: true;
-      results: { operation: TreeEditOperation; assignedIds?: AssignedIds }[];
+      results: PerOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
     }
@@ -216,6 +245,97 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
   }
 }
 
+// ─── add_household_children helpers (spec §4.4) ──────────────────────────────
+
+/** Name-token normalization: casefold, Unicode-decompose (NFKD), strip every
+ *  character outside [a-z0-9] — so `Sóstenes` ≡ `sostenes`, `O'Brien` ≡
+ *  `obrien`. */
+function normalizeNameToken(s: unknown): string {
+  return String(s ?? "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Tolerant given-name match on NORMALIZED tokens: exact (incl. both empty),
+ *  or — both ≥2 chars — one a prefix of the other (Will/William), or the
+ *  shorter a first-letter-anchored subsequence of the longer (the
+ *  Wm/William, Thos/Thomas, Chas/Charles contraction class). An empty token
+ *  matches only an empty token. */
+function givenTokenMatches(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (a.length < 2 || b.length < 2) return false;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (long.startsWith(short)) return true;
+  if (short[0] !== long[0]) return false;
+  let j = 0;
+  for (const ch of long) {
+    if (ch === short[j]) j++;
+    if (j === short.length) return true;
+  }
+  return false;
+}
+
+/** Normalize a member/person gender to Male/Female/Unknown; null = invalid. */
+function normalizeGender(v: unknown): string | null {
+  const g = String(v ?? "")
+    .trim()
+    .toLowerCase();
+  if (g === "male" || g === "m") return "Male";
+  if (g === "female" || g === "f") return "Female";
+  if (g === "unknown" || g === "u") return "Unknown";
+  return null;
+}
+
+/** Record-side display name for checklist echoes. */
+function memberDisplayName(m: HouseholdMemberInput): string {
+  return [m.given, m.surname].filter((p) => typeof p === "string" && p.trim() !== "").join(" ");
+}
+
+/** Does any names[] entry of `person` match the record-side member? Gender
+ *  equality + surname normalized-equal + tolerant given match. */
+function personMatchesMember(person: SimplifiedPerson, member: HouseholdMemberInput, memberGender: string): boolean {
+  if (normalizeGender(person.gender) !== memberGender) return false;
+  const wantGiven = normalizeNameToken(member.given);
+  const wantSurname = normalizeNameToken(member.surname);
+  for (const n of person.names ?? []) {
+    if (!n || typeof n !== "object") continue;
+    if (normalizeNameToken(n.surname) !== wantSurname) continue;
+    if (givenTokenMatches(normalizeNameToken(n.given), wantGiven)) return true;
+  }
+  return false;
+}
+
+interface ValidatedMember {
+  member: HouseholdMemberInput;
+  gender: string;
+  name: string;
+}
+
+/** Validate a parents/children array: non-empty, each entry an object with a
+ *  normalizable gender and at least one name part. */
+function requireHouseholdMembers(list: unknown, field: "parents" | "children"): ValidatedMember[] {
+  if (!Array.isArray(list) || list.length === 0) {
+    throw new TreeEditError(`add_household_children requires a non-empty \`${field}\` array`);
+  }
+  return list.map((m, i) => {
+    if (!m || typeof m !== "object" || Array.isArray(m)) {
+      throw new TreeEditError(`add_household_children ${field}[${i}] must be an object { given?, surname?, gender }`);
+    }
+    const member = m as HouseholdMemberInput;
+    const gender = normalizeGender(member.gender);
+    if (!gender) {
+      throw new TreeEditError(
+        `add_household_children ${field}[${i}] requires a gender (Male/Female/Unknown; M/F/U accepted)`,
+      );
+    }
+    if (normalizeNameToken(member.given) === "" && normalizeNameToken(member.surname) === "") {
+      throw new TreeEditError(`add_household_children ${field}[${i}] requires a given and/or surname`);
+    }
+    return { member, gender, name: memberDisplayName(member) };
+  });
+}
+
 /** Remove the `primary` flag from the holder's other facts of the same type. */
 function clearPrimaryOfType(holder: FactHolder, type: string | undefined, exceptId: string | undefined): void {
   for (const f of holder.facts ?? []) {
@@ -230,10 +350,20 @@ function clearPreferred(person: SimplifiedPerson, exceptId: string | undefined):
   }
 }
 
+interface AppliedOperation {
+  assignedIds: AssignedIds;
+  warnings: string[];
+  household?: HouseholdChecklist;
+  action?: "skipped_no_parent_in_tree";
+  /** false when the op verifiably left the tree untouched (the
+   *  add_household_children no-op paths) — the caller may skip the write. */
+  mutated?: boolean;
+}
+
 async function applyOperation(
   tree: SimplifiedGedcomX,
   input: TreeEditInput,
-): Promise<{ assignedIds: AssignedIds; warnings: string[] }> {
+): Promise<AppliedOperation> {
   const assignedIds: AssignedIds = {};
   const warnings: string[] = [];
   const wantResolve = input.resolveStandardPlace !== false;
@@ -400,6 +530,110 @@ async function applyOperation(
       }
       break;
     }
+    case "add_household_children": {
+      // Record-extraction §5d, internalized: match the record's parents
+      // against the tree, dedup the record's children tolerantly, create
+      // stubs + ParentChild edges for the rest — one transaction, checklist
+      // out. Spec: tree-edit-tool-spec.md §4.4.
+      const parents = requireHouseholdMembers(input.parents, "parents");
+      const children = requireHouseholdMembers(input.children, "children");
+
+      // 1. Match parents — first match in persons order; two inputs hitting
+      // the same tree person collapse to one (edges are per distinct parent).
+      const parentsMatched: { name: string; id: string }[] = [];
+      const matchedParentIds: string[] = [];
+      for (const p of parents) {
+        const hit = (tree.persons ?? []).find(
+          (tp) => tp && typeof tp.id === "string" && personMatchesMember(tp, p.member, p.gender),
+        );
+        if (hit && hit.id && !matchedParentIds.includes(hit.id)) {
+          matchedParentIds.push(hit.id);
+          parentsMatched.push({ name: p.name, id: hit.id });
+        }
+      }
+      if (matchedParentIds.length === 0) {
+        return {
+          assignedIds,
+          warnings,
+          action: "skipped_no_parent_in_tree",
+          household: {
+            parentsMatched: [],
+            created: [],
+            skipped: children.map((c) => ({ name: c.name, reason: "no_parent_in_tree" })),
+            edgesAdded: 0,
+          },
+          mutated: false,
+        };
+      }
+
+      // Existing children of the matched parents, via ParentChild edges.
+      const matchedParentSet = new Set(matchedParentIds);
+      const existingChildIds = new Set<string>();
+      for (const r of tree.relationships ?? []) {
+        if (
+          r &&
+          r.type === "ParentChild" &&
+          typeof r.parent === "string" &&
+          matchedParentSet.has(r.parent) &&
+          typeof r.child === "string"
+        ) {
+          existingChildIds.add(r.child);
+        }
+      }
+
+      // 2 + 3. Dedup each child against the LIVE tree (so an in-request
+      // duplicate dedups against the stub just created), then stub + edges.
+      const created: { name: string; id: string }[] = [];
+      const skipped: { name: string; reason: string; id?: string }[] = [];
+      const createdPersonIds: string[] = [];
+      const createdEdgeIds: string[] = [];
+      for (const c of children) {
+        const childOfParent = (tree.persons ?? []).find(
+          (tp) =>
+            tp && typeof tp.id === "string" && existingChildIds.has(tp.id) && personMatchesMember(tp, c.member, c.gender),
+        );
+        if (childOfParent) {
+          skipped.push({ name: c.name, reason: "already_child_of_parent", id: childOfParent.id });
+          continue;
+        }
+        const anywhere = (tree.persons ?? []).find(
+          (tp) => tp && typeof tp.id === "string" && personMatchesMember(tp, c.member, c.gender),
+        );
+        if (anywhere) {
+          skipped.push({ name: c.name, reason: "person_exists_in_tree", id: anywhere.id });
+          continue;
+        }
+        // The established stub shape: gender + ONE preferred BirthName —
+        // NO facts, no ark (simplified-gedcomx-spec.md §4.6). The record's
+        // facts live on the per-sibling assertions in research.json.
+        const personId = nextId(tree, "I");
+        const name: SimplifiedName = { id: nextId(tree, "N"), type: "BirthName", preferred: true };
+        if (typeof c.member.given === "string" && c.member.given.trim() !== "") name.given = c.member.given;
+        if (typeof c.member.surname === "string" && c.member.surname.trim() !== "") name.surname = c.member.surname;
+        tree.persons = [...(tree.persons ?? []), { id: personId, gender: c.gender, names: [name] }];
+        created.push({ name: c.name, id: personId });
+        createdPersonIds.push(personId);
+        for (const parentId of matchedParentIds) {
+          const relId = nextId(tree, "R");
+          tree.relationships = [
+            ...(tree.relationships ?? []),
+            { id: relId, type: "ParentChild", parent: parentId, child: personId },
+          ];
+          createdEdgeIds.push(relId);
+        }
+      }
+
+      if (createdPersonIds.length > 0) {
+        assignedIds.persons = createdPersonIds;
+        assignedIds.relationships = createdEdgeIds;
+      }
+      return {
+        assignedIds,
+        warnings,
+        household: { parentsMatched, created, skipped, edgesAdded: createdEdgeIds.length },
+        mutated: createdPersonIds.length > 0,
+      };
+    }
     case "remove": {
       if (input.personId) {
         throw new TreeEditError("remove does not delete persons — use merge_tree_persons to collapse a person");
@@ -461,6 +695,8 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
   input.person = coerceJsonArg(input.person) as SimplifiedPerson | undefined;
   input.relationship = coerceJsonArg(input.relationship) as SimplifiedRelationship | undefined;
   input.source = coerceJsonArg(input.source) as SimplifiedSourceDescription | undefined;
+  input.parents = coerceJsonArg(input.parents) as HouseholdMemberInput[] | undefined;
+  input.children = coerceJsonArg(input.children) as HouseholdMemberInput[] | undefined;
 
   try {
     // Heal legacy shapes before anything touches the document: the closed
@@ -480,16 +716,20 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
         return { ok: false, errors: ["`ops` must be a non-empty array"] };
       }
-      const results: { operation: TreeEditOperation; assignedIds?: AssignedIds }[] = [];
+      const results: PerOpResult[] = [];
       const opWarnings: string[] = [];
+      let anyMutated = false;
       for (let i = 0; i < input.ops.length; i++) {
         const op = input.ops[i];
         try {
           gateOperation(op?.operation, gate);
-          const { assignedIds, warnings } = await applyOperation(tree, { ...op, projectPath });
-          opWarnings.push(...warnings);
-          const r: { operation: TreeEditOperation; assignedIds?: AssignedIds } = { operation: op.operation };
-          if (Object.keys(assignedIds).length > 0) r.assignedIds = assignedIds;
+          const applied = await applyOperation(tree, { ...op, projectPath });
+          opWarnings.push(...applied.warnings);
+          if (applied.mutated !== false) anyMutated = true;
+          const r: PerOpResult = { operation: op.operation };
+          if (Object.keys(applied.assignedIds).length > 0) r.assignedIds = applied.assignedIds;
+          if (applied.household) r.household = applied.household;
+          if (applied.action) r.action = applied.action;
           results.push(r);
         } catch (e) {
           if (e instanceof TreeEditError) {
@@ -498,6 +738,17 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
           }
           throw e;
         }
+      }
+
+      // Every op verifiably left the tree untouched (add_household_children
+      // no-op paths) → nothing to validate or write.
+      if (!anyMutated) {
+        return {
+          ok: true,
+          results,
+          filesWritten: [],
+          validation: { valid: true, warnings: opWarnings },
+        };
       }
 
       const validation = await validateParsed(research, tree, { projectPath });
@@ -522,7 +773,22 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       return { ok: false, errors: ["provide either `ops` (batch) or `operation` (single)"] };
     }
     gateOperation(input.operation, gate);
-    const { assignedIds, warnings } = await applyOperation(tree, input);
+    const applied = await applyOperation(tree, input);
+    const { assignedIds, warnings } = applied;
+
+    // A verifiable no-op (add_household_children skip paths) writes nothing.
+    if (applied.mutated === false) {
+      const result: TreeEditResult = {
+        ok: true,
+        operation: input.operation,
+        filesWritten: [],
+        validation: { valid: true, warnings },
+      };
+      if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
+      if (applied.household) result.household = applied.household;
+      if (applied.action) result.action = applied.action;
+      return result;
+    }
 
     const validation = await validateParsed(research, tree, { projectPath });
     if (!validation.valid) {
@@ -542,6 +808,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       },
     };
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
+    if (applied.household) result.household = applied.household;
     return result;
   } catch (e) {
     if (e instanceof TreeEditError) return { ok: false, errors: [e.message] };
@@ -555,7 +822,8 @@ export const treeEditSchema = {
   name: "tree_edit",
   description:
     "Add to the project's tree.gedcomx.json — add a fact or name, add a person or " +
-    "relationship, add a source. ADDITIVE ONLY: corrections and removals " +
+    "relationship, add a source, or add a household's children as sibling stubs. " +
+    "ADDITIVE ONLY: corrections and removals " +
     "(update_fact/update_name/update_person/update_source/remove) live in the " +
     "tree_correct tool. add_fact targets a person (personId) or an existing Couple " +
     "relationship (relationshipId) — a Marriage/Divorce fact lives on the Couple, " +
@@ -570,6 +838,17 @@ export const treeEditSchema = {
     "Returns a compact summary (the assigned ids); on a validation failure nothing " +
     "is written and `{ ok: false, errors }` is returned. Run check-warnings after " +
     "for genealogical-plausibility checks.\n" +
+    "\n" +
+    "add_household_children takes the RECORD's household roster — `parents` and " +
+    "`children` arrays of { given, surname, gender } — and does the rest itself: " +
+    "matches the parents against tree persons (tolerant of Wm/William-class name " +
+    "variants), skips children already in the tree, creates minimal stubs for the " +
+    "rest (gender + one preferred BirthName, never facts) with a ParentChild edge " +
+    "to every matched parent, and returns a checklist { parentsMatched, created, " +
+    "skipped, edgesAdded } to relay. No parent in the tree → " +
+    "{ ok: true, action: 'skipped_no_parent_in_tree' }, nothing written. Never " +
+    "pre-check the tree yourself — list who is on the record and let the tool " +
+    "match and dedup.\n" +
     "\n" +
     "To make several edits at once (e.g. a source plus sibling stubs), pass an `ops` " +
     "array instead of the top-level operation: each op is `{ operation, ...fields }` " +
@@ -592,6 +871,7 @@ export const treeEditSchema = {
           "add_person",
           "add_relationship",
           "add_source",
+          "add_household_children",
         ],
         description: "The addition to perform. Corrections/removals: use tree_correct.",
       },
@@ -633,6 +913,37 @@ export const treeEditSchema = {
         type: "object",
         description: "The source description to add (full, no id — the tool assigns the next S id). Fields: `title` (required), optional `author`, `url`, `citation` — a plain top-level entry, so no place resolution or primary/preferred handling applies. This is the lightweight tree sources[] entry, distinct from the rich research.json source. To refine an existing S entry, use tree_correct's update_source.",
       },
+      parents: {
+        type: "array",
+        description:
+          "add_household_children: the record's parent roles (head_of_household, wife, " +
+          "father_of_*, mother_of_*) as the RECORD names them — the tool matches them " +
+          "against tree persons.",
+        items: {
+          type: "object",
+          properties: {
+            given: { type: "string" },
+            surname: { type: "string" },
+            gender: { type: "string", description: "Male/Female/Unknown (M/F/U accepted)." },
+          },
+          required: ["gender"],
+        },
+      },
+      children: {
+        type: "array",
+        description:
+          "add_household_children: the record's child_N roles (the subject included — " +
+          "the tool skips anyone already in the tree).",
+        items: {
+          type: "object",
+          properties: {
+            given: { type: "string" },
+            surname: { type: "string" },
+            gender: { type: "string", description: "Male/Female/Unknown (M/F/U accepted)." },
+          },
+          required: ["gender"],
+        },
+      },
       resolveStandardPlace: {
         type: "boolean",
         description: "Default true: auto-resolve standard_place when a fact place is set. Pass false to skip the lookup.",
@@ -654,6 +965,7 @@ export const treeEditSchema = {
                 "add_person",
                 "add_relationship",
                 "add_source",
+                "add_household_children",
               ],
               description: "The addition to perform. Corrections/removals: use tree_correct.",
             },
@@ -664,6 +976,8 @@ export const treeEditSchema = {
             person: { type: "object" },
             relationship: { type: "object" },
             source: { type: "object" },
+            parents: { type: "array", items: { type: "object" } },
+            children: { type: "array", items: { type: "object" } },
             resolveStandardPlace: { type: "boolean" },
           },
           required: ["operation"],

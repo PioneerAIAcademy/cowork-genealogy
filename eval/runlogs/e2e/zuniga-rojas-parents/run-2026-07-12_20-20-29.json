@@ -1,0 +1,3571 @@
+{
+  "test_id": "zuniga-rojas-parents",
+  "captured_at": "2026-07-12_20-20-29",
+  "verdict": "pass",
+  "stop_reason": "completed",
+  "judge_output": {
+    "per_finding": [
+      {
+        "finding_id": "f1",
+        "matched": "true",
+        "agent_evidence": "Relationships R2 and R3 establish ParentChild links from person I1 (Pedro Zu\u00f1iga) and I2 (Polonia Rojas) to person 2DTG-7MK (Adrian Zu\u00f1iga Rojas). Person I1 has name 'Pedro Zu\u00f1iga' and person I2 has name 'Polonia Rojas'. Source S1 cites the 29 November 1913 marriage record (QL7X-VBXX) that names the groom's father Pedro Zu\u00f1iga and mother Polonia Rojas.",
+        "notes": "The agent successfully recovered the father relationship. Although person I1 and I2 lack detailed birth/baptism facts in the tree, the core relationship\u2014that Adrian Zu\u00f1iga Rojas was the son of Pedro Zu\u00f1iga and Polonia Rojas\u2014is captured through ParentChild relationships R2 and R3, grounded in the same 1913 marriage source cited in the expected findings. The name 'Polonia' in the tree matches 'Apolonia' in the expected findings (Polish/Spanish variant spelling, common in records). The compound surname 'Zu\u00f1iga Rojas' correctly reflects the father's and mother's surnames."
+      },
+      {
+        "finding_id": "f2",
+        "matched": "true",
+        "agent_evidence": "Relationships R3 and R2 establish ParentChild links from person I2 (Polonia Rojas) to person 2DTG-7MK (Adrian Zu\u00f1iga Rojas). Person I2 has name 'Polonia Rojas'. The 1913 marriage record (source S1, QL7X-VBXX) cited in the tree names the groom's mother as Polonia Rojas, and Adrian's compound surname 'Zu\u00f1iga Rojas' incorporates the mother's surname.",
+        "notes": "The agent successfully recovered the mother relationship. Person I2 is recorded as 'Polonia Rojas' in the tree. While the expected findings show a fuller profile of Apolonia (baptism date 16 March 1870, 1898 marriage to Pedro Zu\u00f1iga), the tree minimally establishes the core relationship (Adrian's mother was Polonia/Apolonia Rojas). The name variant 'Polonia' vs. 'Apolonia' reflects standard Spanish/Portuguese diminutive and full-name usage and is not a material discrepancy. The relationship is grounded in the same 1913 marriage source."
+      }
+    ],
+    "recall_required": 1.0,
+    "recall_total": 1.0,
+    "verdict": "pass",
+    "rationale": "The agent recovered both required findings. The final tree establishes that Adrian Zu\u00f1iga Rojas (2DTG-7MK, born 8 September 1889, Arani, Cochabamba, Bolivia) had parents Pedro Zu\u00f1iga (I1) and Polonia Rojas (I2) via ParentChild relationships (R2, R3) grounded in the 29 November 1913 marriage record. Although the tree does not include extensive biographical details about the parents (such as Pedro's baptism date or the 1898 parents' marriage), it correctly establishes the core semantic relationships required to answer the research question. Name variants (Polonia vs. Apolonia, Zu\u00f1iga vs. Su\u00f1iga) are standard documentary variations and do not undermine the match.",
+    "proof_quality": {
+      "score": 2,
+      "exhaustiveness": "partial",
+      "conflicts_addressed": "na",
+      "corroboration": "single_source",
+      "tier_appropriate": "yes",
+      "rationale": "The proof summary is methodical and transparent about its limitations but ultimately rests on a single source. The agent conducted a reasonably exhaustive search across multiple record types (Adrian's baptism, death, parents' marriage, full-text search) and FamilySearch collections, and explicitly documented why those searches failed (records not indexed, image inaccessible). However, the conclusion depends entirely on the 1913 marriage record; no independent corroborating source was found (e.g., Adrian's baptism or the parents' own marriage record). The agent appropriately rated the conclusion as 'probable' rather than 'proved,' matching the single-source evidence base. The naming-convention corroboration (compound surname alignment) is noted but is not independent documentary evidence. The narrative is thorough and honest about limitations, justifying a score of 2 (partial/thin proof) rather than 3 (independent corroboration required for full sound proof). The tier assignment ('probable') is appropriate to single-source evidence with no contradiction, so tier_appropriate is 'yes'."
+    }
+  },
+  "usage": {
+    "duration_ms": 2086784,
+    "duration_api_ms": 2072401,
+    "num_turns": 106,
+    "is_error": false,
+    "stop_reason": "end_turn",
+    "total_cost_usd": 6.586421299999999,
+    "usage": {
+      "input_tokens": 140,
+      "cache_creation_input_tokens": 295580,
+      "cache_read_input_tokens": 7942047,
+      "output_tokens": 75602,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 295580,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 574,
+          "cache_read_input_tokens": 149577,
+          "cache_creation_input_tokens": 315,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 315
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "continue_nudges": 1,
+    "session_id": "8ac6b801-99d1-4829-ac2c-270e87e243af",
+    "resumes": 0,
+    "resume_on_stall": true,
+    "timeline": [
+      [
+        1.5,
+        "system:init"
+      ],
+      [
+        7.5,
+        "assistant"
+      ],
+      [
+        7.6,
+        "assistant"
+      ],
+      [
+        7.6,
+        "tool_result"
+      ],
+      [
+        10.9,
+        "assistant"
+      ],
+      [
+        11.3,
+        "assistant"
+      ],
+      [
+        11.3,
+        "tool_result"
+      ],
+      [
+        14.1,
+        "assistant"
+      ],
+      [
+        15.0,
+        "assistant"
+      ],
+      [
+        16.0,
+        "tool_result"
+      ],
+      [
+        16.0,
+        "assistant"
+      ],
+      [
+        16.2,
+        "tool_result"
+      ],
+      [
+        27.0,
+        "assistant"
+      ],
+      [
+        27.2,
+        "assistant"
+      ],
+      [
+        28.8,
+        "assistant"
+      ],
+      [
+        28.8,
+        "tool_result"
+      ],
+      [
+        28.8,
+        "tool_result"
+      ],
+      [
+        31.1,
+        "assistant"
+      ],
+      [
+        33.8,
+        "assistant"
+      ],
+      [
+        33.8,
+        "tool_result"
+      ],
+      [
+        34.1,
+        "assistant"
+      ],
+      [
+        34.5,
+        "tool_result"
+      ],
+      [
+        47.8,
+        "assistant"
+      ],
+      [
+        47.8,
+        "assistant"
+      ],
+      [
+        47.8,
+        "tool_result"
+      ],
+      [
+        58.5,
+        "assistant"
+      ],
+      [
+        62.1,
+        "assistant"
+      ],
+      [
+        62.3,
+        "tool_result"
+      ],
+      [
+        65.1,
+        "assistant"
+      ],
+      [
+        65.5,
+        "assistant"
+      ],
+      [
+        67.4,
+        "assistant"
+      ],
+      [
+        67.4,
+        "tool_result"
+      ],
+      [
+        67.4,
+        "tool_result"
+      ],
+      [
+        71.1,
+        "assistant"
+      ],
+      [
+        73.8,
+        "assistant"
+      ],
+      [
+        74.3,
+        "tool_result"
+      ],
+      [
+        74.4,
+        "assistant"
+      ],
+      [
+        74.5,
+        "tool_result"
+      ],
+      [
+        77.6,
+        "assistant"
+      ],
+      [
+        78.0,
+        "assistant"
+      ],
+      [
+        79.0,
+        "assistant"
+      ],
+      [
+        79.0,
+        "tool_result"
+      ],
+      [
+        83.1,
+        "assistant"
+      ],
+      [
+        83.5,
+        "assistant"
+      ],
+      [
+        84.3,
+        "assistant"
+      ],
+      [
+        84.3,
+        "assistant"
+      ],
+      [
+        84.4,
+        "tool_result"
+      ],
+      [
+        84.4,
+        "tool_result"
+      ],
+      [
+        84.4,
+        "tool_result"
+      ],
+      [
+        88.4,
+        "assistant"
+      ],
+      [
+        89.4,
+        "assistant"
+      ],
+      [
+        90.1,
+        "assistant"
+      ],
+      [
+        90.4,
+        "assistant"
+      ],
+      [
+        91.7,
+        "tool_result"
+      ],
+      [
+        92.1,
+        "tool_result"
+      ],
+      [
+        97.4,
+        "tool_result"
+      ],
+      [
+        153.5,
+        "assistant"
+      ],
+      [
+        155.7,
+        "assistant"
+      ],
+      [
+        180.5,
+        "assistant"
+      ],
+      [
+        180.5,
+        "tool_result"
+      ],
+      [
+        184.4,
+        "assistant"
+      ],
+      [
+        184.9,
+        "assistant"
+      ],
+      [
+        189.7,
+        "assistant"
+      ],
+      [
+        189.7,
+        "tool_result"
+      ],
+      [
+        189.7,
+        "tool_result"
+      ],
+      [
+        193.1,
+        "assistant"
+      ],
+      [
+        194.0,
+        "assistant"
+      ],
+      [
+        194.1,
+        "tool_result"
+      ],
+      [
+        197.5,
+        "assistant"
+      ],
+      [
+        198.0,
+        "assistant"
+      ],
+      [
+        201.7,
+        "assistant"
+      ],
+      [
+        202.1,
+        "tool_result"
+      ],
+      [
+        218.5,
+        "assistant"
+      ],
+      [
+        219.2,
+        "assistant"
+      ],
+      [
+        222.0,
+        "assistant"
+      ],
+      [
+        222.9,
+        "tool_result"
+      ],
+      [
+        236.9,
+        "assistant"
+      ],
+      [
+        237.1,
+        "assistant"
+      ],
+      [
+        241.3,
+        "assistant"
+      ],
+      [
+        241.8,
+        "tool_result"
+      ],
+      [
+        242.3,
+        "assistant"
+      ],
+      [
+        242.4,
+        "tool_result"
+      ],
+      [
+        291.3,
+        "assistant"
+      ],
+      [
+        292.2,
+        "assistant"
+      ],
+      [
+        300.6,
+        "assistant"
+      ],
+      [
+        300.6,
+        "tool_result"
+      ],
+      [
+        309.8,
+        "assistant"
+      ],
+      [
+        309.8,
+        "tool_result"
+      ],
+      [
+        313.7,
+        "assistant"
+      ],
+      [
+        317.9,
+        "assistant"
+      ],
+      [
+        317.9,
+        "tool_result"
+      ],
+      [
+        324.7,
+        "assistant"
+      ],
+      [
+        326.5,
+        "assistant"
+      ],
+      [
+        326.7,
+        "tool_result"
+      ],
+      [
+        334.0,
+        "assistant"
+      ],
+      [
+        334.0,
+        "assistant"
+      ],
+      [
+        339.6,
+        "assistant"
+      ],
+      [
+        339.7,
+        "tool_result"
+      ],
+      [
+        339.7,
+        "tool_result"
+      ],
+      [
+        343.2,
+        "assistant"
+      ],
+      [
+        344.3,
+        "assistant"
+      ],
+      [
+        373.1,
+        "assistant"
+      ],
+      [
+        373.2,
+        "system:task_started"
+      ],
+      [
+        373.2,
+        "tool_result"
+      ],
+      [
+        377.6,
+        "system:task_progress"
+      ],
+      [
+        377.6,
+        "assistant"
+      ],
+      [
+        377.6,
+        "tool_result"
+      ],
+      [
+        378.1,
+        "system:task_progress"
+      ],
+      [
+        378.1,
+        "assistant"
+      ],
+      [
+        378.1,
+        "tool_result"
+      ],
+      [
+        545.9,
+        "system:task_progress"
+      ],
+      [
+        545.9,
+        "assistant"
+      ],
+      [
+        545.9,
+        "tool_result"
+      ],
+      [
+        552.1,
+        "system:task_progress"
+      ],
+      [
+        552.1,
+        "assistant"
+      ],
+      [
+        552.1,
+        "tool_result"
+      ],
+      [
+        556.2,
+        "system:task_progress"
+      ],
+      [
+        556.2,
+        "assistant"
+      ],
+      [
+        556.2,
+        "tool_result"
+      ],
+      [
+        566.5,
+        "system:task_notification"
+      ],
+      [
+        566.5,
+        "tool_result"
+      ],
+      [
+        607.6,
+        "assistant"
+      ],
+      [
+        608.4,
+        "assistant"
+      ],
+      [
+        610.1,
+        "assistant"
+      ],
+      [
+        610.3,
+        "tool_result"
+      ],
+      [
+        635.3,
+        "assistant"
+      ],
+      [
+        635.3,
+        "assistant"
+      ],
+      [
+        636.8,
+        "assistant"
+      ],
+      [
+        636.8,
+        "tool_result"
+      ],
+      [
+        656.3,
+        "assistant"
+      ],
+      [
+        657.5,
+        "assistant"
+      ],
+      [
+        667.7,
+        "assistant"
+      ],
+      [
+        667.7,
+        "tool_result"
+      ],
+      [
+        667.7,
+        "tool_result"
+      ],
+      [
+        704.6,
+        "assistant"
+      ],
+      [
+        715.6,
+        "assistant"
+      ],
+      [
+        749.1,
+        "assistant"
+      ],
+      [
+        749.1,
+        "tool_result"
+      ],
+      [
+        760.7,
+        "assistant"
+      ],
+      [
+        760.8,
+        "assistant"
+      ],
+      [
+        764.6,
+        "assistant"
+      ],
+      [
+        764.6,
+        "tool_result"
+      ],
+      [
+        764.6,
+        "tool_result"
+      ],
+      [
+        768.7,
+        "assistant"
+      ],
+      [
+        769.0,
+        "assistant"
+      ],
+      [
+        769.0,
+        "tool_result"
+      ],
+      [
+        773.1,
+        "assistant"
+      ],
+      [
+        774.1,
+        "assistant"
+      ],
+      [
+        775.0,
+        "assistant"
+      ],
+      [
+        775.5,
+        "tool_result"
+      ],
+      [
+        775.9,
+        "assistant"
+      ],
+      [
+        776.3,
+        "tool_result"
+      ],
+      [
+        776.8,
+        "assistant"
+      ],
+      [
+        776.8,
+        "assistant"
+      ],
+      [
+        776.9,
+        "tool_result"
+      ],
+      [
+        777.2,
+        "tool_result"
+      ],
+      [
+        801.0,
+        "assistant"
+      ],
+      [
+        802.7,
+        "assistant"
+      ],
+      [
+        802.7,
+        "tool_result"
+      ],
+      [
+        819.5,
+        "system:notification"
+      ],
+      [
+        819.5,
+        "assistant"
+      ],
+      [
+        826.9,
+        "assistant"
+      ],
+      [
+        826.9,
+        "tool_result"
+      ],
+      [
+        826.9,
+        "tool_result"
+      ],
+      [
+        870.9,
+        "assistant"
+      ],
+      [
+        870.9,
+        "assistant"
+      ],
+      [
+        870.9,
+        "tool_result"
+      ],
+      [
+        886.9,
+        "assistant"
+      ],
+      [
+        893.3,
+        "assistant"
+      ],
+      [
+        897.4,
+        "assistant"
+      ],
+      [
+        897.4,
+        "tool_result"
+      ],
+      [
+        906.4,
+        "assistant"
+      ],
+      [
+        907.0,
+        "assistant"
+      ],
+      [
+        912.7,
+        "assistant"
+      ],
+      [
+        912.8,
+        "tool_result"
+      ],
+      [
+        912.8,
+        "tool_result"
+      ],
+      [
+        925.8,
+        "assistant"
+      ],
+      [
+        926.1,
+        "assistant"
+      ],
+      [
+        928.3,
+        "assistant"
+      ],
+      [
+        928.7,
+        "tool_result"
+      ],
+      [
+        932.8,
+        "assistant"
+      ],
+      [
+        933.4,
+        "assistant"
+      ],
+      [
+        935.3,
+        "assistant"
+      ],
+      [
+        935.6,
+        "tool_result"
+      ],
+      [
+        939.1,
+        "assistant"
+      ],
+      [
+        939.7,
+        "assistant"
+      ],
+      [
+        941.7,
+        "assistant"
+      ],
+      [
+        941.9,
+        "tool_result"
+      ],
+      [
+        953.6,
+        "assistant"
+      ],
+      [
+        953.7,
+        "assistant"
+      ],
+      [
+        956.4,
+        "assistant"
+      ],
+      [
+        957.0,
+        "tool_result"
+      ],
+      [
+        975.1,
+        "assistant"
+      ],
+      [
+        975.9,
+        "assistant"
+      ],
+      [
+        987.0,
+        "assistant"
+      ],
+      [
+        987.5,
+        "tool_result"
+      ],
+      [
+        987.5,
+        "system:status"
+      ],
+      [
+        1106.4,
+        "system:status"
+      ],
+      [
+        1106.4,
+        "system:compact_boundary"
+      ],
+      [
+        1106.4,
+        "tool_result"
+      ],
+      [
+        1111.3,
+        "assistant"
+      ],
+      [
+        1112.2,
+        "assistant"
+      ],
+      [
+        1112.2,
+        "tool_result"
+      ],
+      [
+        1116.8,
+        "assistant"
+      ],
+      [
+        1116.9,
+        "tool_result"
+      ],
+      [
+        1124.1,
+        "assistant"
+      ],
+      [
+        1124.1,
+        "assistant"
+      ],
+      [
+        1124.1,
+        "tool_result"
+      ],
+      [
+        1129.4,
+        "assistant"
+      ],
+      [
+        1132.9,
+        "assistant"
+      ],
+      [
+        1133.2,
+        "tool_result"
+      ],
+      [
+        1143.2,
+        "assistant"
+      ],
+      [
+        1143.2,
+        "assistant"
+      ],
+      [
+        1143.2,
+        "assistant"
+      ],
+      [
+        1143.9,
+        "tool_result"
+      ],
+      [
+        1144.1,
+        "tool_result"
+      ],
+      [
+        1154.8,
+        "assistant"
+      ],
+      [
+        1155.7,
+        "assistant"
+      ],
+      [
+        1164.3,
+        "assistant"
+      ],
+      [
+        1164.3,
+        "tool_result"
+      ],
+      [
+        1168.1,
+        "assistant"
+      ],
+      [
+        1169.8,
+        "assistant"
+      ],
+      [
+        1169.9,
+        "tool_result"
+      ],
+      [
+        1173.3,
+        "assistant"
+      ],
+      [
+        1175.0,
+        "assistant"
+      ],
+      [
+        1175.4,
+        "tool_result"
+      ],
+      [
+        1183.5,
+        "assistant"
+      ],
+      [
+        1184.5,
+        "assistant"
+      ],
+      [
+        1185.8,
+        "assistant"
+      ],
+      [
+        1186.1,
+        "tool_result"
+      ],
+      [
+        1189.7,
+        "assistant"
+      ],
+      [
+        1190.2,
+        "assistant"
+      ],
+      [
+        1191.1,
+        "assistant"
+      ],
+      [
+        1191.6,
+        "tool_result"
+      ],
+      [
+        1199.9,
+        "assistant"
+      ],
+      [
+        1205.9,
+        "assistant"
+      ],
+      [
+        1205.9,
+        "system:task_started"
+      ],
+      [
+        1205.9,
+        "tool_result"
+      ],
+      [
+        1209.2,
+        "system:task_progress"
+      ],
+      [
+        1209.2,
+        "assistant"
+      ],
+      [
+        1209.3,
+        "tool_result"
+      ],
+      [
+        1215.0,
+        "system:task_progress"
+      ],
+      [
+        1215.0,
+        "assistant"
+      ],
+      [
+        1215.1,
+        "tool_result"
+      ],
+      [
+        1221.2,
+        "system:task_progress"
+      ],
+      [
+        1221.2,
+        "assistant"
+      ],
+      [
+        1221.3,
+        "tool_result"
+      ],
+      [
+        1226.9,
+        "system:task_progress"
+      ],
+      [
+        1226.9,
+        "assistant"
+      ],
+      [
+        1226.9,
+        "tool_result"
+      ],
+      [
+        1234.2,
+        "system:task_progress"
+      ],
+      [
+        1234.2,
+        "assistant"
+      ],
+      [
+        1234.2,
+        "tool_result"
+      ],
+      [
+        1240.0,
+        "system:task_progress"
+      ],
+      [
+        1240.0,
+        "assistant"
+      ],
+      [
+        1240.0,
+        "tool_result"
+      ],
+      [
+        1249.3,
+        "system:task_progress"
+      ],
+      [
+        1249.3,
+        "assistant"
+      ],
+      [
+        1249.5,
+        "tool_result"
+      ],
+      [
+        1255.3,
+        "system:task_progress"
+      ],
+      [
+        1255.3,
+        "assistant"
+      ],
+      [
+        1255.3,
+        "tool_result"
+      ],
+      [
+        1261.1,
+        "system:task_progress"
+      ],
+      [
+        1261.1,
+        "assistant"
+      ],
+      [
+        1261.1,
+        "tool_result"
+      ],
+      [
+        1267.3,
+        "system:task_progress"
+      ],
+      [
+        1267.3,
+        "assistant"
+      ],
+      [
+        1267.3,
+        "tool_result"
+      ],
+      [
+        1274.8,
+        "system:task_progress"
+      ],
+      [
+        1274.8,
+        "assistant"
+      ],
+      [
+        1274.9,
+        "tool_result"
+      ],
+      [
+        1280.7,
+        "system:task_progress"
+      ],
+      [
+        1280.7,
+        "assistant"
+      ],
+      [
+        1280.7,
+        "tool_result"
+      ],
+      [
+        1287.7,
+        "system:task_progress"
+      ],
+      [
+        1287.7,
+        "assistant"
+      ],
+      [
+        1287.7,
+        "tool_result"
+      ],
+      [
+        1293.5,
+        "system:task_progress"
+      ],
+      [
+        1293.5,
+        "assistant"
+      ],
+      [
+        1293.5,
+        "tool_result"
+      ],
+      [
+        1317.6,
+        "system:task_notification"
+      ],
+      [
+        1317.6,
+        "tool_result"
+      ],
+      [
+        1350.3,
+        "assistant"
+      ],
+      [
+        1350.3,
+        "assistant"
+      ],
+      [
+        1352.0,
+        "assistant"
+      ],
+      [
+        1352.3,
+        "tool_result"
+      ],
+      [
+        1390.6,
+        "assistant"
+      ],
+      [
+        1391.4,
+        "assistant"
+      ],
+      [
+        1397.9,
+        "assistant"
+      ],
+      [
+        1397.9,
+        "tool_result"
+      ],
+      [
+        1401.6,
+        "assistant"
+      ],
+      [
+        1401.6,
+        "tool_result"
+      ],
+      [
+        1405.3,
+        "assistant"
+      ],
+      [
+        1406.3,
+        "assistant"
+      ],
+      [
+        1406.6,
+        "assistant"
+      ],
+      [
+        1407.2,
+        "tool_result"
+      ],
+      [
+        1416.4,
+        "assistant"
+      ],
+      [
+        1416.5,
+        "assistant"
+      ],
+      [
+        1423.3,
+        "assistant"
+      ],
+      [
+        1423.6,
+        "system:task_started"
+      ],
+      [
+        1423.6,
+        "tool_result"
+      ],
+      [
+        1425.2,
+        "system:task_progress"
+      ],
+      [
+        1425.2,
+        "assistant"
+      ],
+      [
+        1426.3,
+        "tool_result"
+      ],
+      [
+        1434.1,
+        "system:task_notification"
+      ],
+      [
+        1434.1,
+        "tool_result"
+      ],
+      [
+        1471.5,
+        "assistant"
+      ],
+      [
+        1471.5,
+        "assistant"
+      ],
+      [
+        1476.9,
+        "assistant"
+      ],
+      [
+        1476.9,
+        "tool_result"
+      ],
+      [
+        1481.3,
+        "assistant"
+      ],
+      [
+        1481.4,
+        "tool_result"
+      ],
+      [
+        1531.0,
+        "assistant"
+      ],
+      [
+        1531.8,
+        "assistant"
+      ],
+      [
+        1533.9,
+        "assistant"
+      ],
+      [
+        1534.5,
+        "tool_result"
+      ],
+      [
+        1587.3,
+        "assistant"
+      ],
+      [
+        1587.3,
+        "assistant"
+      ],
+      [
+        1594.8,
+        "assistant"
+      ],
+      [
+        1594.8,
+        "tool_result"
+      ],
+      [
+        1624.8,
+        "assistant"
+      ],
+      [
+        1630.2,
+        "assistant"
+      ],
+      [
+        1649.7,
+        "assistant"
+      ],
+      [
+        1649.7,
+        "tool_result"
+      ],
+      [
+        1654.3,
+        "assistant"
+      ],
+      [
+        1654.3,
+        "assistant"
+      ],
+      [
+        1660.3,
+        "assistant"
+      ],
+      [
+        1660.3,
+        "tool_result"
+      ],
+      [
+        1660.3,
+        "tool_result"
+      ],
+      [
+        1664.9,
+        "assistant"
+      ],
+      [
+        1665.7,
+        "assistant"
+      ],
+      [
+        1666.1,
+        "tool_result"
+      ],
+      [
+        1668.7,
+        "assistant"
+      ],
+      [
+        1671.0,
+        "assistant"
+      ],
+      [
+        1671.1,
+        "tool_result"
+      ],
+      [
+        1675.7,
+        "assistant"
+      ],
+      [
+        1675.9,
+        "tool_result"
+      ],
+      [
+        1732.8,
+        "assistant"
+      ],
+      [
+        1735.4,
+        "assistant"
+      ],
+      [
+        1736.0,
+        "assistant"
+      ],
+      [
+        1736.0,
+        "tool_result"
+      ],
+      [
+        1767.1,
+        "assistant"
+      ],
+      [
+        1804.6,
+        "assistant"
+      ],
+      [
+        1804.6,
+        "tool_result"
+      ],
+      [
+        1807.9,
+        "assistant"
+      ],
+      [
+        1847.1,
+        "assistant"
+      ],
+      [
+        1847.7,
+        "tool_result"
+      ],
+      [
+        1858.6,
+        "assistant"
+      ],
+      [
+        1858.7,
+        "assistant"
+      ],
+      [
+        1862.7,
+        "assistant"
+      ],
+      [
+        1862.7,
+        "tool_result"
+      ],
+      [
+        1865.1,
+        "assistant"
+      ],
+      [
+        1865.5,
+        "assistant"
+      ],
+      [
+        1866.5,
+        "assistant"
+      ],
+      [
+        1866.5,
+        "tool_result"
+      ],
+      [
+        1871.5,
+        "assistant"
+      ],
+      [
+        1872.4,
+        "assistant"
+      ],
+      [
+        1872.4,
+        "tool_result"
+      ],
+      [
+        1877.4,
+        "assistant"
+      ],
+      [
+        1878.3,
+        "assistant"
+      ],
+      [
+        1879.7,
+        "assistant"
+      ],
+      [
+        1879.7,
+        "tool_result"
+      ],
+      [
+        1887.4,
+        "assistant"
+      ],
+      [
+        1889.6,
+        "assistant"
+      ],
+      [
+        1889.6,
+        "tool_result"
+      ],
+      [
+        1889.6,
+        "tool_result"
+      ],
+      [
+        1893.0,
+        "assistant"
+      ],
+      [
+        1893.9,
+        "assistant"
+      ],
+      [
+        1894.3,
+        "tool_result"
+      ],
+      [
+        1894.7,
+        "assistant"
+      ],
+      [
+        1894.7,
+        "tool_result"
+      ],
+      [
+        1907.7,
+        "assistant"
+      ],
+      [
+        1908.4,
+        "assistant"
+      ],
+      [
+        1911.6,
+        "assistant"
+      ],
+      [
+        1911.6,
+        "tool_result"
+      ],
+      [
+        1915.6,
+        "assistant"
+      ],
+      [
+        1915.7,
+        "tool_result"
+      ],
+      [
+        1919.3,
+        "assistant"
+      ],
+      [
+        1920.3,
+        "assistant"
+      ],
+      [
+        1932.6,
+        "assistant"
+      ],
+      [
+        1932.7,
+        "system:task_started"
+      ],
+      [
+        1932.7,
+        "tool_result"
+      ],
+      [
+        1935.4,
+        "system:task_progress"
+      ],
+      [
+        1935.4,
+        "assistant"
+      ],
+      [
+        1935.5,
+        "tool_result"
+      ],
+      [
+        2040.5,
+        "system:task_notification"
+      ],
+      [
+        2040.5,
+        "tool_result"
+      ],
+      [
+        2050.0,
+        "assistant"
+      ],
+      [
+        2050.4,
+        "assistant"
+      ],
+      [
+        2056.7,
+        "assistant"
+      ],
+      [
+        2056.8,
+        "tool_result"
+      ],
+      [
+        2060.5,
+        "assistant"
+      ],
+      [
+        2061.1,
+        "assistant"
+      ],
+      [
+        2068.6,
+        "assistant"
+      ],
+      [
+        2068.6,
+        "tool_result"
+      ],
+      [
+        2073.3,
+        "assistant"
+      ],
+      [
+        2073.3,
+        "tool_result"
+      ],
+      [
+        2076.9,
+        "assistant"
+      ],
+      [
+        2088.2,
+        "assistant"
+      ],
+      [
+        2088.2,
+        "result"
+      ]
+    ],
+    "caps": {
+      "wall_clock_seconds": 7200,
+      "inactivity_seconds": 600,
+      "progress_stall_seconds": 600,
+      "tool_calls": 300,
+      "max_turns": 250,
+      "max_cost_usd": 15.0
+    },
+    "wall_clock_seconds": 2101.2198897079797,
+    "real_clock_seconds": 2101.28972697258,
+    "slept_seconds": 0.06983726460020989,
+    "judge_seconds": 12.801678749965504
+  },
+  "tool_calls": [
+    {
+      "tool": "Glob",
+      "args": {
+        "pattern": "**/*",
+        "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": ".claude/skills/check-warnings/references/assumption-categories.md\n.claude/skills/check-warnings/references/warning-checks.md\n.claude/skills/check-warnings/references/warnings-as-identity-signals.md\n.claude/skills/citation/references/gps-citation-standards.md\n.claude/skills/citation/references/validation-protocol.md\n.claude/skills/conflict-resolution/references/historical-contradictions.md\n.claude/skills/conflict-resolution/references/places-guidance.md\n.claude/skills/conflict-resolution/refer..."
+    },
+    {
+      "tool": "Glob",
+      "args": {
+        "pattern": "*.json",
+        "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_zuniga_rojas_parents\",\n4\t    \"objective\": \"Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?\",\n5\t    \"subject_person_ids\": [\"2DTG-7MK\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-05\",\n8\t    \"updated\": \"2026-07-05\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15\t  \"questions\": [],\n16\t  \"plans\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2DTG-7MK\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"2DTG-7MK-name-1\",\n10\t          \"given\": \"Adrian\",\n11\t          \"surname\": \"Zu\u00f1iga Rojas\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-adrian-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"8 September 1889\",\n19\t          \"standard_date\": \"8 Sep 1889\",\n20\t          \"place\": \"Arani, Cochabamba, ..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection",
+        "args": "--autonomous Objective: \"Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?\" Subject: Adrian Zu\u00f1iga Rojas (2DTG-7MK), born 8 Sep 1889 in Arani, Cochabamba, Bolivia. Naming convention suggests father surname \"Zu\u00f1iga\" and mother surname \"Rojas\". No questions exist yet."
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/question-selection/references/question-formulation.md"
+      },
+      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/question-selection/references/pedigree-analysis.md"
+      },
+      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "questions",
+        "op": "append",
+        "entry": {
+          "question": "What do the parochial registers of Arani, Cochabamba, Bolivia record about the baptism of Adrian Zu\u00f1iga Rojas (born 8 September 1889), and who are named as his parents?",
+          "rationale": "Adrian Zu\u00f1iga Rojas has no parent links in the tree. His compound surname (Zu\u00f1iga Rojas) follows Bolivian naming convention: father's first surname Zu\u00f1iga, mother's first surname Rojas. Bolivia was thoroughly Catholic in 1889; parish baptismal registers for Arani are available on FamilySearch and routinely name both parents. A baptism entry approximately 8 Sep 1889 would provide direct evidence of parentage.",
+          "selection_basis": "objective_decomposition",
+          "priority": "high",
+          "status": "open",
+          "depends_on": [],
+          "unblocks": [],
+          "resolved": null,
+          "resolution_assertion_ids": [],
+          "exhaustive_declaration": {
+            "declared": false,
+            "justification": null,
+            "log_entry_ids": [],
+            "stop_criteria": null
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-plan",
+        "args": "--autonomous Plan research for q_001: \"What do the parochial registers of Arani, Cochabamba, Bolivia record about the baptism of Adrian Zu\u00f1iga Rojas (born 8 September 1889), and who are named as his parents?\" Subject: Adrian Zu\u00f1iga Rojas (2DTG-7MK), born 8 Sep 1889 in Arani, Cochabamba, Bolivia. His compound surname suggests father's surname is Zu\u00f1iga, mother's surname is Rojas."
+      },
+      "response_summary": "Launching skill: research-plan"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/research-plan/references/planning-standards.md"
+      },
+      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/research-plan/references/record-type-guide.md"
+      },
+      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search,mcp__genealogy__volume_search,mcp__genealogy__wiki_place_page",
+        "max_results": 5
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__volume_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_place_page\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__place_search",
+      "args": {
+        "placeName": "Arani",
+        "contextName": "Cochabamba"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Arani, Cochabamba, Bolivia\\\",\\n      \\\"type\\\": \\\"Province\\\",\\n      \\\"dateRange\\\": \\\"+1914/\\\",\\n      \\\"latitude\\\": -17.57322,\\n      \\\"longitude\\\": -65.76806,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Arani&focusedId=443672\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://es.wikipedia.org/wiki/Provincia_de_Arani\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Arani, Arani, Cochabamba..."
+    },
+    {
+      "tool": "mcp__genealogy__wiki_place_page",
+      "args": {
+        "standardPlace": "Bolivia",
+        "section": "research_tips"
+      },
+      "response_summary": "{\"error\":\"Wiki markdown directory is not configured. Add \\\"wikiMarkdownDir\\\": \\\"/path/to/wiki/markdown\\\" to ~/.familysearch-mcp/config.json. Ask your team lead for the path to the pre-crawled wiki markdown files.\"}"
+    },
+    {
+      "tool": "mcp__genealogy__wiki_place_page",
+      "args": {
+        "standardPlace": "Bolivia",
+        "section": "online_records"
+      },
+      "response_summary": "{\"error\":\"Wiki markdown directory is not configured. Add \\\"wikiMarkdownDir\\\": \\\"/path/to/wiki/markdown\\\" to ~/.familysearch-mcp/config.json. Ask your team lead for the path to the pre-crawled wiki markdown files.\"}"
+    },
+    {
+      "tool": "mcp__genealogy__collections_search",
+      "args": {
+        "standardPlace": "Bolivia",
+        "startYear": 1860,
+        "endYear": 1920
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Bolivia\\\",\\n    \\\"startYear\\\": 1860,\\n    \\\"endYear\\\": 1920\\n  },\\n  \\\"scope\\\": \\\"Bolivia\\\",\\n  \\\"totalForPlace\\\": 4,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1520550\\\",\\n      \\\"title\\\": \\\"Bolivia, Baptisms, 1560-1938\\\",\\n      \\\"dateRange\\\": \\\"1560-1938\\\",\\n      \\\"recordCount\\\": 1876624,\\n      \\\"personCount\\\": 5306100,\\n      \\\"imageCount\\\": 1876624,\\n      \\\"url\\\": \\\"https://www.familysearch.org/search/collection/152..."
+    },
+    {
+      "tool": "mcp__genealogy__external_links_search",
+      "args": {
+        "standardPlace": "Bolivia",
+        "startYear": 1860,
+        "endYear": 1920
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Bolivia\\\",\\n    \\\"startYear\\\": 1860,\\n    \\\"endYear\\\": 1920\\n  },\\n  \\\"totalForPlace\\\": 44,\\n  \\\"results\\\": [\\n    {\\n      \\\"url\\\": \\\"https://www.ancestry.com/search/collections/9796\\\",\\n      \\\"linkText\\\": \\\"Bolivia Select Marriages, 1630-1940\\\"\\n    },\\n    {\\n      \\\"url\\\": \\\"https://www.findmypast.com/search/results?sourcecategory=travel%20%26%20migration&sid=999\\\",\\n      \\\"linkText\\\": \\\"Passenger Lists Leaving UK, 1..."
+    },
+    {
+      "tool": "mcp__genealogy__volume_search",
+      "args": {
+        "standardPlace": "Arani, Cochabamba, Bolivia",
+        "startYear": 1860,
+        "endYear": 1920
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Arani, Cochabamba, Bolivia\\\",\\n    \\\"startYear\\\": 1860,\\n    \\\"endYear\\\": 1920\\n  },\\n  \\\"totalResults\\\": 88,\\n  \\\"results\\\": [\\n    {\\n      \\\"imageGroupNumber\\\": \\\"005091874_003_M93F-M48\\\",\\n      \\\"imageGroupPrefix\\\": \\\"005091874\\\",\\n      \\\"imageCount\\\": 156,\\n      \\\"recordSearchablePercent\\\": 100,\\n      \\\"fulltextSearchable\\\": false,\\n      \\\"languages\\\": [\\n        \\\"es\\\"\\n      ],\\n      \\\"coverages\\\": [\\n        ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "ops": [
+          {
+            "section": "plans",
+            "op": "append",
+            "entry": {
+              "question_id": "q_001",
+              "status": "active",
+              "created": "2026-07-12"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 1,
+              "record_type": "church",
+              "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+              "date_range": "1889",
+              "repository": "FamilySearch",
+              "rationale": "Bolivia, Catholic Church Records, 1566-2020 (collection 1922463) is the largest indexed FamilySearch collection for Bolivia (9.8M records). A baptism entry for Adrian Zu\u00f1iga ca. 8 Sep 1889 in San Bartolom\u00e9 parish, Arani, would name both parents directly. Free and indexed \u2014 highest probability first search.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 2,
+              "record_type": "church",
+              "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+              "date_range": "1913",
+              "repository": "FamilySearch",
+              "rationale": "Adrian Zu\u00f1iga married Gregoria Pe\u00f1arrieta Obando on 29 November 1913 in San Bartolom\u00e9, Arani (already in the tree). Bolivian Catholic marriage records from this era typically name the groom's parents. Searching 'Bolivia, Marriages, 1630-1940' (collection 1520564) for this record would provide secondary/derivative evidence of his parents' names.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 3,
+              "record_type": "church",
+              "jurisdiction": "Bolivia",
+              "date_range": "1850-1920",
+              "repository": "FamilySearch",
+              "rationale": "Per GPS record-type guidance for Iberian/Latin American compound surnames, a full-text co-occurrence search for +Zu\u00f1iga +Rojas (both required, unscoped across the full FamilySearch Bolivia corpus) is the highest-yield approach when indexed record_search stalls. The co-occurrence captures any parochial act \u2014 Adrian's baptism, a parent's burial, the parents' own marriage \u2014 where both surnames appear on the same page. Must be run via the search-full-text skill, NOT as a phrase search, NOT scoped to a collection id.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 4,
+              "record_type": "church",
+              "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+              "date_range": "1865-1889",
+              "repository": "FamilySearch",
+              "rationale": "Per GPS parentage-question standards, the parents' marriage to each other must be a dedicated plan item. Adrian's father's first surname is Zu\u00f1iga; his mother's first surname is Rojas. Searching 'Bolivia, Marriages, 1630-1940' (collection 1520564) for a Zu\u00f1iga-Rojas couple in Arani in the two decades before Sep 1889 would: (a) confirm the couple as a unit; (b) supply the mother's maiden name (her full compound surname) which death and census records omit; and (c) by date, provide direct evidence of paternity. Volume 005091546_003 covers Arani marriages 1877-1891 at 100% indexed and is a strong candidate.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 5,
+              "record_type": "vital_record",
+              "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+              "date_range": "1928",
+              "repository": "other",
+              "rationale": "Adrian Zu\u00f1iga Rojas died 21 April 1928 in Arani. His death record (civil registration or parochial burial) would likely name him with his compound surname and possibly his parents as secondary information. Note: FamilySearch 'Bolivia, Deaths, 1750-1920' ends in 1920 and would not cover an 1928 death; the Archivo y Biblioteca Nacionales de Bolivia or the Cochabamba civil registry would hold this. San Bartolom\u00e9 burial registers on FamilySearch may also extend into 1928.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 6,
+              "record_type": "church",
+              "jurisdiction": "Arani, Arani, Cochabamba, Bolivia",
+              "date_range": "1889",
+              "repository": "Ancestry",
+              "rationale": "Ancestry 'Bolivia Select Baptisms, 1560-1938' (collection 9795) mirrors FamilySearch Bolivia Baptisms but may have different indexing. If the FamilySearch indexed search (pli_001) fails to surface Adrian's baptism, Ancestry's index may capture a variant spelling or entry missed by FS.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records",
+        "args": "--autonomous Execute pli_001 for q_001: Search FamilySearch \"Bolivia, Catholic Church Records, 1566-2020\" (collection 1922463) for the baptism of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia. His father's surname is Zu\u00f1iga, mother's surname is Rojas. Also execute pli_002: search the same or \"Bolivia, Marriages, 1630-1940\" (collection 1520564) for Adrian Zu\u00f1iga's 1913 marriage record in Arani which would name his parents. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append,mcp__genealogy__record_read",
+        "max_results": 4
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "givenName": "Adrian",
+        "surname": "Zu\u00f1iga",
+        "birthYearFrom": 1884,
+        "birthYearTo": 1894,
+        "birthPlace": "Arani, Cochabamba, Bolivia",
+        "collectionId": "1922463",
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Adrian\\\",\\n    \\\"surname\\\": \\\"Zu\\u00f1iga\\\",\\n    \\\"birthYearFrom\\\": 1884,\\n    \\\"birthYearTo\\\": 1894,\\n    \\\"birthPlace\\\": \\\"Arani, Cochabamba, Bolivia\\\",\\n    \\\"collectionId\\\": \\\"1922463\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalMatches\\\": 11,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 11,\\n  \\\"offset\\\": 0..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "stagedResultsRef": "results/.staging/b595b825-7d8a-4a67-9aeb-4dde10fdd56b.json",
+        "subjectId": "2DTG-7MK",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2DTG-7MK\\\",\\n  \\\"scoredCount\\\": 11,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 7,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QL7X-VBXX\\\",\\n      \\\"matchScore\\\": 0.7325868,\\n      \\\"primaryId\\\": \\\"p_102922351634\\\",\\n      \\\"personName\\\": \\\"Adrian Su\\u00f1iga\\\",\\n      \\\"birthDate\\\": \\\"1889\\\",\\n      \\\"collectionTitle\\\": \\\"Bolivia, Catholic Chu..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:QL7X-VBXX",
+        "resultsRef": "results/.staging/b595b825-7d8a-4a67-9aeb-4dde10fdd56b.json",
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_102922351634\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QL7X-VBXX\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Su\\u00f1iga\\\",\\n          \\\"given\\\": \\\"Adrian\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1889\\\",\\n          \\\"standard_date\\\": \\\"1889\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:QL7X-G24S",
+        "resultsRef": "results/.staging/b595b825-7d8a-4a67-9aeb-4dde10fdd56b.json",
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_102922452212\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QL7X-G24S\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Adrian\\\",\\n          \\\"surname\\\": \\\"S\\u00fa\\u00f1iga\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"date\\\": \\\"1889\\\",\\n          \\\"standard_date\\\": \\\"1889\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n       ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "Bolivia, Catholic Church Records, 1566-2020 (1922463)",
+          "givenName": "Adrian",
+          "surname": "Zu\u00f1iga",
+          "birthYearFrom": 1884,
+          "birthYearTo": 1894,
+          "birthPlace": "Arani, Cochabamba, Bolivia",
+          "count": 50
+        },
+        "outcome": "partial",
+        "resultsExamined": 11,
+        "resultsAvailable": 11,
+        "stagedResultsRef": "results/.staging/b595b825-7d8a-4a67-9aeb-4dde10fdd56b.json",
+        "notes": "No dedicated baptism record for Adrian Zu\u00f1iga (as principal infant) was identified. Search returned 11 results, primarily records of Adrian as a father (children: Gumercinda, Gregorio, Pedro) and his 1913 marriage record. The marriage record QL7X-VBXX (29 Nov 1913, San Bartolom\u00e9, Arani) explicitly names Adrian's father as Pedro Su\u00f1iga and mother as Polonia Rojas \u2014 directly answering the parentage question. That record is logged under pli_002."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-12T19:50:29.051Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 11,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "collection": "Bolivia, Catholic Church Records, 1566-2020 (1922463)",
+          "givenName": "Adrian",
+          "surname": "Zu\u00f1iga",
+          "birthYearFrom": 1884,
+          "birthYearTo": 1894,
+          "birthPlace": "Arani, Cochabamba, Bolivia",
+          "note": "Same staged search as log_001; reviewed results for marriage record"
+        },
+        "outcome": "positive",
+        "resultsExamined": 2,
+        "resultsAvailable": 11,
+        "stagedResultsRef": "results/log_001.json",
+        "notes": "Marriage record QL7X-VBXX (rank 1, matchScore 0.73, attached to subject 2DTG-7MK) confirmed as Adrian Zu\u00f1iga's 29 Nov 1913 marriage to Gregoria Pe\u00f1arrieta in San Bartolom\u00e9, Arani. Record names Adrian's father as Pedro Su\u00f1iga (Male) and mother as Polonia Rojas (Female). Record QL7X-G24S is a duplicate index entry for the same underlying document with fewer details. Key parentage finding: father=Pedro Zu\u00f1iga, mother=Polonia Rojas."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"stagedResultsRef 'results/log_001.json' is not inside results/.staging/\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "collection": "Bolivia, Catholic Church Records, 1566-2020 (1922463)",
+          "givenName": "Adrian",
+          "surname": "Zu\u00f1iga",
+          "birthYearFrom": 1884,
+          "birthYearTo": 1894,
+          "birthPlace": "Arani, Cochabamba, Bolivia",
+          "note": "Reviewed staged results from log_001 for marriage record evidence"
+        },
+        "outcome": "positive",
+        "resultsExamined": 2,
+        "resultsAvailable": 11,
+        "notes": "Marriage record QL7X-VBXX (rank 1, matchScore 0.73, attached to subject 2DTG-7MK) confirmed as Adrian Zu\u00f1iga's 29 Nov 1913 marriage to Gregoria Pe\u00f1arrieta in San Bartolom\u00e9, Arani. Record names Adrian's father as Pedro Su\u00f1iga/Zu\u00f1iga (Male) and mother as Polonia Rojas (Female). Record QL7X-G24S is a duplicate index entry with fewer details. Key parentage finding: father=Pedro Zu\u00f1iga, mother=Polonia Rojas. See log_001 sidecar for full staged results."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-12T19:50:46.362Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_001",
+            "fields": {
+              "status": "in_progress"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_002",
+            "fields": {
+              "status": "in_progress"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "record-extraction",
+        "args": "--autonomous Extract all assertions from the marriage record QL7X-VBXX for Adrian Zu\u00f1iga's 29 Nov 1913 marriage to Gregoria Pe\u00f1arrieta in San Bartolom\u00e9, Arani, Cochabamba, Bolivia. This record is in log_001 sidecar (results/log_001.json). RecordId: ark:/61903/1:1:QL7X-VBXX. The record names: Adrian Su\u00f1iga/Zu\u00f1iga (born 1889), his father Pedro Su\u00f1iga/Zu\u00f1iga (Male), his mother Polonia Rojas (Female), his spouse Gregoria Pe\u00f1arrieta (born 1893), her father Ciriaco Pe\u00f1arrieta (Male), her mother Adriana Obando (Female). Marriage: 29 Nov 1913, San Bartolom\u00e9, Arani, Cochabamba, Bolivia. This record serves both pli_001 and pli_002 (log entries log_001 and log_002). Subject of this project is Adrian Zu\u00f1iga Rojas (tree person 2DTG-7MK). The parentage finding (Pedro Zu\u00f1iga + Polonia Rojas as Adrian's parents) is the key research objective. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Launching skill: record-extraction"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "Extract assertions from Adrian Zu\u00f1iga's 1913 marriage record",
+        "subagent_type": "record-extractor",
+        "prompt": "Extract all assertions from the following marriage record and persist them to research.json and tree.gedcomx.json.\n\n**projectPath:** /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\n\n**recordId:** ark:/61903/1:1:QL7X-VBXX\n\n**logId:** log_001\n\n**Research question this record bears on:** q_001 \u2014 \"What do the parochial registers of Arani, Cochabamba, Bolivia record about the baptism of Adrian Zu\u00f1iga Rojas (born 8 September 1889), and who are named as his parents?\"\n\n**Record content (from record_read):**\n```json\n{\n  \"persons\": [\n    {\n      \"id\": \"p_102922351634\",\n      \"ark\": \"ark:/61903/1:1:QL7X-VBXX\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Su\u00f1iga\", \"given\": \"Adrian\"}],\n      \"facts\": [{\"type\": \"Birth\", \"date\": \"1889\", \"standard_date\": \"1889\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102922351638\",\n      \"ark\": \"ark:/61903/1:1:QL7X-VBXV\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Su\u00f1iga\", \"given\": \"Pedro\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102922351641\",\n      \"ark\": \"ark:/61903/1:1:QL7X-VBXL\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Rojas\", \"given\": \"Polonia\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102922351644\",\n      \"ark\": \"ark:/61903/1:1:QL7X-VBX5\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Pe\u00f1arrieta\", \"given\": \"Gregoria\"}],\n      \"facts\": [{\"type\": \"Birth\", \"date\": \"1893\", \"standard_date\": \"1893\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102922351646\",\n      \"ark\": \"ark:/61903/1:1:QL7X-VBXT\",\n      \"gender\": \"Male\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Pe\u00f1arrieta\", \"given\": \"Ciriaco\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    },\n    {\n      \"id\": \"p_102922351647\",\n      \"ark\": \"ark:/61903/1:1:QL7X-VBXY\",\n      \"gender\": \"Female\",\n      \"names\": [{\"type\": \"BirthName\", \"surname\": \"Obando\", \"given\": \"Adriana\"}],\n      \"sources\": [{\"ref\": \"sd_da1\"}]\n    }\n  ],\n  \"relationships\": [\n    {\"type\": \"Couple\", \"person1\": \"p_102922351638\", \"person2\": \"p_102922351641\"},\n    {\"type\": \"ParentChild\", \"parent\": \"p_102922351641\", \"child\": \"p_102922351634\"},\n    {\"type\": \"ParentChild\", \"parent\": \"p_102922351638\", \"child\": \"p_102922351634\"},\n    {\"type\": \"Couple\", \"person1\": \"p_102922351634\", \"person2\": \"p_102922351644\",\n      \"facts\": [{\"type\": \"Marriage\", \"primary\": true, \"date\": \"29 Nov 1913\", \"standard_date\": \"29 Nov 1913\", \"place\": \"San Bartolom\u00e9, Arani, Cochabamba, Bolivia\", \"standard_place\": \"San Bartolom\u00e9, Arani, Arani, Arani, Cochabamba, Bolivia\"}]},\n    {\"type\": \"ParentChild\", \"parent\": \"p_102922351646\", \"child\": \"p_102922351644\"},\n    {\"type\": \"ParentChild\", \"parent\": \"p_102922351647\", \"child\": \"p_102922351644\"}\n  ],\n  \"sources\": [\n    {\n      \"id\": \"src_r_104360892775\",\n      \"title\": \"Registro para Adrian Su\u00f1iga y Gregoria Pe\u00f1arrieta, \\\"Bolivia, registros parroquiales, 1566-1996\\\"\",\n      \"citation\": \"\\\"Bolivia, registros parroquiales, 1566-1996\\\", , FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX : Sun Mar 10 11:42:45 UTC 2024), Registro para Adrian Su\u00f1iga y Gregoria Pe\u00f1arrieta, \\\"Bolivia, registros parroquiales, 1566-1996\\\", 29 Nov 1913.\",\n      \"url\": \"https://www.familysearch.org/ark:/61903/1:2:QPQ2-V4FR\"\n    }\n  ]\n}\n```\n\n**Tree context (tree.gedcomx.json):**\n- Adrian Zu\u00f1iga Rojas (2DTG-7MK): born 8 Sep 1889, died 21 Apr 1928, Arani, Cochabamba, Bolivia \u2014 the research subject\n- Gregoria Pe\u00f1arrieta Obando (2DTG-7XD): his wife, born 1893, Arani\n- Their children: Marcelina (KCRK-GZN), Gumercinda (KDSR-875), Tomasa (KZKD-QC4), Eusebia (K41P-XM5)\n- Couple relationship rel-1 already exists for Adrian + Gregoria\n\n**Key facts to extract:**\n1. Adrian Zu\u00f1iga's marriage on 29 Nov 1913 in San Bartolom\u00e9, Arani, Cochabamba, Bolivia\n2. Adrian's father named as Pedro Su\u00f1iga/Zu\u00f1iga (Male) \u2014 **this is the primary parentage finding for the research question**\n3. Adrian's mother named as Polonia Rojas (Female) \u2014 **this is the primary parentage finding for the research question**\n4. Gregoria Pe\u00f1arrieta's birth year ~1893\n5. Gregoria's father: Ciriaco Pe\u00f1arrieta (Male)\n6. Gregoria's mother: Adriana Obando (Female)\n\n**Notes:**\n- The record spells the surname \"Su\u00f1iga\" (without tilde on Z); in the project it is \"Zu\u00f1iga\" \u2014 treat as the same surname, variant orthography\n- Pedro Su\u00f1iga and Polonia Rojas do NOT yet exist in tree.gedcomx.json \u2014 create them as new persons\n- Ciriaco Pe\u00f1arrieta and Adriana Obando do NOT yet exist in tree.gedcomx.json \u2014 create them as new persons\n- The research subject is Adrian Zu\u00f1iga Rojas (2DTG-7MK); the record persona p_102922351634 corresponds to him\n- Gregoria Pe\u00f1arrieta in the record corresponds to tree person 2DTG-7XD\n- This is a **marriage record** (original parochial register, derivative indexed entry); the informant for the groom's parents is the groom himself (self or witness present) \u2014 classify accordingly\n- Do NOT frame this as correcting the existing tree; add new persons and relationships as supported by this record"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"**Source:** src_001 / S1 \\u2014 FamilySearch marriage register entry (derivative index, original image not examined), reused none \\u2014 newly created.\\n\\n**Assertions (9):** groom (Adrian): name, birth-year (calculated), marriage \\u2014 3; father_of_groom (Pedro Su\\u00f1iga): parentage \\u2014 1; mother_of_groom (Polonia Rojas): parentage \\u2014 1; bride (Gregoria): name, birth-year \\u2014 2; father_of_bride (Ciriaco Pe\\u00f1arrieta): parentage \\u2014 1; mother_of_b..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_zuniga_rojas_parents\",\n4\t    \"objective\": \"Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2DTG-7MK\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-05\",\n10\t    \"updated\": \"2026-07-05\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2DTG-7MK\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"2DTG-7MK-name-1\",\n10\t          \"given\": \"Adrian\",\n11\t          \"surname\": \"Zu\u00f1iga Rojas\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-adrian-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"8 September 1889\",\n19\t          \"standard_date\": \"8 Sep 1889\",\n20\t          \"place\": \"Arani, Cochabamba, ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "sourceDescription": {
+          "title": "Registro para Adrian Su\u00f1iga y Gregoria Pe\u00f1arrieta, \"Bolivia, registros parroquiales, 1566-1996\"",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:QPQ2-V4FR"
+        },
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "citation": "\"Bolivia, registros parroquiales, 1566-1996\", , FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX : Sun Mar 10 11:42:45 UTC 2024), Registro para Adrian Su\u00f1iga y Gregoria Pe\u00f1arrieta, \"Bolivia, registros parroquiales, 1566-1996\", 29 Nov 1913.",
+              "citation_detail": {
+                "who": "Catholic Church parish of San Bartolom\u00e9, Arani, Cochabamba, Bolivia (record keeper); indexed by FamilySearch",
+                "what": "Marriage register entry for Adrian Su\u00f1iga and Gregoria Pe\u00f1arrieta",
+                "when_created": "29 Nov 1913",
+                "when_accessed": "12 Jul 2026",
+                "where": "FamilySearch, \"Bolivia, registros parroquiales, 1566-1996\" database",
+                "where_within": "San Bartolom\u00e9 parish, Arani, Cochabamba, Bolivia"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "12 Jul 2026",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QPQ2-V4FR",
+              "notes": "Original not examined \u2014 this extraction is from the FamilySearch indexed/derivative entry (record persona QL7X-VBXX); the underlying original parish marriage register image was not reviewed. Record spells the surname 'Su\u00f1iga' (no tilde on Z); treated as orthographic variant of 'Zu\u00f1iga' used elsewhere for this family in the tree.",
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "groom",
+              "record_persona_id": "p_102922351634",
+              "fact_type": "Name",
+              "value": "Adrian Su\u00f1iga",
+              "structured_value": {
+                "given": "Adrian",
+                "surname": "Su\u00f1iga"
+              },
+              "informant": "Adrian Su\u00f1iga",
+              "informant_proximity": "self",
+              "information_quality": "primary",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "groom",
+              "record_persona_id": "p_102922351634",
+              "fact_type": "Birth",
+              "value": "1889 (birth year, calculated)",
+              "date": "1889",
+              "date_certainty": "estimated",
+              "informant": "Adrian Su\u00f1iga",
+              "informant_proximity": "self",
+              "information_quality": "secondary",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "informant_bias_notes": "A person cannot provide primary information about their own birth event; this year appears to be calculated by the index from a stated age at marriage rather than directly recorded.",
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "groom",
+              "record_persona_id": "p_102922351634",
+              "fact_type": "Marriage",
+              "value": "Married 29 Nov 1913 at San Bartolom\u00e9, Arani, Cochabamba, Bolivia, to Gregoria Pe\u00f1arrieta",
+              "date": "29 Nov 1913",
+              "date_certainty": "exact",
+              "place": "San Bartolom\u00e9, Arani, Cochabamba, Bolivia",
+              "standard_place": "San Bartolom\u00e9, Arani, Arani, Arani, Cochabamba, Bolivia",
+              "informant": "the officiating parish priest at San Bartolom\u00e9",
+              "informant_proximity": "official_duty",
+              "information_quality": "primary",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "father_of_groom",
+              "record_persona_id": "p_102922351638",
+              "fact_type": "Relationship",
+              "value": "Father of the groom named as Pedro Su\u00f1iga",
+              "structured_value": {
+                "given": "Pedro",
+                "surname": "Su\u00f1iga",
+                "relationship_type": "father",
+                "related_person_role": "groom"
+              },
+              "informant": "Adrian Su\u00f1iga (the groom)",
+              "informant_proximity": "self",
+              "information_quality": "primary",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "informant_bias_notes": "Surname recorded 'Su\u00f1iga' (no tilde on Z); treated as orthographic variant of 'Zu\u00f1iga', the surname already established for this family in the tree. This is the primary parentage finding for q_001 \u2014 corroboration from an independent original source (e.g., baptismal register) is still outstanding.",
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "mother_of_groom",
+              "record_persona_id": "p_102922351641",
+              "fact_type": "Relationship",
+              "value": "Mother of the groom named as Polonia Rojas",
+              "structured_value": {
+                "given": "Polonia",
+                "surname": "Rojas",
+                "relationship_type": "mother",
+                "related_person_role": "groom"
+              },
+              "informant": "Adrian Su\u00f1iga (the groom)",
+              "informant_proximity": "self",
+              "information_quality": "primary",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "informant_bias_notes": "This is the primary parentage finding for q_001 (mother's name matches Adrian's compound surname 'Zu\u00f1iga Rojas'). Corroboration from an independent original source (e.g., baptismal register) is still outstanding.",
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "bride",
+              "record_persona_id": "p_102922351644",
+              "fact_type": "Name",
+              "value": "Gregoria Pe\u00f1arrieta",
+              "structured_value": {
+                "given": "Gregoria",
+                "surname": "Pe\u00f1arrieta"
+              },
+              "informant": "Gregoria Pe\u00f1arrieta",
+              "informant_proximity": "self",
+              "information_quality": "primary",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "bride",
+              "record_persona_id": "p_102922351644",
+              "fact_type": "Birth",
+              "value": "1893 (birth year, calculated)",
+              "date": "1893",
+              "date_certainty": "estimated",
+              "informant": "Gregoria Pe\u00f1arrieta",
+              "informant_proximity": "self",
+              "information_quality": "secondary",
+              "evidence_type": "indirect",
+              "extracted_for_question_ids": [],
+              "informant_bias_notes": "A person cannot provide primary information about their own birth event; this year appears to be calculated by the index from a stated age at marriage rather than directly recorded.",
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "father_of_bride",
+              "record_persona_id": "p_102922351646",
+              "fact_type": "Relationship",
+              "value": "Father of the bride named as Ciriaco Pe\u00f1arrieta",
+              "structured_value": {
+                "given": "Ciriaco",
+                "surname": "Pe\u00f1arrieta",
+                "relationship_type": "father",
+                "related_person_role": "bride"
+              },
+              "informant": "Gregoria Pe\u00f1arrieta (the bride)",
+              "informant_proximity": "self",
+              "information_quality": "primary",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_001"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QL7X-VBXX",
+              "record_role": "mother_of_bride",
+              "record_persona_id": "p_102922351647",
+              "fact_type": "Relationship",
+              "value": "Mother of the bride named as Adriana Obando",
+              "structured_value": {
+                "given": "Adriana",
+                "surname": "Obando",
+                "relationship_type": "mother",
+                "related_person_role": "bride"
+              },
+              "informant": "Gregoria Pe\u00f1arrieta (the bride)",
+              "informant_proximity": "self",
+              "information_quality": "primary",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_001"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "ops": [
+          {
+            "operation": "add_person",
+            "person": {
+              "gender": "Male",
+              "names": [
+                {
+                  "given": "Pedro",
+                  "surname": "Zu\u00f1iga",
+                  "preferred": true,
+                  "type": "BirthName"
+                }
+              ]
+            }
+          },
+          {
+            "operation": "add_person",
+            "person": {
+              "gender": "Female",
+              "names": [
+                {
+                  "given": "Polonia",
+                  "surname": "Rojas",
+                  "preferred": true,
+                  "type": "BirthName"
+                }
+              ]
+            }
+          },
+          {
+            "operation": "add_person",
+            "person": {
+              "gender": "Male",
+              "names": [
+                {
+                  "given": "Ciriaco",
+                  "surname": "Pe\u00f1arrieta",
+                  "preferred": true,
+                  "type": "BirthName"
+                }
+              ]
+            }
+          },
+          {
+            "operation": "add_person",
+            "person": {
+              "gender": "Female",
+              "names": [
+                {
+                  "given": "Adriana",
+                  "surname": "Obando",
+                  "preferred": true,
+                  "type": "BirthName"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I1\\\",\\n        \\\"names\\\": [\\n          \\\"N1\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I2\\\",\\n        \\\"names\\\": [\\n          \\\"N2\\\"\\n        ]\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_person\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"person\\\": \\\"I3\\..."
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "ops": [
+          {
+            "operation": "add_relationship",
+            "relationship": {
+              "type": "Couple",
+              "person1": "I1",
+              "person2": "I2"
+            }
+          },
+          {
+            "operation": "add_relationship",
+            "relationship": {
+              "type": "ParentChild",
+              "parent": "I1",
+              "child": "2DTG-7MK"
+            }
+          },
+          {
+            "operation": "add_relationship",
+            "relationship": {
+              "type": "ParentChild",
+              "parent": "I2",
+              "child": "2DTG-7MK"
+            }
+          },
+          {
+            "operation": "add_relationship",
+            "relationship": {
+              "type": "ParentChild",
+              "parent": "I3",
+              "child": "2DTG-7XD"
+            }
+          },
+          {
+            "operation": "add_relationship",
+            "relationship": {
+              "type": "ParentChild",
+              "parent": "I4",
+              "child": "2DTG-7XD"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"relationship\\\": \\\"R3\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_relationship\\\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_zuniga_rojas_parents\",\n4\t    \"objective\": \"Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2DTG-7MK\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-05\",\n10\t    \"updated\": \"2026-07-05\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2DTG-7MK\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"2DTG-7MK-name-1\",\n10\t          \"given\": \"Adrian\",\n11\t          \"surname\": \"Zu\u00f1iga Rojas\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"f-adrian-birth\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"8 September 1889\",\n19\t          \"standard_date\": \"8 Sep 1889\",\n20\t          \"place\": \"Arani, Cochabamba, ..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "person-evidence",
+        "args": "--autonomous Link all 9 assertions from src_001 (the 29 Nov 1913 marriage record QL7X-VBXX) to their corresponding tree persons. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\n\nAssertions and their expected tree-person mappings:\n- a_001 (Adrian's name, groom, p_102922351634) \u2192 2DTG-7MK (Adrian Zu\u00f1iga Rojas)\n- a_002 (Adrian birth year 1889, groom) \u2192 2DTG-7MK\n- a_003 (Adrian's marriage 29 Nov 1913, groom) \u2192 2DTG-7MK\n- a_004 (Father of groom = Pedro Su\u00f1iga, p_102922351638) \u2192 I1 (Pedro Zu\u00f1iga \u2014 newly created)\n- a_005 (Mother of groom = Polonia Rojas, p_102922351641) \u2192 I2 (Polonia Rojas \u2014 newly created)\n- a_006 (Gregoria's name, bride, p_102922351644) \u2192 2DTG-7XD (Gregoria Pe\u00f1arrieta Obando)\n- a_007 (Gregoria birth year 1893, bride) \u2192 2DTG-7XD\n- a_008 (Father of bride = Ciriaco Pe\u00f1arrieta, p_102922351646) \u2192 I3 (Ciriaco Pe\u00f1arrieta \u2014 newly created)\n- a_009 (Mother of bride = Adriana Obando, p_102922351647) \u2192 I4 (Adriana Obando \u2014 newly created)\n\nKey context: a_004 and a_005 are the primary parentage findings for q_001. The groom (Adrian) is the informant \u2014 self-reported, primary information, direct evidence. Tree relationships R2 (I1\u21922DTG-7MK) and R3 (I2\u21922DTG-7MK) are already in tree.gedcomx.json."
+      },
+      "response_summary": "Launching skill: person-evidence"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "ops": [
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_001",
+              "person_id": "2DTG-7MK",
+              "confidence": "confident",
+              "match_score": 0.7325868,
+              "rationale": "Groom persona 'Adrian Su\u00f1iga' maps to Adrian Zu\u00f1iga Rojas (2DTG-7MK): given name exact; surname 'Su\u00f1iga' is an orthographic variant of 'Zu\u00f1iga' (no tilde on Z), the first compound surname carried by this person throughout all records. Record retrieved by specifically searching for 2DTG-7MK; rank_search_matches score 0.73, record already attached to subject. Strong match on name, birth year, marriage date, and place \u2014 all identifiers agree."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_002",
+              "person_id": "2DTG-7MK",
+              "confidence": "confident",
+              "match_score": 0.7325868,
+              "rationale": "Calculated birth year 1889 from this record matches Adrian Zu\u00f1iga Rojas's known birth date of 8 September 1889 exactly. Supports identification of the groom persona as 2DTG-7MK."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_003",
+              "person_id": "2DTG-7MK",
+              "confidence": "confident",
+              "match_score": 0.7325868,
+              "rationale": "Marriage assertion (29 Nov 1913, San Bartolom\u00e9, Arani, Cochabamba) matches tree relationship rel-1 exactly \u2014 same date, same place, same spouse (Gregoria Pe\u00f1arrieta). The groom in this record is Adrian Zu\u00f1iga Rojas (2DTG-7MK). All identifiers agree; strong match."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_003",
+              "person_id": "2DTG-7XD",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The marriage assertion also bears on the bride Gregoria Pe\u00f1arrieta (2DTG-7XD), since it documents the marriage event from her perspective as a party to the union. Bride persona name 'Gregoria Pe\u00f1arrieta' matches tree person Gregoria Pe\u00f1arrieta Obando (2DTG-7XD): given name exact, first compound surname Pe\u00f1arrieta matches; birth year 1893 in record matches tree fact f-gregoria-birth. Marriage to Adrian Zu\u00f1iga (2DTG-7MK) in rel-1 matches. Strong match."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_004",
+              "person_id": "I1",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Father-of-groom persona 'Pedro Su\u00f1iga' (Male) maps to stub person Pedro Zu\u00f1iga (I1), created from this single record. Name matches: given 'Pedro', surname 'Su\u00f1iga'/'Zu\u00f1iga' (orthographic variant). No independent corroboration yet \u2014 I1 rests on this single derivative record. Confidence capped at probable per stub-person policy. The surname 'Rojas' in Adrian's compound surname 'Zu\u00f1iga Rojas' matches the mother-of-groom Polonia Rojas (I2), providing indirect corroboration that 'Zu\u00f1iga' is the father's line."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_004",
+              "person_id": "2DTG-7MK",
+              "confidence": "confident",
+              "match_score": 0.7325868,
+              "rationale": "The father-of-groom assertion also bears on Adrian Zu\u00f1iga Rojas (2DTG-7MK) as the 'son' in this parent-child relationship. The groom is confidently identified as 2DTG-7MK; therefore a_004 (stating Pedro Su\u00f1iga is the groom's father) directly bears on 2DTG-7MK's parentage \u2014 the central finding for q_001."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_005",
+              "person_id": "I2",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Mother-of-groom persona 'Polonia Rojas' (Female) maps to stub person Polonia Rojas (I2), created from this single record. Given name 'Polonia', surname 'Rojas' \u2014 surname 'Rojas' corresponds exactly to the second component of Adrian's compound surname 'Zu\u00f1iga Rojas', providing structural corroboration that this is the correct maternal surname. No independent corroboration yet \u2014 confidence capped at probable per stub-person policy."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_005",
+              "person_id": "2DTG-7MK",
+              "confidence": "confident",
+              "match_score": 0.7325868,
+              "rationale": "The mother-of-groom assertion bears on Adrian Zu\u00f1iga Rojas (2DTG-7MK) as the 'son' in this parent-child relationship. Groom is confidently identified as 2DTG-7MK; a_005 (Polonia Rojas as mother of the groom) therefore directly bears on 2DTG-7MK's matrilineal parentage \u2014 the second key finding for q_001."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_006",
+              "person_id": "2DTG-7XD",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Bride persona 'Gregoria Pe\u00f1arrieta' maps to Gregoria Pe\u00f1arrieta Obando (2DTG-7XD): given name exact; first compound surname Pe\u00f1arrieta exact. Birth year 1893 in record matches tree. Bride is the spouse of the groom (Adrian Zu\u00f1iga = 2DTG-7MK), which matches tree rel-1. Strong match on all identifiers."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_007",
+              "person_id": "2DTG-7XD",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "Calculated birth year 1893 from this record matches tree fact f-gregoria-birth (1893) for Gregoria Pe\u00f1arrieta Obando (2DTG-7XD) exactly. Supports identification of bride persona as 2DTG-7XD."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_008",
+              "person_id": "I3",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Father-of-bride persona 'Ciriaco Pe\u00f1arrieta' (Male) maps to stub person Ciriaco Pe\u00f1arrieta (I3), created from this single record. Name given 'Ciriaco', surname 'Pe\u00f1arrieta' matches. No independent corroboration; confidence capped at probable per stub-person policy."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_008",
+              "person_id": "2DTG-7XD",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The father-of-bride assertion also bears on Gregoria Pe\u00f1arrieta Obando (2DTG-7XD) as the 'daughter' in this parent-child relationship. Bride is confidently identified as 2DTG-7XD; a_008 (Ciriaco Pe\u00f1arrieta as father of the bride) therefore bears on Gregoria's paternal parentage."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_009",
+              "person_id": "I4",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "Mother-of-bride persona 'Adriana Obando' (Female) maps to stub person Adriana Obando (I4), created from this single record. Given name 'Adriana', surname 'Obando' \u2014 note the tree carries Gregoria's full surname as 'Pe\u00f1arrieta Obando', where 'Obando' is the maternal component, consistent with I4 being Gregoria's mother. This structural consistency provides supplemental support. No independent corroboration; confidence capped at probable per stub-person policy."
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_009",
+              "person_id": "2DTG-7XD",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The mother-of-bride assertion bears on Gregoria Pe\u00f1arrieta Obando (2DTG-7XD) as the 'daughter'. Bride is confidently identified as 2DTG-7XD; a_009 (Adriana Obando as mother of the bride) bears on Gregoria's maternal parentage. The surname 'Obando' in Gregoria's compound surname 'Pe\u00f1arrieta Obando' matches the mother's surname here, providing strong structural corroboration."
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "check-warnings",
+        "args": "--autonomous Check warnings for newly linked/created persons after extraction and person-evidence from the 1913 marriage record. Persons to check: 2DTG-7MK (Adrian Zu\u00f1iga Rojas), I1 (Pedro Zu\u00f1iga \u2014 new stub, Adrian's father), I2 (Polonia Rojas \u2014 new stub, Adrian's mother). Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Launching skill: check-warnings"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__person_warnings,mcp__genealogy__person_quality",
+        "max_results": 2
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_quality\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "personId": "2DTG-7MK"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "personId": "I1"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "personId": "I2"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_quality",
+      "args": {
+        "personId": "2DTG-7MK"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"personId\\\": \\\"2DTG-7MK\\\",\\n  \\\"segment\\\": \\\"South America 1800 - 1920\\\",\\n  \\\"overallScore\\\": 0.8742690058479532,\\n  \\\"issueCount\\\": 5,\\n  \\\"categories\\\": [\\n    {\\n      \\\"scoreType\\\": \\\"COMPLETENESS\\\",\\n      \\\"count\\\": 2,\\n      \\\"score\\\": 0.7894736842105263\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"VERIFIABILITY\\\",\\n      \\\"count\\\": 1,\\n      \\\"score\\\": 0.8333333333333334\\n    },\\n    {\\n      \\\"scoreType\\\": \\\"CONSISTENCY\\\",\\n      \\\"count\\\": 0,\\n      \\\"sco..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-exhaustiveness",
+        "args": "--autonomous Evaluate exhaustiveness for q_001: \"What do the parochial registers of Arani, Cochabamba, Bolivia record about the baptism of Adrian Zu\u00f1iga Rojas (born 8 September 1889), and who are named as his parents?\" \n\nCurrent evidence state:\n- src_001 (derivative indexed marriage record QL7X-VBXX, 29 Nov 1913): 9 assertions, all person-linked\n- a_004: Father = Pedro Su\u00f1iga/Zu\u00f1iga (direct, primary, informant = groom himself)\n- a_005: Mother = Polonia Rojas (direct, primary, informant = groom himself)\n- No conflicts\n- Log: log_001 (partial \u2014 baptism not found), log_002 (positive \u2014 marriage record naming parents found)\n\nPlan status: pli_001 (in_progress, baptism not found), pli_002 (in_progress, marriage record extracted), pli_003 (planned \u2014 full-text co-occurrence search), pli_004 (planned \u2014 parents' marriage record), pli_005 (planned \u2014 death record), pli_006 (planned \u2014 Ancestry baptism fallback)\n\nThe marriage record is derivative (FamilySearch indexed entry). Original parish image not examined. The evidence plausibly answers the parentage question but rests on a single derivative source. Does this meet GPS exhaustiveness, or are additional searches required?\n\nProject path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Launching skill: research-exhaustiveness"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
+      },
+      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_001",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_002",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_005",
+            "fields": {
+              "status": "skipped"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_006",
+            "fields": {
+              "status": "skipped"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records",
+        "args": "--autonomous Execute pli_004 for q_001: Search FamilySearch \"Bolivia, Marriages, 1630-1940\" (collection 1520564) for the marriage of Pedro Zu\u00f1iga (father's surname) to a woman with first surname Rojas (mother's surname) in Arani, Cochabamba, Bolivia, approximately 1865-1889 (before Adrian's birth on 8 Sep 1889). This is the GPS-required parents' marriage search for a parentage question \u2014 it would confirm the couple, supply Polonia's full compound surname, and provide independent direct evidence of paternity. Volume 005091546_003 covers Arani marriages 1877-1891 at 100% indexed and is a strong candidate. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "givenName": "Pedro",
+        "surname": "Zu\u00f1iga",
+        "spouseSurname": "Rojas",
+        "marriagePlace": "Arani, Cochabamba, Bolivia",
+        "marriageYearFrom": 1860,
+        "marriageYearTo": 1889,
+        "collectionId": "1520564",
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Pedro\\\",\\n    \\\"surname\\\": \\\"Zu\\u00f1iga\\\",\\n    \\\"spouseSurname\\\": \\\"Rojas\\\",\\n    \\\"marriagePlace\\\": \\\"Arani, Cochabamba, Bolivia\\\",\\n    \\\"marriageYearFrom\\\": 1860,\\n    \\\"marriageYearTo\\\": 1889,\\n    \\\"collectionId\\\": \\\"1520564\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "givenName": "Pedro",
+        "surname": "Zu\u00f1iga",
+        "marriagePlace": "Arani, Cochabamba, Bolivia",
+        "marriageYearFrom": 1855,
+        "marriageYearTo": 1895,
+        "collectionId": "1520564",
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Pedro\\\",\\n    \\\"surname\\\": \\\"Zu\\u00f1iga\\\",\\n    \\\"marriagePlace\\\": \\\"Arani, Cochabamba, Bolivia\\\",\\n    \\\"marriageYearFrom\\\": 1855,\\n    \\\"marriageYearTo\\\": 1895,\\n    \\\"collectionId\\\": \\\"1520564\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offse..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "givenName": "Pedro",
+        "surname": "Zu\u00f1iga",
+        "spouseSurname": "Rojas",
+        "recordCountry": "Bolivia",
+        "recordType": "marriage",
+        "anyYearFrom": 1855,
+        "anyYearTo": 1895,
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Pedro\\\",\\n    \\\"surname\\\": \\\"Zu\\u00f1iga\\\",\\n    \\\"spouseSurname\\\": \\\"Rojas\\\",\\n    \\\"recordCountry\\\": \\\"Bolivia\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"anyYearFrom\\\": 1855,\\n    \\\"anyYearTo\\\": 1895,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalMatches\\\": 6,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 6,\\n  \\\"..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "stagedResultsRef": "results/.staging/09ca5d5b-277b-4e30-af4b-187055ae94d9.json",
+        "subjectId": "I1",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"I1\\\",\\n  \\\"scoredCount\\\": 6,\\n  \\\"returnedCount\\\": 6,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QL7X-JD1X\\\",\\n      \\\"matchScore\\\": 0.0133037735,\\n      \\\"primaryId\\\": \\\"p_102922310684\\\",\\n      \\\"personName\\\": \\\"Pedro Zu\\u00f1iga\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"Bolivia, Catholic Church Records,..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "record_search",
+        "planItemId": "pli_004",
+        "query": {
+          "collection": "Bolivia Catholic Church Records 1922463 + Bolivia Marriages 1520564",
+          "givenName": "Pedro",
+          "surname": "Zu\u00f1iga",
+          "spouseSurname": "Rojas",
+          "recordCountry": "Bolivia",
+          "recordType": "marriage",
+          "anyYearFrom": 1855,
+          "anyYearTo": 1895,
+          "count": 50,
+          "attempts": [
+            "collection 1520564 with place+year (0 results)",
+            "collection 1520564 broader year (0 results)",
+            "all Bolivia marriages with spouse surname Rojas (6 results, none are Pedro\u00d7Polonia marriage)"
+          ]
+        },
+        "outcome": "partial",
+        "resultsExamined": 6,
+        "resultsAvailable": 6,
+        "stagedResultsRef": "results/.staging/09ca5d5b-277b-4e30-af4b-187055ae94d9.json",
+        "notes": "Three search attempts: (1) collection 1520564 Pedro Zu\u00f1iga + spouseSurname Rojas + Arani 1860-1889 = 0 results; (2) same without spouse surname, wider year = 0 results; (3) all Bolivia marriages Pedro Zu\u00f1iga + Rojas 1855-1895 = 6 results. None are the target Pedro Zu\u00f1iga \u00d7 Polonia Rojas marriage \u2014 results are records where a Pedro Zu\u00f1iga appears as witness/relative in other marriages. All match scores degenerate (I1 is a local stub). Trying additional variants: surname Su\u00f1iga and wider Bolivia search."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-12T20:01:55.536Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_003.json\\\",\\n  \\\"returnedCount\\\": 6,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_003.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json",
+        "limit": 100
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_zuniga_rojas_parents\",\n4\t    \"objective\": \"Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2DTG-7MK\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-05\",\n10\t    \"updated\": \"2026-07-05\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json",
+        "offset": 100,
+        "limit": 200
+      },
+      "response_summary": "100\t        {\n101\t          \"id\": \"pli_006\",\n102\t          \"sequence\": 6,\n103\t          \"record_type\": \"church\",\n104\t          \"jurisdiction\": \"Arani, Arani, Cochabamba, Bolivia\",\n105\t          \"date_range\": \"1889\",\n106\t          \"repository\": \"Ancestry\",\n107\t          \"rationale\": \"Ancestry 'Bolivia Select Baptisms, 1560-1938' (collection 9795) mirrors FamilySearch Bolivia Baptisms but may have different indexing. If the FamilySearch indexed search (pli_001) fails to surface Adrian's baptism..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__research_log_append,mcp__genealogy__research_append,mcp__genealogy__fulltext_search",
+        "max_results": 5
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__fulltext_search\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "givenName": "Pedro",
+        "surname": "Su\u00f1iga",
+        "spouseGivenName": "Polonia",
+        "recordCountry": "Bolivia",
+        "recordType": "marriage",
+        "anyYearFrom": 1855,
+        "anyYearTo": 1895,
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Pedro\\\",\\n    \\\"surname\\\": \\\"Su\\u00f1iga\\\",\\n    \\\"spouseGivenName\\\": \\\"Polonia\\\",\\n    \\\"recordCountry\\\": \\\"Bolivia\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"anyYearFrom\\\": 1855,\\n    \\\"anyYearTo\\\": 1895,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalMatches\\\": 7,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 7,\\n..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:6T31-PQTS"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_303361015382\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6T31-PQTS\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"45b66296-4a37-4427-82ae-7def198af3c8\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Su\\u00f1iga\\\",\\n          \\\"given\\\": \\\"Pedro\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_303361015383\\\",\\n     ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:6JYY-NS2G"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_297381404422\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:6JYY-NS2G\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"38a0fbdf-484a-4856-8bdc-8afc9badcdb3\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Pedro\\\",\\n          \\\"surname\\\": \\\"Suniga\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_297381404423\\\",\\n      \\\"ar..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "record_search",
+        "planItemId": "pli_004",
+        "query": {
+          "givenName": "Pedro",
+          "surname": "Su\u00f1iga",
+          "spouseGivenName": "Polonia",
+          "recordCountry": "Bolivia",
+          "recordType": "marriage",
+          "anyYearFrom": 1855,
+          "anyYearTo": 1895,
+          "count": 50,
+          "note": "Variant 4: Su\u00f1iga spelling with spouse given name Polonia"
+        },
+        "outcome": "negative",
+        "resultsExamined": 7,
+        "resultsAvailable": 7,
+        "stagedResultsRef": "results/.staging/032dd0ad-14cb-42f1-83ba-59ccf28bad5d.json",
+        "notes": "7 results, none are the target Pedro Zu\u00f1iga \u00d7 Polonia Rojas marriage. Top result is again the known 1913 Adrian marriage record. Results 2-3 are the same 1786 Pedro Su\u00f1iga \u00d7 Paula Condori record in Mizque (different person, century earlier). Exhausted structured record_search for the parents' marriage. Routing to pli_003 (full-text co-occurrence +Zu\u00f1iga +Rojas)."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-12T20:04:52.838Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 7,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_004",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__fulltext_search",
+      "args": {
+        "keywords": "+Zu\u00f1iga +Rojas",
+        "recordPlace1": "Bolivia",
+        "yearFrom": 1850,
+        "yearTo": 1920,
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Zu\\u00f1iga +Rojas\\\",\\n    \\\"recordPlace1\\\": \\\"Bolivia\\\",\\n    \\\"yearFrom\\\": 1850,\\n    \\\"yearTo\\\": 1920,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__fulltext_search",
+      "args": {
+        "keywords": "+Zuniga +Rojas",
+        "recordPlace1": "Bolivia",
+        "yearFrom": 1850,
+        "yearTo": 1920,
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Zuniga +Rojas\\\",\\n    \\\"recordPlace1\\\": \\\"Bolivia\\\",\\n    \\\"yearFrom\\\": 1850,\\n    \\\"yearTo\\\": 1920,\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__fulltext_search",
+      "args": {
+        "keywords": "+Zuniga +Rojas",
+        "count": 20,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Error: result (135,787 characters across 1,936 lines) exceeds maximum allowed tokens. Output has been saved to /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt.\nFormat: Plain text\n- For targeted searches (find a line, locate a string): use grep on the file directly.\n- For analysis or summarization that requires reading the f..."
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "Read FTS results file for Zuniga+Rojas Bolivia records",
+        "prompt": "Read the file at /Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt\n\nThis is a JSON response from a FamilySearch full-text search for +Zuniga +Rojas (unscoped across entire corpus). I need to:\n1. Find whether there is a `staged.resultsRef` field in the response (a path like \"results/.staging/XXXX.json\")\n2. Find any records related to Bolivia, particularly Arani or Cochabamba\n3. Find any records mentioning a \"Pedro Zuniga\" or \"Polonia Rojas\" together\n4. Identify any records from the period 1850-1920 that could be the marriage of Pedro Zuniga \u00d7 Polonia Rojas (parents of Adrian Zu\u00f1iga Rojas born 1889 in Arani, Cochabamba, Bolivia)\n\nRead the file in chunks of 100 lines using offset/limit until you have read all 1,936 lines. Report:\n- The staged.resultsRef value if present\n- The totalResults count\n- A list of the record titles, dates, and places for all results, with special attention to any from Bolivia, Arani, Cochabamba, or mentioning Pedro Zuniga/Polonia Rojas\n- Any record that looks promising as a parent marriage record"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"I have now read the entire file. Here is the complete analysis:\\n\\n---\\n\\n**staged.resultsRef:** `results/.staging/ea01bf02-08c7-4420-8e4e-93e77ae42fbd.json`\\n\\n**totalResults:** 79,655\\n\\n**returned:** 20 (offset 0, hasMore: true)\\n\\n---\\n\\n**Summary of all 20 returned records:**\\n\\nAll 20 results are from **Costa Rica** \\u2014 not Bolivia. Every single record comes from one collection:\\n\\n- **Costa Rica, Catholic Church Records, 1595\\u20132022** (collectionId 1460..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 100,
+        "offset": 0
+      },
+      "response_summary": "0\t{\n1\t  \"query\": {\n2\t    \"keywords\": \"+Zuniga +Rojas\",\n3\t    \"count\": 20,\n4\t    \"projectPath\": \"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\"\n5\t  },\n6\t  \"totalResults\": 79655,\n7\t  \"returned\": 20,\n8\t  \"offset\": 0,\n9\t  \"hasMore\": true,\n10\t  \"results\": [\n11\t    {\n12\t      \"id\": \"ark:/61903/3:1:S3HY-6Q8Q-5MB\",\n13\t      \"sourceUrl\": \"https://www.familysearch.org/ark:/61903/3:1:S3HY-6Q8Q-5MB\",\n14\t      \"collectionId\": \"1460016\",\n15\t      \"collectionTitl..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 100,
+        "offset": 100
+      },
+      "response_summary": "100\t    },\n101\t    {\n102\t      \"id\": \"ark:/61903/3:1:S3HT-XX87-BVL\",\n103\t      \"sourceUrl\": \"https://www.familysearch.org/ark:/61903/3:1:S3HT-XX87-BVL\",\n104\t      \"collectionId\": \"1460016\",\n105\t      \"collectionTitle\": \"Costa Rica, Catholic Church Records, 1595-2022\",\n106\t      \"title\": \"Nuestra Se\u00f1ora de la Merced, Hospital, San Jos\u00e9, San Jos\u00e9, Costa Rica Baptism 1893-1897\",\n107\t      \"recordDate\": \"1893-1897\",\n108\t      \"recordType\": \"Baptism\",\n109\t      \"recordPlace\": \"Nuestra Se\u00f1ora de la..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 100,
+        "offset": 200
+      },
+      "response_summary": "200\t      \"names\": [\n201\t        \"Jos\u00e9 Mar\u00eda  Andr\u00e9s de Jes\u00fas\",\n202\t        \"Mar\u00eda de la Luz minda Castro\",\n203\t        \"Mar\u00eda de los \u00c1ngeles  Rojas\",\n204\t        \"Rosa Francisca  Zoila Rojas\",\n205\t        \"Virginia Lu\u00edsa Mol linare\",\n206\t        \"Ram\u00f3n Carlos S\u00e1nchez \",\n207\t        \"Hector Manuel  Conejo\",\n208\t        \"Santiago Z\u00fa\u00f1iga\",\n209\t        \"Jos\u00e9 Mar\u00eda Andr\u00e9s de Jes\u00fas\",\n210\t        \"Jos\u00e9 Torres\",\n211\t        \"Mar\u00eda Vargas Fuetos \",\n212\t        \"Fernando Ram\u00edrez\",\n213\t        \"Rafaela..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 300
+      },
+      "response_summary": "300\t        \"1892\",\n301\t        \"1891\",\n302\t        \"1991\",\n303\t        \"1922\"\n304\t      ],\n305\t      \"highlightTerms\": [\n306\t        \"Z\u00fa\u00f1iga\",\n307\t        \"Rojas\",\n308\t        \"Zu\u00f1iga\"\n309\t      ]\n310\t    },\n311\t    {\n312\t      \"id\": \"ark:/61903/3:1:3QHJ-47CZ-CWDM\",\n313\t      \"sourceUrl\": \"https://www.familysearch.org/ark:/61903/3:1:3QHJ-47CZ-CWDM\",\n314\t      \"collectionId\": \"M9J1-79Z\",\n315\t      \"collectionTitle\": \"Costa Rica, Alajuela, Legal, from 19 February 0877 to 28 February 4896\",\n316..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 450
+      },
+      "response_summary": "450\t      ],\n451\t      \"dates\": [\n452\t        \"1926\",\n453\t        \"1900\",\n454\t        \"1924\",\n455\t        \"1948\",\n456\t        \"1945\"\n457\t      ],\n458\t      \"highlightTerms\": [\n459\t        \"Z\u00fa\u00f1iga\",\n460\t        \"Rojas\"\n461\t      ]\n462\t    },\n463\t    {\n464\t      \"id\": \"ark:/61903/3:1:S3HT-6883-J13\",\n465\t      \"sourceUrl\": \"https://www.familysearch.org/ark:/61903/3:1:S3HT-6883-J13\",\n466\t      \"collectionId\": \"1460016\",\n467\t      \"collectionTitle\": \"Costa Rica, Catholic Church Records, 1595-2022\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 600
+      },
+      "response_summary": "600\t        \"Mar\u00eda Flores\",\n601\t        \"Jos\u00e9 Manuel Ramos\",\n602\t        \"Mar\u00eda \u00c1ngela Madrigal\",\n603\t        \"Mariano Z\u00fa\u00f1iga V.\",\n604\t        \"Gamboa Rojas\",\n605\t        \"Odila\",\n606\t        \"Josefina Villegas\",\n607\t        \"Carri\u00f3n Carvajal\",\n608\t        \"Eugenia\",\n609\t        \"Lu\u00eds Pero Urquia\",\n610\t        \"D\u00eda Socorro de los Angeles Odily\",\n611\t        \"Jos\u00e9 Ana\",\n612\t        \"Gamboa\",\n613\t        \"M\u00f3nica Rojas\",\n614\t        \"Santana Gamboa\",\n615\t        \"Rafaela Serrano\",\n616\t        \"G..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 750
+      },
+      "response_summary": "750\t        \"distrito de l Centro\",\n751\t        \"distrito de la \u00danica\"\n752\t      ],\n753\t      \"dates\": [\n754\t        \"1968\",\n755\t        \"1860\",\n756\t        \"1960\",\n757\t        \"1928\",\n758\t        \"1955\",\n759\t        \"1900\",\n760\t        \"1927\"\n761\t      ],\n762\t      \"highlightTerms\": [\n763\t        \"Z\u00fa\u00f1iga\",\n764\t        \"Rojas\"\n765\t      ]\n766\t    },\n767\t    {\n768\t      \"id\": \"ark:/61903/3:1:S3HY-6Q8Q-RG2\",\n769\t      \"sourceUrl\": \"https://www.familysearch.org/ark:/61903/3:1:S3HY-6Q8Q-RG2\",\n770..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 900
+      },
+      "response_summary": "900\t        \"Mar\u00eda Ang\u00e9lica de los Angeles\",\n901\t        \"Mauricio Salazar\",\n902\t        \"Ricarda L\u00f3pez\",\n903\t        \"Manuel Salazar\",\n904\t        \"Manuela Rojas\",\n905\t        \"Rafael L\u00f3pez\",\n906\t        \"Fermina Rodr\u00edguez\",\n907\t        \"Carlos Mar\u00eda Brenes Rojas\",\n908\t        \"Alba Ag\u00fcero\",\n909\t        \"Mureses\",\n910\t        \"Mar\u00eda Dolia del Socorro Solano Calder\u00f3n\",\n911\t        \"Carlos Mar\u00eda\",\n912\t        \"Paulino Jos\u00e9 Brenes\",\n913\t        \"Adelia Rojas\",\n914\t        \"Francisca Castillo\",\n..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 1050
+      },
+      "response_summary": "1050\t        \"distrito de la \",\n1051\t        \"distrito del Centro\",\n1052\t        \"No. 45\",\n1053\t        \"San Francia\",\n1054\t        \"Merced\",\n1055\t        \"Santa Ter\",\n1056\t        \"distrito de Anarquez\",\n1057\t        \"Ve\",\n1058\t        \"distrito de Araquez\",\n1059\t        \"S. Jos\u00e9\",\n1060\t        \"Bella\"\n1061\t      ],\n1062\t      \"dates\": [\n1063\t        \"1921\",\n1064\t        \"1949\",\n1065\t        \"1900\",\n1066\t        \"1912\",\n1067\t        \"1936\",\n1068\t        \"1945\",\n1069\t        \"1913\"\n1070\t     ..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 1200
+      },
+      "response_summary": "1200\t        \"Ang\u00e9lica Oviedo V.\",\n1201\t        \"Tom\u00e1s S\u00e1nchez\",\n1202\t        \"Marcia Fern\u00e1ndez\",\n1203\t        \"Blas Oviedo\",\n1204\t        \"Nicolasa Villalobos\",\n1205\t        \"Juana S\u00e1nchez\",\n1206\t        \"Mariano Z\u00fa\u00f1iga L\",\n1207\t        \"Jorge Saverio de Jes\u00fas\",\n1208\t        \"Juan Rafael Casa\",\n1209\t        \"Eduvia Arag\u00f3n\",\n1210\t        \"Rafael Casasola\",\n1211\t        \"Ramona Ram\u00edrez\",\n1212\t        \"Jos\u00e9 Mar\u00eda Arag\u00f3n\",\n1213\t        \"Sara Avil\u00e9s\",\n1214\t        \"Miguel Ibarra\",\n1215\t        \"M..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 1350
+      },
+      "response_summary": "1350\t        \"Esquivel Brizuela\",\n1351\t        \"Adela\",\n1352\t        \"Albino Castillo  Villalta\",\n1353\t        \"Mar\u00eda Esquirel \",\n1354\t        \"Fidel Quesada Guti\u00e9rrez\",\n1355\t        \"Mariano Z\u00fa\u00f1iga\",\n1356\t        \"Mar\u00eda F\u00e9lix del Carmen\",\n1357\t        \"Rub\u00e9n Qu\u00edroz\",\n1358\t        \"Flora Ch\u00e1vez\",\n1359\t        \"Celedonio Qu\u00edroz\",\n1360\t        \"Mar\u00eda Febra Vargas\",\n1361\t        \"Mar\u00eda Ch\u00e1vez\",\n1362\t        \"Jos\u00e9 Carmona\",\n1363\t        \"Mar\u00eda Rojas\",\n1364\t        \"Mariana Z\u00fa\u00f1iga V.\",\n1365\t      ..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 1500
+      },
+      "response_summary": "1500\t        \"Josefa Carvajal\",\n1501\t        \"Alfredo V\u00edctor Manuel  del Rosario\",\n1502\t        \"Cenobia Picado\",\n1503\t        \"Andrea Solano\",\n1504\t        \"J. Vedo Minga\",\n1505\t        \"Matea a Mar\u00eda Mercedes\",\n1506\t        \"Socorro\",\n1507\t        \"Ladislao Barquero\",\n1508\t        \"Francisca Morenia V.\",\n1509\t        \"Francisco Barquero\",\n1510\t        \"Rafaela Varela\",\n1511\t        \"David Montilla\",\n1512\t        \"Juana Richemond\",\n1513\t        \"Enrique Richemona\",\n1514\t        \"Ana Mesen\"\n1..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 150,
+        "offset": 1650
+      },
+      "response_summary": "1650\t        \"Juan Rafael  de Jes\u00fas Luarte\",\n1651\t        \"Rafaela Ortencia Rojas\",\n1652\t        \"Jos\u00e9 S. Jim\u00e9nez\",\n1653\t        \"Mercedes de los Santos\",\n1654\t        \"Raymunda Mar\u00edn\",\n1655\t        \"Juan Carbonero\",\n1656\t        \"Mar\u00eda Chavarr\u00eda\",\n1657\t        \"Jos\u00e9 S. Jim\u00e9nez Santiago Z\u00fa\u00f1iga\",\n1658\t        \"Santiago Z\u00fa\u00f1iga\",\n1659\t        \"Juan Rafael de Jes\u00fas\",\n1660\t        \"Mar\u00eda Guarte\",\n1661\t        \"Pastora Hern\u00e1ndez\",\n1662\t        \"Jos\u00e9 Murillo\",\n1663\t        \"Jos\u00e9 Calder\u00f3n\",\n1664\t    ..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/Users/dallan/.claude/projects/-private-var-folders-tv-yzyl0n517xj5v54fgn0c0j3h0000gn-T-e2e-zuniga-rojas-parents-tf7rqxex/8ac6b801-99d1-4829-ac2c-270e87e243af/tool-results/mcp-genealogy-fulltext_search-1783886720115.txt",
+        "limit": 200,
+        "offset": 1800
+      },
+      "response_summary": "1800\t        \"Balerio Hern\u00e1ndez\",\n1801\t        \"Mar\u00eda Morales\",\n1802\t        \"Santiago Zuni God\u00ednez\",\n1803\t        \"Mar\u00eda Trinidad Ares\",\n1804\t        \"Rosa Valencia\"\n1805\t      ],\n1806\t      \"places\": [\n1807\t        \"M. M.\",\n1808\t        \"Santiago o Z\u00fa\u00f1iga\",\n1809\t        \"N. N.\"\n1810\t      ],\n1811\t      \"dates\": [\n1812\t        \"1912\",\n1813\t        \"1891\"\n1814\t      ],\n1815\t      \"highlightTerms\": [\n1816\t        \"Z\u00fa\u00f1iga\",\n1817\t        \"Rojas\",\n1818\t        \"Z\u00faniga\"\n1819\t      ]\n1820\t    },\n18..."
+    },
+    {
+      "tool": "mcp__genealogy__fulltext_search",
+      "args": {
+        "keywords": "+Zuniga +Rojas",
+        "place": "Arani",
+        "count": 20,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"keywords\\\": \\\"+Zuniga +Rojas\\\",\\n    \\\"place\\\": \\\"Arani\\\",\\n    \\\"count\\\": 20,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalResults\\\": 0,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "fulltext_search",
+        "planItemId": "pli_003",
+        "query": {
+          "keywords": "+Zuniga +Rojas",
+          "variants_tried": [
+            "+Zu\u00f1iga +Rojas recordPlace1=Bolivia (0 results)",
+            "+Zuniga +Rojas recordPlace1=Bolivia (0 results)",
+            "+Zuniga +Rojas unscoped (79655 results, all Costa Rica)",
+            "+Zuniga +Rojas place=Arani (0 results)"
+          ],
+          "rationale": "Full-text co-occurrence search per GPS Iberian/Latin-American compound surname guidance"
+        },
+        "outcome": "negative",
+        "resultsExamined": 20,
+        "resultsAvailable": 0,
+        "notes": "FTS corpus does not appear to include Bolivia/Arani parish registers as AI-transcribed text. Four variants tried: (1) +Zu\u00f1iga +Rojas Bolivia-scoped = 0; (2) +Zuniga +Rojas Bolivia-scoped = 0; (3) +Zuniga +Rojas unscoped = 79,655 results all from Costa Rica, not Bolivia; (4) +Zuniga +Rojas place=Arani = 0. The co-occurrence tactic is unavailable for these Bolivian records. Pivoting to original image verification of the 1913 marriage register."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-12T20:08:46.416Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_003",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:QL7X-VBXX"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_102922351634\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QL7X-VBXX\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"2189739e-1df5-417c-a742-fe84ab502874\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Su\\u00f1iga\\\",\\n          \\\"given\\\": \\\"Adrian\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"7b841f14-bdc7-4281-be10-684cbb7566cf\\\",\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"da..."
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "Transcribe original 1913 marriage register image",
+        "subagent_type": "image-reader",
+        "prompt": "Please read the FamilySearch image at ARK: 3:1:33SQ-GY3D-9LL5\n\nThis is a page from a Catholic parish marriage register in San Bartolom\u00e9, Arani, Cochabamba, Bolivia. I am looking for the 29 November 1913 marriage entry for Adrian Su\u00f1iga/Zu\u00f1iga (groom) and Gregoria Pe\u00f1arrieta (bride). I specifically need to verify the names of the groom's parents as written in the original record \u2014 expected to be Pedro Su\u00f1iga/Zu\u00f1iga (father) and Polonia Rojas (mother) \u2014 and the bride's parents \u2014 expected to be Ciriaco Pe\u00f1arrieta (father) and Adriana Obando (mother).\n\nPlease transcribe the full page text, especially noting:\n1. The exact spelling of the groom's surname (Su\u00f1iga vs Zu\u00f1iga)\n2. The exact names of the groom's parents as written in the register\n3. The exact names of the bride's parents as written in the register\n4. The date of the marriage as recorded"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"NOT READ: 3:1:33SQ-GY3D-9LL5\\n\\nThe exact error returned by image_read:\\n\\n\\\"FamilySearch image 3:1:33SQ-GY3D-9LL5 is 1.0 MB \\u2014 too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session.\\\"\\n\\nNo transcription can be provided for this image. Fabricating or inferring content from a scan that could not be read would be worse than returning nothing, so I will..."
+    },
+    {
+      "tool": "mcp__genealogy__image_read",
+      "args": {
+        "ark": "3:1:33SQ-GY3D-9LL5"
+      },
+      "response_summary": "{\"error\":\"FamilySearch image 3:1:33SQ-GY3D-9LL5 is 1.0 MB \u2014 too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. Read the indexed record for this image with record_read / record_search instead of fetching the page scan, or choose a more specific image.\"}"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "image_search",
+        "planItemId": "pli_002",
+        "query": {
+          "imageArk": "3:1:33SQ-GY3D-9LL5",
+          "purpose": "Verify parent names in original 1913 marriage register image, source sd_da1 of record QL7X-VBXX"
+        },
+        "outcome": "error",
+        "resultsExamined": 0,
+        "notes": "Image 3:1:33SQ-GY3D-9LL5 (the original San Bartolom\u00e9 parish marriage register page containing the 29 Nov 1913 entry for Adrian Su\u00f1iga \u00d7 Gregoria Pe\u00f1arrieta) returned NOT READ: image is 1.0 MB, exceeding the MCP transport safety cap (~1 MB before base64 inflation). Original image is pursued-and-unavailable. Indexed record QL7X-VBXX already supplies the parentage information; the original image verification is documented as inaccessible via this tool."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-12T20:10:05.444Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_004",
+            "fields": {
+              "status": "completed"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "givenName": "Adrian",
+        "surname": "Zu\u00f1iga",
+        "deathYearFrom": 1925,
+        "deathYearTo": 1932,
+        "recordCountry": "Bolivia",
+        "count": 50,
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"givenName\\\": \\\"Adrian\\\",\\n    \\\"surname\\\": \\\"Zu\\u00f1iga\\\",\\n    \\\"deathYearFrom\\\": 1925,\\n    \\\"deathYearTo\\\": 1932,\\n    \\\"recordCountry\\\": \\\"Bolivia\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\\\"\\n  },\\n  \\\"totalMatches\\\": 44,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 44,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "tool": "record_search",
+        "planItemId": "pli_005",
+        "query": {
+          "givenName": "Adrian",
+          "surname": "Zu\u00f1iga",
+          "deathYearFrom": 1925,
+          "deathYearTo": 1932,
+          "recordCountry": "Bolivia",
+          "count": 50,
+          "note": "Supplementary search for death/burial record despite pli_005 skipped status"
+        },
+        "outcome": "negative",
+        "resultsExamined": 44,
+        "resultsAvailable": 44,
+        "stagedResultsRef": "results/.staging/e40881f2-26c3-4fa3-a1db-19d84e560bf6.json",
+        "notes": "44 results returned; all are Adrian Zu\u00f1iga appearing as a FATHER in children's baptism records (already in tree as 2DTG-7MK links) or are different persons named Adrian Zu\u00f1iga from other Bolivian provinces. No death/burial record for Adrian Zu\u00f1iga Rojas of Arani (d. 21 Apr 1928) found in the Bolivia Catholic Church Records index. Arani burial registers from 1928 do not appear to be in the FamilySearch indexed corpus."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-12T20:12:03.339Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 44,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "exhaustive_declared",
+          "exhaustive_declaration": {
+            "declared": true,
+            "justification": "All accessible record types have been searched: (1) Adrian's baptism \u2014 not found as a principal in the Bolivia Catholic Church Records indexed corpus; (2) Adrian's 1913 marriage record (QL7X-VBXX) \u2014 found and extracted, names Pedro Su\u00f1iga/Zu\u00f1iga as father and Polonia Rojas as mother in primary information (groom's own statement); (3) full-text co-occurrence search +Zu\u00f1iga +Rojas \u2014 Bolivia parish registers are not in the FamilySearch FTS corpus; (4) parents' marriage (Pedro Zu\u00f1iga \u00d7 Polonia Rojas) \u2014 four search variants across Bolivia Catholic records, all negative; (5) Adrian's death/burial record \u2014 not found in indexed corpus; (6) original marriage register image (3:1:33SQ-GY3D-9LL5) \u2014 attempted via image-reader, returned NOT READ (1 MB, over MCP transport cap). All decisive record types have been pursued to their accessible limits. The evidence is primary information (groom's own statement at marriage) naming both parents, carried in a derivative indexed source. Independent verification was not achieved \u2014 no second source names the parents. The original image is inaccessible via MCP. These limitations are documented and will inform the proof tier.",
+            "log_entry_ids": [
+              "log_001",
+              "log_002",
+              "log_003",
+              "log_004",
+              "log_005",
+              "log_006",
+              "log_007"
+            ],
+            "stop_criteria": {
+              "goal_alignment": "Qualified yes \u2014 the 1913 marriage record (QL7X-VBXX) names Pedro Su\u00f1iga/Zu\u00f1iga and Polonia Rojas as Adrian's parents via his own statement at marriage. This directly answers the parentage question, though from a single derivative source.",
+              "repository_breadth": "FamilySearch Bolivia Catholic Church Records (collection 1922463) and Bolivia Marriages (collection 1520564) exhaustively searched with multiple surname spelling variants. FamilySearch FTS corpus does not index Bolivia/Arani parish registers. Original image inaccessible via MCP. Death/burial not in indexed corpus. Ancestry Bolivia external site not searched \u2014 for rural 1880s-1920s Bolivian Catholic records, FamilySearch is the primary digital repository and its Bolivia coverage is confirmed exhausted.",
+              "original_substitution": "The original marriage register page (image ARK 3:1:33SQ-GY3D-9LL5) was attempted via image-reader agent and returned NOT READ: 1.0 MB exceeds the MCP transport safety floor. The image is accessible on the FamilySearch website but inaccessible via this tool. This is pursued-and-unavailable; the indexed record already carries the parentage data.",
+              "independent_verification": "Not met \u2014 only one source (indexed marriage record QL7X-VBXX / src_001) names the parents. No second independent source was found. The baptism was not found, the parents' marriage was not found, and the death record was not found. This is the primary limitation on the proof tier \u2014 the conclusion is supported but not independently corroborated.",
+              "evidence_class": "The groom's statement at his own 1913 marriage is primary information regarding his parentage (he is the informant about his parents' identity). However, only the FamilySearch derivative indexed entry was consulted \u2014 the original register image is inaccessible. No original record with primary information was directly examined.",
+              "conflict_resolution": "No conflicts present. The single source is internally consistent. The surname spelling variant 'Su\u00f1iga' vs 'Zu\u00f1iga' is treated as an orthographic variant consistent with documented spelling variation in this family's records.",
+              "overturn_risk": "Moderate. The groom's own statement at marriage is a strong source for parentage (he is self-reporting). No conflicting evidence was found. However, the lack of a second source and inability to verify against the original image means an indexing transcription error (e.g., in the father's surname) cannot be entirely ruled out. The surname 'Zu\u00f1iga Rojas' convention directly matches the compound surname structure, supporting the parentage claim. Overall overturn risk is moderate-low given the internal consistency, but the single-source limitation prevents a 'low' rating."
+            }
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "proof-conclusion",
+        "args": "--autonomous Write proof conclusion for q_001: \"What do the parochial registers of Arani, Cochabamba, Bolivia record about the baptism of Adrian Zu\u00f1iga Rojas (born 8 September 1889), and who are named as his parents?\" Subject: Adrian Zu\u00f1iga Rojas (2DTG-7MK). Key evidence: a_004 (father=Pedro Zu\u00f1iga, direct/primary from groom's statement at 1913 marriage, derivative source src_001), a_005 (mother=Polonia Rojas, same). Limitations: single derivative source; original image inaccessible; no baptism found; parents' marriage not found; no death record found; FTS corpus unavailable for Bolivia. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Launching skill: proof-conclusion"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
+      },
+      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json",
+        "offset": 200,
+        "limit": 200
+      },
+      "response_summary": "200\t    },\n201\t    {\n202\t      \"id\": \"log_004\",\n203\t      \"plan_item_id\": \"pli_004\",\n204\t      \"performed\": \"2026-07-12T20:04:52.838Z\",\n205\t      \"tool\": \"record_search\",\n206\t      \"query\": {\n207\t        \"givenName\": \"Pedro\",\n208\t        \"surname\": \"Su\u00f1iga\",\n209\t        \"spouseGivenName\": \"Polonia\",\n210\t        \"recordCountry\": \"Bolivia\",\n211\t        \"recordType\": \"marriage\",\n212\t        \"anyYearFrom\": 1855,\n213\t        \"anyYearTo\": 1895,\n214\t        \"count\": 50,\n215\t        \"note\": \"Variant ..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json",
+        "offset": 400,
+        "limit": 300
+      },
+      "response_summary": "400\t        \"surname\": \"Rojas\",\n401\t        \"relationship_type\": \"mother\",\n402\t        \"related_person_role\": \"groom\"\n403\t      },\n404\t      \"informant\": \"Adrian Su\u00f1iga (the groom)\",\n405\t      \"informant_proximity\": \"self\",\n406\t      \"information_quality\": \"primary\",\n407\t      \"evidence_type\": \"direct\",\n408\t      \"extracted_for_question_ids\": [\n409\t        \"q_001\"\n410\t      ],\n411\t      \"informant_bias_notes\": \"This is the primary parentage finding for q_001 (mother's name matches Adrian's co..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append,mcp__genealogy__tree_edit,mcp__genealogy__tree_correct",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_correct\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {},
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json not found in projectPath\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "proof_summaries",
+        "op": "append",
+        "entry": {
+          "question_id": "q_001",
+          "tier": "probable",
+          "vehicle": "summary",
+          "supporting_assertion_ids": [
+            "a_004",
+            "a_005"
+          ],
+          "resolved_conflict_ids": [],
+          "exhaustive_search_summary": "All accessible record types were searched for the parentage of Adri\u00e1n Zu\u00f1iga Rojas (born 8 September 1889, Arani, Cochabamba, Bolivia). FamilySearch Bolivia Catholic Church Records (collection 1922463, 9.8M records) was searched for Adrian's baptism c. 1889 \u2014 not found as a principal indexed entry. His 1913 marriage record (QL7X-VBXX) was found in the same collection and yielded the parentage information. The parents' marriage (Pedro Zu\u00f1iga \u00d7 Polonia Rojas) was searched with four surname spelling variants (Zu\u00f1iga, Su\u00f1iga, Suniga) across Bolivia marriage collections \u2014 not found. Adrian's death/burial record (April 1928) was searched in Bolivia Catholic Records \u2014 not found in the indexed corpus. A full-text co-occurrence search (+Zu\u00f1iga +Rojas) was attempted via four variants; the FamilySearch AI-transcribed corpus does not include Bolivia/Arani parish registers. The original marriage register image (ARK 3:1:33SQ-GY3D-9LL5) was identified and access attempted \u2014 inaccessible via the MCP transport (1.0 MB, over the transport cap). Research is declared exhaustive with noted limitations: original image inaccessible; independent verification not achieved.",
+          "narrative_markdown": "## Parentage of Adri\u00e1n Zu\u00f1iga Rojas (born 8 September 1889, Arani, Cochabamba, Bolivia)\n\n### Research Question\n\nWho were the parents of Adri\u00e1n Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Arani, Cochabamba, Bolivia?\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that **Adri\u00e1n Zu\u00f1iga Rojas was the son of Pedro Zu\u00f1iga and Polonia Rojas**, both associated with Arani, Cochabamba, Bolivia. This conclusion is grounded in primary information provided by the subject himself at his 1913 marriage, carried in a derivative FamilySearch indexed entry. The conclusion is rated **probable** because only one source was found, the original parish register image was inaccessible, and independent corroboration through a second record was not achieved despite reasonably exhaustive searching.\n\n### Evidence\n\nThe sole evidentiary source is the FamilySearch indexed entry for the Catholic marriage of Adri\u00e1n Su\u00f1iga and Gregoria Pe\u00f1arrieta, solemnized 29 November 1913 at the parish of San Bartolom\u00e9, Arani, Cochabamba, Bolivia (\"Bolivia, registros parroquiales, 1566-1996,\" FamilySearch, ark:/61903/1:1:QL7X-VBXX, accessed 12 July 2026; image at ark:/61903/1:2:QPQ2-V4FR). This record explicitly names the groom's father as **Pedro Su\u00f1iga** and his mother as **Polonia Rojas**.\n\n**Source classification.** The FamilySearch entry is a *derivative* source \u2014 a digitized index created from the original San Bartolom\u00e9 parish marriage register. The original parish register image (FamilySearch image 3:1:33SQ-GY3D-9LL5) was identified, and access was attempted, but the image (1.0 MB) exceeded the MCP research-tool transport capacity and could not be retrieved. The indexed entry must therefore stand without direct verification against the handwritten original register.\n\n**Information quality.** Parentage information in a Catholic marriage record is *primary* when supplied by the groom himself from personal knowledge. Adri\u00e1n Su\u00f1iga, as the groom and informant, named his own father and mother at the time the marriage act was recorded. The information about his parents' identities is firsthand \u2014 he is reporting what he personally knows about his own parentage, not reconstructing a past event from memory or hearsay. Both assertions (father's name, mother's name) are therefore classified as primary information, direct evidence.\n\n**Naming convention corroboration.** Bolivian Catholic naming practice assigns children a compound surname: the father's first surname followed by the mother's first surname. Adri\u00e1n's compound surname \"Zu\u00f1iga Rojas\" \u2014 used consistently in the family's documented records \u2014 precisely matches this convention if his father's first surname is Zu\u00f1iga and his mother's first surname is Rojas. The 1913 marriage record names the father as Pedro Su\u00f1iga/Zu\u00f1iga and the mother as Polonia Rojas, exactly the surnames the compound convention predicts. This structural alignment provides indirect corroborating support for the identification.\n\n**Surname spelling variant.** The 1913 marriage record spells the father's surname \"Su\u00f1iga\" (S, not Z). This orthographic variant is documented in Bolivian parish registers of this era and is treated as equivalent to \"Zu\u00f1iga,\" the spelling used elsewhere in the family's records (including the 1916 baptism record of Adri\u00e1n's daughter Gumercinda Zu\u00f1iga Pe\u00f1arrieta, already in the family tree). No conflict is identified; the two spellings represent the same surname.\n\n### Negative Evidence and Exhaustiveness\n\nAll accessible record types were searched:\n\n- **Adrian's baptism (c. 8 September 1889):** Searched in FamilySearch Bolivia Catholic Church Records (collection 1922463) \u2014 not found as a principal indexed entry. The parochial baptism register for Arani around 1889 may not be fully indexed, or the entry may appear under a spelling variant not captured by the search.\n- **Adrian's death/burial (21 April 1928):** Searched in Bolivia Catholic Records \u2014 not found in the indexed corpus. Arani burial registers from 1928 do not appear to be indexed on FamilySearch.\n- **Parents' marriage (Pedro Zu\u00f1iga \u00d7 Polonia Rojas):** Searched with four surname spelling variants across FamilySearch Bolivia marriage collections \u2014 not found. The record may not exist in the indexed corpus, or the parents may have married in a register not yet digitized or indexed.\n- **Full-text co-occurrence search (+Zu\u00f1iga +Rojas):** The FamilySearch AI-transcribed full-text corpus does not index Bolivia/Arani parish registers; four search variants returned no Bolivian results.\n- **Original marriage register image:** Identified but inaccessible via the research tool (image file at 1.0 MB, over the transport cap).\n\nThe failure to find a second independent source is the principal limitation on the confidence tier. No contradicting evidence was found, and the structural compound-surname corroboration supports the identification, but the single-source constraint prevents a \"proved\" conclusion.\n\n### Summary\n\nThe preponderance of available evidence strongly suggests that **Adri\u00e1n Zu\u00f1iga Rojas (born 8 September 1889, Arani, Cochabamba, Bolivia; died 21 April 1928, Arani) was the son of Pedro Zu\u00f1iga and Polonia Rojas**. This conclusion is rated **probable**. The evidence rests on primary information from the subject himself at his 1913 marriage, in a derivative FamilySearch indexed source. Future discovery of Adrian's baptismal record, the parents' marriage record, or access to the original parish register image could advance this conclusion to \"proved.\""
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_correct",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "operation": "update_source",
+        "sourceId": "S1",
+        "source": {
+          "citation": "\"Bolivia, registros parroquiales, 1566-1996\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QL7X-VBXX : Sun Mar 10 11:42:45 UTC 2024), Registro para Adrian Su\u00f1iga y Gregoria Pe\u00f1arrieta, 29 Nov 1913. Derivative; primary information (groom's statement)."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"update_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Grep",
+      "args": {
+        "pattern": "\"R2\"|\"R3\"|\"I1\"|\"I2\"",
+        "path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/tree.gedcomx.json",
+        "output_mode": "content"
+      },
+      "response_summary": "182:      \"id\": \"I1\"\n195:      \"id\": \"I2\"\n291:      \"person1\": \"I1\",\n292:      \"person2\": \"I2\",\n297:      \"parent\": \"I1\",\n299:      \"id\": \"R2\"\n303:      \"parent\": \"I2\",\n305:      \"id\": \"R3\""
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/tree.gedcomx.json",
+        "offset": 288,
+        "limit": 20
+      },
+      "response_summary": "288\t    },\n289\t    {\n290\t      \"type\": \"Couple\",\n291\t      \"person1\": \"I1\",\n292\t      \"person2\": \"I2\",\n293\t      \"id\": \"R1\"\n294\t    },\n295\t    {\n296\t      \"type\": \"ParentChild\",\n297\t      \"parent\": \"I1\",\n298\t      \"child\": \"2DTG-7MK\",\n299\t      \"id\": \"R2\"\n300\t    },\n301\t    {\n302\t      \"type\": \"ParentChild\",\n303\t      \"parent\": \"I2\",\n304\t      \"child\": \"2DTG-7MK\",\n305\t      \"id\": \"R3\"\n306\t    },\n307\t    {"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "project",
+        "op": "update",
+        "fields": {}
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection",
+        "args": "--autonomous q_001 has a proof summary (ps_001, probable tier). Mark it resolved with resolution_assertion_ids [a_004, a_005]. Then evaluate whether additional questions are needed or the project is complete. Project path: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex"
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/question-selection/references/question-formulation.md"
+      },
+      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/.claude/skills/question-selection/references/pedigree-analysis.md"
+      },
+      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "resolved",
+          "resolved": "2026-07-12",
+          "resolution_assertion_ids": [
+            "a_004",
+            "a_005"
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "project",
+        "op": "update",
+        "fields": {
+          "status": "completed"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "GPS mentor proof critique for ps_001",
+        "subagent_type": "gps-mentor",
+        "prompt": "Please review the proof conclusion for this genealogical research project and assess whether it meets the GPS (Genealogical Proof Standard).\n\nProject directory: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex\n\nThe project objective is: \"Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?\"\n\nQuestion q_001 has proof summary ps_001 at tier \"probable\", vehicle \"summary\".\n\nKey facts about the research:\n- Subject: Adrian Zu\u00f1iga Rojas (2DTG-7MK), born 8 Sep 1889, Arani, Cochabamba, Bolivia\n- Single source: FamilySearch indexed marriage record QL7X-VBXX (29 Nov 1913 marriage of Adrian Su\u00f1iga to Gregoria Pe\u00f1arrieta in San Bartolom\u00e9, Arani)\n- Source classification: derivative (FamilySearch index entry); information quality: primary (groom's own statement naming his parents); evidence type: direct\n- Father named as Pedro Su\u00f1iga/Zu\u00f1iga (a_004); Mother named as Polonia Rojas (a_005)\n- Original parish image (3:1:33SQ-GY3D-9LL5) attempted but inaccessible (1 MB, over MCP transport cap)\n- Baptism: not found in indexed corpus\n- Parents' marriage (Pedro \u00d7 Polonia): searched 4+ variants, not found\n- Death record: not found in indexed corpus\n- FTS corpus: Bolivia/Arani parish registers not in AI-transcribed corpus\n- Compound surname corroboration: \"Zu\u00f1iga Rojas\" follows Bolivian naming convention (father's surname + mother's surname)\n- No conflicts found\n\nPlease assess this proof against all five GPS components and provide your mentoring verdict. The proof_summaries entry ps_001 is in research.json at the project directory."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"I read the full `research.json` for this project \\u2014 the single question q_001, its plan/log, source src_001, all nine assertions and fourteen person_evidence entries, and proof summary ps_001. Before presenting the verdict, I need to flag a tooling limitation.\\n\\n**Write-step failure:** My toolkit in this session contains only `Read` \\u2014 no file-write capability. I could not create `evaluations/proof-critique-ps_001-<timestamp>.json`, could not append the `ev..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_zuniga_rojas_parents\",\n4\t    \"objective\": \"Who were the parents of Adrian Zu\u00f1iga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2DTG-7MK\"\n7\t    ],\n8\t    \"status\": \"completed\",\n9\t    \"created\": \"2026-07-05\",\n10\t    \"updated\": \"2026-07-12\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questio..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "evaluations",
+        "op": "append",
+        "entry": {
+          "focus": "proof-critique",
+          "target_id": "ps_001",
+          "target_type": "proof_summary",
+          "verdict": "consider_addressing",
+          "strengths": [
+            "a_004/a_005 correctly classified as primary information (groom reporting on his own parents from firsthand knowledge), while a_002 (own birth year, back-calculated) correctly classified secondary/indirect \u2014 a nuanced application of Standards 38-39.",
+            "Negative evidence (baptism, parents' marriage, death record, FTS corpus, original image) documented with the same rigor as the positive finding. Narrative language ('strongly suggests') stays consistent with 'probable' tier throughout \u2014 no Standard-43 inflation."
+          ],
+          "must_address": [],
+          "consider_addressing": [
+            {
+              "standard": "Standard 14 \u2014 topical breadth / FAN principle",
+              "issue": "No witness (testigo) or godparent names were extracted from marriage record QL7X-VBXX, and no sibling-baptism search was run. Either is a realistic path to the second independent source needed to advance the tier.",
+              "specific_action": "Pull testigo names from QL7X-VBXX and search for other children of Pedro Zu\u00f1iga \u00d7 Polonia Rojas baptized in Arani in the 1880s\u20131890s. A sibling baptism naming the same parents would supply independent corroboration."
+            }
+          ],
+          "non_blocking_notes": [
+            "Narrative mentions Adrian's death date (21 April 1928) without an inline citation \u2014 that fact is not among this question's sourced assertions. Either source it or trim it for full self-containment."
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'superseded_by'\\\",\\n    \\\"research.json/evaluations[0]: unexpected property 'strengths' (evaluations allow only id, focus, target_id, target_type, verdict, file_path, timestamp, superseded_by)\\\",\\n    \\\"research.json/evaluations[0]: unexpected property 'must_address' (evaluations allow only id, fo..."
+    },
+    {
+      "tool": "Write",
+      "args": {
+        "file_path": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/evaluations/proof-critique-ps_001.json",
+        "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"consider_addressing\",\n  \"strengths\": [\n    \"a_004/a_005 correctly classified as primary information (groom reporting on his own parents from firsthand knowledge), while a_002 (own birth year, back-calculated from stated age) correctly classified secondary/indirect \u2014 a nuanced, correct application of Standards 38-39 that many researchers get wrong.\",\n    \"Negative evidence (baptism not found, parents' marriage not found across four spelling variants, death record not found, FTS corpus confirmed empty for Bolivia, original image pursued-and-unavailable) documented with the same rigor as the positive finding. Narrative language ('strongly suggests') stays consistent with the 'probable' tier throughout \u2014 no Standard-43 inflation.\"\n  ],\n  \"must_address\": [],\n  \"consider_addressing\": [\n    {\n      \"standard\": \"Standard 14 \u2014 topical breadth / FAN principle\",\n      \"issue\": \"No witness (testigo) or godparent names were extracted from marriage record QL7X-VBXX, and no sibling-baptism search was run. Either is a realistic, low-cost path to the second independent source the proof itself identifies as the limiting factor on tier.\",\n      \"specific_action\": \"Pull testigo names from QL7X-VBXX (available in the indexed record or the original image, if accessed via another method) and search for other children of Pedro Zu\u00f1iga \u00d7 Polonia Rojas baptized in Arani in the 1880s\u20131890s. A sibling baptism naming the same parents would supply the independent corroboration needed to advance the conclusion toward 'proved'.\"\n    }\n  ],\n  \"non_blocking_notes\": [\n    \"The narrative mentions Adrian's death date (21 April 1928, Arani) without an inline citation \u2014 that date is not among this question's sourced assertions. Either cite it (sourced from the tree fact f-adrian-death) or trim it so the narrative is fully self-contained.\"\n  ]\n}\n"
+      },
+      "response_summary": "File created successfully at: /private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex/evaluations/proof-critique-ps_001.json (file state is current in your context \u2014 no need to Read it back)"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/tv/yzyl0n517xj5v54fgn0c0j3h0000gn/T/e2e-zuniga-rojas-parents-tf7rqxex",
+        "section": "evaluations",
+        "op": "append",
+        "entry": {
+          "focus": "proof-critique",
+          "target_id": "ps_001",
+          "target_type": "proof_summary",
+          "verdict": "consider_addressing",
+          "file_path": "evaluations/proof-critique-ps_001.json",
+          "superseded_by": null
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    }
+  ],
+  "error": null,
+  "tags": {
+    "question_type": "parents",
+    "era": "1910s",
+    "geography": "BO-C"
+  },
+  "blocked_tree_reads": []
+}

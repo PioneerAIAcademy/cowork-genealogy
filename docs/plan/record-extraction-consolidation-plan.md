@@ -1,6 +1,14 @@
 # Record-extraction consolidation — two-day execution plan (v2)
 
-> **Status:** v2 after adversarial panel review (4 lenses, all `needs-rework`;
+> **Status:** EXECUTED (2026-07-11 → 2026-07-13). All five workstreams
+> shipped: #646 (eval repair), #647 (tree_edit fixes), #648 (composite
+> persist), #649 (lane rule), #650 (extractor agent + router + deletion),
+> plus the follow-on extractor state diet (#651). Deferred items live on
+> the project board (Ready column) and docs/TODOs.md — NOT in this doc.
+> Closing evidence: the window-closing theme-incidence analysis (see the
+> wrap notes in #651). Historical plan text follows unchanged.
+>
+> v2 after adversarial panel review (4 lenses, all `needs-rework`;
 > findings incorporated below, §8). Dallan + Claude, 2026-07-11. Execution
 > window: 2026-07-11 → 2026-07-13, no other teams editing.
 > **Working model:** agent + human pair. Claude: specs, code, prose, tests,

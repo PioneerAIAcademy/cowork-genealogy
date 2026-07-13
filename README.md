@@ -98,6 +98,7 @@ The MCP server exposes 31 tools.
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata | OAuth |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
+| `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 

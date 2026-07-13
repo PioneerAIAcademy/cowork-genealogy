@@ -129,6 +129,13 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   while an agent holds the tool).
 
 ## Eval framework
+- [ ] **Revert the temporary $25 e2e cost caps** — `bottemiller-parents` and
+  `cruz-corona-ancestry` fixtures carry `caps.max_cost_usd: 25` as experiment
+  headroom for the extractor-state-diet measurement window (3 of 5 e2e runs
+  were hitting the default $15 cap pre-diet; cruz peaked at $19.12). Once the
+  diet (`project_context` + tool-side source reuse + `add_household_children`)
+  demonstrably lands runs under $15, drop the `caps` blocks so the default cap
+  is the regression gate again.
 - [ ] **Judge fabrication class — give the judge before-state file content** —
   three citation fails (2026-07-12) came from the judge claiming on-file text
   was fabricated or absent; the judge context should include the relevant
