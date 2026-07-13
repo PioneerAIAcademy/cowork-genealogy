@@ -1,0 +1,19 @@
+{
+  "id": "benny-taylor-spouse",
+  "name": "Benny Raphael Taylor — additional spouse Rosemarie Graham (m. 1962)",
+  "genre": "record-hint",
+  "source_pid": "KNJ1-TRX",
+  "captured": "2026-07-13",
+  "researcher_question": "Benny Raphael Taylor's (KNJ1-TRX) tree already records his 1945 marriage to Hildagard Duclos. Did he marry again later, and if so, to whom?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1960s",
+    "geography": "US-OR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture: nothing stripped; starting tree == unstripped snapshot. The answer (a later marriage) lives only in records, not the tree. Answer: Benny married Rosemarie Graham (b. 1942 Portland, Oregon; parents Arthur L Graham and Rosamund Hoover) on 28 Sep 1962 in Oregon; corroborated by Benny's 1991 Oregon Death Index entry naming surviving spouse 'Rosema Taylor'. NAMESPACE TRAP: the 1962 marriage record (Oregon, Marriage Records 1906-1968; ark 1:1:WBF8-1Q3Z) is indexed as 'Benny Rapheal Taylor and Tossie Bain', but 'Tossie Bain' is Benny's MOTHER on that record (a garble of Autossie 'Tossie' Bair, listed as his parent), NOT the bride. Autossie Bair IS in the starting tree as Benny's mother, so an agent must not create/attach 'Tossie Bain' as a spouse. Difficulty hard: the spouse is only reachable via the 1962 marriage record + 1991 death index, the bride's name is not in the index title, and the index title dangles the mother as a false spouse candidate. This subject also carries a phantom 1941 tree edge to Jolene Bartchy (unsupported by any record) which record-hint cannot strip; it is left as real (if dubious) tree state and does not affect this question."
+}

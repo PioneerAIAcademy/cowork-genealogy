@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Benny Raphael Taylor married again after his 1945 marriage: his later wife was Rosemarie Graham (born 1942 in Portland, Oregon; daughter of Arthur L Graham and Rosamund Hoover), married 28 September 1962 in Oregon. This marriage is not in the starting tree — it is recoverable from Benny's 1962 Oregon marriage record and his 1991 Oregon death index entry (surviving spouse 'Rosema Taylor').",
+      "details": {
+        "subject_person": "Benny Raphael Taylor (KNJ1-TRX)",
+        "relation": "wife (married 28 Sep 1962, Oregon)",
+        "target_person": {
+          "name": "Rosemarie Graham",
+          "birth": "1942, Portland, Oregon"
+        }
+      },
+      "supporting_sources": [
+        "Oregon, Marriage Records, 1906-1968 (ark 1:1:WBF8-1Q3Z) — Benny Rapheal Taylor married 28 Sep 1962; bride Rosemarie Graham, b. 1942 Portland, parents Arthur L Graham and Rosamund Hoover. NOTE: the index title reads 'Benny Rapheal Taylor and Tossie Bain', but 'Tossie Bain' is Benny's MOTHER (Autossie 'Tossie' Bair) listed as his parent on the record, not the bride.",
+        "Oregon, Death Index, 1903-1998 (ark 1:1:VZCQ-5XC) — Benny Rapheal Taylor d. 9 Jul 1991, Tillamook, Oregon; surviving spouse 'Rosema Taylor'."
+      ],
+      "required": true
+    }
+  ]
+}

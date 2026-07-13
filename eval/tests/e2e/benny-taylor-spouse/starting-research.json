@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_benny_taylor_spouse",
+    "objective": "Whom did Benny Raphael Taylor (born 1921 in McCammon, Bannock, Idaho; died 1991 in Tillamook, Oregon) marry?",
+    "subject_person_ids": [
+      "KNJ1-TRX"
+    ],
+    "status": "active",
+    "created": "2026-07-13",
+    "updated": "2026-07-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
