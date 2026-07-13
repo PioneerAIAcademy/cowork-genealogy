@@ -93,6 +93,19 @@ skills get a "projection-first, read-only-when-you-need-bodies" rule.
   ≤5), cost, turns. Success: meaningful Read reduction with no verdict
   regression.
 
+## 4.5 Lesson from the extractor diet (apply here)
+
+**Removing a file read removes an implicit teacher.** The extractor diet's
+regression run (2026-07-13, 6 fails) traced 4 fails to one cause: the
+up-front `research.json` read had been the agent's only ISO-date exemplar,
+and prose dates leaked in the moment it vanished (plus a deleted
+relationship-shape example causing 4/4 retry partials). Before phase 2
+lands, inventory what each reader incidentally learns from the file it's
+losing (formats, id shapes, op shapes, enum spellings) and state those
+conventions explicitly — in the tool's write-time validation where
+possible (iso_date is now enforced in validator.ts), in prose only where
+not.
+
 ## 5. Costs / risks
 
 - Annotation: 4 suites flip (person-evidence, research-exhaustiveness,
