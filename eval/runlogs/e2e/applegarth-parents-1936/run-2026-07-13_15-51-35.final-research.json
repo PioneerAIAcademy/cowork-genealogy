@@ -1,0 +1,2223 @@
+{
+  "project": {
+    "id": "rp_applegarth_parents_1936",
+    "objective": "Who were the parents of Alan Glen Applegarth, born 29 April 1936 in Ogden, Weber County, Utah, and died 16 May 2023 in Providence, Cache County, Utah?",
+    "subject_person_ids": [
+      "KWZH-XB6"
+    ],
+    "status": "completed",
+    "created": "2026-07-07",
+    "updated": "2026-07-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does Alan Glen Applegarth's Utah birth certificate say about his parents?",
+      "rationale": "Utah began statewide birth registration in 1905; a 1936 Ogden birth should have a registered certificate. A birth certificate is the most direct source for both parents' names, the mother's maiden name, and the father's full name \u2014 making this the highest-value gatekeeper record for the parentage question. It precedes and informs all subsequent searches (census household identification, obituary cross-checks, LDS records).",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-13",
+      "resolution_assertion_ids": [
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_032",
+        "a_033",
+        "a_034",
+        "a_035",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044",
+        "a_045"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Seven sources searched across five record types (US census, LDS church census, vital records, marriage, obituary). Four independent sources converge on John O'Brien Applegarth (known as 'J O' in 1940 census, 'John O' in 1950 census, 'Jack' in 1926 marriage record, and 'John O'Brien' in 2023 obituary) and Olive Harvey Applegarth (maiden name Harvey confirmed by marriage record, 1950 census middle initial 'H', and obituary) as Alan's parents. The Utah birth certificate (pli_001) was not indexed in FamilySearch's collection and is inaccessible via Ancestry (no subscription) and physical archives in this session. The marriage register image (ark:/61903/3:1:3QS7-L92S-1S3N-N) exceeded the MCP transport cap and could not be read. These limitations are noted; the accessible evidence independently supports a defensible conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "The parentage question is answered through four convergent sources identifying John O'Brien Applegarth and Olive Harvey Applegarth. The birth certificate (the question's target source) was not found; the conclusion rests on other records, which converge without contradiction.",
+          "repository_breadth": "FamilySearch exhausted across five record types. Ancestry (Utah birth certs 1903-1996) and physical archives (Utah Dept. of Health) were not tried due to resource inaccessibility in this session. Name variants tried: J O / John O / John O'Brien / Jack for father; Olive / Olive H / Olive Harvey / Harvey for mother. Both Utah and Ada County Idaho jurisdictions covered.",
+          "original_substitution": "1940 and 1950 US Census records are originals; LDS church censuses are originals. Weber County marriage register image verified inaccessible (MCP transport cap, 1.5 MB). 2023 obituary accessed only via GenealogyBank derivative index. Utah birth certificate not found in indexed FamilySearch collection. Two originals remain unexamined (marriage register, obituary newspaper) but their derivative counterparts are corroborated by the original census records.",
+          "independent_verification": "Four sources from three distinct institutional origins and time periods: (1) 1940 US Census \u2014 government enumerator, Ada County Idaho; (2) 1950 US Census \u2014 government enumerator, Ogden Utah; (3) 1926 Weber County marriage record \u2014 county clerk at time of marriage; (4) 2023 obituary \u2014 family-supplied death notice. Different informants, different record-creation events. Censuses and marriage are independent; obituary shares the family informant class with household members who may have also reported to census takers, but is separated by 77-97 years. At minimum three independent source units.",
+          "evidence_class": "Original records present: both US census records (1940, 1950) are originals with the enumerator as primary witness to household composition. The marriage index is derivative of an original register; the original is verified inaccessible. No original record with primary parentage information (birth certificate) was found. The censuses provide direct parentage evidence via household relationship column (indirect evidence of biological parentage).",
+          "conflict_resolution": "No substantive conflicts identified. All discrepancies are explained: (a) Alan's calculated birth year 1937 vs. actual 1936 \u2014 standard pre-birthday census calculation artifact; (b) father's birth year 1905-1907 across records \u2014 standard 1-2 year age-rounding across different censuses and marriage registration; (c) father's name variants J O / John O / Jack / John O'Brien \u2014 all consistent with one person (John, nickname Jack, middle name O'Brien); (d) mother's name variants Olive / Olive H / Olive Harvey \u2014 all consistent (Harvey = maiden name, H = initial). No unresolved conflicts blocking proof.",
+          "overturn_risk": "LOW. Four independent sources converge without contradiction. The highest-risk unsearched source is the Utah birth certificate (1936), which would directly name both parents. If found, it would most likely confirm the current conclusion; a discrepancy would require explaining why the certificate contradicts four independent sources spanning 1926-2023. The marriage register original (inaccessible) names 'Jack Applegarth' and 'Olive Harvey' \u2014 if the original differed from the index, it would affect the name rendering but not the identity (all other sources name John O / J O + Olive). No contradictory evidence exists anywhere in the record corpus."
+        }
+      },
+      "created": "2026-07-13"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-13",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Weber County, Utah",
+          "date_range": "1936",
+          "repository": "FamilySearch",
+          "rationale": "Utah began statewide birth registration in 1905; a 1936 birth in Ogden, Weber County should have a registered certificate. 'Utah, Births and Christenings, 1892-1941' (collection 1675542) is indexed on FamilySearch and covers this date. A birth certificate directly names both father and mother (with her maiden name), making this the highest-value record for identifying Alan's parents.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Ada County, Idaho",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "The tree shows Alan in 'South Boise Election Precinct, Ada, Idaho' in 1940. As a 4-year-old child he would appear in his parents' household, allowing identification of the household head and mother. The 1940 US Federal Census is fully indexed on FamilySearch. This is direct evidence: the household structure names his father as head and his mother by relationship.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "United States",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "The tree already references LDS Church Census Record for 1940 (FamilySearch ARK 1:1:8778-JZ6Z, source QL59-XS2). LDS Church Census records often list the head of household and family members, providing independent evidence of the family unit. This source should be extracted and its parentage assertions recorded.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "United States",
+          "date_range": "1950",
+          "repository": "FamilySearch",
+          "rationale": "The tree references two LDS Church Census Records for 1950 (ARKs 1:1:DLHW-TCN2 and 1:1:8MKB-TKT2, sources QL59-CH4 and QL59-CK2). By 1950 Alan (age 14) was back in Ogden, Utah. These records may show him in the same household as his parents and independently confirm the family unit.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "newspaper",
+          "jurisdiction": "Utah",
+          "date_range": "2023",
+          "repository": "other",
+          "rationale": "The tree references Alan Glen Applegarth's 2023 obituary (Allen Mortuaries, URL: https://www.allenmortuaries.net/obituaries/Alan-Applegarth/) and a GenealogyBank entry (source QJCM-75T, ARK 1:1:62SL-XR8P). Obituaries of the deceased often name surviving and predeceased family members, including parents. If Alan's parents predeceased him, the obituary may identify them by name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Weber County, Utah",
+          "date_range": "1895-1936",
+          "repository": "FamilySearch",
+          "rationale": "Per the record-type guide, a parentage plan must include a dedicated search for the parents' marriage to each other. 'Utah, Weber County Marriages, 1887-1941' (collection 2291514, 92,337 records, indexed) is the most targeted source. The parents' marriage record supplies the mother's maiden name (usually omitted from census and death records) and, by date relative to Alan's 1936 birth, is direct evidence of paternity. This item is sequenced after the birth certificate so the parents' names are known before searching.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Utah",
+          "date_range": "1904-1966",
+          "repository": "FamilySearch",
+          "rationale": "Once the parents are identified, searching 'Utah, Death Certificates, 1904-1966' (collection 1747615, 136,419 records) for the parents' own death certificates will provide corroborating parentage data (their own parents, their birth places, informant names) and may include obituary or burial details. Death certificates for Alan's father or mother would confirm identity and provide secondary-source birth details.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-13T15:03:13.453Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "givenName": "Alan",
+        "birthYearFrom": 1935,
+        "birthYearTo": 1937,
+        "birthPlace": "Utah",
+        "collectionId": "1675542",
+        "count": 50,
+        "collection": "Utah, Births and Christenings, 1892-1941"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Alan Glen Applegarth not indexed in Utah, Births and Christenings, 1892-1941. Utah birth certificates from 1936 may be present in state archives but not fully indexed on FamilySearch. The collection has only 39,037 records vs. ~116,496 persons, suggesting incomplete indexing."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-13T15:03:23.936Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "givenName": "Alan",
+        "birthYearFrom": 1933,
+        "birthYearTo": 1939,
+        "birthPlace": "Utah",
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "1 result returned \u2014 collection mismatch. Record is from GenealogyBank Historic Newspaper Births (collection 2608510) for 'Mrs Applegate', Female. Not Alan Glen Applegarth; no Utah birth certificate found via recordType:birth filter with wider year range."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-13T15:03:32.528Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "givenName": "Alan",
+        "birthPlace": "Utah",
+        "count": 50,
+        "note": "broad across all record types and collections"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1645,
+      "notes": "No Utah birth certificate found. Top-ranked hits: 1940 census 'Household of J O Applegarth' (Ada County, Idaho; Alan indexed as 'Allan', b.1937/Utah); 1950 census 'Household of John O Applegarth' (Ogden, Weber, Utah; indexed as 'Allen G', b.1937/Utah). Father surname Applegarth with initials 'J O' or full 'John O' is the strongest parentage lead. LDS Church Census 1940 and obituary records also surfaced. These records serve pli_002, pli_003, pli_005 as well."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-13T15:25:09.759Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "givenName": "John",
+        "collectionId": "2291514",
+        "collection": "Utah, Weber County Marriages, 1887-1941",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 7,
+      "notes": "7 results, all Applegarth in Weber County. Top match: 'Jack Applegarth and Olive Harvey' (multiple index entries for same event). 'Jack' is a traditional nickname for John; bride 'Olive Harvey' confirms maiden name. This is almost certainly the marriage of John O'Brien and Olive Harvey Applegarth (Alan's parents)."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-13T15:25:13.971Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Harvey",
+        "givenName": "Olive",
+        "collectionId": "2291514",
+        "collection": "Utah, Weber County Marriages, 1887-1941",
+        "count": 50,
+        "note": "bride maiden-name search"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 5,
+      "notes": "5 results; top 4 (score 3.62) are 'Olive Harvey' bride in 'Jack Applegarth and Olive Harvey' marriage \u2014 same event as groom-side search. One result (b.1906) has a birth year consistent with Olive H Applegarth (b.~1907-1908 per censuses). Confirms maiden name Harvey and Weber County marriage."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-13T15:25:18.812Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "givenName": "John",
+        "collectionId": "1747615",
+        "collection": "Utah, Death Certificates, 1904-1966",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 4,
+      "notes": "4 results, none match: 'John Wesley Applegate' (x2), 'John B. Appelgate', 'Apelgate' \u2014 all different surname spellings and different individuals. John O'Brien Applegarth not in Utah Death Certificates 1904-1966; likely died after 1966 (born ~1906-1907, would be 59-60 in 1966)."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-13T15:25:22.334Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Applegarth",
+        "givenName": "Olive",
+        "collectionId": "1747615",
+        "collection": "Utah, Death Certificates, 1904-1966",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 1,
+      "notes": "1 result: 'Apelgate' (Male) \u2014 not Olive Applegarth. Olive Harvey Applegarth not in Utah Death Certificates 1904-1966; likely died after 1966 (born ~1907-1908, would be ~58-59 in 1966)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:8778-JZ6Z : accessed 13 July 2026), entry for Alan Glenn Applegarth, North Weber Utah Stake, 1940; citing collection 3438701.",
+      "citation_detail": {
+        "who": "North Weber Utah Stake clerk/enumerator (The Church of Jesus Christ of Latter-day Saints)",
+        "what": "Church census entry for Alan Glenn Applegarth",
+        "when_created": "1940",
+        "when_accessed": "2026-07-13",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", collection 3438701"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States Census, 1940,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VY4Z-QLG : accessed 13 July 2026), household of J O Applegarth, South Boise Election Precinct, Ada, Idaho, United States; citing NARA microfilm publication T627.",
+      "citation_detail": {
+        "who": "United States Bureau of the Census",
+        "what": "1940 U.S. Federal Census population schedule, household of J O Applegarth",
+        "when_created": "1940",
+        "when_accessed": "2026-07-13",
+        "where": "South Boise Election Precinct, Ada, Idaho, United States",
+        "where_within": "National Archives and Records Administration (NARA), digitized by FamilySearch"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VY4Z-QLG",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "1950 U.S. census, Weber County, Utah, population schedule, Ogden, household of John O Applegarth; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XKW-9VFF : accessed 13 July 2026).",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census (enumerator)",
+        "what": "1950 U.S. Federal Census population schedule, household of John O Applegarth",
+        "when_created": "1 April 1950",
+        "when_accessed": "13 July 2026",
+        "where": "Ogden, Weber County, Utah",
+        "where_within": "Household of John O Applegarth"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages 1980-2014,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6239-LQSN : accessed 13 July 2026), entry for Alan Glen Applegarth, 20 May 2023; citing Logan, Cache, Utah, United States.",
+      "citation_detail": {
+        "who": "GenealogyBank (compiler/publisher of newspaper notices)",
+        "what": "Obituary entry for Alan Glen Applegarth",
+        "when_created": "20 May 2023",
+        "when_accessed": "2026-07-13",
+        "where": "FamilySearch, database and images",
+        "where_within": "United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015, collection 2333694, entry for Alan Glen Applegarth"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H3SX-M678",
+      "notes": "Original not examined \u2014 accessed via the GenealogyBank/FamilySearch obituary index; the original newspaper obituary text itself was not read directly. Indexer's given/surname field-splitting is unreliable for compound names (see father/mother name assertions).",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Utah, Weber County Marriages, 1887-1941\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QK6K-4FCD : Fri Mar 08 21:16:54 UTC 2024), Entry for Jack Applegarth and Olive Harvey, 20 Oct 1926.",
+      "citation_detail": {
+        "who": "Weber County Clerk (marriage register); indexed by FamilySearch",
+        "what": "Marriage index entry for Jack Applegarth and Olive Harvey",
+        "when_created": "20 Oct 1926 (indexed/published on FamilySearch by 2024)",
+        "when_accessed": "2026-07-13",
+        "where": "FamilySearch, \"Utah, Weber County Marriages, 1887-1941\" collection (online database)",
+        "where_within": "Entry for Jack Applegarth and Olive Harvey, 20 Oct 1926, Weber County, Utah"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q224-CDH9",
+      "notes": "Original not examined \u2014 this is a FamilySearch index/derivative entry from \"Utah, Weber County Marriages, 1887-1941\"; the underlying original marriage register has not been examined. The original register image should be checked to verify the index rendering of the groom's given name (\"Jack\" vs. a more formal rendering of \"John\").",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "gedcomx_source_description_id": "QL59-CH4",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DLHW-TCN2 : accessed 13 July 2026), entry for Alan Glen Applegarth, 1950, Ogden Utah Stake.",
+      "citation_detail": {
+        "who": "The Church of Jesus Christ of Latter-day Saints (compiling authority); entry for Alan Glen Applegarth",
+        "what": "Church Census Records (Worldwide), 1914-1960 \u2014 1950 stake census entry",
+        "when_created": "1950",
+        "when_accessed": "2026-07-13",
+        "where": "FamilySearch (familysearch.org), database",
+        "where_within": "Entry for Alan Glen Applegarth, 1950, Ogden Utah Stake"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DLHW-TCN2",
+      "notes": "Persona-only entry for Alan Glen Applegarth himself; no parents or other household members are captured by this record persona. Appears to be a duplicate/alternate 1950 LDS Church Census entry for the same individual (same stake, same birth data) as ark:/61903/1:1:8MKB-TKT2 (tree source QL59-CK2) \u2014 likely two indexed entries for one underlying stake census sheet. Only the FamilySearch persona/index view was examined, not the original stake ledger image.",
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_007",
+      "gedcomx_source_description_id": "QL59-CK2",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:8MKB-TKT2 : accessed 13 July 2026), entry for Alan Glen Applegarth, 1950, Ogden Utah Stake.",
+      "citation_detail": {
+        "who": "The Church of Jesus Christ of Latter-day Saints (compiling authority); entry for Alan Glen Applegarth",
+        "what": "Church Census Records (Worldwide), 1914-1960 \u2014 1950 stake census entry",
+        "when_created": "1950",
+        "when_accessed": "2026-07-13",
+        "where": "FamilySearch (familysearch.org), database",
+        "where_within": "Entry for Alan Glen Applegarth, 1950, Ogden Utah Stake"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8MKB-TKT2",
+      "notes": "Persona-only entry for Alan Glen Applegarth himself; no parents or other household members are captured by this record persona. Appears to be a duplicate/alternate 1950 LDS Church Census entry for the same individual as ark:/61903/1:1:DLHW-TCN2 (tree source QL59-CH4) \u2014 same subject, same stake, same birth data. The raw persona also carries internally-duplicated fact rows (two identical Birth facts, two near-identical Census facts) \u2014 treated as a single database merge artifact, not extracted twice. Only the FamilySearch persona/index view was examined, not the original stake ledger image.",
+      "log_entry_id": "log_003"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:8778-JZ6Z",
+      "record_role": "subject",
+      "record_persona_id": "p_244345878400",
+      "fact_type": "Birth",
+      "value": "Birth, 1935, Ogden, Utah",
+      "date": "1935",
+      "date_certainty": "approximate",
+      "place": "Ogden, Utah",
+      "structured_value": {
+        "year": "1935",
+        "place": "Ogden, Utah"
+      },
+      "information_quality": "secondary",
+      "informant": "church census enumerator (North Weber Utah Stake)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The stake enumerator was not present at Alan's birth in 1936; birth data was relayed by a household member at the 1940 census-taking. Recorded year (1935) is one year off from the actual birth year (1936), consistent with secondhand/recollected reporting.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Ogden, Weber, Utah, United States"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:8778-JZ6Z",
+      "record_role": "subject",
+      "record_persona_id": "p_244345878400",
+      "fact_type": "Census",
+      "value": "Church census, North Weber Utah Stake, 1940",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "North Weber Utah Stake",
+      "structured_value": {
+        "place": "North Weber Utah Stake"
+      },
+      "information_quality": "primary",
+      "informant": "church census enumerator (North Weber Utah Stake)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Stake membership/residence recorded by the enumerator as a contemporaneous official duty at the time of the 1940 church census.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Weber, Utah, United States"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Allan Applegarth",
+      "structured_value": {
+        "given": "Allan",
+        "surname": "Applegarth"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Enumerator recorded name as reported by an unidentified household member; a young child could not report own identity information.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044255",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Residing in South Boise Election Precinct, Ada, Idaho, United States (1940 census enumeration)",
+      "structured_value": {
+        "place": "South Boise Election Precinct, Ada, Idaho, United States"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "South Boise Election Precinct, Ada, Idaho, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator personally visited the dwelling and recorded the household's residence firsthand.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044255",
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "South Boise Election Precinct, Ada, Idaho, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Birth year 1937 (as indexed from stated age at 1940 census), Utah",
+      "structured_value": {
+        "year": "1937",
+        "place": "Utah"
+      },
+      "date": "1937",
+      "date_certainty": "calculated",
+      "place": "Utah",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from age reported to the enumerator at the 1 April 1940 census date; a child cannot provide primary information about his own birth, and the specific household respondent is not identified in the record.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044255",
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "Allan listed as son of J O Applegarth (head of household) in the 1940 census household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Relationship-to-head column states 'son'; the specific household respondent who reported this to the enumerator is not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044255",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "Allan listed as son of Olive Applegarth (wife) in the 1940 census household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Relationship-to-head column and household position identify Olive as mother figure; the specific respondent who reported this is not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044255",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "J O Applegarth",
+      "structured_value": {
+        "given": "J O",
+        "surname": "Applegarth"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Adult household head's name typically self-reported to the enumerator, but the specific respondent is not identified in the record.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044252",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Birth year 1906, Nebraska",
+      "structured_value": {
+        "year": "1906",
+        "place": "Nebraska"
+      },
+      "date": "1906",
+      "date_certainty": "calculated",
+      "place": "Nebraska",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age at census; specific household respondent not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044252",
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Nebraska, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Olive Applegarth",
+      "structured_value": {
+        "given": "Olive",
+        "surname": "Applegarth"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Adult household member's name typically self-reported; specific respondent not identified.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044253",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Birth year 1907, Utah",
+      "structured_value": {
+        "year": "1907",
+        "place": "Utah"
+      },
+      "date": "1907",
+      "date_certainty": "calculated",
+      "place": "Utah",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age at census; specific household respondent not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044253",
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "Olive listed as wife of J O Applegarth (head of household) in the 1940 census household",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Relationship-to-head column states 'wife'; specific respondent not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13784044253",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Boyd Applegarth",
+      "structured_value": {
+        "given": "Boyd",
+        "surname": "Applegarth"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Enumerator recorded name as reported by an unidentified household member.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_13784044254",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Birth year 1931, Utah",
+      "structured_value": {
+        "year": "1931",
+        "place": "Utah"
+      },
+      "date": "1931",
+      "date_certainty": "calculated",
+      "place": "Utah",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year computed from stated age at census; specific household respondent not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_13784044254",
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Boyd listed as son of J O Applegarth (head of household) in the 1940 census household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Relationship-to-head column states 'son'; specific respondent not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_13784044254",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:VY4Z-QLR",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Boyd listed as son of Olive Applegarth (wife) in the 1940 census household",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "wife"
+      },
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Relationship-to-head column and household position identify Olive as mother figure; specific respondent not identified.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_13784044254",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_294982603665",
+      "fact_type": "Birth",
+      "value": "b. 1907, Nebraska",
+      "date": "1907",
+      "date_certainty": "calculated",
+      "place": "Nebraska",
+      "structured_value": {
+        "year": "1907",
+        "place": "Nebraska"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census informant not recorded; birth year derived from reported age, which could have been given by John O himself or by his wife Olive H.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003",
+      "standard_place": "Nebraska, United States"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_294982603665",
+      "fact_type": "Census",
+      "value": "Resident of Ogden, Weber, Utah, 1 April 1950",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Ogden, Weber, Utah",
+      "standard_place": "Ogden, Weber, Utah, United States",
+      "structured_value": {
+        "place": "Ogden, Weber, Utah, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household's residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_294982603665",
+      "fact_type": "Name",
+      "value": "John O Applegarth",
+      "structured_value": {
+        "given": "John O",
+        "surname": "Applegarth"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "wife",
+      "record_persona_id": "p_294982603667",
+      "fact_type": "Birth",
+      "value": "b. 1908, Utah",
+      "date": "1908",
+      "date_certainty": "calculated",
+      "place": "Utah",
+      "structured_value": {
+        "year": "1908",
+        "place": "Utah"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census informant not recorded; birth year derived from reported age, which could have been given by Olive H herself or by her husband John O.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "wife",
+      "record_persona_id": "p_294982603667",
+      "fact_type": "Census",
+      "value": "Resident of Ogden, Weber, Utah, 1 April 1950",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Ogden, Weber, Utah",
+      "standard_place": "Ogden, Weber, Utah, United States",
+      "structured_value": {
+        "place": "Ogden, Weber, Utah, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household's residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "wife",
+      "record_persona_id": "p_294982603667",
+      "fact_type": "Name",
+      "value": "Olive H Applegarth",
+      "structured_value": {
+        "given": "Olive H",
+        "surname": "Applegarth"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "child_2",
+      "record_persona_id": "p_294982603662",
+      "fact_type": "Birth",
+      "value": "b. 1937, Utah",
+      "date": "1937",
+      "date_certainty": "calculated",
+      "place": "Utah",
+      "structured_value": {
+        "year": "1937",
+        "place": "Utah"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census informant not recorded; a household member (likely John O or Olive H) reported Allen G's age. Note: this yields a birth year of ~1937, one year later than Alan Glen Applegarth's documented birth date of 29 April 1936 -- a minor discrepancy typical of census age rounding, but worth flagging alongside identity correlation.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "child_2",
+      "record_persona_id": "p_294982603662",
+      "fact_type": "Census",
+      "value": "Resident of Ogden, Weber, Utah, 1 April 1950",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Ogden, Weber, Utah",
+      "standard_place": "Ogden, Weber, Utah, United States",
+      "structured_value": {
+        "place": "Ogden, Weber, Utah, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household's residence directly.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "child_2",
+      "record_persona_id": "p_294982603662",
+      "fact_type": "Name",
+      "value": "Allen G Applegarth",
+      "structured_value": {
+        "given": "Allen G",
+        "surname": "Applegarth"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Recorded as 'Allen G' -- a spelling/nickname variant of Alan Glen Applegarth's known name.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "child_2",
+      "record_persona_id": "p_294982603662",
+      "fact_type": "ParentChild",
+      "value": "Son of John O Applegarth (head of household), per 1950 census relationship column",
+      "structured_value": {
+        "relationship_type": "parent_child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The census relationship column states household relationship to the head (son), not biological parentage per se; the parent-child conclusion combines the stated relationship with co-residence, so it is treated as indirect evidence of biological parentage.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6XKW-9VFD",
+      "record_role": "child_2",
+      "record_persona_id": "p_294982603662",
+      "fact_type": "ParentChild",
+      "value": "Son of Olive H Applegarth (wife of head of household), per 1950 census relationship column",
+      "structured_value": {
+        "relationship_type": "parent_child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Olive H's relationship to Allen G is inferred by combining her stated relationship as wife of the head with Allen G's stated relationship as son of the head, plus shared co-residence -- an indirect route to the mother-child conclusion, not a directly stated one.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280676",
+      "record_role": "deceased",
+      "fact_type": "Name",
+      "value": "Alan Glen Applegarth",
+      "structured_value": {
+        "given": "Alan Glen",
+        "surname": "Applegarth"
+      },
+      "information_quality": "primary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Indexer split the name as given=\"Alan\", surname=\"Glen Applegarth\" \u2014 an artifact of automated field-splitting, not evidence that \"Glen\" is part of the surname.",
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280676",
+      "record_role": "deceased",
+      "fact_type": "Birth",
+      "value": "29 April 1936, Ogden, Weber, Utah",
+      "date": "29 April 1936",
+      "date_certainty": "exact",
+      "place": "Ogden, Weber, Utah, United States",
+      "standard_place": "Ogden, Weber, Utah, United States",
+      "information_quality": "secondary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Family-provided decedent's own birth information at time of obituary composition \u2014 secondhand relay of a fact the informant did not witness.",
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280676",
+      "record_role": "deceased",
+      "fact_type": "Death",
+      "value": "16 May 2023, Providence, Cache, Utah",
+      "date": "16 May 2023",
+      "date_certainty": "exact",
+      "place": "Providence, Cache, Utah, United States",
+      "standard_place": "Providence, Cache, Utah, United States",
+      "information_quality": "secondary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Family relayed the death date/place for the obituary; no physician or funeral-director attestation is part of this source.",
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280676",
+      "record_role": "deceased",
+      "fact_type": "Obituary",
+      "value": "Obituary published for Alan Glen Applegarth",
+      "date": "20 May 2023",
+      "date_certainty": "exact",
+      "place": "Logan, Cache, Utah, United States",
+      "standard_place": "Logan, Cache, Utah, United States",
+      "information_quality": "primary",
+      "informant": "newspaper/funeral home staff",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280677",
+      "record_role": "father_of_deceased",
+      "fact_type": "Name",
+      "value": "John O'Brien Applegarth [as indexed: given \"John\", surname \"Obrien Applegarth\"]",
+      "structured_value": {
+        "given": "John O'Brien",
+        "surname": "Applegarth"
+      },
+      "information_quality": "secondary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "GenealogyBank indexer split the name as given=\"John\", surname=\"Obrien Applegarth\" \u2014 most likely a mis-split of \"John O'Brien Applegarth\" with O'Brien as a middle name rather than part of the surname. Single-source, uncorroborated reading \u2014 original newspaper obituary text should be checked to confirm exact rendering.",
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280676",
+      "record_role": "deceased",
+      "fact_type": "ParentChild",
+      "value": "Father named as John O'Brien Applegarth",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "father"
+      },
+      "information_quality": "secondary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280678",
+      "record_role": "mother_of_deceased",
+      "fact_type": "Name",
+      "value": "Olive Harvey Applegarth [as indexed: given \"Olive Harvey\", surname \"Annie Applegarth\"]",
+      "structured_value": {
+        "given": "Olive Harvey",
+        "surname": "Applegarth"
+      },
+      "information_quality": "secondary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Indexer parsed as given=\"Olive Harvey\", surname=\"Annie Applegarth\" \u2014 the full string across fields reads \"Olive Harvey Annie Applegarth\". Most likely \"Harvey\" is her maiden name and \"Annie\" a middle name, with \"Applegarth\" the married surname, but the exact name order is uncorroborated from this single derivative index; original obituary text should be checked to confirm.",
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280676",
+      "record_role": "deceased",
+      "fact_type": "ParentChild",
+      "value": "Mother named as Olive Harvey Applegarth",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280679",
+      "record_role": "wife",
+      "fact_type": "Name",
+      "value": "Carole Checketts",
+      "structured_value": {
+        "given": "Carole",
+        "surname": "Checketts"
+      },
+      "information_quality": "primary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280681",
+      "record_role": "child_1",
+      "fact_type": "Name",
+      "value": "Mark Alan Applegarth",
+      "structured_value": {
+        "given": "Mark Alan",
+        "surname": "Applegarth"
+      },
+      "information_quality": "primary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280682",
+      "record_role": "child_2",
+      "fact_type": "Name",
+      "value": "Shauna Applegarth",
+      "structured_value": {
+        "given": "Shauna",
+        "surname": "Applegarth"
+      },
+      "information_quality": "primary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Narrative summary lists Shauna as 'Daughter', but the source's encoded relationship type toward Alan is ParentChildInLaw (daughter-in-law) \u2014 an indexing inconsistency; exact relationship to Alan unconfirmed.",
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:6239-LQSN",
+      "record_persona_id": "p_298964280680",
+      "record_role": "daughter_in_law_1",
+      "fact_type": "Name",
+      "value": "Camie Palmer",
+      "structured_value": {
+        "given": "Camie",
+        "surname": "Palmer"
+      },
+      "information_quality": "primary",
+      "informant": "obituary informant (unidentified family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:QK6K-4FCD",
+      "record_role": "groom",
+      "record_persona_id": "p_101662492782",
+      "fact_type": "name",
+      "value": "Jack Applegarth",
+      "structured_value": {
+        "given": "Jack",
+        "surname": "Applegarth"
+      },
+      "information_quality": "primary",
+      "informant": "Jack Applegarth (the groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Groom self-reported his own name to the clerk at time of marriage; index rendering \"Jack\" for \"John\" not yet confirmed against original register image.",
+      "log_entry_id": "log_004",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:QK6K-4FCD",
+      "record_role": "groom",
+      "record_persona_id": "p_101662492782",
+      "fact_type": "birth",
+      "value": "Birth year 1905 (computed from age at marriage, per index)",
+      "structured_value": {
+        "year": 1905
+      },
+      "date": "1905",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Jack Applegarth (the groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year is computed from stated age at time of marriage, not a directly recorded birth date; a person cannot give primary information about their own birth.",
+      "log_entry_id": "log_004",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:QK6K-4FCD",
+      "record_role": "groom",
+      "record_persona_id": "p_101662492782",
+      "fact_type": "marriage",
+      "value": "Married Olive Harvey, 20 Oct 1926, Weber County, Utah",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "date": "20 Oct 1926",
+      "date_certainty": "exact",
+      "place": "Weber, Utah, United States",
+      "information_quality": "primary",
+      "informant": "Weber County clerk/officiant of record",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_005",
+      "standard_place": "Weber, Utah, United States"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:QK6K-4FCD",
+      "record_role": "bride",
+      "record_persona_id": "p_101662492783",
+      "fact_type": "name",
+      "value": "Olive Harvey",
+      "structured_value": {
+        "given": "Olive",
+        "surname": "Harvey"
+      },
+      "information_quality": "primary",
+      "informant": "Olive Harvey (the bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Bride self-reported her own (maiden) name to the clerk at time of marriage; confirms Harvey as maiden surname.",
+      "log_entry_id": "log_004",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:QK6K-4FCD",
+      "record_role": "bride",
+      "record_persona_id": "p_101662492783",
+      "fact_type": "birth",
+      "value": "Birth year 1906 (computed from age at marriage, per index)",
+      "structured_value": {
+        "year": 1906
+      },
+      "date": "1906",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Olive Harvey (the bride)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year is computed from stated age at time of marriage, not a directly recorded birth date; a person cannot give primary information about their own birth.",
+      "log_entry_id": "log_004",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:QK6K-4FCD",
+      "record_role": "bride",
+      "record_persona_id": "p_101662492783",
+      "fact_type": "marriage",
+      "value": "Married Jack Applegarth, 20 Oct 1926, Weber County, Utah",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "date": "20 Oct 1926",
+      "date_certainty": "exact",
+      "place": "Weber, Utah, United States",
+      "information_quality": "primary",
+      "informant": "Weber County clerk/officiant of record",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_005",
+      "standard_place": "Weber, Utah, United States"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:DLHW-TCN2",
+      "record_role": "subject",
+      "fact_type": "name",
+      "value": "Alan Glen Applegarth",
+      "structured_value": {
+        "given": "Alan Glen",
+        "surname": "Applegarth"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent, as Alan was a minor in 1950)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Respondent for this LDS Church Census entry is not identified in the record.",
+      "log_entry_id": "log_003",
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:DLHW-TCN2",
+      "record_role": "subject",
+      "fact_type": "birth",
+      "value": "1936, Ogden, Utah",
+      "structured_value": {
+        "year": "1936",
+        "place": "Ogden, Utah"
+      },
+      "date": "1936",
+      "date_certainty": "exact",
+      "place": "Ogden, Utah",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent, as Alan was a minor in 1950)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Respondent not identified; per census-analogy doctrine, subject's own birth facts stay indeterminate when the respondent is unknown.",
+      "log_entry_id": "log_003",
+      "source_id": "src_006",
+      "standard_place": "Ogden, Weber, Utah, United States"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:DLHW-TCN2",
+      "record_role": "subject",
+      "fact_type": "residence",
+      "value": "Enumerated in Ogden Utah Stake, 1950 LDS Church Census",
+      "structured_value": {
+        "place": "Ogden Utah Stake"
+      },
+      "date": "1950",
+      "date_certainty": "exact",
+      "place": "Ogden Utah Stake",
+      "information_quality": "primary",
+      "informant": "the stake/ward census recorder",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The recorder compiled the stake membership/census entry contemporaneously.",
+      "log_entry_id": "log_003",
+      "source_id": "src_006",
+      "standard_place": "Ogden, Weber, Utah, United States"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:8MKB-TKT2",
+      "record_role": "subject",
+      "fact_type": "name",
+      "value": "Alan Glen Applegarth",
+      "structured_value": {
+        "given": "Alan Glen",
+        "surname": "Applegarth"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent, as Alan was a minor in 1950)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Respondent for this LDS Church Census entry is not identified in the record; the persona carries two identical name-fact rows, treated as one duplicate artifact.",
+      "log_entry_id": "log_003",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:8MKB-TKT2",
+      "record_role": "subject",
+      "fact_type": "birth",
+      "value": "1936, Ogden, Utah",
+      "structured_value": {
+        "year": "1936",
+        "place": "Ogden, Utah"
+      },
+      "date": "1936",
+      "date_certainty": "exact",
+      "place": "Ogden, Utah",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent, as Alan was a minor in 1950)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Respondent not identified; per census-analogy doctrine, subject's own birth facts stay indeterminate when the respondent is unknown. Persona carries two identical Birth-fact rows, treated as one duplicate artifact.",
+      "log_entry_id": "log_003",
+      "source_id": "src_007",
+      "standard_place": "Ogden, Weber, Utah, United States"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:8MKB-TKT2",
+      "record_role": "subject",
+      "fact_type": "residence",
+      "value": "Enumerated in Ogden Utah Stake, 1950 LDS Church Census",
+      "structured_value": {
+        "place": "Ogden Utah Stake"
+      },
+      "date": "1950",
+      "date_certainty": "exact",
+      "place": "Ogden Utah Stake",
+      "information_quality": "primary",
+      "informant": "the stake/ward census recorder",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The recorder compiled the stake membership/census entry contemporaneously. Persona carries a second, place-less Census-fact row, treated as one duplicate artifact.",
+      "log_entry_id": "log_003",
+      "source_id": "src_007",
+      "standard_place": "Ogden, Weber, Utah, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "LDS 1940 church census entry names 'Alan Glenn Applegarth' in North Weber Utah Stake. Tree source QL59-XS2 is already attached to KWZH-XB6. Name variant Glenn/Glen is routine; the existing tree attachment confirms identity. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Census residence assertion on the same LDS 1940 persona as a_001 (North Weber Utah Stake). Identity confirmed by a_001. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "1940 US Census child_2 in J O Applegarth household: name 'Allan Applegarth' (Allan = spelling variant), b.1937 Utah, Ada County Idaho. Matches Alan's known 1940 residence fact (South Boise Election Precinct, Ada, Idaho). Birth year 1937 vs. actual 1936 is the standard census age-calculation artifact (enumerated before April 29 birthday). Surname, location, household head, and birth state all corroborate. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Residence assertion on the same 1940 census persona (child_2) as a_003. Identity confirmed by a_003. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (calculated from age) on the same 1940 census persona as a_003. Identity confirmed by a_003. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Relationship assertion from the child_2 persona (identified as Alan Glen Applegarth per a_003): Allan listed as son of J O Applegarth. Bears on KWZH-XB6 as the child side. Identity of the child persona confirmed by a_003. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Relationship assertion from the child_2 persona: Allan listed as son of Olive Applegarth (wife). Bears on KWZH-XB6 as the child side. Identity confirmed by a_003. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_023",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "1950 US Census child_2 in John O Applegarth household: name 'Allen G Applegarth' (Allen G = name variant), b.1937 Utah, Ogden Weber Utah. Matches Alan's known 1950 residence fact (Ogden, Weber, Utah). Same household-head surname pattern as 1940. Birth year 1937 vs. 1936 is the same census age-calculation artifact. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_024",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Residence assertion on the same 1950 census persona (child_2) as a_023. Identity confirmed by a_023. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_025",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Allen G Applegarth' on the same 1950 census persona as a_023. Identity confirmed by a_023. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_026",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "1950 census: Allen G (child_2, identified as Alan per a_023) listed as son of John O Applegarth. Bears on KWZH-XB6 as the child side. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_027",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "1950 census: Allen G listed as son of Olive H Applegarth (wife). Bears on KWZH-XB6 as the child side. Identity confirmed by a_023. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_028",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Obituary deceased persona: name 'Alan Glen Applegarth' matches KWZH-XB6 exactly. The obituary is indexed under this FamilySearch record. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_029",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Obituary: birth 29 April 1936, Ogden, Weber, Utah matches KWZH-XB6's documented birth fact exactly. Same persona as a_028. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_030",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Obituary: death 16 May 2023, Providence, Cache, Utah matches KWZH-XB6's documented death fact exactly. Same persona as a_028. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_031",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Obituary publication fact on the same persona as a_028 (Alan Glen Applegarth). Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_033",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Obituary deceased persona (KWZH-XB6, per a_028): father named as John O'Brien Applegarth. Bears on KWZH-XB6 as the child side of this parentage assertion. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_035",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Obituary deceased persona (KWZH-XB6, per a_028): mother named as Olive Harvey Applegarth. Bears on KWZH-XB6 as the child side. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1940 census: Allan Applegarth (child_2 = Alan Glen) listed as son of J O Applegarth (head). Bears on I1 as the father named in this parentage assertion. I1 is identified as J O Applegarth by a_008 (name) and a_009 (birth/place). Probable \u2014 the father link derives from Alan's child role, not from direct identification of the head persona in this assertion.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1940 census head_of_household persona: name 'J O Applegarth' in Ada County Idaho household containing Allan (= Alan, b.1937 Utah) and Boyd. J O = John O['Brien] \u2014 initials match I1's full name 'John O'Brien Applegarth', confirmed by the 1950 census ('John O') and obituary ('John O'Brien'). Surname, year, location, and family composition all corroborate. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year 1906, Nebraska for J O Applegarth head (1940 census). Same persona as a_008. Birth in Nebraska is consistent across both censuses (1940: 1906; 1950: 1907 \u2014 1-year age-rounding difference). Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1940 census wife persona: Olive listed as wife of J O Applegarth. Bears on I1 as the person named as Olive's husband; corroborates the couple unit J O + Olive = I1 + I2. Probable \u2014 this is Olive's role assertion, naming I1 indirectly.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1940 census: Boyd (child_1) listed as son of J O Applegarth (head). Bears on I1 as the father named in this parentage assertion, consistent with I1 being Alan's father in the same household. Probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1950 census head_of_household persona: birth year 1907, Nebraska for John O Applegarth, Ogden Weber Utah. Household includes Allen G (= Alan). John O expands J O from 1940; birth year 1907 vs. 1940-calculated 1906 is a standard 1-year age-rounding difference. Surname + location + family composition confirm I1. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence Ogden, Weber, Utah 1950 for John O Applegarth head. Same persona as a_017/a_019. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name 'John O Applegarth' (1950 census head). Expands the 1940 initials 'J O' to first name 'John'; further expanded to 'John O'Brien' by the obituary. Matches I1. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1950 census: Allen G listed as son of John O Applegarth (head). Bears on I1 as the named father; corroborates the 1940 census parentage. Probable \u2014 parentage inferred from head-of-household relationship, not stated directly.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_032",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Obituary father persona: name 'John O'Brien Applegarth' (indexed as 'John Obrien Applegarth' \u2014 mis-split by GenealogyBank's automated field parser). This is the most complete form of the name: John = first name, O'Brien = middle name, Applegarth = surname. Fully corroborated by 1940 ('J O') and 1950 ('John O') census names. Matches I1. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_033",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Obituary: father of Alan Glen Applegarth explicitly named as John O'Brien Applegarth. Direct parentage statement. Bears on I1 as the identified father. Three independent sources \u2014 1940 census, 1950 census, 2023 obituary \u2014 all converge on this person as Alan's father. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1940 census: Allan (child_2 = Alan) listed as son of Olive Applegarth (wife/mother). Bears on I2 as the named mother. Probable \u2014 parentage inferred from household position, not stated directly.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1940 census wife persona: name 'Olive Applegarth' in J O Applegarth household, Ada County Idaho. I2 is 'Olive Harvey Applegarth'. Name match (given 'Olive', surname 'Applegarth'), wife of J O (= I1), mother of Allan (= Alan) and Boyd. All corroborate. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth year 1907, Utah for Olive Applegarth wife (1940 census). Same persona as a_010. Born in Utah consistent with tree (no birth fact yet). Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1940 census: Olive listed as wife of J O Applegarth. This is Olive's own role assertion; bears on I2 as the named wife. Confirms I2's spousal relationship to I1. Probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1940 census: Boyd (child_1) listed as son of Olive Applegarth (wife). Bears on I2 as the named mother of Boyd, consistent with I2 being Alan's mother. Probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1950 census wife persona: birth year 1908, Utah for Olive H Applegarth, Ogden. 1-year age-rounding difference (1907 vs. 1908) between 1940 and 1950 is standard. Middle initial H likely = 'Harvey' (maiden name per obituary). Matches I2. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_021",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Residence Ogden, Weber, Utah 1950 for Olive H Applegarth wife. Same persona as a_020. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_022",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Name 'Olive H Applegarth' (1950 census wife of John O). Middle initial H = Harvey (maiden name confirmed by obituary). Matches I2. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1950 census: Allen G listed as son of Olive H Applegarth (wife). Bears on I2 as the named mother; corroborates the 1940 census parentage. Probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_034",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Obituary mother persona: name 'Olive Harvey Applegarth' (indexed as given='Olive Harvey', surname='Annie Applegarth' \u2014 GenealogyBank field-split artifact). The full string 'Olive Harvey Annie Applegarth' most likely parses as: given 'Olive', maiden 'Harvey', middle 'Annie', married 'Applegarth'. Middle initial H in the 1950 census confirms H = Harvey. This is the most specific name form for I2. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_035",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Obituary: mother of Alan Glen Applegarth explicitly named as Olive Harvey Applegarth. Direct parentage statement. Three independent sources \u2014 1940 census, 1950 census, 2023 obituary \u2014 all converge on this person as Alan's mother. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_036",
+      "person_id": "KWZH-XBN",
+      "confidence": "confident",
+      "rationale": "Obituary: wife of Alan Glen Applegarth named as 'Carole Checketts'. KWZH-XBN is 'Carole Sue Checketts' (maiden name) in the tree, married to KWZH-XB6. Given 'Carole' and surname 'Checketts' match exactly. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_013",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1940 census child_1 in J O Applegarth household: name 'Boyd Applegarth'. I3 is the stub created for this persona. Name and household position are the only evidence; stub rests on a single record. Probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_014",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birth year 1931, Utah for Boyd Applegarth (child_1, 1940 census). Same persona as a_013. Probable per a_013.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_015",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1940 census: Boyd listed as son of J O Applegarth (head). Bears on I3 as the child side of this parentage assertion, consistent with Boyd being a sibling of Alan in the same household. Probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1940 census: Boyd listed as son of Olive Applegarth (wife). Bears on I3 as the child side; consistent with Boyd being a son of I2. Probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_037",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Obituary child_1 persona: name 'Mark Alan Applegarth', listed as son of Alan Glen Applegarth. I4 is the stub created for this persona. Probable \u2014 stub rests on a single record (the derivative obituary index).",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_038",
+      "person_id": "I5",
+      "confidence": "speculative",
+      "rationale": "Obituary: 'Shauna Applegarth' listed in household/family section. I5 is the stub created for this persona. Relationship to Alan is inconsistently indexed (narrative says 'daughter' but GenealogyBank's encoded relationship is 'ParentChildInLaw'). Speculative \u2014 relationship type unconfirmed from this derivative source; original obituary text should be checked.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_040",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage record: groom persona named 'Jack Applegarth'. 'Jack' is a well-established nickname for 'John'. Same surname, Weber County Utah, married Olive Harvey \u2014 matches I1 (John O'Brien Applegarth) exactly. Birth year 1905 vs. census-calculated 1906-1907 is within the standard 1-2 year rounding range. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_041",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth year 1905 for Jack Applegarth (groom, Weber County marriage 1926). Same persona as a_040. Birth year is 1-2 years earlier than census-calculated 1906-1907 \u2014 within rounding range. Probable \u2014 single calculated year, not a direct birth record.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_042",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage assertion on the groom persona: Jack Applegarth married Olive Harvey, 20 Oct 1926, Weber County, Utah. Bears on I1 as the groom identified by a_040. Marriage date precedes both children's births (Boyd ~1931, Alan 1936) by appropriate margins. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_042",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage assertion on the groom-bride couple: Jack Applegarth married Olive Harvey, 20 Oct 1926, Weber County, Utah. Bears on I2 as the named bride (Olive Harvey = Olive Harvey Applegarth per obituary). Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_043",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage record bride persona: name 'Olive Harvey' (maiden name). Surname Harvey confirmed by 1950 census middle initial 'H' and obituary's 'Olive Harvey Applegarth'. Given 'Olive' matches I2 exactly. Confident \u2014 maiden name confirmation is a key finding.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_044",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth year 1906 for Olive Harvey (bride). Census gives 1907-1908 calculated \u2014 within 1-2 year rounding range. Probable \u2014 single calculated year, not a direct birth record.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_045",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage assertion on the bride persona: Olive Harvey married Jack Applegarth, 20 Oct 1926, Weber County, Utah. Bears on I2 as the identified bride. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_045",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage assertion bears on I1 as the groom (Jack Applegarth = John O'Brien Applegarth) named in this couple event. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_046",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "LDS 1950 church census (DLHW-TCN2): subject is Alan Glen Applegarth named at Ogden Utah Stake. Source QL59-CH4 already attached to KWZH-XB6 in the tree. Identity confirmed by name and attached source. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_047",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Birth assertion on same LDS 1950 persona as a_046 (Alan Glen Applegarth, Ogden Utah Stake). Identity confirmed by a_046. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_048",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Residence/census assertion on same LDS 1950 persona as a_046. Identity confirmed. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_049",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "LDS 1950 church census (8MKB-TKT2): near-duplicate entry for same person in same stake as a_046-a_048. Source QL59-CK2 attached to KWZH-XB6. Identity confirmed. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_050",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Birth assertion on same LDS 1950 persona as a_049. Identity confirmed by a_049. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_051",
+      "person_id": "KWZH-XB6",
+      "confidence": "confident",
+      "rationale": "Residence/census assertion on same LDS 1950 persona as a_049. Identity confirmed. Confident.",
+      "match_score": null,
+      "created": "2026-07-13"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_032",
+        "a_033",
+        "a_034",
+        "a_035",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044",
+        "a_045"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch searches covered: US Federal Census 1940 (Ada County, Idaho) and 1950 (Ogden, Weber, Utah); LDS Church Census Records 1940 and 1950 (North Weber Utah Stake, Ogden Utah Stake); Utah vital records \u2014 births collection 1675542 (three searches, all negative; collection incomplete for 1936 births) and death certificates 1904-1966 (negative for both parents, likely died after 1966); Weber County Utah marriages 1887-1941, collection 2291514 (positive \u2014 'Jack Applegarth and Olive Harvey,' 20 Oct 1926, two search angles: groom name and bride maiden name); GenealogyBank obituary index, collection 2333694 (2023 obituary for Alan Glen Applegarth). Not searched: Ancestry.com Utah birth certificates 1903-1996 (no subscription available in this session); physical Utah State Archives or Utah Dept. of Health; marriage register original page scan (ARK ark:/61903/3:1:3QS7-L92S-1S3N-N, 1.5 MB, exceeded MCP transport capacity).",
+      "narrative_markdown": "## Parentage of Alan Glen Applegarth (born 29 April 1936)\n\nThe preponderance of evidence strongly suggests that **Alan Glen Applegarth** (born 29 April 1936, Ogden, Weber County, Utah; died 16 May 2023, Providence, Cache County, Utah) is the son of **John O\u2019Brien Applegarth** and **Olive Harvey Applegarth** (n\u00e9e Harvey), who married 20 October 1926 in Weber County, Utah.\n\n### Most Probative Evidence \u2014 Direct Parentage Statement\n\nA GenealogyBank obituary index entry for Alan Glen Applegarth (20 May 2023, Logan, Cache, Utah; FamilySearch, ark:/61903/1:1:6239-LQSN) explicitly names his parents. The index renders the father\u2019s name as \u201cJohn Obrien Applegarth\u201d and the mother\u2019s as \u201cOlive Harvey Annie Applegarth\u201d \u2014 both are automated field-splitting artifacts. Reading the full encoded strings: father = John O\u2019Brien Applegarth (O\u2019Brien as middle name, evidenced by the consistent initial \u201cO\u201d in the 1940 and 1950 censuses); mother = Olive Harvey Applegarth (Harvey = maiden name, corroborated by the 1926 marriage record; Annie = likely middle name). This source is a derivative index of a family-supplied newspaper notice; the informant had firsthand knowledge of the parentage but the source classification is derivative/secondary. The original newspaper was not consulted.\n\n### Original Census Records \u2014 Household Evidence\n\nThe United States Federal Census of 1940 enumerates the household of \u201cJ O Applegarth\u201d in South Boise Election Precinct, Ada County, Idaho, comprising wife \u201cOlive Applegarth\u201d (born approximately 1907, Utah) and son \u201cAllan Applegarth\u201d (born approximately 1937, Utah) (\u201cUnited States Census, 1940,\u201d FamilySearch, ark:/61903/1:1:VY4Z-QLR). The United States Federal Census of 1950 lists \u201cJohn O Applegarth\u201d as head of household in Ogden, Weber County, Utah, with wife \u201cOlive H Applegarth\u201d (born approximately 1908, Utah) and son \u201cAllen G Applegarth\u201d (born approximately 1937, Utah) (1950 U.S. census, FamilySearch, ark:/61903/1:1:6XKW-9VFD). Allan/Allen G are spelling variants of Alan Glen; the 1937 calculated birth year in both censuses results from the enumeration date falling before Alan\u2019s 29 April birthday, a standard census age-calculation artifact. Both census records are originals; the parentage evidence is indirect, derived from household relationship columns (\u201cson\u201d) rather than a direct biological assertion.\n\n### Marriage Record \u2014 Couple and Maiden Name Confirmation\n\nThe Weber County, Utah marriage index records \u201cJack Applegarth\u201d (born approximately 1905) married \u201cOlive Harvey\u201d (born approximately 1906) on 20 October 1926 (\u201cUtah, Weber County Marriages, 1887\u20131941,\u201d FamilySearch, ark:/61903/1:1:QK6K-4FCD). \u201cJack\u201d is a well-established English nickname for John, consistent with the census initials \u201cJ O\u201d (1940) and \u201cJohn O\u201d (1950) and the obituary rendering \u201cJohn O\u2019Brien.\u201d The bride\u2019s surname Harvey confirms Olive\u2019s maiden name, corroborated independently by the 1950 census middle initial \u201cH\u201d and the obituary\u2019s \u201cOlive Harvey Annie Applegarth.\u201d The marriage in 1926 precedes the births of Boyd Applegarth (approximately 1931, per the 1940 census) and Alan Glen Applegarth (29 April 1936) by appropriate margins. This record is a derivative index; the original marriage register image (ARK: ark:/61903/3:1:3QS7-L92S-1S3N-N) was verified inaccessible due to MCP transport capacity limits.\n\n### Discrepancy Resolution\n\n**Father\u2019s given name.** \u201cJ O Applegarth\u201d (1940 census), \u201cJohn O Applegarth\u201d (1950 census), \u201cJack Applegarth\u201d (1926 marriage index), and \u201cJohn O\u2019Brien Applegarth\u201d (2023 obituary) are consistent with a single individual: John O\u2019Brien Applegarth, who used the nickname Jack at his 1926 marriage and whose middle name O\u2019Brien was abbreviated to the initial O in census records.\n\n**Birth year variation.** The father\u2019s birth year calculates to approximately 1905\u20131907 and the mother\u2019s to approximately 1906\u20131908 across three records. These one- to two-year variations are standard for records in which age was reported orally at the time of enumeration or registration rather than from a primary birth document, and they do not constitute a substantive conflict.\n\n**Alan\u2019s census birth year.** Both censuses index Alan\u2019s birth year as 1937 rather than his documented birth date of 29 April 1936. The 1940 census was enumerated on 1 April 1940, before Alan\u2019s birthday; an age of 3 calculates to 1937. The 1950 census carries the same artifact.\n\n### Research Scope and Limitations\n\nSearches on FamilySearch covered US Federal Census (1940, 1950), LDS Church Census records (1940, 1950), Utah births (collection 1675542, three searches, all negative; collection appears incomplete for 1936 births), Utah death certificates 1904\u20131966 (both parents absent, consistent with survival past 1966 given their birth years of approximately 1905\u20131908), Weber County marriages 1887\u20131941, and GenealogyBank obituary indexes. Ancestry.com Utah birth certificates (1903\u20131996) were not searched due to the absence of a subscription. Alan Glen Applegarth\u2019s 1936 Utah birth certificate, which would provide primary parentage information, was not located. Its discovery would be the most direct path to advancing this conclusion to proved.\n\n### Tier: Probable\n\nFour convergent independent sources \u2014 spanning three distinct institutional origins (government census, church census, county marriage register, newspaper obituary) and three time periods (1926, 1940\u20131950, 2023) \u2014 identify John O\u2019Brien Applegarth and Olive Harvey Applegarth as Alan Glen Applegarth\u2019s parents. No contradictory evidence was identified in any source examined. Research has been declared reasonably exhaustive within available tools. The tier is **probable** rather than proved because no original source with primary, direct parentage information has been located: the most direct parentage statement (the 2023 obituary) is a derivative source with secondary information; the 1940 and 1950 census records are originals but provide only indirect household evidence of parentage; and the 1926 marriage record, while confirming the couple, is a derivative index. The GPS standard for proved requires at least two independent original records with primary information, a bar not met by the current evidence corpus."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-13.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-13T15:50:58.872Z"
+    }
+  ]
+}
