@@ -363,24 +363,36 @@ def grade(
     )
 
     client = _make_client(auth)
-    response = _create_message_with_retry(
-        client=client,
-        model=model,
-        prefix=prefix,
-        suffix=suffix,
-    )
 
-    # If max_tokens clipped the response, the tool_use input may be a
-    # truncated JSON fragment — _extract_dimensions will then fail with a
-    # confusing parse-style error. Surface the truncation directly so the
-    # operator knows to bump max_tokens (or shorten dimensions).
-    if response.stop_reason == "max_tokens":
-        raise JudgeError(
-            "judge response hit max_tokens — tool_use input was clipped. "
-            "Bump max_tokens (currently 4096) or shorten rubric/criteria."
+    # Judge output is non-deterministic: the model occasionally emits a
+    # malformed submit_grading call (dimensions not a list, >1 tool_use, or a
+    # null on a non-nullable base dimension). Those are transient — a fresh
+    # sample almost always parses — so re-sample the create+extract a few times
+    # before giving up rather than failing the whole test on one bad draw.
+    # (A max_tokens clip is NOT transient: re-sampling won't help, so surface
+    # it immediately so the operator bumps the cap.)
+    last_parse_error: JudgeError | None = None
+    for _attempt in range(3):
+        response = _create_message_with_retry(
+            client=client,
+            model=model,
+            prefix=prefix,
+            suffix=suffix,
         )
+        if response.stop_reason == "max_tokens":
+            raise JudgeError(
+                "judge response hit max_tokens — tool_use input was clipped. "
+                "Bump max_tokens (currently 4096) or shorten rubric/criteria."
+            )
+        try:
+            dimensions = _extract_dimensions(response)
+            break
+        except JudgeError as e:
+            last_parse_error = e
+            continue
+    else:
+        raise last_parse_error  # exhausted re-samples on malformed judge output
 
-    dimensions = _extract_dimensions(response)
     cost = _compute_cost(response, model)
     usage = response.usage
     return JudgeOutput(

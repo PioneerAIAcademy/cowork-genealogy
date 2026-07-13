@@ -4,8 +4,12 @@
     "skill": "record-extraction",
     "name": "Set record_persona_id on assertions from a record_search result",
     "type": "positive",
-    "description": "Extract assertions from a record_search result handed over by search-records. Because the record came from record_search, each assertion must carry record_persona_id — the GedcomX person id of its persona within the result's gedcomx — and record_id must be the result's arkUrl copied verbatim (the full URL form). The focus persona's record_persona_id must equal the result's primaryId.",
-    "tags": ["extraction", "record-search", "record-persona-id"]
+    "description": "Extract assertions from a record_search result handed over by search-records. Because the record came from record_search (logged as log_001 with a results sidecar), each assertion must carry record_persona_id — the GedcomX person id of its persona within the result's gedcomx — and the persisted record_id must be the sidecar's stored form (research_append canonicalizes any submitted ARK form — full URL, bare ark:/61903/1:1:<id>, or entity id — to the sidecar's recordId, here the full URL). The focus persona's record_persona_id must equal the result's primaryId.",
+    "tags": [
+      "extraction",
+      "record-search",
+      "record-persona-id"
+    ]
   },
   "input": {
     "user_message": "search-records ran record_search (logged as log_001) and handed over this result — extract all the assertions you can.\n\n```json\n{\n  \"personId\": \"MXHY-TP4\",\n  \"personName\": \"Patrick Flynn\",\n  \"arkUrl\": \"https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4\",\n  \"collectionTitle\": \"United States Census, 1850\",\n  \"recordTitle\": \"Patrick Flynn in household of Thomas Flynn\",\n  \"primaryId\": \"P1\",\n  \"gedcomx\": {\n    \"persons\": [\n      { \"id\": \"P1\", \"gender\": \"Male\", \"names\": [{\"given\": \"Patrick\", \"surname\": \"Flynn\"}], \"facts\": [{\"type\": \"Birth\", \"date\": \"1845\", \"place\": \"Ireland\"}, {\"type\": \"Residence\", \"date\": \"1850\", \"place\": \"Branch Township, Schuylkill, Pennsylvania\"}] },\n      { \"id\": \"P2\", \"gender\": \"Male\", \"names\": [{\"given\": \"Thomas\", \"surname\": \"Flynn\"}], \"facts\": [{\"type\": \"Residence\", \"date\": \"1850\", \"place\": \"Branch Township, Schuylkill, Pennsylvania\"}] },\n      { \"id\": \"P3\", \"gender\": \"Female\", \"names\": [{\"given\": \"Mary\", \"surname\": \"Flynn\"}], \"facts\": [{\"type\": \"Residence\", \"date\": \"1850\", \"place\": \"Branch Township, Schuylkill, Pennsylvania\"}] }\n    ],\n    \"relationships\": [\n      { \"type\": \"ParentChild\", \"parent\": \"P2\", \"child\": \"P1\" },\n      { \"type\": \"ParentChild\", \"parent\": \"P3\", \"child\": \"P1\" }\n    ]\n  }\n}\n```",
@@ -13,7 +17,7 @@
   },
   "judge_context": [
     "search-records already logged this search as log_001 (a record_search entry whose sidecar holds the gedcomx). The skill should reference that existing log_entry_id on the source and assertions — it should NOT call research_log_append to create a new log entry for a record another skill already logged",
-    "Every new assertion must carry record_persona_id — the GedcomX person id (P1, P2, or P3) of the persona it is about — and record_id must be the arkUrl copied verbatim in full URL form, not a trimmed bare ARK",
+    "Every new assertion must carry record_persona_id — the GedcomX person id (P1, P2, or P3) of the persona it is about. The PERSISTED record_id must end up as the sidecar's stored form (the full arkUrl, https://www.familysearch.org/ark:/61903/1:1:MXHY-TP4): research_append canonicalizes whatever ARK form was submitted, so do NOT penalize the tool-call argument for being a bare ark:/61903/1:1:MXHY-TP4 or entity id — grade the persisted value in research.json",
     "Assertions about the focus persona (Patrick) must have record_persona_id equal to the result's primaryId (P1)",
     "Relationship assertions from the 1850 census are indirect evidence — the 1850 census does not state relationships explicitly",
     "Informant: for name/age/birthplace, use 'unknown household member' with reasoning (e.g., 'likely a parent' for a child) and proximity 'household_member'. For residence, 'census enumerator' with proximity 'witness' is acceptable. Use informant_bias_notes to explain reasoning."

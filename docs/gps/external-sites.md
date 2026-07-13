@@ -103,7 +103,7 @@ Search strategy. The skill determines which sites to search and in what order, b
 
 Result interpretation. When the user returns a captured PDF, the skill extracts the search results — names, dates, places, record types, and (critically) URLs to individual records. It evaluates each result against the research question, identifies the most promising matches, and recommends which records to examine in detail.
 
-Record analysis. When the user captures an individual record page, the skill extracts every field (name, dates, places, relationships, source citation, household members) and feeds them into the record-extraction and assertion-classification pipeline. Assertions are created, classified, and added to the research file.
+Record analysis. When the user captures an individual record page, the skill extracts every field (name, dates, places, relationships, source citation, household members) and feeds them into the record-extraction pipeline. Assertions are created, classified, and added to the research file (classification is first-and-final at extraction — there is no separate classification pass).
 
 Iterative refinement. Based on the results (or lack thereof), the skill may generate a refined search URL — broadening date ranges if too few results were returned, adding a maiden name, switching to a FAN club search, or targeting a specific collection the research plan identified.
 
@@ -161,7 +161,7 @@ Research planning (Step 1). The `research-plan` skill identifies which external 
 
 Search execution. The external-sites skill generates URLs from the plan, walks the user through the click-capture loop, and processes results. Each search — including nil results — is logged via the `research-log` skill.
 
-Record extraction (Step 2-3). Captured record pages flow into `record-extraction` and `assertion-classification` to produce atomic assertions with GPS-conformant three-layer classifications. Citations are generated via the `citation` skill, noting the repository (e.g., "Ancestry.com") and the specific database and record identifiers.
+Record extraction (Step 2-3). Captured record pages flow into `record-extraction` to produce atomic assertions with GPS-conformant three-layer classifications (first-and-final at extraction; classification-refinement requests route back through `record-extraction`). Citations are generated via the `citation` skill, noting the repository (e.g., "Ancestry.com") and the specific database and record identifiers.
 
 Conflict resolution (Step 4). When assertions from external sites conflict with FamilySearch data or with each other, the `conflict-resolution` skill handles them using the standard GPS preponderance hierarchy.
 

@@ -1,0 +1,18 @@
+{
+  "id": "florencio-parents",
+  "name": "Rivanette Florencio de Araujo",
+  "source_pid": "GM4P-TYS",
+  "captured": "2026-07-02",
+  "researcher_question": "Who were Rivanette Florencio de Araujo's parents?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1930s",
+    "geography": "BR-PE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Well-attested person with clear parentage documented in Brazilian civil records."
+}

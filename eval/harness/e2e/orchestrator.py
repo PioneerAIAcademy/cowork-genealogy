@@ -874,6 +874,14 @@ async def run_e2e_test(
                     final_research=final_research,
                     model=fixture.judge_model,
                 )
+                # Deterministic §3.4.1 backstop: an `avoid` finding whose
+                # target is still in the final tree is forced to matched:
+                # "false" and the verdict recomputed (downgrade-only).
+                judge_output = judge_module.apply_avoid_guard(
+                    judge_output,
+                    expected_findings=fixture.expected_findings,
+                    final_tree=final_tree,
+                )
                 verdict = str(judge_output.get("verdict") or "fail")
             except Exception as e:  # noqa: BLE001 — keep the run loggable
                 judge_output = {"error": f"{type(e).__name__}: {e}"}

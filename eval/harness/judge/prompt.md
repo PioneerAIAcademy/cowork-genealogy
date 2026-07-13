@@ -106,6 +106,11 @@ all distinct from work that was never actually done: a tool that returned
 no records, a required write that never happened, or a claimed edit that
 left the file unchanged remain Correctness failures.
 
+A score of 2 requires naming a concrete incorrect artifact — a wrong
+persisted value, a factually false claim, a missed required action.
+Stylistic "imprecision" or a hypothetically-better alternative is not a
+deduction when the persisted state is correct.
+
 ## Completeness
 - **pass:** The skill addressed everything the user message and input
   state required. No silent omissions of items it should have covered.
@@ -144,6 +149,13 @@ reasonable additions or noise.
   "none"), OR the args bear little resemblance to what was expected.
 - **n/a (null score):** the test made zero MCP tool calls. Report
   `score: null` and use the rationale to confirm "no tool calls — N/A."
+
+**Recovered validation retries:** when a call was rejected by a tool's
+own validation (an `ok: false` / validation-error result, not
+`fixture_not_found`) and Claude corrected it in an immediate retry that
+succeeded, score at most **partial (2)** — the error was real, so do not
+give full credit, and the clean recovery means do not fail it either.
+This policy is fixed; do not re-litigate it per run.
 
 ────────────────────────────────────────
 # Skill rubric

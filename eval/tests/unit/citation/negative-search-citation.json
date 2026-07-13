@@ -26,6 +26,7 @@
     "who should name MyHeritage as the platform searched, not as a record creator",
     "where_within should document the search scope: 'Patrick Flynn, born c. 1845, Pennsylvania — no results returned'",
     "The skill should work only from log_003's documented query (surname Flynn, given Patrick, birth_year 1845, birth_place Pennsylvania) and its recorded search date — no invented scope, dates, or collection detail beyond what the log entry contains",
+    "On file in log_003.notes are the verbatim phrases 'Searched broader Pennsylvania — still no match' and 'Site may not have this collection indexed'. Including these phrases (or the scope/caveat they state) in the citation or its notes is fidelity-correct — they are quoted from the log entry, not fabrication",
     "Must NOT create a new src_ source entry — creating sources is record-extraction's job. The correct delivery is presenting the formatted negative-search citation to the user (e.g., to record in the research log notes or a future proof argument), optionally noting that record-extraction can persist it as a source entry if desired"
   ]
 }

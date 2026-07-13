@@ -3,7 +3,7 @@ name: image-reader
 description: Reads ONE FamilySearch image scan in an isolated context and returns ONLY a full text transcription — never the image bytes. Call this whenever you need the content of a page scan (a `3:1:.../$dist` image ARK or a `dgs:{DGS}_{IMAGE}/dist.jpg` Image Group Number) — e.g. "transcribe this register page", "read this image", "OCR this scan", "what does image 004022578_00190 say". Reads exactly one image per invocation; invoke it once per image. Keeps the large base64 image out of the calling agent's context (the base64 accumulates and overflows the transport otherwise). Do NOT use for indexed records (use record_read / record_search), PDFs (read them directly), or to search for which image to read (use image_search / volume_search first, then hand this agent the specific imageId).
 model: claude-sonnet-4-6
 tools:
-  - image_read
+  - mcp__genealogy__image_read
 ---
 
 # Image Reader
