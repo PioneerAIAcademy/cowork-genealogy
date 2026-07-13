@@ -177,134 +177,66 @@
       ]
     },
     {
-      "id": "LYK6-CW2",
-      "gender": "Female",
-      "living": false,
-      "names": [
-        {
-          "id": "N4",
-          "given": "Martha Patsey",
-          "surname": "Ford"
-        }
-      ],
-      "facts": [
-        {
-          "id": "bd6a8d00-41f7-4035-88ba-3e3a9a8f1882",
-          "type": "Birth",
-          "date": "28 October 1814",
-          "standard_date": "28 Oct 1814",
-          "place": "Spartanburg, South Carolina, United States",
-          "standard_place": "Spartanburg, South Carolina, United States"
-        },
-        {
-          "id": "111581c4-b213-4181-9057-ed4889c3df0a",
-          "type": "Residence",
-          "date": "1850",
-          "standard_date": "1850",
-          "place": "Cherokee, Cherokee, Georgia, United States",
-          "standard_place": "Cherokee, Cherokee, Georgia, United States"
-        },
-        {
-          "id": "9728173d-aae4-499e-8d99-bbf54814741e",
-          "type": "Residence",
-          "date": "1860",
-          "standard_date": "1860",
-          "place": "Eastern Subdivision, Blount, Alabama, United States",
-          "standard_place": "Blount, Alabama, United States"
-        },
-        {
-          "id": "72af5adf-eae1-4607-89d2-ee0790e6798e",
-          "type": "Death",
-          "date": "14 Aug 1863",
-          "standard_date": "14 Aug 1863",
-          "place": "Browns Valley, Blount, Alabama, United States",
-          "standard_place": "Browns Valley, Blount, Alabama, United States"
-        }
-      ]
-    },
-    {
-      "id": "9MCR-38H",
+      "id": "P1",
       "gender": "Male",
       "living": false,
       "names": [
         {
-          "id": "N5",
-          "given": "Manley Matteson ( Madison)",
-          "surname": "WOOD"
+          "id": "N4",
+          "given": "J. H.",
+          "surname": "Sampson"
         }
       ],
       "facts": [
         {
-          "id": "11091a68-bdf0-4479-af2b-8ab0c2caa758",
+          "id": "F-P1-birth",
           "type": "Birth",
-          "date": "1808",
-          "standard_date": "1808",
-          "place": "Spartanburg, Spartanburg, South Carolina, United States",
-          "standard_place": "Spartanburg, Spartanburg, South Carolina, United States"
-        },
+          "date": "1820",
+          "standard_date": "1820"
+        }
+      ]
+    },
+    {
+      "id": "P2",
+      "gender": "Female",
+      "living": false,
+      "names": [
         {
-          "id": "5c8088e8-79ee-4273-8476-f0690d4ec71c",
-          "type": "Residence",
-          "date": "1840",
-          "standard_date": "1840",
-          "place": "Spartanburg, South Carolina, United States",
-          "standard_place": "Spartanburg, South Carolina, United States"
-        },
+          "id": "N5",
+          "given": "Louisa",
+          "surname": "Sampson"
+        }
+      ],
+      "facts": [
         {
-          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
-          "type": "Residence",
-          "date": "1840",
-          "standard_date": "1840",
-          "place": "Spartanburg, South Carolina, United States",
-          "standard_place": "Spartanburg, South Carolina, United States"
-        },
+          "id": "F-P2-birth",
+          "type": "Birth",
+          "date": "1820",
+          "standard_date": "1820",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        }
+      ]
+    },
+    {
+      "id": "P3",
+      "gender": "Male",
+      "living": false,
+      "names": [
         {
-          "id": "e28231e3-b161-49ad-b96f-74418af12297",
-          "type": "Residence",
-          "date": "1850",
-          "standard_date": "1850",
-          "place": "Division 15, Cherokee, Georgia",
-          "standard_place": "Cherokee, Georgia, United States"
-        },
+          "id": "N6",
+          "given": "Thomas R.",
+          "surname": "Sampson"
+        }
+      ],
+      "facts": [
         {
-          "id": "c045ce46-74ac-49c8-ad09-646390e9a173",
-          "type": "Residence",
-          "date": "1850",
-          "standard_date": "1850",
-          "place": "Kingston, Cherokee, Georgia, United States",
-          "standard_place": "Kingston, Cherokee, Georgia, United States"
-        },
-        {
-          "id": "e915c5ed-7055-4ffa-bbaf-3416df6daca7",
-          "type": "Residence",
-          "date": "1850",
-          "standard_date": "1850",
-          "place": "Division 15, Cherokee, Georgia",
-          "standard_place": "Cherokee, Georgia, United States"
-        },
-        {
-          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
-          "type": "Residence",
-          "date": "1860",
-          "standard_date": "1860",
-          "place": "Eastern Subdivision, Blount, Alabama, United States",
-          "standard_place": "Blount, Alabama, United States"
-        },
-        {
-          "id": "f56cdc5d-e099-464a-bec8-6442b35f5bb9",
-          "type": "Death",
-          "date": "10 July 1863",
-          "standard_date": "10 Jul 1863",
-          "place": "Summit, Blount, Alabama, United States",
-          "standard_place": "Summit, Blount, Alabama, United States"
-        },
-        {
-          "id": "ac09a283-348b-4443-9154-0fc5e8b37dec",
-          "type": "Burial",
-          "date": "July 1863",
-          "standard_date": "Jul 1863",
-          "place": "Summit, Blount, Alabama, United States",
-          "standard_place": "Summit, Blount, Alabama, United States"
+          "id": "F-P3-birth",
+          "type": "Birth",
+          "date": "1856",
+          "standard_date": "1856",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
         }
       ]
     }
@@ -341,20 +273,32 @@
     {
       "id": "R4",
       "type": "ParentChild",
-      "parent": "9MCR-38H",
+      "parent": "P1",
       "child": "LKYG-VKB"
     },
     {
       "id": "R5",
       "type": "ParentChild",
-      "parent": "LYK6-CW2",
+      "parent": "P2",
       "child": "LKYG-VKB"
     },
     {
       "id": "R6",
       "type": "Couple",
-      "person1": "9MCR-38H",
-      "person2": "LYK6-CW2"
+      "person1": "P1",
+      "person2": "P2"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "P1",
+      "child": "P3"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "P2",
+      "child": "P3"
     }
   ],
   "sources": [
@@ -477,6 +421,24 @@
       "title": "Martha J Hamby, \"United States, Census, 1900\"",
       "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3G5-GWC : Mon Apr 14 12:53:01 UTC 2025), Entry for William S Hamby and Martha J Hamby, 1900.",
       "url": "https://familysearch.org/ark:/61903/1:1:M3G5-GWZ"
+    },
+    {
+      "id": "SRC-P1",
+      "title": "James W Neill and Martha A Sampson, \"Arkansas, County Marriages, 1837-1957\"",
+      "citation": "\"Arkansas, County Marriages, 1837-1957,\" database index, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NMBD-RMZ : 10 March 2024), entry for James W Neill and Martha A Sampson, married 3 January 1875, Nevada County, Arkansas.",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MYVC-QNT"
+    },
+    {
+      "id": "SRC-P2",
+      "title": "T Sampson household, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MC4B-GTX : accessed 10 July 2026), household of T Sampson, Ouachita County, Arkansas.",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MC4B-GTX"
+    },
+    {
+      "id": "SRC-P3",
+      "title": "J. H. Sampson and Louisa Sampson, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880,\" digital images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MNWN-J6K : accessed 10 July 2026), entry for J. H. Sampson and Louisa Sampson, Caney Township, Nevada County, Arkansas.",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MC46-XXG"
     }
   ]
 }
