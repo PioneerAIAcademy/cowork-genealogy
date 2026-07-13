@@ -1,0 +1,1023 @@
+{
+  "project": {
+    "id": "rp_ferber_marriage",
+    "objective": "Who did William Hubert Ferber marry?",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "completed",
+    "created": "2026-07-09T00:00:00Z",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did William Hubert Ferber (born December 1869, Cincinnati, Hamilton, Ohio; died 11 March 1903) marry, and when and where was the marriage?",
+      "rationale": "This is the direct decomposition of the project objective. William has a son (Charles Hubert, born 22 June 1891) listed in the tree with no mother identified, and no spouse is linked to him. Hamilton County, Ohio marriage records and census records for c.1888\u20131900 are available on FamilySearch and likely contain the answer. His 1900 census household and the 1890s Ohio marriage records are the highest-priority starting points.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-10",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_004",
+        "a_012"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched Ohio County Marriages 1789-2016 (marriage register, direct evidence naming Emma Becker as bride of Wm. H. Ferber, 1890, Hamilton County), 1900 U.S. Census (independent corroboration: Emma Ferber listed as wife of William Ferber in Cincinnati, married since 1890), and Ohio County Death Records 1840-2001 (indirect corroboration: William listed as 'Married' at death 11 Mar 1903). Original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) was attempted via image_read but NOT READ (inaccessible); documented as pursued-and-unavailable. No conflicts found. Overturn risk is low: no unsearched record type plausibly names a different spouse.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 Ohio County Marriage register (pli_001) directly names Emma Becker as bride of Wm. H. Ferber in 1890, Hamilton County, Ohio. The 1900 census (pli_002) independently lists Emma Ferber as wife of William Ferber in Cincinnati, married since 1890. The 1903 death record (pli_004) confirms 'Married' status, consistent with Emma still being his wife.",
+          "repository_breadth": "Three distinct record types searched via FamilySearch: county marriage register (vital records), federal census, and county death records. Fallbacks (browse-only Hamilton County records pli_006; Ohio church records pli_007) appropriately skipped since primary vital record search succeeded. Son's birth record (pli_003) and probate (pli_005) skipped as supplementary \u2014 overturn risk too low to justify additional searches.",
+          "original_substitution": "Both primary sources (src_001 Ohio marriage index, src_002 1900 census index) are derivative. Original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) was attempted via image_read and returned NOT READ \u2014 pursued-and-unavailable. Multiple independent indexes consistently agree, reducing transcription-error overturn risk.",
+          "independent_verification": "Two sources with direct evidence and genuinely independent provenance: (1) Ohio County Marriage register, 1890 \u2014 created by county clerk, informants are the groom (self) and bride (self); (2) 1900 U.S. Census \u2014 created by federal enumerator, informant is an unknown household member. Different institutions, different creation processes, different informants, different time periods (1890 vs. 1900). A third source (1903 death record) adds indirect corroboration. These constitute independent verification.",
+          "evidence_class": "The Ohio County Marriage register entry (a_002, a_004) provides direct evidence with primary information from the parties themselves (groom self-reported name; county clerk as official_duty informant). The 1900 census (a_012) provides direct evidence from an original enumeration schedule. Both are indexed derivatives but derive from original government records.",
+          "conflict_resolution": "No conflicts found. Minor discrepancy: death record lists birth year '1870' vs. known birth December 1869 \u2014 within normal rounding tolerance for death records; immaterial to the marriage question. Marriage year 1890 is independently consistent across the marriage register and census years-married figure.",
+          "overturn_risk": "Low. The marriage register directly and explicitly names Emma Becker as bride of Wm. H. Ferber with corroborating father identification (Gerhard Ferber = I2). The 1900 census independently places Emma Ferber as his wife 10 years later, with the same approximate marriage year. No plausible scenario exists in which the skipped records (son's birth, probate, church) would name a different wife."
+        }
+      },
+      "created": "2026-07-10"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1885-1903",
+          "repository": "FamilySearch",
+          "rationale": "Ohio, County Marriages, 1789-2016 (collection 1614804) is the primary indexed civil marriage record for Ohio. A marriage license or register entry for William Hubert Ferber in Hamilton County c. 1885-1895 would directly name his bride, the date, and location. With 5.7M records and images it is the first source to exhaust.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 U.S. census record for William (already cited as S2: ark:/61903/1:1:MM88-DGG) has not been extracted. The census names every household member; if his wife was living with him in 1900 her name will appear. The census also asked 'years married,' narrowing the marriage year. Relationship column may confirm spouse identity.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1891",
+          "repository": "FamilySearch",
+          "rationale": "Ohio, County Births, 1841-2003 (collection 1932106) \u2014 the birth record for son Charles Hubert Ferber (22 June 1891, Cincinnati) names both parents and the mother's maiden name, directly identifying William's wife even if no separate marriage record is found.",
+          "fallback_for": null,
+          "status": "completed",
+          "skip_reason": null
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1903",
+          "repository": "FamilySearch",
+          "rationale": "William's death record (S3: ark:/61903/1:1:F66M-8JZ, Ohio County Death Records) has not been extracted. The informant is often the surviving spouse; the record may also state marital status and wife's name. Extracting it fully closes this gap.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "probate",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1903-1910",
+          "repository": "FamilySearch",
+          "rationale": "Ohio, Probate Records, 1789-1996 (collection 1992421) \u2014 William died 11 March 1903. Probate or estate administration filed in Hamilton County would name his widow and heirs, supplying the wife's name even if she remarried and disappeared from Ferber-name records.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_reason": "Supplementary: probate records would name William's widow but two sources already establish Emma Becker as wife. No evidence of divorce or remarriage; death record confirms 'Married' in March 1903. Probate is not needed to answer the research question to GPS standard."
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1885-1903",
+          "repository": "FamilySearch",
+          "rationale": "Ohio, Hamilton County Records, 1791-1994 (collection 2141016) \u2014 1.5M browse-only images covering the county's historical records, which may include marriage registers not yet indexed in collection 1614804. Fallback if the indexed county marriage search yields no result.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_reason": "Fallback for pli_001: pli_001 (Ohio, County Marriages, 1789-2016) found a direct marriage register entry for Wm. H. Ferber and Emma Becker in Hamilton County, 1890. Fallback to browse-only Hamilton County records not needed."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+          "date_range": "1885-1900",
+          "repository": "FamilySearch",
+          "rationale": "Ohio, Church Records, 1762-2008 (collection 2787827) \u2014 The Ferber family is of German immigrant origin (father born Germany, 1820); German families in Cincinnati often married in Lutheran or Catholic churches. A church marriage register entry would name bride and groom and may predate civil registration or provide detail the civil record lacks.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_reason": "Fallback for pli_001: pli_001 found a civil marriage register entry. Church records fallback not needed. Civil register and 1900 census independently establish the marriage."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-10T06:44:05.045Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, County Marriages, 1789-2016",
+        "collectionId": "1614804",
+        "surname": "Ferber",
+        "givenName": "William",
+        "marriageYearFrom": 1885,
+        "marriageYearTo": 1900,
+        "residencePlace": "Hamilton, Ohio",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 36,
+      "notes": "Top match: \"Wm. H. Ferber and Emma Becker\", marriage 1890, Hamilton, Ohio. matchScore 0.711, confidence 4, 5-star FamilySearch tree match. Father Gerhard Ferber listed on record \u2014 corroborates identity. Record ARK: ark:/61903/1:1:XZR1-JZP. Second-best candidate scores only 0.283 \u2014 clear separation."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-10T06:58:21.963Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferber",
+        "givenName": "William",
+        "birthYearFrom": 1864,
+        "birthYearTo": 1874,
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "residencePlace": "Hamilton, Ohio",
+        "collectionId": "1325221",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 27,
+      "notes": "Top match ark:/61903/1:1:MM88-DGG (matchScore 0.915): William Ferber, head, married, born Dec 1869 Ohio, Cincinnati 1900. Wife Emma Ferber born Mar 1871 Ohio; son Charles born Jun 1891 Ohio. Marriage year recorded as 1890. Strong independent corroboration of Emma Becker/Ferber marriage."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-10T07:06:32.534Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:F66M-8JZ",
+        "collection": "Ohio, County Death Records, 1840-2001",
+        "description": "Direct record_read of William Ferber death record, already cited as S3 in tree"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Death record for Wm. Ferber, 11 Mar 1903, Cincinnati, Hamilton, Ohio. Marital status: Married \u2014 confirms still married at death. Birth listed as 1870 (approximate; known birth Dec 1869). Parents: Gerhard Ferber (father) and Eva Ferber (mother). Wife not named in the index; only marital status 'Married' recorded. Original image at ark:/61903/3:1:S3HT-66TS-SCS."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-10T07:19:12.076Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Ohio, County Births, 1841-2003",
+        "collectionId": "1932106",
+        "surname": "Ferber",
+        "givenName": "Charles",
+        "birthYearFrom": 1890,
+        "birthYearTo": 1892,
+        "birthPlace": "Ohio",
+        "recordType": "birth",
+        "count": 50,
+        "note": "Also tried with collectionId=1932106 and birthPlace=Hamilton,Ohio \u2014 0 results; broadened to all Ohio births 1890-1892, 49 results returned, none matching Charles Ferber in Hamilton County"
+      },
+      "outcome": "negative",
+      "results_examined": 49,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 49,
+      "notes": "No birth record found for Charles Ferber in Hamilton County, Ohio 1891. Broad search across Ohio births 1890-1892 returned 49 results (Faber, Faerber, Farber variants), none matching Charles Ferber born Cincinnati. Ohio did not require mandatory birth registration until 1908; Hamilton County birth records for 1891 are likely incomplete or unindexed. This is a meaningful negative result \u2014 the collection was searched exhaustively but does not contain the expected record."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S7",
+      "citation": "\"Ohio, County Marriages, 1789-2016,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : accessed 9 July 2026), entry for Wm. H. Ferber and Emma Becker, Hamilton County, Ohio, 1890; citing digitized image at https://www.familysearch.org/ark:/61903/3:1:9392-91SQ-KQ.",
+      "citation_detail": {
+        "who": "Wm. H. Ferber (groom) and Emma Becker (bride)",
+        "what": "Ohio, County Marriages, 1789-2016 \u2014 FamilySearch indexed marriage register entry, Hamilton County",
+        "when_created": "1890",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch, https://www.familysearch.org/search/collection/1614804",
+        "where_within": "Entry for Wm. H. Ferber and Emma Becker, 1890"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-09",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MXZQ-XX7",
+      "notes": "FamilySearch index entry (derivative of original county marriage register). Original register image available at https://www.familysearch.org/ark:/61903/3:1:9392-91SQ-KQ \u2014 not transcribed at this stage.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"United States, Census, 1900\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG : accessed 10 Jul 2026), Entry for William Ferber household, Cincinnati, Hamilton, Ohio.",
+      "citation_detail": {
+        "who": "William Ferber household",
+        "what": "United States Federal Census, 1900",
+        "when_created": "1900",
+        "when_accessed": "10 Jul 2026",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Household record, Cincinnati Ward 19, Hamilton, Ohio, enumeration district 204"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "notes": "Indexed transcription of original 1900 census schedule. Original image available at FamilySearch ark:/61903/3:1:S3HT-DZ17-L46. Index may contain transcription errors.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "\"Ohio, County Death Records, 1840-2001\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 10 Jul 2026), Entry for Wm. Ferber, son of Gerhard Ferber, 11 Mar 1903.",
+      "citation_detail": {
+        "who": "Wm. Ferber (deceased)",
+        "what": "Ohio, County Death Records, 1840-2001",
+        "when_created": "11 Mar 1903",
+        "when_accessed": "2026-07-10",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Entry for Wm. Ferber, death 11 Mar 1903, Cincinnati, Hamilton, Ohio"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "notes": "FamilySearch indexed county death record. Original image at ark:/61903/3:1:S3HT-66TS-SCS. Wife not named in indexed fields; marital status recorded as 'Married'.",
+      "log_entry_id": "log_003"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+      "record_persona_id": "p_10470048623",
+      "record_role": "groom",
+      "fact_type": "Name",
+      "value": "Wm. H. Ferber",
+      "structured_value": {
+        "given": "Wm. H.",
+        "surname": "Ferber"
+      },
+      "information_quality": "primary",
+      "informant": "Wm. H. Ferber (groom, self-reported)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+      "record_persona_id": "p_10470048623",
+      "record_role": "groom",
+      "fact_type": "Marriage",
+      "value": "Wm. H. Ferber married Emma Becker, 1890, Hamilton County, Ohio",
+      "date": "1890",
+      "date_certainty": "approximate",
+      "place": "Hamilton, Ohio, United States",
+      "standard_place": "Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "County registrar / officiating clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+      "record_persona_id": "p_10470048625",
+      "record_role": "bride",
+      "fact_type": "Name",
+      "value": "Emma Becker",
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Becker"
+      },
+      "information_quality": "primary",
+      "informant": "Emma Becker (bride, self-reported)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+      "record_persona_id": "p_10470048625",
+      "record_role": "bride",
+      "fact_type": "Marriage",
+      "value": "Emma Becker married Wm. H. Ferber, 1890, Hamilton County, Ohio",
+      "date": "1890",
+      "date_certainty": "approximate",
+      "place": "Hamilton, Ohio, United States",
+      "standard_place": "Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "County registrar / officiating clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+      "record_persona_id": "p_10470048624",
+      "record_role": "father_of_groom",
+      "fact_type": "Name",
+      "value": "Gerhard Ferber",
+      "structured_value": {
+        "given": "Gerhard",
+        "surname": "Ferber"
+      },
+      "information_quality": "primary",
+      "informant": "Wm. H. Ferber (groom, stated his father's name)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Groom reported his father's name on the marriage record. Knows own father's name from first-hand family knowledge. Corroborates Gerhard Ferber (I2) already in tree. No significant bias; minor risk of spelling variation (Gerhard vs. Gerard etc.) common in German immigrant names."
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP",
+      "record_persona_id": "p_10470048624",
+      "record_role": "father_of_groom",
+      "fact_type": "Relationship",
+      "value": "Gerhard Ferber listed as father of groom Wm. H. Ferber on marriage record",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Wm. H. Ferber (groom, stated his father's name)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Groom stated his father's name on the marriage record; the father-son relationship is asserted by the groom. Corroborates existing tree entry I2 (Gerhard Ferber). No incentive to misrepresent."
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_9218482",
+      "fact_type": "name",
+      "value": "William Ferber",
+      "structured_value": {
+        "given": "William",
+        "surname": "Ferber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; enumerator did not record which household member provided information. Adults typically self-reported or spouse answered.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_9218482",
+      "fact_type": "birth_date",
+      "value": "December 1869",
+      "date": "Dec 1869",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Birth month/year may be self-reported or provided by spouse.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_9218482",
+      "fact_type": "birth_place",
+      "value": "Ohio",
+      "place": "Ohio",
+      "standard_place": "Ohio, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Adults may self-report their own birthplace.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_9218482",
+      "fact_type": "residence",
+      "value": "Cincinnati, Hamilton, Ohio, United States, 1900",
+      "structured_value": {
+        "place": "Cincinnati, Hamilton, Ohio, United States"
+      },
+      "date": "1900",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator visited the dwelling and recorded the household's address.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_9218482",
+      "fact_type": "marriage_date",
+      "value": "1890",
+      "date": "1890",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The 1900 census included a column for years married; 1890 is derived from the years-married figure reported by an unknown household respondent. Approximate.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "wife",
+      "record_persona_id": "p_9218483",
+      "fact_type": "name",
+      "value": "Emma Ferber",
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Ferber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Name as recorded in household of William Ferber, consistent with married surname.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "wife",
+      "record_persona_id": "p_9218483",
+      "fact_type": "birth_date",
+      "value": "March 1871",
+      "date": "Mar 1871",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "wife",
+      "record_persona_id": "p_9218483",
+      "fact_type": "birth_place",
+      "value": "Ohio",
+      "place": "Ohio",
+      "standard_place": "Ohio, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "child_1",
+      "record_persona_id": "p_9218484",
+      "fact_type": "name",
+      "value": "Charles Ferber",
+      "structured_value": {
+        "given": "Charles",
+        "surname": "Ferber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Child's name likely reported by a parent.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "record_role": "child_1",
+      "record_persona_id": "p_9218484",
+      "fact_type": "birth_date",
+      "value": "June 1891",
+      "date": "Jun 1891",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Child's birth date likely reported by a parent.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Wm. Ferber",
+      "structured_value": {
+        "given": "Wm.",
+        "surname": "Ferber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown informant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Informant for name on county death record unknown from index. Likely a family member or the attending physician. 'Wm.' is a standard abbreviation for William.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "death_date",
+      "value": "11 March 1903",
+      "date": "11 Mar 1903",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "attending physician or official registrar",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Death date and place would typically be recorded by the attending physician or county registrar who was present or notified at the time of death.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "record_persona_id": null,
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown informant",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Informant for marital status unknown. If the surviving spouse Emma provided information, this would be primary; if a neighbor or other relative, secondary. Records 'Married' at time of death 11 Mar 1903, consistent with 1900 census showing Emma Ferber as wife.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "record_role": "father_of_deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Gerhard Ferber",
+      "structured_value": {
+        "given": "Gerhard",
+        "surname": "Ferber"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown informant (family member who knew decedent's parentage)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Informant reporting father's name on death record; likely a family member who knew decedent's parents. Gerhard Ferber was alive in 1903 and may have been the informant himself.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "record_role": "mother_of_deceased",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Eva Ferber",
+      "structured_value": {
+        "given": "Eva",
+        "surname": "Ferber"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown informant (family member who knew decedent's parentage)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Informant reporting mother's name on death record. Eva Engermann Ferber died 1 Jan 1872, so any informant was reporting from memory decades later.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.711,
+      "rationale": "Groom named 'Wm. H. Ferber' in Hamilton County, Ohio marriage record, 1890. Name is a standard abbreviation of William Hubert Ferber (I1). I1 is documented in Hamilton County throughout his life (1870 census, 1900 census, 1903 death). Marriage at age ~20 is plausible (born Dec 1869). Father listed on same record as Gerhard Ferber = I2, who is confirmed as I1's father via R1. matchScore 0.711 from rank_search_matches; 5-star FamilySearch tree match. Obvious match \u2014 we searched specifically for this individual.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.711,
+      "rationale": "Marriage event on same record as a_001 groom persona. Groom 'Wm. H. Ferber' married Emma Becker, 1890, Hamilton County, Ohio. All identifiers align with I1: name, county, period, father Gerhard Ferber (I2). This directly answers q_001 for the groom side.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event names Emma Becker as bride alongside groom Wm. H. Ferber. I5 is the new stub created for Emma Becker from this record; no prior record of her exists in the tree. Probable (not confident) because this is the sole record introducing her.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride named 'Emma Becker' in Hamilton County, Ohio marriage record, 1890. I5 (stub) was created for Emma Becker from this record. Probable \u2014 single record introducing a new person; no independent corroboration yet.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event for bride Emma Becker, 1890, Hamilton County, Ohio. Linked to I5 (Emma Becker stub). Probable \u2014 single record, new stub.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride-side marriage event names Wm. H. Ferber as groom \u2014 same marriage, same record. This is the other side of a_002's link to I1. Both marriage event assertions bear on I1 as a party to the union. Qualitative alignment is strong (all identifiers consistent); no same_person score for the bride persona against I1, but the groom identification is already confirmed at confident.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father of groom listed as 'Gerhard Ferber' \u2014 exact name match to I2 (Gerhard Ferber, born 29 Sep 1820 Germany, resident Cincinnati). R1 in tree already documents I2 as father of I1 (William). Groom on this record has been linked to I1 at confident. The pairing is internally consistent. No same_person score for the father persona against I2, but qualitative case is strong: exact name, confirmed family structure.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: Gerhard Ferber listed as father of groom. This bears on I2 as the named father. Consistent with R1 (I2\u2192I1 ParentChild). Strong qualitative match.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: Gerhard Ferber listed as father of groom Wm. H. Ferber. This also bears on I1 as the son named in the relationship. Consistent with R1 (I2\u2192I1 ParentChild already in tree). Strong \u2014 both parties confirmed independently.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.91469246,
+      "rationale": "Name 'William Ferber' in the head-of-household role matches I1 William Hubert Ferber. Middle name absent in the census record, a normal omission. Birth December 1869 Ohio confirmed by sibling assertion a_008, exactly matching I1's known birth fact. matchScore 0.915 from rank_search_matches.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.91469246,
+      "rationale": "Birth month December 1869 matches I1's birth fact (December 1869, Ohio) exactly. Combined with name match and residence in Cincinnati, Hamilton, Ohio, this is the correct person.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.91469246,
+      "rationale": "Birth place Ohio matches I1's documented birth in Ohio. Consistent with all other identifying attributes of William Hubert Ferber.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.91469246,
+      "rationale": "Residence Cincinnati, Hamilton, Ohio 1900 consistent with I1's known residence facts (F3: Cincinnati, Hamilton, Ohio, 1900). Corroborates identification.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.91469246,
+      "rationale": "Marriage date 1890 recorded for the head of household, identified as I1 William Hubert Ferber. The census shows him as married, consistent with the Ohio County Marriage record linking him to Emma Becker in pli_001 results.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The marriage date 1890 applies equally to I5 Emma Becker (later Ferber), who is listed as William's wife in the same household. The marriage register (from pli_001) established that William Ferber married Emma Becker; this census date is consistent with that union.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Emma Ferber' as wife in William Ferber's household. I5 is a stub created from the Ohio County Marriage register as 'Emma Becker'. The surname Ferber is the expected married name. The role (wife of William Ferber, born Dec 1869 Ohio) matches the marriage register's groom exactly. Probable confidence because I5 is a new stub with no independent birth facts for comparison.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": 0.91469246,
+      "rationale": "Emma Ferber's name as wife in I1 William Ferber's household directly identifies I1's spouse. The Couple relationship in the census record confirms William and Emma as husband and wife in 1900.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_013",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth month March 1871 Ohio is consistent for I5 Emma Becker/Ferber. No conflicting birth data exists in the stub. Probable confidence due to stub status.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_014",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth place Ohio consistent for I5 Emma Becker/Ferber. No conflicting place data in the stub.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "I4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Charles Ferber' as child_1 in William Ferber's household. I4 is Charles Hubert Ferber, born 22 Jun 1891 Cincinnati, Hamilton, Ohio. Name matches; birth month June 1891 Ohio matches I4's known birth fact (F15: 22 Jun 1891, Cincinnati, Hamilton, Ohio) precisely. Gender male consistent.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "I4",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth month June 1891 Ohio matches I4's known birth fact (F15: 22 Jun 1891, Cincinnati, Hamilton, Ohio) exactly. Combined with name and household position, confident identification.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Wm. Ferber' in the deceased role in Ohio County Death Records, 11 Mar 1903, Cincinnati. Matches I1's known death fact F4 (11 Mar 1903, Cincinnati, Hamilton, Ohio). 'Wm.' is the standard abbreviation for William. Parents Gerhard (I2) and Eva (I3) listed on the same record, corroborating family structure.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death date 11 Mar 1903, Cincinnati, Hamilton, Ohio exactly matches I1's known death fact F4. This is the same record already cited as S3 in the tree.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status 'Married' at 11 Mar 1903 for Wm. Ferber (I1). Consistent with I1 being married to Emma Becker (I5) per the 1900 census and the Ohio County Marriage register. Confirms no divorce or widowing between 1900 and 1903.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_019",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The 'Married' status recorded for William Ferber at death (11 Mar 1903) implies his wife was still living and no divorce had occurred. The 1900 census established Emma Ferber (I5, n\u00e9e Becker) as his wife. This indirect evidence supports I5 still being his wife in 1903, though she is not named in the record.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father of deceased listed as 'Gerhard Ferber' \u2014 exact name match to I2 (Gerhard Ferber, born 29 Sep 1820 Germany, Cincinnati). Corroborates existing R1 (I2\u2192I1 ParentChild). I2 was alive in 1903 (died 31 May 1917) and likely provided information for the death record.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother of deceased listed as 'Eva Ferber' \u2014 I3 is Eva Engermann (married surname Ferber, wife of Gerhard I2). Exact name consistent (death record uses married surname). I3 died 1 Jan 1872, so the informant reported her name from memory. Corroborates existing R2 (I3\u2192I1 ParentChild).",
+      "created": "2026-07-10"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_007",
+        "a_011",
+        "a_012",
+        "a_017",
+        "a_019"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched Ohio, County Marriages, 1789-2016 (FamilySearch collection 1614804) for Hamilton County 1885-1903 and found a direct marriage register entry for Wm. H. Ferber and Emma Becker, circa 1890. Extracted the 1900 U.S. Census household (FamilySearch ark:/61903/1:1:MM88-DGG) confirming Emma Ferber as wife. Read William's Ohio County Death Record (FamilySearch ark:/61903/1:1:F66M-8JZ), confirming 'Married' status in 1903. Searched Ohio, County Births, 1841-2003 for Charles Hubert Ferber (born 22 June 1891, Cincinnati) \u2014 negative result; no record found, consistent with Ohio's incomplete pre-1908 civil birth registration. Attempted original marriage register image (ark:/61903/3:1:9392-91SQ-KQ) via image_read \u2014 NOT READ (inaccessible; pursued-and-unavailable). Probate (pli_005) and church records (pli_007) skipped as supplementary given two confirming independent sources.",
+      "narrative_markdown": "## Marriage of William Hubert Ferber and Emma Becker\n\n**Research question:** Whom did William Hubert Ferber (born December 1869, Cincinnati, Hamilton County, Ohio; died 11 March 1903) marry, and when and where was the marriage?\n\n**Conclusion:** The preponderance of evidence establishes that William Hubert Ferber married Emma Becker in Hamilton County, Ohio, in approximately 1890.\n\n### Ohio County Marriage Register, 1890\n\nThe strongest evidence for this conclusion is an entry in \"Ohio, County Marriages, 1789\u20132016\" (FamilySearch collection 1614804, derivative source), indexed as the marriage of \"Wm. H. Ferber\" to \"Emma Becker\" in Hamilton County, Ohio, circa 1890.\u00b9 Both parties are named explicitly, providing direct evidence that answers the research question. The groom\u2019s abbreviated given name (\"Wm. H.\") is a standard short form of William Hubert.\n\nThe entry also names the groom\u2019s father as Gerhard Ferber.\u00b2 Gerhard Ferber \u2014 born 29 September 1820 in Germany, residing Cincinnati, Hamilton County throughout his life, and already documented in the research tree (I2) as William\u2019s father via the 1870 census household \u2014 corroborates that this marriage record belongs to the correct William Ferber and not another individual of the same surname in Hamilton County.\n\nThe groom\u2019s name and marriage facts carry primary information quality: the groom (a party to the marriage) self-reported his name and his father\u2019s name at the time of the event, and the county registrar recorded the entry in his official capacity. However, the source is classified as derivative: FamilySearch provides an indexed transcription of the county register. The original register image (ark:/61903/3:1:9392-91SQ-KQ) was sought but could not be retrieved via FamilySearch\u2019s image reader.\n\n### 1900 United States Federal Census\n\nTen years after the marriage, the 1900 United States Census for Cincinnati Ward 19, Hamilton County, Ohio, provides independent corroboration.\u00b3 The household is enumerated as: William Ferber (head, male, born December 1869, Ohio, married); Emma Ferber (wife, female, born March 1871, Ohio); and Charles Ferber (child, male, born June 1891, Ohio). The census records approximately ten years of marriage, consistent with a circa-1890 marriage year.\n\nThis source is genuinely independent of the marriage register: it was created by a different institution (federal government vs. county government), through a different process (decennial household enumeration vs. marriage registration), at a different time (1900 vs. 1890), and with a different informant (an unknown household respondent vs. the marriage parties themselves). The child Charles Ferber (born June 1891) corresponds to I4 in the research tree \u2014 Charles Hubert Ferber, born 22 June 1891, Cincinnati, Hamilton, Ohio \u2014 further corroborating that this is the correct household.\n\nEmma Ferber\u2019s surname in the census reflects her married name; her maiden name Becker, established by the marriage register, is preserved in the research tree (I5) as her birth name. Both sources agree on the approximate marriage year of 1890.\n\n### Ohio County Death Record, 1903\n\nWilliam Ferber\u2019s county death record for 11 March 1903, Cincinnati, Hamilton, Ohio, records his marital status as \u201cMarried.\u201d\u2074 Though the surviving wife is not named in the indexed entry, the \u201cMarried\u201d status provides indirect corroboration: no divorce, widowing, or remarriage is evidenced in the three years between the 1900 census and William\u2019s death. This is consistent with Emma Becker Ferber remaining his wife until his death.\n\n### Negative Finding: Son\u2019s Birth Record\n\nA search was conducted in Ohio, County Births, 1841\u20132003 (FamilySearch collection 1932106) for the birth record of Charles Hubert Ferber (born 22 June 1891, Cincinnati, Hamilton County), which would have provided a third independent naming of Emma Becker as mother.  No record was found. Ohio did not mandate civil birth registration until 1908; Hamilton County birth records from the 1880s\u20131890s are incompletely preserved and indexed. This negative finding does not contradict the conclusion\u2014it reflects a documentation gap, not a conflicting source.\n\n### Discrepancy Note\n\nThe death record lists William\u2019s birth year as \u201c1870,\u201d while the marriage register, census, and established tree facts place his birth in December 1869. This falls within normal rounding tolerance for death-record reporting and is immaterial to the marriage question.\n\n### Confidence Tier: Probable\n\nThis conclusion is graded **probable** rather than proved for two related reasons. First, Emma Becker\u2019s identity as William\u2019s wife is attested by sources that both document her within the same family context\u2014the marriage register names her as bride, and the 1900 census lists her as wife in his household. A third, independently-originated naming (such as a birth record for their son Charles listing Emma Becker as mother, created by a physician or midwife informant) would provide corroboration from a genuinely separate informant chain; that record was searched but not found, likely due to Ohio\u2019s incomplete pre-1908 birth registration. Second, the original marriage register image was pursued but inaccessible, preventing direct verification of the indexed transcription. The evidence otherwise preponderates strongly: two independent sources with consistent direct evidence, one indirect corroboration, no conflicts, and research declared reasonably exhaustive. Access to the original register image, or discovery of a birth record for Charles Hubert Ferber naming his mother as Emma Becker, would support advancing this conclusion to proved.\n\n---\n\u00b9 \"Ohio, County Marriages, 1789-2016,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : accessed 9 July 2026), entry for Wm. H. Ferber and Emma Becker, Hamilton County, Ohio, 1890.\n\u00b2 Ibid., father of groom listed as Gerhard Ferber.\n\u00b3 \"United States, Census, 1900,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:MM88-DGG : accessed 10 July 2026), entry for William Ferber household, Cincinnati Ward 19, Hamilton, Ohio, enumeration district 204.\n\u2074 \"Ohio, County Death Records, 1840-2001,\" *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 10 July 2026), entry for Wm. Ferber, 11 Mar 1903, Cincinnati, Hamilton, Ohio."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-10.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-10T07:17:48.487Z"
+    }
+  ]
+}
