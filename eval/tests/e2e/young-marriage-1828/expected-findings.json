@@ -49,7 +49,7 @@
       "supporting_sources": [
         "Bitton parish register, 1778-1812, 1 November 1812, Sarah Martin and Betty Martin; digital image \"Bristol, England, Church of England Baptisms, Marriages and Burials, 1538-1812,\" Ancestry (https://www.ancestry.com/discoveryuicontent/view/126909:61666 : accessed 11 October 2023)."
       ],
-      "required": true
+      "required": false
     }
   ]
 }

@@ -27,6 +27,27 @@ fully-qualified standardized name) plus `type`, `dateRange`, coordinates, and
 links. **Pick the best/first match and use its `standardPlace` verbatim** as the
 handle for everything downstream. There are no place IDs in the output.
 
+### When to use contextName
+
+Many place names exist in multiple jurisdictions (Bristol in England AND
+Virginia; Paris in France AND Idaho; Dublin in Ireland AND Ohio). When
+your research context makes the correct jurisdiction clear, **always pass
+`contextName`** to avoid resolving to the wrong place:
+
+```
+place_search({ placeName: "Bristol", contextName: "England" })
+```
+
+Use `contextName` whenever:
+- The place name is shared across countries or US states (Bristol, Dublin,
+  Paris, Leicester, Cambridge, Portland, etc.)
+- You already know the country or state from the research question, the
+  tree, or a record you've read
+- A previous `place_search` returned an unexpected jurisdiction
+
+The `contextName` matches against the full standardized name, so "England",
+"Ireland", "France", or a US state name all work.
+
 Use **`place_search_all`** instead of `place_search` when jurisdictions or
 boundaries changed across the period you're researching — it returns *every*
 standard place a location has belonged to over time, which informs where

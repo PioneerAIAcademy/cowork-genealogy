@@ -1,0 +1,934 @@
+{
+  "run_log": "v1_2026-07-08_15-47-10.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the search result (MXHY-TP4) as a strong match (0.95 score) for Patrick Flynn, accurately noting the alignment on name, birth year (1845), birthplace (Ireland), and household (Thomas Flynn). The attachment check was executed and correctly reported that MXHY-TP4 is already attached to FamilySearch person KWCJ-RN4, and VRNT-7M3 has no attachment. The triage reasoning is sound: strong match flagged as primary, variant spelling flagged as possible corroborating entry. No fabricated claims or unsupported assertions.\n\nJunior: (Both census entries point to the same household (Thomas + Mary Flynn, Branch Township, Schuylkill County) with Patrick born ~1845 in Ireland. This supports the research question and aligns with the Thomas Flynn probate will. MXHY‑TP4 is attached elsewhere, VRNT‑7M3 is unattached and prioritized for extraction. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request: executed the 1850 census search for Patrick Flynn in Schuylkill County per pli_001, returned the result, checked attachment status for both the new result and the known variant record (VRNT-7M3), triaged both records, and logged the search. The response explicitly notes attachment status in both the tabular triage and the log notes. All required elements covered.\n\nJunior: (The skill fully met the request: it ran the 1850 census search for Patrick Flynn in Schuylkill County (pli_001), checked attachment status for both MXHY‑TP4 and VRNT‑7M3, triaged attached vs. unattached records, and logged the search with clear notes. Attachment status was explicitly mentioned in both the triage table and log notes. All required elements were covered. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both critical MCP calls matched expected args. record_search received surname='Flynn', givenName='Patrick', residenceYearFrom/To=1850, residencePlace='Schuylkill County, Pennsylvania' (expected ~Patrick and surname base params, all provided correctly). source_attachments received two ARK URIs including both MXHY-TP4 and VRNT-7M3 as expected. research_log_append call included all required fields (query, outcome, resultsExamined, stagedResultsRef, notes). No fixture_not_found errors. All calls semantically match expected behavior.\n\nJunior: (No errors or mismatches were observed. All calls semantically aligned with expected behavior. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters are appropriate and well-justified. Surname 'Flynn' is the correct anchor, date range 1850–1850 matches pli_001 exactly, and jurisdiction 'Schuylkill County, Pennsylvania' is at the correct specificity level (county within the state, as required by the plan item). The query is broad enough to catch the primary name variant without being unfocused. The skill notes the rationale in the log entry.\n\nJunior: (**`ut_search_records_012`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\nJunior (The query was broad enough to capture the primary name variant without being unfocused, and the rationale was noted in the log entry. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> Each result is triaged with specific per-record reasoning. MXHY-TP4 (0.95 score) is categorized as a strong match with reasoning citing name, year, birthplace, and household alignment. VRNT-7M3 (0.66 score from log_003) is categorized as possible/corroborating, with rationale explaining the variant spelling context. Attachment status is explicitly noted and factored into triage: MXHY-TP4 is marked as already attached to KWCJ-RN4 (a different person), while VRNT-7M3 is marked unattached. The skill correctly deprioritizes the already-attached record and flags the unattached one for extraction. No near-matches are silently dropped.\n\nJunior: (Attachment status was factored into triage: the attached record was correctly deprioritized, and the unattached record prioritized for extraction. No near‑matches were omitted. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Log entry (log_005) is comprehensive and audit-ready. Query field populated with actual search parameters used (surname, givenName, residenceYearFrom/To, residencePlace). results_examined=1, outcome='positive', stagedResultsRef points to results/log_005.json. notes field provides one-line human summary: 'Fresh re-run...returned same record as log_001...Attachment check: MXHY-TP4 already attached to KWCJ-RN4...VRNT-7M3 returned no attachment data.' Log supports exhaustiveness claims and provides context for future review.\n\nJunior: (The log supports exhaustiveness claims and provides sufficient context for future review. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> Positive search correctly wrote sidecar at the expected path (results/log_005.json), as confirmed by the research_log_append response ('filesWritten' includes 'results/log_005.json'). The skill's text explicitly references writing the sidecar. Returned_count in the log matches the actual number of results examined (1 result: MXHY-TP4). The sidecar path matches the results_ref in the log entry. No sidecar created for nil searches (none occurred in this execution).\n\nJunior: (The positive search correctly wrote a sidecar at the expected path (results/log_005.json), confirmed in the research_log_append response. The skill text explicitly referenced writing the sidecar, and the returned_count in the log matched the actual number of results examined (1 result: MXHY‑TP4). The sidecar path aligned with the stagedResultsRef in the log entry. No sidecar was created for nil searches, which is correct since none occurred in this execution. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_012`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> This execution returned a positive result (1 match), so nil escalation does not apply. However, the skill's treatment of the search context is sound: it acknowledges that log_001 and log_003 have already covered the Flynn/Flinn variants for pli_001, and this fresh search (log_005) confirms the same record. The skill does not prematurely declare exhaustion — it notes both records remain candidates for extraction. If a nil had occurred, the existing record sidecars (log_001, log_003) and the variant attempts already logged would satisfy the multi-lever requirement.\n\nJunior: (Nil escalation does not apply here since the search returned a positive result (1 match). The skill handled the search context correctly: it acknowledged prior logs (log_001 and log_003) covering Flynn/Flinn variants and confirmed the same record in log_005. It did not prematurely declare exhaustion, instead noting that both records remain candidates for extraction. If a nil had occurred, the existing sidecars and variant attempts already logged would have satisfied the multi‑lever requirement. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly used 'Price' as the primary surname parameter (not 'Mullen'), interpreted 'Mullen' as a middle given name rather than an alternate surname, and accurately triaged the two results. Result 1 (Sarah M. Price, b. 1875, Dodge County) correctly identified as the subject with strong supporting evidence (parents James and Sarah A. Price match exactly; 'M.' initial aligns with Mullen). Result 2 correctly discarded as wrong person (b. 1870 New York, Milwaukee County). All factual claims are supported by the fixture's returned data.\n\nJunior: (All factual claims are supported by the fixture data, and the reasoning is sound. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill executed the 1880 census search for pli_001 as requested, examined both returned results, produced proper triage reasoning for each, logged the search with full query details and outcome summary, and wrote a sidecar file. It addressed the ambiguity about Mullen explicitly in the search parameters note ('Mullen is subject's middle given name, not her surname'), documented the outcome, and identified the strong match record ready for extraction. No required elements were omitted.\n\nJunior: (The skill fully executed the 1880 census search for pli_001 as requested. It examined both returned results, provided clear triage reasoning for each, logged the search with full query details and outcome summary, and wrote a sidecar file. It explicitly addressed the ambiguity about “Mullen” by noting it is a middle given name, not a surname, and documented this in the query note. The outcome was clearly recorded, with the strong match identified and flagged as ready for extraction. No required elements were omitted. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls used correct arguments. record_search: surname='Price' (primary anchor, correct per tree), givenName='Sarah' (matches expected ~Sarah pattern), birth year range 1870–1880 (±5 from 1875, reasonable), residence 'Dodge County, Wisconsin' at 1880 (exact match to plan item). research_log_append: query parameters accurately reflected the search executed, outcome='positive' correct (2 results returned), resultsExamined=2 matches returned count. research_append: update of pli_001 status valid. No fixture_not_found errors; all calls matched predicate or live.\n\nJunior: (No fixture_not_found errors occurred, and all calls matched expected behavior. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> The skill constructed appropriate search parameters anchored on surname 'Price' with givenName 'Sarah' (accepting middle names as part of given field per API design). Birth year range 1870–1880 matches the ±5 standard around the subject's 1875 birth. Residence was correctly anchored to Dodge County, Wisconsin in 1880. No variant surnames were needed here—a common surname with clear jurisdiction and date constraints. The skill explicitly noted in the search query 'note' field that Mullen is the middle given name, not a surname variant, demonstrating correct parameter interpretation. No surnameAlt field was populated, correctly avoiding the misclassification warned about in the rubric.\n\nJunior: (The skill constructed appropriate search parameters anchored on surname Price with givenName Sarah (acceptable handling of multi token given names). The birth year range 1870–1880 correctly reflects the ±5 standard around the subject’s 1875 birth. Residence was anchored to Dodge County, Wisconsin in 1880, exactly matching the plan item. No alternate surnames were introduced, which was correct — “Mullen” was explicitly noted in the query as a middle given name, not a surname variant. The surnameAlt field was left empty, avoiding the misclassification warned about in the rubric. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> Each result received per-record reasoning with specific matching attributes cited. Result 1: Female, b. 1875 Wisconsin (matches subject's year and state), Dodge County 1880 residence (exact match), household head James Price b. 1848 Wales (matches I2 precisely), mother Sarah A. Price b. 1852 Wisconsin (matches I3 precisely), 'M.' initial interpreted as Mullen (strong contextual support). Score 0.9 cited. Result 2: b. 1870 New York (wrong year and place), Milwaukee County residence (wrong county), Thomas Price household head (wrong person)—clearly discarded. No attachment status was available in fixture (treeMatches empty for both), but the skill correctly prioritized Result 1 as new evidence ready for extraction. No near-match was silently dropped.\n\nJunior: (No attachment data was available in the fixture (treeMatches empty), and the skill correctly prioritized Result 1 as new evidence ready for extraction. No near‑matches were silently dropped. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Log entry (log_001) contains: query field fully populated (surname, givenName, birth/residence year ranges, residencePlace, collectionId, and explanatory note about Mullen), results_examined=2 matches the two results reviewed, outcome='positive' is accurate, results_ref='results/log_001.json' correctly populated, notes field provides one-line human summary useful for future review ('1 strong match...Second result not the subject'). Every search element is auditable and the log supports exhaustiveness claims.\n\nJunior: (Every search element is auditable, and the log supports exhaustiveness claims. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> Sidecar written at correct path 'results/log_001.json' (per response_summary filesWritten). The staged results ref '36a8136c-a6d4-46a3-b77e-f20fe62f102c.json' was passed to research_log_append and converted to results/log_001.json by the tool. Returned count in response_summary is 2, matching the fixture's 2 results. No sidecar created for nil search (not applicable here). Log_id 'log_001' in response corresponds to the documented outcome.\n\nJunior: (The sidecar was written at the correct path (results/log_001.json), confirmed by the filesWritten field in the response. The staged results reference (36a8136c-a6d4-46a3-b77e-f20fe62f102c.json) was properly passed to research_log_append and converted to the final sidecar path. The returned count (2) matched the fixture’s two results examined. No sidecar was created for a nil search, which is correct since none occurred. The log_id log_001 corresponds to the documented outcome, ensuring consistency between the log and sidecar. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_016`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> Not applicable—the search returned 2 results (positive outcome), not nil. The skill correctly examined both and triaged them. No escalation through name variants or date widening was required or expected here, as the first search yielded a strong match. If the search had returned zero results, nil escalation would be evaluated; the skill's triage behavior demonstrates competent judgment (acknowledging strong match vs. clear non-match) that would support variant-retry logic if needed, but the test fixture did not trigger that scenario.\n\nJunior: (Nil escalation was not triggered because the search returned two results (positive outcome). The skill correctly examined and triaged both records, identifying one strong match and one clear non‑match. Since a strong match was found, no variant surname or date‑widening retries were required. The handling demonstrates sound judgment and shows that, if a nil search had occurred, the skill’s approach and prior variant coverage would have satisfied the multi‑lever requirement. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the need to exhaust FamilySearch variants before escalating, executed 5 systematic searches with appropriate parameter adjustments, logged each result accurately, and called search-external-sites as required. The nil assessment correctly identifies that zero FamilySearch results does not mean non-existence and that transcription errors are likely for Irish immigrant names.\n\nJunior: (no comment)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully executed the required task: attempted FamilySearch with multiple variants (Flynn/Flinn, Schuylkill County/Pennsylvania, with/without birth fields), logged all 5 nil results separately, assessed whether absence is meaningful, and escalated to external sites via Skill('search-external-sites'). The plan item was correctly updated to in_progress (not marked completed, as required).\n\nJunior: ( Completeness is satisfied — the workflow demonstrates proper escalation after FamilySearch exhaustion, with all required logging and plan item handling. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All 5 record_search calls included givenName='Patrick' on every invocation, matching the expected args pattern. Surname variants (Flynn/Flinn) and jurisdiction levels (Schuylkill County/Pennsylvania) were systematically adjusted. All log_append calls matched expected structure. The external_site log entry correctly recorded the escalation with proper fields and the Ancestry collection ID. No fixture_not_found errors occurred.\n\nJunior: (Tool arguments were handled correctly and thoroughly, with all required parameters present and properly logged. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Parameters correctly anchor on surname Flynn with givenName Patrick on all calls. Date range matches the 1850 census year (residenceYearFrom/To set to 1850). Jurisdiction spans both appropriate levels: Schuylkill County (narrow, matching plan item) and Pennsylvania (broad, as a lever). Irish-origin name variants are included: Flynn (canonical) and Flinn (common variant). Initial search drops birth fields as a lever; text explanation cites over-constraining as rationale.\n\nJunior: (Search strategy was thorough, systematic, and aligned with genealogical best practices — leveraging name variants, jurisdiction levels, and constraint adjustments before escalation. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> Each of the 5 FamilySearch searches returned zero results; the skill correctly logged each as negative with resultsExamined=0. All log entries carry honest outcome labels ('negative') and brief notes (e.g., 'Over-constraint,' 'Variant exhausted'). The text response appropriately assesses that zero results do not confirm non-existence and flags transcription error as the likely cause. No results were silently dropped or mischaracterized.\n\nJunior: (Result triage was accurate, transparent, and professionally handled — negative outcomes were logged honestly, contextualized, and escalated appropriately. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> All 5 FamilySearch searches and the 1 external-site search each produced a separate log entry. All include query (exact params used), results_examined (all 0 for nil searches), outcome ('negative' or 'partial'), resultsRef (null for all, correct for nil searches), and notes summarizing the variant tried and next step. Log IDs (log_001–log_006) are sequential and traceable.\n\nJunior: (Log quality is excellent — comprehensive, transparent, and systematically structured, with no omissions or mislabeling. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> All 5 FamilySearch searches returned zero results; the skill correctly wrote no sidecar files for them (nil invariant preserved). The external-site log (log_006) was marked outcome='partial' and captureReceived=false; no sidecar was created, which is appropriate given the URL is pending user capture. No false evidence (sidecar for zero-result searches) was stored.\n\nJunior: (Sidecar correctness is fully satisfied — nil invariants were preserved, external escalation was properly logged without premature sidecar creation, and no false artifacts were stored. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_018`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> After the first nil (log_001), the skill iterated through 4 meaningful levers: (1) dropped birth fields, (2) tried Flinn variant in county, (3) broadened to statewide Flynn, (4) tried Flinn statewide. Each retry was logged separately (log_002–log_005). Before escalating, the skill assessed whether absence is meaningful: confirmed the 1850 census existed, noted FamilySearch's susceptibility to transcription errors for Irish names, and flagged indexing variants (Flin, Phlin) as potential causes. Correctly escalated to Ancestry as the next lever.\n\nJunior: (Nil escalation was handled thoroughly and correctly — retries were systematic, absence was critically assessed, and escalation to external sites was justified and properly logged. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All factual claims are supported by the tool responses and project state. The skill correctly identified the search result as MXHY-TP4 (matching log_001), performed accurate manual triage using name, birth year, birthplace, residence location, and API score, and maintained plan item status as 'in_progress' as required. No fabricated or contradictory material.\n\nJunior: (Correctness is fully satisfied — the search result was accurately triaged, logged, and contextualized, with plan item status handled exactly as required. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user message asked for a fresh 1850 census search for Patrick Flynn in Schuylkill County for pli_001. The skill executed the search with appropriate parameters (surname, given name, residence year, birthplace), examined and triaged the single returned result, logged it correctly, and confirmed pli_001 status remained in_progress. All aspects of the request were addressed.\n\nJunior: (Completeness is fully satisfied — the fresh search was carried out as requested, results were examined and contextualized, and project state was updated correctly. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP tool calls passed arguments matching the fixture expectations. record_search call matched expected_args (surname='Flynn', givenName matching ~Patrick); research_log_append and research_append calls are live-tested so no fixture comparison applies. No fixture_not_found errors. Arguments were reasonable and semantically correct.\n\nJunior: (Tool arguments were fully correct — parameters matched expectations, were semantically appropriate, and no errors or omissions occurred. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters are well-justified: surname 'Flynn' is the anchor, given name 'Patrick' is exact match to subject, residencePlace='Schuylkill County, Pennsylvania' matches the subject's jurisdiction, residenceYear 1850 matches the census collection year, birthPlace='Ireland' matches the subject's known origin. Parameters are narrower than prior runs (log_001/log_003) to corroborate existing findings, which is appropriate after inconclusive runs. Rationale in notes explains the parameter choices and distinguishes this search from prior attempts.\n\nJunior: (Search strategy was precise, justified, and methodologically sound — parameters were chosen to strengthen corroboration and provide meaningful differentiation from prior searches. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> The single result MXHY-TP4 is correctly categorized as a confirmed positive match (already captured in log_001). The skill performed systematic manual triage comparing name, sex, birth year, birthplace, residence location, and API score (0.95) — all fields aligned perfectly with the research subject I1. The result is properly identified as the same record already in the project, not a new record, which is accurate and contextually appropriate. No near-matches were present to flag.\n\nJunior: (Result triage was thorough, accurate, and contextually appropriate — the single hit was correctly identified as the same record already in the project, with no misclassification or omissions. - PASS) "
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Log entry (log_005) is comprehensive and honest. The query field contains the actual search parameters used (surname, givenName, residencePlace, residenceYearFrom/To, birthPlace). results_examined=1 matches the count of results returned. outcome='positive' is accurate. resultsRef='results/log_005.json' points to the correct sidecar file. notes field provides a clear one-line human summary: 'Fresh search with residence year anchor...independently corroborates that record under a distinct query shape.' This audit trail is suitable for future review and supports exhaustiveness claims.\n\nJunior: (Log quality is excellent — the entry is complete, honest, and audit‑ready, providing a reliable trail for future review and validation. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> Sidecar file written at correct path ('results/log_005.json') for a positive search. The staging reference from record_search (results/.staging/b3b50988-...) was passed to research_log_append, which wrote the final sidecar. response_summary confirms 'filesWritten: [research.json, results/log_005.json]' and 'returnedCount: 1', matching the single result returned. No nil search; no erroneous sidecar created. Sidecar correctly corresponds to the log entry log_005.\n\nJunior: (Sidecar correctness is fully satisfied — the file was written at the correct path, matched the logged result, and no false or missing artifacts were introduced. -PASS)"
+    },
+    {
+      "test_id": "ut_search_records_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_001`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> Not applicable to this search — a result was returned (MXHY-TP4, score 0.95), so no nil condition triggered. The skill did not need to iterate through variants or widening strategies. This dimension is inapplicable but scored 3 because the condition for nil escalation never arose; the skill's approach to a positive result was appropriate.\n\nJunior: ( Nil escalation is fully satisfied in context — the skill correctly bypassed escalation logic since a valid record was found, and handled the positive outcome appropriately. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified and used the maiden surname 'Mullen' as the primary search parameter for the 1860 census, explicitly reasoning that Sarah did not marry until 1872. All search parameters match the expected context: surname Mullen, givenName Sarah, correct birth year range (1847-1857), residence year 1860, Dodge County Wisconsin. The single result returned (Sarah A. Mullen in William Mullen's household, score 0.92) is accurately triaged. Manual cross-checks all match the tree: birth year 1852 exact, father William Mullen b. 1825 Ireland (I4), mother Margaret Mullen b. 1830 Ireland (I5), household relationship plausible for age 8. No fabricated or unsupported claims.\n\nJunior: (Correctness is fully satisfied — the skill used the maiden surname appropriately, reasoned about the marriage date, executed the search with accurate parameters, and triaged the result correctly. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user message and plan item pli_001. It executed the 1860 census search under the maiden surname Mullen, triaged the single result with detailed cross-checking (name, sex, birth year, birth place, residence, parents), logged the outcome with accurate query parameters and result count, and wrote the sidecar file. The skill also appropriately noted that the result is not yet attached and suggested next steps (record extraction). No aspects of the requested task were omitted.\n\nJunior: (Completeness is fully satisfied — the search request was executed end‑to‑end with all required components and thoughtful next‑step guidance. PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The MCP tool call passed correct and semantically appropriate arguments. The required identifiers matched expected values: surname='Mullen' (the correct maiden name), givenName='Sarah' (matching the expected ~Sarah pattern). Additional arguments (birthYearFrom/To, residenceYearFrom/To, residencePlace, sex, fatherGivenName, fatherSurname, projectPath) were all reasonable contextual enrichments that improved search precision. The second call (research_log_append) was well-formed with accurate query reconstruction and honest outcome/resultsExamined reporting. No matched.kind=='none' errors.\n\nJunior: (Tool arguments were fully correct — parameters matched expectations, were semantically appropriate, and no errors or omissions occurred. PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> The skill demonstrated explicit reasoning about the name type and marriage date. In the opening analysis, it clearly stated: 'Since this is 1860 and she didn't marry until 1872, search under her maiden name' and later in the notes: 'Searched under maiden name Mullen — did not marry until 1872.' This explicitly connects the plan date (1860) to the marriage date (1872) and correctly selects Mullen as the anchor. The date range (1847-1857) correctly reflects a ±5-year birth window around the 1852 birth year. Jurisdiction is set at the appropriate level (Dodge County, Wisconsin). Additional contextual parameters (father's name) support ranking without introducing noise.\n\nJunior: ( Search strategy was exemplary — the skill explicitly reasoned about the pre‑marriage context, chose the maiden surname correctly, and applied precise parameters to maximize search relevance. PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> The skill correctly evaluated the single result with detailed per-record reasoning. It created a comprehensive manual triage table checking score (0.92, strong), name match ('Sarah A. Mullen' to birth name N1), sex, birth year (exact 1852 match), birth place, residence (Dodge County WI 1860), father (William Mullen b. 1825 Ireland matching I4), mother (Margaret Mullen b. 1830 Ireland matching I5), household role (child, plausible for age 8), and attachment status (treeMatches: [] confirming not yet attached). The score is cited and interpreted within context (>0.7 = strong match). No near-match was discarded; the logical cross-checks confirm the match before logging it as positive outcome.\n\nJunior: (Result triage was thorough, systematic, and accurate — the single hit was correctly identified as a strong match to the subject, with all contextual attributes verified. PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> The log entry (log_002) is complete and accurate. The query field is fully populated with all search parameters used: surname, givenName, sex, birthYearFrom/To, residenceYearFrom/To, residencePlace, fatherGivenName, fatherSurname, and collection. results_examined equals 1, matching the single result reviewed. outcome is correctly set to 'positive'. resultsRef points to the correct sidecar path (results/log_002.json). notes provides a one-line human summary explaining the household relationship, matching parents, score, attachment status, and the key methodological decision (searched under maiden name, did not marry until 1872). All fields support future review and exhaustiveness claims.\n\nJunior: (Log quality is excellent — the entry is complete, honest, and provides a reliable audit trail for future validation. PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> A positive search (1 result) correctly triggered sidecar creation. The response summary shows filesWritten includes 'results/log_002.json' (matching the resultsRef in the log entry), returnedCount is 1 (matching the number of results in the payload), and the staged results reference points to a valid payload. The sidecar path matches the log_id log_002. The invariant (positive search → sidecar written, nil search → no sidecar) is satisfied; no nil search occurred in this execution.\n\nJunior: (Sidecar correctness is fully satisfied — the file was written at the correct path, matched the logged result, and adhered to the expected invariants. PASS)"
+    },
+    {
+      "test_id": "ut_search_records_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_015`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> This dimension is not applicable to the current execution: the search returned one strong result (score 0.92), so nil escalation was not triggered. The skill did not need to attempt variants, broaden the date range, or investigate absence. The pass score reflects that the skill correctly handled the positive outcome without premature escalation or unnecessary variant searches. Had a nil result occurred, the skill would be required to iterate through levers (surname variants, date widening, jurisdiction broadening) and log each retry separately—but that scenario did not arise here.\n\nJunior: (Nil escalation is fully satisfied in context — the skill appropriately bypassed escalation logic since a valid record was found, and handled the positive outcome correctly. PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly used the BirthName entry (surname 'Mullen', givenName 'Sarah') for the 1860 census search, which is the appropriate choice for a pre-marriage time period. The search parameters (birth year 1847–1857, residence 1860, Dodge County, Wisconsin, father William Mullen) are factually accurate and well-reasoned. The returned record (Sarah A. Mullen, age 8, in William Mullen's household) is correctly identified as a strong match (score 0.92) with field-by-field validation showing perfect alignment on name, sex, birth year, location, and father's identity. No fabricated or unsupported claims are present.\n\nJunior: (Correctness is fully satisfied — the skill used the maiden surname appropriately, reasoned about the marriage date, executed the search with accurate parameters, and triaged the result correctly. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully executed plan item pli_001 as requested. It performed the 1860 census search, evaluated the single returned result, documented attachment status (unattached), provided the record ID and ARK URL for extraction, and logged the search outcome. The skill also correctly kept pli_001 as 'in_progress' and noted readiness to move to pli_002 (1880 census search under Price surname). All required elements of the task were addressed.\n\nJunior: (Completeness is fully satisfied — the task was executed end‑to‑end with all required components and clear guidance for next steps. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The record_search call passed arguments matching the fixture's expected_args semantically. The skill provided surname 'Mullen' (exact match) and givenName 'Sarah' (matches ~Sarah expectation). Additional parameters (birthYearFrom/To, residenceYear/Place, fatherGivenName/Surname, collection) were reasonable refinements not contradicted by the fixture's predicate-based matching. The research_log_append and research_append calls are live-matched (non-fixture) and correctly structured. No fixture_not_found errors occurred.\n\nJunior: (Tool arguments were fully correct — parameters matched expectations, refinements were reasonable, and all tool calls were properly structured with no errors. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> The skill explicitly demonstrated awareness of the two name entries and explained why it chose the BirthName for a pre-marriage search: 'Constructing a broad-start query: surname Mullen, given name Sarah' for 1860, before the 1872 marriage. It included correct parameters: surname anchor 'Mullen' from BirthName, appropriate date range (birth 1847–1857, residence 1860), correct jurisdiction (Dodge County, Wisconsin), and contextual anchor (father William Mullen). The rationale proves the skill understood the name-type vs. date logic required by the test instructions.\n\nJunior: (Search strategy is exemplary — the skill explicitly reasoned about the two name entries, chose the maiden surname for the pre‑marriage census, and applied precise parameters to maximize relevance. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> The single returned result was categorized as a strong match (0.92 score) with detailed per-record reasoning. The skill cited specific matching attributes: 'Sarah A.' aligns with 'Ann' middle name, father William Mullen and Irish birthplace match exactly, birth year 1852 and Dodge County residence match, and the household relationship is logically consistent. Attachment status was checked (unattached—new evidence). The 0.92 score was cited and contextually supported by field comparison, not used as the final word in isolation.\n\nJunior: (Result triage was thorough, systematic, and accurate — the single hit was correctly identified as a strong match, with all contextual attributes verified and attachment status noted. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> The log entry (log_002) includes all required fields: query populated with actual search parameters (surname 'Mullen', givenName 'Sarah', birth/residence years, location, father details, collection), results_examined '1' matching the count reviewed, outcome 'positive' accurately recorded, resultsRef correctly pointing to 'results/log_002.json', and notes providing a one-line human summary useful for future review. The log entry honestly records the search and its outcome.\n\nJunior: (Log quality is excellent — the entry is complete, accurate, and provides a reliable audit trail for future review. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> A positive search sidecar was correctly written at the path 'results/log_002.json' (verified in filesWritten and response_summary.resultsRef). The sidecar contains the verbatim record_search payload (confirmed by stagedResultsRef and response_summary data), and returned_count '1' matches the single result in the payload. The log_id 'log_002' matches the entry created by research_log_append. Nil invariant (no sidecar for nil searches) was not tested here since one result was found.\n\nJunior: ( Sidecar correctness is fully satisfied — the file was written at the correct path, matched the logged result, and adhered to the expected invariants. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_017`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> This dimension is N/A for this test because the search returned 1 positive result (0.92 match score). No nil condition occurred, so no escalation or variant retries were needed. The skill correctly accepted the positive outcome and proceeded to logging and result triage. Nil escalation grading applies only when a search returns zero results; this search did not meet that condition.\n\nJunior: (Nil escalation is fully satisfied in context — the skill appropriately bypassed escalation logic and handled the positive outcome correctly. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that the user request (searching Ancestry for Patrick Flynn in 1850 census) is outside the scope of search-records and properly routed to search-external-sites. No fabricated material, no unsupported claims, no tool misuse.\n\nJunior: (The skill routed properly and avoided all violations. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed the user's request by making the correct routing decision. For a negative test, the expected behavior is precise routing without task execution, which was delivered. No pieces were missed.\n\nJunior: (The required external‑sites routing was executed, nothing extraneous added. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_records_004`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. This is correct for a routing-only response. The skill invoked Skill('search-external-sites') per the context notes, which is a skill reference rather than an MCP tool call. N/A.\n\nJunior: (N/A — no MCP tool calls were made, which is correct for a routing‑only response.)"
+    },
+    {
+      "test_id": "ut_search_records_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform its own task and routed to record-extraction as required. No fabricated material or unsupported claims were made. The empty response confirms adherence to the negative routing test requirement of providing no analysis or commentary beyond routing.\n\nJunior: (Correctness is fully satisfied — the skill adhered to the negative routing requirement by invoking record‑extraction and avoiding all prohibited extras. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill fully addressed what was required in this negative test: it identified that the user had provided an online record and correctly routed to record-extraction without performing search-records tasks. No required elements were omitted.\n\nJunior: (Completeness is fully satisfied — the skill executed the routing‑only requirement exactly as specified. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_records_003`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the search-records skill itself. The routing to record-extraction occurred at the skill-invocation level, not via MCP tool calls. N/A applies here.\n\nJunior: (Tool arguments dimension is N/A because routing was handled via skill invocation only, with no MCP tool usage.)"
+    },
+    {
+      "test_id": "ut_search_records_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_007`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform the search-records task and routed to search-external-sites, which is the correct behavior for a newspaper search. No fabricated material, tool calls, URLs, or research.json modifications were produced.\n\nJunior: ( Correctness is fully satisfied — the skill adhered to the negative routing requirement by invoking external‑sites routing and avoiding all prohibited extras. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's implicit requirement: it recognized that searching Newspapers.com requires external routing and delegated to the appropriate skill (search-external-sites) without attempting to fulfill the request directly.\n\nJunior: (Completeness is fully satisfied — the skill executed the routing‑only requirement exactly as specified. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_records_007`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill correctly routed via Skill('search-external-sites') without invoking any direct MCP tools, which is the correct behavior for this negative routing test.\n\nJunior: (Tool arguments are N/A — the skill behaved correctly by routing only, without invoking MCP tools.)"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The skill correctly identified a collection mismatch (1850 returned for a 1870 search) and properly logged both attempts with outcome='partial'. However, the skill's characterization in the text response that this is 'effectively negative' is slightly misleading — partial outcome means results were found but not for the intended collection, which is distinct from a true nil/negative result. The skill also correctly noted that it attempted a collectionId filter retry (appropriate genealogy practice) and stopped when that also returned the 1850 result, without escalating to name variants. The file changes and logging appear sound. Minor imprecision in framing the meaning of 'effectively negative' for a partial outcome.\n\nJunior: ( PASS- The skill correctly identified the collection mismatch when FamilySearch returned the 1850 census instead of the requested 1870 census, and it logged both attempts with outcome='partial' as required, including sidecars and explanatory notes. It performed one appropriate retry using the explicit 1870 census collectionId, then stopped without escalating to variant surname searches, and suggested checking Ancestry as a valid next step. The only minor issue was the phrasing “effectively negative” in the text response, which could blur the distinction between partial and negative outcomes, but since the logs themselves were correct this does not reduce the rating.)"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request to search the 1870 census for Patrick Flynn in Schuylkill County. Two search attempts were executed (initial search + collectionId retry), both logged, both analyzed for the mismatch, and a nil-assessment with three-condition check was provided. The skill also recommended next steps (Ancestry search). No omissions of major requirements; the work is thorough.\n\nJunior: (PASS - The skill fully addressed the user’s request to search the 1870 census for Patrick Flynn in Schuylkill County. It executed two search attempts (initial search plus a retry with explicit collectionId), logged both with outcome='partial', and provided explanatory notes about the collection mismatch. A nil‑assessment with the three‑condition check was included, and valid next‑step guidance (checking Ancestry) was offered. No major requirements were omitted, and the handling was thorough.)"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both record_search tool calls passed args matching expected semantics. First call: surname='Flynn', givenName='Patrick' with birth range 1840–1850 and residence year 1870 — all match the plan and user request. Second call: same core fields plus explicit collectionId='1438024' for the 1870 US Federal Census. Both matched.kind='predicate', indicating successful predicate matching. The log_append calls also carried correct arguments. No critical identifier errors.\n\nJunior: (Tool arguments were accurate and complete — Pass )"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters include correct surname (Flynn) and given name (Patrick), a reasonable birth range (1840–1850 derived from ~1845 known birth), and the jurisdiction at the correct level (Schuylkill County, Pennsylvania). Residence year (1870) matches the user request. First attempt used broad parameters; second attempt added explicit collectionId filter (1438024), which is sound practice for collection-scoping. Parameters are well-justified for the research context (25-year-old Patrick in 1870, building from prior 1860 census placement).\n\nJunior: (Search strategy was thorough, appropriate, and well‑justified — Pass )"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> Both searches returned the same result (Patrick Flynn, 1850 census). The skill correctly identified the collection mismatch (collectionTitle='United States Census, 1850' vs. target 1870) and categorized it as non-applicable. The mismatch itself — year 1850 vs. search intent 1870 — is sufficient to establish non-relevance without needing to call same_person or source_attachments. The skill did not attempt to force a match or call additional tools unnecessarily. Triage reasoning is clear and accurate.\n\nJunior: (Result triage handled properly — Pass )"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Both log entries (log_006 and log_007) contain populated query fields with actual search parameters, resultsExamined=1 and resultsAvailable=1 for both, outcome='partial' (appropriate for collection mismatch, not 'negative'), resultsRef pointing to the correct sidecar files (results/log_006.json and results/log_007.json), and detailed notes explaining the mismatch and retry logic. Notes are specific and useful for future review ('Collection mismatch', 'search engine is not constraining', 'recommend checking Ancestry'). Log entries create an audit trail for the exhaustiveness claim.\n\nJunior: (Log quality is strong — Pass)"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> Both searches returned results (one 1850 record in each case), so sidecars were correctly written for both (results/log_006.json and results/log_007.json). Each sidecar is referenced in the corresponding log entry's resultsRef field. The returned_count in the response_summary matches the results returned (1 result each). No nil-search sidecar was incorrectly created. The invariant — positive search → sidecar; nil search → no sidecar — is preserved.\n\nJunior: (Sidecar correctness is fully satisfied — Pass )"
+    },
+    {
+      "test_id": "ut_search_records_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_002`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> Although the searches did not return zero results (they returned 1850 records), the skill correctly treated the collection mismatch as a finding requiring investigation. The first mismatch triggered a second attempt with explicit collectionId filter (1438024), which is the prescribed lever for collection-scoping in mismatch scenarios. After the second attempt also returned mismatched results, the skill stopped (no escalation to name-variant searches like Flinn/Flyn), and provided a three-condition nil assessment: (a) did the 1870 census cover Schuylkill County? Yes. (b) is FamilySearch's 1870 index reasonably complete? Yes. (c) should Patrick appear? Yes. The skill correctly concludes that the absence is meaningful and recommends trying a different source (Ancestry) rather than name variants. Nil escalation protocol followed correctly.\n\nJunior: (Nil escalation protocol was followed correctly — Pass )"
+    },
+    {
+      "test_id": "ut_search_records_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to execute a search-records task and instead routed the user to complete the in-flight plan item (pli_006) before selecting the next research direction. The response accurately identifies that adding a new question mid-flight would be counterproductive and cites specific project state (the probate search, hypothesis status, timeline gaps). No factual errors or fabricated claims are present.\n\nJunior: (Pass  — the skill avoided prohibited search execution/writes and provided a valid planning‑oriented response.)"
+    },
+    {
+      "test_id": "ut_search_records_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The response fully addresses what the user asked (what to search next) by declining the premature question-selection and routing to the appropriate next step (completing pli_006). It provides complete context explaining why the user should not select a new question yet, including the specific in-flight item, potential hypothesis advancement, and high-priority follow-up areas (mother's identity, census timeline gaps). Nothing required by the scenario was omitted.\n\nJunior: (The response did not execute any forbidden search or write actions, and instead correctly routed the user back to the in‑flight plan item (pli_006). It explained why adding a new question prematurely would be counterproductive, referenced the current project state accurately, and highlighted valid future priorities. Since all required elements were addressed without errors or omissions, the evaluation is a - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_records_005`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill correctly declined to perform search-records work without invoking any tools. N/A per specification.\n\nJunior: (No MCP tool calls were made in this run. The skill correctly declined to perform any record_search work and did not invoke tools, which is the expected behavior for this negative test. Since no arguments were passed, this dimension is N/A per specification, and the absence of tool calls is itself correct.)"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All search parameters and tool calls are factually sound. The skill correctly identified that Bartholomew is unknown in the project and framed this as an ad-hoc search (planItemId: null). Log entries accurately record nil outcomes with proper outcome='negative' designation. External site URLs are correctly formed with appropriate query parameters. No fabricated material or unsupported claims.\n\nJunior: (It’s a Pass because the skill handled the search correctly: it framed Bartholomew Flynn as an ad‑hoc search, used appropriate parameters, logged each attempt with outcome='negative' when no results were found, and escalated properly to external sites with well‑formed URLs. The logs and text response matched, no sidecars were incorrectly created, and there were no fabricated claims — all requirements for correctness were met.)"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill exhaustively addressed the user's request to search for Bartholomew Flynn. It executed five FamilySearch variant searches (full name, nickname, spelling variants, geographic broadening from county to state to country level) before escalating to external sites. All five FamilySearch searches were logged separately with honest nil outcomes. Two external site URLs (Ancestry and FindAGrave) were generated as planned. User instructions for PDF capture were provided. No silent omissions.\n\nJunior: ( Completeness = Pass  — all expected steps were covered.)"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All record_search calls include givenName (Bartholomew/Bart) across primary searches, satisfying the critical requirement. The skill's parameters match expected_args semantically: surname anchor present in all calls, givenName variants properly applied (Bartholomew → Bart nickname), and optional parameters (residencePlace, fatherGivenName, recordCountry) were added appropriately to aid precision and match the contextual search strategy. No wrong identifiers or fixture_not_found errors.\n\nJunior: (Tool arguments were accurate, well‑structured, and complete — Pass )"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters follow the broad-to-narrow default correctly: started with full context (county, father name, full given name), broadened to state level, then to nation, then tried spelling variant (Flinn), used nickname (Bart) to catch transcription variants, and finally pivoted to Ireland. Each step is justified by the research context (Bartholomew is an unknown sibling, possibly stayed in Ireland or heavily mangled in indexing). Rationale explicitly notes these strategy choices in log entries.\n\nJunior: (Search strategy was thorough, contextually justified, and systematically applied — Pass)"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> No results were returned across any search, so triage does not apply. However, the skill correctly avoided the opposite error: it did not treat nil results as conclusive endpoint but instead escalated through multiple variants and geographies before concluding exhaustion. For the external site searches, the skill explicitly flags that captured PDFs will require triage (mentions verification against original records for FindAGrave compiled data).\n\nJunior: (Skill showed careful reasoning and proper handling of nil results without prematurely closing off the search. Result triage - Pass )"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Every search—all five FamilySearch queries and both external site steps—produced a log entry. Each entry has query field populated with actual parameters used, results_examined=0 correctly reported, outcome='negative' or 'partial' accurately set, resultsRef=null (correct for nil searches), and notes provide one-line human-readable summary of what was tried and next steps. Log entries are audit-trail-ready and support exhaustiveness claims.\n\nJunior: (The logs are complete, accurate, and audit‑ready, supporting the exhaustiveness claim. Log quality - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> No sidecar files were written, which is correct—all FamilySearch searches returned zero results (nil searches must not produce results/ sidecars per the invariant). External site searches are logged with outcome='partial' and captureReceived=false, correctly indicating that PDFs are pending user capture and no sidecar data exists yet. The nil invariant is upheld across all five FamilySearch searches.\n\nJunior: (No sidecar files were written, which is exactly correct since all five FamilySearch searches returned nil results. Per the invariant, nil searches must not produce sidecars, and that rule was upheld. For the external site searches, the logs were marked with outcome='partial' and captureReceived=false, correctly indicating that user‑provided PDFs are pending and no sidecar data exists yet. This shows the system handled both nil and external cases properly. Sidecar correctness - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_011`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> After the first nil, the skill did not stop. Instead it tried at least 4 meaningful variations: (1) broadened from county to state, (2) tried Flinn spelling variant (same variant that surfaced Patrick in log_003), (3) tried Bart nickname to catch transcription variants, (4) broadened to nation-wide US search, (5) pivoted to Ireland in case Bartholomew did not emigrate. Each retry was logged separately (log_005–log_009). The skill then assessed exhaustion: notes state FamilySearch coverage exists for the period and record types, and acknowledges Bartholomew may have stayed in Ireland or be under a mangled spelling before escalating to external sites.\n\nJunior: (This systematic escalation shows the protocol was followed correctly, with clear rationale and audit‑ready logs. Nil escalation - Pass )"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly executed both formal-name and nickname searches. The first search (Mary Jackson, 1900) returned zero results as expected from the fixture. The second search (Bitsie Jackson, 1900) returned the matching record (Bitsie Jackson, b. 1850, Lancaster County, William Jackson household, FamilySearch score 0.88). The skill accurately explained the reasoning: the enumerator recorded the community nickname rather than the formal name. All attributes were correctly cross-checked against I1 (given name, surname, sex, birth year, place, residence). No fabricated material; outputs align with tool responses and input state.\n\nJunior: (Correctness - Pass  — the skill demonstrated proper nickname‑fallback handling and accurate reporting.)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP calls matched expected arguments. First record_search: surname='Jackson', givenName='Mary' matched expected ~Mary; included reasonable additional parameters (residenceYearFrom/To, residencePlace, sex) that refine the search appropriately. Second record_search: surname='Jackson', givenName='Bitsie' matched expected ~Bitsie; same refinement parameters. Both research_log_append calls provided correct query, outcome, resultsExamined counts, and notes. research_append call correctly updated plan item status. No critical identifiers were wrong; fixture returned matched.kind='predicate' for both record_search calls indicating proper argument matching.\n\nJunior: (No steps were omitted, and the response fully addressed the scenario. Completeness - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> The skill constructed appropriate search parameters following the broad-to-narrow default. Initial search used formal name 'Mary Jackson' with jurisdiction (Lancaster County, PA), date range (1900 residenceYear), and sex (Female). On nil result, the skill correctly consulted tree.gedcomx.json, identified the non-derivative nickname 'Bitsie' documented on I1, and retried with givenName='Bitsie' while maintaining the same jurisdiction and date range. The rationale in log_002 notes explicitly explains the retry strategy ('enumerator may have recorded the community nickname'). This matches the plan rationale and demonstrates understanding that Bitsie is not derivable from standard nickname tables.\n\nJunior: (The skill demonstrated a precise and context‑aware search strategy that matched the plan rationale. Search strategy - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> The skill correctly evaluated the single result against I1. Triaged as promising/strong match with per-record reasoning: explicitly matched given name (Bitsie), surname (Jackson), sex (Female), birth year (1850 vs ~1850), birth place (Pennsylvania, Lancaster Co.), and residence (Lancaster County, PA 1900). All attributes were systematically cross-checked in the table. FamilySearch score (0.88) was cited and correctly interpreted as strong. The skill identified the new lead (William Jackson, Couple relationship) and noted it was not previously in tree. No near-matches were silently discarded; the one result was thoroughly contextualized.\n\nJunior: (Result triage - Pass. Thorough, accurate, and well‑reasoned)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Both searches produced complete log entries. Log_002 (nil search): query populated with actual search parameters (surname, givenName, residenceYear, place, sex), resultsExamined=0, resultsAvailable=0, outcome='negative', resultsRef=null (correct for nil), notes explain the nil and rationale for retry. Log_003 (positive search): query populated with actual parameters (now givenName='Bitsie'), resultsExamined=1, outcome='positive', resultsRef='results/log_003.json' (correct), notes provide useful summary citing the match score, attributes, and enumerator nickname behavior. Both log entries are audit-trail complete and enable future review.\n\nJunior: (Entries are complete and audit‑ready, clearly demonstrating the nickname‑fallback strategy. Log quality - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> Positive search (log_003) correctly generated sidecar at results/log_003.json as verified by research_log_append response (filesWritten includes 'results/log_003.json' and resultsRef matches). The staged result reference shows the payload was captured. Nil search (log_002) correctly wrote no sidecar (resultsRef=null in response_summary). The invariant is respected: positive search → sidecar written; nil search → no sidecar. Log_id in both append calls matches the generated log IDs (log_002, log_003).\n\nJunior: (Sidecar correctness = Pass. The invariant was respected and sidecar references were consistent.)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> When the formal-name search returned zero results, the skill did NOT declare the search negative and stop. Instead, it: (1) read tree.gedcomx.json and identified the documented Nickname 'Bitsie Jackson' on I1, (2) recognized that 'Bitsie' does not map via standard nickname-equivalence tables (per scenario context), (3) retried the search with givenName='Bitsie' as a meaningful variant, (4) logged both the nil (log_002) and the retry (log_003) as separate entries, (5) succeeded in recovering the record via the nickname retry. The skill exhausted the primary investigative lever (nickname fallback from tree) and assessed that the absence of formal-name results was meaningful evidence of enumerator behavior (recording the community nickname instead). No premature conclusion; reasonable escalation path followed.\n\nJunior: (No premature conclusion; escalation path was reasonable and complete. Nil escalation - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie_in_record",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie_in_record`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all requirements: (1) read tree.gedcomx.json and identified both the BirthName 'Mary Jackson' and Nickname 'Bitsie Jackson' on I1, (2) executed formal-name search first per the plan, (3) recognized the nil result and consulted the tree for nickname fallback per plan rationale, (4) retried with 'Bitsie' and recovered the record, (5) logged both searches separately (log_002 and log_003), (6) wrote sidecar results/log_003.json for the positive result, (7) reported the match back to the user with explicit reasoning linking the recovered record to I1, and (8) noted the new lead (William Jackson household). No silent omissions.\n\nJunior: (No silent omissions occurred; every step of the plan was addressed. Completeness - Pass )"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Skill correctly identified that Mary Jackson (I1) had both a BirthName and Nickname, recognized that 'Bitsie' is non-derivative and doesn't appear in standard nickname equivalence tables, and issued record_search with givenName 'Mary'. The 1880 census record matched (score 0.92) with accurate details: Mary Jackson, b. 1850, PA, Lancaster County, household of William Jackson. All claims supported by tool responses and cross-checks.\n\nJunior: (All claims were supported by tool responses and cross‑checks. No fabricated details. Correctness - Pass )"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Skill completed all required tasks: read tree.gedcomx.json to identify both names on I1, explained reasoning for using formal name, issued record_search with correct parameters, reviewed and triaged the returned record, logged the result with full metadata (log_002), and wrote the sidecar. Plan item pli_001 status updated to in_progress. No gaps.\n\nJunior: (No gaps or omissions, the skill fully addressed the scenario. Completeness - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP calls used correct arguments. record_search call matched expected_args (surname 'Jackson', givenName 'Mary'). Additional parameters (residencePlace, dates, projectPath) were reasonable and well-motivated. research_log_append and research_append calls both matched live tool signatures with valid arguments. No fixture_not_found errors or semantic mismatches.\n\nJunior: (No fixture mismatches, missing parameters, or semantic errors occurred. Tool Arguments - Pass)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters correctly anchored on surname 'Jackson' and formal givenName 'Mary' (not 'Bitsie'). Date range 1845–1855 (birth) and 1880 residence matched plan item and subject context. Lancaster County, Pennsylvania jurisdiction was appropriately specific. Skill explained why formal name was used: 'Bitsie' is a non-derivative nickname not in standard equivalence tables, so only the formal BirthName would appear in official records. This reasoning directly addresses the test scenario.\n\nJunior: (Reasoning directly addressed the test scenario and showed proper nickname‑resolution behavior. - PASS)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> Single result (Mary Jackson, score 0.92) was correctly triaged as a strong match. Skill performed manual cross-check against I1: name, sex, birth year, birthplace, and residence county all aligned. Noted couple relationship to William Jackson from GEDCOMX payload. Explicitly flagged that score 0.92 + logical attributes = confident match. No near-misses were discarded or bulk-categorized.\n\nJunior: (Result triage - Pass. Strong, systematic, and complete evaluation.)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> Positive search (1 result) correctly generated sidecar at results/log_002.json (matching resultsRef in log entry). Tool response confirmed filesWritten=[research.json, results/log_002.json], returning true sidecar creation. returnedCount=1 in response matches single record in results. No sidecar would have been written for nil search per the nil invariant—not applicable here.\n\nJunior: (Log quality - Pass. Entry fully populated; audit trail clear and reasoning explicit.)"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> Search returned one positive result, so nil escalation logic not triggered. However, skill's strategy demonstrates the required reasoning: it proactively chose the formal name over the nickname based on project state and name-search mechanics reference, avoiding the nil-result failure mode that would occur if 'Bitsie' were searched directly (the bitsie-no-results fixture). By design, the skill prevented a nil situation rather than responding to one.\n\nJunior: ( Nil escalation - Pass. Nil avoided by using formal name; escalation logic demonstrated through prevention rather than response. )"
+    },
+    {
+      "test_id": "ut_search_records_nickname_bitsie",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_nickname_bitsie`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Log entry (log_002) fully populated: query included all parameters used (surname, givenName, residencePlace, dates), resultsExamined=1 and resultsAvailable=1 accurately reported, outcome='positive' correct, resultsRef correctly pointed to results/log_002.json, notes provided concise summary noting score, matching attributes, and explicit statement that 'Mary' was indexed correctly while 'Bitsie' was not needed. Audit trail clear for future review.\n\nJunior: (Log quality - Pass. Entry fully populated; audit trail clear and reasoning explicit.)"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the logical impossibility (5-year-old listed as Head of Household in 1850), cross-checked the high same_person score (0.85) against qualitative evidence, and flagged the result appropriately rather than auto-accepting the score. The ARK collision observation was accurate and well-documented. All assertions made are factually grounded in the record data and research context.\n\nJunior: (Correctness - Pass. Conflict flagged — strong score overridden by impossible role and ARK duplication. )"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the full scope of the user request: executed the census search for pli_001, triaged the single result with per-record reasoning, called same_person to validate the match algorithmically, logged the search outcome, and provided a summary of all pli_001 searches and recommended next steps. The discovery of a qualitative conflict is a complete finding, not an incomplete search — nil-escalation rules do not apply.\n\nJunior: (Completeness - Pass. Search executed, conflict flagged with reasoning, logged, and next steps offered, complete handling.)"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three tool calls passed arguments matching the fixture expectations. record_search used surname='Flynn', givenName='Patrick', residencePlace='Schuylkill County, Pennsylvania', and year 1850 — matching ~Flynn and ~Patrick expectations. same_person received correctly formed GedcomX payloads with primaryId1='CP1' and primaryId2='I1'. research_log_append received all required fields including query, outcome='partial', resultsExamined=1, and notes. No calls returned fixture_not_found errors.\n\nJunior: (Tool Arguments  - Pass.  All arguments matched expectations; no fixture errors or semantic issues.)"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters were well-formed: surname 'Flynn' (correct anchor), givenName 'Patrick', residencePlace 'Schuylkill County, Pennsylvania' (appropriate jurisdiction level from pli_001), and residenceYear 1850 (exact match to plan item). The broad-to-narrow approach is implicit in the clean targeting. The skill correctly noted in context that prior searches (log_001, log_003) had already captured strong variant and surname variants, so a fresh direct search was the right strategy.\n\nJunior: (Search strategy - Pass. Parameters precise; formal search complemented prior variant coverage.)"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> The skill triaged the single result with explicit per-record reasoning: (1) cited the same_person score 0.85/confidence 8; (2) identified the logical impossibility of a 5-year-old being listed as Head of Household; (3) flagged the ARK collision with log_002; (4) correctly categorized the result as 'needs-review' rather than silently discarding or auto-accepting the score. The skill demonstrated that same_person is one input to reasoning, not the final word — exactly as required by the context.\n\nJunior: (Result triage - Pass. Strong score overridden by impossible role and ARK duplication; flagged for human review. )"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Log entry log_005 is complete and accurate: `query` populated with actual search parameters (surname, givenName, residencePlace, years), `results_examined` is 1 and matches the count reviewed, `outcome` is 'partial' (correct for a result with qualitative conflicts), `resultsRef` points to results/log_005.json (created by the append call), and `notes` provides a detailed one-line-plus summary explaining the role conflict, ARK duplication, and relationship to prior searches. The log is audit-ready.\n\nJunior: (Log quality - Pass. Entry complete; conflicts documented; audit trail clear.)"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> The sidecar results/log_005.json was correctly created for the positive search (1 result returned). The response_summary shows resultsRef pointing to the staging file, and the research_log_append response confirms the sidecar was written to results/log_005.json with returnedCount=1. The log_id 'log_005' matches across the log entry and sidecar. No sidecar was inappropriately created for nil results.\n\nJunior: (Sidecar correctness - Pass. Sidecar created for 1 result; log ID and resultsRef consistent; audit trail intact. )"
+    },
+    {
+      "test_id": "ut_search_records_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_014`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> This search returned 1 result (not nil), so nil-escalation rules do not apply. The skill correctly treated the conflicted result as a substantive finding requiring investigation and human review, not as a nil to be escalated. The skill appropriately summarized the context of all pli_001 searches (log_001, log_003, log_005) and recommended image verification to resolve the ARK collision — showing problem-solving rather than abandonment.\n\nJunior: (Nil escalation - Pass. Nil rules not triggered; conflict flagged and next steps offered.)"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_013`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the returned result (Patrick Flyn, ARK VRNT-7M3) and accurately assessed its relevance. The same_person score of 0.32 was correctly interpreted in context: surname truncation (Flyn vs Flynn) and 3-year birth-year variance (1842 vs ~1845) explained the low score, but the skill properly noted that birthplace (Ireland), given name (Patrick), and residence (Branch Township, Schuylkill) all align strongly. The skill correctly cross-referenced this result with log_003 (same ARK) and noted the absence of log_001's MXHY-TP4 record as a search-engine artifact. No fabricated claims; all assertions grounded in the record data.\n\nJunior: (Correctness  - Pass. Low score explained by variant spelling and age gap; record flagged as possible match with reasoning.)"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request fully: searched the 1850 census for Patrick Flynn in Schuylkill County per pli_001, executed the record_search with appropriate parameters (surname, givenName, residence year and place, recordCountry), called same_person to score the result, triaged the result with explicit reasoning (flagging as possible/needs-review), logged the search with appropriate metadata, and updated the plan item status. No silent omissions; all steps required by the scenario were completed.\n\nJunior: (Completeness - Pass. Search executed, near‑match flagged with reasoning, logged, and plan updated — full scope covered.)"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_013`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching the fixture's expected args semantically. The record_search call matched the predicate expectation with surname and givenName correctly populated (Flynn, Patrick), and included residenceYear, residencePlace, and recordCountry — appropriate additions for narrowing the search. The same_person call correctly passed both gedcomx payloads with matching primaryId fields. The research_log_append call correctly populated query, outcome (positive), resultsExamined (1), resultsAvailable (1), and notes with clear triage reasoning. All critical identifiers and parameters align with the expected shape.\n\nJunior: (Tool Arguments - Pass. Arguments matched expectations; search, scoring, logging, and plan update all correctly parameterized.)"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_013`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters were well-constructed: surname (Flynn) as the anchor, givenName (Patrick), residenceYearFrom/To (1850), residencePlace (Schuylkill County, Pennsylvania), and recordCountry (United States). The parameters match the plan item context (Patrick Flynn, ~1845 birth, Schuylkill County target). The fixture expected ~Flynn and ~Patrick — both met. The skill justified the parameters with specific context (Patrick would be ~5 years old in 1850, searched broadly by surname/given name/county). Although no explicit variant names were added to this query, the skill correctly recognized the returned 'Flyn' spelling as a variant and noted it in triage assessment, demonstrating variant-awareness.\n\nJunior: (Search strategy - Pass. Parameters precise; context explained; variant spelling recognized in triage.)"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_013`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> The single returned result was triaged with detailed per-record reasoning. The skill cited specific matching attributes: same given name, surname as one-letter variant (Flyn vs Flynn), birthplace match (Ireland), residence match (Branch Township, Schuylkill, PA). The same_person score (0.32) was explicitly cited and contextualized — the skill explained why it was low (surname truncation + 3-year age gap) and determined this was not a true identity mismatch. The result was correctly categorized as 'possible match — review warranted' (needs-review), not dismissed despite the low score. The skill also checked source_attachments implicitly by noting the ARK overlap with log_003 (same underlying record, confirming prior finding) and logged that log_001's MXHY-TP4 did not surface. All reasoning was explicit and justified.\n\nJunior: (Result triage - Pass. Low score explained, variant spelling recognized, flagged for human review with clear reasoning.)"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_013`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> A log entry was created as log_005 with all required fields populated. The query field contained the actual search parameters used (surname Flynn, givenName Patrick, residenceYearFrom/To 1850, residencePlace Schuylkill County Pennsylvania, recordCountry United States). The results_examined count was 1 (matching the single result reviewed). The outcome was correctly recorded as 'positive' (a result was returned and examined). The results_ref was set to 'results/log_005.json' pointing to the sidecar. The notes field provided a one-line human-useful summary capturing the key finding (Patrick Flyn, ARK VRNT-7M3, same as log_003, low same_person score but possible match on name/place/county), the variant assessment, and the note about log_001 MXHY-TP4 not surfacing. The log serves as an audit trail for exhaustiveness.\n\nJunior: (Log quality - Pass. All required fields populated; reasoning documented; audit trail intact. )"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_013`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> The skill executed a positive search (one result returned) and correctly wrote a sidecar file at the path results/log_005.json, as confirmed by the research_log_append response which listed 'results/log_005.json' in filesWritten. The response_summary from research_log_append reported returnedCount: 1, matching the single result in the search payload. The stagedResultsRef was populated with the correct staging path, which the append operation moved to the permanent results/log_005.json location. The sidecar invariant is satisfied: positive search → sidecar written. No nil searches occurred in this test, so the nil-search invariant is not tested here.\n\nJunior: (Sidecar correctness  - Pass. Sidecar created for 1 result; staging path correctly promoted; invariant satisfied.)"
+    },
+    {
+      "test_id": "ut_search_records_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_search_records_013`** — `rubric` / `Nil escalation`\nLLM: N/A → Junior: N/A\n\n> Not applicable. This test scenario returned one result and the skill triaged it. This test evaluates near-match triage behavior only, not nil-search escalation. No nil result occurred; therefore nil escalation levers (name variants, date widening, jurisdiction broadening) are not graded here. The skill's task was to search once, score the result, and triage — which it completed correctly.\n\nJunior: (Nil escalation - N/A. This test evaluates near‑match handling only; nil‑search escalation is not relevant.)"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All facts presented match the record_search response: Patrick Flynn, age 1845, Ireland birthplace, Thomas and Mary Flynn parents, Branch Township Schuylkill County residence. The match score (0.95) and ARK identifier are accurate. No fabricated claims or contradictions to the input state.\n\nJunior: (Correctness - Pass. All facts matched the record_search response; strong match correctly recognized and logged.)"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Skill fully executed the user request: searched 1850 census for Patrick Flynn in Schuylkill County per pli_001, returned the result, triaged it correctly, wrote a sidecar at results/log_005.json, and appended a log entry. All required outputs (search execution, result triage, log entry with results_ref, sidecar write) are documented.\n\nJunior: (Completeness - Pass. Search executed, result triaged, sidecar written, log entry appended — full scope covered.)"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP calls passed correct args: record_search received surname='Flynn' and givenName='Patrick' (matching expected_args), plus appropriate residence year and place parameters. research_log_append call used correct projectPath, planItemId='pli_001', outcome='positive', and accurately captured query, resultsExamined=1, resultsAvailable=1, and stagedResultsRef. No tool calls returned fixture_not_found errors.\n\nJunior: (Tool Arguments - Pass. Search and logging calls parameterized correctly; all identifiers and counts aligned with expectations.)"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Search strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `rubric` / `Search strategy`\nLLM: 3 → Junior: 3\n\n> Search parameters correctly centered on Flynn surname (the anchor for Patrick Flynn I1), exact year 1850, and Schuylkill County jurisdiction. The parameters match the plan item intent precisely — no variants were needed because Flynn is unambiguous in this context. Broad-to-narrow approach not required here; the targeted parameters were appropriate for the high-specificity requirement.\n\nJunior: (Search strategy - Pass. Parameters matched plan intent; targeted search produced the correct record without requiring variants.)"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `rubric` / `Result triage`\nLLM: 3 → Junior: 3\n\n> Single result (MXHY-TP4) was thoroughly triaged: skill explicitly checked name (exact match), sex (male), birth year (1845 vs. ~1845), birthplace (Ireland), residence (Branch Township, Schuylkill, PA), and match score (0.95). Household relationships to Thomas and Mary Flynn confirmed against tree. Result correctly identified as a strong match supporting the research objective for I1. No tools beyond record_search were available in this test environment, so their absence is not a deficit.\n\nJunior: (Result triage - Pass. Exact match across all key attributes; strong match recognized and logged with household context.)"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> Log entry log_005 (visible in file-change diff and response_summary) captures actual search parameters (surname, givenName, residenceYearFrom/To, residencePlace), results_examined=1, results_available=1, outcome='positive', and results_ref='results/log_005.json'. Notes field is detailed and human-readable: identifies the record ARK, age, location, household relationships, and notes equivalence to log_001. Audit trail is complete and supports exhaustiveness claims.\n\nJunior: (Log quality - Pass. All required fields populated; notes detailed; sidecar linkage intact. )"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Sidecar correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `rubric` / `Sidecar correctness`\nLLM: 3 → Junior: 3\n\n> Skill response explicitly references writing 'results/log_005.json' (via research_log_append response). response_summary confirms filesWritten includes 'results/log_005.json' and returned_count=1 matches the single result in the payload. No sidecar created for nil searches (not applicable here; search was positive). log_id in response_summary matches log_005 referenced in text and tool response.\n\nJunior: (Sidecar correctness - Pass. Sidecar explicitly written, counts aligned, log linkage intact — invariant satisfied. )"
+    },
+    {
+      "test_id": "ut_search_records_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_search_records_010`** — `rubric` / `Nil escalation`\nLLM: 3 → Junior: 3\n\n> Not applicable — the search returned one result, not nil. Nil escalation dimension only evaluates searches that find zero results and require variant retry attempts. This search succeeded on first execution with no nil condition to escalate.\n\nJunior: (Nil escalation - N/A. Search succeeded on first execution; nil‑search escalation not relevant. )"
+    }
+  ]
+}
