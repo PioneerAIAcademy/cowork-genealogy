@@ -113,6 +113,8 @@ Do not restate evidence already quoted verbatim elsewhere — cite it. Most conc
 
 The `narrative_markdown` is the **authoritative GPS conclusion** — if structured fields disagree, the narrative governs. It must be **self-contained**: readable without the JSON and uploadable to FamilySearch as a Memory/Document. Write in the Statement / Summary / Argument form selected above (section headings, evidence summary, conflict resolution, tier declaration, inline citations on every factual claim). Organize by significance, not chronology. Name informants when their identity affects weighing. State source classifications explicitly so the reader sees the three-layer analysis.
 
+**Citations in the narrative must be copied directly from research.json, not recalled or paraphrased.** Before writing any footnote or inline citation, read the relevant source entry's `citation` and `citation_detail` fields from research.json and copy the text verbatim. Do not write collection names, repository names, or URLs from memory. A paraphrased citation that differs even slightly from the stored citation is a citation error — it sends future researchers to the wrong place.
+
 ### 5. Write the proof_summaries entry
 
 `research_append({ projectPath, section: "proof_summaries", op: "append", entry })` without an `id` — the tool assigns `ps_NNN`, validates the whole project, and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
