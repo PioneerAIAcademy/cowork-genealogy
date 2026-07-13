@@ -569,6 +569,32 @@ def _normalize_record_id(rid):
     return rid[idx:] if idx != -1 else rid
 
 
+def _staged_sidecar_persona_counts(state):
+    """Map each staged sidecar record's normalized id -> the number of
+    personas in its `gedcomx.persons[]` (0 when the result carries no
+    gedcomx). Used to gate the shared-persona corruption check on
+    multi-persona records only."""
+    import json
+
+    counts = {}
+    for rel_path, content in (state.get("files") or {}).items():
+        if not (rel_path.startswith("results/") and rel_path.endswith(".json")):
+            continue
+        try:
+            sidecar = json.loads(content)
+        except (ValueError, TypeError):
+            continue  # malformed sidecar fixtures have their own tests
+        payload = sidecar.get("payload") or {}
+        for result in payload.get("results") or []:
+            personas = (result.get("gedcomx") or {}).get("persons") or []
+            for key in ("recordId", "arkUrl"):
+                rid = result.get(key)
+                if rid:
+                    norm = _normalize_record_id(rid)
+                    counts[norm] = max(counts.get(norm, 0), len(personas))
+    return counts
+
+
 def test_record_persona_id_set(before_state, after_state, test):
     """Sidecar-gated: when the scenario staged a search sidecar
     (results/<log_id>.json), EVERY new assertion whose record_id matches a
@@ -616,6 +642,46 @@ def test_record_persona_id_set(before_state, after_state, test):
         rid = a.get("record_id") or ""
         if not rid.startswith("http"):
             errors.append(f"{aid}: record_id {rid!r} is not a full arkUrl")
+
+    # Corruption signature (ut_006): one persona id stamped across DIFFERENT
+    # record_roles of a multi-persona record — the focus persona's id leaked
+    # onto other household members' / relatives' assertions. Gated on records
+    # the sidecar shows to hold 2+ personas (a single-persona record cannot
+    # cross-contaminate). Role comparison reuses _record_role_matches so
+    # `father` vs `father_of_deceased` (one role, two spellings) is not a
+    # false positive.
+    persona_counts = _staged_sidecar_persona_counts(before_state)
+    by_record = {}
+    for a in matched:
+        by_record.setdefault(
+            _normalize_record_id(a.get("record_id") or ""), []
+        ).append(a)
+    for rid_norm, group in by_record.items():
+        if persona_counts.get(rid_norm, 0) < 2:
+            continue
+        by_persona = {}
+        for a in group:
+            pid = a.get("record_persona_id")
+            if pid:
+                by_persona.setdefault(pid, []).append(a)
+        for pid, holders in by_persona.items():
+            distinct = []  # (role, example assertion id), pairwise-distinct roles
+            for a in holders:
+                role = a.get("record_role")
+                if not any(_record_role_matches(role, seen) for seen, _ in distinct):
+                    distinct.append((role, a.get("id", "?")))
+            if len(distinct) > 1:
+                detail = ", ".join(
+                    f"{aid}: record_role='{role}'" for role, aid in distinct
+                )
+                errors.append(
+                    f"record_persona_id '{pid}' is shared by assertions with "
+                    f"different record_roles on multi-persona record "
+                    f"'{rid_norm}' ({detail}) — one persona cannot fill "
+                    f"different roles; the focus persona's id was likely "
+                    f"stamped onto other personas' assertions"
+                )
+
     assert not errors, (
         "record_search assertions wrongly shaped:\n  - " + "\n  - ".join(errors)
     )

@@ -16,7 +16,7 @@ description: >-
   citations.
 model: claude-sonnet-5
 tools:
-  - Read
+  - mcp__genealogy__project_context
   - mcp__genealogy__record_read
   - mcp__genealogy__place_search
   - mcp__genealogy__place_search_all
@@ -60,15 +60,21 @@ standardized places, no network fetch; (3) a **live**
 `record_read({ recordId })` only when handed a bare recordId with neither
 content nor sidecar, or when you need the **full facts of a co-resident**
 (the sidecar fully populates only the searched person). Never read a
-record twice in one invocation, and never `Read` the sidecar file
+record twice in one invocation, and never open the sidecar file
 yourself — `record_read` pulls just the one record out of it.
 
-**Read project state once, up front.** Before extracting, read
-`research.json` and `tree.gedcomx.json` a single time and keep both in
-context — you reuse them for source-reuse checks, duplicate checks, and
-existing-person (`I` id) lookups. Do not re-open either file later; the
-writer tools return every id they assign, so you never re-read to learn
-one.
+**Project context: ONE `project_context` call, up front.** Before
+extracting, call `project_context({ projectPath })` once — it returns
+the compact projection you need for judgment calls: `openQuestions`
+(for `extracted_for_question_ids`), `persons` (each tree person's
+preferred name, gender, and the `S` ids it already cites in
+`sourceRefs`), `sources` (each research source's repository, `S` id,
+and covered `recordIds`), and `projectStatus`. Skip the call only when
+the delegation message states the project is fresh/empty. **Never read
+`research.json`, `tree.gedcomx.json`, or the sidecars — you have no
+file-read tool.** Every mechanical lookup lives inside the writer
+tools, and they return every id they assign, so you never re-read to
+learn one.
 
 ## GPS foundation
 
@@ -116,15 +122,16 @@ classification.
 `citation_detail` (object with six required keys: `who`, `what`,
 `when_created`, `when_accessed`, `where`, `where_within`),
 `source_classification`, `repository`, `access_date`. **Tool-stamped:**
-`id` and `gedcomx_source_description_id` (set the latter yourself only
-when reusing an existing `S`). **Optional:** `url`, `url_archived`,
+`id` and `gedcomx_source_description_id` (the tool stamps the `S` link
+even on reuse — never set either yourself). **Optional:** `url`, `url_archived`,
 `notes` (provenance/quality), `transcription` (verbatim image text),
 `log_entry_id`. Do not invent fields — `record_id` is an assertion field,
 not a source field; `record_type` is not a field at all.
 `when_accessed` / `access_date` are the **real** date the record was
 accessed (today for a record just fetched) — never a placeholder, a raw
-timestamp, or the record's publication date. Set `log_entry_id` to the
-delegation's `logId` — the source→search provenance link.
+timestamp, or the record's publication date. `access_date` is ISO
+`YYYY-MM-DD` (e.g. `2026-07-13`) — never prose dates. Set `log_entry_id`
+to the delegation's `logId` — the source→search provenance link.
 
 **"Original not examined" — decide it now, not later.** If what you
 examined is a derivative (index entry, abstract, transcript, translation)
@@ -306,6 +313,8 @@ absence, whatever the record type; the table's
 - **Groom and bride:** informants for their own identifying facts (age,
   birthplace, parents, occupation), proximity `self`. Their parents'
   names on the license are `direct` evidence — the party stated them.
+  A marriage-record party reporting their OWN parents' names is
+  proximity `self` (`family_not_present` is death-certificate doctrine).
 - **Officiant / clerk:** informant for the marriage event itself (date,
   place, ceremony). Proximity `official_duty` (officiant) or `witness`
   (clerk who recorded the signed return).
@@ -399,8 +408,8 @@ delegation message explicitly says no log entry exists yet for this
 record (then use its returned `logId`).
 
 **`extracted_for_question_ids`** — the open questions this assertion
-bears on (the caller may name them; otherwise check `research.json`
-questions); empty array for opportunistic extraction.
+bears on (the caller may name them; otherwise use `project_context`'s
+`openQuestions`); empty array for opportunistic extraction.
 
 ## Step 4 — Persist: ONE `research_append` call per record
 
@@ -426,14 +435,12 @@ direct writes bypass validation, id allocation, and the `.bak` safety
 net. If a persistence tool shows as deferred, load it via ToolSearch with
 the fully-qualified name (`mcp__genealogy__research_append`) first.
 
-**Reuse instead of duplicating.** Same underlying record already
-described in the tree (e.g. same census via another repository): omit
-`sourceDescription`; set the sources op's
-`gedcomx_source_description_id` to the existing `S` id. Same record +
-same repository already in `research.json`: an `update` op
-(`entryId: "<src_>"`) instead of the append, with each assertion's
-`source_id` set to that `src_` explicitly (the auto-stamp requires a
-sources append).
+**Source reuse is tool-detected.** Always supply `sourceDescription` —
+the tool detects when this record already has a source (same
+repository → it updates the existing `src_` in place; different
+repository → it creates the new `src_` reusing the existing `S`) and
+echoes the decision as `sourceReuse: { action, srcId, sId }`. Relay
+the action in your summary. Never pre-check for reuse yourself.
 
 **On `{ ok: false, errors, opsReceived }` nothing was written:** fix ONLY
 the ops named in `errors` (`ops[i]: …`), keep the rest identical, and
@@ -445,66 +452,57 @@ retry blindly and never drop unnamed ops.
 keep a one-deep `.bak`; a successful return is proof the write is valid.
 Do not re-read the files to "sanity check" a success.
 
+**Never write the `person_evidence` section** — identity assessments
+(record persona = tree person) go in your return summary only; the
+person-evidence skill owns that section.
+
 ## Step 5 — Sibling person stubs (subject is a child on a household record)
 
 When the subject's `record_role` is `child_N` on a household record
-(census etc.), also create minimal person stubs in `tree.gedcomx.json`
-for the subject's siblings on this record (the other `child_N` roles).
+(census etc.), make **ONE** `tree_edit` call — the tool owns the tree
+matching, dedup, stub creation, and edges:
 
-**Trigger** — ALL of: the subject is `child_N` (not head, spouse, or
-other role), AND at least one household parent role
-(`head_of_household`, `wife`, `father_of_*`, `mother_of_*`) maps to a
-person **already in `tree.gedcomx.json`**. **Skip** when: the subject's
-role is anything else; no household parent is in the tree (surface the
-gap in your summary); or a sibling with the same preferred name + gender
-already exists in the tree.
-
-**Enumerate the actual tree state — never assume.** From the
-`tree.gedcomx.json` you read up front: list `persons[]` once; look up
-each household parent by preferred name + gender and record each found
-parent's `I` id (none found → skip stubs); look up each sibling the same
-way, matching tolerantly — spelling variants and diminutives
-(Bridget/Biddy, Wm/William) are the same person. Found siblings are
-skipped; not-found siblings are the in-scope set. If the record's
-children and the tree's children **contradict** beyond tolerant matching,
-STILL stub every clearly-new child (the trigger fired; writing the stubs
-is mandatory) and ALSO surface the discrepancy as an identity question
-in your summary. When you judge a record persona to BE an existing tree
-person under a different name (e.g. that person already cites this very
-source), record the record's name as an **alternate name** — a
-`tree_edit add_name` op with `preferred` omitted — and say so in the
-summary. **Never** rename or rewrite existing tree persons: extraction
-adds evidence (`add_person`, `add_relationship`, `add_name`,
-`add_fact` on entities you created this pass); `update_name`,
-`update_person`, and `remove` are identity-resolution and correction
-acts that belong to person-evidence, hypothesis-tracking, and the
-tree-edit skill — they live in the `tree_correct` tool, which is not
-in your tool set, and the eval suite's validator fails any run that
-emits them. Then emit a compact enumeration
-checklist (required before writing, a few lines): `Parents in tree:
-<name> = I<id>, …` (or "none → skip"); `Siblings: <name> → create /
-<name> → already I<id>`. Never claim "all siblings already existed"
-without this list.
-
-**Write in two `tree_edit` batches** (tree `I` ids mix synthesized +
-FamilySearch ids — never predict them):
-1. **Person stubs — one batch of `add_person` ops**, one per in-scope
-   sibling: `gender` (`Male`/`Female`) + a single `names` entry with
-   `given`, `surname`, `preferred: true`, `type: "BirthName"` — no `id`.
-   **Hard rule: the stub is `gender` + ONE `names` entry ONLY — a
-   `facts` array on a stub fails validation. Do NOT copy the shape of
-   existing tree persons (they carry facts/sources; stubs never do);
-   the record's facts and the S source ref live on the per-sibling
-   assertions in research.json.** Read each assigned `I` id back from
-   `results[].assignedIds`.
-2. **ParentChild edges — a SECOND batch**, one `add_relationship` op per
-   (sibling × in-tree parent) pair: `{ type: "ParentChild", parent:
-   "<parent I>", child: "<sibling I from batch 1>" }`. Two ops per
-   sibling when both parents are in the tree.
+- **From the RECORD**, list the household's parents
+  (`head_of_household`, `wife`, `father_of_*`, `mother_of_*`) and
+  children (every `child_N`, the subject included) — name + gender for
+  each, as the record states them.
+- Call `tree_edit({ projectPath, operation: "add_household_children",
+  parents: [{given, surname, gender}, …], children: [{given, surname,
+  gender}, …] })`. The tool matches parents against the tree (tolerant
+  of Wm/William-class variants), skips children already there, creates
+  the missing stubs (gender + one preferred BirthName — never facts),
+  and adds a ParentChild edge to every matched parent, all in one
+  validated write. Never pre-check the tree or predict `I` ids.
+- **Relay the returned checklist** (`parentsMatched`, `created`,
+  `skipped`, `edgesAdded`) in your summary.
+  `action: "skipped_no_parent_in_tree"` means no household parent is
+  in the tree — surface that gap instead. On `skipped_no_parent_in_tree`:
+  surface the gap in your summary and STOP — never `add_person` the
+  missing parents or hand-draw their edges; parents enter the tree via
+  person-evidence/proof-conclusion, not extraction.
+- **Identity contradictions are yours to flag.** When the tool's
+  skipped/created pattern conflicts with the record — e.g. the tree
+  holds children this household record does not list, or a `skipped`
+  entry's tree identity looks like a different person — surface the
+  discrepancy as an identity question in your summary. **Never**
+  rename or rewrite existing tree persons: `update_name`,
+  `update_person`, and `remove` are identity-resolution acts that live
+  in the `tree_correct` tool, which is not in your tool set, and the
+  eval suite's validator fails any run that emits them.
+- **Alternate names:** when you judge a record persona to BE an
+  existing tree person under a different name — e.g.
+  `project_context.persons[].sourceRefs` shows that person already
+  cites this record's `S` — record the record's spelling as an
+  alternate name (`tree_edit add_name`, `preferred` omitted) and say
+  so in the summary.
 
 The subject's own person and edges are out of scope — person-evidence
-writes those. The source `S` entry was already created by Step 4; these
-batches carry no source op.
+writes those. The source `S` entry was already created by Step 4; the
+household call carries no source op.
+
+Raw relationship ops (non-household cases — death-cert parents, marriage
+couples): `ParentChild` takes `{ type: "ParentChild", parent: "<I id>",
+child: "<I id>" }`; `Couple` takes `{ type: "Couple", person1, person2 }`.
 
 ## Negative evidence
 
@@ -542,12 +540,14 @@ report them in your return summary.
 
 ## Re-invocation and source reuse
 
-If a source for this record already exists (match by
-`gedcomx_source_description_id`, `record_id` on its assertions, or
-working citation), do NOT create a duplicate: refine the existing entry
-via `research_append` `op: "update"` and refine its assertions the same
-way (update in place by `a_` id — never a second assertion for the same
-fact). This includes classification-refinement requests: re-examine the
+Re-extracting a record already persisted is safe: supply
+`sourceDescription` as usual — the tool detects the existing source
+for this `record_id` and updates it in place instead of duplicating
+(`sourceReuse.action: "updated_existing"`). Refine existing assertions
+via `update` ops by `a_` id — the delegation names the assertions to
+refine (`project_context.sources[].recordIds` shows which source covers
+this record) — never a second assertion for the same
+fact. This includes classification-refinement requests: re-examine the
 named assertions against the doctrine above and update only the
 classification fields that should change (`information_quality`,
 `informant`, `informant_proximity`, `informant_bias_notes`,
@@ -564,9 +564,11 @@ NOT reproduce per-assertion tables, per-field walkthroughs, or
 classification rationale — that lives in the persisted artifact. Return
 **≤10 lines** to the caller:
 
-- source id (`src_` + `S`), reused or created
+- source id (`src_` + `S`) and the echoed `sourceReuse` action
+  (created / updated_existing / new_source_reused_s)
 - assertion count grouped by `record_role`
-- tree changes (sibling stubs created with `I` ids, edges added), or none
+- tree changes (the household checklist: stubs created with `I` ids,
+  skipped, edges added), or none
 - key findings: gaps, conflicts, negative evidence, shared-informant
   units, any tentative/`[?]` identity flag, and any **"original not
   examined"** limitation

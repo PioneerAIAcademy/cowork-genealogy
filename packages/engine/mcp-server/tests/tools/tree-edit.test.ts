@@ -807,3 +807,276 @@ describe("tree_edit (batch ops)", () => {
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
   });
 });
+
+describe("tree_edit (add_household_children)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "tree-edit-household-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function writeProject(tree: any, research: any = minimalResearch) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+  const exists = async (rel: string) => access(join(dir, rel)).then(() => true, () => false);
+
+  /** ut_013-style tree: Thomas (I1) is Patrick's (I2) father via R1. */
+  const flynnTree = () => ({
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "Thomas", surname: "Flynn", preferred: true }] },
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Patrick", surname: "Flynn", preferred: true }] },
+    ],
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2" }],
+    sources: [],
+  });
+
+  it("creates stubs + edges for new children, skips the existing child, returns the checklist", async () => {
+    await writeProject(flynnTree());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [
+        { given: "Thomas", surname: "Flynn", gender: "Male" },
+        { given: "Margaret", surname: "Flynn", gender: "Female" }, // not in tree
+      ],
+      children: [
+        { given: "Bridget", surname: "Flynn", gender: "Female" },
+        { given: "Patrick", surname: "Flynn", gender: "Male" }, // the subject — already I2
+        { given: "John", surname: "Flynn", gender: "Male" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || "results" in r) return;
+    expect(r.household).toEqual({
+      parentsMatched: [{ name: "Thomas Flynn", id: "I1" }],
+      created: [
+        { name: "Bridget Flynn", id: "I3" },
+        { name: "John Flynn", id: "I4" },
+      ],
+      skipped: [{ name: "Patrick Flynn", reason: "already_child_of_parent", id: "I2" }],
+      edgesAdded: 2,
+    });
+    expect(r.assignedIds?.persons).toEqual(["I3", "I4"]);
+    expect(r.assignedIds?.relationships).toEqual(["R2", "R3"]);
+    expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+
+    const tree = await readTree();
+    const bridget = tree.persons.find((p: any) => p.id === "I3");
+    // the established stub shape: gender + ONE preferred BirthName — no facts, no ark
+    expect(bridget).toEqual({
+      id: "I3",
+      gender: "Female",
+      names: [{ id: "N3", type: "BirthName", preferred: true, given: "Bridget", surname: "Flynn" }],
+    });
+    const newRels = tree.relationships.filter((x: any) => x.id !== "R1");
+    expect(newRels).toEqual([
+      { id: "R2", type: "ParentChild", parent: "I1", child: "I3" },
+      { id: "R3", type: "ParentChild", parent: "I1", child: "I4" },
+    ]);
+  });
+
+  it("no parent in the tree → skipped_no_parent_in_tree, zero writes, no .bak", async () => {
+    await writeProject(flynnTree());
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Henry", surname: "Bottermiller", gender: "Male" }],
+      children: [{ given: "Willie", surname: "Bottermiller", gender: "Male" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || "results" in r) return;
+    expect(r.action).toBe("skipped_no_parent_in_tree");
+    expect(r.household?.parentsMatched).toEqual([]);
+    expect(r.household?.created).toEqual([]);
+    expect(r.household?.skipped).toEqual([{ name: "Willie Bottermiller", reason: "no_parent_in_tree" }]);
+    expect(r.filesWritten).toEqual([]);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("dedup tolerance: Wm/William contraction, Will/William prefix, and accent-folded exact all skip", async () => {
+    const tree = flynnTree();
+    tree.persons.push(
+      { id: "I3", gender: "Male", names: [{ id: "N3", given: "William", surname: "Flynn", preferred: true }] },
+      { id: "I4", gender: "Male", names: [{ id: "N4", given: "Jose", surname: "Flynn", preferred: true }] },
+    );
+    tree.relationships.push({ id: "R2", type: "ParentChild", parent: "I1", child: "I3" });
+    await writeProject(tree);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Thos", surname: "Flynn", gender: "Male" }], // contraction matches Thomas
+      children: [
+        { given: "Wm", surname: "Flynn", gender: "Male" }, // contraction → I3 (child of I1)
+        { given: "José", surname: "Flynn", gender: "Male" }, // accent-folded → I4 (global, no edge)
+        { given: "Biddy", surname: "Flynn", gender: "Female" }, // no match → created
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || "results" in r) return;
+    expect(r.household?.parentsMatched).toEqual([{ name: "Thos Flynn", id: "I1" }]);
+    expect(r.household?.skipped).toEqual([
+      { name: "Wm Flynn", reason: "already_child_of_parent", id: "I3" },
+      { name: "José Flynn", reason: "person_exists_in_tree", id: "I4" },
+    ]);
+    expect(r.household?.created).toEqual([{ name: "Biddy Flynn", id: "I5" }]);
+  });
+
+  it("gender mismatch does NOT dedup — a same-named child of the other sex is created", async () => {
+    const tree = flynnTree();
+    tree.persons.push({
+      id: "I3",
+      gender: "Female",
+      names: [{ id: "N3", given: "Frances", surname: "Flynn", preferred: true }],
+    });
+    tree.relationships.push({ id: "R2", type: "ParentChild", parent: "I1", child: "I3" });
+    await writeProject(tree);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Thomas", surname: "Flynn", gender: "Male" }],
+      children: [{ given: "Frances", surname: "Flynn", gender: "Male" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || "results" in r) return;
+    expect(r.household?.skipped).toEqual([]);
+    expect(r.household?.created).toEqual([{ name: "Frances Flynn", id: "I4" }]);
+  });
+
+  it("multi-parent: every created stub gets one edge per matched parent", async () => {
+    const tree = flynnTree();
+    tree.persons.push({
+      id: "I3",
+      gender: "Female",
+      names: [{ id: "N3", given: "Mary", surname: "Flynn", preferred: true }],
+    });
+    await writeProject(tree);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [
+        { given: "Thomas", surname: "Flynn", gender: "Male" },
+        { given: "Mary", surname: "Flynn", gender: "Female" },
+      ],
+      children: [
+        { given: "Bridget", surname: "Flynn", gender: "Female" },
+        { given: "John", surname: "Flynn", gender: "Male" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || "results" in r) return;
+    expect(r.household?.parentsMatched).toEqual([
+      { name: "Thomas Flynn", id: "I1" },
+      { name: "Mary Flynn", id: "I3" },
+    ]);
+    expect(r.household?.edgesAdded).toBe(4);
+    const rels = (await readTree()).relationships.filter((x: any) => x.id !== "R1");
+    expect(rels.map((x: any) => [x.parent, x.child])).toEqual([
+      ["I1", "I4"],
+      ["I3", "I4"],
+      ["I1", "I5"],
+      ["I3", "I5"],
+    ]);
+  });
+
+  it("every child dedups away → nothing written (filesWritten [])", async () => {
+    await writeProject(flynnTree());
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Thomas", surname: "Flynn", gender: "Male" }],
+      children: [{ given: "Patrick", surname: "Flynn", gender: "Male" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || "results" in r) return;
+    expect(r.household?.created).toEqual([]);
+    expect(r.household?.skipped).toEqual([{ name: "Patrick Flynn", reason: "already_child_of_parent", id: "I2" }]);
+    expect(r.filesWritten).toEqual([]);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
+  });
+
+  it("an in-request duplicate child dedups against the stub created moments earlier", async () => {
+    await writeProject(flynnTree());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Thomas", surname: "Flynn", gender: "Male" }],
+      children: [
+        { given: "Bridget", surname: "Flynn", gender: "Female" },
+        { given: "Bridget", surname: "Flynn", gender: "Female" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || "results" in r) return;
+    expect(r.household?.created).toEqual([{ name: "Bridget Flynn", id: "I3" }]);
+    expect(r.household?.skipped).toEqual([
+      { name: "Bridget Flynn", reason: "person_exists_in_tree", id: "I3" },
+    ]);
+  });
+
+  it("rejects malformed input: missing arrays, entry without gender, entry without any name part", async () => {
+    await writeProject(flynnTree());
+    const noChildren = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Thomas", surname: "Flynn", gender: "Male" }],
+    });
+    expect(noChildren.ok).toBe(false);
+    if (noChildren.ok) return;
+    expect(noChildren.errors.join(" ")).toMatch(/non-empty `children` array/);
+
+    const badGender = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Thomas", surname: "Flynn", gender: "Male" }],
+      children: [{ given: "Bridget", surname: "Flynn", gender: "girl" }],
+    });
+    expect(badGender.ok).toBe(false);
+    if (badGender.ok) return;
+    expect(badGender.errors.join(" ")).toMatch(/children\[0\] requires a gender/);
+
+    const noName = await treeEdit({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ gender: "Male" }],
+      children: [{ given: "Bridget", surname: "Flynn", gender: "Female" }],
+    });
+    expect(noName.ok).toBe(false);
+    if (noName.ok) return;
+    expect(noName.errors.join(" ")).toMatch(/parents\[0\] requires a given and\/or surname/);
+  });
+
+  it("works inside a batch, and tree_correct rejects the op (additive gate)", async () => {
+    await writeProject(flynnTree());
+    const r = await treeEdit({
+      projectPath: dir,
+      ops: [
+        {
+          operation: "add_household_children",
+          parents: [{ given: "Thomas", surname: "Flynn", gender: "Male" }],
+          children: [{ given: "Bridget", surname: "Flynn", gender: "Female" }],
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.results[0].operation).toBe("add_household_children");
+    expect(r.results[0].household?.created).toEqual([{ name: "Bridget Flynn", id: "I3" }]);
+
+    const rejected = await treeCorrect({
+      projectPath: dir,
+      operation: "add_household_children",
+      parents: [{ given: "Thomas", surname: "Flynn", gender: "Male" }],
+      children: [{ given: "John", surname: "Flynn", gender: "Male" }],
+    });
+    expect(rejected.ok).toBe(false);
+    if (rejected.ok) return;
+    expect(rejected.errors.join(" ")).toMatch(/additive op/);
+  });
+});

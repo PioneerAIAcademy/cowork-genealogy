@@ -165,12 +165,23 @@ export interface ResolvedPlaceEcho {
   source: "sidecar" | "geocoded";
 }
 
+/** The §3.4.1 source-reuse decision, echoed whenever auto-detection engaged
+ *  so the caller can relay it without re-reading files. */
+export interface SourceReuseEcho {
+  action: "created" | "updated_existing" | "new_source_reused_s";
+  /** The research source the batch wrote (existing id, or the assigned src_NNN). */
+  srcId: string;
+  /** The tree S entry that source cites. */
+  sId: string | null;
+}
+
 interface SingleSuccess {
   ok: true;
   section: string;
   op: "append" | "update";
   entryId: string;
   sourceDescriptionId?: string;
+  sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -179,6 +190,7 @@ interface BatchSuccess {
   ok: true;
   results: { section: string; op: "append" | "update"; entryId: string }[];
   sourceDescriptionId?: string;
+  sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -556,8 +568,14 @@ function sidecarStandardPlace(gx: any, place: string): string | null {
 interface PreparedOps {
   treeMutated: boolean;
   sourceDescriptionId?: string;
+  sourceReuse?: SourceReuseEcho;
   resolvedPlaces: ResolvedPlaceEcho[];
   warnings: string[];
+}
+
+/** Normalized-exact repository comparison key (trim + casefold). */
+function normalizeRepository(v: unknown): string {
+  return typeof v === "string" ? v.trim().toLowerCase() : "";
 }
 
 /**
@@ -566,6 +584,11 @@ interface PreparedOps {
  * canonicalizations) in place. Collects every op-scoped error (all failing ops
  * are named at once) and throws a single ResearchAppendError when any exist.
  *
+ * 0. Source-reuse auto-detection (§3.4.1): when the batch's assertion appends
+ *    cite a `record_id` an existing research source already covers, convert
+ *    the sources append into an update of that source (same repository) or
+ *    stamp the existing S id onto it (different repository) — either way the
+ *    S-create is skipped and the decision is echoed as `sourceReuse`.
  * 1. `sourceDescription` → create the tree `S` entry (shared id allocator) and
  *    stamp the batch's single sources append op's `gedcomx_source_description_id`.
  * 2. Every sources append op must reference an S entry that exists (created in
@@ -590,14 +613,112 @@ async function prepareOps(
   const resolvedPlaces: ResolvedPlaceEcho[] = [];
   let treeMutated = false;
   let sourceDescriptionId: string | undefined;
+  let sourceReuse: SourceReuseEcho | undefined;
 
-  const sourcesAppendIdx = ops
-    .map((op, i) => ({ op, i }))
-    .filter(({ op }) => op.section === "sources" && op.op === "append")
-    .map(({ i }) => i);
+  const findSourcesAppends = (): number[] =>
+    ops
+      .map((op, i) => ({ op, i }))
+      .filter(({ op }) => op.section === "sources" && op.op === "append")
+      .map(({ i }) => i);
+  let sourcesAppendIdx = findSourcesAppends();
+
+  // ── 0. Source-reuse auto-detection (§3.4.1) ──
+  // Engages only for the composite record-persist shape: exactly one sources
+  // append with NO explicit S reference (a caller-supplied
+  // gedcomx_source_description_id keeps the verified-reuse semantics and is
+  // never second-guessed), plus at least one assertions append carrying a
+  // record_id. Record ids compare canonicalized (arkToBareId), repositories
+  // by normalized exact match (trim + casefold).
+  let reuseSkipsSourceDescription = false;
+  let detectionEngaged = false;
+  const assertionAppends = ops.filter(
+    (op) => op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object",
+  );
+  if (sourcesAppendIdx.length === 1) {
+    const srcOp = ops[sourcesAppendIdx[0]];
+    const srcEntry = srcOp.entry as any;
+    const batchRecordKeys = new Set(
+      assertionAppends
+        .map((op) => (op.entry as any).record_id)
+        .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "")
+        .map((v: string) => arkToBareId(v)),
+    );
+    if (
+      srcEntry &&
+      typeof srcEntry === "object" &&
+      srcEntry.gedcomx_source_description_id == null &&
+      batchRecordKeys.size > 0
+    ) {
+      detectionEngaged = true;
+      // Existing sources covering any of the batch's record ids, in
+      // research.sources array order (deterministic "first match").
+      const sourceIdsForRecords = new Set<string>();
+      for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
+        if (
+          a &&
+          typeof a.record_id === "string" &&
+          typeof a.source_id === "string" &&
+          batchRecordKeys.has(arkToBareId(a.record_id))
+        ) {
+          sourceIdsForRecords.add(a.source_id);
+        }
+      }
+      const matched = (Array.isArray(research.sources) ? research.sources : []).filter(
+        (s: any) => s && typeof s === "object" && sourceIdsForRecords.has(s.id),
+      );
+      if (matched.length > 0) {
+        const wantRepo = normalizeRepository(srcEntry.repository);
+        const sameRepo =
+          wantRepo !== "" ? matched.find((s: any) => normalizeRepository(s.repository) === wantRepo) : undefined;
+        if (sameRepo) {
+          // Same record + same repository → refine the existing source in
+          // place instead of duplicating it. The append becomes an update;
+          // the existing S link is kept (never overwritten by the merge).
+          const fields: Record<string, unknown> = { ...srcEntry };
+          delete fields.id;
+          delete fields.gedcomx_source_description_id;
+          ops[sourcesAppendIdx[0]] = { section: "sources", op: "update", entryId: sameRepo.id, fields };
+          // The step-3 auto-stamp requires a sources APPEND, which no longer
+          // exists — stamp the batch's assertions with the existing id here.
+          for (const op of assertionAppends) {
+            const e = op.entry as any;
+            if (e.source_id === undefined || e.source_id === null) e.source_id = sameRepo.id;
+          }
+          sourceReuse = {
+            action: "updated_existing",
+            srcId: sameRepo.id,
+            sId: typeof sameRepo.gedcomx_source_description_id === "string" ? sameRepo.gedcomx_source_description_id : null,
+          };
+          reuseSkipsSourceDescription = true;
+          sourcesAppendIdx = findSourcesAppends();
+        } else {
+          // Same record, different repository → new research source, but the
+          // record's S entry already exists: reuse the first match's S and
+          // skip the S-create even when sourceDescription was supplied.
+          const reusedS = matched
+            .map((s: any) => s.gedcomx_source_description_id)
+            .find((v: unknown): v is string => typeof v === "string" && v !== "");
+          if (reusedS !== undefined) {
+            srcEntry.gedcomx_source_description_id = reusedS;
+            sourceReuse = {
+              action: "new_source_reused_s",
+              srcId: nextResearchId(Array.isArray(research.sources) ? research.sources : [], "src_"),
+              sId: reusedS,
+            };
+            reuseSkipsSourceDescription = true;
+          }
+          // A legacy matched source with no S id falls through to the
+          // created path (sourceDescription, when present, creates the S).
+        }
+      }
+    }
+  }
 
   // ── 1. sourceDescription → tree S entry ──
-  const sd = input.sourceDescription;
+  // Ignored (not validated) when §3.4.1 already resolved the source's S —
+  // "the tool detects reuse" must not force the caller to predict whether
+  // supplying sourceDescription is legal.
+  const sd = reuseSkipsSourceDescription ? undefined : input.sourceDescription;
   if (sd !== undefined) {
     if (!sd || typeof sd !== "object" || Array.isArray(sd)) {
       throw new ResearchAppendError("`sourceDescription` must be an object: { title, author?, url? }");
@@ -636,6 +757,16 @@ async function prepareOps(
       treeMutated = true;
       sourceDescriptionId = sId;
     }
+  }
+
+  // §3.4.1 "created" echo: detection engaged but found no reusable source —
+  // the S the composite just created is the answer.
+  if (detectionEngaged && !sourceReuse && sourceDescriptionId !== undefined) {
+    sourceReuse = {
+      action: "created",
+      srcId: nextResearchId(Array.isArray(research.sources) ? research.sources : [], "src_"),
+      sId: sourceDescriptionId,
+    };
   }
 
   // ── 2. Every sources append op must reference an existing S entry ──
@@ -679,6 +810,26 @@ async function prepareOps(
   }
 
   // ── 4 + 5. D2 matrix + place levers, per assertions append op ──
+  // D2 auto-fill scoping: the sidecar's primaryId is the SEARCHED persona, not
+  // necessarily the persona an arbitrary assertion describes — sidecar personas
+  // carry no role labels, so an assertion's record_role cannot be checked
+  // against them. The sound proxy is batch shape: stamping primaryId onto every
+  // omitted persona is safe only when the batch's assertion appends all cite
+  // ONE canonical record_id and ONE distinct record_role (a single-focus
+  // extraction). Unscoped auto-fill stamped the focus persona's id onto other
+  // household members' assertions (observed silent corruption).
+  const batchAssertionRecordKeys = new Set(
+    assertionAppends
+      .map((op) => (op.entry as any).record_id)
+      .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "")
+      .map((v: string) => arkToBareId(v)),
+  );
+  const batchAssertionRoles = new Set(
+    assertionAppends
+      .map((op) => (op.entry as any).record_role)
+      .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== ""),
+  );
+  const autoFillScopeOk = batchAssertionRecordKeys.size === 1 && batchAssertionRoles.size === 1;
   const logById = new Map<string, any>();
   for (const e of Array.isArray(research.log) ? research.log : []) {
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
@@ -783,8 +934,22 @@ async function prepareOps(
               typeof matchedRecord.primaryId === "string" &&
               personaIds.includes(matchedRecord.primaryId)
             ) {
-              // Auto-fill the unambiguous case — never silently null.
-              entry.record_persona_id = matchedRecord.primaryId;
+              if (personaIds.length === 1 || autoFillScopeOk) {
+                // Auto-fill the unambiguous case — never silently null. Safe
+                // because the record holds a single persona, or the batch is a
+                // single-record single-role extraction (see scoping note above).
+                entry.record_persona_id = matchedRecord.primaryId;
+              } else {
+                errors.push(
+                  fmt(
+                    i,
+                    `record_persona_id omitted — multiple personas in this record (${personaIds.join(", ")}) ` +
+                      "and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; " +
+                      `supply record_persona_id per assertion (the searched persona is '${matchedRecord.primaryId}')`,
+                  ),
+                );
+                continue;
+              }
             }
           }
         }
@@ -850,7 +1015,7 @@ async function prepareOps(
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
-  return { treeMutated, sourceDescriptionId, resolvedPlaces, warnings };
+  return { treeMutated, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -953,8 +1118,9 @@ export async function researchAppend(
     }
 
     const validationBlock = { valid: true as const, warnings: [...validationWarnings, ...opWarnings] };
-    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "resolvedPlaces"> = {};
+    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
+    if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;
     if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
 
     if (isBatch) {
@@ -1026,10 +1192,14 @@ export const researchAppendSchema = {
     "canonicalizes `record_id` against the log entry's results sidecar, resolves " +
     "`standard_place` for assertion places (copying the sidecar's resolution when " +
     "present; resolved values are echoed in `resolvedPlaces`), validates ONCE, and " +
-    "writes tree.gedcomx.json + research.json together. To cite a record whose S entry " +
-    "already exists (e.g. the same record via another repository), omit " +
-    "`sourceDescription` and set the sources op's `gedcomx_source_description_id` to " +
-    "the existing S id — a sources append must have one or the other. Batches are " +
+    "writes tree.gedcomx.json + research.json together. Source reuse is " +
+    "auto-detected: when the batch's assertions cite a record_id an existing source " +
+    "already covers, the tool updates that source in place (same repository) or " +
+    "reuses its S entry (different repository) instead of duplicating — always " +
+    "supply `sourceDescription` and relay the echoed `sourceReuse` " +
+    "({ action: created | updated_existing | new_source_reused_s, srcId, sId }). " +
+    "To cite a specific known S entry explicitly, omit `sourceDescription` and set " +
+    "the sources op's `gedcomx_source_description_id` to that S id. Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
     "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {

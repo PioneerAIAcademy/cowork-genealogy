@@ -53,6 +53,11 @@ Current live tools:
   same live-registration rationale. Kept as a separate tool so a skill's
   allowed-tools can grant additions without granting identity rewrites (the
   record-extractor authority split).
+- project_context: calls the compiled TS tool to project the workspace's
+  research.json + tree.gedcomx.json into the compact read-only shape the
+  record-extractor agent consumes instead of reading project files. A
+  deterministic function of workspace state — a canned fixture cannot
+  honestly reflect what the skill just wrote.
 """
 
 from __future__ import annotations
@@ -76,6 +81,7 @@ LIVE_TOOLS: set[str] = {
     "research_append",
     "tree_edit",
     "tree_correct",
+    "project_context",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -381,7 +387,20 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
             "add_person",
             "add_relationship",
             "add_source",
+            "add_household_children",
         ]
+        _household_member_items = {
+            "type": "object",
+            "properties": {
+                "given": {"type": "string"},
+                "surname": {"type": "string"},
+                "gender": {
+                    "type": "string",
+                    "description": "Male/Female/Unknown (M/F/U accepted).",
+                },
+            },
+            "required": ["gender"],
+        }
         _op_fields = {
             "operation": {
                 "type": "string",
@@ -426,6 +445,24 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
             },
             "relationship": {"type": "object"},
             "source": {"type": "object"},
+            "parents": {
+                "type": "array",
+                "description": (
+                    "add_household_children: the record's parent roles as the "
+                    "RECORD names them — the tool matches them against tree "
+                    "persons."
+                ),
+                "items": _household_member_items,
+            },
+            "children": {
+                "type": "array",
+                "description": (
+                    "add_household_children: the record's child_N roles (the "
+                    "subject included — the tool skips anyone already in the "
+                    "tree)."
+                ),
+                "items": _household_member_items,
+            },
             "resolveStandardPlace": {"type": "boolean"},
         }
         return {
@@ -442,6 +479,15 @@ def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
                     },
                 },
             },
+            "required": ["projectPath"],
+        }
+    if tool_name == "project_context":
+        # Mirror the production tool's input schema (project-context.ts) —
+        # never leave a live tool on the permissive fallback (a permissive
+        # shape lets the eval model invent argument forms production rejects).
+        return {
+            "type": "object",
+            "properties": {"projectPath": {"type": "string"}},
             "required": ["projectPath"],
         }
     if tool_name == "tree_correct":
@@ -528,9 +574,13 @@ def _make_live_handler(
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
     if tool_name == "tree_edit":
-        return _make_tree_write_handler("tree_edit", "tree-edit.js", "treeEdit", workspace, call_log)
+        return _make_compiled_tool_handler("tree_edit", "tree-edit.js", "treeEdit", workspace, call_log)
     if tool_name == "tree_correct":
-        return _make_tree_write_handler("tree_correct", "tree-correct.js", "treeCorrect", workspace, call_log)
+        return _make_compiled_tool_handler("tree_correct", "tree-correct.js", "treeCorrect", workspace, call_log)
+    if tool_name == "project_context":
+        return _make_compiled_tool_handler(
+            "project_context", "project-context.js", "projectContext", workspace, call_log
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -740,15 +790,16 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
     return handler
 
 
-def _make_tree_write_handler(
+def _make_compiled_tool_handler(
     tool_name: str,
     js_filename: str,
     export_symbol: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
 ):
-    """Build the live handler for a tree-writing tool (tree_edit / tree_correct
-    — the two halves of the op split share this builder).
+    """Build the live handler for a compiled single-export tool — the tree
+    writers (tree_edit / tree_correct) and the read-only project_context all
+    share this builder (one exported async function taking the input object).
 
     Calls the compiled TS tool via `node --input-type=module` against the
     workspace path. The skill passes its own projectPath arg, but we always
