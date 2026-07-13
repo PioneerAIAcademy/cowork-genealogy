@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Pedro Zuñiga was the father of Adrian Zuñiga Rojas. Baptized 16 March 1870 in San Bartolomé, Arani, and living in the Arani–Pocoata area of Cochabamba, Bolivia; he married Apolonia Rojas in 1898. He is named as the groom's father in Adrian's 29 November 1913 marriage record.",
+      "details": {
+        "subject_person": {
+          "name": "Adrian Zuñiga Rojas",
+          "pid": "2DTG-7MK"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Pedro Zuñiga",
+          "birth": "baptized 16 March 1870, San Bartolomé, Arani, Cochabamba, Bolivia (also recorded as born about 1873, Pocoata)"
+        }
+      },
+      "supporting_sources": [
+        "Bolivia, registros parroquiales — 29 November 1913 marriage of Adrian Zuñiga and Gregoria Peñarrieta at San Bartolomé, Arani, Cochabamba, naming the groom's father Pedro Zuñiga (FamilySearch, e.g. ark:/61903/1:1:QL7X-VBXX).",
+        "1898 marriage of Pedro Zuñiga and Apolonia Rojas, Pocoata, Cochabamba, Bolivia."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Apolonia Rojas was the mother of Adrian Zuñiga Rojas. Born/baptized 16 March 1870 in Pocoata, Arani, Cochabamba, Bolivia; she married Pedro Zuñiga in 1898. Her surname survives in the subject's compound surname 'Zuñiga Rojas'.",
+      "details": {
+        "subject_person": {
+          "name": "Adrian Zuñiga Rojas",
+          "pid": "2DTG-7MK"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Apolonia Rojas",
+          "birth": "16 March 1870, Pocoata, Arani, Cochabamba, Bolivia"
+        }
+      },
+      "supporting_sources": [
+        "Bolivia, registros parroquiales — 1898 marriage of Pedro Zuñiga and Apolonia Rojas, Pocoata, Cochabamba, Bolivia.",
+        "Baptism of Apolonia Rojas, 16 March 1870, San Bartolomé, Arani, Cochabamba, Bolivia."
+      ],
+      "required": true
+    }
+  ]
+}

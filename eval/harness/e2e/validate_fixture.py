@@ -1,4 +1,18 @@
-"""Fixture linter for e2e benchmark fixtures — stripping-completeness check.
+"""Fixture linter for e2e benchmark fixtures — schema + stripping checks.
+
+Three gates, in order:
+
+1. **JSON Schema** (hard, exit 2). `starting-tree.gedcomx.json` and
+   `starting-research.json` are validated against `docs/specs/schemas/`
+   via `harness.schema_validator` — the same module `e2e.author validate`
+   uses, so the authoring gate and this corpus-wide gate cannot disagree.
+2. **Structural integrity** (hard, exit 2). What JSON Schema 2020-12
+   cannot express: intra-document reference integrity (a dangling
+   relationship endpoint or source `ref` lints clean and then hard-fails
+   `tree_edit` mid-run), id uniqueness, and the FamilySearch-ToS
+   living-person rule. Applied to the starting tree and, when present,
+   the committed unstripped tree.
+3. **Stripping completeness** (warn-only), described below.
 
 The crux invariant of an e2e fixture: every entry in
 `expected-findings.json` must be **genuinely absent** from
@@ -31,9 +45,12 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+from harness.schema_validator import validate_research_json, validate_tree_gedcomx_json
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -67,15 +84,36 @@ class TreePerson:
     person_id: str
     given_tokens: set[str]
     surname_tokens: set[str]
-    fact_types: set[str]  # lowercased fact `type` values on this person
+    fact_types: set[str]  # lowercased fact `type` values on this person or their relationships
 
     @property
     def name_tokens(self) -> set[str]:
         return self.given_tokens | self.surname_tokens
 
 
-def _index_tree(tree: dict[str, Any]) -> list[TreePerson]:
-    """Collect per-person name tokens (given vs surname) and fact types."""
+def index_tree(tree: dict[str, Any]) -> list[TreePerson]:
+    """Collect per-person name tokens (given vs surname) and fact types.
+
+    Relationship-held facts are folded onto both endpoints: a Marriage
+    lives on the Couple relationship, never on either spouse, so without
+    the fold no marriage `fact` finding could ever match a person. (The
+    schema allows facts on Couple only, but the fold reads endpoints
+    generically so a schema change can't silently reopen the gap.)
+    """
+    rel_fact_types: dict[str, set[str]] = {}
+    for rel in tree.get("relationships") or []:
+        types = {
+            str(f.get("type", "")).lower()
+            for f in (rel.get("facts") or [])
+            if f.get("type")
+        }
+        if not types:
+            continue
+        keys = ("parent", "child") if rel.get("type") == "ParentChild" else ("person1", "person2")
+        for key in keys:
+            if rel.get(key) is not None:
+                rel_fact_types.setdefault(str(rel[key]), set()).update(types)
+
     people: list[TreePerson] = []
     for person in tree.get("persons") or []:
         given: set[str] = set()
@@ -87,7 +125,7 @@ def _index_tree(tree: dict[str, Any]) -> list[TreePerson]:
             str(f.get("type", "")).lower()
             for f in (person.get("facts") or [])
             if f.get("type")
-        }
+        } | rel_fact_types.get(str(person.get("id", "?")), set())
         people.append(
             TreePerson(
                 person_id=str(person.get("id", "?")),
@@ -138,7 +176,7 @@ def _collect_target_names(value: Any, under_target_key: bool) -> list[str]:
     return out
 
 
-def _finding_name_tokens(finding: dict[str, Any]) -> set[str]:
+def finding_name_tokens(finding: dict[str, Any]) -> set[str]:
     """Best-effort name token bag for the finding's *target* person.
 
     Prefers names under target-ish `details` keys (`target_person`,
@@ -159,7 +197,7 @@ def _finding_name_tokens(finding: dict[str, Any]) -> set[str]:
     return bag
 
 
-def _finding_type_token(finding: dict[str, Any]) -> set[str]:
+def finding_type_token(finding: dict[str, Any]) -> set[str]:
     """A coarse fact-type token for `fact` findings (e.g. birth/death/marriage)."""
     blob = (
         f"{finding.get('description', '')} "
@@ -173,6 +211,117 @@ def _finding_type_token(finding: dict[str, Any]) -> set[str]:
     return hits
 
 
+# Pre-rename aliases (these started life underscore-private; e2e.author now
+# consumes them, which is what made them public).
+_index_tree = index_tree
+_finding_name_tokens = finding_name_tokens
+_finding_type_token = finding_type_token
+
+
+def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
+    """Structural checks JSON Schema 2020-12 cannot express.
+
+    Mirrors the engine's runtime `validateGedcomx` where the right answer is
+    unambiguous: a fixture that lints clean here but hard-fails `tree_edit`
+    mid-run burns the tokens the fixture pipeline exists to save (the exact
+    bug class of the repaired ParentChild-keys corpus). Three groups:
+
+    * **Reference integrity** — relationship endpoints and source `ref`s
+      must name objects in the document.
+    * **Id uniqueness** — duplicate ids make `strip`'s selectors ambiguous
+      and reads of the document ill-defined.
+    * **Living persons** — FamilySearch's ToS forbids committing fixtures
+      about living persons, and absent is not deceased (mirrors
+      `living_gate` rules 1-2 in `e2e.author`; kept local to avoid an
+      import cycle).
+
+    The runtime's two remaining name/fact checks live in the JSON Schema
+    itself, not here: `given` is required by the schema (spell an unknown
+    given name `""`, the engine's own stub convention), and the fact-type
+    enum carries an upper-initial `pattern` that catches the lowercase types
+    the runtime hard-fails on. Cross-gate agreement is pinned by the shared
+    vectors in docs/specs/schemas/tree-gate-vectors.json, consumed by both
+    this side's test_gate_vectors.py and the engine's gate-vectors.test.ts.
+    """
+    errors: list[str] = []
+    persons = [p for p in tree.get("persons") or [] if isinstance(p, dict)]
+    relationships = [r for r in tree.get("relationships") or [] if isinstance(r, dict)]
+    sources = [s for s in tree.get("sources") or [] if isinstance(s, dict)]
+
+    person_ids = [str(p.get("id")) for p in persons if p.get("id")]
+    rel_ids = [str(r.get("id")) for r in relationships if r.get("id")]
+    source_ids = [str(s.get("id")) for s in sources if s.get("id")]
+
+    for kind, ids in (("person", person_ids), ("relationship", rel_ids), ("source", source_ids)):
+        errors += [
+            f"{filename}: duplicate {kind} id {dup!r} ({n} times)"
+            for dup, n in sorted(Counter(ids).items()) if n > 1
+        ]
+    for holder in (*persons, *relationships):
+        hid = holder.get("id", "?")
+        fact_ids = [
+            str(f.get("id"))
+            for f in holder.get("facts") or []
+            if isinstance(f, dict) and f.get("id")
+        ]
+        errors += [
+            f"{filename}: duplicate fact id {dup!r} on {hid} ({n} times)"
+            for dup, n in sorted(Counter(fact_ids).items()) if n > 1
+        ]
+
+    known_persons, known_sources = set(person_ids), set(source_ids)
+
+    for rel in relationships:
+        rid = rel.get("id", "?")
+        keys = ("parent", "child") if rel.get("type") == "ParentChild" else ("person1", "person2")
+        for key in keys:
+            ref = rel.get(key)
+            if ref is not None and str(ref) not in known_persons:
+                errors.append(
+                    f"{filename}: relationship {rid} {key} {ref!r} is not a "
+                    f"person in the tree — a dangling reference tree_edit "
+                    f"hard-fails on"
+                )
+
+    def check_source_refs(holder: dict[str, Any], where: str) -> None:
+        for sref in holder.get("sources") or []:
+            if isinstance(sref, dict) and str(sref.get("ref")) not in known_sources:
+                errors.append(
+                    f"{filename}: {where} references source {sref.get('ref')!r}, "
+                    f"which is not in the tree"
+                )
+
+    for person in persons:
+        pid = person.get("id", "?")
+        for name in person.get("names") or []:
+            if isinstance(name, dict):
+                check_source_refs(name, f"person {pid} name {name.get('id', '?')}")
+        for fact in person.get("facts") or []:
+            if isinstance(fact, dict):
+                check_source_refs(fact, f"person {pid} fact {fact.get('id', '?')}")
+    for rel in relationships:
+        rid = rel.get("id", "?")
+        check_source_refs(rel, f"relationship {rid}")
+        for fact in rel.get("facts") or []:
+            if isinstance(fact, dict):
+                check_source_refs(fact, f"relationship {rid} fact {fact.get('id', '?')}")
+
+    for person in persons:
+        pid = person.get("id", "?")
+        if "living" not in person:
+            errors.append(
+                f"{filename}: person {pid} has no `living` field — absent is "
+                f"not deceased; set `living: false` once the death is confirmed"
+            )
+        elif person["living"] is True:
+            errors.append(
+                f"{filename}: person {pid} is marked living — FamilySearch's "
+                f"terms forbid committing data about living persons"
+            )
+
+    return errors
+
+
 @dataclass
 class Suspect:
     finding_id: str
@@ -180,6 +329,7 @@ class Suspect:
     person_id: str
     shared: set[str]
     reason: str
+    polarity: str = "recover"  # the finding's polarity (spec §3.4.1)
 
 
 def check_stripping(
@@ -193,14 +343,21 @@ def check_stripping(
     the stripped tree. For `fact`-type findings we additionally require
     the fact type to be present on that person, since a person
     legitimately remains when only one of their facts was stripped.
+
+    Polarity-agnostic on purpose: a `polarity: "avoid"` claim must be
+    just as absent from the starting tree as a `recover` answer (a
+    pre-asserted wrong claim breaks the fixture the other way), and the
+    avoid-guard reuses this matcher against the run's *final* tree. Only
+    the advice differs — see `format_suspect`.
     """
-    people = _index_tree(tree)
+    people = index_tree(tree)
     suspects: list[Suspect] = []
 
     for finding in expected_findings.get("findings") or []:
         fid = str(finding.get("id", "?"))
         ftype = str(finding.get("type", "?"))
-        name_bag = _finding_name_tokens(finding)
+        polarity = str(finding.get("polarity", "recover"))
+        name_bag = finding_name_tokens(finding)
         if not name_bag:
             continue  # nothing nameable to match — can't judge presence
 
@@ -212,7 +369,7 @@ def check_stripping(
 
             if ftype == "fact":
                 # The person staying is fine; the *fact* must be gone.
-                wanted = _finding_type_token(finding)
+                wanted = finding_type_token(finding)
                 if wanted and not (wanted & person.fact_types):
                     continue  # person present, but the fact's type isn't — OK
                 reason = (
@@ -230,10 +387,47 @@ def check_stripping(
                     person_id=person.person_id,
                     shared=shared_given | shared_surname,
                     reason=reason,
+                    polarity=polarity,
                 )
             )
 
     return suspects
+
+
+def format_suspect(fixture_name: str, s: Suspect) -> str:
+    """The WARN line for one suspect.
+
+    Lives here rather than in `main()` so `e2e.author` can lint an
+    *in-memory* candidate tree — on a dry run, or before the first write —
+    and still print the same advice as the standalone linter.
+    """
+    shared = ", ".join(sorted(s.shared))
+    if s.polarity == "avoid":
+        fix = (
+            f"this is an `avoid` finding — the claim the agent must NOT "
+            f"assert appears to be pre-asserted by the starting tree. Remove "
+            f"it from starting-tree.gedcomx.json (and the identical snapshot "
+            f"on a record-hint fixture), or rewrite the finding."
+        )
+    elif s.finding_type == "fact":
+        fix = (
+            f"a `fact` finding leaves the person in place, so this is "
+            f"only a problem if the stripped fact is still on "
+            f"{s.person_id} — check its `facts` in "
+            f"starting-tree.gedcomx.json and remove that fact if so."
+        )
+    else:
+        fix = (
+            f"if {s.person_id} IS the answer to this finding, delete "
+            f"that person and its relationship from "
+            f"starting-tree.gedcomx.json and re-run; if it's just a "
+            f"relative who happens to share a surname, ignore this line."
+        )
+    return (
+        f"WARN   [{fixture_name}] finding {s.finding_id} ({s.finding_type}): "
+        f"tree person {s.person_id} is still present and its name "
+        f"overlaps the answer on [{shared}]. {fix}"
+    )
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -243,8 +437,12 @@ def _load_json(path: Path) -> dict[str, Any]:
 def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
     """Lint one fixture dir. Returns (suspects, hard_errors).
 
-    hard_errors are structural problems (missing/unparseable files) that
-    should fail the run with exit 2; suspects are warn-only.
+    hard_errors are structural problems — a missing or unparseable file, a
+    JSON-Schema violation, or a `tree_integrity_errors` failure (dangling
+    refs, duplicate ids, living persons) — that should fail the run with
+    exit 2; suspects are warn-only. `e2e.author validate` reaches the same
+    schema check through the same `harness.schema_validator` module, so a
+    fixture cannot pass one gate and fail the other.
     """
     fixture_dir = Path(fixture_dir)
     errors: list[str] = []
@@ -265,6 +463,37 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
         tree = _load_json(tree_path)
     except (json.JSONDecodeError, OSError) as e:
         errors.append(f"starting-tree.gedcomx.json did not parse: {e}")
+    if errors:
+        return [], errors
+
+    errors += [f"starting-tree.gedcomx.json: {e}" for e in validate_tree_gedcomx_json(tree)]
+    errors += tree_integrity_errors(tree, "starting-tree.gedcomx.json")
+
+    # Optional: only PID-path fixtures have one. It is committed, so it is held to
+    # the same structural and living-person bar as the starting tree.
+    unstripped_path = fixture_dir / "unstripped-tree.gedcomx.json"
+    if unstripped_path.exists():
+        try:
+            unstripped = _load_json(unstripped_path)
+        except (json.JSONDecodeError, OSError) as e:
+            errors.append(f"unstripped-tree.gedcomx.json did not parse: {e}")
+        else:
+            errors += [
+                f"unstripped-tree.gedcomx.json: {e}"
+                for e in validate_tree_gedcomx_json(unstripped)
+            ]
+            errors += tree_integrity_errors(unstripped, "unstripped-tree.gedcomx.json")
+
+    # Optional: a PID-less fixture under construction may not have one yet.
+    research_path = fixture_dir / "starting-research.json"
+    if research_path.exists():
+        try:
+            research = _load_json(research_path)
+        except (json.JSONDecodeError, OSError) as e:
+            errors.append(f"starting-research.json did not parse: {e}")
+        else:
+            errors += [f"starting-research.json: {e}" for e in validate_research_json(research)]
+
     if errors:
         return [], errors
 
@@ -337,30 +566,11 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"ERROR  [{name}] {e}", file=sys.stderr)
             continue
         if not suspects:
-            print(f"OK     [{name}] all findings appear stripped")
+            print(f"OK     [{name}] schema valid, all findings appear stripped")
             continue
         total_suspects += len(suspects)
         for s in suspects:
-            shared = ", ".join(sorted(s.shared))
-            if s.finding_type == "fact":
-                fix = (
-                    f"a `fact` finding leaves the person in place, so this is "
-                    f"only a problem if the stripped fact is still on "
-                    f"{s.person_id} — check its `facts` in "
-                    f"starting-tree.gedcomx.json and remove that fact if so."
-                )
-            else:
-                fix = (
-                    f"if {s.person_id} IS the answer to this finding, delete "
-                    f"that person and its relationship from "
-                    f"starting-tree.gedcomx.json and re-run; if it's just a "
-                    f"relative who happens to share a surname, ignore this line."
-                )
-            print(
-                f"WARN   [{name}] finding {s.finding_id} ({s.finding_type}): "
-                f"tree person {s.person_id} is still present and its name "
-                f"overlaps the answer on [{shared}]. {fix}"
-            )
+            print(format_suspect(name, s))
 
     if any_hard_error:
         return 2  # structural problem — fix the fixture files

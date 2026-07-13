@@ -48,8 +48,10 @@ def run_validators(
         "after_state": after_state,
         "tool_calls": tool_calls,
         "skill_frontmatter": skill_frontmatter or {},
-        # `test` is the parsed test JSON dict (the inner "test" block).
-        # Validators gate test-specific checks on test["tags"], e.g.
+        # `test` is the parsed test JSON dict (the inner "test" block,
+        # plus top-level validator-facing blocks the orchestrator threads
+        # in — currently `expected_classifications`). Validators gate
+        # test-specific checks on test["tags"], e.g.
         #   if "slug-apostrophe" not in test.get("tags", []): pytest.skip(...)
         "test": test or {},
     }

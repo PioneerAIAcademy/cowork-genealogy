@@ -20,8 +20,8 @@ description: >-
   impossibilities suggest an identity conflict. Do NOT use for
   confidence-calibration review or auditing existing person_evidence links
   (that's person-evidence's territory). Do NOT use to classify evidence (use
-  assertion-classification), build a timeline (use timeline), or write a
-  conclusion (use proof-conclusion).
+  record-extraction, which owns classification), build a timeline (use
+  timeline), or write a conclusion (use proof-conclusion).
 ---
 
 # Conflict Resolution
@@ -78,10 +78,10 @@ fact conflicts which require at least two).
 Read `research.json` assertions, person_evidence, and timelines.
 **Trust the existing assertion classifications** (evidence_type,
 directness, informant) as recorded — do NOT re-classify inline, and do
-NOT invoke the assertion-classification or check-warnings skills from
-here. If a classification looks wrong and would change the weighing,
-note it and recommend running `assertion-classification` as a next
-step, then proceed with what is recorded.
+NOT invoke the record-extraction or check-warnings skills from here.
+If a classification looks wrong and would change the weighing, note it
+and recommend running `record-extraction` (which owns classification
+refinement) as a next step, then proceed with what is recorded.
 
 Look for:
 
@@ -267,7 +267,13 @@ preferred answer, the resolution must follow the evidence.
 **If more evidence is needed (Standard 49):** Deferral is a
 documented finding, not a stopping point — persist it to the
 conflict record (a `research_append` `op: "update"` call as above),
-not only to your reply. On the same write, fill
+not only to your reply. **Gate before any `status: "resolved"`
+write:** can independent evidence actually break the tie? When every
+competing assertion traces to a single source or a single informant,
+weighing cannot resolve the conflict — no matter how thorough your
+analysis reads — so keep `status: "unresolved"` /
+`preferred_assertion_id: null` and name the decisive record types.
+Completing a strong analysis is not, by itself, grounds to resolve. On the same write, fill
 `independence_analysis` and `weighing_analysis` with the work you
 did (these are required regardless of outcome — you analyzed the
 conflict even if you could not resolve it), keep `status:

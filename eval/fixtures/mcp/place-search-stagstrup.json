@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "place_search — Stagstrup parish, Thisted county, Denmark.",
+  "args": {
+    "placeName": "~Stagstrup"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Stagstrup, Thisted, Denmark",
+        "type": "Parish",
+        "dateRange": "+1660/",
+        "latitude": 56.87,
+        "longitude": 8.62,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Stagstrup&focusedId=430285"
+      }
+    ]
+  }
+}

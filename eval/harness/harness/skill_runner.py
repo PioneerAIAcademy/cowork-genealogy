@@ -45,8 +45,12 @@ from harness.mock_mcp import create_mock_server
 
 
 # v1 permissive allowlist + disallow-tool backstop (per the user's tightening).
-BASELINE_ALLOWED = ["Read", "Write", "Edit", "Glob", "Grep", "Skill"]
-DISALLOWED_BACKSTOP = ["Bash", "WebFetch", "WebSearch", "Task", "NotebookEdit"]
+# "Task" is allowed unconditionally (matching the e2e orchestrator's
+# BASELINE_ALLOWED_TOOLS): plugin subagents are staged into every workspace
+# and a skill delegates via `@plugin:<name>` only when its SKILL.md says to —
+# the model doesn't spawn subagents unprompted, so no per-test flag is needed.
+BASELINE_ALLOWED = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Task"]
+DISALLOWED_BACKSTOP = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 DEFAULT_MAX_TURNS = 20

@@ -1,0 +1,589 @@
+{
+  "project": {
+    "id": "rp_job_purnell_marriage_1844",
+    "objective": "When and where did Job Purnell marry his wife Emma?",
+    "subject_person_ids": [
+      "2W2F-CNH"
+    ],
+    "status": "completed",
+    "created": "2026-07-07T00:00:00Z",
+    "updated": "2026-07-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Job Purnell (born 1 December 1819, Trowbridge, Wiltshire, England; died 9 November 1895, Portage, Wisconsin) marry his wife Emma (born 22 July 1822, Rode, Somerset, England)?",
+      "rationale": "The couple relationship in the tree has no marriage facts. Job was in Trowbridge in 1841 and Emma was born in nearby Rode, Somerset; their first child was born in Connecticut in May 1846, establishing a marriage window of roughly 1841\u20131845. Marriage registers for Wiltshire and Somerset (England, pre-emigration) and Connecticut vital records are available on FamilySearch, making this directly researchable.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-08",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_004"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Seven plan items searched across two countries (England and USA): GRO civil registration index, England Marriages 1538-1973, Wiltshire and Somerset church records, Nonconformist RG4-8, US census records (1870/1880), Connecticut Marriages 1630-1997, and Connecticut Vital Records Prior to 1850 (Barbour Collection). England-side searches uniformly negative; positive result found in collection 2843390. The marriage date (27 October 1844) and place (Norwich, New London, Connecticut) are directly stated. All evidence is consistent; no conflicts exist. Limitation: the source is derivative (Barbour Collection abstraction); original Norwich town vital register not examined.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 27 October 1844, Norwich, New London, Connecticut, directly stated in CT Vital Records Prior to 1850. Question fully answered.",
+          "repository_breadth": "Yes \u2014 GRO civil reg index, England Marriages 1538-1973, Wiltshire church records, Somerset church records, Nonconformist RG4-8, 1870/1880 US census, CT Marriages 1630-1997, and CT Vital Records pre-1850 all searched. Name variants Purnell/Parnell/Purnal tried. England and USA jurisdictions both covered.",
+          "original_substitution": "Partial \u2014 CT Vital Records Prior to 1850 (Barbour Collection) is a derivative compilation. Original Norwich town vital register held at CT State Library, not accessible via this session's MCP tools. Barbour Collection is the standard systematic resource for pre-1850 CT vital records; overturn risk from the original is low.",
+          "independent_verification": "Qualified \u2014 one record directly states the marriage (Barbour Collection); census records (1850 Norwich CT, 1870 Wisconsin) and first child born May 1846 Norwich CT independently corroborate the couple's union and consistent geography, though none independently names the marriage date.",
+          "evidence_class": "Derivative source only (Barbour Collection abstraction of original town vital register). Original not accessed. The Barbour Collection is a well-established, systematic compilation authoritative for pre-1850 CT vital records.",
+          "conflict_resolution": "Yes \u2014 no conflicts. October 1844 Norwich CT marriage consistent with first child born May 1846 Norwich CT, 1850 census in Norwich CT, and subsequent Wisconsin census records.",
+          "overturn_risk": "Low. England-side searches exhausted (all negative, consistent with marriage in USA). Connecticut evidence internally consistent. No unsearched record category plausibly likely to name a different date or place. Theoretical risk from original town register is acknowledged but does not rise to probable overturn."
+        }
+      },
+      "created": "2026-07-07"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-07",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "England and Wales",
+          "date_range": "1841-1845",
+          "repository": "FamilySearch",
+          "rationale": "England civil registration began 1 July 1837. Any marriage in England between 1841 (when Job was in Trowbridge) and 1845 (before first child born in Connecticut, May 1846) would appear in the England and Wales Marriage Registration Index (FS collection 2285732). This index covers the Trowbridge (Wiltshire) and Frome (Somerset) registration districts \u2014 the two most likely districts given Job's residence in Trowbridge and Emma's birth in Rode, Somerset. A match will yield the registration district and quarter, enabling retrieval of the full certificate.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "England",
+          "date_range": "1841-1845",
+          "repository": "FamilySearch",
+          "rationale": "The England Marriages 1538-1973 collection (FS collection 1473015) indexes over 10 million marriage entries from Church of England and other records across England. Searching for Purnell in the 1840s will catch marriages recorded in parish registers (pre- and post-1837 civil registration overlay), including cases where the civil index entry lacks sufficient detail to identify the couple.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Trowbridge, Wiltshire, England",
+          "date_range": "1841-1845",
+          "repository": "FamilySearch",
+          "rationale": "England, Wiltshire, Church Records 1518-1990 (FS collection 4380174) includes indexed and imaged parish registers for Trowbridge and surrounding Wiltshire parishes. Job lived in Trowbridge in 1841; a church marriage there would appear in these records. The images allow verification of the original register entry if an index match is found.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Rode, Somerset, England",
+          "date_range": "1841-1845",
+          "repository": "FamilySearch",
+          "rationale": "England, Somerset, Church Records 1501-1999 (FS collection 4380193) covers parishes in Somerset including Rode and the nearby Frome registration district. Emma was born in Rode, Somerset; marriages frequently occurred in the bride's home parish. Searching this collection covers the alternative scenario where the ceremony was held in Somerset rather than Wiltshire.",
+          "fallback_for": "pli_003",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Trowbridge, Wiltshire, England",
+          "date_range": "1837-1845",
+          "repository": "FamilySearch",
+          "rationale": "England and Wales Non-Conformist Record Indexes RG4-8 (FS collection 1666142) covers Nonconformist chapel registers surrendered to the Registrar General in 1837. Trowbridge was a significant cloth-manufacturing town with strong Baptist and Methodist communities. If Job or Emma's family were Nonconformist, their marriage may appear in these chapel registers rather than in Anglican parish records.",
+          "fallback_for": "pli_003",
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Norwich, New London, Connecticut, United States",
+          "date_range": "1850-1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1870 and 1880 US census records (already cited in the tree: FS ark:/61903/1:1:MN97-PWH and MN4C-SFJ) and the 1875 Wisconsin state census (MMMT-96B) may record marriage duration or year. The 1880 census in particular included a column for whether individuals were 'married within the census year,' and the 1870 census sometimes enumerated marriage dates. These existing sources should be read for any marriage date or place information before exhausting England-side searches.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Norwich, New London, Connecticut, United States",
+          "date_range": "1843-1846",
+          "repository": "FamilySearch",
+          "rationale": "Connecticut Marriages 1630-1997 (FS collection 1674749) is a fallback if the marriage occurred in Connecticut after Job and Emma emigrated from England. The first child was born in Norwich, Connecticut in May 1846. If they arrived in Connecticut before marrying, the ceremony could have occurred there in 1844-1845. The Connecticut Vital Records prior to 1850 collection (FS 2843390) and the Charles R. Hale Collection (FS 2658554) provide additional coverage of this period.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T22:52:43.310Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales Marriage Registration Index 1837-2005 (2285732)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "spouseGivenName": "Emma",
+        "marriageYearFrom": 1841,
+        "marriageYearTo": 1845,
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results. Spouse-name filter may be too restrictive if Emma's name was indexed differently or omitted from the index entry."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T22:53:00.235Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales Marriage Registration Index 1837-2005 (2285732)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "One result returned: Job Purnell, marriage Q4 1849, Melksham, Wiltshire (vol. 8, p. 724). Incompatible with research subject \u2014 first child born May 1846 in Connecticut, so our Job Purnell cannot have married in England in 1849. This is a different person. Collection 2285732 returns no valid match for Job Purnell marrying Emma in the expected 1841\u20131845 window."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T22:53:22.596Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales Marriage Registration Index 1837-2005 (2285732)",
+        "surname": "Purnell OR Parnell",
+        "givenName": "Job",
+        "marriageYearFrom": 1841,
+        "marriageYearTo": 1846,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result with surname variants Purnell/Parnell, 1841-1846. The civil registration index for this period is known to have poor compliance (pre-1850 era); the marriage may not have been recorded in the GRO index, or may have been a Nonconformist ceremony not captured here. Advancing to broader England Marriages collection (pli_002)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T22:54:26.483Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England Marriages 1538-1973 (1473015)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 8,
+      "notes": "8 results returned \u2014 all incompatible with subject. Top two (NK3L-DHH, NXMG-G4Q) are Job Purnell/Lucy Smith 1832 and Job Purnell/Elizabeth Hill 1815, Trowbridge \u2014 likely father or older kinsman. Third (NLWL-V2H) is Job Purnall. None match the ~1841-1845 window nor Emma as spouse. Collection 1473015 contains no record of Job Purnell marrying Emma."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-07T22:55:21.139Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England, Wiltshire, Church Records 1518-1990 (4380174)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "marriageYearFrom": 1838,
+        "marriageYearTo": 1846,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 12,
+      "notes": "12 results, all incompatible. Top results are baptism records for a Job Purnell born ~1801 in Trowbridge (different person, likely an uncle or cousin of subject). Two records where Job Purnell appears as father (James Purnell entry, Hannah Dicks entry) are parent-role mentions with occupation 'Carrier', not marriage records. subjectResolvable=false due to subject lacking marriage facts. No marriage record for Job Purnell (b. 1819) and Emma found in Wiltshire Church Records."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-07T22:56:01.916Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England, Somerset, Church Records 1501-1999 (4380193)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "marriageYearFrom": 1838,
+        "marriageYearTo": 1846,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 4,
+      "notes": "4 results, none a marriage record for our subject. Top two (6DML-7R9H, 6DML-3ZMK) are Somerset records where Job Purnell appears as a parent (Irene Purnell's entry, William Coombs entry) \u2014 likely a later-era Somerset Job Purnell, not our Wisconsin-emigrant subject. Third result is a baptism for a Job Purnell born 1799 in Walcot (different person). No marriage record found in Somerset Church Records for Job Purnell (b.1819) + Emma in the 1838-1846 window."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-07T22:56:34.114Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "England and Wales Non-Conformist Record Indexes RG4-8 (1666142)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 5,
+      "notes": "5 results \u2014 all 17th\u201318th century burials/christenings for unknown-given-name Purnells in Bristol and Gloucestershire. No match for Job Purnell in the 1838-1846 window. Nonconformist chapel registers in the Trowbridge area may not be fully indexed in this collection, or the family was Anglican."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-07T22:57:59.951Z",
+      "tool": "record_search",
+      "query": {
+        "records_read": [
+          "ark:/61903/1:1:MN97-PWH (1870 census)",
+          "ark:/61903/1:1:MN4C-SFJ (1880 census)"
+        ],
+        "purpose": "Check existing tree census sources for marriage year or place data"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "Read 1870 and 1880 census records already cited in tree. 1870 (MN97-PWH): Job b.1820 England, Emma b.1824 England \u2014 no marriage date/place column. 1880 (MN4C-SFJ): Job listed as widowed (Emma died Jan 1879), no marriage year data. Neither census record contains marriage date or place information beyond confirming the couple's existence and English birth."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-07T22:58:06.425Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Connecticut Marriages 1630-1997 (1674749)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result in collection 1674749. This collection's coverage of Norwich, New London County, CT in the 1840s appears incomplete. Searching the broader Connecticut Vital Records Prior to 1850 collection (2843390) as fallback."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-07T22:58:15.888Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Connecticut Vital Records Prior to 1850 (2843390)",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 2,
+      "notes": "Two results, both tree-matching 2W2F-CNH (Job Purnell) at 5 stars. Records QPQB-SJDF (Job Purnal persona) and QPHS-LY5H (Job Purnal persona) are two index entries from the same underlying marriage record. Full record read confirms: Job Purnal married Emma Osborne, 27 October 1844, Norwich, New London, Connecticut. Witness: Richard Livesey. Emma's maiden name Osborne \u2014 explains daughter Sarah OSBORNE Purnell's middle name. This is the answer to q_001."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Connecticut, Vital Records, Prior to 1850,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF : accessed 8 July 2026), entry for Job Purnal and Emma Osborne, marriage 27 October 1844, Norwich, New London, Connecticut.",
+      "citation_detail": {
+        "who": "Job Purnal and Emma Osborne",
+        "what": "Marriage record",
+        "when_created": "27 October 1844",
+        "when_accessed": "2026-07-08",
+        "where": "FamilySearch, https://www.familysearch.org/search/collection/2843390",
+        "where_within": "Entry for Job Purnal and Emma Osborne; ark:/61903/1:1:QPQB-SJDF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-08",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+      "log_entry_id": "log_010",
+      "notes": "Connecticut, Vital Records, Prior to 1850 (FS collection 2843390) is a digital index of the Barbour Collection \u2014 a compilation of abstracts from original Connecticut town and church marriage records. Derivative source; the original Norwich town marriage register entry has not been independently examined."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+      "record_persona_id": null,
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Job Purnal",
+      "structured_value": {
+        "given": "Job",
+        "surname": "Purnal"
+      },
+      "information_quality": "primary",
+      "informant": "Job Purnal (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+      "record_persona_id": null,
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "27 October 1844, Norwich, New London, Connecticut",
+      "date": "27 October 1844",
+      "date_certainty": "exact",
+      "place": "Norwich, New London, Connecticut",
+      "standard_place": "Norwich, New London, Connecticut, United States",
+      "information_quality": "primary",
+      "informant": "town clerk / marriage registrar, Norwich, Connecticut",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+      "record_persona_id": null,
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Emma Osborne",
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Osborne"
+      },
+      "information_quality": "primary",
+      "informant": "Emma Osborne (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+      "record_persona_id": null,
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "27 October 1844, Norwich, New London, Connecticut",
+      "date": "27 October 1844",
+      "date_certainty": "exact",
+      "place": "Norwich, New London, Connecticut",
+      "standard_place": "Norwich, New London, Connecticut, United States",
+      "information_quality": "primary",
+      "informant": "town clerk / marriage registrar, Norwich, Connecticut",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+      "record_persona_id": null,
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "Richard Livesey",
+      "structured_value": {
+        "given": "Richard",
+        "surname": "Livesey"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "2W2F-CNH",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The record names the groom 'Job Purnal' \u2014 a phonetic spelling variant of Purnell consistent with the subject's name across records (Purnell/Parnell/Pernell throughout census records). Age compatibility: born 1 December 1819, making him 24 at the October 1844 marriage \u2014 consistent with prime marrying age. Geographic fit: the marriage occurred in Norwich, New London, Connecticut, consistent with the subject's documented presence in Connecticut (first child born there May 1846). No other Job Purnell/Purnal of matching age and location is known. The name, age window, and Connecticut geography together constitute a strong match.",
+      "superseded_by": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "2W2F-CNH",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The groom's marriage event (27 October 1844, Norwich, New London, Connecticut) is linked to Job Purnell (2W2F-CNH) on the same identification grounds as a_001 (name variant 'Purnal', age 24 at marriage, Connecticut residence consistent with first child born there May 1846). This is the same record-persona; the marriage fact is directly stated and applies to the same individual as the name assertion.",
+      "superseded_by": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "2W2D-8X9",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The groom's marriage assertion (a_002) is a relationship assertion that bears equally on the bride. 2W2D-8X9 is 'Emm' Purnell, Job's wife, born 22 July 1822 in Rode, Somerset. The record names the bride 'Emma Osborne'; 'Emm' in the tree is a truncated form of Emma. Age at marriage: 22 years \u2014 fully consistent with born 1822 \u00d7 married October 1844. The couple relationship rel-couple-2W2F-CNH-2W2D-8X9 already exists in the tree. This assertion records the event that formalizes that couple relationship.",
+      "superseded_by": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "2W2D-8X9",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The record names the bride 'Emma Osborne'. 2W2D-8X9 is the Emma in Job's couple relationship, born 22 July 1822 in Rode, Somerset. 'Emma' matches the tree's truncated 'Emm'. The surname 'Osborne' is previously unknown from the tree but is corroborated by the couple's daughter being named 'Sarah Osborne Purnell' \u2014 a clear honor-naming of the mother's maiden family. Age at marriage 22 (born 1822 \u00d7 October 1844) is plausible. No other Emma known in connection with Job Purnell. Strong match on name/age/relationship context.",
+      "superseded_by": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "2W2D-8X9",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The bride's marriage event (27 October 1844, Norwich, New London, Connecticut) is linked to Emma n\u00e9e Osborne (2W2D-8X9) on the same grounds as a_003: name 'Emma' matches, maiden name 'Osborne' corroborated by daughter's middle name, age 22 at marriage consistent with born 1822, and the couple relationship with 2W2F-CNH already exists in the tree.",
+      "superseded_by": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "2W2F-CNH",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The bride's marriage assertion (a_004) is a relationship assertion that also bears on the groom Job Purnell (2W2F-CNH). The marriage event names both parties; linking it to both persons records the bilateral nature of the marriage event. Identification grounds for 2W2F-CNH are the same as for a_001 and a_002.",
+      "superseded_by": null,
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The record names 'Richard Livesey' as witness to the marriage. I1 is the stub person created from this single record mention. The name matches exactly. No corroborating records currently exist for Richard Livesey; confidence is probable rather than confident because the stub rests solely on this one record entry with no independent corroboration yet.",
+      "superseded_by": null,
+      "created": "2026-07-07"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Ten searches across two countries: GRO civil registration index (England & Wales Marriage Registration Index 1837\u20132005, three query variants including surname variants Purnell/Parnell), England Marriages 1538\u20131973, Wiltshire Church Records 1518\u20131990, Somerset Church Records 1501\u20131999, Non-Conformist RG4-8, 1870 and 1880 US census (existing tree citations read for marriage data), Connecticut Marriages 1630\u20131997, and Connecticut Vital Records Prior to 1850 (Barbour Collection, FS collection 2843390). England-side searches uniformly negative. Positive result found in collection 2843390. Limitation: source is derivative (Barbour Collection abstraction of original Norwich town vital register); original register, held at the Connecticut State Library, was not accessed via this session's MCP-based research tools.",
+      "narrative_markdown": "## Marriage of Job Purnell and Emma Osborne, 27 October 1844, Norwich, Connecticut\n\n### Research Question\n\nWhen and where did Job Purnell (born 1 December 1819, Trowbridge, Wiltshire, England; died 9 November 1895, Portage, Columbia, Wisconsin) marry his wife Emma (born 22 July 1822, Rode, Somerset, England)?\n\n### Conclusion\n\nThe preponderance of evidence strongly indicates that Job Purnell married Emma Osborne on 27 October 1844 in Norwich, New London County, Connecticut.\n\n### Evidence and Analysis\n\n**Direct Evidence \u2014 Connecticut Vital Records**\n\nThe marriage is recorded in \"Connecticut, Vital Records, Prior to 1850,\" a digital index of the Barbour Collection on FamilySearch (ark:/61903/1:1:QPQB-SJDF).\u00b9 The entry records the groom as \"Job Purnal,\" the bride as \"Emma Osborne,\" the date as 27 October 1844, and the place as Norwich, New London, Connecticut. Richard Livesey is named as witness.\n\nThe Barbour Collection is a systematic compilation of abstracts of Connecticut town vital records to 1850, prepared under Lucius Barnes Barbour between approximately 1913 and 1934. It is a **derivative source** \u2014 an abstraction of the original Norwich town vital register \u2014 and the original register was not independently examined during this research. This limitation prevents upgrading the conclusion beyond probable, as direct access to the original record is desirable to confirm the abstraction's accuracy.\n\nThe groom's name \"Purnal\" is a phonetic spelling variant of Purnell consistent with the subject's name across multiple records (indexed as \"Parnell\" in the 1850 U.S. census and \"Pernell\" in the 1860 census). Identification of this record with Job Purnell (born 1819, Trowbridge, Wiltshire) rests on three points of corroboration: (a) age compatibility \u2014 he would have been approximately 24 years old at the October 1844 ceremony; (b) geographic consistency \u2014 the couple's first child, Eliza Etta Purnell, was born 1 May 1846 in Norwich, New London, Connecticut,\u00b2 placing the family at the same location in the expected post-marriage period; and (c) absence of any other Job Purnell or Purnal of matching age and Connecticut location identified in any searched source.\n\n**Negative Evidence \u2014 England**\n\nSeven searches across English record collections for the 1841\u20131845 marriage window returned no compatible result: the England and Wales Marriage Registration Index 1837\u20132005 (GRO civil registration, three searches under Purnell and Parnell surname variants), England Marriages 1538\u20131973 (a broad index of church and other marriages), Wiltshire Church Records 1518\u20131990, Somerset Church Records 1501\u20131999 (covering Emma's home county), and the England and Wales Non-Conformist Record Indexes RG4-8.\u00b3 All searches returned either nil results or records demonstrably incompatible with the subject. One result \u2014 a Job Purnell married in Melksham, Wiltshire, Q4 1849 \u2014 was excluded as impossible: the couple's first child was born in Connecticut in May 1846, ruling out an English marriage in 1849. The consistent failure across all England-side sources constitutes strong negative evidence that the marriage did not occur in England and is consistent with the couple having emigrated to Connecticut before marrying.\n\n**Corroborating Evidence**\n\nThe 1850 United States census, an original record, lists Job \"Parnell\" and Emma \"Parnell\" together as a married couple in Norwich, New London County, Connecticut \u2014 the same jurisdiction named in the marriage record.\u2074 The 1870 census confirms the couple's continuing union in Wisconsin.\u2075 These census records, created independently of the Barbour Collection, corroborate \u2014 though indirectly \u2014 that Job and Emma were married and that their union was established in Connecticut.\n\nEmma's maiden name \"Osborne,\" previously unknown in the family tree, is circumstantially corroborated by the couple's daughter Sarah Osborne Purnell (born 27 December 1861, Portage, Wisconsin\u2076). Honor-naming of a child after the mother's maiden family was common practice in the nineteenth century; the daughter's middle name Osborne aligns precisely with the bride's surname in the marriage record.\n\n**Source Classification**\n\nThe Connecticut Vital Records Prior to 1850 entry is a **derivative source** (abstraction of original town vital records). The marriage date and place bear **official-duty** informant proximity (town registrar); the parties' names bear **self** informant proximity (groom and bride reported their own names). The marriage event is **direct evidence** of when and where the marriage occurred.\n\n### Limitations and Tier Declaration\n\nThis conclusion is rated **probable** rather than proved for two reasons. First, the sole source directly naming the marriage date and place is derivative (the Barbour Collection abstraction); the original Norwich town vital register, which would be an original source with primary information, was not examined. Second, independent corroboration from the census records is indirect \u2014 the censuses confirm the couple's union and Connecticut location but do not independently name the marriage date. The available evidence points consistently in one direction, with no conflicting sources, supporting a probable conclusion. Access to the original Norwich town vital register (Connecticut State Library) would, if it confirms the Barbour Collection's abstraction, advance this conclusion to proved.\n\n---\n\n\u00b9 \"Connecticut, Vital Records, Prior to 1850,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF : accessed 8 July 2026), entry for Job Purnal and Emma Osborne, marriage 27 October 1844, Norwich, New London, Connecticut.\n\n\u00b2 Person record 2W2D-81L (Eliza Etta Purnell, born 1 May 1846, Norwich, New London, Connecticut), research project tree.\n\n\u00b3 Search log entries log_001 through log_007.\n\n\u2074 \"United States, Census, 1850,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:M68R-B1Q), entry for Job Parnell and Emma Parnell, 1850.\n\n\u2075 \"United States, Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MN97-PWH), entry for Job Purnell and Emma Purnell, 1870.\n\n\u2076 Person record 2W2D-D64 (Sarah Osborne Purnell, born 27 December 1861, Portage, Columbia, Wisconsin), research project tree."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-08.json",
+      "superseded_by": null,
+      "strengths": [
+        "Tier honestly set at probable rather than proved, with derivative-source and indirect-corroboration limitations explicitly named.",
+        "England-side negative evidence correctly excludes competing Job Purnell candidates with stated reasoning."
+      ],
+      "must_address": [
+        {
+          "standard": "Narrative self-containment / Standard 43",
+          "issue": "Footnotes 2 and 6 cite internal tree person records rather than verifiable external sources for load-bearing identification facts (Eliza Etta May 1846 birth; Sarah Osborne middle name).",
+          "specific_action": "Cite underlying birth records for 2W2D-81L and 2W2D-D64, or annotate as uncited legacy tree data."
+        }
+      ],
+      "consider_addressing": [
+        {
+          "standard": "Standard 14 \u2014 repository breadth",
+          "issue": "England-side searches FamilySearch-only; Nonconformist indexing flagged as incomplete in log_007.",
+          "specific_action": "FreeBMD or county record office cross-check for Proved upgrade path."
+        }
+      ],
+      "non_blocking_notes": [],
+      "timestamp": "2026-07-07T23:15:11.938Z"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "zuniga-rojas-parents",
+  "name": "Adrian Zuñiga Rojas — parents (1910s)",
+  "source_pid": "2DTG-7MK",
+  "captured": "2026-07-05",
+  "researcher_question": "Who were the parents of Adrian Zuñiga Rojas, born 8 September 1889 in Arani, Cochabamba, Bolivia?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1910s",
+    "geography": "BO-C"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Parentage is attested by the 29 November 1913 Catholic marriage record from San Bartolomé parish, Arani (Bolivia parish registers, 1566–2020), which names the groom's father, Pedro Zuñiga. The mother, Apolonia Rojas, is reflected in the subject's compound surname (Zuñiga Rojas) and in the couple's own 1898 marriage in Pocoata. Records are Spanish-language with heavy surname spelling variation (Zuñiga / Súñiga / Suñiga / Zúñiga / Zúniga); the agent should recover both parents from parish-record search, not from an attached source."
+}

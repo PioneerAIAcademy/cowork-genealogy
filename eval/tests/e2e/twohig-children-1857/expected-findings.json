@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "person",
+      "description": "Stephen Joseph Twohig had a previously-unlinked daughter, Mary Twohig (also recorded as Florence in later records; married name Feurfile), born 11 June 1886 in Manhattan — a distinct child from the already-linked daughter Genevieve \"Jennie\" Ballard, despite sharing a similar birth year.",
+      "details": {
+        "subject_person": "Stephen Joseph Twohig (GQV2-NKK)",
+        "relation": "child",
+        "target_person": {
+          "name": "Mary Twohig (later Florence Twohig Feurfile)",
+          "birth": "11 June 1886, Manhattan, New York"
+        }
+      },
+      "supporting_sources": [
+        "New York, New York City Births, 1846-1909 civil birth registration index",
+        "1900 and 1910 U.S. federal census household enumerations"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Stephen Joseph Twohig had a previously-unlinked son, Edward Twohig, born 27 March 1891 in Manhattan, who died in infancy on 29 January 1892.",
+      "details": {
+        "subject_person": "Stephen Joseph Twohig (GQV2-NKK)",
+        "relation": "child",
+        "target_person": {
+          "name": "Edward Twohig",
+          "birth": "27 March 1891, Manhattan, New York",
+          "death": "29 January 1892"
+        }
+      },
+      "supporting_sources": [
+        "New York, New York City Births, 1846-1909 civil birth registration index",
+        "New York, New York City Municipal Deaths, 1795-1949",
+        "Find a Grave Index (Calvary Cemetery, Woodside, Queens)"
+      ],
+      "required": true
+    }
+  ]
+}
