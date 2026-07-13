@@ -58,6 +58,8 @@ _`assertion-extraction` is doing too much._ I bundled extraction, three-axis cla
 
 That puts informant identification with the Primary/Secondary judgment where it belongs (since that's the axis it directly determines).
 
+> **Status note (2026-07):** this split was later reversed — `assertion-classification` was merged back into `record-extraction`. Classification is now **first-and-final at extraction** (the record-extractor agent applies the full three-layer rigor in the same pass that extracts), and classification-refinement requests route back through `record-extraction`. The `assertion-classification` references in the tier lists and build order below are historical.
+
 _`citation` should be tier 1, but it's not as foundational as I implied._ Citations get generated from sources, and sources are a relatively thin record of where data came from. Worth keeping in tier 1 for GPS conformance, but it's the most independent of the four — could realistically be deferred a week without breaking anything else. My earlier "build it last in tier 1" note was right and I shouldn't have flagged it as more critical than it is.
 
 _Missing skill: `person-evidence`._ If assertions attach to records and records get linked to persons separately (per the schema fix above), there needs to be a skill that does that linking — evaluating whether the John Smith in this 1850 census is our subject. This is the identity-resolution work that the Match tool supports but doesn't fully automate. Belongs in tier 2, between question-selection and conflict-resolution.

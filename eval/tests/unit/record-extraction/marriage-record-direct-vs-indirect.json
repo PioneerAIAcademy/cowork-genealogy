@@ -17,7 +17,7 @@
     "Birth years computed from stated ages (Patrick ~1845, Catherine ~1848) are INDIRECT evidence — requires arithmetic inference from the age",
     "Should extract assertions for BOTH the groom and bride — this is a two-party record",
     "Witnesses (Thomas Flynn, James Gallagher) should be noted as FAN associates but do not need full assertion sets — identifying facts only",
-    "Informant: the groom and bride are the informants for their own facts (they provided their ages, birthplaces, parents to the clerk). informant_proximity should be 'self' for the party's own facts. For the marriage event itself (date, place), the officiant (Rev. O'Connor) is an acceptable informant with proximity 'witness' — he performed and witnessed the ceremony. The clerk is the recorder."
+    "Informant: the groom and bride are the informants for their own facts (they provided their ages, birthplaces, parents to the clerk). informant_proximity should be 'self' for the party's own facts. For the marriage event itself (date, place), the officiant (Rev. O'Connor) is the informant; his proximity may be 'official_duty' (preferred — matches the record-extractor agent's marriage-record doctrine) or 'witness' (he performed and witnessed the ceremony) — both are acceptable, neither is a deduction. The clerk is the recorder."
   ],
   "execution": {
     "max_turns": 40,

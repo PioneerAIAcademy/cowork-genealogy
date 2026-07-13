@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Father recovered: I1 linked as parent of K87G-T89; given name Tollev = Tollef (variant), patronymic 'Nadnesen' is a transcription variant of Aadnesen, farm Birkeland matches context. Birth 1773/Time and the 'Aasland' farm-surname are not on the tree person, but the father is correctly identified and linked.",
+    "f2": "Mother recovered (bonus, required:false): I2 'Inger Larsdatter' linked as parent; given + patronymic match. 'Froyland' surname not captured (finding's birth is 'unknown'). proof_quality=2: systematic 4-collection search but parentage rests on a single indexed baptism source (original image not examined); probable tier appropriate."
+  },
+  "annotator": "developer-blind"
+}

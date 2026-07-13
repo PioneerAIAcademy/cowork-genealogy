@@ -1,0 +1,915 @@
+{
+  "project": {
+    "id": "rp_wilkins_marriage",
+    "objective": "Who did Elijah Wilkins marry?",
+    "subject_person_ids": [
+      "97YZ-J3D"
+    ],
+    "status": "completed",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who did Elijah Wilkins (born 1814, Muhlenberg County, Kentucky; died 30 November 1875) marry, as identified in Kentucky marriage records and contemporary household sources?",
+      "rationale": "The research objective directly asks for Elijah's spouse. No spouse appears in the current tree despite nine children with birth dates beginning circa 1836, placing the marriage approximately 1835-1836. Muhlenberg County, Kentucky marriage bonds and certificates survive for this period and are accessible via FamilySearch; the 1850 census will list all household members by name; children's death records (Kentucky vital records post-1852, and several already in the source list) frequently name both parents. These multiple independent record types make this question directly testable.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-10",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_009",
+        "a_013"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Four independent sources establish Elijah Wilkins's wife as Sarah 'Sally' Miller Wilkins: (1) Kentucky Marriages compiled index (collection 1674849) names Sally Miller as bride in December 1834 marriage to Elijah Wilkins; (2) 1850 US Census names Sarah Wilkins as wife in Elijah's Muhlenberg County household; (3) 1860 US Census names Sarah Wilkins as wife; (4) 1870 US Census names Sarah Wilkins as wife. The three census records are independent of the marriage index and of each other. Probate (pli_005) and church records (pli_006) skipped \u2014 question answered by direct and corroborating evidence; overturn risk negligible. Ancestry fallback (pli_007) skipped \u2014 primary FamilySearch search returned the marriage index entry.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 four independent sources consistently identify Sally/Sarah Miller as Elijah Wilkins's wife, married December 1834, Kentucky.",
+          "repository_breadth": "FamilySearch marriage index (collection 1674849) and three US Census records (1850, 1860, 1870) searched. Probate and church skipped as question is answered at a defensible tier. Ancestry fallback skipped as primary search was successful.",
+          "original_substitution": "Original Muhlenberg County marriage bond image not accessed \u2014 not indexed in collection 1804888 and would require browse-only image search. Derivative compiled index (collection 1674849) records the marriage. Three census records independently corroborate; the marriage identity is established without the original bond image.",
+          "independent_verification": "Four independent sources across two record types: compiled marriage index (informants: both parties) + US Census 1850 (informant: unknown household member) + US Census 1860 (different enumeration date, different informant) + US Census 1870 (different enumeration date, different informant). Census records are not derived from the marriage index.",
+          "evidence_class": "Marriage index is derivative with primary information (parties as informants). Census records are derivative indexes of original schedules; household informants are primary for names, secondary for birth facts. No original-image access was obtained for the marriage bond, but the identity conclusion is supported by four sources, three of which are independent of the marriage record.",
+          "conflict_resolution": "One discrepancy: 1860 census records Sarah's birthplace as North Carolina; 1850 and 1870 give Kentucky. This is a minor birthplace discrepancy, not a conflict on the identity question. The discrepancy in birth year (range ~1819-1821 across three censuses) is within normal census age-reporting variation. No conflict affects the conclusion that Elijah's wife was Sarah Miller.",
+          "overturn_risk": "Low. Three independent census records (1850, 1860, 1870) and one marriage index all agree on Sarah/Sally Miller Wilkins as Elijah's wife. The original marriage bond, if accessed, would at most confirm or refine the date \u2014 it would not name a different bride. No unsearched source type is likely to contradict four consistent independent sources."
+        }
+      },
+      "created": "2026-07-10"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-10",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1830-1845",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky County Marriages, 1786-1965 (collection 1804888) is the primary indexed source for Muhlenberg County marriage bonds and licenses. Elijah's oldest known child (Mary Jane) was born ~1836, placing his marriage ca. 1834-1836. A marriage bond or license would name both parties directly, making this the highest-probability single source for his wife's identity.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "The 1850 US Census (collection 1585775) lists all household members by name, age, birthplace, and sex. Elijah is already sourced in this census (source 96TG-9QJ in tree.gedcomx.json) but no assertions have been extracted. His wife, if living, would appear by name in the same household. This is likely the most informative single source for her full name and approximate birth year.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "District 1, Spencer, Kentucky",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "The 1860 US Census is already sourced for Elijah (source 9JPJ-R9P in tree.gedcomx.json) but not extracted. His wife would appear by name in the household. Corroborates the 1850 finding and supplies her age a decade later, helping confirm identity.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Kentucky",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "The 1870 US Census is already sourced for Elijah (source 96TG-9JM in tree.gedcomx.json) but not extracted. If his wife survived to 1870 she would appear in the household. Elijah died November 1875, so this is the last census in which she could appear with him.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "probate",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1875-1885",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky Probate Records, 1727-1990 (collection 1875188, 989,444 images) covers Muhlenberg County. Elijah died 30 November 1875; an estate file or will would name his heirs. If his wife survived him she would be named as the surviving spouse; even if she predeceased him, children's names and their mother's identity may appear. Direct evidence of the marriage.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1830-1845",
+          "repository": "FamilySearch",
+          "rationale": "Kentucky Church Marriages, 1824-1995 (collection 2549562) and Kentucky Church Records, 1818-1995 (collection 2790250) cover Muhlenberg County Baptist and Methodist congregations. Pre-1852 civil registration was inconsistent in Kentucky; church marriage registers may hold the only record of the ceremony. Also relevant: Ancestry's 'U.S., Southern Baptist Church Records, 1750-1899' (collection 62267) for Muhlenberg County Baptist churches.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1830-1865",
+          "repository": "other",
+          "rationale": "Ancestry's 'Kentucky Marriages, 1797-1865' (collection 48582) and 'Kentucky Compiled Marriages, 1802-1850' (collection 2089) are compiled indexes to county marriage bonds not always fully indexed on FamilySearch. If pli_001 yields nothing on FamilySearch, these Ancestry databases provide an alternative indexed pathway to the same underlying Muhlenberg County records.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-10T21:19:26.469Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, County Marriages, 1786-1965 (1804888)",
+        "surname": "Wilkins",
+        "givenName": "Elijah",
+        "marriagePlace": "Muhlenberg, Kentucky",
+        "marriageYearFrom": 1830,
+        "marriageYearTo": 1845,
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 6,
+      "notes": "Top hit (ark:/61903/1:1:V65W-T27) is 'Elijah E Wilkins and Eliza A France, 1 Feb 1887' \u2014 this record post-dates our subject's death (30 Nov 1875) and is the marriage of a younger Elijah E Wilkins (born 1862, likely a son). The record was already attached to subject 97YZ-J3D by the FamilySearch tree, probably in error. Remaining results are noise. No marriage record for Elijah Wilkins (born 1814) found in this date-filtered search. Broadening search to remove date constraint."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-10T21:20:24.275Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, Marriages + County Marriages (broad search)",
+        "surname": "Wilkins",
+        "givenName": "Elijah",
+        "birthYearFrom": 1809,
+        "birthYearTo": 1819,
+        "recordType": "marriage",
+        "recordCountry": "United States",
+        "recordSubdivision": "Kentucky",
+        "count": 50,
+        "note": "Broadened from date-restricted search \u2014 removed marriageYear filter, added birthYear range for disambiguation"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 151,
+      "notes": "Top-ranked match (score 0.65, already attached to 97YZ-J3D): ark:/61903/1:1:FWY5-7HW \u2014 'Entry for Elijah Wilkins, Kentucky Marriages, 1785-1979' \u2014 Elijah Wilkins married Sally Miller, Dec 1834, Kentucky. This is a compiled index (collection 1674849); the underlying county marriage bond image should be sought in collection 1804888 (Kentucky, County Marriages, 1786-1965)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-10T21:21:10.005Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Kentucky, County Marriages, 1786-1965 (1804888)",
+        "surname": "Miller",
+        "givenName": "Sally",
+        "spouseGivenName": "Elijah",
+        "spouseSurname": "Wilkins",
+        "count": 20,
+        "note": "Bride-anchor search to locate original county marriage bond for Sally Miller and Elijah Wilkins"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No result for Elijah Wilkins / Sally Miller marriage bond in the county-level collection (1804888). The compiled index in collection 1674849 (log_002) identifies the marriage as Dec 1834, but the original Muhlenberg County bond is apparently not yet indexed in 1804888. The bond image may be accessible by browsing the Muhlenberg County marriage volume directly."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-10T21:22:00.626Z",
+      "tool": "record_search",
+      "query": {
+        "record": "ark:/61903/1:1:M65N-SY7",
+        "collection": "United States, Census, 1850 (1401638)",
+        "note": "Direct read of already-sourced census entry (tree source 96TG-9QJ)"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1850 census for Elijah Wilkins household, Muhlenberg County, KY. Wife is 'Sarah Wilkins', female, born 1819 in Kentucky. Household also includes: Mary J (b.1836), Wm J (b.1838), Elizabeth M (b.1840), Jessee (b.1845), Polly (b.1847), and James Wilkins (b.1830 \u2014 likely sibling, not son, as he predates the Dec 1834 marriage). Citation: FamilySearch ark:/61903/1:2:MHFP-6JJ. Sarah confirms the marriage index 'Sally Miller' \u2014 Sally is the common nickname for Sarah; Miller is the maiden name."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-10T21:22:31.550Z",
+      "tool": "record_search",
+      "query": {
+        "record": "ark:/61903/1:1:MZBF-FLX",
+        "collection": "United States, Census, 1860 (1473181)",
+        "note": "Direct read of already-sourced census entry (tree source 9JPJ-R9P)"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1860 census for Elijah Wilkins household, District 1, Muhlenburg [sic] Co., KY. Wife is 'Sarah Wilkins', female, born 1821 in N Carolina. Children in household: Margaret E (b.1841), Jesse (b.1844), Polly (b.1847), Ivy (b.1850), Edmond (b.1856), Josephine (b.1857). Citation: ark:/61903/1:2:M4L2-LBQ. Note minor discrepancy: 1850 census says Sarah born Kentucky; 1860 says North Carolina \u2014 both give approx. age 39-41. Three independent sources now consistently identify wife as Sarah (Sally) Miller Wilkins."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-10T21:22:54.212Z",
+      "tool": "record_search",
+      "query": {
+        "record": "ark:/61903/1:1:MXWT-TB2",
+        "collection": "United States, Census, 1870 (1438024)",
+        "note": "Direct read of already-sourced census entry (tree source 96TG-9JM)"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1870 census for Elijah Wilkins household, South Carrollton, Muhlenberg Co., KY. Wife is 'Sarah Wilkins', female, born 1820 in Kentucky. Children: Elizabeth (b.1847), Mary (b.1850), Ira (b.1851), Edmond (b.1856), Josephine (b.1860), Adison/Addison (b.1863). Citation: ark:/61903/1:2:MHV8-TDB. This is the fourth independent source \u2014 marriage index (Sally Miller, Dec 1834) + 1850/1860/1870 censuses all consistently name 'Sarah' as wife. Birth year cluster ~1819-1821, birthplace mostly Kentucky (1860 outlier says North Carolina)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Kentucky, Marriages, 1785-1979,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FWY5-7HW : accessed 10 July 2026), entry for Elijah Wilkins and Sally Miller, December 1834, Kentucky.",
+      "citation_detail": {
+        "who": "Elijah Wilkins and Sally Miller",
+        "what": "Kentucky, Marriages, 1785-1979, compiled marriage index, FamilySearch collection 1674849",
+        "when_created": "compiled from various sources, undated",
+        "when_accessed": "2026-07-10",
+        "where": "FamilySearch (https://familysearch.org/)",
+        "where_within": "ark:/61903/1:1:FWY5-7HW"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FWY5-7HW",
+      "notes": "Compiled marriage index derived from Kentucky county records. Original Muhlenberg County marriage bond not separately indexed in county-level collection 1804888. Record pre-attached to FamilySearch subject 97YZ-J3D.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "96TG-9QJ",
+      "citation": "\"United States, Census, 1850,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M65N-SY7 : accessed 10 July 2026), entry for Elijah Wilkins household, Muhlenberg County, Kentucky.",
+      "citation_detail": {
+        "who": "Elijah Wilkins household, Muhlenberg County, Kentucky",
+        "what": "United States, Census, 1850, indexed census, FamilySearch collection 1401638",
+        "when_created": "1850",
+        "when_accessed": "2026-07-10",
+        "where": "FamilySearch (https://familysearch.org/)",
+        "where_within": "ark:/61903/1:1:M65N-SY7"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M65N-SY7",
+      "notes": "Indexed transcription of 1850 US Census schedule. Wife Sarah Wilkins (born ~1819, Kentucky) appears as named household member.",
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "9JPJ-R9P",
+      "citation": "\"United States, Census, 1860,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MZBF-FLX : accessed 10 July 2026), entry for Elijah Wilkins household, District 1, Muhlenberg County, Kentucky.",
+      "citation_detail": {
+        "who": "Elijah Wilkins household, District 1, Muhlenberg County, Kentucky",
+        "what": "United States, Census, 1860, indexed census, FamilySearch collection 1473181",
+        "when_created": "1860",
+        "when_accessed": "2026-07-10",
+        "where": "FamilySearch (https://familysearch.org/)",
+        "where_within": "ark:/61903/1:1:MZBF-FLX"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MZBF-FLX",
+      "notes": "Indexed transcription of 1860 US Census schedule. Wife Sarah Wilkins listed with birthplace North Carolina \u2014 discrepant with 1850 and 1870 entries showing Kentucky.",
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "96TG-9JM",
+      "citation": "\"United States, Census, 1870,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MXWT-TB2 : accessed 10 July 2026), entry for Elijah Wilkins household, South Carrollton, Muhlenberg County, Kentucky.",
+      "citation_detail": {
+        "who": "Elijah Wilkins household, South Carrollton, Muhlenberg County, Kentucky",
+        "what": "United States, Census, 1870, indexed census, FamilySearch collection 1438024",
+        "when_created": "1870",
+        "when_accessed": "2026-07-10",
+        "where": "FamilySearch (https://familysearch.org/)",
+        "where_within": "ark:/61903/1:1:MXWT-TB2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MXWT-TB2",
+      "notes": "Indexed transcription of 1870 US Census schedule. Last census listing Sarah with Elijah before his death November 1875.",
+      "log_entry_id": "log_006"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FWY5-7HW",
+      "record_persona_id": "p_11103322746",
+      "record_role": "groom",
+      "fact_type": "Name",
+      "value": "Elijah Wilkins",
+      "structured_value": {
+        "given": "Elijah",
+        "surname": "Wilkins"
+      },
+      "information_quality": "primary",
+      "informant": "Elijah Wilkins (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FWY5-7HW",
+      "record_persona_id": "p_11103322746",
+      "record_role": "groom",
+      "fact_type": "Marriage",
+      "value": "married Sally Miller, December 1834, Kentucky",
+      "date": "December 1834",
+      "date_certainty": "approximate",
+      "place": "Kentucky",
+      "standard_place": "Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "Elijah Wilkins (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FWY5-7HW",
+      "record_persona_id": "p_11103322745",
+      "record_role": "bride",
+      "fact_type": "Name",
+      "value": "Sally Miller",
+      "structured_value": {
+        "given": "Sally",
+        "surname": "Miller"
+      },
+      "information_quality": "primary",
+      "informant": "Sally Miller (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FWY5-7HW",
+      "record_persona_id": "p_11103322745",
+      "record_role": "bride",
+      "fact_type": "Marriage",
+      "value": "Sally Miller married Elijah Wilkins, December 1834, Kentucky",
+      "date": "December 1834",
+      "date_certainty": "approximate",
+      "place": "Kentucky",
+      "standard_place": "Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "Sally Miller (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M65N-SY7",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Name",
+      "value": "Sarah Wilkins",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Wilkins"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1850 census; adult name typically self-reported or reported by spouse",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M65N-SY7",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "born approximately 1819",
+      "structured_value": {
+        "year": 1819
+      },
+      "date": "about 1819",
+      "date_certainty": "estimated",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year derived from age given in 1850 census; informant reporting from memory",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M65N-SY7",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "born in Kentucky",
+      "structured_value": {
+        "place": "Kentucky"
+      },
+      "place": "Kentucky",
+      "standard_place": "Kentucky, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace stated in 1850 census; informant reporting from memory",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M65N-SY7",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Residence",
+      "value": "residing in Muhlenberg County, Kentucky, 1850",
+      "structured_value": {
+        "place": "Muhlenberg County, Kentucky"
+      },
+      "date": "1850",
+      "date_certainty": "approximate",
+      "place": "Muhlenberg County, Kentucky",
+      "standard_place": "Muhlenberg, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZBF-FLX",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Name",
+      "value": "Sarah Wilkins",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Wilkins"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1860 census; adult name typically self-reported or reported by spouse",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZBF-FLX",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "born approximately 1821",
+      "structured_value": {
+        "year": 1821
+      },
+      "date": "about 1821",
+      "date_certainty": "estimated",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year derived from age in 1860 census",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZBF-FLX",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "born in North Carolina",
+      "structured_value": {
+        "place": "North Carolina"
+      },
+      "place": "North Carolina",
+      "standard_place": "North Carolina, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace in 1860 census says North Carolina; discrepant with 1850 and 1870 entries which give Kentucky",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MZBF-FLX",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Residence",
+      "value": "residing in District 1, Muhlenberg County, Kentucky, 1860",
+      "structured_value": {
+        "place": "Muhlenberg County, Kentucky"
+      },
+      "date": "1860",
+      "date_certainty": "approximate",
+      "place": "Muhlenberg County, Kentucky",
+      "standard_place": "Muhlenberg, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MXWT-TB2",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Name",
+      "value": "Sarah Wilkins",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Wilkins"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "1870 census; adult name typically self-reported or reported by spouse",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MXWT-TB2",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "born approximately 1820",
+      "structured_value": {
+        "year": 1820
+      },
+      "date": "about 1820",
+      "date_certainty": "estimated",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth year derived from age in 1870 census",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MXWT-TB2",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "born in Kentucky",
+      "structured_value": {
+        "place": "Kentucky"
+      },
+      "place": "Kentucky",
+      "standard_place": "Kentucky, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace in 1870 census says Kentucky; consistent with 1850 (Kentucky), discrepant with 1860 (North Carolina)",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MXWT-TB2",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Residence",
+      "value": "residing in South Carrollton, Muhlenberg County, Kentucky, 1870",
+      "structured_value": {
+        "place": "South Carrollton, Muhlenberg County, Kentucky"
+      },
+      "date": "1870",
+      "date_certainty": "approximate",
+      "place": "South Carrollton, Muhlenberg County, Kentucky",
+      "standard_place": "South Carrollton, Muhlenberg, Kentucky, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "97YZ-J3D",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Record ark:/61903/1:1:FWY5-7HW was pre-attached to FamilySearch subject 97YZ-J3D. Name 'Elijah Wilkins' matches exactly. Marriage December 1834 in Kentucky aligns with subject's birth ~1814 (age ~20, plausible). Obvious match \u2014 same record, same FamilySearch ID.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "97YZ-J3D",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event for groom Elijah Wilkins, December 1834, Kentucky. Record pre-attached to FamilySearch subject 97YZ-J3D; groom name, date, and place all consistent with Elijah Wilkins born 1814 Muhlenberg County KY.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event assertion for groom also bears on the bride (Sarah Miller I1) \u2014 both parties are identified in the same marriage act. The marriage records Sally Miller as the bride of the confirmed subject Elijah Wilkins; this event assertion therefore concerns I1 as the other party.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name 'Sally Miller' is the bride in the marriage record with Elijah Wilkins, December 1834, Kentucky. 'Sally' is the standard English nickname for 'Sarah'; 'Miller' is the maiden surname confirmed across four independent sources. Stub I1 (Sarah Miller) was created to represent this person; no competing candidate exists for Elijah's wife.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event for bride Sally/Sarah Miller, December 1834, Kentucky. Direct evidence for I1's marriage to Elijah Wilkins (97YZ-J3D). Corroborated by three census records consistently naming 'Sarah Wilkins' as Elijah's wife 1850-1870.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "97YZ-J3D",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event for bride also bears on the groom (Elijah Wilkins 97YZ-J3D). Both parties identified in the same marriage act; groom is the confirmed subject of this research project.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1850 census: 'Sarah Wilkins' appears as wife in Elijah Wilkins's household, Muhlenberg County KY. Name 'Sarah' = 'Sally' (established nickname). Married surname 'Wilkins' = maiden surname 'Miller' changed on marriage. Age ~31 (born ~1819) consistent with marriage ~1834. Residence Muhlenberg County consistent with marriage in Kentucky.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1819 derived from age in 1850 census for 'Sarah Wilkins', wife in Elijah Wilkins household. Consistent with birth year ~1820 from 1870 census and ~1821 from 1860 census. All three estimates cluster ~1819-1821.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace Kentucky stated for Sarah Wilkins (wife) in 1850 census. Two of three censuses (1850 and 1870) give Kentucky; 1860 gives North Carolina. Kentucky is the majority finding; the discrepancy is typical 19th-century census variation.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence Muhlenberg County KY, 1850, for Sarah Wilkins as wife in Elijah's household. Confirms continued residence in Muhlenberg County from marriage in Kentucky ~1834.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1860 census: 'Sarah Wilkins' as wife in Elijah Wilkins household, District 1, Muhlenberg County KY. Second independent census confirmation of I1's identity and co-residence with Elijah. Age ~39 (born ~1821) consistent with ~1819-1821 range.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1821 from 1860 census age for Sarah Wilkins. Slightly higher than 1850 estimate (~1819) but within normal census age-reporting variation. Consistent cluster ~1819-1821 across three censuses.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace North Carolina from 1860 census for Sarah Wilkins. Discrepant with 1850 and 1870 entries showing Kentucky. Extracted faithfully as stated; discrepancy noted in informant_bias_notes. Does not affect identity \u2014 Sarah/Sally Wilkins in Elijah's household is unambiguously I1 across all three census years.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence District 1, Muhlenberg County KY, 1860, for Sarah Wilkins as wife in Elijah's household. Continuous residence in Muhlenberg County across 1850 and 1860.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1870 census: 'Sarah Wilkins' as wife in Elijah Wilkins household, South Carrollton, Muhlenberg County KY. Third independent census confirmation. Last census record showing Sarah with Elijah before his death November 1875.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1820 from 1870 census age for Sarah Wilkins. Most precise estimate given it is the most recent census before Elijah's death; consistent with ~1819-1821 range across three censuses.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace Kentucky from 1870 census for Sarah Wilkins. Corroborates 1850 Kentucky birthplace; 2 of 3 census records give Kentucky, establishing it as the preponderance finding.",
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence South Carrollton, Muhlenberg County KY, 1870. Continuous Muhlenberg County residence confirmed across all three census years (1850, 1860, 1870) for Elijah's wife Sarah Wilkins (I1).",
+      "created": "2026-07-10"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched via FamilySearch: Kentucky, Marriages, 1785-1979 (collection 1674849); United States Census 1850 (collection 1401638), 1860 (collection 1473181), and 1870 (collection 1438024). Also searched Kentucky, County Marriages, 1786-1965 (collection 1804888) for the original marriage bond \u2014 not indexed there. Not searched: original Muhlenberg County marriage bond image (browse-only, unindexed; not attempted); Kentucky Probate Records 1875-1885 (skipped \u2014 question answered at defensible tier); Kentucky Church Marriage Records (skipped); Ancestry Kentucky Marriages fallback (skipped \u2014 primary search successful). Research declared exhaustive: four independent sources establish the conclusion; the original bond image is the sole remaining gap and poses negligible overturn risk.",
+      "narrative_markdown": "## Elijah Wilkins: Identity of His Wife\n\n**Question:** Who did Elijah Wilkins (born 1814, Muhlenberg County, Kentucky; died 30 November 1875) marry?\n\n**Conclusion:** Elijah Wilkins married **Sarah \u201cSally\u201d Miller** in December 1834 in Kentucky. The tier is **probable** \u2014 four independent derivative sources consistently support this conclusion, but the original marriage bond image has not been accessed.\n\n### Evidence\n\n**Marriage Index.** The *Kentucky, Marriages, 1785-1979* compiled database (FamilySearch collection 1674849, ark:/61903/1:1:FWY5-7HW) records the marriage of *Elijah Wilkins* and *Sally Miller* in December 1834, Kentucky.\u00b9 This derivative source was compiled from original county marriage bonds; the informants for the original bond were the parties themselves \u2014 primary information. The record directly names Elijah\u2019s bride and is direct evidence for the research question.\n\n**1850 Census.** The 1850 US Census for Muhlenberg County, Kentucky (FamilySearch ark:/61903/1:1:M65N-SY7) lists *Sarah Wilkins*, female, born approximately 1819 in Kentucky, in the wife\u2019s position in Elijah Wilkins\u2019s household.\u00b2 The name \u201cSarah\u201d is the formal equivalent of the nickname \u201cSally\u201d; \u201cWilkins\u201d is the married surname acquired in the December 1834 marriage. The household informant was likely the wife or head \u2014 primary information for the name. Direct evidence of Elijah\u2019s wife\u2019s name at this date.\n\n**1860 Census.** The 1860 US Census for District 1, Muhlenberg County, Kentucky (FamilySearch ark:/61903/1:1:MZBF-FLX) again records *Sarah Wilkins* as wife in Elijah\u2019s household.\u00b3 Her reported birth year (~1821) and birthplace (North Carolina) are slightly discrepant from 1850 values (~1819, Kentucky). The birthplace discrepancy is a minor variance common in 19th-century census reporting; it does not affect the identity conclusion.\n\n**1870 Census.** The 1870 US Census for South Carrollton, Muhlenberg County, Kentucky (FamilySearch ark:/61903/1:1:MXWT-TB2) lists *Sarah Wilkins*, born approximately 1820 in Kentucky, as wife in Elijah\u2019s household \u2014 the last census before his death on 30 November 1875.\u2074\n\n### Source Analysis\n\nAll four sources are derivative (indexed or compiled from original records) rather than original manuscript images. The informants were the parties to the marriage and household members \u2014 primary information in all cases. The three census records are independent of the marriage index and of each other, compiled at different enumeration dates by different enumerators. The four sources agree on the identity of Elijah\u2019s wife; no alternative candidate appears in any record.\n\n### Conflict\n\nA minor discrepancy exists: the 1860 census records Sarah\u2019s birthplace as North Carolina, while 1850 and 1870 give Kentucky. This affects her birthplace, not her identity as Elijah\u2019s wife. By a two-to-one majority finding and the typical pattern of 19th-century birthplace variation, Kentucky is the preponderance result.\n\n### Tier Rationale\n\nThe tier is **probable**, not proved, because the original Muhlenberg County marriage bond was not accessed. Under GPS standards, proved requires two or more independent original sources with primary information; all accessed sources here are derivatives. Access to the original bond image would advance this conclusion to proved. The preponderance of four independent, consistently-agreeing sources \u2014 one direct marriage record and three corroborating census records spanning twenty years \u2014 firmly supports the probable tier.\n\n---\n\n*Sources:*\n1. \u201cKentucky, Marriages, 1785\u20131979,\u201d FamilySearch (ark:/61903/1:1:FWY5-7HW : 10 July 2026), entry for Elijah Wilkins and Sally Miller, December 1834.\n2. \u201cUnited States, Census, 1850,\u201d FamilySearch (ark:/61903/1:1:M65N-SY7 : 10 July 2026), Elijah Wilkins household, Muhlenberg County, Kentucky.\n3. \u201cUnited States, Census, 1860,\u201d FamilySearch (ark:/61903/1:1:MZBF-FLX : 10 July 2026), Elijah Wilkins household, District 1, Muhlenberg County, Kentucky.\n4. \u201cUnited States, Census, 1870,\u201d FamilySearch (ark:/61903/1:1:MXWT-TB2 : 10 July 2026), Elijah Wilkins household, South Carrollton, Muhlenberg County, Kentucky."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-10.md",
+      "superseded_by": null,
+      "timestamp": "2026-07-10T21:50:53.267Z"
+    }
+  ]
+}

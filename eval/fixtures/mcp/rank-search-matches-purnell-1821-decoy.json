@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the single staged baptism candidate against subject I1 (Job Purnell, b. ~1826). The lone hit — Job Purnell baptised 1821, ark 6DSR-XD6Y — ranks #1 with a strong name+place score (0.86, confidence 4) and is unattached. The high score is a lure: the candidate's birth year (1821) conflicts with the subject (~1826), so the skill must apply the logical cross-check and decline to adopt it. Matched on subjectId; independent of the per-run stagedResultsRef.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:6DSR-XD6Y",
+        "primaryId": "P1",
+        "personName": "Job Purnell",
+        "sex": "Male",
+        "birthDate": "1821",
+        "birthPlace": "Trowbridge, Wiltshire, England",
+        "collectionTitle": "England, Wiltshire, Church Records, 1518-1990",
+        "matchScore": 0.86,
+        "matchConfidence": 4,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

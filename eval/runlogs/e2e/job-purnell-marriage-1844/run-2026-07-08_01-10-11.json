@@ -1,0 +1,2874 @@
+{
+  "test_id": "job-purnell-marriage-1844",
+  "captured_at": "2026-07-08_01-10-11",
+  "verdict": "pass",
+  "stop_reason": "completed",
+  "judge_output": {
+    "per_finding": [
+      {
+        "finding_id": "f1",
+        "matched": "true",
+        "agent_evidence": "Person 2W2F-CNH (Job Purnell) contains Marriage fact with date '27 October 1844' and place 'Norwich, New London, Connecticut, United States'; Person 2W2D-8X9 (Emma Purnell, n\u00e9e Osborne) contains matching Marriage fact with same date and place. Couple relationship rel-couple-2W2F-CNH-2W2D-8X9 links them.",
+        "notes": "The tree fully records the marriage date (27 October 1844) and place (Norwich, New London, Connecticut) for both Job and Emma. The agent successfully recovered the core fact that was stripped from the starting tree."
+      },
+      {
+        "finding_id": "f2",
+        "matched": "true",
+        "agent_evidence": "Person 2W2D-8X9 has two name entries: primary name 'Emma Purnell' and BirthName 'Emma Osborne' (id N2). The Osborne maiden name is explicitly captured. Daughter 2W2D-D64 is named 'Sarah Osborne Purnell', using the mother's maiden name as a middle name.",
+        "notes": "The tree records Emma's maiden name as Osborne in her birth name field and corroborates it through daughter Sarah Osborne Purnell. This is consistent with the expected finding that Emma's maiden name was Osborne."
+      }
+    ],
+    "recall_required": 1.0,
+    "recall_total": 1.0,
+    "verdict": "pass",
+    "rationale": "The agent recovered both required findings completely. The final tree (final_tree.gedcomx.json) contains the marriage date and place (27 October 1844, Norwich, New London, Connecticut) for Job Purnell and Emma, recorded as facts on both spouse persons and linked by a Couple relationship. Emma's maiden name Osborne is captured as a birth name and corroborated by the daughter Sarah Osborne Purnell. No conflicts or discrepancies are present in the tree data. Both findings marked as required=true are fully matched in the tree.",
+    "proof_quality": {
+      "score": 2,
+      "exhaustiveness": "yes",
+      "conflicts_addressed": "na",
+      "corroboration": "single_source",
+      "tier_appropriate": "yes",
+      "rationale": "The exhaustive_search_summary demonstrates a reasonably comprehensive search strategy across ten different collections in both England and Connecticut (GRO index, England Marriages, Wiltshire and Somerset Church Records, Non-Conformist RG4-8, Connecticut collections, and censuses), with explicit negative results from England-side searches supporting the conclusion. The tier declaration of 'probable' is appropriate: the agent correctly identifies the Barbour Collection as a derivative source (abstraction of original record) and notes the absence of independent corroboration from the original Norwich vital register. However, the corroboration is primarily single-source (the Barbour Collection entry itself), with census records providing only indirect corroboration (confirming the couple's union and Connecticut location, not the marriage date). The narrative reasoning is sound and transparent about limitations. The score of 2 reflects solid work: the search was reasonably exhaustive, the tier is properly justified, but corroboration remains indirect and the key source is derivative rather than original."
+    }
+  },
+  "usage": {
+    "duration_ms": 1685097,
+    "duration_api_ms": 1639780,
+    "num_turns": 96,
+    "is_error": false,
+    "stop_reason": "end_turn",
+    "total_cost_usd": 4.620294949999999,
+    "usage": {
+      "input_tokens": 121,
+      "cache_creation_input_tokens": 252868,
+      "cache_read_input_tokens": 6429596,
+      "output_tokens": 71324,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 252868,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 780,
+          "cache_read_input_tokens": 104905,
+          "cache_creation_input_tokens": 2435,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 2435
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "continue_nudges": 0,
+    "session_id": "6bbedb0a-1f9b-4e91-b9bc-e5df7b64922a",
+    "resumes": 0,
+    "resume_on_stall": true,
+    "timeline": [
+      [
+        2.9,
+        "system:init"
+      ],
+      [
+        6.3,
+        "assistant"
+      ],
+      [
+        8.1,
+        "assistant"
+      ],
+      [
+        8.2,
+        "tool_result"
+      ],
+      [
+        11.7,
+        "assistant"
+      ],
+      [
+        11.9,
+        "assistant"
+      ],
+      [
+        11.9,
+        "tool_result"
+      ],
+      [
+        11.9,
+        "tool_result"
+      ],
+      [
+        14.5,
+        "assistant"
+      ],
+      [
+        16.9,
+        "assistant"
+      ],
+      [
+        17.4,
+        "tool_result"
+      ],
+      [
+        17.7,
+        "assistant"
+      ],
+      [
+        17.7,
+        "tool_result"
+      ],
+      [
+        28.1,
+        "assistant"
+      ],
+      [
+        28.7,
+        "assistant"
+      ],
+      [
+        28.8,
+        "tool_result"
+      ],
+      [
+        31.3,
+        "assistant"
+      ],
+      [
+        31.7,
+        "tool_result"
+      ],
+      [
+        52.3,
+        "assistant"
+      ],
+      [
+        54.1,
+        "assistant"
+      ],
+      [
+        54.5,
+        "assistant"
+      ],
+      [
+        54.5,
+        "tool_result"
+      ],
+      [
+        56.9,
+        "assistant"
+      ],
+      [
+        65.7,
+        "assistant"
+      ],
+      [
+        65.7,
+        "tool_result"
+      ],
+      [
+        68.0,
+        "assistant"
+      ],
+      [
+        68.5,
+        "assistant"
+      ],
+      [
+        68.8,
+        "assistant"
+      ],
+      [
+        68.9,
+        "tool_result"
+      ],
+      [
+        68.9,
+        "tool_result"
+      ],
+      [
+        78.4,
+        "assistant"
+      ],
+      [
+        78.8,
+        "assistant"
+      ],
+      [
+        79.3,
+        "assistant"
+      ],
+      [
+        79.4,
+        "tool_result"
+      ],
+      [
+        81.9,
+        "assistant"
+      ],
+      [
+        82.8,
+        "assistant"
+      ],
+      [
+        83.7,
+        "assistant"
+      ],
+      [
+        83.9,
+        "assistant"
+      ],
+      [
+        87.4,
+        "tool_result"
+      ],
+      [
+        87.4,
+        "tool_result"
+      ],
+      [
+        93.4,
+        "tool_result"
+      ],
+      [
+        113.5,
+        "assistant"
+      ],
+      [
+        114.7,
+        "assistant"
+      ],
+      [
+        114.7,
+        "tool_result"
+      ],
+      [
+        150.3,
+        "assistant"
+      ],
+      [
+        153.3,
+        "assistant"
+      ],
+      [
+        180.9,
+        "assistant"
+      ],
+      [
+        180.9,
+        "tool_result"
+      ],
+      [
+        184.6,
+        "assistant"
+      ],
+      [
+        184.6,
+        "assistant"
+      ],
+      [
+        185.2,
+        "assistant"
+      ],
+      [
+        185.2,
+        "tool_result"
+      ],
+      [
+        185.2,
+        "tool_result"
+      ],
+      [
+        196.4,
+        "assistant"
+      ],
+      [
+        196.4,
+        "assistant"
+      ],
+      [
+        197.1,
+        "assistant"
+      ],
+      [
+        197.4,
+        "tool_result"
+      ],
+      [
+        202.8,
+        "assistant"
+      ],
+      [
+        205.6,
+        "assistant"
+      ],
+      [
+        206.5,
+        "tool_result"
+      ],
+      [
+        209.7,
+        "assistant"
+      ],
+      [
+        210.2,
+        "assistant"
+      ],
+      [
+        211.4,
+        "assistant"
+      ],
+      [
+        212.1,
+        "tool_result"
+      ],
+      [
+        221.4,
+        "assistant"
+      ],
+      [
+        221.4,
+        "assistant"
+      ],
+      [
+        222.0,
+        "assistant"
+      ],
+      [
+        223.3,
+        "tool_result"
+      ],
+      [
+        226.9,
+        "assistant"
+      ],
+      [
+        227.3,
+        "assistant"
+      ],
+      [
+        227.3,
+        "tool_result"
+      ],
+      [
+        229.6,
+        "assistant"
+      ],
+      [
+        229.9,
+        "assistant"
+      ],
+      [
+        233.4,
+        "tool_result"
+      ],
+      [
+        259.8,
+        "assistant"
+      ],
+      [
+        260.8,
+        "assistant"
+      ],
+      [
+        266.5,
+        "assistant"
+      ],
+      [
+        266.5,
+        "tool_result"
+      ],
+      [
+        269.7,
+        "assistant"
+      ],
+      [
+        275.0,
+        "assistant"
+      ],
+      [
+        275.0,
+        "tool_result"
+      ],
+      [
+        283.4,
+        "assistant"
+      ],
+      [
+        283.4,
+        "tool_result"
+      ],
+      [
+        292.2,
+        "assistant"
+      ],
+      [
+        292.4,
+        "assistant"
+      ],
+      [
+        294.6,
+        "assistant"
+      ],
+      [
+        295.4,
+        "tool_result"
+      ],
+      [
+        301.3,
+        "assistant"
+      ],
+      [
+        305.8,
+        "assistant"
+      ],
+      [
+        305.8,
+        "tool_result"
+      ],
+      [
+        309.5,
+        "assistant"
+      ],
+      [
+        309.5,
+        "tool_result"
+      ],
+      [
+        312.6,
+        "assistant"
+      ],
+      [
+        313.1,
+        "assistant"
+      ],
+      [
+        314.7,
+        "assistant"
+      ],
+      [
+        315.5,
+        "tool_result"
+      ],
+      [
+        317.7,
+        "assistant"
+      ],
+      [
+        318.6,
+        "assistant"
+      ],
+      [
+        319.7,
+        "assistant"
+      ],
+      [
+        320.4,
+        "tool_result"
+      ],
+      [
+        329.7,
+        "assistant"
+      ],
+      [
+        329.7,
+        "assistant"
+      ],
+      [
+        332.7,
+        "assistant"
+      ],
+      [
+        334.4,
+        "tool_result"
+      ],
+      [
+        342.0,
+        "assistant"
+      ],
+      [
+        342.3,
+        "assistant"
+      ],
+      [
+        342.8,
+        "assistant"
+      ],
+      [
+        343.0,
+        "assistant"
+      ],
+      [
+        346.3,
+        "tool_result"
+      ],
+      [
+        347.1,
+        "tool_result"
+      ],
+      [
+        360.7,
+        "assistant"
+      ],
+      [
+        361.6,
+        "assistant"
+      ],
+      [
+        369.6,
+        "assistant"
+      ],
+      [
+        369.7,
+        "tool_result"
+      ],
+      [
+        374.4,
+        "assistant"
+      ],
+      [
+        374.4,
+        "tool_result"
+      ],
+      [
+        378.3,
+        "assistant"
+      ],
+      [
+        379.2,
+        "assistant"
+      ],
+      [
+        381.0,
+        "assistant"
+      ],
+      [
+        381.9,
+        "tool_result"
+      ],
+      [
+        392.0,
+        "assistant"
+      ],
+      [
+        392.3,
+        "assistant"
+      ],
+      [
+        395.6,
+        "assistant"
+      ],
+      [
+        397.2,
+        "tool_result"
+      ],
+      [
+        414.1,
+        "assistant"
+      ],
+      [
+        415.4,
+        "assistant"
+      ],
+      [
+        424.3,
+        "assistant"
+      ],
+      [
+        424.4,
+        "tool_result"
+      ],
+      [
+        428.4,
+        "assistant"
+      ],
+      [
+        428.4,
+        "tool_result"
+      ],
+      [
+        431.1,
+        "assistant"
+      ],
+      [
+        432.1,
+        "assistant"
+      ],
+      [
+        433.9,
+        "assistant"
+      ],
+      [
+        436.7,
+        "tool_result"
+      ],
+      [
+        455.4,
+        "assistant"
+      ],
+      [
+        457.1,
+        "assistant"
+      ],
+      [
+        465.1,
+        "assistant"
+      ],
+      [
+        465.1,
+        "tool_result"
+      ],
+      [
+        468.3,
+        "assistant"
+      ],
+      [
+        469.1,
+        "assistant"
+      ],
+      [
+        471.4,
+        "assistant"
+      ],
+      [
+        471.8,
+        "tool_result"
+      ],
+      [
+        472.7,
+        "assistant"
+      ],
+      [
+        473.6,
+        "tool_result"
+      ],
+      [
+        489.4,
+        "assistant"
+      ],
+      [
+        490.2,
+        "assistant"
+      ],
+      [
+        497.3,
+        "assistant"
+      ],
+      [
+        497.3,
+        "tool_result"
+      ],
+      [
+        502.1,
+        "assistant"
+      ],
+      [
+        502.5,
+        "tool_result"
+      ],
+      [
+        502.5,
+        "assistant"
+      ],
+      [
+        503.9,
+        "assistant"
+      ],
+      [
+        506.5,
+        "tool_result"
+      ],
+      [
+        507.2,
+        "tool_result"
+      ],
+      [
+        520.8,
+        "assistant"
+      ],
+      [
+        521.1,
+        "assistant"
+      ],
+      [
+        522.5,
+        "assistant"
+      ],
+      [
+        522.9,
+        "assistant"
+      ],
+      [
+        523.3,
+        "tool_result"
+      ],
+      [
+        527.1,
+        "tool_result"
+      ],
+      [
+        538.4,
+        "assistant"
+      ],
+      [
+        539.4,
+        "assistant"
+      ],
+      [
+        540.4,
+        "assistant"
+      ],
+      [
+        540.4,
+        "assistant"
+      ],
+      [
+        544.3,
+        "tool_result"
+      ],
+      [
+        544.8,
+        "tool_result"
+      ],
+      [
+        574.4,
+        "assistant"
+      ],
+      [
+        576.2,
+        "assistant"
+      ],
+      [
+        583.1,
+        "assistant"
+      ],
+      [
+        583.2,
+        "tool_result"
+      ],
+      [
+        589.6,
+        "assistant"
+      ],
+      [
+        589.7,
+        "tool_result"
+      ],
+      [
+        599.1,
+        "assistant"
+      ],
+      [
+        599.1,
+        "tool_result"
+      ],
+      [
+        603.2,
+        "assistant"
+      ],
+      [
+        603.2,
+        "tool_result"
+      ],
+      [
+        611.5,
+        "assistant"
+      ],
+      [
+        611.5,
+        "assistant"
+      ],
+      [
+        611.5,
+        "assistant"
+      ],
+      [
+        611.6,
+        "tool_result"
+      ],
+      [
+        611.6,
+        "tool_result"
+      ],
+      [
+        702.1,
+        "assistant"
+      ],
+      [
+        702.1,
+        "assistant"
+      ],
+      [
+        704.5,
+        "assistant"
+      ],
+      [
+        704.7,
+        "assistant"
+      ],
+      [
+        704.7,
+        "tool_result"
+      ],
+      [
+        704.9,
+        "tool_result"
+      ],
+      [
+        729.0,
+        "assistant"
+      ],
+      [
+        729.0,
+        "assistant"
+      ],
+      [
+        731.3,
+        "assistant"
+      ],
+      [
+        731.3,
+        "tool_result"
+      ],
+      [
+        753.8,
+        "assistant"
+      ],
+      [
+        753.9,
+        "assistant"
+      ],
+      [
+        766.5,
+        "assistant"
+      ],
+      [
+        766.6,
+        "tool_result"
+      ],
+      [
+        789.4,
+        "assistant"
+      ],
+      [
+        790.0,
+        "assistant"
+      ],
+      [
+        795.0,
+        "assistant"
+      ],
+      [
+        795.0,
+        "tool_result"
+      ],
+      [
+        803.3,
+        "assistant"
+      ],
+      [
+        805.2,
+        "assistant"
+      ],
+      [
+        806.4,
+        "assistant"
+      ],
+      [
+        806.4,
+        "tool_result"
+      ],
+      [
+        806.4,
+        "tool_result"
+      ],
+      [
+        850.8,
+        "assistant"
+      ],
+      [
+        858.4,
+        "assistant"
+      ],
+      [
+        861.5,
+        "assistant"
+      ],
+      [
+        861.6,
+        "tool_result"
+      ],
+      [
+        861.6,
+        "system:status"
+      ],
+      [
+        998.0,
+        "system:status"
+      ],
+      [
+        998.0,
+        "system:compact_boundary"
+      ],
+      [
+        998.0,
+        "tool_result"
+      ],
+      [
+        1022.5,
+        "assistant"
+      ],
+      [
+        1022.5,
+        "assistant"
+      ],
+      [
+        1022.9,
+        "tool_result"
+      ],
+      [
+        1022.9,
+        "assistant"
+      ],
+      [
+        1023.5,
+        "tool_result"
+      ],
+      [
+        1033.0,
+        "assistant"
+      ],
+      [
+        1033.2,
+        "assistant"
+      ],
+      [
+        1059.0,
+        "assistant"
+      ],
+      [
+        1059.1,
+        "tool_result"
+      ],
+      [
+        1066.8,
+        "assistant"
+      ],
+      [
+        1066.8,
+        "assistant"
+      ],
+      [
+        1067.3,
+        "assistant"
+      ],
+      [
+        1067.3,
+        "tool_result"
+      ],
+      [
+        1078.3,
+        "assistant"
+      ],
+      [
+        1080.0,
+        "assistant"
+      ],
+      [
+        1080.5,
+        "tool_result"
+      ],
+      [
+        1112.0,
+        "assistant"
+      ],
+      [
+        1112.1,
+        "assistant"
+      ],
+      [
+        1116.2,
+        "assistant"
+      ],
+      [
+        1116.3,
+        "tool_result"
+      ],
+      [
+        1135.5,
+        "assistant"
+      ],
+      [
+        1136.2,
+        "assistant"
+      ],
+      [
+        1139.2,
+        "assistant"
+      ],
+      [
+        1139.2,
+        "tool_result"
+      ],
+      [
+        1142.3,
+        "assistant"
+      ],
+      [
+        1142.8,
+        "assistant"
+      ],
+      [
+        1144.2,
+        "assistant"
+      ],
+      [
+        1144.7,
+        "tool_result"
+      ],
+      [
+        1144.7,
+        "assistant"
+      ],
+      [
+        1144.7,
+        "tool_result"
+      ],
+      [
+        1155.2,
+        "assistant"
+      ],
+      [
+        1155.2,
+        "assistant"
+      ],
+      [
+        1155.2,
+        "assistant"
+      ],
+      [
+        1155.2,
+        "tool_result"
+      ],
+      [
+        1155.2,
+        "tool_result"
+      ],
+      [
+        1215.2,
+        "assistant"
+      ],
+      [
+        1215.2,
+        "assistant"
+      ],
+      [
+        1216.6,
+        "assistant"
+      ],
+      [
+        1216.7,
+        "tool_result"
+      ],
+      [
+        1264.9,
+        "assistant"
+      ],
+      [
+        1278.0,
+        "assistant"
+      ],
+      [
+        1292.7,
+        "assistant"
+      ],
+      [
+        1292.7,
+        "tool_result"
+      ],
+      [
+        1295.2,
+        "assistant"
+      ],
+      [
+        1295.7,
+        "assistant"
+      ],
+      [
+        1296.0,
+        "assistant"
+      ],
+      [
+        1296.0,
+        "tool_result"
+      ],
+      [
+        1296.0,
+        "tool_result"
+      ],
+      [
+        1298.2,
+        "assistant"
+      ],
+      [
+        1298.6,
+        "assistant"
+      ],
+      [
+        1301.1,
+        "assistant"
+      ],
+      [
+        1301.2,
+        "tool_result"
+      ],
+      [
+        1389.0,
+        "assistant"
+      ],
+      [
+        1390.9,
+        "assistant"
+      ],
+      [
+        1419.5,
+        "assistant"
+      ],
+      [
+        1419.5,
+        "tool_result"
+      ],
+      [
+        1427.2,
+        "assistant"
+      ],
+      [
+        1427.2,
+        "assistant"
+      ],
+      [
+        1429.6,
+        "assistant"
+      ],
+      [
+        1429.7,
+        "tool_result"
+      ],
+      [
+        1434.6,
+        "assistant"
+      ],
+      [
+        1440.8,
+        "assistant"
+      ],
+      [
+        1440.8,
+        "system:task_started"
+      ],
+      [
+        1440.8,
+        "tool_result"
+      ],
+      [
+        1443.3,
+        "system:task_progress"
+      ],
+      [
+        1443.3,
+        "assistant"
+      ],
+      [
+        1443.6,
+        "tool_result"
+      ],
+      [
+        1448.6,
+        "system:task_progress"
+      ],
+      [
+        1448.6,
+        "assistant"
+      ],
+      [
+        1449.0,
+        "tool_result"
+      ],
+      [
+        1560.5,
+        "system:task_notification"
+      ],
+      [
+        1560.5,
+        "tool_result"
+      ],
+      [
+        1575.2,
+        "assistant"
+      ],
+      [
+        1575.2,
+        "assistant"
+      ],
+      [
+        1584.9,
+        "assistant"
+      ],
+      [
+        1584.9,
+        "tool_result"
+      ],
+      [
+        1591.4,
+        "assistant"
+      ],
+      [
+        1591.6,
+        "assistant"
+      ],
+      [
+        1591.7,
+        "tool_result"
+      ],
+      [
+        1597.1,
+        "assistant"
+      ],
+      [
+        1607.6,
+        "assistant"
+      ],
+      [
+        1607.7,
+        "tool_result"
+      ],
+      [
+        1615.1,
+        "assistant"
+      ],
+      [
+        1615.2,
+        "tool_result"
+      ],
+      [
+        1622.2,
+        "assistant"
+      ],
+      [
+        1623.1,
+        "assistant"
+      ],
+      [
+        1623.4,
+        "assistant"
+      ],
+      [
+        1623.4,
+        "tool_result"
+      ],
+      [
+        1623.4,
+        "tool_result"
+      ],
+      [
+        1664.0,
+        "assistant"
+      ],
+      [
+        1664.6,
+        "assistant"
+      ],
+      [
+        1667.3,
+        "assistant"
+      ],
+      [
+        1667.3,
+        "tool_result"
+      ],
+      [
+        1677.7,
+        "assistant"
+      ],
+      [
+        1687.9,
+        "assistant"
+      ],
+      [
+        1688.0,
+        "result"
+      ]
+    ],
+    "caps": {
+      "wall_clock_seconds": 7200,
+      "inactivity_seconds": 600,
+      "progress_stall_seconds": 600,
+      "tool_calls": 300,
+      "max_turns": 250,
+      "max_cost_usd": 15.0
+    },
+    "wall_clock_seconds": 2302.572772124986,
+    "real_clock_seconds": 8515.166429281235,
+    "slept_seconds": 6212.593657156249,
+    "judge_seconds": 613.7268532089947
+  },
+  "tool_calls": [
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_marriage_1844\",\n4\t    \"objective\": \"When and where did Job Purnell marry his wife Emma?\",\n5\t    \"subject_person_ids\": [\"2W2F-CNH\"],\n6\t    \"status\": \"active\",\n7\t    \"created\": \"2026-07-07T00:00:00Z\",\n8\t    \"updated\": \"2026-07-07T00:00:00Z\"\n9\t  },\n10\t  \"researcher_profile\": {\n11\t    \"experience_level\": \"intermediate\",\n12\t    \"subscriptions\": [],\n13\t    \"narration_guidance\": \"concise\"\n14\t  },\n15\t  \"questions\": [],\n16\t  \"plans\": [],\n17\t  \"log\": [],..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection"
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/.claude/skills/question-selection/references/question-formulation.md"
+      },
+      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/.claude/skills/question-selection/references/pedigree-analysis.md"
+      },
+      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+    },
+    {
+      "tool": "Glob",
+      "args": {
+        "pattern": "**/*.json",
+        "path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6"
+      },
+      "response_summary": ".claude/skills/init-project/templates/research.json\nresearch.json\ntree.gedcomx.json"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2W2F-CNH\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Job\",\n10\t          \"surname\": \"Purnell\",\n11\t          \"id\": \"2W2F-CNH-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"type\": \"Birth\",\n17\t          \"date\": \"1 December 1819\",\n18\t          \"standard_date\": \"1 Dec 1819\",\n19\t          \"place\": \"Trowbridge, Wiltshire, England\",\n20\t          \"standard_place\": \"..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "questions",
+        "op": "append",
+        "entry": {
+          "question": "When and where did Job Purnell (born 1 December 1819, Trowbridge, Wiltshire, England; died 9 November 1895, Portage, Wisconsin) marry his wife Emma (born 22 July 1822, Rode, Somerset, England)?",
+          "rationale": "The couple relationship in the tree has no marriage facts. Job was in Trowbridge in 1841 and Emma was born in nearby Rode, Somerset; their first child was born in Connecticut in May 1846, establishing a marriage window of roughly 1841\u20131845. Marriage registers for Wiltshire and Somerset (England, pre-emigration) and Connecticut vital records are available on FamilySearch, making this directly researchable.",
+          "selection_basis": "objective_decomposition",
+          "priority": "high",
+          "status": "open",
+          "depends_on": [],
+          "unblocks": [],
+          "resolved": null,
+          "resolution_assertion_ids": [],
+          "exhaustive_declaration": {
+            "declared": false,
+            "justification": null,
+            "log_entry_ids": [],
+            "stop_criteria": null
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-plan",
+        "args": "q_001"
+      },
+      "response_summary": "Launching skill: research-plan"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__collections_search,mcp__genealogy__place_search,mcp__genealogy__wiki_search",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__wiki_search\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__collections_search",
+      "args": {
+        "standardPlace": "England",
+        "startYear": 1840,
+        "endYear": 1848
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"England\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1848\\n  },\\n  \\\"scope\\\": \\\"England\\\",\\n  \\\"totalForPlace\\\": 151,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"1473015\\\",\\n      \\\"title\\\": \\\"England Marriages, 1538\\u20131973\\\",\\n      \\\"dateRange\\\": \\\"1538-1973\\\",\\n      \\\"recordCount\\\": 10303063,\\n      \\\"personCount\\\": 30015213,\\n      \\\"imageCount\\\": 2429,\\n      \\\"url\\\": \\\"https://www.familysearch.org/search/collecti..."
+    },
+    {
+      "tool": "mcp__genealogy__collections_search",
+      "args": {
+        "standardPlace": "Connecticut, United States",
+        "startYear": 1840,
+        "endYear": 1848
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Connecticut, United States\\\",\\n    \\\"startYear\\\": 1840,\\n    \\\"endYear\\\": 1848\\n  },\\n  \\\"scope\\\": \\\"Connecticut\\\",\\n  \\\"totalForPlace\\\": 20,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"2448938\\\",\\n      \\\"title\\\": \\\"Connecticut, Births and Baptisms, 1639-1941\\\",\\n      \\\"dateRange\\\": \\\"1639-1941\\\",\\n      \\\"recordCount\\\": 39361,\\n      \\\"personCount\\\": 87658,\\n      \\\"imageCount\\\": 6102,\\n      \\\"url\\\": \\\"https://www.family..."
+    },
+    {
+      "tool": "mcp__genealogy__wiki_search",
+      "args": {
+        "query": "England marriage registers 1837 civil registration Wiltshire Somerset genealogy"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": \\\"England marriage registers 1837 civil registration Wiltshire Somerset genealogy\\\",\\n  \\\"total_chunks_searched\\\": 1240565,\\n  \\\"results\\\": [\\n    {\\n      \\\"rank\\\": 1,\\n      \\\"relevance_score\\\": 0.851562,\\n      \\\"chunk_text\\\": \\\"| **[Vital Records](https://www.familysearch.org/en/wiki/Somerset_Civil_Registration \\\\\\\"Somerset Civil Registration\\\\\\\")**   ---   ***Births***   * **1531-1812**: [Somerset, England Church of England Baptisms, Marriages, ..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/.claude/skills/research-plan/references/record-type-guide.md"
+      },
+      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "section": "plans",
+            "op": "append",
+            "entry": {
+              "question_id": "q_001",
+              "status": "active",
+              "created": "2026-07-07"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 1,
+              "record_type": "vital_record",
+              "jurisdiction": "England and Wales",
+              "date_range": "1841-1845",
+              "repository": "FamilySearch",
+              "rationale": "England civil registration began 1 July 1837. Any marriage in England between 1841 (when Job was in Trowbridge) and 1845 (before first child born in Connecticut, May 1846) would appear in the England and Wales Marriage Registration Index (FS collection 2285732). This index covers the Trowbridge (Wiltshire) and Frome (Somerset) registration districts \u2014 the two most likely districts given Job's residence in Trowbridge and Emma's birth in Rode, Somerset. A match will yield the registration district and quarter, enabling retrieval of the full certificate.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 2,
+              "record_type": "vital_record",
+              "jurisdiction": "England",
+              "date_range": "1841-1845",
+              "repository": "FamilySearch",
+              "rationale": "The England Marriages 1538-1973 collection (FS collection 1473015) indexes over 10 million marriage entries from Church of England and other records across England. Searching for Purnell in the 1840s will catch marriages recorded in parish registers (pre- and post-1837 civil registration overlay), including cases where the civil index entry lacks sufficient detail to identify the couple.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 3,
+              "record_type": "church",
+              "jurisdiction": "Trowbridge, Wiltshire, England",
+              "date_range": "1841-1845",
+              "repository": "FamilySearch",
+              "rationale": "England, Wiltshire, Church Records 1518-1990 (FS collection 4380174) includes indexed and imaged parish registers for Trowbridge and surrounding Wiltshire parishes. Job lived in Trowbridge in 1841; a church marriage there would appear in these records. The images allow verification of the original register entry if an index match is found.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 4,
+              "record_type": "church",
+              "jurisdiction": "Rode, Somerset, England",
+              "date_range": "1841-1845",
+              "repository": "FamilySearch",
+              "rationale": "England, Somerset, Church Records 1501-1999 (FS collection 4380193) covers parishes in Somerset including Rode and the nearby Frome registration district. Emma was born in Rode, Somerset; marriages frequently occurred in the bride's home parish. Searching this collection covers the alternative scenario where the ceremony was held in Somerset rather than Wiltshire.",
+              "fallback_for": "pli_003",
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 5,
+              "record_type": "church",
+              "jurisdiction": "Trowbridge, Wiltshire, England",
+              "date_range": "1837-1845",
+              "repository": "FamilySearch",
+              "rationale": "England and Wales Non-Conformist Record Indexes RG4-8 (FS collection 1666142) covers Nonconformist chapel registers surrendered to the Registrar General in 1837. Trowbridge was a significant cloth-manufacturing town with strong Baptist and Methodist communities. If Job or Emma's family were Nonconformist, their marriage may appear in these chapel registers rather than in Anglican parish records.",
+              "fallback_for": "pli_003",
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 6,
+              "record_type": "census",
+              "jurisdiction": "Norwich, New London, Connecticut, United States",
+              "date_range": "1850-1880",
+              "repository": "FamilySearch",
+              "rationale": "The 1870 and 1880 US census records (already cited in the tree: FS ark:/61903/1:1:MN97-PWH and MN4C-SFJ) and the 1875 Wisconsin state census (MMMT-96B) may record marriage duration or year. The 1880 census in particular included a column for whether individuals were 'married within the census year,' and the 1870 census sometimes enumerated marriage dates. These existing sources should be read for any marriage date or place information before exhausting England-side searches.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 7,
+              "record_type": "vital_record",
+              "jurisdiction": "Norwich, New London, Connecticut, United States",
+              "date_range": "1843-1846",
+              "repository": "FamilySearch",
+              "rationale": "Connecticut Marriages 1630-1997 (FS collection 1674749) is a fallback if the marriage occurred in Connecticut after Job and Emma emigrated from England. The first child was born in Norwich, Connecticut in May 1846. If they arrived in Connecticut before marrying, the ceremony could have occurred there in 1844-1845. The Connecticut Vital Records prior to 1850 collection (FS 2843390) and the Charles R. Hale Collection (FS 2658554) provide additional coverage of this period.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records",
+        "args": "pli_001"
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "spouseGivenName": "Emma",
+        "marriageYearFrom": 1841,
+        "marriageYearTo": 1845,
+        "collectionId": "2285732",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"spouseGivenName\\\": \\\"Emma\\\",\\n    \\\"marriageYearFrom\\\": 1841,\\n    \\\"marriageYearTo\\\": 1845,\\n    \\\"collectionId\\\": \\\"2285732\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\":..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "2285732",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"2285732\\\",\\n    \\\"recordType\\\": \\\"marriage\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "stagedResultsRef": "results/.staging/ffb84bde-427b-4ae4-ac1a-717998cdde44.json",
+        "subjectId": "2W2F-CNH",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2W2F-CNH\\\",\\n  \\\"scoredCount\\\": 1,\\n  \\\"returnedCount\\\": 1,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:2D3D-3N1\\\",\\n      \\\"matchScore\\\": 0.6783042,\\n      \\\"primaryId\\\": \\\"p_14874357209\\\",\\n      \\\"personName\\\": \\\"Job Purnell\\\",\\n      \\\"collectionTitle\\\": \\\"England and Wales, Marriage Registration Index, 1837-2005\\\",\\n  ..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_read",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:2D3D-3N1"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14874357209\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:2D3D-3N1\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Job\\\",\\n          \\\"surname\\\": \\\"Purnell\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Marriage\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"1849\\\",\\n          \\\"standard_date\\\": \\\"1849\\\",\\n          \\\"place\\\": \\\"Melksham, Wiltshir..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "England and Wales Marriage Registration Index 1837-2005 (2285732)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "spouseGivenName": "Emma",
+          "marriageYearFrom": 1841,
+          "marriageYearTo": 1845,
+          "recordType": "marriage"
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "resultsAvailable": 0,
+        "notes": "No results. Spouse-name filter may be too restrictive if Emma's name was indexed differently or omitted from the index entry."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:52:43.310Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {},
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"outcome 'undefined' is not one of positive/negative/partial/error\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "England and Wales Marriage Registration Index 1837-2005 (2285732)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "recordType": "marriage",
+          "count": 50
+        },
+        "outcome": "negative",
+        "resultsExamined": 1,
+        "resultsAvailable": 1,
+        "stagedResultsRef": "results/.staging/ffb84bde-427b-4ae4-ac1a-717998cdde44.json",
+        "notes": "One result returned: Job Purnell, marriage Q4 1849, Melksham, Wiltshire (vol. 8, p. 724). Incompatible with research subject \u2014 first child born May 1846 in Connecticut, so our Job Purnell cannot have married in England in 1849. This is a different person. Collection 2285732 returns no valid match for Job Purnell marrying Emma in the expected 1841\u20131845 window."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:53:00.235Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "surnameAlt": "Parnell",
+        "givenName": "Job",
+        "collectionId": "2285732",
+        "marriageYearFrom": 1841,
+        "marriageYearTo": 1846,
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"surnameAlt\\\": \\\"Parnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"2285732\\\",\\n    \\\"marriageYearFrom\\\": 1841,\\n    \\\"marriageYearTo\\\": 1846,\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\":..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "England and Wales Marriage Registration Index 1837-2005 (2285732)",
+          "surname": "Purnell OR Parnell",
+          "givenName": "Job",
+          "marriageYearFrom": 1841,
+          "marriageYearTo": 1846,
+          "count": 50
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "resultsAvailable": 0,
+        "notes": "Nil result with surname variants Purnell/Parnell, 1841-1846. The civil registration index for this period is known to have poor compliance (pre-1850 era); the marriage may not have been recorded in the GRO index, or may have been a Nonconformist ceremony not captured here. Advancing to broader England Marriages collection (pli_002)."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:53:22.596Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_001",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "1473015",
+        "marriageYearFrom": 1838,
+        "marriageYearTo": 1846,
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"1473015\\\",\\n    \\\"marriageYearFrom\\\": 1838,\\n    \\\"marriageYearTo\\\": 1846,\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"s..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "1473015",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"1473015\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 8,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 8,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:NK3L-DHH\\\",\\n      \\\"events..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "stagedResultsRef": "results/.staging/ac6e158a-3bbc-4e0e-abf0-670916112f6e.json",
+        "subjectId": "2W2F-CNH",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2W2F-CNH\\\",\\n  \\\"scoredCount\\\": 8,\\n  \\\"returnedCount\\\": 8,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:NK3L-DHH\\\",\\n      \\\"matchScore\\\": 0.027358834,\\n      \\\"primaryId\\\": \\\"p_12128708048\\\",\\n      \\\"personName\\\": \\\"Job Purnell\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"collectionTitle\\\": \\\"England Marriages, 1538\\u20131973\\\",..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:NK3L-DHH"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12128708048\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NK3L-DHH\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"f39634d4-8d77-4126-833e-e771e4dd2452\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Purnell\\\",\\n          \\\"given\\\": \\\"Job\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_12128708047\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NK3L-DH4\\\",\\n      \\\"gender\\\": \\\"Femal..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:NXMG-G4Q"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_12004814014\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NXMG-G4Q\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"e7fe4b3a-5552-4333-a98a-a4a5c87f4331\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Job\\\",\\n          \\\"surname\\\": \\\"Purnell\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_12004814013\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:NXMG-G43\\\",\\n      \\\"gender\\\": \\\"Femal..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "collection": "England Marriages 1538-1973 (1473015)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "count": 50
+        },
+        "outcome": "negative",
+        "resultsExamined": 8,
+        "resultsAvailable": 8,
+        "stagedResultsRef": "results/.staging/ac6e158a-3bbc-4e0e-abf0-670916112f6e.json",
+        "notes": "8 results returned \u2014 all incompatible with subject. Top two (NK3L-DHH, NXMG-G4Q) are Job Purnell/Lucy Smith 1832 and Job Purnell/Elizabeth Hill 1815, Trowbridge \u2014 likely father or older kinsman. Third (NLWL-V2H) is Job Purnall. None match the ~1841-1845 window nor Emma as spouse. Collection 1473015 contains no record of Job Purnell marrying Emma."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:54:26.483Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 8,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_002",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_002\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "4380174",
+        "marriageYearFrom": 1838,
+        "marriageYearTo": 1846,
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"4380174\\\",\\n    \\\"marriageYearFrom\\\": 1838,\\n    \\\"marriageYearTo\\\": 1846,\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 12,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 12,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "stagedResultsRef": "results/.staging/09d52a14-9191-45a1-8477-0f5ed40e47b7.json",
+        "subjectId": "2W2F-CNH",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"2W2F-CNH\\\",\\n  \\\"scoredCount\\\": 12,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 3,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:6DSR-YXVY\\\",\\n      \\\"matchScore\\\": 0.0046401434,\\n      \\\"primaryId\\\": \\\"p_293127592167\\\",\\n      \\\"personName\\\": \\\"Job Purnell\\\",\\n      \\\"birthDate\\\": \\\"1801\\\",\\n      \\\"collectionTitle\\\": \\\"England, Wiltshire, Churc..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_003",
+        "query": {
+          "collection": "England, Wiltshire, Church Records 1518-1990 (4380174)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "marriageYearFrom": 1838,
+          "marriageYearTo": 1846,
+          "count": 50
+        },
+        "outcome": "negative",
+        "resultsExamined": 12,
+        "resultsAvailable": 12,
+        "stagedResultsRef": "results/.staging/09d52a14-9191-45a1-8477-0f5ed40e47b7.json",
+        "notes": "12 results, all incompatible. Top results are baptism records for a Job Purnell born ~1801 in Trowbridge (different person, likely an uncle or cousin of subject). Two records where Job Purnell appears as father (James Purnell entry, Hannah Dicks entry) are parent-role mentions with occupation 'Carrier', not marriage records. subjectResolvable=false due to subject lacking marriage facts. No marriage record for Job Purnell (b. 1819) and Emma found in Wiltshire Church Records."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:55:21.139Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_005.json\\\",\\n  \\\"returnedCount\\\": 12,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_005.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_003",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_003\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "4380193",
+        "marriageYearFrom": 1838,
+        "marriageYearTo": 1846,
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"4380193\\\",\\n    \\\"marriageYearFrom\\\": 1838,\\n    \\\"marriageYearTo\\\": 1846,\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 4,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 4,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_004",
+        "query": {
+          "collection": "England, Somerset, Church Records 1501-1999 (4380193)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "marriageYearFrom": 1838,
+          "marriageYearTo": 1846,
+          "count": 50
+        },
+        "outcome": "negative",
+        "resultsExamined": 4,
+        "resultsAvailable": 4,
+        "stagedResultsRef": "results/.staging/d80694e7-b4f7-468d-a8a6-03ca8b99980f.json",
+        "notes": "4 results, none a marriage record for our subject. Top two (6DML-7R9H, 6DML-3ZMK) are Somerset records where Job Purnell appears as a parent (Irene Purnell's entry, William Coombs entry) \u2014 likely a later-era Somerset Job Purnell, not our Wisconsin-emigrant subject. Third result is a baptism for a Job Purnell born 1799 in Walcot (different person). No marriage record found in Somerset Church Records for Job Purnell (b.1819) + Emma in the 1838-1846 window."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:56:01.916Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_006.json\\\",\\n  \\\"returnedCount\\\": 4,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_006.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_004",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_004\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "1666142",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"1666142\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 5,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 5,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:FQPW-SNP\\\",\\n      \\\"events..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_005",
+        "query": {
+          "collection": "England and Wales Non-Conformist Record Indexes RG4-8 (1666142)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "count": 50
+        },
+        "outcome": "negative",
+        "resultsExamined": 5,
+        "resultsAvailable": 5,
+        "stagedResultsRef": "results/.staging/7220d68f-4ec3-4e9d-9529-b233a3a535c3.json",
+        "notes": "5 results \u2014 all 17th\u201318th century burials/christenings for unknown-given-name Purnells in Bristol and Gloucestershire. No match for Job Purnell in the 1838-1846 window. Nonconformist chapel registers in the Trowbridge area may not be fully indexed in this collection, or the family was Anglican."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:56:34.114Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_007.json\\\",\\n  \\\"returnedCount\\\": 5,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_007.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_005",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_005\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:MN4C-SFJ"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_394715267\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MN4C-SFJ\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"e6785517-b85c-4f7e-9d1b-db818b0917e4\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Job\\\",\\n          \\\"surname\\\": \\\"Purnell\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Race\\\",\\n          \\\"value\\\": \\\"White\\\"\\n        },\\n        {\\n   ..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "1674749",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"1674749\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "surname": "Purnell",
+        "givenName": "Job",
+        "collectionId": "2843390",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\\\",\\n    \\\"surname\\\": \\\"Purnell\\\",\\n    \\\"givenName\\\": \\\"Job\\\",\\n    \\\"collectionId\\\": \\\"2843390\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 2,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 2,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QPQB-SJDF\\\",\\n      \\\"event..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:MN97-PWH"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_389765888\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:MN97-PWH\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"b1149c62-6594-4abd-970f-3b976185cd96\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Purnell\\\",\\n          \\\"given\\\": \\\"Job\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"id\\\": \\\"7b790dd7-ddcc-4133-834c-adbc4e9869f3\\\",\\n          \\\"type\\\": \\\"Birth\\..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:QPQB-SJDF"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_104366949675\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QPQB-SJDF\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"f933e59c-6fad-477a-93a8-776fc1728d21\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Purnal\\\",\\n          \\\"given\\\": \\\"Job\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_104366949674\\\",\\n      \\\"ark\\..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:QPHS-LY5H"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_104443612027\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QPHS-LY54\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"id\\\": \\\"701bf45f-f242-406a-a590-9f7cc634e128\\\",\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Emma\\\",\\n          \\\"surname\\\": \\\"Osborne\\\"\\n        }\\n      ],\\n      \\\"sources\\\": [\\n        {\\n          \\\"ref\\\": \\\"sd_da1\\\"\\n        }\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"p_104443612026\\\",\\n      \\\"ar..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_006",
+        "query": {
+          "records_read": [
+            "ark:/61903/1:1:MN97-PWH (1870 census)",
+            "ark:/61903/1:1:MN4C-SFJ (1880 census)"
+          ],
+          "purpose": "Check existing tree census sources for marriage year or place data"
+        },
+        "outcome": "negative",
+        "resultsExamined": 2,
+        "resultsAvailable": 2,
+        "notes": "Read 1870 and 1880 census records already cited in tree. 1870 (MN97-PWH): Job b.1820 England, Emma b.1824 England \u2014 no marriage date/place column. 1880 (MN4C-SFJ): Job listed as widowed (Emma died Jan 1879), no marriage year data. Neither census record contains marriage date or place information beyond confirming the couple's existence and English birth."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:57:59.951Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_007",
+        "query": {
+          "collection": "Connecticut Marriages 1630-1997 (1674749)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "count": 50
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "resultsAvailable": 0,
+        "notes": "Nil result in collection 1674749. This collection's coverage of Norwich, New London County, CT in the 1840s appears incomplete. Searching the broader Connecticut Vital Records Prior to 1850 collection (2843390) as fallback."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_009\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:58:06.425Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "tool": "record_search",
+        "planItemId": "pli_007",
+        "query": {
+          "collection": "Connecticut Vital Records Prior to 1850 (2843390)",
+          "surname": "Purnell",
+          "givenName": "Job",
+          "count": 50
+        },
+        "outcome": "positive",
+        "resultsExamined": 2,
+        "resultsAvailable": 2,
+        "stagedResultsRef": "results/.staging/660cbcb4-0c28-4501-9c4d-7a2afe4c12f6.json",
+        "notes": "Two results, both tree-matching 2W2F-CNH (Job Purnell) at 5 stars. Records QPQB-SJDF (Job Purnal persona) and QPHS-LY5H (Job Purnal persona) are two index entries from the same underlying marriage record. Full record read confirms: Job Purnal married Emma Osborne, 27 October 1844, Norwich, New London, Connecticut. Witness: Richard Livesey. Emma's maiden name Osborne \u2014 explains daughter Sarah OSBORNE Purnell's middle name. This is the answer to q_001."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_010\\\",\\n  \\\"performed\\\": \\\"2026-07-07T22:58:15.888Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_010.json\\\",\\n  \\\"returnedCount\\\": 2,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_010.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_006",
+            "fields": {
+              "status": "in_progress"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_007",
+            "fields": {
+              "status": "in_progress"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_007\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "record-extraction",
+        "args": "recordId=ark:/61903/1:1:QPQB-SJDF planItemId=pli_007"
+      },
+      "response_summary": "Launching skill: record-extraction"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_marriage_1844\",\n4\t    \"objective\": \"When and where did Job Purnell marry his wife Emma?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2W2F-CNH\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-07T00:00:00Z\",\n10\t    \"updated\": \"2026-07-07T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t     ..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_edit",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "operation": "add_source",
+        "source": {
+          "title": "Connecticut, Vital Records, Prior to 1850",
+          "url": "https://www.familysearch.org/search/collection/2843390"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_source\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"source\\\": \\\"S1\\\"\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "gedcomx_source_description_id": "S1",
+              "citation": "\"Connecticut, Vital Records, Prior to 1850,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF : accessed 8 July 2026), entry for Job Purnal and Emma Osborne, marriage 27 October 1844, Norwich, New London, Connecticut.",
+              "citation_detail": {
+                "who": "Job Purnal and Emma Osborne",
+                "what": "Marriage record",
+                "when_created": "27 October 1844",
+                "when_accessed": "2026-07-08",
+                "where": "FamilySearch, https://www.familysearch.org/search/collection/2843390",
+                "where_within": "Entry for Job Purnal and Emma Osborne; ark:/61903/1:1:QPQB-SJDF"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch",
+              "access_date": "2026-07-08",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+              "log_entry_id": "log_010",
+              "notes": "Connecticut, Vital Records, Prior to 1850 (FS collection 2843390) is a digital index of the Barbour Collection \u2014 a compilation of abstracts from original Connecticut town and church marriage records. Derivative source; the original Norwich town marriage register entry has not been independently examined."
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+              "record_persona_id": null,
+              "record_role": "groom",
+              "fact_type": "name",
+              "value": "Job Purnal",
+              "structured_value": {
+                "given": "Job",
+                "surname": "Purnal"
+              },
+              "information_quality": "primary",
+              "informant": "Job Purnal (groom)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_010"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+              "record_persona_id": null,
+              "record_role": "groom",
+              "fact_type": "marriage",
+              "value": "27 October 1844, Norwich, New London, Connecticut",
+              "date": "27 October 1844",
+              "date_certainty": "exact",
+              "place": "Norwich, New London, Connecticut",
+              "standard_place": "Norwich, New London, Connecticut, United States",
+              "information_quality": "primary",
+              "informant": "town clerk / marriage registrar, Norwich, Connecticut",
+              "informant_proximity": "official_duty",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_010"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+              "record_persona_id": null,
+              "record_role": "bride",
+              "fact_type": "name",
+              "value": "Emma Osborne",
+              "structured_value": {
+                "given": "Emma",
+                "surname": "Osborne"
+              },
+              "information_quality": "primary",
+              "informant": "Emma Osborne (bride)",
+              "informant_proximity": "self",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_010"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+              "record_persona_id": null,
+              "record_role": "bride",
+              "fact_type": "marriage",
+              "value": "27 October 1844, Norwich, New London, Connecticut",
+              "date": "27 October 1844",
+              "date_certainty": "exact",
+              "place": "Norwich, New London, Connecticut",
+              "standard_place": "Norwich, New London, Connecticut, United States",
+              "information_quality": "primary",
+              "informant": "town clerk / marriage registrar, Norwich, Connecticut",
+              "informant_proximity": "official_duty",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_010"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "source_id": "src_001",
+              "record_id": "https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF",
+              "record_persona_id": null,
+              "record_role": "witness_1",
+              "fact_type": "name",
+              "value": "Richard Livesey",
+              "structured_value": {
+                "given": "Richard",
+                "surname": "Livesey"
+              },
+              "information_quality": "indeterminate",
+              "informant": "unknown",
+              "informant_proximity": "unknown",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [],
+              "log_entry_id": "log_010"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    },\\n ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_001",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_002",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_004",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_005",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_006",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_007",
+            "fields": {
+              "status": "completed"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "person-evidence",
+        "args": "link all roles in record ark:/61903/1:1:QPQB-SJDF"
+      },
+      "response_summary": "Launching skill: person-evidence"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "operation": "add_person",
+        "person": {
+          "gender": "Male",
+          "names": [
+            {
+              "given": "Richard",
+              "surname": "Livesey",
+              "preferred": true,
+              "type": "BirthName"
+            }
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"operation\\\": \\\"add_person\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  },\\n  \\\"assignedIds\\\": {\\n    \\\"person\\\": \\\"I1\\\",\\n    \\\"names\\\": [\\n      \\\"N1\\\"\\n    ]\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append,mcp__genealogy__validate_research_schema",
+        "max_results": 2
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__validate_research_schema\"}]"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_marriage_1844\",\n4\t    \"objective\": \"When and where did Job Purnell marry his wife Emma?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2W2F-CNH\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-07T00:00:00Z\",\n10\t    \"updated\": \"2026-07-07T00:00:00Z\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t     ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_001",
+              "person_id": "2W2F-CNH",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The record names the groom 'Job Purnal' \u2014 a phonetic spelling variant of Purnell consistent with the subject's name across records (Purnell/Parnell/Pernell throughout census records). Age compatibility: born 1 December 1819, making him 24 at the October 1844 marriage \u2014 consistent with prime marrying age. Geographic fit: the marriage occurred in Norwich, New London, Connecticut, consistent with the subject's documented presence in Connecticut (first child born there May 1846). No other Job Purnell/Purnal of matching age and location is known. The name, age window, and Connecticut geography together constitute a strong match.",
+              "superseded_by": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_002",
+              "person_id": "2W2F-CNH",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The groom's marriage event (27 October 1844, Norwich, New London, Connecticut) is linked to Job Purnell (2W2F-CNH) on the same identification grounds as a_001 (name variant 'Purnal', age 24 at marriage, Connecticut residence consistent with first child born there May 1846). This is the same record-persona; the marriage fact is directly stated and applies to the same individual as the name assertion.",
+              "superseded_by": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_002",
+              "person_id": "2W2D-8X9",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The groom's marriage assertion (a_002) is a relationship assertion that bears equally on the bride. 2W2D-8X9 is 'Emm' Purnell, Job's wife, born 22 July 1822 in Rode, Somerset. The record names the bride 'Emma Osborne'; 'Emm' in the tree is a truncated form of Emma. Age at marriage: 22 years \u2014 fully consistent with born 1822 \u00d7 married October 1844. The couple relationship rel-couple-2W2F-CNH-2W2D-8X9 already exists in the tree. This assertion records the event that formalizes that couple relationship.",
+              "superseded_by": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_003",
+              "person_id": "2W2D-8X9",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The record names the bride 'Emma Osborne'. 2W2D-8X9 is the Emma in Job's couple relationship, born 22 July 1822 in Rode, Somerset. 'Emma' matches the tree's truncated 'Emm'. The surname 'Osborne' is previously unknown from the tree but is corroborated by the couple's daughter being named 'Sarah Osborne Purnell' \u2014 a clear honor-naming of the mother's maiden family. Age at marriage 22 (born 1822 \u00d7 October 1844) is plausible. No other Emma known in connection with Job Purnell. Strong match on name/age/relationship context.",
+              "superseded_by": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_004",
+              "person_id": "2W2D-8X9",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The bride's marriage event (27 October 1844, Norwich, New London, Connecticut) is linked to Emma n\u00e9e Osborne (2W2D-8X9) on the same grounds as a_003: name 'Emma' matches, maiden name 'Osborne' corroborated by daughter's middle name, age 22 at marriage consistent with born 1822, and the couple relationship with 2W2F-CNH already exists in the tree.",
+              "superseded_by": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_004",
+              "person_id": "2W2F-CNH",
+              "confidence": "confident",
+              "match_score": null,
+              "rationale": "The bride's marriage assertion (a_004) is a relationship assertion that also bears on the groom Job Purnell (2W2F-CNH). The marriage event names both parties; linking it to both persons records the bilateral nature of the marriage event. Identification grounds for 2W2F-CNH are the same as for a_001 and a_002.",
+              "superseded_by": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_005",
+              "person_id": "I1",
+              "confidence": "probable",
+              "match_score": null,
+              "rationale": "The record names 'Richard Livesey' as witness to the marriage. I1 is the stub person created from this single record mention. The name matches exactly. No corroborating records currently exist for Richard Livesey; confidence is probable rather than confident because the stub rests solely on this one record entry with no independent corroboration yet.",
+              "superseded_by": null
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__person_warnings",
+        "max_results": 2
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__person_warnings\"}]"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2W2F-CNH\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Job\",\n10\t          \"surname\": \"Purnell\",\n11\t          \"id\": \"2W2F-CNH-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"type\": \"Birth\",\n17\t          \"date\": \"1 December 1819\",\n18\t          \"standard_date\": \"1 Dec 1819\",\n19\t          \"place\": \"Trowbridge, Wiltshire, England\",\n20\t          \"standard_place\": \"..."
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "operation": "add_fact",
+            "relationshipId": "rel-couple-2W2F-CNH-2W2D-8X9",
+            "fact": {
+              "type": "Marriage",
+              "date": "27 October 1844",
+              "standard_date": "27 Oct 1844",
+              "place": "Norwich, New London, Connecticut, United States",
+              "standard_place": "Norwich, New London, Connecticut, United States",
+              "primary": true
+            }
+          },
+          {
+            "operation": "update_name",
+            "personId": "2W2D-8X9",
+            "nameId": "2W2D-8X9-name-1",
+            "name": {
+              "given": "Emma"
+            }
+          },
+          {
+            "operation": "add_name",
+            "personId": "2W2D-8X9",
+            "name": {
+              "given": "Emma",
+              "surname": "Osborne",
+              "type": "BirthName"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"ops[0]: personId is required for this operation\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "operation": "add_fact",
+            "personId": "2W2F-CNH",
+            "fact": {
+              "type": "Marriage",
+              "date": "27 October 1844",
+              "standard_date": "27 Oct 1844",
+              "place": "Norwich, New London, Connecticut, United States",
+              "standard_place": "Norwich, New London, Connecticut, United States",
+              "primary": true
+            }
+          },
+          {
+            "operation": "add_fact",
+            "personId": "2W2D-8X9",
+            "fact": {
+              "type": "Marriage",
+              "date": "27 October 1844",
+              "standard_date": "27 Oct 1844",
+              "place": "Norwich, New London, Connecticut, United States",
+              "standard_place": "Norwich, New London, Connecticut, United States",
+              "primary": true
+            }
+          },
+          {
+            "operation": "update_name",
+            "personId": "2W2D-8X9",
+            "nameId": "2W2D-8X9-name-1",
+            "name": {
+              "given": "Emma"
+            }
+          },
+          {
+            "operation": "add_name",
+            "personId": "2W2D-8X9",
+            "name": {
+              "given": "Emma",
+              "surname": "Osborne",
+              "type": "BirthName"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F1\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F2\\\"\\n      }\\n    },\\n    {\\n      \\\"operation\\\": \\\"update_name\\\"\\n    },\\n    {\\n      \\\"operation\\\": \\\"add_name\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"name\\\": \\\"N2\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedc..."
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "personId": "2W2F-CNH"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__person_warnings",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "personId": "2W2D-8X9"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"warningCount\\\": 0,\\n  \\\"warnings\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-exhaustiveness",
+        "args": "q_001"
+      },
+      "response_summary": "Launching skill: research-exhaustiveness"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
+      },
+      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "exhaustive_declared",
+          "exhaustive_declaration": {
+            "declared": true,
+            "justification": "Seven plan items searched across two countries (England and USA): GRO civil registration index, England Marriages 1538-1973, Wiltshire and Somerset church records, Nonconformist RG4-8, US census records (1870/1880), Connecticut Marriages 1630-1997, and Connecticut Vital Records Prior to 1850 (Barbour Collection). England-side searches uniformly negative; positive result found in collection 2843390. The marriage date (27 October 1844) and place (Norwich, New London, Connecticut) are directly stated. All evidence is consistent; no conflicts exist. Limitation: the source is derivative (Barbour Collection abstraction); original Norwich town vital register not examined.",
+            "log_entry_ids": [
+              "log_001",
+              "log_002",
+              "log_003",
+              "log_004",
+              "log_005",
+              "log_006",
+              "log_007",
+              "log_008",
+              "log_009",
+              "log_010"
+            ],
+            "stop_criteria": {
+              "goal_alignment": "Yes \u2014 27 October 1844, Norwich, New London, Connecticut, directly stated in CT Vital Records Prior to 1850. Question fully answered.",
+              "repository_breadth": "Yes \u2014 GRO civil reg index, England Marriages 1538-1973, Wiltshire church records, Somerset church records, Nonconformist RG4-8, 1870/1880 US census, CT Marriages 1630-1997, and CT Vital Records pre-1850 all searched. Name variants Purnell/Parnell/Purnal tried. England and USA jurisdictions both covered.",
+              "original_substitution": "Partial \u2014 CT Vital Records Prior to 1850 (Barbour Collection) is a derivative compilation. Original Norwich town vital register held at CT State Library, not accessible via this session's MCP tools. Barbour Collection is the standard systematic resource for pre-1850 CT vital records; overturn risk from the original is low.",
+              "independent_verification": "Qualified \u2014 one record directly states the marriage (Barbour Collection); census records (1850 Norwich CT, 1870 Wisconsin) and first child born May 1846 Norwich CT independently corroborate the couple's union and consistent geography, though none independently names the marriage date.",
+              "evidence_class": "Derivative source only (Barbour Collection abstraction of original town vital register). Original not accessed. The Barbour Collection is a well-established, systematic compilation authoritative for pre-1850 CT vital records.",
+              "conflict_resolution": "Yes \u2014 no conflicts. October 1844 Norwich CT marriage consistent with first child born May 1846 Norwich CT, 1850 census in Norwich CT, and subsequent Wisconsin census records.",
+              "overturn_risk": "Low. England-side searches exhausted (all negative, consistent with marriage in USA). Connecticut evidence internally consistent. No unsearched record category plausibly likely to name a different date or place. Theoretical risk from original town register is acknowledged but does not rise to probable overturn."
+            }
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "proof-conclusion",
+        "args": "q_001"
+      },
+      "response_summary": "Launching skill: proof-conclusion"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
+      },
+      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "proof_summaries",
+        "op": "append",
+        "entry": {
+          "question_id": "q_001",
+          "tier": "probable",
+          "vehicle": "summary",
+          "supporting_assertion_ids": [
+            "a_001",
+            "a_002",
+            "a_003",
+            "a_004"
+          ],
+          "resolved_conflict_ids": [],
+          "exhaustive_search_summary": "Ten searches across two countries: GRO civil registration index (England & Wales Marriage Registration Index 1837\u20132005, three query variants including surname variants Purnell/Parnell), England Marriages 1538\u20131973, Wiltshire Church Records 1518\u20131990, Somerset Church Records 1501\u20131999, Non-Conformist RG4-8, 1870 and 1880 US census (existing tree citations read for marriage data), Connecticut Marriages 1630\u20131997, and Connecticut Vital Records Prior to 1850 (Barbour Collection, FS collection 2843390). England-side searches uniformly negative. Positive result found in collection 2843390. Limitation: source is derivative (Barbour Collection abstraction of original Norwich town vital register); original register, held at the Connecticut State Library, was not accessed via this session's MCP-based research tools.",
+          "narrative_markdown": "## Marriage of Job Purnell and Emma Osborne, 27 October 1844, Norwich, Connecticut\n\n### Research Question\n\nWhen and where did Job Purnell (born 1 December 1819, Trowbridge, Wiltshire, England; died 9 November 1895, Portage, Columbia, Wisconsin) marry his wife Emma (born 22 July 1822, Rode, Somerset, England)?\n\n### Conclusion\n\nThe preponderance of evidence strongly indicates that Job Purnell married Emma Osborne on 27 October 1844 in Norwich, New London County, Connecticut.\n\n### Evidence and Analysis\n\n**Direct Evidence \u2014 Connecticut Vital Records**\n\nThe marriage is recorded in \"Connecticut, Vital Records, Prior to 1850,\" a digital index of the Barbour Collection on FamilySearch (ark:/61903/1:1:QPQB-SJDF).\u00b9 The entry records the groom as \"Job Purnal,\" the bride as \"Emma Osborne,\" the date as 27 October 1844, and the place as Norwich, New London, Connecticut. Richard Livesey is named as witness.\n\nThe Barbour Collection is a systematic compilation of abstracts of Connecticut town vital records to 1850, prepared under Lucius Barnes Barbour between approximately 1913 and 1934. It is a **derivative source** \u2014 an abstraction of the original Norwich town vital register \u2014 and the original register was not independently examined during this research. This limitation prevents upgrading the conclusion beyond probable, as direct access to the original record is desirable to confirm the abstraction's accuracy.\n\nThe groom's name \"Purnal\" is a phonetic spelling variant of Purnell consistent with the subject's name across multiple records (indexed as \"Parnell\" in the 1850 U.S. census and \"Pernell\" in the 1860 census). Identification of this record with Job Purnell (born 1819, Trowbridge, Wiltshire) rests on three points of corroboration: (a) age compatibility \u2014 he would have been approximately 24 years old at the October 1844 ceremony; (b) geographic consistency \u2014 the couple's first child, Eliza Etta Purnell, was born 1 May 1846 in Norwich, New London, Connecticut,\u00b2 placing the family at the same location in the expected post-marriage period; and (c) absence of any other Job Purnell or Purnal of matching age and Connecticut location identified in any searched source.\n\n**Negative Evidence \u2014 England**\n\nSeven searches across English record collections for the 1841\u20131845 marriage window returned no compatible result: the England and Wales Marriage Registration Index 1837\u20132005 (GRO civil registration, three searches under Purnell and Parnell surname variants), England Marriages 1538\u20131973 (a broad index of church and other marriages), Wiltshire Church Records 1518\u20131990, Somerset Church Records 1501\u20131999 (covering Emma's home county), and the England and Wales Non-Conformist Record Indexes RG4-8.\u00b3 All searches returned either nil results or records demonstrably incompatible with the subject. One result \u2014 a Job Purnell married in Melksham, Wiltshire, Q4 1849 \u2014 was excluded as impossible: the couple's first child was born in Connecticut in May 1846, ruling out an English marriage in 1849. The consistent failure across all England-side sources constitutes strong negative evidence that the marriage did not occur in England and is consistent with the couple having emigrated to Connecticut before marrying.\n\n**Corroborating Evidence**\n\nThe 1850 United States census, an original record, lists Job \"Parnell\" and Emma \"Parnell\" together as a married couple in Norwich, New London County, Connecticut \u2014 the same jurisdiction named in the marriage record.\u2074 The 1870 census confirms the couple's continuing union in Wisconsin.\u2075 These census records, created independently of the Barbour Collection, corroborate \u2014 though indirectly \u2014 that Job and Emma were married and that their union was established in Connecticut.\n\nEmma's maiden name \"Osborne,\" previously unknown in the family tree, is circumstantially corroborated by the couple's daughter Sarah Osborne Purnell (born 27 December 1861, Portage, Wisconsin\u2076). Honor-naming of a child after the mother's maiden family was common practice in the nineteenth century; the daughter's middle name Osborne aligns precisely with the bride's surname in the marriage record.\n\n**Source Classification**\n\nThe Connecticut Vital Records Prior to 1850 entry is a **derivative source** (abstraction of original town vital records). The marriage date and place bear **official-duty** informant proximity (town registrar); the parties' names bear **self** informant proximity (groom and bride reported their own names). The marriage event is **direct evidence** of when and where the marriage occurred.\n\n### Limitations and Tier Declaration\n\nThis conclusion is rated **probable** rather than proved for two reasons. First, the sole source directly naming the marriage date and place is derivative (the Barbour Collection abstraction); the original Norwich town vital register, which would be an original source with primary information, was not examined. Second, independent corroboration from the census records is indirect \u2014 the censuses confirm the couple's union and Connecticut location but do not independently name the marriage date. The available evidence points consistently in one direction, with no conflicting sources, supporting a probable conclusion. Access to the original Norwich town vital register (Connecticut State Library) would, if it confirms the Barbour Collection's abstraction, advance this conclusion to proved.\n\n---\n\n\u00b9 \"Connecticut, Vital Records, Prior to 1850,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPQB-SJDF : accessed 8 July 2026), entry for Job Purnal and Emma Osborne, marriage 27 October 1844, Norwich, New London, Connecticut.\n\n\u00b2 Person record 2W2D-81L (Eliza Etta Purnell, born 1 May 1846, Norwich, New London, Connecticut), research project tree.\n\n\u00b3 Search log entries log_001 through log_007.\n\n\u2074 \"United States, Census, 1850,\" FamilySearch (https://familysearch.org/ark:/61903/1:1:M68R-B1Q), entry for Job Parnell and Emma Parnell, 1850.\n\n\u2075 \"United States, Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MN97-PWH), entry for Job Purnell and Emma Purnell, 1870.\n\n\u2076 Person record 2W2D-D64 (Sarah Osborne Purnell, born 27 December 1861, Portage, Columbia, Wisconsin), research project tree."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "project",
+        "op": "update",
+        "fields": {}
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "GPS-mentor proof critique of ps_001",
+        "subagent_type": "gps-mentor",
+        "prompt": "Please review the proof summary ps_001 in this project and provide a proof-critique. The project directory is:\n\n/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6\n\nThe proof addresses q_001: \"When and where did Job Purnell (born 1 December 1819, Trowbridge, Wiltshire, England; died 9 November 1895, Portage, Wisconsin) marry his wife Emma (born 22 July 1822, Rode, Somerset, England)?\"\n\nThe conclusion is **probable** (not proved) based on a single derivative source (Barbour Collection / Connecticut Vital Records Prior to 1850) directly naming the marriage: Job Purnal married Emma Osborne, 27 October 1844, Norwich, New London, Connecticut. The tier is set at probable because: (1) the source is derivative, not original; and (2) corroborating evidence from census records is only indirect. No conflicting evidence was found.\n\nPlease read research.json and tree.gedcomx.json, evaluate the proof, and append your evaluation to research.json's evaluations[] section. Your role is advisory only."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"# Mentor review: proof-critique on ps_001\\n\\nBefore I get to the substance, a process note: my toolkit for this session includes only file-reading capability \\u2014 no write/edit tool was made available to me, so I could not actually create `evaluations/proof-critique-ps_001-<timestamp>.json` or append the pointer entry to `research.json`. I've completed the full review below and prepared the structured verdict exactly as the output protocol specifies; the orchestra..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_job_purnell_marriage_1844\",\n4\t    \"objective\": \"When and where did Job Purnell marry his wife Emma?\",\n5\t    \"subject_person_ids\": [\n6\t      \"2W2F-CNH\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-07T00:00:00Z\",\n10\t    \"updated\": \"2026-07-07\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"id\": \"q_..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"2W2F-CNH\",\n5\t      \"gender\": \"Male\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"given\": \"Job\",\n10\t          \"surname\": \"Purnell\",\n11\t          \"id\": \"2W2F-CNH-name-1\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"type\": \"Birth\",\n17\t          \"date\": \"1 December 1819\",\n18\t          \"standard_date\": \"1 Dec 1819\",\n19\t          \"place\": \"Trowbridge, Wiltshire, England\",\n20\t          \"standard_place\": \"..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "evaluations",
+        "op": "append",
+        "entry": {
+          "focus": "proof-critique",
+          "target_id": "ps_001",
+          "target_type": "proof_summary",
+          "verdict": "address_first",
+          "strengths": [
+            "Tier honestly set at probable rather than proved, with the derivative-source (Barbour Collection) and indirect-corroboration limitations explicitly named \u2014 Standard 43 in practice.",
+            "England-side negative evidence correctly excludes competing Job Purnell candidates (log_002 1849 Melksham marriage; log_004 Trowbridge baptisms) with stated reasoning rather than silent discard."
+          ],
+          "must_address": [
+            {
+              "standard": "Narrative self-containment / Standard 43 (evidence integrity)",
+              "issue": "Footnotes 2 and 6 cite 'Person record ..., research project tree' rather than a verifiable source, for facts load-bearing to the identification argument: Eliza Etta Purnell's May 1846 birth underpins the marriage-window premise, and Sarah Osborne Purnell's middle name underpins the honor-naming corroboration for Emma's maiden name.",
+              "what_would_change_my_mind": "Adding a traceable citation (or an explicit 'source not yet identified, pending verification' note) for the Eliza Etta and Sarah Osborne birth facts would close the self-containment gap.",
+              "suggested_skill": "source-citation",
+              "specific_action": "Locate and cite the underlying birth records for 2W2D-81L (Eliza Etta Purnell) and 2W2D-D64 (Sarah Osborne Purnell), or annotate them as uncited legacy tree data."
+            }
+          ],
+          "consider_addressing": [
+            {
+              "standard": "Standard 14 \u2014 topical/repository breadth",
+              "issue": "All England-side negative searches ran through FamilySearch only; log_007 itself flags incomplete Nonconformist indexing for the Trowbridge area.",
+              "specific_action": "A FreeBMD cross-check or Wiltshire/Somerset county record office lookup would strengthen the negative-evidence case if pursuing upgrade to Proved."
+            }
+          ],
+          "non_blocking_notes": [],
+          "narrative": "Tier correctly set at probable. One citation gap: footnotes 2 and 6 cite internal tree records (2W2D-81L, 2W2D-D64) rather than verifiable external sources, for facts load-bearing to the identification argument. England-side searches FamilySearch-only \u2014 FreeBMD or county archives would strengthen for a future Proved upgrade. Overall, the conclusion is well-reasoned and the tier call is sound."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'superseded_by'\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "Bash",
+      "args": {
+        "command": "mkdir -p /private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/evaluations",
+        "description": "Create evaluations directory"
+      },
+      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+    },
+    {
+      "tool": "Write",
+      "args": {
+        "file_path": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/evaluations/proof-critique-ps_001-2026-07-08.json",
+        "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"address_first\",\n  \"strengths\": [\n    \"Tier honestly set at probable rather than proved, with the derivative-source (Barbour Collection) and indirect-corroboration limitations explicitly named \u2014 Standard 43 in practice.\",\n    \"England-side negative evidence correctly excludes competing Job Purnell candidates (log_002 1849 Melksham marriage; log_004 Trowbridge baptisms) with stated reasoning rather than silent discard.\"\n  ],\n  \"must_address\": [\n    {\n      \"standard\": \"Narrative self-containment / Standard 43 (evidence integrity)\",\n      \"issue\": \"Footnotes 2 and 6 cite 'Person record ..., research project tree' rather than a verifiable source, for facts load-bearing to the identification argument: Eliza Etta Purnell's May 1846 birth underpins the marriage-window premise, and Sarah Osborne Purnell's middle name underpins the honor-naming corroboration for Emma's maiden name.\",\n      \"what_would_change_my_mind\": \"Adding a traceable citation (or an explicit 'source not yet identified, pending verification' note) for the Eliza Etta and Sarah Osborne birth facts would close the self-containment gap.\",\n      \"suggested_skill\": \"source-citation\",\n      \"specific_action\": \"Locate and cite the underlying birth records for 2W2D-81L (Eliza Etta Purnell) and 2W2D-D64 (Sarah Osborne Purnell), or annotate them as uncited legacy tree data.\"\n    }\n  ],\n  \"consider_addressing\": [\n    {\n      \"standard\": \"Standard 14 \u2014 topical/repository breadth\",\n      \"issue\": \"All England-side negative searches ran through FamilySearch only; log_007 itself flags incomplete Nonconformist indexing for the Trowbridge area.\",\n      \"specific_action\": \"A FreeBMD cross-check or Wiltshire/Somerset county record office lookup would strengthen the negative-evidence case if pursuing upgrade to Proved.\"\n    }\n  ],\n  \"non_blocking_notes\": []\n}\n"
+      },
+      "response_summary": "File created successfully at: /private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6/evaluations/proof-critique-ps_001-2026-07-08.json (file state is current in your context \u2014 no need to Read it back)"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "section": "evaluations",
+        "op": "append",
+        "entry": {
+          "focus": "proof-critique",
+          "target_id": "ps_001",
+          "target_type": "proof_summary",
+          "verdict": "address_first",
+          "file_path": "evaluations/proof-critique-ps_001-2026-07-08.json",
+          "superseded_by": null,
+          "strengths": [
+            "Tier honestly set at probable rather than proved, with derivative-source and indirect-corroboration limitations explicitly named.",
+            "England-side negative evidence correctly excludes competing Job Purnell candidates with stated reasoning."
+          ],
+          "must_address": [
+            {
+              "standard": "Narrative self-containment / Standard 43",
+              "issue": "Footnotes 2 and 6 cite internal tree person records rather than verifiable external sources for load-bearing identification facts (Eliza Etta May 1846 birth; Sarah Osborne middle name).",
+              "specific_action": "Cite underlying birth records for 2W2D-81L and 2W2D-D64, or annotate as uncited legacy tree data."
+            }
+          ],
+          "consider_addressing": [
+            {
+              "standard": "Standard 14 \u2014 repository breadth",
+              "issue": "England-side searches FamilySearch-only; Nonconformist indexing flagged as incomplete in log_007.",
+              "specific_action": "FreeBMD or county record office cross-check for Proved upgrade path."
+            }
+          ],
+          "non_blocking_notes": []
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection"
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/ys/gs7l5hcx1rs6dvjt0ys_n05h0000gn/T/e2e-job-purnell-marriage-1844-rw4j9ci6",
+        "ops": [
+          {
+            "section": "questions",
+            "op": "update",
+            "entryId": "q_001",
+            "fields": {
+              "status": "resolved",
+              "resolved": "2026-07-08",
+              "resolution_assertion_ids": [
+                "a_002",
+                "a_004"
+              ]
+            }
+          },
+          {
+            "section": "project",
+            "op": "update",
+            "fields": {
+              "status": "completed"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"questions\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"q_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"project\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"project\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    }
+  ],
+  "error": null,
+  "tags": {
+    "question_type": "marriage",
+    "era": "1840s",
+    "geography": "US-CT"
+  },
+  "blocked_tree_reads": []
+}

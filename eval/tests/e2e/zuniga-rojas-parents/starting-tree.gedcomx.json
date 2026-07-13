@@ -1,0 +1,246 @@
+{
+  "persons": [
+    {
+      "id": "2DTG-7MK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "2DTG-7MK-name-1",
+          "given": "Adrian",
+          "surname": "Zuñiga Rojas"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-adrian-birth",
+          "type": "Birth",
+          "date": "8 September 1889",
+          "standard_date": "8 Sep 1889",
+          "place": "Arani, Cochabamba, Bolivia",
+          "standard_place": "Arani, Arani, Cochabamba, Bolivia"
+        },
+        {
+          "id": "f-adrian-death",
+          "type": "Death",
+          "date": "21 April 1928",
+          "standard_date": "21 Apr 1928",
+          "place": "Arani, Cochabamba, Bolivia",
+          "standard_place": "Arani, Cochabamba, Bolivia"
+        }
+      ]
+    },
+    {
+      "id": "2DTG-7XD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "2DTG-7XD-name-1",
+          "given": "Gregoria",
+          "surname": "Peñarrieta Obando"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-gregoria-birth",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "Arani, Cochabamba, Bolivia",
+          "standard_place": "Arani, Arani, Cochabamba, Bolivia"
+        },
+        {
+          "id": "f-gregoria-baptism",
+          "type": "Baptism",
+          "date": "9 September 1895",
+          "standard_date": "9 Sep 1895",
+          "place": "San Bartolomé, Arani, Cochabamba, Bolivia",
+          "standard_place": "San Bartolomé, Arani, Cochabamba, Bolivia"
+        },
+        {
+          "id": "f-gregoria-death",
+          "type": "Death",
+          "date": "Abt 1935",
+          "standard_date": "Abt 1935"
+        }
+      ]
+    },
+    {
+      "id": "KCRK-GZN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "KCRK-GZN-name-1",
+          "given": "Marcelina",
+          "surname": "Zuñiga Peñarrieta"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-marcelina-birth",
+          "type": "Birth",
+          "date": "Abt 1914",
+          "standard_date": "Abt 1914",
+          "place": "Arani, Cochabamba, Bolivia",
+          "standard_place": "Arani, Arani, Cochabamba, Bolivia"
+        }
+      ]
+    },
+    {
+      "id": "KDSR-875",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "KDSR-875-name-1",
+          "given": "Gumercinda",
+          "surname": "Zuñiga Peñarrieta"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-gumercinda-birth",
+          "type": "Birth",
+          "date": "13 January 1916",
+          "standard_date": "13 Jan 1916",
+          "place": "Arani, Cochabamba, Bolivia",
+          "standard_place": "Arani, Arani, Cochabamba, Bolivia"
+        },
+        {
+          "id": "f-gumercinda-baptism",
+          "type": "Baptism",
+          "date": "13 January 1916",
+          "standard_date": "13 Jan 1916",
+          "place": "San Bartolomé, Arani, Cochabamba, Bolivia",
+          "standard_place": "San Bartolomé, Arani, Cochabamba, Bolivia"
+        },
+        {
+          "id": "f-gumercinda-death",
+          "type": "Death",
+          "date": "3 June 1993",
+          "standard_date": "3 Jun 1993"
+        }
+      ]
+    },
+    {
+      "id": "KZKD-QC4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "KZKD-QC4-name-1",
+          "given": "Tomasa",
+          "surname": "Zuñiga Peñarrieta"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-tomasa-birth",
+          "type": "Birth",
+          "date": "21 December 1924",
+          "standard_date": "21 Dec 1924",
+          "place": "Arani, Cochabamba, Bolivia",
+          "standard_place": "Arani, Arani, Cochabamba, Bolivia"
+        }
+      ]
+    },
+    {
+      "id": "K41P-XM5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "K41P-XM5-name-1",
+          "given": "Eusebia",
+          "surname": "Zuñiga Peñarrieta"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-eusebia-birth",
+          "type": "Birth",
+          "date": "Abt 1926",
+          "standard_date": "Abt 1926",
+          "place": "Pocoata, Arani, Cochabamba, Bolivia",
+          "standard_place": "Pocoata, Arani, Cochabamba, Bolivia"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "2DTG-7MK",
+      "person2": "2DTG-7XD",
+      "facts": [
+        {
+          "id": "f-marriage-1913",
+          "type": "Marriage",
+          "date": "29 November 1913",
+          "standard_date": "29 Nov 1913",
+          "place": "San Bartolomé, Arani, Cochabamba, Bolivia",
+          "standard_place": "San Bartolomé, Arani, Cochabamba, Bolivia"
+        }
+      ]
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "2DTG-7MK",
+      "child": "KCRK-GZN"
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "2DTG-7XD",
+      "child": "KCRK-GZN"
+    },
+    {
+      "id": "rel-4",
+      "type": "ParentChild",
+      "parent": "2DTG-7MK",
+      "child": "KDSR-875"
+    },
+    {
+      "id": "rel-5",
+      "type": "ParentChild",
+      "parent": "2DTG-7XD",
+      "child": "KDSR-875"
+    },
+    {
+      "id": "rel-6",
+      "type": "ParentChild",
+      "parent": "2DTG-7MK",
+      "child": "KZKD-QC4"
+    },
+    {
+      "id": "rel-7",
+      "type": "ParentChild",
+      "parent": "2DTG-7XD",
+      "child": "KZKD-QC4"
+    },
+    {
+      "id": "rel-8",
+      "type": "ParentChild",
+      "parent": "2DTG-7MK",
+      "child": "K41P-XM5"
+    },
+    {
+      "id": "rel-9",
+      "type": "ParentChild",
+      "parent": "2DTG-7XD",
+      "child": "K41P-XM5"
+    }
+  ],
+  "sources": [
+    {
+      "id": "9L87-NMR",
+      "title": "Adrian Zúñiga en el registro de Gumercinda Zúñiga Peñarrieta, \"Bolivia, registros parroquiales, 1566-1996\"",
+      "citation": "\"Bolivia, registros parroquiales, 1566-2020\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL7X-K1JW : Tue Oct 07 20:30:09 UTC 2025), Entry for Gumercinda Zúñiga Peñarrieta and Adrian Zúñiga, 13 Jan 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL7X-K1J4"
+    }
+  ]
+}
