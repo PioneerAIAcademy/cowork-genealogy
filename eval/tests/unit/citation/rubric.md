@@ -2,6 +2,8 @@
 
 Grading dimensions for citation unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+**Scoring calibration.** These dimensions are scored on the PERSISTED source/citation fields — `citation`, `citation_detail`, and `notes` as written to `research.json` (or, when the correct behavior is to present a citation without persisting, e.g. a negative-search citation, the presented citation itself) — not on how the chat response narrates them. If the persisted fields are correct, the dimension scores 3, regardless of how tersely or verbosely the response describes them. A score of 2 requires the rationale to name a concrete wrong field value on a concrete source (e.g., "src_003's `who` names the hosting repository instead of the record's creator"). A deduction is never justified by calling a fixture-correct value "imprecise" or naming a hypothetically-better value — if the persisted value matches this rubric or the test's judge context, the dimension scores 3. Narrative style, verbosity, and presentation are never grounds for a deduction in these dimensions.
+
 ## Evidence Explained compliance
 
 Does the citation follow the Who/What/When/Where/Where-within framework from Evidence Explained? All five elements should be present and correctly populated. Grade against what the source data makes achievable: an element whose data is genuinely absent from the source entry and the scenario, and which is explicitly flagged with an unknown-marker (e.g. `[PAGE NOT RECORDED]`) and referred to the user, counts as correctly handled — not as a missing element.

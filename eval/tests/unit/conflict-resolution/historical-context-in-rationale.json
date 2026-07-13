@@ -15,7 +15,7 @@
 
   "judge_context": [
     "Part 4 of the resolution rationale must go beyond 'informants make mistakes' — it should name the specific historical mechanism: a son-in-law reporting a birth he wasn't present for, 63 years after the event, from what he was told, in a milieu where Pennsylvania would be the locally familiar answer for any member of the family",
-    "Should reference the known pattern of delayed birth certificates carrying higher error rates for birthplace, as documented in historical-contradictions.md — Irish-born parents whose American-born children assumed the whole family was American is a recognized source class of this discrepancy",
+    "Grade on whether the persisted resolution_rationale names the documented historical PATTERN — e.g. immigration-origin confusion (Irish-born parents whose American-born children assumed the whole family was American) or secondary-informant late reporting. Citing the historical-contradictions.md FILENAME is not required and its absence is never a deduction. Do not synthesize extra grading dimensions beyond the rubric's",
     "The answer to 'why does the death certificate say Pennsylvania' should be a plausible historical narrative — not a generic disclaimer — explaining the informant's epistemic position: James Brown had no firsthand knowledge of Patrick's birth in Ireland and may genuinely not have known, or may have heard 'Pennsylvania' used as shorthand for the family's American origin",
     "The independence of the two census sources (a_002 and a_009) and the shared-informant caveat (both may reflect the same household member's knowledge) should appear in the independence_analysis — the historical reasoning belongs in Part 4, not as a substitute for the independence assessment"
   ],

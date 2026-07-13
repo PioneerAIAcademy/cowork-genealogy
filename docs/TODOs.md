@@ -68,7 +68,101 @@ These MCP tools are shipped, specced, and advertised, but no skill references th
   called by any skill (`tree-edit` uses the match tools + `person_read`, never
   `person_ancestors`). Wire it into the relevant tree/research workflow.
 
+## Record-extraction consolidation follow-ups (2026-07 window)
+Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
+- [ ] **Record-type playbook files + snapshot carve-out** — per-record-type
+  references (census/death/probate/church/marriage) as the parallel-team
+  ownership surface. Blocked on a design decision: inside the skill dir every
+  playbook edit flips the runlog inactive (full re-run+annotation per edit);
+  outside it agents have no reliable load path. Needs a deliberate, documented
+  snapshot carve-out (e.g. a `playbooks/` subdir exclusion) before creating
+  the files. Until then, compact tables live in the extractor agent body.
+- [ ] **Fan-out extractor agents** — the extractor runs serially per record;
+  the latency plan's P3 full form fans out one agent per record with parent
+  batch-persist. Do after per-record overhead is measured on multi-record e2e
+  runs.
+- [ ] **Extraction→tree materialization gap ownership** — fact-less sibling
+  stubs are never enriched, the 5d trigger can't fire on a family's first
+  record, and no skill promotes extracted facts onto tree persons (8/27 e2e
+  scenarios; judges penalize the thin tree). Needs an ownership spec:
+  `merge_record_into_tree` grows this, or person-evidence does.
+- [ ] **person-evidence epistemic gate** — identity over-reach: pe links
+  written at `confident` from one uncorroborated record with `[?]` readings
+  (clark-parents). The extractor agent got a tentative-cap line; person-evidence
+  needs the equivalent gate + mandatory conflicts entry.
+- [ ] **Upstream sidecar-staging gap** — one e2e run had all 18
+  `record_persona_id`s nulled because the search never staged a sidecar
+  (spriggs). D2 can't auto-fill what was never staged; the fix is
+  search-skill-side (always pass `projectPath` / surface the staging failure).
+- [ ] **Generate the mock input-schema mirror from compiled schemas** —
+  `eval/harness/harness/mock_mcp.py` hand-maintains tool input schemas and has
+  drifted before (missing `ops`). Generate from the compiled build to kill the
+  drift class.
+- [ ] **Bare agent-tool names in gps-mentor.md / image-reader.md** — the
+  agent-mode spike proved bare tool names leave a subagent toolless in the
+  unit-harness SDK path (needs `mcp__genealogy__*`), yet these two agents use
+  bare names and work in Cowork/e2e paths. Reconcile once the PR-3
+  investigation lands: qualify (or dual-list) so all agents work identically
+  in Cowork, the e2e harness, the unit harness, and the hosted web SDK path.
+
+- [x] **Extractor write authority is too broad (op-level restriction)** —
+  **superseded by the `tree_edit`/`tree_correct` split (this commit,
+  2026-07-12)**: the mutating ops (`update_fact`/`update_name`/`update_person`/
+  `update_source`/`remove`) moved to a new `tree_correct` tool; `tree_edit`
+  keeps only the additive ops, so the record-extractor agent (tree_edit only)
+  is structurally unable to rename/rewrite/remove existing tree entities
+  (the ut_013 rename incident). Residual gap: **per-op authorization within a
+  single tool is still unavailable** — if a finer split is ever needed (e.g.
+  add_name but not add_person), there is no `allowedOperations` caller
+  contract; the only lever is splitting tools again.
+- [ ] **Enum-drift lint** — grep prose enum enumerations (agent bodies, cribs,
+  rubrics) against `enums.schema.json` in CI, following the places-guidance
+  byte-lint pattern. Two drift instances shipped 2026-07-12 (the /research crib
+  listed `researcher` as invalid after it became a valid
+  `informant_proximity`; record-extractor's negative-evidence section still
+  said `unknown`).
+- [ ] **`image_read` callable by the main session** — prose failed 3x (rx_015):
+  the record-extraction skill tells the MAIN session not to call `image_read`
+  itself (delegate to image-reader), but no environment can currently deny a
+  main session a tool an agent needs — Cowork allowed-tools are per-skill, not
+  per-context. Wants a per-context tool-policy design (main-session denylist
+  while an agent holds the tool).
+
+## Eval framework
+- [ ] **Revert the temporary $25 e2e cost caps** — `bottemiller-parents` and
+  `cruz-corona-ancestry` fixtures carry `caps.max_cost_usd: 25` as experiment
+  headroom for the extractor-state-diet measurement window (3 of 5 e2e runs
+  were hitting the default $15 cap pre-diet; cruz peaked at $19.12). Once the
+  diet (`project_context` + tool-side source reuse + `add_household_children`)
+  demonstrably lands runs under $15, drop the `caps` blocks so the default cap
+  is the regression gate again.
+- [ ] **Judge fabrication class — give the judge before-state file content** —
+  three citation fails (2026-07-12) came from the judge claiming on-file text
+  was fabricated or absent; the judge context should include the relevant
+  before-state source entries so "not on file" claims are mechanically
+  checkable.
+- [ ] **Revisit recovered-retry Tool Arguments scoring** — the judge policy
+  (`eval/harness/judge/prompt.md` + the mirror note in
+  `eval/tests/unit/record-extraction/rubric.md`) caps a validation-rejected
+  call that Claude cleanly fixed on the first retry at partial (2). Chosen
+  while the suite is *diagnostic*: the retry path is where wasted round-trips
+  and silent op-drops were observed, and scoring it 3 would blind the trend
+  to the failure class the composite-persist work eliminates. Once
+  composite-persist has made validation rejections rare and the suite's role
+  shifts toward regression acceptance (post-alpha), consider full credit for
+  a cleanly-recovered single retry — decide with post-composite data.
+
 ## Done
+- ~~Negative-evidence `informant_proximity` enum value~~ — **shipped**
+  (2026-07-12, the tree_edit/tree_correct + enum-drift-fixes window):
+  `researcher` is a valid `informant_proximity` closed-enum value with the
+  full blast radius applied — both `enums.schema.json` trees, the TS union in
+  `packages/schema/src/index.ts`, validator `CLOSED_ENUMS`, and the
+  `research-schema-spec.md` prose (`researcher` = the value is the
+  researcher's own conclusion — negative evidence, structure-inferred
+  relationships; `unknown` = a record informant exists but can't be
+  identified). Residual prose-drift policing is the separate "Enum-drift
+  lint" item above.
 - ~~`/v1` FamilySearch token mechanism~~ — **shipped**: `POST /v1/sessions` accepts an
   optional `familysearch_token` ({`access_token`, `refresh_token?`, `expires_in?`}),
   injected straight into the sandbox at create and **not** persisted. Include the

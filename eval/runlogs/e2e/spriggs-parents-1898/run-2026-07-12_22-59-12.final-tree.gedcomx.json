@@ -1,0 +1,642 @@
+{
+  "persons": [
+    {
+      "id": "L64C-QQX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "L64C-QQX-name-1",
+          "given": "Reuben Spencer",
+          "surname": "Spriggs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-reuben-birth",
+          "type": "Birth",
+          "date": "6 November 1898",
+          "standard_date": "6 Nov 1898",
+          "place": "Maddock, Benson, North Dakota, United States",
+          "standard_place": "Maddock, Benson, North Dakota, United States"
+        },
+        {
+          "id": "f-reuben-death",
+          "type": "Death",
+          "date": "21 May 1998",
+          "standard_date": "21 May 1998",
+          "place": "Riverside, Riverside, California, United States",
+          "standard_place": "Riverside, Riverside, California, United States"
+        },
+        {
+          "id": "f-reuben-res-1910",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "f-reuben-res-1998",
+          "type": "Residence",
+          "date": "21 May 1998",
+          "standard_date": "21 May 1998",
+          "place": "Riverside, California, United States",
+          "standard_place": "Riverside, California, United States"
+        },
+        {
+          "id": "f-reuben-obituary",
+          "type": "Obituary",
+          "date": "29 May 1998",
+          "standard_date": "29 May 1998",
+          "place": "Riverside, California, United States",
+          "standard_place": "Riverside, California, United States"
+        },
+        {
+          "id": "f-reuben-res-sd",
+          "type": "Residence",
+          "place": "South Dakota, United States",
+          "standard_place": "South Dakota, United States"
+        },
+        {
+          "id": "f-reuben-burial",
+          "type": "Burial",
+          "place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States"
+        }
+      ]
+    },
+    {
+      "id": "L64C-QM1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "L64C-QM1-name-1",
+          "given": "Nora Alvina",
+          "surname": "Satter"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-nora-birth",
+          "type": "Birth",
+          "date": "7 November 1899",
+          "standard_date": "7 Nov 1899",
+          "place": "Hartland, Freeborn, Minnesota, United States",
+          "standard_place": "Hartland, Freeborn, Minnesota, United States"
+        },
+        {
+          "id": "f-nora-res-1900",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Hartland Township, Freeborn, Minnesota, United States",
+          "standard_place": "Hartland Township, Freeborn, Minnesota, United States"
+        },
+        {
+          "id": "f-nora-res-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "f-nora-death",
+          "type": "Death",
+          "date": "16 May 1959",
+          "standard_date": "16 May 1959",
+          "place": "Riverside, Riverside, California, United States",
+          "standard_place": "Riverside, Riverside, California, United States"
+        },
+        {
+          "id": "f-nora-burial",
+          "type": "Burial",
+          "date": "1959",
+          "standard_date": "1959",
+          "place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Maplewood Cemetery, Iroquois, Kingsbury, South Dakota, United States"
+        }
+      ]
+    },
+    {
+      "id": "LFT9-PXM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "LFT9-PXM-name-1",
+          "given": "Donna Jean",
+          "surname": "Spriggs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-donna-birth",
+          "type": "Birth",
+          "date": "1 November 1931",
+          "standard_date": "1 Nov 1931",
+          "place": "Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+        },
+        {
+          "id": "f-donna-res-1935",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "f-donna-res-1940",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Sioux Falls, Minnehaha, South Dakota, United States"
+        },
+        {
+          "id": "f-donna-death",
+          "type": "Death",
+          "date": "1 May 2022",
+          "standard_date": "1 May 2022",
+          "place": "Riverside, Riverside, California, United States",
+          "standard_place": "Riverside, Riverside, California, United States"
+        }
+      ]
+    },
+    {
+      "id": "LFT9-PDR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LFT9-PDR-name-1",
+          "given": "Reuben Spencer",
+          "surname": "Spriggs",
+          "suffix": "Jr"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-reubenjr-birth",
+          "type": "Birth",
+          "date": "3 October 1928",
+          "standard_date": "3 Oct 1928",
+          "place": "Iroquois, Kingsbury, South Dakota, United States",
+          "standard_place": "Iroquois, Kingsbury, South Dakota, United States"
+        },
+        {
+          "id": "f-reubenjr-res-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Belle Prairie Township, Beadle, South Dakota, United States",
+          "standard_place": "Belle Prairie Township, Beadle, South Dakota, United States"
+        },
+        {
+          "id": "f-reubenjr-res-1940",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Sioux Falls, Minnehaha, South Dakota, United States",
+          "standard_place": "Sioux Falls, Minnehaha, South Dakota, United States"
+        },
+        {
+          "id": "f-reubenjr-draft",
+          "type": "Military Draft Registration",
+          "date": "3 October 1946",
+          "standard_date": "3 Oct 1946",
+          "place": "Riverside, Riverside, California, United States",
+          "standard_place": "Riverside, Riverside, California, United States"
+        },
+        {
+          "id": "f-reubenjr-death",
+          "type": "Death",
+          "date": "16 May 2015",
+          "standard_date": "16 May 2015",
+          "place": "Dana Point, Orange, California, United States",
+          "standard_place": "Dana Point, Orange, California, United States"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "John W",
+          "surname": "Spriggs",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N1"
+        }
+      ],
+      "id": "I1"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Charlotte",
+          "surname": "Spriggs",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N2"
+        }
+      ],
+      "id": "I2"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Lillian F",
+          "surname": "Spriggs",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N3"
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Leonard W",
+          "surname": "Spriggs",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N4"
+        }
+      ],
+      "id": "I4"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Selvin",
+          "surname": "Christianson",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N5"
+        }
+      ],
+      "id": "I5"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Karen",
+          "surname": "Quass",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N6"
+        }
+      ],
+      "id": "I6"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "John H",
+          "surname": "Spriggs",
+          "id": "N7",
+          "preferred": true
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "December 1868",
+          "standard_date": "Dec 1868",
+          "place": "District of Columbia, United States",
+          "standard_place": "District of Columbia, United States",
+          "id": "F1"
+        }
+      ],
+      "id": "I7"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Ruben",
+          "surname": "Spriggs",
+          "id": "N8",
+          "preferred": true
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "December 1865",
+          "standard_date": "Dec 1865",
+          "place": "Minnesota, United States",
+          "standard_place": "Minnesota, United States",
+          "id": "F2"
+        },
+        {
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Grand Forks, Grand Forks, North Dakota, United States",
+          "standard_place": "Grand Forks, Grand Forks, North Dakota, United States",
+          "id": "F3"
+        }
+      ],
+      "id": "I8"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "J W",
+          "surname": "Sprigg",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N9"
+        }
+      ],
+      "id": "I9"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "",
+          "surname": "Crane",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N10"
+        }
+      ],
+      "id": "I10"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "O",
+          "surname": "Weslby",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N11"
+        }
+      ],
+      "id": "I11"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "",
+          "surname": "Hansen",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N12"
+        }
+      ],
+      "id": "I12"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "L64C-QQX",
+      "person2": "L64C-QM1",
+      "facts": [
+        {
+          "id": "f-marriage-1926",
+          "type": "Marriage",
+          "date": "8 November 1926",
+          "standard_date": "8 Nov 1926",
+          "place": "Minneapolis, Hennepin, Minnesota, United States",
+          "standard_place": "Minneapolis, Hennepin, Minnesota, United States"
+        }
+      ]
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "L64C-QQX",
+      "child": "LFT9-PDR"
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "L64C-QM1",
+      "child": "LFT9-PDR"
+    },
+    {
+      "id": "rel-4",
+      "type": "ParentChild",
+      "parent": "L64C-QQX",
+      "child": "LFT9-PXM"
+    },
+    {
+      "id": "rel-5",
+      "type": "ParentChild",
+      "parent": "L64C-QM1",
+      "child": "LFT9-PXM"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R1",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "19 August 1898",
+          "standard_date": "19 Aug 1898",
+          "place": "Spokane City, Spokane, Washington, United States",
+          "standard_place": "Spokane City, Spokane, Washington, United States",
+          "primary": true,
+          "id": "F4"
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "L64C-QQX",
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "L64C-QQX",
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L64C-QQX",
+      "child": "I6",
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I9",
+      "child": "I1",
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I10",
+      "child": "I1",
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I11",
+      "child": "I2",
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I12",
+      "child": "I2",
+      "id": "R12"
+    },
+    {
+      "type": "Couple",
+      "person1": "I9",
+      "person2": "I10",
+      "id": "R13"
+    },
+    {
+      "type": "Couple",
+      "person1": "I11",
+      "person2": "I12",
+      "id": "R14"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MSNP-DNF",
+      "title": "Legacy NFS Source: Reuben Spencer Spriggs - Funeral program",
+      "citation": "Paper, Funeral program"
+    },
+    {
+      "id": "MS8F-8VD",
+      "title": "Legacy NFS Source: Reuben Spencer Spriggs - Funeral program",
+      "citation": "Paper, Funeral program"
+    },
+    {
+      "id": "MMC9-FL7",
+      "title": "Reuben Spencer Spriggs, \"United States World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", database with images, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K68M-VHS : 1 July 2024), Reuben Spencer Spriggs, 1917-1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K68M-VHS"
+    },
+    {
+      "id": "MMMK-R73",
+      "title": "Spencer Spriggs, \"United States Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V19Y-4D7 : Sun Oct 19 15:16:03 UTC 2025), Entry for Spencer Spriggs and Nora Spriggs, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V19Y-4D7"
+    },
+    {
+      "id": "MMBK-HKS",
+      "title": "Spencer Spriggs, \"South Dakota, State Census, 1935\"",
+      "citation": "\"South Dakota, State Census, 1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVHW-88P : Mon Jan 20 20:11:13 UTC 2025), Entry for Spencer Spriggs and Norah Salter, 1935.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVHW-88P"
+    },
+    {
+      "id": "MMM8-MP6",
+      "title": "Spencer R Spriggs, \"United States Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XQJ5-4QM : Sun Mar 10 06:45:01 UTC 2024), Entry for Spencer R Spriggs and Nora A Spriggs, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XQJ5-4QM"
+    },
+    {
+      "id": "MMML-NNY",
+      "title": "Reuben S Spriggs, \"United States Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V3N4-V2P : 10 January 2021), Reuben S Spriggs, 21 May 1998; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:V3N4-V2P"
+    },
+    {
+      "id": "9ZX6-HJ9",
+      "title": "Spencer Spriggs, \"South Dakota, State Census, 1915\"",
+      "citation": "\"South Dakota, State Census, 1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMH5-9TH : Mon Jan 20 19:39:34 UTC 2025), Entry for Spencer Spriggs, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MMH5-9TH"
+    },
+    {
+      "id": "9KF5-7BY",
+      "title": "Mr Reuben Spencer Spriggs, \"United States, GenealogyBank Obituaries, 1980-2014\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKLM-51PS : Mon Jun 03 18:45:24 UTC 2024), Entry for Mr Reuben Spencer Spriggs and Dona Darwin, 29 May 1998.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKLM-51PS"
+    },
+    {
+      "id": "9P93-67H",
+      "title": "R. Spencer Spriggs, \"Find A Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q231-HPSQ : Thu Jul 10 02:11:38 UTC 2025), Entry for Reuben Spencer Spriggs.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q231-HPSQ"
+    },
+    {
+      "id": "S1",
+      "title": "Household of John W Spriggs, \"United States, Census, 1910\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9JX9-6LD"
+    },
+    {
+      "id": "S2",
+      "title": "Household of John H Spriggs, \"United States Census, 1900\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M316-6G8"
+    },
+    {
+      "id": "S3",
+      "title": "Household of Ruben Spriggs, \"United States, Census, 1900\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M9VJ-V1R"
+    },
+    {
+      "id": "S4",
+      "title": "United States, World War I Draft Registration Cards, 1917-1918",
+      "author": "United States Selective Service System",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:K68M-VHS"
+    },
+    {
+      "id": "S5",
+      "title": "South Dakota, State Census, 1915",
+      "author": "State of South Dakota",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MMH5-9TH"
+    },
+    {
+      "id": "S6",
+      "title": "Obituary for Mr Reuben Spencer Spriggs, Press-Enterprise (Riverside, CA), 29 May 1998",
+      "author": "Press-Enterprise (Riverside, California)",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKLM-51PS"
+    },
+    {
+      "id": "S7",
+      "title": "Entry for John W Sprigg and Charlotta Westby, \"Washington, County Marriages, 1855-2008\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QRJ5-YWPH"
+    }
+  ]
+}

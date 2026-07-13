@@ -10,12 +10,33 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  agentRefsInText,
   diffSnapshotVsDisk,
   hashContent,
   hashFile,
   hashSnapshot,
   normalize,
 } from '../../lib/snapshot';
+
+// ---- agentRefsInText (shared vectors with test_snapshot.py) ---------------
+
+describe('agentRefsInText', () => {
+  it('dedupes and sorts @plugin: references', () => {
+    const text =
+      'Delegate to `@plugin:image-reader`, the same way /research invokes\n' +
+      '`@plugin:gps-mentor`. Then call @plugin:gps-mentor again.\n';
+    expect(agentRefsInText(text)).toEqual(['gps-mentor', 'image-reader']);
+  });
+
+  it('returns empty when there are no references', () => {
+    expect(agentRefsInText('No delegation here. @plugin: alone is not a ref.')).toEqual([]);
+  });
+
+  it('stops at invalid characters', () => {
+    expect(agentRefsInText('see @plugin:record-extractor.')).toEqual(['record-extractor']);
+    expect(agentRefsInText('bad @plugin:Foo uppercase')).toEqual([]);
+  });
+});
 
 // ---- normalize contract --------------------------------------------------
 

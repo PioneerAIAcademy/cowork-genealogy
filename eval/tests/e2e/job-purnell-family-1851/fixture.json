@@ -1,0 +1,18 @@
+{
+  "id": "job-purnell-family-1851",
+  "name": "Job Purnell's wife and child in the 1851 Trowbridge census",
+  "source_pid": "LHKV-VKD",
+  "captured": "2026-07-09",
+  "researcher_question": "Who was the wife of Job Purnell, and who was their child, as recorded in the 1851 Census of Trowbridge, Wiltshire, England?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1850s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Subject is Job Purnell (LHKV-VKD), b. ~1826 Trowbridge, a Wiltshire cloth-town laborer who stayed in England (NOT the same-named emigrant 2W2F-CNH, who was in Wisconsin by 1851). Wife (Serena/Serinah Deacon), the couple relationship + 1849 marriage, and son Samuel are all stripped; the agent must recover the wife and child from the 1851 census household itself. The answer co-resides with the subject in the named record, so identity and answer are recovered together — this is why the wife/child question is solvable where a parents question on the same crowded name is not. Watch for surname mis-indexing (Purnell/Purnall) and other Job Purnells in Trowbridge; the correct subject is the b.~1826 laborer with an infant son in 1851."
+}

@@ -190,8 +190,8 @@ specified as JSON Schema under `docs/specs/schemas/` and mirrored independently
 in `packages/schema/` (JSON Schema + hand-maintained TypeScript types in
 `src/index.ts`, consumed by viewer-ui/web/server). The engine's runtime check is
 the hand-maintained `validate_research_schema` (`validator.ts`) — it does **not**
-load the JSON Schema, so it must be edited too. There are two kinds of schema
-change, with two different (and easy-to-undercount) site lists:
+load the JSON Schema, so it must be edited too. There are three kinds of schema
+change, with different (and easy-to-undercount) site lists:
 
 - **New field or section:** `docs/specs/schemas/research.schema.json`, the prose
   table in `docs/specs/research-schema-spec.md`, the validator
@@ -207,6 +207,16 @@ change, with two different (and easy-to-undercount) site lists:
   `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
   prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
   rationale: `docs/plan/no-evidence-evidence-type-decision.md`.
+- **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
+  persons, names, facts, relationships, or sources: in addition to the spec
+  (`docs/specs/simplified-gedcomx-spec.md`) and the schema mirrors above, the
+  **closed per-object field allow-lists** in
+  `packages/engine/mcp-server/src/validation/tree-shape.ts` must be edited —
+  the validator enforces `additionalProperties: false` from those sets, so an
+  unlisted field makes every writer tool (`tree_edit`, `tree_correct`, the
+  merge tools, `research_append`'s tree write) reject the write. The legacy
+  healer (`tree-sanitize.ts`) reads the same sets; check whether the change
+  needs a heal rule for pre-change trees.
 
 The interview lives in `init-project/SKILL.md`.
 
@@ -335,6 +345,15 @@ Skills live in `packages/engine/plugin/skills/<skill-name>/`. Each skill has:
 The `description` in SKILL.md frontmatter is critical — it determines
 when Claude triggers the skill. Be specific about what kinds of user
 requests should activate it.
+
+**Lane rule for skill findings.** Before editing any SKILL.md (or plugin
+agent body) to fix an e2e/eval/user finding, classify the finding:
+(1) tooling defect → MCP tool PR; (2) eval defect (judge/rubric/fixture
+wrong) → eval PR; (3) record-type craft gap → that type's
+playbook/table; (4) core doctrine → the stewarded prose edit, gated by
+the unit suite. Most findings are lanes 1–2; prose edits never
+compensate for a tool or eval bug. Full version:
+`docs/skill-lifecycle.md` §5.
 
 ### Python file I/O: always pass `encoding="utf-8"`
 
