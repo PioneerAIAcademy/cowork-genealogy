@@ -1,0 +1,62 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read for the 1817 Stavanger baptism of Christian Frederich (adult name Kristian Fredrik Tollefsen Birkeland). Index names the father 'Tollev Nadnesen' at Birkeland and the mother 'Inger Larsdatter' at Stavanger. 'Nadnesen' is a likely OCR/hand mistranscription of the patronymic 'Aadnesen' (true father: Tollef Aadneson). The record is a church-book entry with a digitized parish-register image available — used to test that record-extraction confirms a suspect required-identifier name against the original image rather than finalizing the index value.",
+  "args": {
+    "recordId": "~68Q3-5SGC"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "68Q3-5SGC",
+        "ark": "ark:/61903/1:1:68Q3-5SGC",
+        "gender": "Male",
+        "names": [
+          { "id": "N1", "type": "BirthName", "given": "Christian Frederich" }
+        ],
+        "facts": [
+          { "type": "Christening", "date": "20 July 1817", "place": "Stavanger, Rogaland, Norway" },
+          { "type": "Birth", "date": "11 July 1817", "place": "Stavanger, Rogaland, Norway" }
+        ],
+        "sources": [{ "id": "S1", "title": "Norway, Church Books, 1797-1958" }]
+      },
+      {
+        "id": "68Q3-5SGF",
+        "ark": "ark:/61903/1:1:68Q3-5SGF",
+        "gender": "Male",
+        "names": [
+          { "id": "N2", "type": "BirthName", "given": "Tollev", "surname": "Nadnesen" }
+        ],
+        "facts": [
+          { "type": "Residence", "date": "1817", "place": "Birkeland" }
+        ],
+        "sources": [{ "id": "S1", "title": "Norway, Church Books, 1797-1958" }]
+      },
+      {
+        "id": "68Q3-5SGM",
+        "ark": "ark:/61903/1:1:68Q3-5SGM",
+        "gender": "Female",
+        "names": [
+          { "id": "N3", "type": "BirthName", "given": "Inger", "surname": "Larsdatter" }
+        ],
+        "facts": [
+          { "type": "Residence", "date": "1817", "place": "Stavanger, Rogaland, Norway" }
+        ],
+        "sources": [{ "id": "S1", "title": "Norway, Church Books, 1797-1958" }]
+      }
+    ],
+    "relationships": [
+      { "id": "R1", "type": "ParentChild", "parent": "68Q3-5SGF", "child": "68Q3-5SGC" },
+      { "id": "R2", "type": "ParentChild", "parent": "68Q3-5SGM", "child": "68Q3-5SGC" }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Norway, Church Books, 1797-1958",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:68Q3-5SGC",
+        "source_classification": "original",
+        "note": "Digitized parish register (original church book). Register image available as image group 13729_012345; the indexed father surname 'Nadnesen' is uncertain."
+      }
+    ],
+    "places": []
+  }
+}

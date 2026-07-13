@@ -1,0 +1,2801 @@
+{
+  "project": {
+    "id": "rp_bottemiller_parents",
+    "objective": "Who were the parents of William Henry Bottemiller, born 29 December 1862 in Franconia Township, Chisago County, Minnesota, and died 13 May 1929 in Oregon City, Clackamas County, Oregon?",
+    "subject_person_ids": [
+      "249W-9LP"
+    ],
+    "status": "completed",
+    "created": "2026-07-01",
+    "updated": "2026-07-12"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who are the parents of William Henry Bottemiller, born 29 December 1862 in Franconia Township, Chisago County, Minnesota?",
+      "rationale": "This is the core question of the research objective. William Henry Bottemiller (249W-9LP) has no parent links in tree.gedcomx.json. He was born in 1862 in Franconia Township, Chisago County, Minnesota \u2014 a Swedish Lutheran settlement area \u2014 and by 1880 resided in Bertha, Todd County, Minnesota, suggesting a family westward migration. The 1870 census (age 7) should place him in a parental household in Chisago County; the 1880 census (age 17) may show him still with family in Todd County. His 1929 Oregon death certificate should name his parents. Minnesota church and state birth records for Chisago County may also document the parentage directly.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-12",
+      "resolution_assertion_ids": [
+        "a_013",
+        "a_019",
+        "a_033",
+        "a_043",
+        "a_049",
+        "a_007"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-12"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-12",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Clackamas County, Oregon",
+          "date_range": "1929",
+          "repository": "FamilySearch",
+          "rationale": "William Henry Bottemiller died 13 May 1929 in Oregon City, Clackamas County. His Oregon death certificate (Oregon State Archives Death Records, 1864\u20131968, col. 3657650) is the single most direct source for his parents: Oregon certificates from this era include fields for the father's name and mother's maiden name. An informant \u2014 likely a surviving child \u2014 provided these details. The existing FamilySearch profile sources (ARK 1:1:F8WM-X8F, 1:1:VZHS-YXF) indicate the record is accessible; this item retrieves the full-image certificate to extract the parents' fields.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Franconia Township, Chisago County, Minnesota",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "In June 1870 William was approximately 7 years old and almost certainly living in the parental household in Franconia Township, Chisago County \u2014 the same location given for his 1862 birth. The household head (father) and his wife (mother) will be named. Ages of all household members will help identify siblings and estimate parents' birth years and origins. This is the earliest indexed federal census placing William with his family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Chisago County, Minnesota",
+          "date_range": "1865",
+          "repository": "FamilySearch",
+          "rationale": "The Minnesota State Census of 1865 (col. 1503054, 246K indexed records) was taken when William was about 2. It should place him with both parents in Chisago County. State censuses enumerate household members with age and sex; the head's name is recorded and the family structure confirms parentage. This is earlier than the 1870 federal census and could surface information predating any family migration.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Todd County, Minnesota",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 federal census places William (age 17) in Bertha, Todd County, Minnesota (confirmed by tree.gedcomx.json). The family may have migrated northwest from Chisago County between 1875 and 1880. If William is still in a parental household, this record names both father and mother and gives their birthplaces (including parents' birthplaces by state/country in the 1880 schedule). Even if William had left home, locating a co-resident Bottemiller family of the right generation in Todd County advances the parentage hypothesis.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Minnesota (Chisago and Todd Counties)",
+          "date_range": "1875",
+          "repository": "FamilySearch",
+          "rationale": "The Minnesota State Census of 1875 (col. 1503053, 612K indexed records) was taken when William was about 12. It bridges the 1870 federal and 1880 federal censuses and can reveal when the family migrated from Chisago County to Todd County. It names the household head, enumerated members, and their ages, providing corroboration for the father's identity identified in earlier censuses.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Minnesota",
+          "date_range": "1840-1916",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'Minnesota, Births and Christenings, 1840\u20131980' (col. 1680827) and 'Minnesota, Birth and Death Records, 1866\u20131916' (col. 1858352) may contain a birth or christening record for William or his siblings born to the same parents in Chisago or Todd County. A birth record for any sibling would directly name both parents and confirm the family unit, even if William's own 1862 record is absent from these collections.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Minnesota (Chisago County and statewide)",
+          "date_range": "1853-1890",
+          "repository": "FamilySearch",
+          "rationale": "Per GPS parentage-question standards, the parents' marriage is a required dedicated plan item. Minnesota County Marriages 1853\u20131983 (col. 1803974, 946K indexed) covers Chisago County from its earliest settlement. The marriage record of William's parents (likely predating his 29 December 1862 birth) supplies: (a) the father's full name; (b) the mother's maiden name, which census and death records typically omit; and (c) a date prior to William's birth constituting direct paternity evidence. This evidence is critical to identifying the mother, who may appear in other records only under her maiden name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Chisago County and Todd County, Minnesota",
+          "date_range": "1855-1890",
+          "repository": "FamilySearch",
+          "rationale": "The surname Bottemiller derives from German or Swiss 'Bodenm\u00fcller.' Early settlers in Chisago County included not only Swedish Lutherans but also German, Swiss, and other immigrant communities. FamilySearch 'Minnesota, Church Records, 1798\u20131991' (col. 2790243) contains baptism, confirmation, and membership records from various denominations. A baptismal entry for William or a sibling would directly name both parents. Supplementary index: Dalby Database Minnesota Church Records (dalbydata.com).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "probate",
+          "jurisdiction": "Minnesota (Chisago and Todd Counties)",
+          "date_range": "1849-1920",
+          "repository": "FamilySearch",
+          "rationale": "If William's father died in Minnesota \u2014 either in Chisago County before 1880 or in Todd County after the family's migration \u2014 a will or estate administration may name William as a son and heir. FamilySearch 'Minnesota, Will Records, 1849\u20131985' (col. 1607922, 189K indexed) covers both counties. A will naming William Bottemiller as a legatee is direct evidence of the father-son relationship and may also identify siblings. Also searchable on Ancestry as 'Minnesota Wills and Probate Records, 1801-1925.'",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "other",
+          "jurisdiction": "Minnesota",
+          "date_range": "1855-1910",
+          "repository": "FamilySearch",
+          "rationale": "Bottemiller is a rare and distinctive surname unlikely to appear frequently in Minnesota records. A full-text co-occurrence search across the FamilySearch corpus (via the search-full-text skill) for 'Bottemiller' may surface church registers, newspaper items, local history mentions, or unindexed records not captured by name-indexed searches. Variant spellings (Bottenmiller, Bodemiller, Bodenmiller) should be tried. Execute via the search-full-text skill.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-12T20:26:19.948Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battemiller",
+        "givenName": "Henry",
+        "deathYearFrom": 1928,
+        "deathYearTo": 1930,
+        "recordType": "death",
+        "recordCountry": "United States",
+        "recordSubdivision": "Oregon",
+        "note": "Initial search used Bottemiller/William/col.3657650 \u2014 zero results; retried as Battemiller/Henry (name as indexed in tree sources) without collection filter"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 7,
+      "notes": "Found two records for subject: ark:F8WM-X8F (Oregon Deaths and Burials 1903-1947, col.1675532, matchScore 0.94) and ark:VZHS-YXF (Oregon Death Index 1903-1998, col.1946790, matchScore 0.83). Both already attached to 249W-9LP. The Deaths and Burials record names father as 'Casper A. Battermiller' and mother as 'Mary Mehlman' \u2014 direct parentage evidence from the death certificate informant."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-12T20:26:58.347Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottemiller",
+        "givenName": "William",
+        "deathYearFrom": 1929,
+        "deathYearTo": 1929,
+        "recordType": "death",
+        "collectionId": "3657650"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Oregon State Archives Death Records col. 3657650 does not index this record under 'Bottemiller/William'. Tried variant 'Battemiller/Henry' (log_003) \u2014 also no match for subject. Certificate found only in cols. 1675532 and 1946790 (log_001). Col. 3657650 may carry an image-only entry or transcribed name differently still."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-12T20:37:47.432Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottemiller",
+        "surnameAlt": "Battermiller",
+        "givenName": "William",
+        "birthYearFrom": 1860,
+        "birthYearTo": 1865,
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "residencePlace": "Minnesota, United States",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Single result was 'Will Bottomly' in Martin County \u2014 unrelated English family. No Bottemiller/Battermiller child of this name and birth year found in Minnesota 1870 census."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-12T20:37:54.615Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battermiller",
+        "surnameAlt": "Bottemiller",
+        "givenName": "Casper",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "residencePlace": "Minnesota, United States",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. Father Casper Battermiller/Bottemiller not found as head of household in 1870 Minnesota census. All three 1870 census searches exhausted; surname may be unindexed or transcribed beyond recognition in this collection."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-12T20:39:14.138Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottemiller",
+        "surnameAlt": "Battermiller",
+        "givenName": "William",
+        "birthYearFrom": 1860,
+        "birthYearTo": 1865,
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "residencePlace": "Minnesota, United States",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 2,
+      "notes": "Top match: 'Willie Bottermiller' (matchScore 0.95, 5-star, already attached to 249W-9LP) in household of Henry Bottermiller, Bertha, Todd County, MN. Father = Henry Bottermiller, born 1828 Germany; mother = Mary Bottermiller, born 1838 Germany. Father's name conflicts with Oregon death cert ('Casper A. Battermiller'). ark:/61903/1:1:MZ9R-28C."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-12T20:46:02.048Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottermiller",
+        "surnameAlt": "Battermiller",
+        "spouseSurname": "Mehlman",
+        "residencePlace": "Minnesota, United States",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. A second search dropping the bride surname also returned no Bottermiller/Battermiller marriages in Minnesota county records. Parents Henry and Mary were both born in Germany (~1828, ~1838); first child born 1860 in MN. Marriage almost certainly occurred in Germany before emigration and would not appear in Minnesota records."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-12T20:46:42.889Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottemiller",
+        "surnameAlt": "Battermiller",
+        "givenName": "William",
+        "birthYearFrom": 1860,
+        "birthYearTo": 1865,
+        "recordType": "birth",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No Minnesota birth record for William found. Top results are Oregon birth records of William's own children (where he appears as father, 5-star match to 249W-9LP). Minnesota did not require mandatory civil birth registration until 1900; an 1862 birth in Chisago County was almost certainly not registered."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-12T20:49:25.716Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Battermiller",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 20,
+      "notes": "Found Minnesota probate record (~1881, ark:/61903/3:1:3Q9M-C9T9-6TCW) naming 'Henry Boltermiller / Henry Battermiller / Henry Bottemiller' as witness \u2014 corroborates 1880 census father name 'Henry.' Also found 1885 Wadena County MN deed for Charles Battermiller of Todd County (eldest son, born ~1860 MN). The Oregon death cert FTS transcription shows 'Casper A. Battermiller' as father and 'Mary Mealman' as mother. Full-text search for +Bottermiller (1855-1910) returned 0 results."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-12T20:51:06.736Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottermiller",
+        "surnameAlt": "Battermiller",
+        "residencePlace": "Minnesota, United States",
+        "recordType": "probate",
+        "note": "Also searched givenName=Henry; both nil. Henry also not found in 1900 MN census."
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No probate records for Bottermiller/Battermiller in Minnesota. Henry Bottermiller also not found in 1900 MN census \u2014 may have died 1880-1900. FTS mention of Henry as witness in MN probate (~1881) not accessible via record_read (image-only 3:1: ARK)."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-12T20:55:04.754Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battemiller",
+        "givenName": "William",
+        "collectionId": "1503054",
+        "collection": "Minnesota, State Census, 1865"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1,
+      "notes": "Found William Battemiller (ark:/61903/1:1:SPSM-N8C) in household of Henry Battemiller, Franconia, Chisago County, MN 1865 \u2014 William's birthplace, 3 years after his birth. Corroborates Henry as father."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-12T20:55:07.580Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottermiller",
+        "givenName": "William",
+        "collectionId": "1503044",
+        "collection": "Minnesota, State Census, 1885"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 1,
+      "notes": "Found William Bottermiller (ark:/61903/1:1:MQFJ-ZZB), born 1862 MN, in household of Henry Bottermiller, Bertha, Todd County, MN 1885. pli_005 targeted 1875 census; 1885 is the next available MN state census. Confirms family still together and Henry as head."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-12T21:09:35.503Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battemiller",
+        "givenName": "Henry",
+        "collectionId": "1503053",
+        "collection": "Minnesota, State Census, 1875"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. Henry Battemiller not found in 1875 MN State Census (col. 1503053). Family may have been mid-migration from Chisago County (1865) to Todd County (1880) in 1875, or indexed under a different surname variant. 1885 MN census used as substitute for pli_005."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-12T21:09:53.593Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Bottermiller",
+        "givenName": "Henry",
+        "collectionId": "1503053",
+        "collection": "Minnesota, State Census, 1875"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil variant. Family not indexed in 1875 MN State Census under either Battemiller or Bottermiller. The 1875 census would have been key to identifying which wife (Anna or Mary) was present between the 1865 and 1880 enumerations; its absence means c_002 (mother identity) cannot be resolved via this source without image browsing."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-12T21:10:31.107Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battermiller",
+        "givenName": "Henry",
+        "recordType": "census",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "residencePlace": "Minnesota, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil. Henry Battermiller not found in MN 1870 federal census. Combined with prior searches under William (log_003) and Casper (log_004), the family is not locatable in any 1870 census \u2014 likely transcribed beyond recognition or missed by the enumerator. pli_002 exhausted."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-12T21:10:34.391Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Battemiller",
+        "givenName": "Henry",
+        "collectionId": "2790243",
+        "collection": "Minnesota, Church Records, 1798-1991"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil for Battemiller and Bottermiller in MN Church Records collection 2790243. No baptism or marriage record for the family found in this indexed collection. Church records for German immigrant communities in Chisago and Todd Counties may not be indexed here; unindexed image series would require a volume_search and browse approach."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-07-12T21:33:24.517Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:SPSM-N88",
+        "purpose": "Retrieve 1865 MN census Battemiller household to confirm wife given name and locate original image ARK for c_002 resolution"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Indexed record confirms wife given name as 'Anna Battemiller' \u2014 consistent with a_021. Official FamilySearch source citation reads: 'Entry for Henry Battemiller and Anna Battemiller, 1865.' Household members indexed: Henry (head), Anna (wife), Augustus, Eliza, Charles, William, Fred, Mary J. Original image ARK located: ark:/61903/3:1:939Z-YPF8-9 (1.8 MB \u2014 exceeds automated read transport limit). Handwritten original requires human review at familysearch.org to definitively confirm spelling. The indexed evidence leans strongly toward Anna as genuine, making the two-wife hypothesis (Anna died before 1880; Henry remarried Mary Mehlman) the most probable reading of the evidence."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Oregon Death Index, 1903-1998,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9MSQ-JPYR : 11 December 2014), 13 May 1929; from \"Oregon, Death Index, 1898-2008,\" Ancestry; citing Clackamas, Oregon, certificate number 194, Oregon State Archives and Records Center, Salem.",
+      "citation_detail": {
+        "who": "Oregon State Archives and Records Center (source certificate no. 194); indexed by Ancestry, republished by FamilySearch",
+        "what": "Oregon Death Index, 1903-1998 \u2014 derivative index entry for Henry William Battemiller",
+        "when_created": "certificate created 1929; index compiled/published by 11 December 2014",
+        "when_accessed": "2026-07-12",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF",
+        "where_within": "Oregon, Death Index, 1903-1998 collection"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (index); underlying certificate at Oregon State Archives and Records Center, Salem",
+      "access_date": "2026-07-12",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF",
+      "notes": "Derivative index entry citing Clackamas County certificate number 194; original certificate image was not examined in this extraction \u2014 the index carries only death date/place, no parentage fields.",
+      "gedcomx_source_description_id": "S8VD-92V",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S8VD-MGG",
+      "citation": "\"Oregon Deaths and Burials, 1903-1947\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MYQR-859 : 9 March 2022), Entry for Henry William Battemiller, 1929.",
+      "citation_detail": {
+        "who": "Oregon county death registrars/board of health; database compiled by FamilySearch",
+        "what": "Death registration database entry for Henry William Battemiller, naming parents Casper A. Battermiller and Mary Mehlman",
+        "when_created": "Death occurred 13 May 1929; underlying county register entry created 1929; FamilySearch derivative database dated 9 March 2022",
+        "when_accessed": "12 July 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "\"Oregon, Deaths and Burials, 1903-1947\" database, Clackamas County, Oregon"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "12 July 2026",
+      "url": "https://familysearch.org/ark:/61903/1:1:F8WM-X8F",
+      "notes": "Original not examined \u2014 this is a derivative index/database compiled from Oregon death certificates/registers, not an image of the original certificate. The original Clackamas County death certificate was sought in Oregon State Archives Death Records col. 3657650 (see log_002) but not located there; only indexed in this derivative database and in a separate death index (S8VD-92V). Subject indexed as 'Henry William Battemiller' \u2014 a given-name-order and spelling variant of tree subject 'William Henry Bottemiller' (249W-9LP).",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, Census, 1880,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C : accessed 12 July 2026), Willie Bottermiller in household of Henry Bottermiller, Bertha, Todd, Minnesota, United States; FamilySearch collection 1417683.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau enumerator; digital index/images published by FamilySearch",
+        "what": "1880 U.S. Federal Census population schedule \u2014 household of Henry Bottermiller, Bertha, Todd County, Minnesota",
+        "when_created": "enumerated 1880; FamilySearch database/images published subsequently",
+        "when_accessed": "2026-07-12",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:MZ9R-28C",
+        "where_within": "\"United States, Census, 1880\" collection (FamilySearch collection 1417683), Bertha, Todd County, Minnesota"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital images); original schedules held by the National Archives and Records Administration (NARA)",
+      "access_date": "2026-07-12",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:M46J-482",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Minnesota, State Census, 1865,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:SPSM-N8Q : 8 March 2024), household of Henry Battemiller, Franconia, Chisago County, Minnesota, 1865; citing Minnesota State Census, 1865, FamilySearch collection 1503054.",
+      "citation_detail": {
+        "who": "Minnesota state census enumerator (Chisago County); digital index/images published by FamilySearch",
+        "what": "Minnesota State Census, 1865 \u2014 household enumeration of Henry Battemiller, Franconia, Chisago County, Minnesota",
+        "when_created": "enumerated 1865; FamilySearch index published by 8 March 2024",
+        "when_accessed": "2026-07-12",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:SPSM-N8Q",
+        "where_within": "\"Minnesota, State Census, 1865\" collection (FamilySearch collection 1503054), Franconia, Chisago County, Minnesota"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital index/images); original state census schedules held by the Minnesota Historical Society, St. Paul",
+      "access_date": "2026-07-12",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1G3V-DST",
+      "notes": "1865 Minnesota State Census \u2014 original government enumeration (image linked at ark:/61903/1:2:1G3V-DST); this extraction used the indexed persona facts (name, census/residence event, and race for one child) returned by record_read \u2014 no dwelling/page/line number was captured in this pass and no relationship column exists on this pre-1880 schedule, so household relationships are positionally inferred, not stated.",
+      "log_entry_id": "log_010",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Minnesota, State Census, 1885,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MQFJ-ZZB : accessed 12 July 2026), William Bottermiller in household of Henry Bottermiller, Bertha, Todd County, Minnesota, United States; FamilySearch collection 1503044.",
+      "citation_detail": {
+        "who": "Minnesota state census enumerator; digital index/images published by FamilySearch",
+        "what": "Minnesota State Census, 1885 population schedule \u2014 household of Henry Bottermiller, Bertha, Todd County, Minnesota",
+        "when_created": "enumerated 1885; FamilySearch index/images published by 8 March 2024",
+        "when_accessed": "2026-07-12",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:MQFJ-ZZB",
+        "where_within": "\"Minnesota, State Census, 1885\" collection (FamilySearch collection 1503044), Bertha, Todd County, Minnesota"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital index/images); original schedules held by the Minnesota Historical Society (Minnesota State Archives)",
+      "access_date": "2026-07-12",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:VZHS-YXF",
+      "record_role": "deceased",
+      "record_persona_id": "p_13371558735",
+      "fact_type": "name",
+      "value": "Henry William Battemiller (as indexed)",
+      "structured_value": {
+        "given": "Henry William",
+        "surname": "Battemiller"
+      },
+      "information_quality": "secondary",
+      "informant": "personal informant (unnamed, likely family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Index reflects the name as reported to the original certificate's personal informant; name order (Henry William) is inverted relative to William Henry, a common transcription/reporting variant.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:VZHS-YXF",
+      "record_role": "deceased",
+      "record_persona_id": "p_13371558735",
+      "fact_type": "death",
+      "value": "Death: 13 May 1929, Clackamas, Oregon",
+      "structured_value": {
+        "year": "1929",
+        "place": "Clackamas, Oregon"
+      },
+      "date": "13 May 1929",
+      "date_certainty": "exact",
+      "place": "Clackamas, Oregon",
+      "standard_place": "Clackamas, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "attending physician (unnamed)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Death date/place on the underlying certificate is the physician's official attestation; index does not preserve the physician's name.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:F8WM-X8F",
+      "record_role": "deceased",
+      "record_persona_id": "p_11207172945",
+      "fact_type": "Name",
+      "value": "Henry William Battemiller",
+      "structured_value": {
+        "given": "Henry William",
+        "surname": "Battemiller"
+      },
+      "information_quality": "primary",
+      "informant": "unidentified personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Subject's name here ('Henry William Battemiller') is a given-name-order/spelling variant of tree subject 'William Henry Bottemiller' \u2014 same underlying person, indexing/transcription variant, not a conflicting identity.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:F8WM-X8F",
+      "record_role": "deceased",
+      "record_persona_id": "p_11207172945",
+      "fact_type": "Death",
+      "value": "Died 13 May 1929, Clackamas, Oregon, United States",
+      "date": "13 May 1929",
+      "date_certainty": "exact",
+      "place": "Clackamas, Oregon, United States",
+      "standard_place": "Clackamas, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "unidentified attending physician",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:F8WM-X8F",
+      "record_role": "deceased",
+      "record_persona_id": "p_11207172945",
+      "fact_type": "Birth",
+      "value": "1862",
+      "date": "1862",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unidentified personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year relayed by a family informant who did not witness the subject's 1862 birth; per death-certificate doctrine, the decedent's own birth information reported by a not-present family informant is indirect evidence despite appearing as a stated field.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:F8WM-X8F",
+      "record_role": "father_of_deceased",
+      "record_persona_id": "p_11207172946",
+      "fact_type": "Name",
+      "value": "Casper A. Battermiller",
+      "structured_value": {
+        "given": "Casper A.",
+        "surname": "Battermiller"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Father's name reported by a family informant not present at the subject's 1862 birth \u2014 secondhand parentage information typical of death-certificate informants. This is a single, uncorroborated derivative record; identification of 'Casper A. Battermiller' as father is tentative pending corroboration (e.g., 1870/1880 MN census, MN vital or church records per plan items pli_002-pli_008). Shares the same informant as the mother's-name assertion below (a_005) \u2014 together they form one evidence unit under GPS Standard 4, not two independent corroborations.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:F8WM-X8F",
+      "record_role": "mother_of_deceased",
+      "record_persona_id": "p_11207172947",
+      "fact_type": "Name",
+      "value": "Mary Mehlman",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Mehlman"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother's maiden name reported by a family informant not present at the subject's 1862 birth \u2014 secondhand parentage information. Single, uncorroborated derivative record; tentative pending independent corroboration (e.g., MN marriage record of Casper Battermiller and Mary Mehlman per pli_007). Shares the same informant as the father's-name assertion above (a_004) \u2014 one evidence unit, not two independent sources, per GPS Standard 4.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:F8WM-X8F",
+      "record_role": "spouse",
+      "record_persona_id": "p_11207172948",
+      "fact_type": "Name",
+      "value": "Lilly Jane",
+      "structured_value": {
+        "given": "Lilly Jane"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified personal informant (family member)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Surviving spouse named as 'Lilly Jane' (no surname given in this index); corresponds to existing tree person Lillie Jane Kleinsmith (9SPC-3H6), the subject's wife per the existing Couple relationship in tree.gedcomx.json.",
+      "log_entry_id": "log_001",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "child_2",
+      "record_persona_id": "p_244503339",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1880, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling and recorded the household as observed.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "child_2",
+      "record_persona_id": "p_244503339",
+      "fact_type": "Birth",
+      "value": "Born about 1862, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1862",
+        "place": "Minnesota, United States"
+      },
+      "date": "1862",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent, since Willie was a dependent child in the household)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who specifically answered the enumerator's questions. Birth year is calculated from stated age (standard 1880 schedule format records age, not birth year), so evidence is indirect; respondent unknown so information quality is indeterminate per pre-1940 census doctrine.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "child_2",
+      "record_persona_id": "p_244503339",
+      "fact_type": "Occupation",
+      "value": "Farm Laborer",
+      "structured_value": {
+        "occupation": "Farm Laborer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Willie himself, or a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent to the enumerator is unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "child_2",
+      "record_persona_id": "p_244503339",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Bottermiller and wife Mary Bottermiller, Bertha, Todd County, Minnesota, 1880 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "The 1880 household listing places Willie within Henry and Mary Bottermiller's family by co-residence/enumeration position. This is indirect evidence of a parent-child relationship \u2014 it corroborates but does not by itself prove Henry and Mary as biological parents of William Henry Bottemiller (249W-9LP) for q_001.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_244503336",
+      "fact_type": "Residence",
+      "value": "Head of household residing in Bertha, Todd County, Minnesota, 1880",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_244503336",
+      "fact_type": "Birth",
+      "value": "Born about 1828, Germany (age-derived)",
+      "structured_value": {
+        "year": "1828",
+        "place": "Germany"
+      },
+      "date": "1828",
+      "date_certainty": "calculated",
+      "place": "Germany",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely Henry himself, self-reporting as head of household)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "No household member present in 1880 could have witnessed Henry's 1828 birth in Germany, decades before the family's formation in Minnesota; per doctrine a person also cannot provide primary information about their own birth. Birth year is calculated from stated age. NAME CONFLICT: this 1880 census names the head of household 'Henry Bottermiller,' whereas the subject's 1929 Oregon death certificate names the father 'Casper A. Battermiller' \u2014 a given-name discrepancy requiring resolution via additional records (parents' marriage record, church records).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Germany"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_244503336",
+      "fact_type": "Occupation",
+      "value": "Farmer",
+      "structured_value": {
+        "occupation": "Farmer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Henry himself or his wife Mary)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent to the enumerator is unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "wife_of_head",
+      "record_persona_id": "p_244503337",
+      "fact_type": "Residence",
+      "value": "Residing with husband Henry Bottermiller's household in Bertha, Todd County, Minnesota, 1880",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "wife_of_head",
+      "record_persona_id": "p_244503337",
+      "fact_type": "Birth",
+      "value": "Born about 1838, Germany (age-derived)",
+      "structured_value": {
+        "year": "1838",
+        "place": "Germany"
+      },
+      "date": "1838",
+      "date_certainty": "calculated",
+      "place": "Germany",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely Mary herself, self-reporting as wife)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "No household member present in 1880 could have witnessed Mary's 1838 birth in Germany, decades before the family's formation in Minnesota; per doctrine a person also cannot provide primary information about their own birth. Birth year is calculated from stated age. The 1929 Oregon death certificate gives the mother's maiden name as 'Mehlman' (not present in this census, which records only the given name Mary).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Germany"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:MZ9R-28C",
+      "record_role": "wife_of_head",
+      "record_persona_id": "p_244503337",
+      "fact_type": "Occupation",
+      "value": "Keeping House",
+      "structured_value": {
+        "occupation": "Keeping House"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Mary herself)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent to the enumerator is unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_2018534734",
+      "fact_type": "Name",
+      "value": "Henry Battemiller",
+      "structured_value": {
+        "given": "Henry",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "This state census does not record who specifically answered the enumerator; respondent unknown though likely Henry himself as head of household. Corroborates 'Henry' as the given name of William's father, consistent with the 1880 and 1885 MN censuses and conflicting with the 1929 Oregon death certificate's 'Casper A.' (c_001).",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_2018534734",
+      "fact_type": "Residence",
+      "value": "Head of household residing in Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling and recorded the household as observed; same township (Franconia) as William's 29 Dec 1862 birthplace, ~2-3 years later.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "wife",
+      "record_persona_id": "p_2018534735",
+      "fact_type": "Name",
+      "value": "Anna Battemiller",
+      "structured_value": {
+        "given": "Anna",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Listed immediately after head Henry, the position conventionally used for a wife on a pre-1880 schedule lacking a relationship column; the 'wife' role here is a positional inference, not a stated relationship.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "wife",
+      "record_persona_id": "p_2018534735",
+      "fact_type": "Residence",
+      "value": "Residing with the household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "wife",
+      "record_persona_id": "p_2018534735",
+      "fact_type": "Relationship",
+      "value": "Enumerated immediately after head Henry Battemiller \u2014 the household position conventionally occupied by a spouse on an 1865 census lacking a relationship column",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "NAME CONFLICT: this record's presumed wife is named 'Anna Battemiller,' but existing tree stub I2 (mother candidate) was built from the 1929 Oregon death certificate naming the mother 'Mary Mehlman' \u2014 a different given name, no obvious variant relationship. This is a new, unresolved discrepancy in the mother's identity, parallel to the existing father given-name conflict (c_001), and needs independent corroboration (e.g., 1870/1875/1880 MN census showing the wife's name, or a marriage record) before either name can be preferred as William's mother.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_1",
+      "record_persona_id": "p_2018534736",
+      "fact_type": "Name",
+      "value": "Augustus Battemiller",
+      "structured_value": {
+        "given": "Augustus",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "A child could not report own name/birth information to the enumerator; a parent or other adult household member is the likely respondent, though respondent is not specifically recorded.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_1",
+      "record_persona_id": "p_2018534736",
+      "fact_type": "Residence",
+      "value": "Residing in household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_1",
+      "record_persona_id": "p_2018534736",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_2",
+      "record_persona_id": "p_2018534737",
+      "fact_type": "Name",
+      "value": "Eliza Battemiller",
+      "structured_value": {
+        "given": "Eliza",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "A child could not report own name/birth information to the enumerator; a parent or other adult household member is the likely respondent, though respondent is not specifically recorded.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_2",
+      "record_persona_id": "p_2018534737",
+      "fact_type": "Residence",
+      "value": "Residing in household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_2",
+      "record_persona_id": "p_2018534737",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_3",
+      "record_persona_id": "p_2018534738",
+      "fact_type": "Name",
+      "value": "Charles Battemiller",
+      "structured_value": {
+        "given": "Charles",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "A child could not report own name/birth information to the enumerator; a parent or other adult household member is the likely respondent, though respondent is not specifically recorded.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_3",
+      "record_persona_id": "p_2018534738",
+      "fact_type": "Residence",
+      "value": "Residing in household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_3",
+      "record_persona_id": "p_2018534738",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_4",
+      "record_persona_id": "p_2018534739",
+      "fact_type": "Name",
+      "value": "William Battemiller",
+      "structured_value": {
+        "given": "William",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "A child could not report own name/birth information to the enumerator; a parent or other adult household member is the likely respondent. Subject-identifying name for research subject 249W-9LP (William Henry Bottemiller), found ~2-3 years after his 29 Dec 1862 birth, in the same township.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_4",
+      "record_persona_id": "p_2018534739",
+      "fact_type": "Residence",
+      "value": "Residing in household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Places the research subject (249W-9LP) in Franconia Township, Chisago County \u2014 the same location given for his 1862 birth \u2014 about 2-3 years later, in Henry Battemiller's household.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_4",
+      "record_persona_id": "p_2018534739",
+      "fact_type": "Race",
+      "value": "White",
+      "structured_value": {},
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_4",
+      "record_persona_id": "p_2018534739",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865 census \u2014 the same township as his 29 December 1862 birth",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Household composition implies but does not directly state that Henry is William's father \u2014 this is indirect evidence of a father-child relationship. It is the earliest census placing William with a household headed by Henry Battemiller, in the same township as his birth, and corroborates the 'Henry' father-name lead from the 1880/1885 MN censuses against the 1929 death certificate's 'Casper A.' (c_001).",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_5",
+      "record_persona_id": "p_2018534740",
+      "fact_type": "Name",
+      "value": "Fred Battemiller",
+      "structured_value": {
+        "given": "Fred",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "A child could not report own name/birth information to the enumerator; a parent or other adult household member is the likely respondent, though respondent is not specifically recorded.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_5",
+      "record_persona_id": "p_2018534740",
+      "fact_type": "Residence",
+      "value": "Residing in household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_5",
+      "record_persona_id": "p_2018534740",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_6",
+      "record_persona_id": "p_2018534741",
+      "fact_type": "Name",
+      "value": "Mary J Battemiller",
+      "structured_value": {
+        "given": "Mary J",
+        "surname": "Battemiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "A child could not report own name/birth information to the enumerator; a parent or other adult household member is the likely respondent, though respondent is not specifically recorded.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_6",
+      "record_persona_id": "p_2018534741",
+      "fact_type": "Residence",
+      "value": "Residing in household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865",
+      "structured_value": {
+        "place": "Franconia, Chisago, Minnesota, United States"
+      },
+      "date": "1865",
+      "date_certainty": "exact",
+      "place": "Franconia, Chisago, Minnesota, United States",
+      "standard_place": "Franconia, Chisago, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:SPSM-N8C",
+      "record_role": "child_6",
+      "record_persona_id": "p_2018534741",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Battemiller, Franconia, Chisago County, Minnesota, 1865 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_109818326",
+      "fact_type": "Name",
+      "value": "Henry Bottermiller",
+      "structured_value": {
+        "given": "Henry",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Henry himself, self-reporting as head of household)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "As household head, Henry is the presumed respondent to the census enumerator; corroborates 'Henry' as the father's given name (cf. conflict c_001 vs. the Oregon death certificate's 'Casper A.').",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_109818326",
+      "fact_type": "Birth",
+      "value": "Born about 1827, Germany (age-derived)",
+      "structured_value": {
+        "year": "1827",
+        "place": "Germany"
+      },
+      "date": "1827",
+      "date_certainty": "calculated",
+      "place": "Germany",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely Henry himself, self-reporting)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "No household member present in 1885 could have witnessed Henry's ~1827 birth in Germany, decades before the family's formation in Minnesota; a person also cannot provide primary information about their own birth. Birth year is calculated from stated age. Consistent with the 1880 census (~1828, Germany).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Germany"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_109818326",
+      "fact_type": "Residence",
+      "value": "Head of household residing in Bertha, Todd County, Minnesota, 1885",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling and recorded the household as observed.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "wife",
+      "record_persona_id": "p_109818327",
+      "fact_type": "Name",
+      "value": "Mary Bottermiller",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Mary herself or Henry)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Given name 'Mary' matches the 1880 census and is consistent with 'Mary Mehlman' named as mother on the 1929 Oregon death certificate (I2); this census records no maiden name.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "wife",
+      "record_persona_id": "p_109818327",
+      "fact_type": "Birth",
+      "value": "Born about 1841, Germany (age-derived)",
+      "structured_value": {
+        "year": "1841",
+        "place": "Germany"
+      },
+      "date": "1841",
+      "date_certainty": "calculated",
+      "place": "Germany",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely Mary herself)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "No household member present in 1885 could have witnessed Mary's ~1841 birth in Germany decades earlier; a person also cannot provide primary information about their own birth. Birth year calculated from stated age. 1880 census gave ~1838; a ~3-year discrepancy typical of census age imprecision.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Germany"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "wife",
+      "record_persona_id": "p_109818327",
+      "fact_type": "Residence",
+      "value": "Residing with husband Henry Bottermiller's household in Bertha, Todd County, Minnesota, 1885",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_1",
+      "record_persona_id": "p_109818328",
+      "fact_type": "Name",
+      "value": "William Bottermiller",
+      "structured_value": {
+        "given": "William",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent to the enumerator is unknown per pre-1940 census doctrine. Subject-identifying name is direct evidence for locating William in this dated, located 1885 record.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_1",
+      "record_persona_id": "p_109818328",
+      "fact_type": "Birth",
+      "value": "Born 1862, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1862",
+        "place": "Minnesota, United States"
+      },
+      "date": "1862",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who specifically answered the enumerator's questions; respondent unknown so quality is indeterminate. Birth year matches subject's known birth date of 29 December 1862 exactly.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_1",
+      "record_persona_id": "p_109818328",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_1",
+      "record_persona_id": "p_109818328",
+      "fact_type": "Race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent to the enumerator is unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_1",
+      "record_persona_id": "p_109818328",
+      "fact_type": "Ethnicity",
+      "value": "Canadian",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Anomalous given both parents are recorded as German-born in this same household record; possibly an enumerator/indexing artifact. Not corroborated by any other source in this project \u2014 flagged, not resolved.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_1",
+      "record_persona_id": "p_109818328",
+      "fact_type": "Relationship",
+      "value": "Enumerated as a child in the household of head Henry Bottermiller and wife Mary Bottermiller, Bertha, Todd County, Minnesota, 1885 census",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household enumeration position",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "No explicit relationship-to-head column is present in this record; the parent-child relationship is inferred from co-residence/household position, corroborating the 1880 census placement of Willie in the same household and further supporting 'Henry' as the father's given name (conflict c_001).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_2",
+      "record_persona_id": "p_109818329",
+      "fact_type": "Name",
+      "value": "Fred Bottermiller",
+      "structured_value": {
+        "given": "Fred",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_2",
+      "record_persona_id": "p_109818329",
+      "fact_type": "Birth",
+      "value": "Born 1864, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1864",
+        "place": "Minnesota, United States"
+      },
+      "date": "1864",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_2",
+      "record_persona_id": "p_109818329",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_3",
+      "record_persona_id": "p_109818330",
+      "fact_type": "Name",
+      "value": "Milley Bottermiller",
+      "structured_value": {
+        "given": "Milley",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_3",
+      "record_persona_id": "p_109818330",
+      "fact_type": "Birth",
+      "value": "Born 1866, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1866",
+        "place": "Minnesota, United States"
+      },
+      "date": "1866",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_3",
+      "record_persona_id": "p_109818330",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_4",
+      "record_persona_id": "p_109818331",
+      "fact_type": "Name",
+      "value": "Henry Bottermiller (Jr.)",
+      "structured_value": {
+        "given": "Henry",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine. Shares given name with the head of household (his father); distinct person (born 1868) from tree person 27YW-V68 (born/died 1894, son of 249W-9LP).",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_4",
+      "record_persona_id": "p_109818331",
+      "fact_type": "Birth",
+      "value": "Born 1868, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1868",
+        "place": "Minnesota, United States"
+      },
+      "date": "1868",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_4",
+      "record_persona_id": "p_109818331",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_5",
+      "record_persona_id": "p_109818332",
+      "fact_type": "Name",
+      "value": "Mary Bottermiller (daughter)",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine. Shares given name with her mother.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_5",
+      "record_persona_id": "p_109818332",
+      "fact_type": "Birth",
+      "value": "Born 1870, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1870",
+        "place": "Minnesota, United States"
+      },
+      "date": "1870",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_5",
+      "record_persona_id": "p_109818332",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_6",
+      "record_persona_id": "p_109818333",
+      "fact_type": "Name",
+      "value": "Emma Bottermiller",
+      "structured_value": {
+        "given": "Emma",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_6",
+      "record_persona_id": "p_109818333",
+      "fact_type": "Birth",
+      "value": "Born 1872, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1872",
+        "place": "Minnesota, United States"
+      },
+      "date": "1872",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_6",
+      "record_persona_id": "p_109818333",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_7",
+      "record_persona_id": "p_109818334",
+      "fact_type": "Name",
+      "value": "Lena Bottermiller",
+      "structured_value": {
+        "given": "Lena",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_7",
+      "record_persona_id": "p_109818334",
+      "fact_type": "Birth",
+      "value": "Born 1874, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1874",
+        "place": "Minnesota, United States"
+      },
+      "date": "1874",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_7",
+      "record_persona_id": "p_109818334",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_8",
+      "record_persona_id": "p_109818335",
+      "fact_type": "Name",
+      "value": "Lydia Bottermiller",
+      "structured_value": {
+        "given": "Lydia",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_8",
+      "record_persona_id": "p_109818335",
+      "fact_type": "Birth",
+      "value": "Born 1876, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1876",
+        "place": "Minnesota, United States"
+      },
+      "date": "1876",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_8",
+      "record_persona_id": "p_109818335",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_9",
+      "record_persona_id": "p_109818336",
+      "fact_type": "Name",
+      "value": "Eddie Bottermiller",
+      "structured_value": {
+        "given": "Eddie",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_9",
+      "record_persona_id": "p_109818336",
+      "fact_type": "Birth",
+      "value": "Born 1878, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1878",
+        "place": "Minnesota, United States"
+      },
+      "date": "1878",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_9",
+      "record_persona_id": "p_109818336",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_10",
+      "record_persona_id": "p_109818337",
+      "fact_type": "Name",
+      "value": "Emil Bottermiller",
+      "structured_value": {
+        "given": "Emil",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_10",
+      "record_persona_id": "p_109818337",
+      "fact_type": "Birth",
+      "value": "Born 1880, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1880",
+        "place": "Minnesota, United States"
+      },
+      "date": "1880",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_10",
+      "record_persona_id": "p_109818337",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_11",
+      "record_persona_id": "p_109818338",
+      "fact_type": "Name",
+      "value": "Gustav Bottermiller",
+      "structured_value": {
+        "given": "Gustav",
+        "surname": "Bottermiller"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Respondent unknown per pre-1940 census doctrine.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_11",
+      "record_persona_id": "p_109818338",
+      "fact_type": "Birth",
+      "value": "Born 1882, Minnesota (age-derived)",
+      "structured_value": {
+        "year": "1882",
+        "place": "Minnesota, United States"
+      },
+      "date": "1882",
+      "date_certainty": "calculated",
+      "place": "Minnesota, United States",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Pre-1940 census does not record who answered; respondent unknown.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Minnesota, United States"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:MQFJ-ZZB",
+      "record_role": "child_11",
+      "record_persona_id": "p_109818338",
+      "fact_type": "Residence",
+      "value": "Residing in Bertha, Todd County, Minnesota, 1885, in the household of head Henry Bottermiller",
+      "structured_value": {
+        "place": "Bertha, Todd, Minnesota, United States"
+      },
+      "date": "1885",
+      "date_certainty": "exact",
+      "place": "Bertha, Todd, Minnesota, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator (unnamed)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator canvassed/visited the dwelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_005",
+      "standard_place": "Bertha, Todd, Minnesota, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "The 'deceased' persona in the Oregon Death Index (VZHS-YXF) is named 'Henry William Battemiller' with death 13 May 1929 in Clackamas, Oregon. This matches 249W-9LP (William Henry Bottemiller) on: (1) name \u2014 same given name and surname in inverted order, a common indexing/transcription variant; (2) death date \u2014 exact match; (3) death place \u2014 Clackamas, Oregon, exact match; (4) already attached to 249W-9LP in FamilySearch tree (5-star). matchScore 0.825 from rank_search_matches.",
+      "match_score": 0.825,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Same persona as a_001 (p_13371558735, deceased role in VZHS-YXF); confident link to 249W-9LP established by name/date/place correlation. This fact (death 13 May 1929, Clackamas, Oregon) is the core event in the same record.",
+      "match_score": 0.825,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "The 'deceased' persona in 'Oregon Deaths and Burials 1903-1947' (F8WM-X8F) names 'Henry William Battemiller,' born 1862, died 13 May 1929 in Clackamas, Oregon. Matches 249W-9LP on all identifiers: name (given-name-order/spelling variant of William Henry Bottemiller), birth year (1862 exact), death date (13 May 1929 exact), death place (Clackamas, Oregon exact). matchScore 0.940; already attached to subject in FamilySearch tree.",
+      "match_score": 0.94,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Same persona as a_003 (p_11207172945, deceased role in F8WM-X8F); confident link to 249W-9LP established. Death date and place (13 May 1929, Clackamas, Oregon) are the primary event in this record.",
+      "match_score": 0.94,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Same persona as a_003/a_004 (p_11207172945, deceased role in F8WM-X8F); birth year 1862 matches 249W-9LP's known birth date of 29 December 1862 exactly.",
+      "match_score": 0.94,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "The 'father_of_deceased' persona (p_11207172946) in F8WM-X8F is named 'Casper A. Battermiller.' I1 (Casper A. Battermiller) is the stub created from this record to represent the named father. No independent corroboration yet \u2014 a single derivative death-record entry reported by an unnamed family informant. 'Battermiller' is a spelling variant of 'Bottemiller/Battermiller.' Confidence is probable pending corroboration via pli_002\u2013pli_007 (1870/1880 MN census, MN marriage record). match_score null \u2014 I1 is a local stub with no FamilySearch ARK; same_person would yield a degenerate score.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Assertion a_006 names the father of the deceased. The deceased in this record is William Henry Bottemiller (249W-9LP), confirmed at confident level (pe for a_003). Therefore a_006 indirectly bears on 249W-9LP as evidence that his father was Casper A. Battermiller. The linkage to the deceased is confident (same record, same matchScore 0.940); the epistemic weight of the parentage claim is separate and captured in the a_006 \u2192 I1 link (probable).",
+      "match_score": 0.94,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The 'mother_of_deceased' persona (p_11207172947) in F8WM-X8F is named 'Mary Mehlman.' I2 (Mary Mehlman) is the stub created from this record. No independent corroboration yet. Same single-informant limitation as a_006: shared informant means a_006 and a_007 together form one evidence unit (GPS Std 4), not two independent sources. Confidence is probable pending corroboration. match_score null \u2014 local stub, no FamilySearch ARK.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Assertion a_007 names the mother of the deceased. The deceased is 249W-9LP (confident, per pe for a_003). Therefore a_007 bears on 249W-9LP as evidence that his mother was Mary Mehlman. Epistemic weight of parentage claim is probable (captured in a_007 \u2192 I2 link); the bearing on 249W-9LP as the child is confident given the record's focus.",
+      "match_score": 0.94,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "9SPC-3H6",
+      "confidence": "confident",
+      "rationale": "The 'spouse' persona (p_11207172948) in F8WM-X8F is named 'Lilly Jane' (no surname). 9SPC-3H6 (Lillie Jane Kleinsmith) is already linked to 249W-9LP via the existing Couple relationship (rel-couple-249W-9LP-9SPC-3H6, married 2 Dec 1890 in Clackamas, Oregon). The given name 'Lilly Jane' is a spelling variant of 'Lillie Jane'; given the subject is 249W-9LP and his only wife in the tree is 9SPC-3H6, this is an obvious contextual match. No other candidate exists.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Assertion a_008 names the spouse of the deceased (249W-9LP). The spousal relationship bears on 249W-9LP as the person whose wife (Lilly Jane = 9SPC-3H6) is named in this death record.",
+      "match_score": 0.94,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Willie Bottermiller (p_244503339) in the 1880 census household of Henry Bottermiller, Bertha, Todd County, MN matches 249W-9LP (William Henry Bottemiller) per existing FamilySearch tree match (matchScore 0.95, 5-star, already attached to 249W-9LP). Residence fact places the subject at this location/date.",
+      "match_score": 0.95,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Same persona (p_244503339) confirmed to 249W-9LP; birth year ~1862 matches the subject's known birth date of 29 December 1862 exactly, supporting the identity match.",
+      "match_score": 0.95,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Same persona (p_244503339) confirmed to 249W-9LP; occupation fact from the same household entry.",
+      "match_score": 0.95,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Co-residence/relationship assertion concerns the subject 249W-9LP's placement in the household as of the 1880 census.",
+      "match_score": 0.95,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "The 1880 census enumerates Willie within the household of head Henry Bottermiller, indirect evidence that Henry is Willie's father. I1 (Casper A. Battermiller) was created from the 1929 Oregon death certificate, which names the father as 'Casper A. Battermiller' \u2014 conflicting with this census's 'Henry.' Household co-residence, birthplace (Germany), and surname all support these being the same person, but the given-name discrepancy keeps confidence at probable pending resolution (e.g., parents' marriage record, church records).",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The 1880 census enumerates Willie within the household of wife Mary Bottermiller, indirect evidence that Mary is Willie's mother. I2 (Mary Mehlman) was created from the death certificate naming the mother's maiden name as Mehlman; this census records only the given name Mary (no maiden name), so the link is contextual (same household as the probable father, matching given name and generation/birth country) rather than independently corroborated.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Residence fact for head of household Henry Bottermiller (p_244503336), believed to be the same person as I1 (Casper A. Battermiller) per the Oregon death certificate, despite the given-name conflict (Henry vs. Casper A.). Probable pending resolution of the name discrepancy.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth fact (~1828, Germany) for Henry Bottermiller, believed to be I1. Probable confidence reflects the unresolved given-name conflict between this census ('Henry') and the 1929 Oregon death certificate ('Casper A. Battermiller').",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Occupation fact (Farmer) for Henry Bottermiller, believed to be I1. Same probable-confidence rationale as other Henry/I1 links (name conflict).",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Residence fact for wife Mary Bottermiller (p_244503337), believed to be I2 (Mary Mehlman) per the death certificate's mother's-maiden-name field. No maiden name appears in this census; link is probable, based on household context (wife of the probable father I1) and matching given name/generation.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth fact (~1838, Germany) for Mary Bottermiller, believed to be I2. Probable confidence \u2014 same-household/given-name correlation only, no maiden name corroboration in this record.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Occupation fact (Keeping House) for Mary Bottermiller, believed to be I2. Same probable-confidence rationale as other Mary/I2 links.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_043",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Head of household 'Henry Bottermiller' in the 1885 MN State Census, Bertha, Todd County. Same household, surname, and German birthplace as the 1880 census head (also linked probable to I1). Third census (1865, 1880, 1885) agreeing on 'Henry' vs. the single 1929 death-certificate report of 'Casper A.' Probable pending resolution of conflict c_001.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_044",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth fact (~1827, Germany) for Henry Bottermiller, believed to be I1; consistent with 1880 census (~1828, Germany). Probable pending name-conflict resolution.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_045",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Residence fact for head of household Henry Bottermiller, believed to be I1.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_046",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Wife 'Mary Bottermiller' in the 1885 census, believed to be I2 (Mary Mehlman per death certificate). No maiden name in this census; link based on household context (wife of probable father I1) and matching given name/generation, consistent with the 1880 census.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_047",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth fact (~1841, Germany) for Mary Bottermiller, believed to be I2; broadly consistent with 1880 census (~1838, Germany).",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_048",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Residence fact for wife Mary Bottermiller, believed to be I2.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_049",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "William Bottermiller (p_109818328), born 1862 Minnesota, in the household of Henry Bottermiller, Bertha, Todd County, MN 1885 \u2014 matches subject's known birth year (1862) and prior 1880-census placement in the same household/location.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_050",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Birth year 1862 matches 249W-9LP's known birth date of 29 December 1862 exactly.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_051",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Residence fact places subject at Bertha, Todd County, Minnesota in 1885, consistent with the 1880 census placement.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_052",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Race fact from the same household entry confirmed to 249W-9LP.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_053",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Ethnicity fact from the same household entry confirmed to 249W-9LP; value ('Canadian') is anomalous and flagged, not corroborated elsewhere.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_054",
+      "person_id": "249W-9LP",
+      "confidence": "confident",
+      "rationale": "Co-residence/relationship assertion concerns the subject's placement in the household as of the 1885 census.",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_054",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "The 1885 census enumerates William within the household of head Henry Bottermiller, indirect evidence Henry is William's father \u2014 corroborating the same finding from the 1880 census. Probable pending resolution of the given-name conflict with the death certificate (c_001).",
+      "match_score": null,
+      "created": "2026-07-12"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_054",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The 1885 census enumerates William within the household of wife Mary Bottermiller, indirect evidence Mary is William's mother \u2014 corroborating the 1880 census finding. Probable \u2014 contextual link only, no maiden name in this record.",
+      "match_score": null,
+      "created": "2026-07-12"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "competing_assertion_ids": [
+        "a_006",
+        "a_013"
+      ],
+      "description": "The Oregon death certificate (src_002, F8WM-X8F, filed 1929) names William's father as 'Casper A. Battermiller.' The 1880 U.S. Census (src_003) records the head of the Bottermiller household in Bertha, Todd County, MN \u2014 in which Willie Bottermiller (249W-9LP) was enumerated \u2014 as 'Henry Bottermiller,' born 1828 in Germany. Both sources refer to the same individual: the surname, German birthplace, farming occupation, and Willie's co-residence are consistent, but the given name differs: 'Casper A.' vs. 'Henry.' Possible explanations: (1) Henry was his first name and Casper (Kaspar) was a middle name used by family members; (2) the 1929 informant had imprecise knowledge of the father's first name; or (3) the 1880 enumerator recorded the name incorrectly.",
+      "disputed_attribute": "father_given_name",
+      "status": "resolved",
+      "blocks_question_ids": [
+        "q_001"
+      ],
+      "independence_analysis": "The four sources naming 'Henry' are independent of each other: the 1865 Minnesota State Census, the 1880 U.S. Federal Census, the 1885 Minnesota State Census, and the circa-1881 Minnesota probate witness reference were compiled by different enumerators and officials at different times (spanning 1865\u20131885), in different jurisdictions (Chisago County MN, Todd County MN, federal), under different authorities (state and federal). None shares a common informant. The death certificate naming 'Casper A.' stands alone as a single derivative source with a single unidentified family informant.",
+      "weighing_analysis": "Four concordant independent original records with primary or proximate information outweigh one derivative record carrying secondary information from a distant informant. The 1865 census was taken three years after William's birth in the same township; the head-of-household name was recorded by a government enumerator in direct contact with the household. The 1929 death certificate informant was reporting a given name from a 67-year temporal distance for a person who likely predeceased William by decades. No mechanism exists by which four independent officials across twenty years could systematically record the wrong given name for the same person.",
+      "resolution_rationale": "The father's given name is Henry. 'Casper A.' on the 1929 Oregon death certificate is most plausibly an error by the family informant \u2014 faulty memory after decades, confusion with a relative's or neighbor's name, or an occasional middle name used in family address. Henry Bottermiller's name has been corrected from 'Casper A. Battermiller' to 'Henry Bottermiller' in tree.gedcomx.json (stub person I1, name N1)."
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "competing_assertion_ids": [
+        "a_021",
+        "a_007"
+      ],
+      "description": "Mother identity conflict: 'Anna Battemiller' (1865 MN census indexed, a_021; FS citation 'Entry for Henry Battemiller and Anna Battemiller, 1865') vs. 'Mary Bottermiller' (1880 US census a_016, 1885 MN census a_046) vs. 'Mary Mehlman' (1929 OR death cert a_007). UPDATE log_016 (2026-07-12): record_read of ark:/61903/1:1:SPSM-N88 confirms the FamilySearch indexed record names the wife 'Anna.' Original image ark:/61903/3:1:939Z-YPF8-9 exists (1.8 MB) but exceeds automated read threshold \u2014 requires human review at familysearch.org. Two-wife hypothesis is the most probable interpretation: Anna = biological mother (present 1865, in William's birth location), Mary Mehlman = second wife/stepmother (present 1880+). Cannot formally resolve without original image confirmation.",
+      "disputed_attribute": "mother_identity_and_name",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "argument",
+      "supporting_assertion_ids": [
+        "a_006",
+        "a_007",
+        "a_009",
+        "a_010",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_017",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_033",
+        "a_034",
+        "a_043",
+        "a_044",
+        "a_046",
+        "a_047",
+        "a_049",
+        "a_050"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "Searched FamilySearch indexed collections for Chisago County and Todd County, Minnesota (1865, 1875, 1880, 1885 censuses); Oregon death records 1903\u20131947 and 1903\u20131998 death index; Minnesota pre-1900 birth registrations (nil \u2014 civil registration not in force); FamilySearch full-text search for probate records naming Henry Bottemiller as witness (positive, log_008). Ancestry, MyHeritage, and FindAGrave were not searched. German origin and immigration records were not searched. Post-search follow-up (log_016, 2026-07-12): record_read of ark:/61903/1:1:SPSM-N88 confirmed the FamilySearch indexed record for the 1865 census household names the wife 'Anna Battemiller'; the official source citation reads 'Entry for Henry Battemiller and Anna Battemiller, 1865.' The original register image ARK is ark:/61903/3:1:939Z-YPF8-9 (1.8 MB); it exceeds the automated read threshold and requires direct human review at familysearch.org to confirm or refute the indexer's reading. Research is not declared exhaustive: c_002 remains unresolved pending original image review.",
+      "narrative_markdown": "# Proof Argument: Parents of William Henry Bottemiller (1862\u20131929)\n\n**Research Question:** Who are the parents of William Henry Bottemiller, born 29 December 1862 in Franconia Township, Chisago County, Minnesota, and died 13 May 1929 in Oregon City, Clackamas County, Oregon (FamilySearch person 249W-9LP)?\n\n**Conclusion (Probable):** The preponderance of evidence strongly indicates that William Henry Bottemiller's father is **Henry Bottermiller**, born approximately 1827\u20131828 in Germany, a farmer who resided in Franconia Township, Chisago County, Minnesota by 1865 and relocated to Bertha, Todd County, Minnesota by 1880. The identity of William's biological mother is more uncertain. The 1929 Oregon death certificate names **Mary Mehlman** as the mother, and she appears as Henry's wife in 1880 and 1885 census records; however, the 1865 Minnesota State Census \u2014 taken just three years after William's birth in his birthplace \u2014 names a woman called \"Anna\" as Henry's wife, raising the probability that Anna was William's biological mother and Mary Mehlman was Henry's second wife.\n\n---\n\n## Evidence\n\n### 1865 Minnesota State Census (Original)\n\nThe 1865 Minnesota State Census (original government enumeration; FamilySearch collection 1503054) lists **Henry Battemiller** as head of household in Franconia, Chisago County, Minnesota \u2014 the same township and county recorded as William's birthplace on his 1929 death certificate. Among the children enumerated is **William Battemiller**, approximately 2\u20133 years of age, consistent with a birth date of 29 December 1862 [src_004; a_019, a_033]. Also present: wife \"Anna Battemiller\" [src_004; a_021] and five other children (Augustus, Eliza, Charles, Fred, Mary J). This is an original source. Information about the head's name and residence is primary (self-reported to the enumerator); information about children's identities is secondary. Co-residence of William with Henry is indirect evidence of paternity.\n\n### 1880 U.S. Federal Census (Original)\n\nThe 1880 U.S. Census (original government enumeration; FamilySearch collection 1417683) enumerates **Willie Bottermiller**, age approximately 17, born 1862 in Minnesota, as a child in the household of **Henry Bottermiller**, age 52, born Germany, farmer, Bertha, Todd County, Minnesota [src_003; a_009, a_012, a_013, a_014]. Also present: wife **Mary Bottermiller**, born approximately 1838 in Germany [src_003; a_016, a_017]. Original source; Henry's name and German origin is secondary information (self-reported); co-residence is indirect evidence of paternity.\n\n### 1885 Minnesota State Census (Original)\n\nThe 1885 Minnesota State Census (original government enumeration; FamilySearch collection 1503044) enumerates **William Bottermiller**, born 1862 in Minnesota, in the household of **Henry Bottermiller**, Bertha, Todd County, Minnesota [src_005; a_043, a_049, a_050]. Wife **Mary Bottermiller**, born approximately 1841 in Germany [src_005; a_046, a_047]. Ten additional children present. Original source; corroborates the 1880 picture in full.\n\n### 1929 Oregon Death Certificate (Derivative)\n\nThe 1929 Oregon Deaths and Burials database entry for \"Henry William Battemiller\" \u2014 confirmed as William Henry Bottemiller by death date (13 May 1929), place (Clackamas County, Oregon), and surviving spouse (\"Lilly Jane\") \u2014 names the father as \"**Casper A. Battermiller**\" and the mother as \"**Mary Mehlman**\" [src_002; a_006, a_007]. This is a derivative source carrying secondary information: the unnamed family informant was not present at William's 1862 birth and was reporting parentage from a 67-year distance.\n\n---\n\n## Conflict Analysis\n\n### C_001: Father's Given Name \u2014 \"Casper A.\" vs. \"Henry\" (RESOLVED)\n\nThe 1929 death certificate is the sole source for \"Casper A.\" Three independent original censuses \u2014 1865 MN, 1880 US, 1885 MN \u2014 all record the household head as \"Henry Bottermiller\" (with spelling variants), corroborated by a Minnesota probate witness reference circa 1881 [log_008]. These four independent items were compiled by different enumerators, at different times across twenty years, in different counties and jurisdictions; they share no common informant.\n\nFour concordant independent original records outweigh one derivative record with a distant secondary informant. The death certificate informant was reporting a given name for a man last seen perhaps fifty years earlier. No mechanism exists by which four independent officials across three decades could systematically record the same wrong name. **Resolution: The father's given name is Henry.** \"Casper A.\" is most plausibly an error by the 1929 informant \u2014 faulty memory, confusion with a relative's name, or an occasional middle name. I1 has been corrected to \"Henry Bottermiller\" in tree.gedcomx.json.\n\n### C_002: Mother's Identity \u2014 \"Anna\" (1865) vs. \"Mary Mehlman\" (1880+) (UNRESOLVED)\n\nThe 1865 census names Henry's wife \"Anna.\" The 1880 and 1885 censuses name her \"Mary.\" The death certificate names the mother \"Mary Mehlman.\" Two hypotheses fit:\n\n**(A)** Henry had two successive wives \u2014 Anna (first wife, 1865; William's biological mother) died before 1880; Henry then married Mary Mehlman. The 1929 informant named the stepmother as \"mother\" because she was the only maternal figure they knew.\n\n**(B)** \"Anna\" in the 1865 index is a transcription error for \"Mary\" or a similar name, and Mary Mehlman was always William's mother.\n\nNeither can be ruled out without examining the original 1865 register image (ark:/61903/1:2:1G3V-DST, not read in this session). The 1875 Minnesota census was not located; no church records, Anna's death record, or Henry's second marriage record was found. **This conflict remains open.**\n\n---\n\n## Research Scope Note\n\nThe 1870 U.S. Census and 1875 MN State Census were not located for this family. The original Oregon death certificate image was not retrieved. The original 1865 census register page was not examined. Minnesota church and immigration records were not found in indexed collections. These gaps are material primarily to the mother's identity question (c_002).\n\n---\n\n## Conclusion\n\n**Tier: Probable.**\n\nThe father of William Henry Bottemiller is **Henry Bottermiller** (born approximately 1827\u20131828, Germany; died after 1885 in Minnesota). Four independent original census records over twenty years, corroborated by a probate witness reference, consistently place William as a child in Henry's household beginning in William's own birthplace just three years after his birth. The sole contradicting source (death certificate naming \"Casper A.\") is outweighed. This element of the conclusion would stand at the proved tier standing alone.\n\nThe biological mother cannot be established with confidence. The 1929 death certificate names **Mary Mehlman** (n\u00e9e Mehlman; born approximately 1838\u20131841, Germany), and she appears consistently as Henry's wife in 1880 and 1885. However, the 1865 Minnesota State Census \u2014 the earliest and most proximate record placing William in a parental household \u2014 names Henry's wife as \"Anna,\" not Mary. The most probable interpretation is that Anna was William's biological mother and Mary Mehlman was his stepmother; but this cannot be confirmed without the original 1865 census image and additional records. The mother identification is held at probable pending that further research.\n\nTo advance the mother conclusion, the recommended next steps are: (1) image review of the 1865 Minnesota State Census register page (ark:/61903/1:2:1G3V-DST) to confirm or correct the indexed name \"Anna\"; (2) search for a death record for \"Anna Bottermiller\" in Minnesota between 1865 and 1880; (3) search for a marriage record for Henry Bottermiller and Mary Mehlman in Minnesota after 1865."
+    }
+  ],
+  "evaluations": []
+}

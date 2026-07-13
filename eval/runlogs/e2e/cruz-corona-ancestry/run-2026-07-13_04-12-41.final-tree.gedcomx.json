@@ -1,0 +1,519 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Mauro",
+          "surname": "Cruz Corona",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-mauro-birth-approx",
+          "type": "Birth",
+          "date": "about 1910",
+          "standard_date": "Abt 1910",
+          "place": "near Nueva Italia, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        },
+        {
+          "id": "fact-mauro-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        },
+        {
+          "id": "fact-mauro-death",
+          "type": "Death",
+          "date": "21 April 1999",
+          "standard_date": "21 Apr 1999",
+          "place": "Nueva Italia, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "p-sibling-miguel",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Miguel",
+          "surname": "Cruz",
+          "id": "p-sibling-miguel-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-miguel-birth",
+          "type": "Birth",
+          "date": "24 April 1913",
+          "standard_date": "24 Apr 1913",
+          "place": "El Coco, La Uni\u00f3n, Guerrero, Mexico",
+          "standard_place": "La Uni\u00f3n, Guerrero, Mexico"
+        },
+        {
+          "id": "fact-miguel-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "p-sibling-liborio",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Liborio",
+          "surname": "Cruz",
+          "id": "p-sibling-liborio-name-1"
+        },
+        {
+          "type": "BirthName",
+          "given": "Liborio",
+          "surname": "Cruz Corona",
+          "id": "N15"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-liborio-birth",
+          "type": "Birth",
+          "date": "23 July 1916",
+          "standard_date": "23 Jul 1916",
+          "place": "Pochutla, Coahuayutla, Guerrero, Mexico",
+          "standard_place": "Coahuayutla, Guerrero, Mexico"
+        },
+        {
+          "id": "fact-liborio-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "p-sibling-facundo",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Facundo",
+          "surname": "Cruz",
+          "id": "p-sibling-facundo-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-facundo-birth",
+          "type": "Birth",
+          "date": "27 November 1918",
+          "standard_date": "27 Nov 1918",
+          "place": "Rosario, Coahuayutla, Guerrero, Mexico",
+          "standard_place": "Coahuayutla, Guerrero, Mexico"
+        },
+        {
+          "id": "fact-facundo-residence-1930",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico",
+          "standard_place": "Nueva Italia, Par\u00e1cuaro, Michoac\u00e1n, Mexico"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "type": "BirthName",
+          "preferred": true,
+          "given": "Apolinar",
+          "surname": "Corona",
+          "id": "N1"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Guerrero",
+          "standard_place": "Guerrero, Mexico",
+          "id": "F1"
+        },
+        {
+          "type": "Census",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "id": "F2"
+        }
+      ],
+      "id": "I1"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "preferred": true,
+          "given": "Primitivo",
+          "surname": "Cruz",
+          "id": "N2"
+        },
+        {
+          "given": "Priso",
+          "surname": "Cruz",
+          "type": "AlsoKnownAs",
+          "id": "N9"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "1908",
+          "standard_date": "1908",
+          "place": "Guerrero",
+          "standard_place": "Guerrero, Mexico",
+          "id": "F3"
+        },
+        {
+          "type": "Census",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n, M\u00e9xico",
+          "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "id": "F4"
+        }
+      ],
+      "id": "I2"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "S\u00f3stenes",
+          "surname": "Cruz",
+          "preferred": true,
+          "id": "N3"
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Hilaria",
+          "surname": "Guillen",
+          "preferred": true,
+          "id": "N4"
+        }
+      ],
+      "id": "I4"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Jes\u00fas",
+          "surname": "Cruz",
+          "type": "BirthName",
+          "preferred": true,
+          "id": "N5"
+        }
+      ],
+      "id": "I5"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Donaciano",
+          "surname": "Basurto",
+          "type": "BirthName",
+          "preferred": true,
+          "id": "N6"
+        }
+      ],
+      "id": "I6"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Rafael",
+          "surname": "Corona",
+          "type": "BirthName",
+          "preferred": true,
+          "id": "N7"
+        }
+      ],
+      "id": "I7"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Jes\u00fas",
+          "surname": "Corona",
+          "type": "BirthName",
+          "preferred": true,
+          "id": "N8"
+        }
+      ],
+      "id": "I8"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Mar\u00eda Epera [?]",
+          "surname": "Cruz",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N10"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "9 July 1906",
+          "place": "La Uni\u00f3n, Guerrero, Mexico",
+          "id": "F5",
+          "standard_place": "Louisiana, United States"
+        },
+        {
+          "type": "Christening",
+          "date": "5 August 1906",
+          "place": "La Uni\u00f3n, Guerrero, Mexico",
+          "id": "F6",
+          "standard_place": "Louisiana, United States"
+        }
+      ],
+      "id": "I9"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Jes\u00fas",
+          "surname": "Cruz",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N11"
+        }
+      ],
+      "id": "I10"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Domiciana",
+          "surname": "Basurto",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N12"
+        }
+      ],
+      "id": "I11"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Rafael",
+          "surname": "Corona",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N13"
+        }
+      ],
+      "id": "I12"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Jes\u00fas",
+          "surname": "Mercado",
+          "preferred": true,
+          "type": "BirthName",
+          "id": "N14"
+        }
+      ],
+      "id": "I13"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "I3",
+      "person2": "I1",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "PID-TODO",
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "PID-TODO",
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I2",
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I2",
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "p-sibling-miguel",
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "p-sibling-liborio",
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "p-sibling-facundo",
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I3",
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I3",
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I1",
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I8",
+      "child": "I1",
+      "id": "R12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I9",
+      "id": "R13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I9",
+      "id": "R14"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I10",
+      "child": "I3",
+      "id": "R15"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I11",
+      "child": "I3",
+      "id": "R16"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I12",
+      "child": "I1",
+      "id": "R17"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I13",
+      "child": "I1",
+      "id": "R18"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-1930-census",
+      "title": "Erculano Hernandez household, \"M\u00e9xico censo nacional, 1930\"",
+      "citation": "Erculano Hernandez household, \"M\u00e9xico censo nacional, 1930,\" database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:S3HT-66R3-LH4 : 1 April 2016), Michoac\u00e1n de Ocampo > Par\u00e1cuaro > Nueva Italia > image 39 of 49; Archivo General de la Naci\u00f3n, Distrito Federal (National Archives, Distrito Federal).",
+      "url": "https://familysearch.org/ark:/61903/3:1:S3HT-66R3-LH4"
+    },
+    {
+      "id": "S1",
+      "title": "M\u00e9xico, censo nacional, 1930 \u2014 household of Apolinar Corona (Mauro, Primitivo, Migel, Libario, Facundo Cruz)",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MP5H-ZCT"
+    },
+    {
+      "id": "S2",
+      "title": "Registro para Primitivo Corona y Hilaria Guillen, \"M\u00e9xico, Guerrero, Registro Civil, 1860-1996\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q5JN-HB8T"
+    },
+    {
+      "id": "S3",
+      "title": "Baptism of Miguel Cruz, 19 July 1913, Parroquia de San Felipe de Jes\u00fas, La Uni\u00f3n, Guerrero, Mexico",
+      "author": "Parroquia de San Felipe de Jes\u00fas, Vicar\u00eda For\u00e1nea de La Uni\u00f3n (Presb\u00edtero Manuel Bravo)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:939X-LQ97-VS"
+    },
+    {
+      "id": "S4",
+      "title": "Baptism of Priso [Primitivo/Primo] Cruz, 25 June 1908, Parroquia de la Uni\u00f3n (San Felipe de Jes\u00fas), La Uni\u00f3n, Guerrero, Mexico",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:939X-LQ9W-WL"
+    },
+    {
+      "id": "S5",
+      "title": "Baptism of Mar\u00eda Epera [?] (poss. Mar\u00eda Epifan\u00eda), 5 August 1906, San Felipe de Jes\u00fas Parish, La Uni\u00f3n, Guerrero, Mexico",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:939X-LQ9W-XR"
+    },
+    {
+      "id": "S6",
+      "title": "Baptismal record for Facundo Cruz Corona, \"M\u00e9xico, Guerrero, registros parroquiales, 1576-1979\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4B9Q-59SZ"
+    },
+    {
+      "id": "S7",
+      "title": "M\u00e9xico, Guerrero, registros parroquiales (Catholic Church Records), 1576-1979 \u2014 Baptism of Liborio Cruz Corona, 27 Aug 1916",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6C1W-839Q"
+    }
+  ]
+}

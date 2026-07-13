@@ -120,8 +120,8 @@
       "child": "I3",
       "sources": [
         {
-          "ref": "S1",
-          "page": "1850 Census, Schuylkill Co., dwelling 84",
+          "ref": "S5",
+          "page": "Baptism of Mary Flynn, daughter of Thomas Flynn, 1841",
           "quality": 2
         }
       ]
@@ -133,8 +133,8 @@
       "child": "I4",
       "sources": [
         {
-          "ref": "S1",
-          "page": "1850 Census, Schuylkill Co., dwelling 84",
+          "ref": "S5",
+          "page": "Baptism of James Flynn, son of Thomas Flynn, 1847",
           "quality": 2
         }
       ]

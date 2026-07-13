@@ -372,9 +372,14 @@ function simplifySourceRef(
     out.page = citationDetail.value;
   }
 
+  // The qualifier carries QUAY as a string (qualifier values are strings);
+  // the simplified format wants the integer the tree schema requires. A
+  // value outside the QUAY range 0-3 (or that isn't an integer at all) is
+  // dropped, like any other unrecognized qualifier content — emitting it
+  // would produce a document every validity gate rejects.
   const quality = qualifiers.find((q) => q.name === QUALITY_QUALIFIER);
-  if (quality && typeof quality.value === "string") {
-    out.quality = quality.value;
+  if (quality && typeof quality.value === "string" && /^[0-3]$/.test(quality.value.trim())) {
+    out.quality = Number(quality.value.trim());
   }
 
   return out;
@@ -590,8 +595,8 @@ function expandSourceRef(
   if (typeof ref.page === "string") {
     qualifiers.push({ name: CITATION_DETAIL, value: ref.page });
   }
-  if (typeof ref.quality === "string") {
-    qualifiers.push({ name: QUALITY_QUALIFIER, value: ref.quality });
+  if (Number.isInteger(ref.quality) && (ref.quality as number) >= 0 && (ref.quality as number) <= 3) {
+    qualifiers.push({ name: QUALITY_QUALIFIER, value: String(ref.quality) });
   }
   if (qualifiers.length > 0) out.qualifiers = qualifiers;
 

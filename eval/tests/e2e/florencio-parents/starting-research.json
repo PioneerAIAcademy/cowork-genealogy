@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_florencio_parents",
+    "objective": "Who were Rivanette Florencio de Araujo's parents?",
+    "subject_person_ids": ["GM4P-TYS"],
+    "status": "active",
+    "created": "2026-07-02",
+    "updated": "2026-07-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

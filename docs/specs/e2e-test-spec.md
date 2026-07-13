@@ -128,6 +128,7 @@ Test metadata.
 |-------|------|----------|-------------|
 | `id` | string | yes | Unique slug matching the directory name |
 | `name` | string | yes | Short human-readable name |
+| `genre` | enum | no | `strip` (default) or `record-hint` — see §3.6 |
 | `source_pid` | string | yes | FamilySearch PID the fixture was captured from |
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
@@ -242,6 +243,29 @@ corrupts an entire upstream tree).
 A fixture may mix `recover` and `avoid` findings. At least one negative
 fixture should exist in the suite so over-claiming is sampled (§1).
 
+The judge's grade on an `avoid` finding is backstopped by a
+deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`,
+applied by the orchestrator and by judge calibration): if the avoided
+claim's target is present in the agent's final tree — the stripping
+linter's own matcher, given+surname token overlap plus fact type for
+`fact` findings — the finding is forced to `matched: "false"`, the
+recall fractions are recomputed, and the verdict is recomputed
+**downgrade-only**. What was forced is recorded under the result's
+`judge_output.avoid_guard.forced_false` and in the finding's `notes`.
+The judge still grades the subjective half (is the claim present "only
+as an explicitly rejected hypothesis"?); the guard only prevents a
+model grader from excusing the objective half. Authoring gates treat
+`avoid` findings accordingly: the presence mirror skips them (the
+claim was never in the tree), while the stripping linter still warns
+when an avoided claim is already present in the *starting* tree — a
+fixture must not pre-assert the thing it forbids.
+
+An `avoid` finding may be `required: true`; it then gates the verdict
+exactly like a recover finding (`matched: "true"` = correctly
+avoided). Pair a required `avoid` guard with a required positive
+finding that the agent *documented* the negative conclusion, so a run
+that does nothing at all does not pass by default.
+
 ### 3.5 `README.md`
 
 Human notes. Required content:
@@ -251,6 +275,31 @@ Human notes. Required content:
 - What was removed from the starting tree and why
 - The author's expected difficulty and any notes that would help
   someone reviewing a failed run
+
+### 3.6 Record-hint fixtures (`genre: "record-hint"`)
+
+A `strip` fixture (the default genre) hides an answer the tree already
+had. A **record-hint** fixture inverts that: the answer was never in
+the tree — it lives in a historical record that FamilySearch's hinting
+matched to the tree person with unverified confidence. Nothing is
+stripped:
+
+- `starting-tree.gedcomx.json` is the snapshot **as-is** — written by
+  `strip --none` — and `unstripped-tree.gedcomx.json` is committed
+  **identical** to it, so `snapshot --check` can still audit upstream
+  drift. `e2e.author validate` enforces the equality and skips the
+  presence mirror (expected findings are extra-tree by definition).
+- Findings drafted from an unverified hint record are a **draft
+  pending adjudication**: a genealogist must confirm the hint record
+  concerns the tree person before the fixture's grades are trusted.
+  The three outcomes: **(a)** true match — keep the findings;
+  **(b)** the objective is answerable from other records — edit
+  `expected-findings.json` to the correct answer; **(c)** false match
+  with no findable substitute — replace the findings with a
+  `polarity: "avoid"` guard naming the claim the agent must not
+  assert, plus a `required` recover finding that the agent documented
+  the negative conclusion (§3.4.1). Say in the fixture README which
+  state the fixture is in.
 
 ---
 
@@ -589,6 +638,12 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | `recall_total` | Fraction across all findings |
 | `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none |
 | `rationale` | Free-text summary |
+
+When the §3.4.1 avoid-guard fires, the persisted `judge_output`
+additionally carries `avoid_guard.forced_false` (which findings the
+harness overrode, and the matching final-tree person ids), the affected
+findings' `notes` gain an `[avoid-guard]` annotation, and
+`recall_*`/`verdict` reflect the recompute.
 
 ### 7.3 Variance and Calibration
 

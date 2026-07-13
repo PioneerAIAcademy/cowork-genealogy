@@ -1,0 +1,19 @@
+{
+  "id": "mary-mcandrew-son",
+  "name": "Mary E McAndrew — additional son John (b. 1873, Detroit)",
+  "genre": "record-hint",
+  "source_pid": "G13G-P68",
+  "captured": "2026-07-10",
+  "researcher_question": "Did Mary E. McAndrew (G13G-P68) and her husband John Mogan of Detroit have any children besides the five already in the tree?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "US-MI"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 2, flag adds_son, confidence 3). Findings are a DRAFT transcribed from the hint record (Michigan Births and Christenings 1775-1995: John A Morgan, b. 6 Mar 1873 Detroit, parents John and Mary Morgan), whose identity with the tree family (surname Mogan) is unverified — Mary/John Morgan are very common names in 1870s Detroit, and roughly half the records in this hint batch are false matches. Genealogist adjudication must confirm the match, revise the findings, or convert this to a no-findable-answer fixture."
+}

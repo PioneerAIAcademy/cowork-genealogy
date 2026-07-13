@@ -4,7 +4,7 @@
     "skill": "citation",
     "name": "Terminology guardrail — 'primary source' corrected, not propagated",
     "type": "positive",
-    "description": "User asks to note in src_004's citation that it is a 'primary source'. Per the SKILL.md terminology guardrail, sources are classified Original/Derivative/Authored; 'primary' and 'secondary' apply only to information quality (informant proximity). The skill should gently correct the terminology, note that src_004 is an original source, and must not write 'primary source' into the citation string or alter source_classification. Distinct from the assertion-classification boundary test: this request is about the citation's wording, so it stays in-scope — the skill handles it with a correction rather than routing away.",
+    "description": "User asks to note in src_004's citation that it is a 'primary source'. Per the SKILL.md terminology guardrail, sources are classified Original/Derivative/Authored; 'primary' and 'secondary' apply only to information quality (informant proximity). The skill should gently correct the terminology, note that src_004 is an original source, and must not write 'primary source' into the citation string or alter source_classification. Distinct from the classification-ownership boundary test (ut_citation_011, which routes to record-extraction): this request is about the citation's wording, so it stays in-scope — the skill handles it with a correction rather than routing away.",
     "tags": [
       "terminology-guardrail",
       "primary-secondary",
@@ -22,7 +22,7 @@
   "judge_context": [
     "Should gently correct the terminology per the SKILL.md guardrail: sources are classified Original, Derivative, or Authored; 'primary' and 'secondary' describe information quality (informant proximity), not sources. src_004 is correctly classified 'original'",
     "Must NOT write 'primary source' into the citation string, and must NOT change source_classification — that field is set by record-extraction and is outside this skill's writable fields",
-    "This request is in-scope for citation (it concerns the citation's wording), so the skill should handle it with the correction rather than routing to another skill. Routing away entirely without addressing the request is a miss; only a follow-up question about informant quality (e.g. whether the son-in-law's information is primary) would belong to assertion-classification",
+    "This request is in-scope for citation (it concerns the citation's wording), so the skill should handle it with the correction rather than routing to another skill. Routing away entirely without addressing the request is a miss; only a follow-up question about informant quality (e.g. whether the son-in-law's information is primary) would belong to record-extraction, which owns evidence classification",
     "May helpfully note the layered point: src_004 is an original source that contains both primary information (death facts, from the attending context) and secondary information (birth facts, from son-in-law James Brown) — the very reason 'primary source' is a category error",
     "src_004's citation is already EE-compliant, so apart from declining the mislabel it should remain fundamentally unchanged; no invented additions"
   ]

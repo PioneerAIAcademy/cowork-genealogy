@@ -15,6 +15,9 @@ export interface MergeWarningsSuccess {
   ok: true;
   warningCount: number;
   warnings: PersonWarning[];
+  /** What sanitation did (candidate strips, legacy-tree heals) — surfaced at
+   *  the dry-run so data drops are known BEFORE the write decision. */
+  sanitizeWarnings: string[];
 }
 
 export interface MergeWarningsFailure {
