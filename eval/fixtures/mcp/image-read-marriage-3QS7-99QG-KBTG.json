@@ -1,0 +1,13 @@
+{
+  "tool": "image_read",
+  "description": "image_read response for a FamilySearch document-image ARK (3:1:3QS7-99QG-KBTG) surfaced on a marriage record's imageArk field. The `ark` predicate uses a case-insensitive substring match on the distinctive ARK id, so it matches whether the agent passes the bare 3:1: ARK or the canonical ark:/61903/3:1:... form (both are accepted by image_read since PR #600). Returns image_read's standard shape (imageData + metadata). NOTE: the harness mock serves this as JSON text, not a rendered image, so this fixture exercises tool-routing (was the ARK passed to the ark parameter?), not visual transcription.",
+  "args": { "ark": "~3QS7-99QG-KBTG" },
+  "response": {
+    "imageData": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "metadata": {
+      "url": "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/dgs:004884748_02613/$dist",
+      "mimeType": "image/png",
+      "sizeBytes": 68
+    }
+  }
+}

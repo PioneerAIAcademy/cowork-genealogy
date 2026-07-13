@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Kristian Fredrik Tollefsen Birkeland died on 23 December 1883 (in the Stavanger area, Rogaland, Norway).",
+      "details": {
+        "target_person": {
+          "name": "Kristian Fredrik Tollefsen Birkeland",
+          "pid": "K87G-T89"
+        },
+        "fact_type": "Death",
+        "date": "23 December 1883",
+        "place": "Stavanger, Rogaland, Norway"
+      },
+      "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — burial entry for Christian Frederik Birkeland, 31 Dec 1883",
+        "Norway, Burials, 1666-1927 — Christian Frederick H. Birkeland, 1883"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "He was buried on 31 December 1883 at Stavanger, Rogaland, Norway.",
+      "details": {
+        "target_person": {
+          "name": "Kristian Fredrik Tollefsen Birkeland",
+          "pid": "K87G-T89"
+        },
+        "fact_type": "Burial",
+        "date": "31 December 1883",
+        "place": "Stavanger, Rogaland, Norway"
+      },
+      "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — burial entry for Christian Frederik Birkeland, 31 Dec 1883",
+        "Norway, Burials, 1666-1927 — Christian Frederick H. Birkeland, 1883"
+      ],
+      "required": true
+    }
+  ]
+}

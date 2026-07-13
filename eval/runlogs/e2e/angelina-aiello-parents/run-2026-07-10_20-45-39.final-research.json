@@ -1,0 +1,1275 @@
+{
+  "project": {
+    "id": "rp_angelina_aiello_parents",
+    "objective": "Who were the parents of Angelina M Aiello, born 1910, who married Anthony Sunseri and lived in Pittsburgh, Allegheny County, Pennsylvania?",
+    "subject_person_ids": [
+      "L4HQ-CBN"
+    ],
+    "status": "completed",
+    "created": "2026-07-08",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1920 U.S. census show about the household of Angelina Aiello, born circa 1910 in Allegheny County, Pennsylvania, and who are her parents?",
+      "rationale": "Angelina was approximately 10 years old in 1920 and almost certainly living with her parents. The 1920 federal census (fully indexed and accessible on FamilySearch) would capture her in the parental household, naming the head of household and spouse \u2014 her father and mother \u2014 along with their ages and birthplaces. This is the highest-yield starting point for identifying immigrant Italian parents in early-20th-century Pittsburgh.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-10",
+      "resolution_assertion_ids": [
+        "a_005",
+        "a_013",
+        "a_028",
+        "a_029"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Two independent record types agree on both parents. (1) 1940 US Census (original source, log_004): Angelina Aiello recorded as daughter of Pete Aiello (head) via the relationship column \u2014 direct paternal evidence; Felicia Aiello listed as wife of head \u2014 indirect maternal evidence from household structure. (2) 1941 Allegheny County marriage license (derivative index, log_005): father of bride named 'Peter', mother of bride named 'Felicia Scalise' \u2014 both parents named directly. The two sources are independent (different record types, different creators, different years) and agree on the same father (Pete/Peter Aiello) and mother (Felicia n\u00e9e Scalise). Searches for 1920 census (nil, log_001-002), 1930 census (nil, log_003), PA birth certificate (skipped \u2014 subject born in South America), PA death certificate (SSDI and Find a Grave found, no PA death cert accessible, log_006), and naturalization records (Pietro Aiello candidates found but no family-naming data, log_007) found no contradicting evidence. GPS reasonably exhaustive standard met for available FamilySearch indexed records.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007"
+        ],
+        "stop_criteria": "Two independent record types agree on the father (Pete/Peter Aiello) and mother (Felicia n\u00e9e Scalise); marriage license provides direct evidence for both; no conflicting evidence found across all searched source categories."
+      },
+      "created": "2026-07-10"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-10",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Allegheny County, Pennsylvania, United States",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "Angelina Aiello was approximately 10 years old in 1920 and almost certainly living with her parents in Pittsburgh. The 1920 U.S. federal census (fully indexed on FamilySearch, collection 3724690) would show her in the parental household, naming the head of household (father) and his wife (mother), their ages, birthplaces, and the birthplaces of their own parents. This is the highest-probability, highest-yield first step for identifying the parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Allegheny County, Pennsylvania, United States",
+          "date_range": "1910",
+          "repository": "FamilySearch",
+          "rationale": "Pennsylvania began statewide birth registration in 1906. Angelina's 1910 birth certificate (if it survives and is indexed) would name both parents directly, including the mother's maiden name \u2014 information that census records rarely supply. FamilySearch collection 'Pennsylvania, Births and Christenings, 1709-1950' (id 1681005) and 'Pennsylvania, Delayed Birth Records, 1780-1977' (id 3743274) are the best starting points.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Allegheny County, Pennsylvania, United States",
+          "date_range": "1930",
+          "repository": "FamilySearch",
+          "rationale": "If Angelina had not yet married by 1930 (age ~20), she may still appear in her parents' household, corroborating parentage and adding detail. Even if she had married, the 1930 census captures Anthony Sunseri's household and may give her age and state/country of birth. A search of the parental household independently of Angelina can also identify the father's name if the 1920 search yields nil.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Allegheny County, Pennsylvania, United States",
+          "date_range": "1925-1940",
+          "repository": "FamilySearch",
+          "rationale": "Angelina Aiello's marriage record to Anthony Sunseri in Allegheny County (FamilySearch collection 'Pennsylvania, County Marriages, 1775-1991', id 1589502) will confirm her identity and her age/birth year, and Pennsylvania marriage licenses from the 1920s-30s sometimes name the bride's parents. The record also helps establish the timeline and confirm this is the right Angelina Aiello.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Pennsylvania, United States",
+          "date_range": "1940-1976",
+          "repository": "FamilySearch",
+          "rationale": "Angelina M. Aiello Sunseri's Pennsylvania death certificate (accessible on FamilySearch for deaths before ~1976 under 'Pennsylvania, Deaths and Burials, 1720-1999', id 3535178) would directly name her father and mother (including mother's maiden name) as informant-supplied data. Accessible only after locating her approximate death date; this is a strong corroborating step once the census provides parental names.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "immigration",
+          "jurisdiction": "United States",
+          "date_range": "1880-1915",
+          "repository": "FamilySearch",
+          "rationale": "Given the Italian surname Aiello and the Pittsburgh immigrant community context, the parents likely arrived from Italy between 1880 and 1915. If the father's name is identified from the 1920 census, his naturalization petition (FamilySearch collection 'Pennsylvania, Western District, Naturalizations, 1820-1931', id 5000034, or 'Pennsylvania, Allegheny, Pittsburgh, Naturalization Card File Index, 1906-1990', id 3037614) would name his wife and children, confirm parentage, and supply the Italian place of origin. This is a FAN-cluster item that cross-checks census-derived parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-10T19:59:08.589Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Aiello",
+        "givenName": "Angelina",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "residencePlace": "Allegheny, Pennsylvania",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 3,
+      "notes": "3 results: two Angeline Aiello females with PA birthplaces (born 1914 in John Aiello household, Pittsburgh; born 1910 in Pete Aiello household, Washington PA), one Louis Aiello male. No South American birthplace found. Subject was born in South America per tree; she may not have been in the US in 1920."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-10T19:59:16.771Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Aiello",
+        "givenName": "Angelina",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "recordCountry": "United States",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 32,
+      "notes": "Broadened to US-wide 1920 census. 32 results; no result shows a South American birthplace for Angelina Aiello born c. 1910. Best match score (rank_search_matches vs L4HQ-CBN) was 0.35 for Angeline Aiello b. 1910 in Washington PA (Pete Aiello household). Subject born in South America likely not yet in US in 1920. Proceeding to 1930 census."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-10T20:00:04.962Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Aiello",
+        "givenName": "Angelina",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "residencePlace": "Allegheny, Pennsylvania",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "1 result: Angeline Aiello b. 1914 PA in household of John Aiello, Pittsburgh; birth year does not match our subject (b. 1910 South America). Likely a different Aiello family in Pittsburgh. Subject was probably not yet in the US in 1930, or not indexed under this name."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": null,
+      "performed": "2026-07-10T20:02:21.346Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Aiello",
+        "givenName": "Angelina",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915,
+        "residenceYearFrom": 1940,
+        "residenceYearTo": 1940,
+        "residencePlace": "Pittsburgh, Allegheny, Pennsylvania",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 3,
+      "notes": "POSITIVE: Top match (score 0.82, already attachedToSubject L4HQ-CBN): Angelina Aiello b. 1910 South America, Single, Ward 3 Pittsburgh, in Household of Pete Aiello (b. 1882 Italy, head) and Felicia Aiello (b. 1882 Italy, wife). Siblings Anthony (b. 1912 S.Am.), Amelia (b. 1917 S.Am.), Natalie (b. 1921 S.Am.), William (b. 1924 PA), Helen (b. 1926 PA). GedcomX relationships confirm Pete and Felicia are parents of Angelina. Record ARK: ark:/61903/1:1:KQ6N-YG7. This directly answers the parentage question."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-10T20:23:47.763Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Aiello",
+        "givenName": "Angelina",
+        "spouseGivenName": "Anthony",
+        "spouseSurname": "Sunseri",
+        "marriageYearFrom": 1935,
+        "marriageYearTo": 1945,
+        "marriagePlace": "Allegheny, Pennsylvania",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 3,
+      "notes": "3 results, all Pennsylvania, County Marriages, 1775-1991. Top match KMZP-HPT (score 0.70, birthDate 1910, attachedToSubject L4HQ-CBN). All three are likely the same underlying marriage event (groom/bride/certificate entries). Reading KMZP-HPT for parentage data."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-10T20:23:54.196Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Sunseri",
+        "givenName": "Angelina",
+        "deathYearFrom": 1988,
+        "deathYearTo": 1991,
+        "deathPlace": "Pennsylvania",
+        "recordType": "death",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 67,
+      "notes": "67 results; top matches are SSDI (J2S3-S23, score 5.4, 5 stars L4HQ-CBN) and Find a Grave (QVKF-NKCZ, 5 stars L4HQ-CBN) \u2014 both already in the tree. No Pennsylvania death certificate found for Angelina's 1989 death. PA death certs for deaths after ~1966 may not be fully indexed on FamilySearch. The SSDI and FAG do not name parents."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-10T20:31:55.001Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Aiello",
+        "givenName": "Pete",
+        "givenNameAlt": "Peter",
+        "birthYearFrom": 1877,
+        "birthYearTo": 1887,
+        "birthPlace": "Italy",
+        "anyPlace": "Pennsylvania",
+        "recordType": "immigration",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 6,
+      "notes": "6 results for Pietro Aiello. Top two candidates both have birthDate 29 June 1882, birthPlace Italy: (1) Naturalization 1905 Pittsburgh (6V5Y-5L3D, rank score 0.23); (2) Passport Application 1913 Pennsylvania (QV5Y-GLRR, rank score 0.23). Low scores reflect thin I1 stub. Qualitative match strong: Pietro=Pete, ~1882, Italy, Pittsburgh. Reading 1905 naturalization to check for wife/family data. Remaining 4 results have birthDate 1887 \u2014 likely different person."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"United States, Census, 1940,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MXH-K7DZ : accessed 10 July 2026), Household of Pete Aiello, Ward 3, Pittsburgh City, Allegheny County, Pennsylvania; citing NARA digital publication T627, roll 3534.",
+      "citation_detail": {
+        "who": "Pete Aiello household",
+        "what": "United States, Census, 1940",
+        "when_created": "1940",
+        "when_accessed": "2026-07-10",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Ward 3, Pittsburgh City, Allegheny County, Pennsylvania"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MXH-K7DZ",
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Pennsylvania, County Marriages, 1775-1991,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KMZP-HPT : accessed 10 July 2026), Anthony Sunseri and Angelina Aiello, 10 October 1941, Allegheny County, Pennsylvania.",
+      "citation_detail": {
+        "who": "Anthony Sunseri and Angelina Aiello",
+        "what": "Pennsylvania, County Marriages, 1775-1991",
+        "when_created": "1941",
+        "when_accessed": "2026-07-10",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Allegheny County, Pennsylvania"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:9MD3-KB27",
+      "notes": "FamilySearch derivative index. Original image at ark:/61903/3:1:33S7-9P8G-QH6 (not yet read). Record names father of bride as 'Peter' and mother of bride as 'Felicia Scalise'.",
+      "log_entry_id": "log_005"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG3",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "Name",
+      "value": "Pete Aiello",
+      "structured_value": {
+        "given": "Pete",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely self or spouse",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG3",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "about 1882 (derived from age in 1940 census)",
+      "structured_value": {
+        "year": "1882"
+      },
+      "date": "1882",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely self",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG3",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "Italy",
+      "structured_value": {
+        "place": "Italy"
+      },
+      "place": "Italy",
+      "standard_place": "Italy",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely self",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG3",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "fact_type": "Residence",
+      "value": "Ward 3, Pittsburgh, Allegheny, Pennsylvania, 1940",
+      "structured_value": {
+        "place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+      },
+      "place": "Ward 3, Pittsburgh City, Allegheny, Pennsylvania, United States",
+      "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGQ",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Name",
+      "value": "Felicia Aiello",
+      "structured_value": {
+        "given": "Felicia",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGQ",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "about 1882 (derived from age in 1940 census)",
+      "structured_value": {
+        "year": "1882"
+      },
+      "date": "1882",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGQ",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "Italy",
+      "structured_value": {
+        "place": "Italy"
+      },
+      "place": "Italy",
+      "standard_place": "Italy",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG7",
+      "record_persona_id": "p_13959186965",
+      "record_role": "child_1",
+      "fact_type": "Name",
+      "value": "Angelina Aiello",
+      "structured_value": {
+        "given": "Angelina",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG7",
+      "record_persona_id": "p_13959186965",
+      "record_role": "child_1",
+      "fact_type": "Birth",
+      "value": "about 1910 (derived from age in 1940 census)",
+      "structured_value": {
+        "year": "1910"
+      },
+      "date": "1910",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG7",
+      "record_persona_id": "p_13959186965",
+      "record_role": "child_1",
+      "fact_type": "Birth",
+      "value": "South America",
+      "structured_value": {
+        "place": "South America"
+      },
+      "place": "South America",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG7",
+      "record_persona_id": "p_13959186965",
+      "record_role": "child_1",
+      "fact_type": "MaritalStatus",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG7",
+      "record_persona_id": "p_13959186965",
+      "record_role": "child_1",
+      "fact_type": "Relationship",
+      "value": "Angelina Aiello listed as daughter of Pete Aiello (head of household) in the 1940 federal census relationship column",
+      "structured_value": {
+        "relationship_type": "ParentChild",
+        "related_person_role": "parent"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The 1940 census relationship column explicitly records 'daughter' for Angelina relative to Pete Aiello (head). This is the most direct parentage evidence in the record. Note this column names only one parent (the head); the mother relationship requires a separate inference (see a_013). No known bias motive; Pete was age ~58 in 1940 and the family had been in Pittsburgh for at least 15+ years."
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG7",
+      "record_persona_id": "p_13959186965",
+      "record_role": "child_1",
+      "fact_type": "Relationship",
+      "value": "Angelina Aiello inferred as child of Felicia Aiello (wife of head) from 1940 census household structure \u2014 wife of head presumed mother of daughters in household",
+      "structured_value": {
+        "relationship_type": "ParentChild_inferred",
+        "related_person_role": "parent"
+      },
+      "information_quality": "indeterminate",
+      "informant": "analyst inference: Felicia Aiello listed as wife of Pete Aiello (head), who is recorded as Angelina's father; Felicia inferred as Angelina's mother from household structure",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The 1940 census only explicitly states Angelina is the daughter of the head (Pete). The inference that Felicia is the biological mother rests on the normative assumption that the wife of the head is also the mother of children in the household. Stepmother and second-marriage scenarios would produce the same household structure without biological maternity. This assertion requires corroboration from a birth record, Italian parish register, or South American civil record to prove rather than merely suggest the mother."
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG7",
+      "record_persona_id": "p_13959186965",
+      "record_role": "child_1",
+      "fact_type": "Residence",
+      "value": "Ward 3, Pittsburgh City, Allegheny, Pennsylvania, 1940",
+      "structured_value": {
+        "place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+      },
+      "place": "Ward 3, Pittsburgh City, Allegheny, Pennsylvania, United States",
+      "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGW",
+      "record_persona_id": null,
+      "record_role": "child_2",
+      "fact_type": "Name",
+      "value": "Anthony Aiello",
+      "structured_value": {
+        "given": "Anthony",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGW",
+      "record_persona_id": null,
+      "record_role": "child_2",
+      "fact_type": "Birth",
+      "value": "South America, about 1912",
+      "structured_value": {
+        "place": "South America",
+        "year": "1912"
+      },
+      "place": "South America",
+      "date": "1912",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG4",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "Name",
+      "value": "Amelia Aiello",
+      "structured_value": {
+        "given": "Amelia",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Anthony Aiello (b. ~1912, South America) is Angelina's sibling; his South American birth corroborates that Pete and Felicia Aiello had children in South America in the same period (1910-1921). This is indirect corroboration that Angelina, also born c.1910 in South America, is their daughter."
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YG4",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "Birth",
+      "value": "South America, about 1917",
+      "structured_value": {
+        "place": "South America",
+        "year": "1917"
+      },
+      "place": "South America",
+      "date": "1917",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGH",
+      "record_persona_id": null,
+      "record_role": "child_4",
+      "fact_type": "Name",
+      "value": "Natalie Aiello",
+      "structured_value": {
+        "given": "Natalie",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Amelia Aiello (b. ~1917, South America) is Angelina's sibling; her South American birth corroborates the family's sustained presence in South America from at least 1910-1921."
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGH",
+      "record_persona_id": null,
+      "record_role": "child_4",
+      "fact_type": "Birth",
+      "value": "South America, about 1921",
+      "structured_value": {
+        "place": "South America",
+        "year": "1921"
+      },
+      "place": "South America",
+      "date": "1921",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGC",
+      "record_persona_id": null,
+      "record_role": "child_5",
+      "fact_type": "Name",
+      "value": "William Aiello",
+      "structured_value": {
+        "given": "William",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Natalie Aiello (b. ~1921, South America) is Angelina's sibling; her South American birth marks the latest date the family is known to have been in South America before relocating to Pennsylvania."
+    },
+    {
+      "id": "a_022",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGC",
+      "record_persona_id": null,
+      "record_role": "child_5",
+      "fact_type": "Birth",
+      "value": "Pennsylvania, about 1924",
+      "structured_value": {
+        "place": "Pennsylvania, United States",
+        "year": "1924"
+      },
+      "place": "Pennsylvania, United States",
+      "standard_place": "Pennsylvania, United States",
+      "date": "1924",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_023",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGZ",
+      "record_persona_id": null,
+      "record_role": "child_6",
+      "fact_type": "Name",
+      "value": "Helen Aiello",
+      "structured_value": {
+        "given": "Helen",
+        "surname": "Aiello"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_024",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KQ6N-YGZ",
+      "record_persona_id": null,
+      "record_role": "child_6",
+      "fact_type": "Birth",
+      "value": "Pennsylvania, about 1926",
+      "structured_value": {
+        "place": "Pennsylvania, United States",
+        "year": "1926"
+      },
+      "place": "Pennsylvania, United States",
+      "standard_place": "Pennsylvania, United States",
+      "date": "1926",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member, likely a parent",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_025",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KMZP-HPT",
+      "record_persona_id": "p_13859728916",
+      "record_role": "bride",
+      "fact_type": "Name",
+      "value": "Angelina Aiello",
+      "structured_value": {
+        "given": "Angelina",
+        "surname": "Aiello"
+      },
+      "information_quality": "primary",
+      "informant": "bride (Angelina Aiello)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_026",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KMZP-HPT",
+      "record_persona_id": "p_13859728916",
+      "record_role": "bride",
+      "fact_type": "Birth",
+      "value": "1910",
+      "structured_value": {
+        "year": "1910"
+      },
+      "date": "1910",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "bride (Angelina Aiello)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_027",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KMZP-HPT",
+      "record_persona_id": "p_13859728916",
+      "record_role": "bride",
+      "fact_type": "Marriage",
+      "value": "10 October 1941, Allegheny, Pennsylvania",
+      "date": "10 October 1941",
+      "date_certainty": "exact",
+      "place": "Allegheny, Pennsylvania, United States",
+      "standard_place": "Allegheny, Pennsylvania, United States",
+      "information_quality": "primary",
+      "informant": "official record of marriage license application",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_028",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KMZP-HPT",
+      "record_persona_id": "p_13859728917",
+      "record_role": "father_of_bride",
+      "fact_type": "Name",
+      "value": "Peter (given name only; no surname recorded)",
+      "structured_value": {
+        "given": "Peter"
+      },
+      "information_quality": "primary",
+      "informant": "bride (Angelina Aiello)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride reported her father's given name as 'Peter'. No surname recorded for the father on this license. The 1940 census records the same man as 'Pete Aiello'; Pete is the common diminutive of Peter \u2014 consistent identification.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_029",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:KMZP-HPT",
+      "record_persona_id": "p_13859728918",
+      "record_role": "mother_of_bride",
+      "fact_type": "Name",
+      "value": "Felicia Scalise (mother's maiden name)",
+      "structured_value": {
+        "given": "Felicia",
+        "surname": "Scalise"
+      },
+      "information_quality": "primary",
+      "informant": "bride (Angelina Aiello)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride reported her mother as 'Felicia Scalise'. Scalise is the mother's birth/maiden surname per PA marriage license practice. The 1940 census shows Felicia Aiello as Pete's wife; her maiden name was Scalise.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Pete Aiello, head_of_household in 1940 census (ARK KQ6N-YG3). Stub I1 created from this record; name, gender, household position, and co-residence with wife Felicia and South American-born children all match. Single-record stub \u2014 probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth year ~1882 for Pete Aiello (head, 1940 census KQ6N-YG3). Consistent with I1 stub fact F1.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birthplace Italy for Pete Aiello (head, 1940 census KQ6N-YG3). Consistent with I1 stub fact F1.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Residence 1940 Ward 3 Pittsburgh for Pete Aiello (head, 1940 census KQ6N-YG3). Consistent with I1.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Felicia Aiello, wife of head in 1940 census (ARK KQ6N-YGQ). Stub I2 created from this record; name, gender, position as Pete's wife, co-residence with South American-born children all match. Single-record stub \u2014 probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth year ~1882 for Felicia Aiello (wife, 1940 census KQ6N-YGQ). Consistent with I2 stub fact F2.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birthplace Italy for Felicia Aiello (wife, 1940 census KQ6N-YGQ). Consistent with I2 stub.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Angelina Aiello, child_1 in 1940 census (ARK KQ6N-YG7, persona p_13959186965). rank_search_matches score 0.82 vs L4HQ-CBN; record already attachedToSubject. Strong match on all four core identifiers: name 'Angelina Aiello' exact; birth year ~1910 matches tree 10 Oct 1910; birthplace South America matches tree; residence Pittsburgh 1940 matches tree Ward 3 residence fact.",
+      "match_score": 0.82,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Birth year ~1910 (child_1, 1940 census KQ6N-YG7). Consistent with tree L4HQ-CBN b. 10 Oct 1910. Score 0.82.",
+      "match_score": 0.82,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Birthplace South America (child_1, 1940 census KQ6N-YG7). Matches L4HQ-CBN tree birthplace 'South America'. Score 0.82.",
+      "match_score": 0.82,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Marital status Single (child_1, 1940 census KQ6N-YG7). Consistent with L4HQ-CBN \u2014 she married Anthony Sunseri in Oct 1941, after this census. Score 0.82.",
+      "match_score": 0.82,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Angelina recorded as 'daughter' of Pete Aiello (head) in 1940 census relationship column (KQ6N-YG7). L4HQ-CBN is the Angelina persona. Score 0.82.",
+      "match_score": 0.82,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Same relationship assertion (Angelina is daughter of head Pete Aiello) bears on Pete as the named parent. Linked to I1 as the paternal figure in this household record. No separate same_person score was computed for Pete from Angelina's persona.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "L4HQ-CBN",
+      "confidence": "probable",
+      "rationale": "Inferred relationship: Angelina's mother inferred as Felicia Aiello (wife of head) from household structure (KQ6N-YG7). The 1940 census relationship column names only the head as parent; maternity is an analytical inference \u2014 hence probable rather than confident. Score 0.82.",
+      "match_score": 0.82,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Same inferred relationship assertion (Felicia as mother of Angelina) bears on Felicia as the inferred maternal figure. Linked to I2. No separate same_person score for Felicia from Angelina's persona.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Residence 1940 Ward 3 Pittsburgh (child_1, 1940 census KQ6N-YG7). Matches L4HQ-CBN tree residence fact for Pittsburgh, Allegheny, Pennsylvania, 1940. Score 0.82.",
+      "match_score": 0.82,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Anthony Aiello, child_2 in 1940 census (ARK KQ6N-YGW). Stub I3 created from this record; name Anthony Aiello, gender Male, born ~1912 South America all match. Single-record stub \u2014 probable.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birth South America ~1912 for Anthony Aiello (child_2, KQ6N-YGW). Consistent with I3 stub.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Amelia Aiello, child_3 in 1940 census (ARK KQ6N-YG4). Stub I4 created from this record; name Amelia Aiello, gender Female, born ~1917 South America all match. Single-record stub \u2014 probable.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birth South America ~1917 for Amelia Aiello (child_3, KQ6N-YG4). Consistent with I4 stub.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Natalie Aiello, child_4 in 1940 census (ARK KQ6N-YGH). Stub I5 created from this record; name Natalie Aiello, gender Female, born ~1921 South America all match. Single-record stub \u2014 probable.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Birth South America ~1921 for Natalie Aiello (child_4, KQ6N-YGH). Consistent with I5 stub.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "William Aiello, child_5 in 1940 census (ARK KQ6N-YGC). Stub I6 created from this record; name William Aiello, gender Male, born ~1924 Pennsylvania all match. Single-record stub \u2014 probable.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Birth Pennsylvania ~1924 for William Aiello (child_5, KQ6N-YGC). Consistent with I6 stub.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_023",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Helen Aiello, child_6 in 1940 census (ARK KQ6N-YGZ). Stub I7 created from this record; name Helen Aiello, gender Female, born ~1926 Pennsylvania all match. Single-record stub \u2014 probable.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_024",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Birth Pennsylvania ~1926 for Helen Aiello (child_6, KQ6N-YGZ). Consistent with I7 stub.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_025",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Bride name 'Angelina Aiello' in 1941 PA marriage record (KMZP-HPT, score 0.70, attachedToSubject). Name, birth year 1910, and spouse Anthony Sunseri all match L4HQ-CBN exactly.",
+      "match_score": 0.7,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_026",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Bride birth year 1910 (KMZP-HPT). Consistent with tree L4HQ-CBN b. 10 Oct 1910. Score 0.70.",
+      "match_score": 0.7,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_027",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Marriage 10 October 1941, Allegheny, PA (KMZP-HPT). Matches tree L4HQ-CBN marriage fact Oct 1941 Allegheny. Score 0.70.",
+      "match_score": 0.7,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Father of bride named 'Peter' in 1941 PA marriage record (KMZP-HPT, father_of_bride persona p_13859728917). No surname given on license. I1 (Pete Aiello) is Pete/Peter Aiello, head of household in 1940 census \u2014 'Pete' is the common diminutive of 'Peter', same person. Probable because surname not stated and no same_person score for this persona vs I1.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_028",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Father_of_bride assertion in Angelina's 1941 marriage record directly bears on Angelina (L4HQ-CBN) as the bride whose father is being named. The record is already attached to L4HQ-CBN (score 0.70). The assertion is part of L4HQ-CBN's own marriage document.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Mother of bride named 'Felicia Scalise' in 1941 PA marriage record (KMZP-HPT, mother_of_bride persona p_13859728918). I2 stub is Felicia Aiello (n\u00e9e Scalise) from the 1940 census \u2014 'Scalise' is her maiden surname per this record. Strong match: given name Felicia, maiden name Scalise, wife of Pete/Peter Aiello. Probable because no separate same_person score computed for Felicia's persona.",
+      "match_score": null,
+      "created": "2026-07-10"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_029",
+      "person_id": "L4HQ-CBN",
+      "confidence": "confident",
+      "rationale": "Mother_of_bride assertion in Angelina's 1941 marriage record directly bears on Angelina (L4HQ-CBN) as the bride whose mother is being named. Part of L4HQ-CBN's own marriage document (score 0.70, attachedToSubject).",
+      "match_score": null,
+      "created": "2026-07-10"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_007",
+        "a_008",
+        "a_012",
+        "a_013",
+        "a_017",
+        "a_019",
+        "a_025",
+        "a_028",
+        "a_029"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searches were conducted on FamilySearch across the following record types for Angelina Aiello and her parents in Pittsburgh, Allegheny County, Pennsylvania: 1920 U.S. Census (Allegheny County) \u2014 negative for the subject's household; a Pete Aiello household in Washington, PA with a daughter Angelina born 1910 was also found but excluded because that daughter's birthplace is Pennsylvania, conflicting with the subject's established South American birthplace. 1930 U.S. Census (Allegheny County) \u2014 negative. 1940 U.S. Census (Pittsburgh, Allegheny County) \u2014 positive, Pete Aiello household enumerating Angelina as daughter. Pennsylvania County Marriages 1775\u20131991 for the October 1941 Sunseri\u2013Aiello marriage \u2014 positive, naming Peter Aiello as father-of-bride and Felicia Scalise as mother-of-bride. Pittsburgh naturalization records \u2014 positive for Pietro Aiello (born 29 Jun 1882, Italy, naturalized 1905) but record contains no family data. Social Security Death Index and Find-a-Grave for Angelina Sunseri \u2014 partial (death confirmed, no PA death certificate accessed). A Pennsylvania birth certificate was appropriately bypassed because Angelina was born in South America. The original image of the 1941 Allegheny County marriage license (FamilySearch ark:/61903/3:1:33S7-9P8G-QH6) was identified but not transcribed \u2014 accessed only as a derivative index. Research is declared reasonably exhaustive for a probable-tier conclusion; to advance to proved, the marriage license original image should be read to confirm the indexed parental names.",
+      "narrative_markdown": "## Parentage of Angelina M. Aiello, born 10 October 1910\n\n**Conclusion: PROBABLE**\n\n### Summary\n\nTwo independent records corroborate that **Pete (Peter) Aiello** and **Felicia, born Scalise**, were the parents of Angelina M. Aiello (later Sunseri), born 10 October 1910 in South America, who resided in Pittsburgh, Allegheny County, Pennsylvania by 1940.\n\n### Evidence\n\n**Source 1 \u2014 United States Census, 1940, Pittsburgh, Ward 3, Allegheny, Pennsylvania (original source, FamilySearch)**\n\nThe 1940 federal census schedule for Pittsburgh Ward 3 enumerates a household headed by \"Pete Aiello,\" age approximately 58, born Italy, with wife \"Felicia,\" age approximately 58, also born Italy, and daughter \"Angelina,\" age 29, born South America [a_001, a_003, a_007, a_008]. The relationship-to-head column records Angelina's position as \"daughter\" [a_005], providing direct evidence that Pete Aiello was her father. This is an **original source**. The parental relationship assertion carries **indeterminate information quality** \u2014 the census enumerator recorded what an unknown household respondent reported; the identity of the informant cannot be established for a pre-1940 census. Felicia's role as Angelina's mother is supported by **indirect evidence**: Felicia is enumerated as Pete's wife in the same household where Angelina appears as daughter [a_013].\n\nAlso enumerated in this household were Anthony, Amelia, and Natalie Aiello (born South America) [a_017, a_019] and William and Helen Aiello (born Pennsylvania) \u2014 consistent with a family that immigrated from South America to Pittsburgh approximately 1922\u20131923.\n\n**Source 2 \u2014 Pennsylvania County Marriages, 1775\u20131991, Allegheny County, October 1941 (derivative index, FamilySearch)**\n\nThe indexed marriage record for the October 1941 Allegheny County marriage of Anthony Joseph Sunseri and Angelina Aiello explicitly names **\"Peter Aiello\"** as father of the bride and **\"Felicia Scalise\"** as mother of the bride [a_028, a_029]. This record is a **derivative source** (an index to an original marriage license; the license image was identified at ark:/61903/3:1:33S7-9P8G-QH6 but not transcribed). The information quality for the parental names is **primary** \u2014 the bride herself was the most probable informant for her own parents' names at the time of license application. Both assertions constitute **direct evidence** for the parentage question.\n\nThis record also reveals Felicia's birth surname as **Scalise** \u2014 a detail absent from the 1940 census, where she appears under the married surname Aiello.\n\n### Correlation and Weighing\n\nThe two sources are **independent** in origin: one is a federal census; the other is a Pennsylvania marriage license. Both agree on the father (Pete / Peter Aiello, born Italy ca. 1882) and on the mother (Felicia, born Italy ca. 1882, married surname Aiello, birth surname Scalise). The naming variants \u2014 Pete (1940 census), Peter (1941 marriage record), Pietro (a 1905 Pittsburgh naturalization for a Pietro Aiello born 29 June 1882, Italy) \u2014 are consistent anglicizations and the standard Italian form of the same name and are not in conflict. No contradictions exist between the two sources on the parentage question.\n\n### Alternative Candidates Considered\n\nA 1920 census search for Pete Aiello in the Pittsburgh area returned a household in Washington, Pennsylvania, with a head named Pete Aiello and a daughter named Angelina born approximately 1910. This candidate was examined and excluded: the daughter's recorded birthplace in that record is Pennsylvania, which directly conflicts with the subject's established South American birthplace. The 1940 census unambiguously records Angelina Aiello (age 29) as born in South America [a_007], as do the birth records for her siblings in the same household. The Washington County Pete Aiello household is therefore a different family, not the research subject's.\n\n### GPS Components Assessment\n\n1. **Reasonably exhaustive search**: The 1920 and 1930 censuses were searched (negative). The 1940 census, the 1941 marriage record, and Pittsburgh naturalization records were examined (positive). Social Security and Find-a-Grave records were found (partial; no PA death certificate accessed). A Pennsylvania birth certificate was not sought because Angelina was born in South America. An alternative Pete Aiello household in Washington, PA was identified and excluded on birthplace grounds. Research is reasonably exhaustive for a probable-tier conclusion.\n2. **Complete citations**: Both sources carry working citations to FamilySearch collections with collection names and access dates.\n3. **Analysis and correlation**: Both sources analyzed above. Informants identified where possible; information quality classified per informant proximity to the events reported.\n4. **Resolution of conflicts**: No conflicts between the two sources on the parentage question were identified. The alternative candidate household in Washington, PA was excluded on birthplace grounds.\n5. **Written conclusion**: This summary.\n\n**Tier: PROBABLE.** The preponderance of available evidence \u2014 two independent sources, one of which contains primary-quality information \u2014 identifies Pete (Peter) Aiello and Felicia, born Scalise, as the parents of Angelina M. Aiello. The conclusion is *probable* rather than *proved* because: (a) the marriage record was accessed only as a derivative index, with the original license image not yet transcribed; and (b) the 1940 census relationship assertion carries indeterminate information quality. To advance to *proved*, the original marriage license image should be read to confirm the parental names as indexed, yielding a second original source with primary-quality parentage evidence."
+    }
+  ],
+  "evaluations": []
+}

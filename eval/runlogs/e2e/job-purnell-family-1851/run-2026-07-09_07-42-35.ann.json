@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f3": "Maiden name \"Deacon\" does not appear anywhere in the tree or research.json — no marriage record was searched (proof_summaries flags this gap explicitly). Graded partial rather than false per genealogist judgment call."
+  }
+}

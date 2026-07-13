@@ -2,20 +2,22 @@
   "test": {
     "id": "ut_proof_conclusion_009",
     "skill": "proof-conclusion",
-    "name": "Informant primary/secondary question should route to assertion-classification",
+    "name": "Informant primary/secondary question should route to record-extraction",
     "type": "negative",
-    "description": "The user asks whether a death-certificate informant is primary or secondary for a fact. That is GPS Step 3 evidence classification (assertion-classification), not writing a proof conclusion.",
+    "description": "The user challenges the persisted 'secondary' informant classification for the father's name on src_004 and asks for a reevaluation. That is GPS Step 3 evidence classification — owned by record-extraction since the assertion-classification merge (2026-07-11) — not writing a proof conclusion. A reevaluation is a classification-change request, so neither a generic informant lecture nor an inline read-back of the stored value can satisfy it.",
     "tags": ["near-miss", "proof-vs-classification", "boundary"]
   },
   "input": {
-    "user_message": "Is the death-certificate informant primary or secondary for the father's name?",
+    "user_message": "I'm not sure 'secondary' is right for the father's name on src_004 — can you reevaluate the informant classification?",
     "scenario": "mid-research-flynn"
   },
   "negative": {
-    "correct_skill": ["assertion-classification"],
-    "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — assertion-classification's job. proof-conclusion uses classifications that already exist on assertions; it does not assign them."
+    "correct_skill": ["record-extraction"],
+    "explanation": "Judging whether an informant provides primary or secondary information is three-layer evidence classification — record-extraction's job (it writes classifications at extraction and refines them on request; the former assertion-classification skill was merged into it). proof-conclusion uses classifications that already exist on assertions; it does not assign them."
   },
   "judge_context": [
-    "Should route to assertion-classification rather than producing a GPS proof narrative"
+    "Should route to record-extraction (the classification owner since the assertion-classification merge) rather than producing a GPS proof narrative",
+    "The user asks to REEVALUATE a persisted classification — a classification-change request against src_004 (Patrick's 1908 death certificate), whose father's-name assertion a_013 already exists in research.json with information_quality 'secondary' and informant James Brown (son-in-law). Correct behavior routes the reevaluation to record-extraction; an inline read-back of the stored value, however accurate, does not satisfy the request and fails",
+    "Reporting what a_013 currently says on file (with attribution to the stored assertion) alongside the record-extraction redirect is acceptable; any write to research.json from this boundary fails"
   ]
 }

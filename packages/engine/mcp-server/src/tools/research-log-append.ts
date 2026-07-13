@@ -11,6 +11,7 @@
 import { join } from "path";
 import { readFile, unlink } from "fs/promises";
 import { validateParsed } from "../validation/validator.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson } from "../utils/project-io.js";
 import { finalizeStagedResults } from "../utils/results-staging.js";
@@ -165,7 +166,9 @@ export async function researchLogAppend(
     // 2. Read project files (research mutated in memory only; tree read for
     //    cross-file checks during validation).
     const research = await readProjectJson(projectPath, "research.json");
-    const tree = await readProjectJson(projectPath, "tree.gedcomx.json");
+    const { tree } = sanitizeTree(
+      await readProjectJson(projectPath, "tree.gedcomx.json"),
+    );
     if (!Array.isArray(research.log)) {
       return { ok: false, errors: ["research.json `log` is missing or not an array"] };
     }

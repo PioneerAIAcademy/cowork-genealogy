@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_spriggs_marriage_1926",
+    "objective": "Who did Reuben Spencer Spriggs marry, and when and where did the marriage take place?",
+    "subject_person_ids": [
+      "L64C-QQX"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

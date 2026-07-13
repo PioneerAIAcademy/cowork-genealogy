@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Elijah Wilkins's wife was Sarah 'Sally' Millard (recorded in the tree under her married name, Sally Wilkins). She was born about 1818 in Muhlenberg County, Kentucky. Recovering her as Elijah's wife Sarah/Sally satisfies this finding; the maiden name Millard, which comes from the 1834 marriage record, is a bonus.",
+      "details": {
+        "subject_person": {
+          "name": "Elijah Wilkins"
+        },
+        "relation": "spouse",
+        "target_person": {
+          "name": "Sarah Millard",
+          "birth": "about 1818, Muhlenberg County, Kentucky"
+        }
+      },
+      "supporting_sources": [
+        "Kentucky, County Marriages, 1786-1965 / Kentucky, Marriages, 1785-1979 — marriage of Elijah Wilkins and Sarah (Sally) Millard, December 1834, Muhlenberg County, Kentucky.",
+        "1850, 1860, and 1870 U.S. censuses, Muhlenberg County, Kentucky, listing Elijah Wilkins with wife Sally.",
+        "Death certificates of children (e.g. Polly Shover, George Addison Wilkins, Ivy Wilkins) naming their mother."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Elijah Wilkins married Sarah (Sally) Millard in December 1834 in Kentucky. The Kentucky marriage index gives the month and year (December 1834) and the state; the specific county, Muhlenberg (established from the censuses), is a bonus. Recovering the December 1834 Kentucky marriage satisfies this finding.",
+      "details": {
+        "subject_person": {
+          "name": "Elijah Wilkins"
+        },
+        "fact_type": "Marriage",
+        "date": "December 1834",
+        "place": "Kentucky, United States"
+      },
+      "supporting_sources": [
+        "Kentucky, Marriages, 1785-1979 / Kentucky, County Marriages, 1786-1965, entry for Elijah Wilkins, married December 1834, Kentucky (Muhlenberg County per the census evidence)."
+      ],
+      "required": true
+    }
+  ]
+}

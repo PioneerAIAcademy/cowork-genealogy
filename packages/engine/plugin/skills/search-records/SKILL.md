@@ -191,7 +191,17 @@ candidates; you still confirm the top ones:
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
   consistency. Flag any impossibility as `needs-review` regardless of score —
-  score is one input, reason is the arbiter.
+  score is one input, reason is the arbiter. A birth year that conflicts with
+  the known subject by more than a year or two is itself a different-person
+  signal, not a rounding error to explain away: a high name-and-place score with
+  the dates several years apart is the classic signature of a *namesake* in a
+  crowded parish — exactly the case where the score misleads. Don't reach for an
+  excuse (imprecise census ages, indexing slips) and adopt the record on the
+  strength of the score; require independent confirmation that it is the *same*
+  person — anchors that match the known subject (spouse, children, later
+  residences, FAN network) — before treating it as the subject's. Absent that
+  confirmation, flag it `needs-review`, keep the plan item `in_progress`, and do
+  not hand the record or its parents to extraction as the subject's.
 - **Needs-review band.** A genuinely *different* same-name/same-place person can
   land inside the match band, and sparse/dateless records score unstably. When the
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat

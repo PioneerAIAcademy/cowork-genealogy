@@ -371,7 +371,7 @@ def test_negative_judge_context_frames_decline_and_keeps_test_context():
     base-only judge grades the decline, not the skill's craft task) and
     appends the test's own judge_context unchanged."""
     spec = load_test_from_dict({
-        "test": {"id": "ut_o_003", "skill": "assertion-classification",
+        "test": {"id": "ut_o_003", "skill": "citation",
                   "name": "n", "type": "negative", "description": "x",
                   "tags": []},
         "input": {"user_message": "m", "scenario": None},
@@ -382,7 +382,7 @@ def test_negative_judge_context_frames_decline_and_keeps_test_context():
     ctx = _negative_judge_context(spec)
     assert "NEGATIVE test" in ctx[0]
     assert "record-extraction" in ctx[0]
-    assert "assertion-classification" in ctx[1]
+    assert "citation" in ctx[1]
     assert ctx[-1] == "Should explicitly name record-extraction"
 
 
