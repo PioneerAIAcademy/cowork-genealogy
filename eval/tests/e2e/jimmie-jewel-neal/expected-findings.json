@@ -3,40 +3,42 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Manley Madison Wood was the maternal grandfather of Jimmie Jewel Neal — that is, the father of her mother Martha J Wood. Manley was born about 1808 in Spartanburg, South Carolina, and died 10 July 1863 in Summit, Blount, Alabama.",
+      "description": "J. H. Sampson was the maternal grandfather of Jimmie Jewel Neal — that is, the father of her mother Martha J Wood, whose maiden surname was Sampson, not Wood. He was born about 1820 (birthplace recorded inconsistently as Georgia in the 1870 census and North Carolina in the 1880 census — not resolved by any record found).",
       "details": {
         "subject_person": {
           "name": "Jimmie Jewel Neal"
         },
         "relation": "maternal_grandfather",
         "target_person": {
-          "name": "Manley Madison Wood",
-          "birth": "about 1808, Spartanburg, South Carolina"
+          "name": "J. H. Sampson",
+          "birth": "about 1820 (birthplace disputed)"
         }
       },
       "supporting_sources": [
-        "FamilySearch Family Tree compiled profile for Martha J Wood, listing Manley Madison Wood as father.",
-        "1860 U.S. Census entry for M M Wood and Martha Wood, Blount, Alabama, showing the couple's household."
+        "Arkansas, County Marriages, 1837-1957, entry for James W Neill and Martha A Sampson, married 3 January 1875, Nevada County, Arkansas — Martha's own marriage record, naming her maiden surname as Sampson and contradicting the compiled FamilySearch tree's unsourced claim that it was Wood.",
+        "United States, Census, 1880, entry for J. H. Sampson (head) and Louisa Sampson (wife), Caney Township, Nevada County, Arkansas — the relationship column explicitly records son Thomas R. Sampson (also found in the 1870 census of the same household) as son of the head and wife.",
+        "United States, Census, 1870, household of T Sampson, Ouachita County, Arkansas — same family three counties and ten years earlier; the household head's initial is indexed as 'T' here versus 'J. H.' in 1880, most likely a transcription misreading rather than a different person."
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "relationship",
-      "description": "Martha Patsey Ford was the maternal grandmother of Jimmie Jewel Neal — that is, the mother of Martha J Wood and wife of Manley Madison Wood. Martha Patsey was born 28 October 1814 in Spartanburg, South Carolina, and died 14 August 1863 in Browns Valley, Blount, Alabama.",
+      "description": "Louisa Sampson was the maternal grandmother of Jimmie Jewel Neal — that is, the mother of Martha J Wood (maiden name Sampson) and wife of J. H. Sampson. She was born about 1820 in Georgia.",
       "details": {
         "subject_person": {
           "name": "Jimmie Jewel Neal"
         },
         "relation": "maternal_grandmother",
         "target_person": {
-          "name": "Martha Patsey Ford",
-          "birth": "28 October 1814, Spartanburg, South Carolina"
+          "name": "Louisa Sampson",
+          "birth": "about 1820, Georgia"
         }
       },
       "supporting_sources": [
-        "FamilySearch Family Tree compiled profile for Martha J Wood, listing Martha Patsey Ford as mother.",
-        "1860 U.S. Census entry for M M Wood and Martha Wood, Blount, Alabama, showing the couple's household."
+        "United States, Census, 1880, entry for J. H. Sampson and Louisa Sampson, Caney Township, Nevada County, Arkansas — Louisa born about 1820 in Georgia, with the relationship column tying the household together as a family.",
+        "United States, Census, 1870, household of T Sampson (wife indexed only by initial 'S'), Ouachita County, Arkansas — same household ten years earlier.",
+        "Arkansas, County Marriages, 1837-1957, entry for James W Neill and Martha A Sampson, married 3 January 1875, Nevada County, Arkansas — establishes the family's maiden surname as Sampson, the basis for searching Nevada/Ouachita County Sampson households rather than Wood households."
       ],
       "required": true
     }
