@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Kristian Fredrik Tollefsen Birkeland's father was Tollef Aadneson Aasland (born 1773, Time, Rogaland, Norway).",
+      "details": {
+        "subject_person": "Kristian Fredrik Tollefsen Birkeland (K87G-T89)",
+        "relation": "father",
+        "target_person": {
+          "name": "Tollef Aadneson Aasland",
+          "birth": "1773, Time, Rogaland, Norway"
+        }
+      },
+      "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — 1840 marriage entry naming the groom's father Tellef Aadnesen (Christian Tellefsen & Tellef Aadnesen, 5 Jul 1840)",
+        "Subject's patronymic surname 'Tollefsen' (son of Tollef)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "His mother was Inger Larsdatter Froyland. (Bonus — thinly attested; do not fail the run if she is not recovered.)",
+      "details": {
+        "subject_person": "Kristian Fredrik Tollefsen Birkeland (K87G-T89)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Inger Larsdatter Froyland",
+          "birth": "unknown"
+        }
+      },
+      "supporting_sources": [
+        "No FamilySearch record in the starting tree names her directly; recovery would require a baptism/parish record beyond the stripped set"
+      ],
+      "required": false
+    }
+  ]
+}

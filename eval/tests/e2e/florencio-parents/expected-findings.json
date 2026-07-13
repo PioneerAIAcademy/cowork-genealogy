@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Miguel Caetano de Araujo was the father of Rivanette Florencio de Araujo.",
+      "details": {
+        "subject_person": "Rivanette Florencio de Araujo (GM4P-TYS)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Miguel Caetano de Araujo",
+          "birth": "1900, Brazil"
+        }
+      },
+      "supporting_sources": [
+        "Brazilian Pernambuco civil registration records (1804-2023)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Josefa Florencio de Araujo was the mother of Rivanette Florencio de Araujo.",
+      "details": {
+        "subject_person": "Rivanette Florencio de Araujo (GM4P-TYS)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Josefa Florencio de Araujo",
+          "birth": "1906, Caruaru, Pernambuco, Brazil"
+        }
+      },
+      "supporting_sources": [
+        "Brazilian Pernambuco civil registration records (1804-2023)"
+      ],
+      "required": true
+    }
+  ]
+}

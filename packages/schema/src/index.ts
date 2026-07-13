@@ -55,6 +55,7 @@ export type InformantProximity =
   | 'witness'
   | 'household_member'
   | 'family_not_present'
+  | 'researcher'
   | 'official_duty'
   | 'unknown'
 
@@ -372,7 +373,15 @@ export interface GedcomxFact {
   type: string
   primary?: boolean
   date?: string
+  /** GEDCOM-canonical sidecar of `date` (e.g. `2 Oct 1876`, `Abt 1850`),
+   *  populated by the converter; LLM-authored facts may omit it. */
+  standard_date?: string
   place?: string
+  /** Standardized place-name sidecar of `place`, resolved via place_search. */
+  standard_place?: string
+  /** Qualifier carrying the fact's meaning when type+date+place isn't enough
+   *  (e.g. an Occupation fact's `"Newspaper Editor"`). */
+  value?: string
   sources?: GedcomxSourceRef[]
 }
 

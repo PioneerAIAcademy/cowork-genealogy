@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Pietro Aiello was the father of Angelina M Aiello. Born 25 August 1881 in Serrastretta, Catanzaro, Calabria, Italy; immigrated through Ellis Island; died 25 December 1975 in Pittsburgh. He heads the 1940 Pittsburgh household in which Angelina appears as a single daughter.",
+      "details": {
+        "subject_person": {
+          "name": "Angelina M Aiello",
+          "pid": "L4HQ-CBN"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Pietro Aiello",
+          "birth": "25 August 1881, Serrastretta, Calabria, Italy"
+        }
+      },
+      "supporting_sources": [
+        "1940 U.S. Census, Pittsburgh Ward 3, Allegheny County, Pennsylvania — household of Pete (Pietro) Aiello and Felicia Aiello, with daughter Angelina.",
+        "Find A Grave Index — 'Angelina M Aiello Sunseri'; parents buried at Saint Michaels Cemetery, Mount Oliver, Allegheny County."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Felicia Scalese was the mother of Angelina M Aiello. Born 15 February 1894 in Serrastretta, Calabria, Italy; died 3 June 1951 in Pittsburgh; buried at Saint Michaels Cemetery, Mount Oliver. She appears as the wife 'Felicia Aiello' in the household where Angelina is listed as a daughter. (Recovering her as Angelina's mother, Felicia, is the bar; the maiden surname 'Scalese' is corroborating.)",
+      "details": {
+        "subject_person": {
+          "name": "Angelina M Aiello",
+          "pid": "L4HQ-CBN"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Felicia Scalese",
+          "birth": "15 February 1894, Serrastretta, Calabria, Italy"
+        }
+      },
+      "supporting_sources": [
+        "1940 U.S. Census, Pittsburgh Ward 3, Allegheny County, Pennsylvania — 'Felicia Aiello' as wife of Pete/Pietro, with daughter Angelina.",
+        "Find A Grave / Pennsylvania death record for Felicia (Scalese) Aiello, d. 3 Jun 1951 (maiden name, corroborating)."
+      ],
+      "required": true
+    }
+  ]
+}

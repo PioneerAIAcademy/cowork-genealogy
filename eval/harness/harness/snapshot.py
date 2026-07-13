@@ -21,6 +21,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -30,6 +31,14 @@ from typing import Any, Iterable
 # ignores keys under this prefix so those legacy run logs re-validate without
 # a re-run rather than staying inactive forever on unrelated MCP-source churn.
 _MCP_SRC_PREFIX = "packages/engine/mcp-server/src/"
+
+# Plugin-agent delegation references in a SKILL.md body: `@plugin:<name>`.
+# A skill that delegates to a plugin agent depends on that agent's prompt
+# the same way it depends on its own references/ docs, so the agent file is
+# part of the skill's snapshot. Mirrored by AGENT_REF_RE / agentRefsInText
+# in eval/app/lib/snapshot.ts — the two must match (shared test vectors in
+# tests/unit/test_snapshot.py + eval/app/tests/unit/snapshot.test.ts).
+_AGENT_REF_RE = re.compile(r"@plugin:([a-z0-9-]+)")
 
 _COSMETIC_TEST_FIELDS = ("name", "description", "tags")
 _JSON_EXTS = {".json"}
@@ -84,6 +93,15 @@ def normalize(repo_relative_path: str, content: bytes) -> str:
         return content.hex()
 
 
+def agent_refs_in_text(text: str) -> list[str]:
+    """Sorted unique plugin-agent names referenced as `@plugin:<name>`.
+
+    Shared contract with `agentRefsInText` in eval/app/lib/snapshot.ts —
+    both sides must return the same names for the same input.
+    """
+    return sorted(set(_AGENT_REF_RE.findall(text)))
+
+
 def hash_content(text: str) -> str:
     """SHA-256 hex digest of normalized text. Inputs come from `normalize()`."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -106,6 +124,9 @@ def build_snapshot(
 
     Embeds:
       - `packages/engine/plugin/skills/<skill>/**`
+      - `packages/engine/plugin/agents/<name>.md` for each `@plugin:<name>`
+        reference in the skill's SKILL.md (the agent prompt is part of the
+        skill's behavior, so editing it must flip the run log inactive)
       - `eval/tests/unit/<skill>/**` (rubric + test files)
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
@@ -127,6 +148,15 @@ def build_snapshot(
 
     skill_dir = repo_root / "packages" / "engine" / "plugin" / "skills" / skill
     _embed_tree(snapshot, skill_dir, repo_root)
+
+    # Plugin-agent files the skill delegates to via `@plugin:<name>`.
+    skill_md = skill_dir / "SKILL.md"
+    if skill_md.is_file():
+        for agent in agent_refs_in_text(skill_md.read_text(encoding="utf-8")):
+            rel = f"packages/engine/plugin/agents/{agent}.md"
+            agent_path = repo_root / rel
+            if agent_path.is_file():
+                snapshot[rel] = normalize(rel, agent_path.read_bytes())
 
     tests_dir = repo_root / "eval" / "tests" / "unit" / skill
     _embed_tree(snapshot, tests_dir, repo_root)

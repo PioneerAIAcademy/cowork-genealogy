@@ -29,17 +29,25 @@ HERE = Path(__file__).resolve().parent
 HARNESS_DIR = HERE.parent
 sys.path.insert(0, str(HARNESS_DIR))
 
-from harness.snapshot import diff_snapshot_vs_disk, hash_file  # noqa: E402
+from harness.snapshot import agent_refs_in_text, diff_snapshot_vs_disk, hash_file  # noqa: E402
 from harness.versioning import classify  # noqa: E402
 
 
 REPO_ROOT = HARNESS_DIR.parents[1]
 RUNLOGS_DIR = REPO_ROOT / "eval" / "runlogs" / "unit"
 JUDGE_PROMPT_PATH = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
+PLUGIN_SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
+TESTS_UNIT_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 
 
 # Match `eval/runlogs/unit/<skill>/<file>.json`
 RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
+
+# Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
+# An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
+# (the agent body is embedded in those skills' run-log snapshots), exactly
+# like an edit inside the skill dir itself.
+AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 
 # Orchestrator skills exempt from the per-skill runlog rules (2 + 3). These
@@ -67,7 +75,8 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
     """Return [(status_letter, path)] for AR-filtered changes in the PR.
 
     Uses --diff-filter=AR so newly-added files AND renamed-into-place
-    files (the candidate → released flow) both count.
+    files (the candidate → released flow) both count. Rule 1's
+    released-runlog counting keys off this view.
     """
     base = os.environ["BASE_SHA"]
     head = os.environ["HEAD_SHA"]
@@ -87,6 +96,46 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
         elif status.startswith("R"):
             rows.append(("R", parts[-1]))  # dest path
     return rows
+
+
+def git_diff_touched_paths() -> list[str]:
+    """Every path changed in the PR, regardless of status (added, modified,
+    deleted, renamed — both sides of a rename).
+
+    The touched-skill detection for rules 2 + 3 keys off this view: a
+    *modification* to a SKILL.md, test JSON, or referenced plugin agent
+    invalidates the run-log snapshot just as surely as an addition, so the
+    AR-only view rule 1 uses would miss it.
+    """
+    base = os.environ["BASE_SHA"]
+    head = os.environ["HEAD_SHA"]
+    out = subprocess.check_output(
+        ["git", "diff", "--name-status", base, head],
+        text=True,
+    )
+    paths: list[str] = []
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        paths.extend(p for p in parts[1:] if p)
+    return paths
+
+
+def skills_referencing_agents(skills_root: Path) -> dict[str, set[str]]:
+    """Map each plugin-agent name to the skills whose SKILL.md references
+    it via `@plugin:<name>`. One scan over the skill corpus."""
+    mapping: dict[str, set[str]] = {}
+    if not skills_root.is_dir():
+        return mapping
+    for skill_md in sorted(skills_root.glob("*/SKILL.md")):
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for agent in agent_refs_in_text(text):
+            mapping.setdefault(agent, set()).add(skill_md.parent.name)
+    return mapping
 
 
 def rule1_max_one_released(touched_releases: dict[str, list[str]]) -> int:
@@ -242,7 +291,6 @@ def main() -> int:
     # Collect (skill -> [filename]) for added/renamed-into-place released
     # files. Rule 1 enforces ≤1 per skill.
     touched_releases: dict[str, list[str]] = {}
-    touched_skills: set[str] = set()
     for _, path in changes:
         if path is None:
             continue
@@ -252,22 +300,51 @@ def main() -> int:
         skill, filename = m.group(1), m.group(2)
         if classify(filename).kind == "released":
             touched_releases.setdefault(skill, []).append(path)
-        # Any change under eval/runlogs/unit/<skill>/ touches that skill.
-        touched_skills.add(skill)
 
-    # Also: changes to skill files / tests / fixtures / scenarios should
-    # surface their owning skill as "touched" for rules 2 + 3.
-    for _, path in changes:
-        if path is None:
+    # Touched-skill detection for rules 2 + 3 uses the any-status view: a
+    # modification invalidates a snapshot just like an addition.
+    touched_paths = git_diff_touched_paths()
+    touched_skills: set[str] = set()
+    touched_agents: set[str] = set()
+    for path in touched_paths:
+        m = RUNLOG_PATH_RE.match(path)
+        if m:
+            # Any change under eval/runlogs/unit/<skill>/ touches that skill.
+            touched_skills.add(m.group(1))
             continue
+        # Changes to skill files / tests surface their owning skill.
         m = re.match(r"^(?:packages/engine/plugin/skills|eval/tests/unit)/([^/]+)/", path)
         if m:
             touched_skills.add(m.group(1))
+            continue
+        m = AGENT_PATH_RE.match(path)
+        if m:
+            touched_agents.add(m.group(1))
+
+    # A touched plugin agent gates every skill whose SKILL.md references
+    # `@plugin:<name>` — the agent body is part of those skills' run-log
+    # snapshots, so editing it outside eval discipline must fail rule 2.
+    if touched_agents:
+        referencing = skills_referencing_agents(PLUGIN_SKILLS_DIR)
+        for agent in sorted(touched_agents):
+            touched_skills |= referencing.get(agent, set())
 
     # Drop orchestrator skills with no unit suite by design (see
     # RUNLOG_GATE_EXEMPT_SKILLS) so a skill-body edit doesn't hard-fail the
     # per-skill rules with no way to clear them.
     touched_skills -= RUNLOG_GATE_EXEMPT_SKILLS
+
+    # Drop DELETED skills: when a PR removes a skill entirely — its skill dir
+    # AND its unit-test dir are both absent from the working tree — there is
+    # nothing left to re-run, so rules 2 + 3 have no gate target. Historical
+    # runlogs under eval/runlogs/unit/<skill>/ may stay behind as history.
+    # A skill with EITHER dir still present is still gated (a half-deleted
+    # skill is an inconsistent state the gate should surface, not skip).
+    touched_skills = {
+        s
+        for s in touched_skills
+        if (PLUGIN_SKILLS_DIR / s).is_dir() or (TESTS_UNIT_DIR / s).is_dir()
+    }
 
     fails = rule1_max_one_released(touched_releases)
 

@@ -31,6 +31,41 @@ def test_stateless_workspace_has_no_research_json(tmp_path):
     assert (ws / ".claude/skills/search-wikipedia/SKILL.md").exists()
 
 
+def test_workspace_stages_plugin_agents(tmp_path):
+    """Plugin agents are staged into .claude/agents/ (SDK project-subagent
+    convention, mirroring the e2e orchestrator) so `@plugin:<name>` Task
+    delegation resolves to the real agent."""
+    ws = build_workspace(
+        scenario_name=None,
+        scenarios_dir=SCENARIOS,
+        skills_dir=PLUGIN_SKILLS,
+        target_dir=tmp_path,
+    )
+    assert (ws / ".claude/agents/gps-mentor.md").exists()
+    assert (ws / ".claude/agents/image-reader.md").exists()
+
+
+def test_workspace_agents_dir_override(tmp_path):
+    """An explicit agents_dir is honored; a missing one stages nothing."""
+    agents = tmp_path / "agents"
+    agents.mkdir()
+    (agents / "spike-echo.md").write_text(
+        "---\nname: spike-echo\n---\nbody\n", encoding="utf-8"
+    )
+    ws1 = tmp_path / "ws1"
+    ws1.mkdir()
+    build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws1,
+                    agents_dir=agents)
+    assert (ws1 / ".claude/agents/spike-echo.md").exists()
+    assert not (ws1 / ".claude/agents/gps-mentor.md").exists()
+
+    ws2 = tmp_path / "ws2"
+    ws2.mkdir()
+    build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws2,
+                    agents_dir=tmp_path / "missing")
+    assert not (ws2 / ".claude/agents").exists()
+
+
 def test_scenario_workspace_copies_files(tmp_path):
     ws = build_workspace(
         scenario_name="mid-research-flynn",

@@ -14,6 +14,7 @@ from e2e.judge import (
     JudgeOutputError,
     _render_prompt,
     _validate_judge_output,
+    apply_avoid_guard,
 )
 
 
@@ -171,3 +172,112 @@ def test_schema_has_no_enum_on_union_type():
                     walk(child, f"{path}[]")
 
     walk(JUDGE_OUTPUT_SCHEMA)
+
+
+# --- the avoid-guard (deterministic §3.4.1 backstop) -------------------------
+
+
+def _avoid_findings(required=True):
+    return {
+        "findings": [
+            {
+                "id": "f1",
+                "type": "relationship",
+                "required": required,
+                "polarity": "avoid",
+                "description": "The agent should NOT conclude Robert Smith is the father.",
+                "details": {"target_person": {"name": "Robert Smith"}},
+            }
+        ]
+    }
+
+
+def _tree_with_robert_smith():
+    return {
+        "persons": [
+            {
+                "id": "P1",
+                "living": False,
+                "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}],
+            }
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+
+
+def test_avoid_guard_forces_false_when_the_avoided_claim_is_in_the_final_tree():
+    # The judge said "correctly avoided" (matched true, verdict pass), but the
+    # final tree still contains the avoided person — the guard overrides.
+    output = _valid_output()
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=_tree_with_robert_smith(),
+    )
+    assert out["per_finding"][0]["matched"] == "false"
+    assert "[avoid-guard]" in out["per_finding"][0]["notes"]
+    assert "P1" in out["per_finding"][0]["notes"]
+    assert out["verdict"] == "fail"
+    assert out["recall_required"] == 0.0
+    assert out["avoid_guard"]["forced_false"] == [
+        {"finding_id": "f1", "person_ids": ["P1"]}
+    ]
+    # Downgrade happens on a copy; the judge's own output is untouched.
+    assert output["per_finding"][0]["matched"] == "true"
+    assert output["verdict"] == "pass"
+
+
+def test_avoid_guard_is_a_no_op_when_the_avoided_claim_is_absent():
+    output = _valid_output()
+    tree = {"persons": [{"id": "P1", "living": False,
+                         "names": [{"id": "N1", "given": "Jane", "surname": "Doe"}]}]}
+    assert apply_avoid_guard(
+        output, expected_findings=_avoid_findings(), final_tree=tree
+    ) is output
+
+
+def test_avoid_guard_ignores_recover_findings():
+    # A recover finding SHOULD be in the final tree — its presence must not
+    # trip the guard even though the matcher would find it.
+    findings = _avoid_findings()
+    del findings["findings"][0]["polarity"]
+    output = _valid_output()
+    assert apply_avoid_guard(
+        output, expected_findings=findings, final_tree=_tree_with_robert_smith()
+    ) is output
+
+
+def test_avoid_guard_never_upgrades_the_verdict():
+    # Judge already failed the finding: nothing left to force, output passes
+    # through unchanged — the guard can only tighten, never loosen.
+    output = _valid_output(verdict="fail", recall_required=0.0, recall_total=0.0)
+    output["per_finding"][0]["matched"] = "false"
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=_tree_with_robert_smith(),
+    )
+    assert out is output
+
+
+def test_avoid_guard_handles_a_skipped_judge():
+    # verdict "skipped" produces judge_output == {} — the guard must pass it
+    # through rather than inventing a grade.
+    assert apply_avoid_guard(
+        {}, expected_findings=_avoid_findings(), final_tree=_tree_with_robert_smith()
+    ) == {}
+
+
+def test_avoid_guard_grades_a_finding_the_judge_never_graded():
+    # Judge contract violation (per_finding missing the avoid finding): the
+    # guard records the objective miss instead of letting it vanish.
+    output = _valid_output(per_finding=[], verdict="pass", recall_required=1.0)
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=_tree_with_robert_smith(),
+    )
+    assert out["per_finding"][0]["finding_id"] == "f1"
+    assert out["per_finding"][0]["matched"] == "false"
+    assert out["verdict"] == "fail"

@@ -63,17 +63,19 @@ Do **not** require that the agent's citations match the
 for context only. If the agent found the right answer via different
 sources, that still counts as a match.
 
-### Negative findings (the agent should NOT conclude something)
+### Negative findings (`polarity: "avoid"` — the agent should NOT conclude something)
 
-Some fixtures test restraint, not recall. A finding may describe a
-**wrong** candidate the agent should decline to assert (its
-`description`/`details` will say so, e.g. "the agent should NOT conclude
-that the father is the other Robert Smith of the next county"). For such
-a finding, `matched == "true"` means the agent **correctly avoided**
-asserting it (the wrong candidate is absent from the tree, or is present
-only as an explicitly unresolved/rejected hypothesis). `matched ==
-"false"` means the agent over-claimed it. Read each finding's text to
-tell a normal (recover-this) finding from a negative (avoid-this) one.
+Some fixtures test restraint, not recall. A finding with
+`"polarity": "avoid"` describes a **wrong** candidate the agent should
+decline to assert. (An older fixture may express this only in the
+finding's text — e.g. "the agent should NOT conclude that the father is
+the other Robert Smith of the next county" — treat those identically.)
+For such a finding, `matched == "true"` means the agent **correctly
+avoided** asserting it (the wrong candidate is absent from the tree, or
+is present only as an explicitly unresolved/rejected hypothesis).
+`matched == "false"` means the agent over-claimed it. Every finding
+without `polarity: "avoid"` (and without such text) is a normal
+recover-this finding.
 
 ## Task 2 — Proof quality (advisory score)
 
