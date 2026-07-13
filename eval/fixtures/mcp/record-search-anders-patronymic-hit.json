@@ -1,0 +1,111 @@
+{
+  "tool": "record_search",
+  "description": "record_search that DROPS the farm-name surname 'Moen' (searching Anders without the farm surname — with any Norway/parent/date anchor) finds Anders's 1868 Ringsaker christening, which names his parents under patronymics: father Hans Olsen, mother Marit Pedersdatter. Matched on givenName~Anders: the surname-constrained fixture (record-search-moen-surname-nil) is ordered FIRST and siphons off any query that keeps surname=Moen (→ nil), so this fixture fires only for the doctrine-correct surname-dropped search, whatever its anchor (recordCountry Norway, birthPlace Ringsaker, or a recovered parent's given name). primaryId P1 matches rank-search-matches-anders-christening.",
+  "args": {
+    "givenName": "~Anders"
+  },
+  "response": {
+    "query": {
+      "givenName": "Anders",
+      "motherGivenName": "Marit",
+      "recordCountry": "Norway",
+      "birthYearFrom": 1868,
+      "birthYearTo": 1868
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "9XKT-M2P",
+        "recordId": "9XKT-M2P",
+        "personName": "Anders",
+        "score": 0.91,
+        "sex": "Male",
+        "birthDate": "15 November 1868",
+        "birthPlace": "Ringsaker, Hedmark, Norway",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:9XKT-M2P",
+        "collectionId": "4237104",
+        "collectionTitle": "Norway, Church Books, 1815-1930",
+        "recordTitle": "Christening of Anders, son of Hans Olsen and Marit Pedersdatter",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Anders",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Christening",
+                  "date": "15 November 1868",
+                  "place": "Ringsaker, Hedmark, Norway"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "October 1868",
+                  "place": "Ringsaker, Hedmark, Norway"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Hans",
+                  "surname": "Olsen",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Marit",
+                  "surname": "Pedersdatter",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
