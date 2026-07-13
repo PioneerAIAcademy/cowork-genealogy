@@ -1,0 +1,18 @@
+{
+  "id": "mckee-birth-1904",
+  "name": "Robert Raymond McKee — birth (1904)",
+  "source_pid": "L8K8-W12",
+  "captured": "2026-07-02",
+  "researcher_question": "When and where was Robert Raymond McKee born?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1900s",
+    "geography": "GB-NIR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Birth date and place stripped from the starting tree; the agent must recover them by searching records. The exact leap-day date (29 Feb 1904) is not in the Ireland Civil Registration Index (which gives only a Jan-Mar 1904 quarter), so the precise date must come from another record such as his WWII draft registration card, while the Banbridge, County Down birthplace comes from the Irish records. The subject is well-anchored by parents in Ireland, spouse, children, a 1911 Ireland census residence, 1923 immigration via Canada/Vermont, and a 1958 death in Chicago. Note: 'Banbridge' still appears in the retained tree as the father's death place and inside the 1911 residence district string - those are legitimate clues, not the stripped birth statement."
+}

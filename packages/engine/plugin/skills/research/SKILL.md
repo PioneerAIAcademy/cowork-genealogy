@@ -64,6 +64,22 @@ blocker you have logged.
 Otherwise (interactive mode), surface meaningful decisions to the
 user as you encounter them.
 
+## Direct user requests name a destination, not a shortcut
+
+When the user says "write the conclusion," "move toward a proof
+conclusion," "conclude this," or anything else that names a downstream
+skill or artifact directly, treat it as "drive the routing table forward
+to that outcome" — not as permission to invoke that skill immediately.
+Re-enter step 1 of "What to do," re-derive the current state from
+`research.json`, and walk the routing table from wherever the project
+actually is: unclassified assertions, unresolved conflicts, un-run Mentor
+gates, and any person the conclusion depends on not yet identity-linked all
+still apply. Only invoke the
+downstream skill once the routing table's precondition row for it is
+actually satisfied. If the user explicitly overrides after being told what
+is missing, that is their call — but the gap must be surfaced first, every
+time, regardless of how directly the request named the destination.
+
 ## What to do
 
 1. **Read `research.json`.** Identify the current state: which
@@ -165,8 +181,9 @@ user as you encounter them.
    exhaustiveness will send you back for the enumerating sources (the
    household census, parent-indexed births, obituaries) before it lets
    you conclude. The gate still requires the evidence to have been
-   extracted, classified, person-linked, and conflict-resolved first —
-   those upstream artifacts are what its criteria read.
+   extracted, classified, and conflict-resolved first, with the persons the
+   conclusion depends on identity-linked — those upstream artifacts are what
+   its criteria read.
 
 3. **Iterate — without yielding.** After each sub-skill returns, route
    to the next step **in the same turn** (under `--autonomous`; see
