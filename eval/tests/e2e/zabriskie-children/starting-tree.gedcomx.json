@@ -290,7 +290,7 @@
         },
         {
           "id": "ab93f448-37cc-401f-b1c8-739d271affbb",
-          "type": "1870 US Census",
+          "type": "Census",
           "date": "11 June 1870",
           "standard_date": "11 Jun 1870",
           "place": "Mount Pleasant Ward 1, Sanpete, Utah, United States",
@@ -314,7 +314,7 @@
         },
         {
           "id": "3044b18b-be51-4565-b130-94e7c45781b3",
-          "type": "1900 US Census",
+          "type": "Census",
           "date": "19 June 1900",
           "standard_date": "19 Jun 1900",
           "place": "Mount Pleasant, Sanpete, Utah, United States",
@@ -330,7 +330,7 @@
         },
         {
           "id": "5c8088e8-79ee-4273-8476-f0690d4ec71c",
-          "type": "1910 US Census",
+          "type": "Census",
           "date": "20 April 1910",
           "standard_date": "20 Apr 1910",
           "place": "Mount Pleasant, Sanpete, Utah, United States",
