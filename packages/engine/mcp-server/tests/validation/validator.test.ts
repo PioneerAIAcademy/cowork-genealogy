@@ -311,6 +311,228 @@ describe("Project Validator", () => {
     });
   });
 
+  // research.schema.json binds these fields to iso_date (^\d{4}-\d{2}-\d{2}$);
+  // the hand-maintained validator must reject at the same sites — prose dates
+  // ("12 July 2026") persisted through the writer tools while this check was
+  // missing.
+  describe("ISO date enforcement (iso_date-bound fields)", () => {
+    const isoQuestion = () => ({
+      id: "q_001",
+      question: "Test?",
+      rationale: "Testing",
+      selection_basis: "user_directed",
+      priority: "high",
+      status: "open",
+      depends_on: [],
+      unblocks: [],
+      created: "2026-01-01",
+      resolved: null,
+      resolution_assertion_ids: [],
+      exhaustive_declaration: {
+        declared: false,
+        log_entry_ids: [],
+        stop_criteria: null,
+      },
+    });
+    const isoSource = () => ({
+      id: "src_001",
+      gedcomx_source_description_id: "SD-001",
+      citation: "Test",
+      citation_detail: {
+        who: "Test",
+        what: "Test",
+        when_created: "2020",
+        when_accessed: "2026-01-01",
+        where: "Test",
+        where_within: "Test",
+      },
+      source_classification: "original",
+      repository: "Test",
+      access_date: "2026-01-01",
+    });
+    const isoAssertion = () => ({
+      id: "a_001",
+      source_id: "src_001",
+      record_id: "test",
+      record_role: "principal",
+      fact_type: "birth",
+      value: "1850",
+      information_quality: "primary",
+      informant: "self",
+      informant_proximity: "self",
+      evidence_type: "direct",
+      extracted_for_question_ids: [],
+    });
+    const isoTree = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "SD-001", title: "Test Source" }],
+    };
+
+    it("rejects prose dates in project.created / project.updated", async () => {
+      const research = {
+        ...minimalResearch,
+        project: {
+          ...minimalResearch.project,
+          created: "12 July 2026",
+          updated: "July 12, 2026",
+        },
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'created' must be an ISO date (YYYY-MM-DD), got '12 July 2026'")
+        )
+      ).toBe(true);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'updated' must be an ISO date (YYYY-MM-DD), got 'July 12, 2026'")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a prose sources[].access_date", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [{ ...isoSource(), access_date: "12 July 2026" }],
+      };
+      await writeProject(research, isoTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path.includes("sources[0]") &&
+            e.message.includes("'access_date' must be an ISO date")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects prose created on known_holdings, questions, plans, and person_evidence entries", async () => {
+      const research = {
+        ...minimalResearch,
+        known_holdings: [
+          {
+            id: "kh_001",
+            holding_type: "document",
+            description: "A letter",
+            confidence: "confident",
+            promoted: false,
+            created: "last Tuesday",
+          },
+        ],
+        questions: [{ ...isoQuestion(), created: "12 July 2026" }],
+        plans: [
+          {
+            id: "pl_001",
+            question_id: "q_001",
+            status: "active",
+            created: "July 2026",
+            items: [],
+          },
+        ],
+        sources: [isoSource()],
+        assertions: [isoAssertion()],
+        person_evidence: [
+          {
+            id: "pe_001",
+            assertion_id: "a_001",
+            person_id: "I1",
+            confidence: "confident",
+            rationale: "Test",
+            created: "the 12th of July",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, isoTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      for (const where of [
+        "known_holdings[0]",
+        "questions[0]",
+        "plans[0]",
+        "person_evidence[0]",
+      ]) {
+        expect(
+          result.errors.some(
+            (e) =>
+              e.path.includes(where) &&
+              e.message.includes("'created' must be an ISO date")
+          )
+        ).toBe(true);
+      }
+    });
+
+    it("rejects a prose questions[].resolved (null stays legal)", async () => {
+      const research = {
+        ...minimalResearch,
+        questions: [
+          { ...isoQuestion(), status: "resolved", resolved: "12 July 2026" },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'resolved' must be an ISO date")
+        )
+      ).toBe(true);
+    });
+
+    it("accepts ISO dates on every iso_date-bound field (control)", async () => {
+      const research = {
+        ...minimalResearch,
+        known_holdings: [
+          {
+            id: "kh_001",
+            holding_type: "document",
+            description: "A letter",
+            confidence: "confident",
+            promoted: false,
+            created: "2026-07-13",
+          },
+        ],
+        questions: [{ ...isoQuestion(), resolved: "2026-07-13" }],
+        plans: [
+          {
+            id: "pl_001",
+            question_id: "q_001",
+            status: "active",
+            created: "2026-07-13",
+            items: [],
+          },
+        ],
+        sources: [isoSource()],
+        assertions: [isoAssertion()],
+        person_evidence: [
+          {
+            id: "pe_001",
+            assertion_id: "a_001",
+            person_id: "I1",
+            confidence: "confident",
+            rationale: "Test",
+            created: "2026-07-13",
+            superseded_by: null,
+          },
+        ],
+      };
+      await writeProject(research, isoTree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe("Cross-file reference validation", () => {
     it("reports source referencing non-existent gedcomx source", async () => {
       const research = {

@@ -129,8 +129,9 @@ even on reuse — never set either yourself). **Optional:** `url`, `url_archived
 not a source field; `record_type` is not a field at all.
 `when_accessed` / `access_date` are the **real** date the record was
 accessed (today for a record just fetched) — never a placeholder, a raw
-timestamp, or the record's publication date. Set `log_entry_id` to the
-delegation's `logId` — the source→search provenance link.
+timestamp, or the record's publication date. `access_date` is ISO
+`YYYY-MM-DD` (e.g. `2026-07-13`) — never prose dates. Set `log_entry_id`
+to the delegation's `logId` — the source→search provenance link.
 
 **"Original not examined" — decide it now, not later.** If what you
 examined is a derivative (index entry, abstract, transcript, translation)
@@ -312,6 +313,8 @@ absence, whatever the record type; the table's
 - **Groom and bride:** informants for their own identifying facts (age,
   birthplace, parents, occupation), proximity `self`. Their parents'
   names on the license are `direct` evidence — the party stated them.
+  A marriage-record party reporting their OWN parents' names is
+  proximity `self` (`family_not_present` is death-certificate doctrine).
 - **Officiant / clerk:** informant for the marriage event itself (date,
   place, ceremony). Proximity `official_duty` (officiant) or `witness`
   (clerk who recorded the signed return).
@@ -449,6 +452,10 @@ retry blindly and never drop unnamed ops.
 keep a one-deep `.bak`; a successful return is proof the write is valid.
 Do not re-read the files to "sanity check" a success.
 
+**Never write the `person_evidence` section** — identity assessments
+(record persona = tree person) go in your return summary only; the
+person-evidence skill owns that section.
+
 ## Step 5 — Sibling person stubs (subject is a child on a household record)
 
 When the subject's `record_role` is `child_N` on a household record
@@ -469,7 +476,10 @@ matching, dedup, stub creation, and edges:
 - **Relay the returned checklist** (`parentsMatched`, `created`,
   `skipped`, `edgesAdded`) in your summary.
   `action: "skipped_no_parent_in_tree"` means no household parent is
-  in the tree — surface that gap instead.
+  in the tree — surface that gap instead. On `skipped_no_parent_in_tree`:
+  surface the gap in your summary and STOP — never `add_person` the
+  missing parents or hand-draw their edges; parents enter the tree via
+  person-evidence/proof-conclusion, not extraction.
 - **Identity contradictions are yours to flag.** When the tool's
   skipped/created pattern conflicts with the record — e.g. the tree
   holds children this household record does not list, or a `skipped`
@@ -489,6 +499,10 @@ matching, dedup, stub creation, and edges:
 The subject's own person and edges are out of scope — person-evidence
 writes those. The source `S` entry was already created by Step 4; the
 household call carries no source op.
+
+Raw relationship ops (non-household cases — death-cert parents, marriage
+couples): `ParentChild` takes `{ type: "ParentChild", parent: "<I id>",
+child: "<I id>" }`; `Couple` takes `{ type: "Couple", person1, person2 }`.
 
 ## Negative evidence
 

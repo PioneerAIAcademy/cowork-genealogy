@@ -38,6 +38,13 @@ persist atomic write.
 > to an update of that source (same repository) or its existing `S` entry is
 > reused (different repository) — the caller no longer reads `research.json`
 > to decide. The decision is echoed as `sourceReuse` (§3.2).
+>
+> **Rev. 4 (2026-07-13, D2 auto-fill scoping):** the §3.5 `record_persona_id`
+> auto-fill is scoped — `primaryId` is stamped only when the stamp cannot be
+> wrong (single-persona record, or a batch whose assertion appends all share
+> one `record_id` and one `record_role`); a multi-persona record in a
+> multi-role batch with omitted personas is now a **hard error** instead of a
+> silent focus-persona stamp on other personas' assertions.
 
 ---
 
@@ -331,7 +338,7 @@ tool enforces the sidecar matrix (spec'd, not vibes — decision D2):
 
 | Log entry state | `record_persona_id` supplied | `record_persona_id` omitted/null |
 |---|---|---|
-| **Sidecar present** (`results_ref` set), `record_id` matches a result (canonical ARK matching via `arkToBareId`) | Verified against the record's `gedcomx.persons[]`; a contradiction is a **hard error naming the expected persona ids** (and the primary persona). | **Auto-filled** with the matched result's `primaryId` when the `record_id` matches exactly one result and that `primaryId` resolves to a persona in the record's `gedcomx.persons[]` — the null-when-required direction is closed for every well-formed sidecar. (Non-focus household personas are not derivable from `record_id` alone — supply them explicitly; the auto-fill is the focus persona. A degenerate sidecar whose `primaryId` is missing/unresolvable leaves the field null rather than persisting a value the validator would reject.) |
+| **Sidecar present** (`results_ref` set), `record_id` matches a result (canonical ARK matching via `arkToBareId`) | Verified against the record's `gedcomx.persons[]`; a contradiction is a **hard error naming the expected persona ids** (and the primary persona). | **Auto-filled** with the matched result's `primaryId` when the `record_id` matches exactly one result, that `primaryId` resolves to a persona in the record's `gedcomx.persons[]`, **and the stamp cannot be wrong**: the record holds a single persona, or the batch's assertion appends all cite one canonical `record_id` **and** one distinct `record_role` (a single-focus extraction — sidecar personas carry no role labels, so batch shape is the only sound proxy for "this assertion is about the searched persona"). A multi-persona record in a batch spanning multiple `record_role`s/`record_id`s is a **hard error naming the searched persona** ("supply `record_persona_id` per assertion") — unscoped auto-fill stamped the focus persona's id onto other household members' assertions (observed silent corruption). A degenerate sidecar whose `primaryId` is missing/unresolvable leaves the field null rather than persisting a value the validator would reject. |
 | **Sidecar present**, `record_id` matches **no** result | **Hard error naming the sidecar's stored recordIds** — a claimed persona cannot be verified against a record that isn't there. | No error — a `record_id` outside the sidecar is legal without a persona claim (e.g. a negative assertion naming the collection searched). |
 | **No sidecar** (`results_ref: null` — record_read, PDF, image, pasted records, most unit fixtures) | **Hard error**: the field must be absent or null; there is no persona document to point at. | No error. |
 

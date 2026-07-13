@@ -94,6 +94,14 @@ const EXTERNAL_SITE_VALUES = new Set([
   "findagrave", "newspapers",
 ]);
 
+// research.schema.json binds these fields to enums.schema.json#/$defs/iso_date
+// (^\d{4}-\d{2}-\d{2}$): project.created/updated, known_holdings[].created,
+// questions[].created/resolved, plans[].created, sources[].access_date, and
+// person_evidence[].created. The hand-maintained validator must enforce the
+// same pattern at exactly those sites — prose dates ("12 July 2026") persisted
+// through the writer tools while this check was missing.
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
   known_holdings: "kh_",
@@ -248,6 +256,23 @@ function checkEnum(
   if (validValues && !validValues.has(value)) {
     const sorted = Array.from(validValues).sort();
     addError(report, path, `'${value}' is not a valid ${enumName} (expected one of: ${sorted.join(', ')})`);
+  }
+}
+
+/** Pattern check for an iso_date-bound field. Null/absent values are left to
+ *  checkRequired (nullability differs per site — questions[].resolved is
+ *  nullable, the created fields are not), so this never double-reports. */
+function checkIsoDate(
+  obj: any,
+  field: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (!(field in obj)) return;
+  const value = obj[field];
+  if (value === null || value === undefined) return;
+  if (typeof value !== "string" || !ISO_DATE_PATTERN.test(value)) {
+    addError(report, path, `'${field}' must be an ISO date (YYYY-MM-DD), got '${value}'`);
   }
 }
 
@@ -453,6 +478,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   if ("status" in p && p.status !== null) {
     checkEnum(p.status, "project_status", projPath, report);
   }
+  checkIsoDate(p, "created", projPath, report);
+  checkIsoDate(p, "updated", projPath, report);
 
   // Researcher profile (optional)
   const rp = data.researcher_profile;
@@ -509,6 +536,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         if ("promoted" in kh && typeof kh.promoted !== "boolean") {
           addError(report, khPath, "promoted must be a boolean");
         }
+        checkIsoDate(kh, "created", khPath, report);
         const rtp = kh.relates_to_person_ids;
         if (rtp !== null && rtp !== undefined && !Array.isArray(rtp)) {
           addError(report, khPath, "relates_to_person_ids must be an array");
@@ -542,6 +570,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("selection_basis" in q && !SELECTION_BASIS_VALUES.has(q.selection_basis)) {
       addError(report, qp, `'${q.selection_basis}' is not a valid selection_basis`);
     }
+    checkIsoDate(q, "created", qp, report);
+    checkIsoDate(q, "resolved", qp, report); // nullable — null skipped above
 
     // Exhaustive declaration
     const ed = q.exhaustive_declaration;
@@ -587,6 +617,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("question_id" in pl) {
       checkRefExists(pl.question_id, ids.questions, "question", pp, report);
     }
+    checkIsoDate(pl, "created", pp, report);
 
     const items = Array.isArray(pl.items) ? pl.items : [];
     for (let j = 0; j < items.length; j++) {
@@ -656,6 +687,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("source_classification" in src) {
       checkEnum(src.source_classification, "source_classification", sp, report);
     }
+    checkIsoDate(src, "access_date", sp, report);
     if (src.log_entry_id) {
       checkRefExists(src.log_entry_id, ids.log, "log entry", sp, report);
     }
@@ -725,6 +757,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("assertion_id" in pe) {
       checkRefExists(pe.assertion_id, ids.assertions, "assertion", pp, report);
     }
+    checkIsoDate(pe, "created", pp, report);
   }
 
   // Conflicts

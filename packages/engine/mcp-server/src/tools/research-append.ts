@@ -810,6 +810,26 @@ async function prepareOps(
   }
 
   // ── 4 + 5. D2 matrix + place levers, per assertions append op ──
+  // D2 auto-fill scoping: the sidecar's primaryId is the SEARCHED persona, not
+  // necessarily the persona an arbitrary assertion describes — sidecar personas
+  // carry no role labels, so an assertion's record_role cannot be checked
+  // against them. The sound proxy is batch shape: stamping primaryId onto every
+  // omitted persona is safe only when the batch's assertion appends all cite
+  // ONE canonical record_id and ONE distinct record_role (a single-focus
+  // extraction). Unscoped auto-fill stamped the focus persona's id onto other
+  // household members' assertions (observed silent corruption).
+  const batchAssertionRecordKeys = new Set(
+    assertionAppends
+      .map((op) => (op.entry as any).record_id)
+      .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "")
+      .map((v: string) => arkToBareId(v)),
+  );
+  const batchAssertionRoles = new Set(
+    assertionAppends
+      .map((op) => (op.entry as any).record_role)
+      .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== ""),
+  );
+  const autoFillScopeOk = batchAssertionRecordKeys.size === 1 && batchAssertionRoles.size === 1;
   const logById = new Map<string, any>();
   for (const e of Array.isArray(research.log) ? research.log : []) {
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
@@ -914,8 +934,22 @@ async function prepareOps(
               typeof matchedRecord.primaryId === "string" &&
               personaIds.includes(matchedRecord.primaryId)
             ) {
-              // Auto-fill the unambiguous case — never silently null.
-              entry.record_persona_id = matchedRecord.primaryId;
+              if (personaIds.length === 1 || autoFillScopeOk) {
+                // Auto-fill the unambiguous case — never silently null. Safe
+                // because the record holds a single persona, or the batch is a
+                // single-record single-role extraction (see scoping note above).
+                entry.record_persona_id = matchedRecord.primaryId;
+              } else {
+                errors.push(
+                  fmt(
+                    i,
+                    `record_persona_id omitted — multiple personas in this record (${personaIds.join(", ")}) ` +
+                      "and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; " +
+                      `supply record_persona_id per assertion (the searched persona is '${matchedRecord.primaryId}')`,
+                  ),
+                );
+                continue;
+              }
             }
           }
         }

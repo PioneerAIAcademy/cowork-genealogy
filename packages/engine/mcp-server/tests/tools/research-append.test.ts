@@ -1250,6 +1250,117 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123"); // canonicalized
   });
 
+  it("auto-fills across a multi-assertion batch when all ops share one record_id and one record_role", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar();
+    const base = {
+      ...noId(validAssertion("x", "src_001")),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      log_entry_id: "log_001",
+    };
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "append", entry: { ...base } },
+        { section: "assertions", op: "append", entry: { ...base, fact_type: "residence", value: "Pottsville" } },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.assertions[1].record_persona_id).toBe("p_1");
+    expect(research.assertions[2].record_persona_id).toBe("p_1");
+  });
+
+  it("hard-errors omitted personas in a multi-role batch on a multi-persona record, naming the searched persona", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const base = {
+      ...noId(validAssertion("x", "src_001")),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      log_entry_id: "log_001",
+    };
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "append", entry: { ...base, record_role: "deceased" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...base, record_role: "father_of_deceased", fact_type: "name", value: "Thomas Flynn" },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // Both omitted-persona ops are named; stamping p_1 onto the father's
+    // assertions was the observed silent corruption this scoping closes.
+    expect(r.errors).toHaveLength(2);
+    expect(r.errors[0]).toMatch(/^ops\[0\]:.*multiple personas in this record \(p_1, p_2\)/);
+    expect(r.errors[1]).toMatch(/^ops\[1\]:/);
+    expect(r.errors[0]).toMatch(/supply record_persona_id per assertion/);
+    expect(r.errors[0]).toMatch(/searched persona is 'p_1'/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before); // nothing written
+  });
+
+  it("explicit record_persona_ids are unaffected by the multi-role scoping (verified as before)", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar();
+    const base = {
+      ...noId(validAssertion("x", "src_001")),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      log_entry_id: "log_001",
+    };
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "append", entry: { ...base, record_role: "deceased", record_persona_id: "p_1" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...base,
+            record_role: "father_of_deceased",
+            fact_type: "name",
+            value: "Thomas Flynn",
+            record_persona_id: "p_2",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.assertions[1].record_persona_id).toBe("p_1");
+    expect(research.assertions[2].record_persona_id).toBe("p_2");
+  });
+
+  it("still auto-fills in a multi-role batch when the record holds a single persona (nothing to confuse)", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar([
+      { recordId: "ark:/61903/1:1:ABCD-123", primaryId: "p_1", gedcomx: { persons: [{ id: "p_1" }] } },
+    ]);
+    const base = {
+      ...noId(validAssertion("x", "src_001")),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      log_entry_id: "log_001",
+    };
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "append", entry: { ...base, record_role: "deceased" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...base, record_role: "informant", fact_type: "name", value: "Mary Flynn" },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.assertions[1].record_persona_id).toBe("p_1");
+    expect(research.assertions[2].record_persona_id).toBe("p_1");
+  });
+
   it("hard-errors when a supplied record_persona_id contradicts the sidecar, naming the expected personas", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();

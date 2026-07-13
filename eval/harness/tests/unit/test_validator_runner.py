@@ -454,6 +454,118 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
         )
 
 
+# --- record_persona_id corruption signature (shared persona across roles) ---
+
+_PERSONA_ARK = "https://www.familysearch.org/ark:/61903/1:1:ABCD-123"
+
+
+def _persona_sidecar_files(persona_ids):
+    """A staged search sidecar (results/log_001.json) holding ONE record
+    with the given gedcomx persona ids (first id = the result's primaryId)."""
+    import json
+
+    sidecar = {
+        "log_id": "log_001",
+        "tool": "record_search",
+        "retrieved": "2026-01-01T00:00:00Z",
+        "returned_count": 1,
+        "payload": {
+            "results": [
+                {
+                    "recordId": _PERSONA_ARK,
+                    "primaryId": persona_ids[0],
+                    "gedcomx": {"persons": [{"id": p} for p in persona_ids]},
+                }
+            ]
+        },
+    }
+    return {"results/log_001.json": json.dumps(sidecar)}
+
+
+def _run_persona_id_set(assertions, persona_ids=("p_1", "p_2", "p_3")):
+    before = _empty_research_state()
+    before["files"] = _persona_sidecar_files(list(persona_ids))
+    after = _empty_research_state()
+    after["files"] = dict(before["files"])
+    after["research_json"] = {**after["research_json"], "assertions": assertions}
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (r for r in results if r.name == "test_record_persona_id_set"), None
+    )
+    assert result is not None, "test_record_persona_id_set did not run"
+    return result
+
+
+def test_record_persona_id_distinct_personas_pass():
+    """Correct multi-persona extraction: each record_role carries its own
+    persona id — no corruption signature."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "deceased", "record_persona_id": "p_1"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "father_of_deceased", "record_persona_id": "p_2"},
+        ]
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_record_persona_id_shared_across_roles_fails():
+    """ut_006 corruption signature: the focus persona's id (p_1) stamped
+    onto a DIFFERENT record_role's assertion on a multi-persona record."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "deceased", "record_persona_id": "p_1"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "father_of_deceased", "record_persona_id": "p_1"},
+        ]
+    )
+    assert result.passed is False
+    for fragment in ("p_1", "a_1", "a_2", "different record_roles"):
+        assert fragment in (result.error or ""), (
+            f"failure message missing {fragment!r}: {result.error}"
+        )
+
+
+def test_record_persona_id_role_spelling_variants_not_flagged():
+    """`father` vs `father_of_deceased` are ONE role in two spellings
+    (the normalized prefix-of matcher) — sharing a persona id across them
+    is not the corruption signature."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "father", "record_persona_id": "p_2"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "father_of_deceased", "record_persona_id": "p_2"},
+        ]
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_record_persona_id_single_persona_record_exempt():
+    """A single-persona record cannot cross-contaminate — the shared-id
+    check gates on 2+ personas in the sidecar's gedcomx."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "deceased", "record_persona_id": "p_1"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "informant", "record_persona_id": "p_1"},
+        ],
+        persona_ids=("p_1",),
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
 # --- Hand-edit detector (project files must go through writer tools) ---
 
 def _hand_edit_states(research_changed):
