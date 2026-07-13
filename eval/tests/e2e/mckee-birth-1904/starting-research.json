@@ -4,8 +4,8 @@
     "objective": "When and where was Robert Raymond McKee born?",
     "subject_person_ids": ["L8K8-W12"],
     "status": "active",
-    "created": "2026-07-02T00:00:00Z",
-    "updated": "2026-07-02T00:00:00Z"
+    "created": "2026-07-02",
+    "updated": "2026-07-02"
   },
   "researcher_profile": {
     "experience_level": "intermediate",
