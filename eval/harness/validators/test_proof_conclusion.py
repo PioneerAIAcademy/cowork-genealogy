@@ -34,7 +34,7 @@ import pytest
 # checks in test_universal.py, which enforce the real invariant: every call
 # must match the skill's declared allowed-tools, and writes stay within
 # proof-conclusion's owned sections. Same removal already applied to
-# conflict-resolution and assertion-classification.
+# conflict-resolution.
 
 
 # --- New proof_summary structural checks ------------------------------
@@ -208,9 +208,15 @@ def test_no_tree_write_below_probable(before_state, after_state, test):
     after = _tree(after_state)
     if before is None or after is None:
         pytest.skip("Missing tree.gedcomx.json for diff")
-    assert before == after, (
-        "tree.gedcomx.json was modified by a below-probable conclusion — "
-        "the tree must only be written at tier `probable` or higher"
+    # Source-description (S entry) metadata is not a conclusion — a
+    # sources-only diff (e.g. citation backfill on an existing S) is
+    # permitted below probable; facts/relationships/persons are not.
+    def _without_sources(tree):
+        return {k: v for k, v in tree.items() if k != "sources"}
+    assert _without_sources(before) == _without_sources(after), (
+        "tree.gedcomx.json facts/relationships/persons were modified by a "
+        "below-probable conclusion — the tree (beyond source-description "
+        "metadata) must only be written at tier `probable` or higher"
     )
 
 

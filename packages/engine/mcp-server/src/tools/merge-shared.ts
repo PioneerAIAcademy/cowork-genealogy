@@ -84,10 +84,52 @@ export function formatIssues(issues: ValidationError[]): string[] {
 }
 
 /**
+ * Strip the parts of a candidate document that are legal in tool output
+ * (`record_read`'s `gedcomx`, `toSimplified` results) but not in the persisted
+ * tree format: top-level `places[]` (the tree carries places as names on
+ * facts) and person-level `sources[]` (tree source references hang off
+ * names/facts/relationships). Returns a cleaned deep copy plus one warning
+ * per stripped kind — the input is never mutated, and a candidate that
+ * carries these must not be rejected for it.
+ */
+export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
+  candidate: SimplifiedGedcomX;
+  warnings: string[];
+} {
+  const cleaned = structuredClone(candidate);
+  const warnings: string[] = [];
+
+  if (Array.isArray(cleaned.places) && cleaned.places.length > 0) {
+    warnings.push(
+      `dropped ${cleaned.places.length} candidate place description(s) — ` +
+        `the tree format carries places as names on facts, not as a places[] section`,
+    );
+  }
+  delete cleaned.places;
+
+  let personSourceRefs = 0;
+  for (const person of cleaned.persons ?? []) {
+    if (Array.isArray(person.sources)) personSourceRefs += person.sources.length;
+    delete person.sources;
+  }
+  if (personSourceRefs > 0) {
+    warnings.push(
+      `dropped ${personSourceRefs} person-level source reference(s) — the ` +
+        `tree format carries source references on names/facts/relationships, ` +
+        `not on persons`,
+    );
+  }
+
+  return { candidate: cleaned, warnings };
+}
+
+/**
  * Validate an inline candidate document by reusing the exported `validateGedcomx`.
  * `toSimplified` omits empty sections, so a valid record may legitimately have
  * no `relationships`/`sources` key — normalize absent sections to `[]` first so
- * the section-presence check doesn't spuriously reject it. Returns [] when valid.
+ * the section-presence check doesn't spuriously reject it. Callers pass the
+ * `sanitizeCandidate` output, so no `places` / person `sources` remain by the
+ * time the runtime validator sees it. Returns [] when valid.
  */
 export function validateCandidateGedcomx(candidate: unknown): string[] {
   if (candidate === null || typeof candidate !== "object") {
@@ -98,7 +140,6 @@ export function validateCandidateGedcomx(candidate: unknown): string[] {
     persons: c.persons ?? [],
     relationships: c.relationships ?? [],
     sources: c.sources ?? [],
-    ...(c.places !== undefined ? { places: c.places } : {}),
   };
   const report = createReport();
   validateGedcomx(normalized, report);

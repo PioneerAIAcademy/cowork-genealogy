@@ -2,7 +2,8 @@
 
 A workspace is the temp directory the harness sets as cwd for the SDK
 session. It contains the scenario's research.json and tree.gedcomx.json
-(if any) plus a .claude/skills/ tree mirroring packages/engine/plugin/skills/.
+(if any) plus a .claude/skills/ tree mirroring packages/engine/plugin/skills/
+and a .claude/agents/ dir mirroring packages/engine/plugin/agents/.
 
 Snapshots capture the state of the workspace before and after the skill
 runs. The .claude/ directory is excluded — it's harness scaffolding, not
@@ -20,6 +21,13 @@ from typing import Any
 # The SDK stores session entries under ~/.claude/projects/<encoded-cwd>/.
 # Temp directories pile up these entries indefinitely if not cleaned.
 _SESSION_STORE_ROOT = Path.home() / ".claude" / "projects"
+
+# Plugin subagents shipped with the Cowork plugin. Staged into every unit
+# workspace so a skill's `@plugin:<name>` delegation resolves to the real
+# agent — mirrors e2e/orchestrator.py's DEFAULT_PLUGIN_AGENTS + staging.
+DEFAULT_PLUGIN_AGENTS = (
+    Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin" / "agents"
+)
 
 
 # Session-store cleanup relies on the SDK's `project_key_for_directory`
@@ -39,8 +47,16 @@ def build_workspace(
     scenarios_dir: Path,
     skills_dir: Path,
     target_dir: Path,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
 ) -> Path:
     """Populate target_dir with scenario files and a .claude/skills/ tree.
+
+    Plugin subagents (`packages/engine/plugin/agents/*.md`) are staged into
+    `.claude/agents/` as project subagents — the same SDK/Cowork convention
+    the e2e orchestrator uses (see e2e/orchestrator.py::build_workspace) —
+    so a skill's `@plugin:<name>` delegation via the Task tool resolves to
+    the real agent instead of an improvised generic subagent. The SDK loads
+    them via setting_sources=["project"].
 
     Returns target_dir for chaining. target_dir must already exist (typically
     created by pytest's tmp_path or tempfile.mkdtemp).
@@ -66,6 +82,15 @@ def build_workspace(
     for skill_dir in Path(skills_dir).iterdir():
         if skill_dir.is_dir() and not skill_dir.name.startswith("."):
             shutil.copytree(skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True)
+
+    # Stage plugin subagents as project subagents (.claude/agents/<name>.md),
+    # exactly as the e2e orchestrator does.
+    agents_dir = Path(agents_dir)
+    if agents_dir.is_dir():
+        agents_target = target / ".claude" / "agents"
+        agents_target.mkdir(parents=True, exist_ok=True)
+        for agent_file in sorted(agents_dir.glob("*.md")):
+            shutil.copy(agent_file, agents_target / agent_file.name)
 
     # Write a CLAUDE.md so the base model knows it is operating as a
     # genealogy research assistant. Without this, the model defaults to

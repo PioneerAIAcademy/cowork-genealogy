@@ -1,0 +1,407 @@
+{
+  "persons": [
+    {
+      "id": "L4HQ-CBN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "L4HQ-CBN-name-1",
+          "given": "Angelina M",
+          "surname": "Aiello"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-ang-birth",
+          "type": "Birth",
+          "date": "10 October 1910",
+          "standard_date": "10 Oct 1910",
+          "place": "South America",
+          "standard_place": "South America"
+        },
+        {
+          "id": "f-ang-res-1940",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Pittsburgh City, Pittsburgh, Ward 3, Allegheny, Pennsylvania",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f-ang-natz",
+          "type": "Naturalization",
+          "date": "28 August 1947",
+          "standard_date": "28 Aug 1947",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f-ang-death",
+          "type": "Death",
+          "date": "October 1989",
+          "standard_date": "Oct 1989",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f-ang-burial",
+          "type": "Burial",
+          "place": "Mount Oliver, Allegheny, Pennsylvania, USA",
+          "standard_place": "Mount Oliver, Allegheny, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "LY6S-JPJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "LY6S-JPJ-name-1",
+          "given": "Anthony Joseph",
+          "surname": "Sunseri"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-ant-birth",
+          "type": "Birth",
+          "date": "29 December 1896",
+          "standard_date": "29 Dec 1896",
+          "place": "Trabia, Palermo, Sicily, Italy",
+          "standard_place": "Trabia, Palermo, Sicily, Italy"
+        },
+        {
+          "id": "f-ant-immig",
+          "type": "Immigration",
+          "date": "1901",
+          "standard_date": "1901"
+        },
+        {
+          "id": "f-ant-res-1940",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 19, Pittsburgh, Pittsburgh City, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f-ant-death",
+          "type": "Death",
+          "date": "30 January 1999",
+          "standard_date": "30 Jan 1999",
+          "place": "Aspinwall, Allegheny, Pennsylvania, United States",
+          "standard_place": "Aspinwall, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f-ant-burial",
+          "type": "Burial",
+          "place": "Mount Oliver, Allegheny, Pennsylvania, United States",
+          "standard_place": "Mount Oliver, Allegheny, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "G31N-FPC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "G31N-FPC-name-1",
+          "given": "John",
+          "surname": "Sunseri"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f-john-birth",
+          "type": "Birth",
+          "date": "16 January 1954",
+          "standard_date": "16 Jan 1954",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f-john-death",
+          "type": "Death",
+          "date": "17 January 1954",
+          "standard_date": "17 Jan 1954",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f-john-burial",
+          "type": "Burial",
+          "place": "Mount Oliver, Allegheny, Pennsylvania, United States",
+          "standard_place": "Mount Oliver, Allegheny, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Pete",
+          "surname": "Aiello",
+          "preferred": true,
+          "id": "N1"
+        },
+        {
+          "type": "BirthName",
+          "given": "Peter",
+          "surname": "Aiello",
+          "id": "N8"
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1882",
+          "standard_date": "1882",
+          "place": "Italy",
+          "id": "F1",
+          "standard_place": "Italy"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Felicia",
+          "surname": "Scalise",
+          "preferred": true,
+          "id": "N2"
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1882",
+          "standard_date": "1882",
+          "place": "Italy",
+          "id": "F2",
+          "standard_place": "Italy"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Anthony",
+          "surname": "Aiello",
+          "preferred": true,
+          "id": "N3"
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Amelia",
+          "surname": "Aiello",
+          "preferred": true,
+          "id": "N4"
+        }
+      ],
+      "id": "I4"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Natalie",
+          "surname": "Aiello",
+          "preferred": true,
+          "id": "N5"
+        }
+      ],
+      "id": "I5"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "William",
+          "surname": "Aiello",
+          "preferred": true,
+          "id": "N6"
+        }
+      ],
+      "id": "I6"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Helen",
+          "surname": "Aiello",
+          "preferred": true,
+          "id": "N7"
+        }
+      ],
+      "id": "I7"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "LY6S-JPJ",
+      "person2": "L4HQ-CBN",
+      "facts": [
+        {
+          "id": "f-marriage-1941",
+          "type": "Marriage",
+          "date": "October 1941",
+          "standard_date": "Oct 1941",
+          "place": "Allegheny, Pennsylvania, United States",
+          "standard_place": "Allegheny, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "LY6S-JPJ",
+      "child": "G31N-FPC"
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "L4HQ-CBN",
+      "child": "G31N-FPC"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I5",
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I6",
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I7",
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I7",
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "L4HQ-CBN",
+      "id": "R12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "L4HQ-CBN",
+      "id": "R13"
+    }
+  ],
+  "sources": [
+    {
+      "id": "3NB9-LVM",
+      "title": "Angelina Sunseri, \"United States, Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:J2S3-S23 : 8 January 2021), Angelina  Sunseri, Oct 1989; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:J2S3-S23"
+    },
+    {
+      "id": "3NB9-G47",
+      "title": "Angelina Sunseri, \"Pennsylvania, Allegheny, Pittsburgh, Naturalization Card File Index, 1906-1990\"",
+      "citation": "\"Pennsylvania, Allegheny, Pittsburgh, Naturalization Card File Index, 1906-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7JFC-4CPZ : Mon Sep 15 16:11:44 UTC 2025), Entry for Angelina Sunseri, 28 August 1947.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7JFC-4CPZ"
+    },
+    {
+      "id": "9PNZ-118",
+      "title": "Angelina Aiello, \"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVTP-WJM3 : Fri Jan 17 23:07:52 UTC 2025), Entry for Mr Anthony J Self Sunseri and Anita Jones, 01 Feb 1999.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVTP-WJMW"
+    },
+    {
+      "id": "SKQ2-CTM",
+      "title": "Angelina M Aiello Sunseri, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKF-NKCZ : Tue Jul 07 07:15:50 UTC 2026), Entry for Angelina M Aiello Sunseri.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKF-NKCZ"
+    },
+    {
+      "id": "MMGW-J8S",
+      "title": "Legacy NFS Source: Angelina  - Family Bible: birth-name: Angelina "
+    },
+    {
+      "title": "United States, Census, 1940",
+      "url": "https://www.familysearch.org/service/cds/recapi/collections/2000219",
+      "id": "S1"
+    },
+    {
+      "title": "Pennsylvania, County Marriages, 1775-1991",
+      "url": "https://www.familysearch.org/service/cds/recapi/collections/1589502",
+      "id": "S2"
+    }
+  ]
+}

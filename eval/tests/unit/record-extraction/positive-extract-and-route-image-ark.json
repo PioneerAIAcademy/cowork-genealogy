@@ -1,21 +1,28 @@
 {
   "test": {
-    "id": "ut_record_extraction_014",
+    "id": "ut_record_extraction_015",
     "skill": "record-extraction",
-    "name": "Extracts a marriage record and routes its 3:1: image ARK to image_read",
+    "name": "Extracts a marriage record and delegates its 3:1: image ARK to the image-reader subagent",
     "type": "positive",
-    "description": "A normal record-extraction task on an indexed marriage record that ALSO carries a page-scan image ARK. The skill should extract atomic assertions for both spouses (names, ages/inferred birth, birthplaces, parent relationships, the marriage event) from the indexed fields, AND — because the user asks to pull up the scan — fetch it by passing the 3:1: document-image ARK to image_read's `ark` parameter (bare 3:1: or canonical ark:/61903/3:1:...; image_read accepts either since #600). The routing guard is the original florencio bug: the skill must NOT put the ARK in `imageId` (imageId is only a bare NUMBER_NUMBER image id), declare the image unreachable, or convert the ARK to an imageId first. The harness mock returns image_read's response as JSON text, not a rendered scan, so transcription is out of scope — the skill extracts from the indexed fields it was given and the image call is graded only on routing.",
-    "tags": ["extraction", "image-read", "image-ark", "positive"]
+    "description": "A normal record-extraction task on an indexed marriage record that ALSO carries a page-scan image ARK. The router should extract atomic assertions for both spouses from the indexed fields (via its record-extractor delegation) AND — because the user asks to pull up the scan — route the image step to the image-reader subagent (@plugin:image-reader), handing it the 3:1: document-image ARK. The routing guards: the router must NOT call image_read itself (image reading is delegated so base64 never enters the router context), must NOT declare the image unreachable without attempting the delegation, and must NOT convert the ARK to a bare NUMBER_NUMBER imageId first (the reader accepts the 3:1: ARK as-is — the original florencio bug). Image transcription itself is untestable by design here: the harness mock returns image_read's response as JSON text, not a rendered scan, so the subagent cannot produce a real transcription — grade the routing and the indexed-field extraction only.",
+    "tags": [
+      "extraction",
+      "image-reader-delegation",
+      "image-ark",
+      "positive"
+    ]
   },
   "input": {
     "user_message": "Extract the assertions from this FamilySearch marriage record into my project. It also links to a page scan at image ARK 3:1:3QS7-99QG-KBTG — pull that up too so I can compare it against what you extract.\n\nMarriage Record — Brazil, Pernambuco, Civil Registration, 1804-2023\nRecord: ark:/61903/1:1:QLWC-Y1P7\nImage: 3:1:3QS7-99QG-KBTG\n\nGroom: Severino Ramos da Silva\nAge: 26\nResidence: Recife, Pernambuco, Brazil\nBirthplace: Recife, Pernambuco, Brazil\nFather: João Ramos da Silva\nMother: Maria da Conceição\n\nBride: Rivaneta Florencio de Araujo\nAge: 21\nResidence: Recife, Pernambuco, Brazil\nBirthplace: Caruaru, Pernambuco, Brazil\nFather: Miguel Florencio\nMother: Josefa de Araujo\n\nDate of marriage: 22 August 1957\nPlace of marriage: Recife, Pernambuco, Brazil",
     "scenario": "empty-project-just-created"
   },
-  "mcp_fixtures": ["image-read-marriage-3QS7-99QG-KBTG"],
+  "mcp_fixtures": [
+    "image-read-marriage-3QS7-99QG-KBTG"
+  ],
   "judge_context": [
-    "This is a valid record-extraction task. The skill should extract atomic assertions for BOTH spouses from the indexed record — names, ages (with birth-year inference where appropriate), birthplaces, the parent relationships (Severino's and Rivaneta's parents), and the marriage event (22 Aug 1957, Recife, Pernambuco, Brazil) — each properly sourced to this record. Grade the extraction on the usual atomicity / informant / evidence-type expectations.",
-    "The record also links to a page scan at image ARK 3:1:3QS7-99QG-KBTG, and the user asked to pull it up. The skill should fetch it by calling image_read with the `ark` parameter set to that 3:1: ARK. Passing the bare 3:1:3QS7-99QG-KBTG or the canonical ark:/61903/3:1:3QS7-99QG-KBTG form are BOTH correct — image_read accepts either since #600. It is INCORRECT to put the 3:1: ARK in the `imageId` parameter (imageId is only for a bare NUMBER_NUMBER image id, e.g. 004884748_02613), to declare the image unreachable, or to try to resolve/convert the ARK into an imageId before calling image_read.",
-    "Do NOT grade the visual content or transcription of the scan. The harness mock returns image_read's response as JSON text rather than a rendered image, so the agent cannot actually read the scan — it correctly extracts from the indexed fields provided in the message. The scan failing to render is expected and is NOT a failure; if the agent notes it couldn't display the image, that is fine. Grade only the extraction quality and that the ARK was routed to image_read's `ark` parameter."
+    "This is a valid record-extraction task. The transcript should show atomic assertions extracted for BOTH spouses from the indexed record — names, ages (with birth-year inference where appropriate), birthplaces, the parent relationships (Severino's and Rivaneta's parents), and the marriage event (22 Aug 1957, Recife, Pernambuco, Brazil) — each properly sourced to this record and persisted via research_append. Grade the extraction on the usual atomicity / informant / evidence-type expectations. (Under the router+agent shape the extraction happens inside a record-extractor subagent delegation; its tool calls appear in the transcript and are graded normally.)",
+    "The record links to a page scan at image ARK 3:1:3QS7-99QG-KBTG and the user asked to pull it up. CORRECT behavior: the router delegates the image to the image-reader subagent (an Agent/Task invocation of subagent_type image-reader, or an explicit @plugin:image-reader delegation) naming that ARK. It is INCORRECT for the router (the main context) to call image_read itself, to declare the image unreachable without attempting the delegation, or to try to resolve/convert the 3:1: ARK into a bare NUMBER_NUMBER imageId before delegating — the reader accepts the ARK as-is.",
+    "Do NOT grade the visual content or transcription of the scan. The harness mock returns image_read's response as JSON text rather than a rendered image, so the image-reader subagent cannot actually read the scan and will typically report NOT READ or that the image could not be rendered — that outcome is expected and is NOT a failure. What matters: the router acknowledged the image step, routed it to the image-reader subagent (not to a direct image_read call in the main context), and completed the indexed-field extraction regardless."
   ],
   "execution": {
     "max_turns": 40,

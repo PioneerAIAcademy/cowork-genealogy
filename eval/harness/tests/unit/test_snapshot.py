@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from harness.snapshot import (
+    agent_refs_in_text,
     build_snapshot,
     diff_snapshot_vs_disk,
     hash_content,
@@ -109,6 +110,27 @@ def test_hash_file_matches_normalize(tmp_path: Path):
     assert h == hash_content("hi\n")
 
 
+# ---- agent_refs_in_text (shared vectors with snapshot.test.ts) ------------
+
+
+def test_agent_refs_dedupes_and_sorts():
+    text = (
+        "Delegate to `@plugin:image-reader`, the same way /research invokes\n"
+        "`@plugin:gps-mentor`. Then call @plugin:gps-mentor again.\n"
+    )
+    assert agent_refs_in_text(text) == ["gps-mentor", "image-reader"]
+
+
+def test_agent_refs_empty_when_no_references():
+    assert agent_refs_in_text("No delegation here. @plugin: alone is not a ref.") == []
+
+
+def test_agent_refs_stop_at_invalid_chars():
+    # Name charset is [a-z0-9-]; the ref ends at the first invalid char.
+    assert agent_refs_in_text("see @plugin:record-extractor.") == ["record-extractor"]
+    assert agent_refs_in_text("bad @plugin:Foo uppercase") == []
+
+
 # ---- build_snapshot ------------------------------------------------------
 
 
@@ -159,6 +181,49 @@ def test_build_snapshot_skips_missing_skill(tmp_path: Path):
     """No skill dir → empty snapshot, no exception."""
     snap = build_snapshot(skill="nope", repo_root=tmp_path)
     assert snap == {}
+
+
+def test_build_snapshot_embeds_referenced_agent_files(tmp_path: Path):
+    """A `@plugin:<name>` reference in SKILL.md embeds the agent's .md —
+    editing the agent prompt must flip the run log inactive, exactly like
+    editing a file inside the skill dir."""
+    repo = tmp_path
+    skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "router"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: router\n---\nPer record, delegate to `@plugin:record-extractor`.\n",
+        encoding="utf-8",
+    )
+    agents_dir = repo / "packages" / "engine" / "plugin" / "agents"
+    agents_dir.mkdir(parents=True)
+    (agents_dir / "record-extractor.md").write_text(
+        "---\nname: record-extractor\n---\nagent body\n", encoding="utf-8"
+    )
+    (agents_dir / "unrelated.md").write_text(
+        "---\nname: unrelated\n---\nnot referenced\n", encoding="utf-8"
+    )
+
+    snap = build_snapshot(skill="router", repo_root=repo)
+    assert "packages/engine/plugin/agents/record-extractor.md" in snap
+    assert snap["packages/engine/plugin/agents/record-extractor.md"] == (
+        "---\nname: record-extractor\n---\nagent body\n"
+    )
+    # Unreferenced agents are NOT embedded.
+    assert "packages/engine/plugin/agents/unrelated.md" not in snap
+
+
+def test_build_snapshot_ignores_missing_referenced_agent(tmp_path: Path):
+    """A dangling @plugin: reference (agent file absent) is skipped, not an
+    error — the frontmatter lint owns dangling-reference detection."""
+    repo = tmp_path
+    skill_dir = repo / "packages" / "engine" / "plugin" / "skills" / "router"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: router\n---\nUses `@plugin:ghost`.\n", encoding="utf-8"
+    )
+    snap = build_snapshot(skill="router", repo_root=repo)
+    assert "packages/engine/plugin/agents/ghost.md" not in snap
+    assert "packages/engine/plugin/skills/router/SKILL.md" in snap
 
 
 def test_build_snapshot_excludes_mcp_server_source(tmp_path: Path):

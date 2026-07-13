@@ -1,22 +1,26 @@
 ---
 name: proof-conclusion
 model: claude-sonnet-4-6
-description: Writes GPS-conformant proof conclusions — selects the
-  confidence tier (Proved/Probable/Possible/Not Proved/Disproved), chooses
-  the proof conclusion form (Statement/Summary/Argument), and produces a
-  self-contained narrative markdown that can be uploaded to FamilySearch.
-  Updates tree.gedcomx.json when the tier reaches probable or higher.
+description: Writes GPS-conformant proof conclusions — selects the tier
+  (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
+  (Statement/Summary/Argument), and writes a self-contained narrative
+  markdown uploadable to FamilySearch. Updates tree.gedcomx.json at tier
+  probable or higher.
   GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
   "conclude this question", when assertions and person_evidence exist for
-  a question, or when a hypothesis reaches supported status. Do NOT use
+  a question or a hypothesis reaches supported status. ALSO for
+  review of an existing proof — "does my proof meet the GPS", "assess
+  ps_NNN against the GPS components", "review my existing proof summary"
+  (invokes the gps-mentor critique). Do NOT use
   when the user wants to resolve a conflict (use conflict-resolution),
   wants to select the next question (use question-selection), or wants to
-  classify evidence (use assertion-classification).
+  classify evidence (use record-extraction, which owns classification).
 allowed-tools:
   - research_append
   - tree_edit
+  - tree_correct
   - merge_tree_persons
   - merge_record_into_tree
   - merge_warnings
@@ -29,11 +33,53 @@ allowed-tools:
 
 **Read `references/gps-proof-writing.md` before writing any conclusion.** It contains GPS standards, proof-conclusion form selection tests, writing standards, and phrasing guidance this skill depends on.
 
-## Preconditions
+## Preconditions — mandatory, mechanical gate (run before Step 1)
 
-Before writing, verify: assertions exist for the question (extracted, classified); person_evidence links them to persons; related conflicts are resolved or acknowledged. If not, tell the user what is missing and recommend the appropriate skill — do not write a conclusion with unclassified or unlinked evidence.
+Run this check before touching Step 1, and show your work. A direct user
+request — "write the conclusion", "move toward proof", "conclude this now" —
+names the destination, not permission to skip the stops on the way there.
+This gate runs regardless of how proof-conclusion was invoked.
 
-If research is **not declared exhaustive**, you may still write at `probable` or `possible` tier. State the research is ongoing and what additional evidence is needed.
+1. Collect every assertion linked to the question via `extracted_for_question_ids`.
+2. **Classification (hard block, all assertions).** For each assertion,
+   confirm `information_quality` and `evidence_type` carry a real, reasoned
+   value (with matching `informant` / `informant_proximity` analysis) — not
+   still carrying record-extraction's best-effort default. If you cannot
+   confirm `assertion-classification` has run on an assertion, treat it as
+   unclassified. List any assertion IDs that fail this check. Classification
+   grounds the tier, so this applies to every assertion tied to the question.
+3. **person_evidence (hard block scoped to person identity).**
+   `person_evidence` is identity resolution — it defeats the unsound
+   assumption that a record is about your person. The hard block is therefore
+   on *identity*, not on every fact. Confirm that **each person the conclusion
+   depends on** — the subject and every candidate parent/relative — is
+   identified by **at least one** linked assertion (a name/identity assertion
+   carrying a `person_evidence` link). List any such person that has **no**
+   linked identity assertion.
+   Unlinked *fact* and *negative* assertions (a birth year, a co-residence, an
+   "unknown father") that pertain to a person already identified above are
+   **advisory, not blockers** — their person is already resolved, and GPS
+   requires them to be analyzed in the narrative, not separately linked. Note
+   any unlinked fact/negative IDs as advisory and proceed.
+4. **Conflicts (hard block).** For each conflict touching this question's
+   assertions, confirm it is `resolved` or carries an explicit
+   acknowledgment. List any conflict IDs that fail this check.
+
+**If step 2 produces failing IDs, step 3 leaves any relied-upon *person*
+without a linked identity assertion, or step 4 produces failing IDs: stop.
+Do not proceed to Step 1.**
+Report the exact failing IDs to the user and recommend the specific skill
+for each gap (`assertion-classification`, `person-evidence`, or
+`conflict-resolution`). In `--autonomous` mode, route to the missing skill
+automatically instead of asking — autonomous mode changes who decides, not
+whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
+do **not** stop the gate — surface them as a note and continue.
+
+Only when the blocking checks pass, proceed to Step 1.
+
+If research is **not declared exhaustive**, you may still write at
+`probable` or `possible` tier — but the checks above still apply
+regardless of exhaustiveness tier.
 
 ## Steps
 
@@ -83,13 +129,13 @@ Use `tree_edit`, **batched into ONE call via its `ops[]` array**, in this order:
 
 1. **The concluded relationship(s) FIRST** — `add_relationship` with a `relationship` object. Parentage: `{ "type": "ParentChild", "parent": "<parentId>", "child": "<childId>" }`. Marriage: `{ "type": "Couple", "person1": "<id>", "person2": "<id>" }`. Endpoints must be **existing** person ids — link the persons already in the tree, don't re-add them (`ParentChild` uses `parent`/`child`, NOT `person1`/`person2`). This is the answer to the question; write it before anything else so it cannot be dropped.
 2. **Facts** — `add_fact` with `primary: true`.
-3. **Source entries** — `add_source` for a new tree source, or `update_source` with its `sourceId` to refine an existing one. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole `tree_edit` write fails validation).
+3. **Source entries** — `add_source` for a new tree source (in this `tree_edit` batch), or `update_source` with its `sourceId` to refine an existing one — `update_source` lives in **`tree_correct`** (same batched `ops[]` form), so issue it as a separate `tree_correct` call. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole write fails validation).
 
-Batching applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing); ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact or relationship added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op in the same batch.
+Batching applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing); ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact or relationship added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op — removals live in **`tree_correct`** (a separate call with the same batched `ops[]` form), not `tree_edit`.
 
 **Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "error"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "warning"` is advisory. Get confirmation, then call `merge_tree_persons` or `merge_record_into_tree`.
 
-After the single batched `tree_edit` (or a merge), run `check-warnings` **once** (see `references/validation-protocol.md`) — not after each op.
+After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct` call — or a merge, run `check-warnings` **once** (see `references/validation-protocol.md`) — not after each op.
 
 **Verify the conclusion landed.** Before you present or mark the project complete, confirm the relationship(s) you concluded are now in the tree — the persons are *linked* by a `ParentChild`/`Couple` relationship, not merely added as unconnected persons. If a concluded parentage or marriage is not linked, the tree does not yet reflect your conclusion: go back and write the relationship.
 
@@ -143,6 +189,6 @@ is already persisted.
 
 **Writes:** `proof_summaries[]` and `project` (`updated`, optionally `status`) in `research.json`; `persons[].facts[]`, `relationships[]`, and `sources[]` in `tree.gedcomx.json` when tier ≥ probable.
 
-**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_edit({ operation: "remove", ... })`.
+**On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
 
 **Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write to the `questions` section (see §7).

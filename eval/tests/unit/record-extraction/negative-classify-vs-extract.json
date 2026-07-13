@@ -2,21 +2,22 @@
   "test": {
     "id": "ut_record_extraction_011",
     "skill": "record-extraction",
-    "name": "Reclassify assertions should route to assertion-classification, not record-extraction",
+    "name": "Reclassify-assertions request routes INTO record-extraction (classification's one owner)",
     "type": "negative",
-    "description": "User asks to re-classify evidence types on existing assertions. record-extraction writes best-effort classifications during extraction; refinement is assertion-classification's job. This tests the extract-vs-refine boundary.",
-    "tags": ["near-miss", "extract-vs-classify", "boundary"]
+    "description": "User asks to re-classify evidence types on existing assertions. Since the assertion-classification skill was merged into record-extraction (2026-07-11), classification is set at extraction and refined by the same skill — a reclassification request must route to record-extraction, not be answered inline in the main context and not declined as out-of-scope.",
+    "tags": ["near-miss", "classification-refinement", "boundary"]
   },
   "input": {
     "user_message": "I've extracted several assertions from the 1850 and 1870 census records. Now I want you to re-examine the evidence_type classifications — some of the 'indirect' labels might actually be 'direct' given what the records explicitly state. Please reclassify them.",
     "scenario": "mid-research-flynn"
   },
   "negative": {
-    "correct_skill": ["assertion-classification"],
-    "explanation": "The user wants to refine evidence classifications on already-extracted assertions. record-extraction writes best-effort classifications during extraction; assertion-classification is the skill that re-examines and refines those classifications. There is no new record to extract from — the user is asking to re-evaluate existing work."
+    "correct_skill": ["record-extraction"],
+    "explanation": "Classification has exactly one owner: record-extraction writes first-and-final three-layer classifications at extraction and refines them on re-invocation (its description covers 'reclassify these assertions'). The former assertion-classification skill no longer exists. Answering the evidence_type question inline — without invoking record-extraction — is the failure mode this test guards."
   },
   "judge_context": [
-    "Should route to assertion-classification; record-extraction should decline because there is no new record to extract — the user wants to refine existing classifications"
+    "Should route to record-extraction, which owns classification refinement since the assertion-classification merge — the skill re-examines the named assertions and updates classification fields in place via its record-extractor delegation",
+    "It is WRONG to answer the reclassification inline (rewriting evidence_type judgments in chat or via direct tool calls without invoking the record-extraction skill), and WRONG to route to the deleted assertion-classification skill or decline the request as out-of-scope"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
