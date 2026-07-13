@@ -1043,7 +1043,9 @@ describe("research_append (composite persist + enforcement)", () => {
       sourceDescription: { title: "1850 U.S. Federal Census", author: "U.S. Census Bureau", url: "https://example.org" },
       ops: [
         { section: "sources", op: "append", entry: sourceOpNoRef() },
-        { section: "assertions", op: "append", entry: noId(validAssertion("x", "src_002")) },
+        // record_id must be fresh — "rec1" already has a source (src_001), which
+        // would trigger §3.4.1 reuse detection instead of the create path.
+        { section: "assertions", op: "append", entry: { ...noId(validAssertion("x", "src_002")), record_id: "rec-new" } },
       ],
     });
     expect(r.ok).toBe(true);
@@ -1166,7 +1168,8 @@ describe("research_append (composite persist + enforcement)", () => {
 
   it("auto-stamps source_id on assertions that omit it when the batch has exactly one sources append", async () => {
     await writeProject();
-    const { source_id: _s, ...assertionNoSource } = noId(validAssertion("x"));
+    // fresh record_id: "rec1" would engage §3.4.1 reuse (same repository)
+    const { source_id: _s, ...assertionNoSource } = { ...noId(validAssertion("x")), record_id: "rec-new" };
     const r = await researchAppend({
       projectPath: dir,
       sourceDescription: { title: "T" },
@@ -1190,7 +1193,8 @@ describe("research_append (composite persist + enforcement)", () => {
       sourceDescription: { title: "T" },
       ops: [
         { section: "sources", op: "append", entry: sourceOpNoRef() }, // → src_002
-        { section: "assertions", op: "append", entry: noId(validAssertion("x", "src_001")) }, // explicit, pre-existing
+        // fresh record_id keeps §3.4.1 out of the picture (explicit source_id is the subject here)
+        { section: "assertions", op: "append", entry: { ...noId(validAssertion("x", "src_001")), record_id: "rec-new" } }, // explicit, pre-existing
       ],
     });
     expect(r.ok).toBe(true);
@@ -1368,7 +1372,8 @@ describe("research_append (composite persist + enforcement)", () => {
     await writeProject();
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
     const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
-    const { informant: _i, ...badAssertion } = noId(validAssertion("x", "src_002")); // missing required `informant`
+    // fresh record_id so §3.4.1 doesn't divert to reuse; missing required `informant`
+    const { informant: _i, ...badAssertion } = { ...noId(validAssertion("x", "src_002")), record_id: "rec-new" };
     const r = await researchAppend({
       projectPath: dir,
       sourceDescription: { title: "T" }, // would create S1 in the in-memory tree
@@ -1588,6 +1593,191 @@ describe("research_append (composite persist + enforcement)", () => {
     const research = await readResearch();
     expect(research.assertions[1].standard_place).toBe("Pottsville, Schuylkill, Pennsylvania, United States");
     expect(research.assertions[2].standard_place).toBeUndefined();
+  });
+
+  // ── §3.4.1: source-reuse auto-detection ──
+
+  /** A schema-valid source without id/S-ref, with an overridable repository. */
+  const reuseSourceOp = (repository = "NARA", extra: Record<string, unknown> = {}) => ({
+    ...sourceOpNoRef(),
+    repository,
+    ...extra,
+  });
+  /** A schema-valid assertion without id/source_id, citing `recordId`. */
+  const reuseAssertionOp = (recordId: string) => {
+    const { source_id: _s, ...rest } = noId(validAssertion("x"));
+    return { ...rest, record_id: recordId };
+  };
+
+  it("created: no existing source for the record_id → S created, sourceReuse echoed", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "1850 U.S. Federal Census" },
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp() },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec-new") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse).toEqual({ action: "created", srcId: "src_002", sId: "S1" });
+    expect(r.sourceDescriptionId).toBe("S1");
+    expect(r.filesWritten).toEqual(["tree.gedcomx.json", "research.json"]);
+  });
+
+  it("updated_existing: same record_id + same repository → append converted to update, no new src/S", async () => {
+    await writeProject();
+    const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "ignored — reuse wins" },
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("NARA", { notes: "refined on re-extraction" }) },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse).toEqual({ action: "updated_existing", srcId: "src_001", sId: "SD-001" });
+    expect(r.sourceDescriptionId).toBeUndefined(); // sourceDescription ignored, no S created
+    expect(r.filesWritten).toEqual(["research.json"]); // research-only write
+    expect(r.results[0]).toEqual({ section: "sources", op: "update", entryId: "src_001" });
+    const research = await readResearch();
+    expect(research.sources).toHaveLength(1); // no duplicate source
+    expect(research.sources[0].notes).toBe("refined on re-extraction"); // fields merged
+    expect(research.sources[0].gedcomx_source_description_id).toBe("SD-001"); // S link kept
+    expect(research.assertions[1].source_id).toBe("src_001"); // stamped with the existing src
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+  });
+
+  it("updated_existing: repository matches on normalized form (case + whitespace)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("  nara ") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse?.action).toBe("updated_existing");
+    expect(r.sourceReuse?.srcId).toBe("src_001");
+  });
+
+  it("new_source_reused_s: same record_id, different repository → new src_ citing the existing S; no S created", async () => {
+    await writeProject();
+    const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "ignored — the record's S already exists" },
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("Ancestry") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse).toEqual({ action: "new_source_reused_s", srcId: "src_002", sId: "SD-001" });
+    expect(r.sourceDescriptionId).toBeUndefined();
+    expect(r.filesWritten).toEqual(["research.json"]); // tree untouched
+    const research = await readResearch();
+    expect(research.sources).toHaveLength(2);
+    expect(research.sources[1].id).toBe("src_002");
+    expect(research.sources[1].repository).toBe("Ancestry");
+    expect(research.sources[1].gedcomx_source_description_id).toBe("SD-001"); // reused S
+    expect(research.assertions[1].source_id).toBe("src_002"); // auto-stamp with the NEW src
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+  });
+
+  it("explicit gedcomx_source_description_id keeps today's semantics — no detection, no sourceReuse echo", async () => {
+    await writeProject();
+    const { id: _i, ...src } = validSource("x"); // carries SD-001 explicitly, repository NARA
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: src },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse).toBeUndefined();
+    const research = await readResearch();
+    expect(research.sources).toHaveLength(2); // a second NARA source was created as asked
+    expect(research.sources[1].id).toBe("src_002");
+  });
+
+  it("multi-repo edge: updates the repository-equal source, not the first; a third repo reuses the FIRST match's S", async () => {
+    const research = baseResearch();
+    research.sources = [
+      validSource("src_001"), // NARA, SD-001
+      { ...validSource("src_002"), repository: "Ancestry", gedcomx_source_description_id: "SD-002" },
+    ];
+    research.assertions = [
+      validAssertion("a_001", "src_001"), // rec1 via NARA
+      validAssertion("a_002", "src_002"), // rec1 via Ancestry
+    ];
+    const tree = { ...baseTree, sources: [...baseTree.sources, { id: "SD-002", title: "Same census via Ancestry" }] };
+    await writeProject(research, tree);
+
+    // (a) repository matches the SECOND source → that one is updated.
+    const a = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("Ancestry") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(a.ok).toBe(true);
+    if (!a.ok || !("results" in a)) return;
+    expect(a.sourceReuse).toEqual({ action: "updated_existing", srcId: "src_002", sId: "SD-002" });
+
+    // (b) a third repository → new src_003 reusing the FIRST match's S (sources order).
+    const b = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("MyHeritage") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("rec1") },
+      ],
+    });
+    expect(b.ok).toBe(true);
+    if (!b.ok || !("results" in b)) return;
+    expect(b.sourceReuse).toEqual({ action: "new_source_reused_s", srcId: "src_003", sId: "SD-001" });
+  });
+
+  it("matches canonicalized record_id forms (resolver URL vs bare ARK vs type-prefixed)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), record_id: "https://www.familysearch.org/ark:/61903/1:1:MXYZ-TP4" },
+    ];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: reuseSourceOp("NARA") },
+        { section: "assertions", op: "append", entry: reuseAssertionOp("1:1:MXYZ-TP4") },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse?.action).toBe("updated_existing");
+    expect(r.sourceReuse?.srcId).toBe("src_001");
+  });
+
+  it("no assertion appends in the batch → detection stays out (no sourceReuse)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "T" },
+      ops: [{ section: "sources", op: "append", entry: reuseSourceOp() }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.sourceReuse).toBeUndefined();
+    expect(r.sourceDescriptionId).toBe("S1");
   });
 });
 

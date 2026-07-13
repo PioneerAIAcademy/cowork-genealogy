@@ -31,6 +31,13 @@ persist atomic write.
 > failures echo `opsReceived` (§3.3). When the composite creates an `S` entry,
 > the tool writes **tree.gedcomx.json and research.json together** (§4) — the
 > one exception to "only research.json is written."
+>
+> **Rev. 3 (2026-07-12, extractor state diet):** the tool now **auto-detects
+> source reuse** (§3.4.1): when a batch's assertion appends cite a `record_id`
+> an existing research source already covers, the sources append is converted
+> to an update of that source (same repository) or its existing `S` entry is
+> reused (different repository) — the caller no longer reads `research.json`
+> to decide. The decision is echoed as `sourceReuse` (§3.2).
 
 ---
 
@@ -140,6 +147,11 @@ camelCase convenience fields the same way `research_log_append` does.
   op: "append" | "update",
   entryId: string,                 // assigned (append) or echoed (update)
   sourceDescriptionId?: string,    // the S id, when sourceDescription created one (§3.4)
+  sourceReuse?: {                  // §3.4.1 — echoed whenever reuse detection engaged
+    action: "created" | "updated_existing" | "new_source_reused_s",
+    srcId: string,                 // the research source written (existing or newly assigned)
+    sId: string | null,            // the tree S entry the source cites
+  },
   resolvedPlaces?: [{ place, standardPlace, source: "sidecar" | "geocoded" }], // §3.6
   filesWritten: ["research.json"], // + "tree.gedcomx.json" first, when §3.4 wrote the S entry
   validation: { valid: true, warnings: string[] },
@@ -258,6 +270,59 @@ the model, owns every id and every cross-file link (decision D1,
   supplied `source_id` always wins (rare multi-source batches). Calls with zero or
   2+ sources append ops auto-stamp nothing: assertion `source_id` requirements are
   exactly as before.
+
+### 3.4.1 Source-reuse auto-detection
+
+The reuse decision used to live in the caller's head: the record-extractor
+agent read `research.json` up front, matched the record against existing
+sources, and chose between append/update/S-reuse by prose rule. That read is
+exactly the per-delegation project-file re-read the extractor state diet
+removes, so the decision moves into the tool — which already holds both
+documents in memory at this point.
+
+**When it engages.** All of: the call is a batch (`ops`); the batch contains
+**exactly one** `sources` append op; that op does **not** carry an explicit
+`gedcomx_source_description_id` (a caller-supplied id keeps today's verified-
+reuse semantics, §3.4 — detection is bypassed and no `sourceReuse` is echoed);
+and the batch contains at least one `assertions` append op with a non-empty
+`record_id`. Batches with zero or 2+ sources append ops, single-op calls, and
+sources-only batches are untouched.
+
+**Matching.** The batch's distinct assertion `record_id`s are canonicalized
+via `arkToBareId` (the same ARK normalization §3.5 uses, so resolver-URL,
+bare-ARK, and type-prefixed forms of one record compare equal; non-ARK ids —
+`ancestry:…`, `capture:…` — compare verbatim). Existing assertions in
+`research.assertions` whose canonicalized `record_id` matches any of them name
+the **matched sources** (via their `source_id`), kept in `research.sources`
+array order. Repositories compare by normalized exact match (trim +
+casefold).
+
+**Decision (deterministic, first match wins):**
+
+1. **Same repository** — a matched source whose normalized `repository`
+   equals the sources op's → the append is **converted to an update** of that
+   `src_` (the provided source fields shallow-merged onto it; the existing
+   `gedcomx_source_description_id` is kept), every assertions append op that
+   omits `source_id` is stamped with the existing `src_` id, and **no `S` is
+   created** — a supplied `sourceDescription` is ignored (not validated).
+   Echo: `action: "updated_existing"`.
+2. **Different repository** — matched sources exist but none share the
+   repository → the new `src_` is created as asked, but its
+   `gedcomx_source_description_id` is stamped from the **first** matched
+   source (sources-array order) and the `S`-create is skipped even when
+   `sourceDescription` was supplied (ignored, not validated). Echo:
+   `action: "new_source_reused_s"`. (Fallback: a legacy matched source with
+   no `S` id falls through to path 3.)
+3. **No matched source** — current §3.4 behavior (create the `S` via
+   `sourceDescription`). Echo: `action: "created"`.
+
+`sourceReuse.srcId` is the research source the batch wrote (the existing id
+for path 1; the deterministic next `src_NNN` for paths 2–3), `sourceReuse.sId`
+the tree `S` entry it cites. In paths 1–2 nothing touches the tree, so the
+call is a research-only write (`filesWritten: ["research.json"]`, no
+`sourceDescriptionId`). The §3.4 reuse-or-create precondition still backstops
+path 2: a stamped `S` id must exist in the tree or the batch is rejected
+op-indexed.
 
 ### 3.5 Persona/record-id enforcement matrix — D2
 
@@ -464,6 +529,16 @@ plain entry write fits here, the computed build may warrant its own tool),
 - **place levers** — sidecar copy preferred over geocoding; `resolvedPlaces`
   echo; country-contradiction rejected; `standard_place: null` opt-out honored;
   `opsReceived` echoed on batch failures.
+- **source-reuse matrix (§3.4.1)** — all four paths: no match → `created`
+  (S written, `sourceReuse` echoed); same repository → `updated_existing`
+  (append converted to update, assertions stamped with the existing `src_`,
+  no S created, research-only write, `sourceDescription` ignored); different
+  repository → `new_source_reused_s` (new `src_` citing the first match's S,
+  no S created); explicit `gedcomx_source_description_id` → today's semantics,
+  no `sourceReuse`. Plus the multi-repo edge (two existing sources for the
+  record — the repository-equal one is updated; a third repository reuses the
+  FIRST match's S) and canonicalized `record_id` forms (resolver URL vs bare
+  ARK vs type-prefixed id all match the same existing source).
 
 ---
 
