@@ -183,6 +183,7 @@ is already persisted.
 - **The narrative is authoritative.** Structured fields follow it, not the reverse.
 - **Never use Proved with hedging.** Proved states fact; anything tentative is Probable or below.
 - **Cite everything; acknowledge limitations.** State what was not searched, what conflicts remain, what assumptions are made. A well-written "Not Proved" is better than a fabricated "Proved."
+- **Never assert unresolvability without testing it.** Before writing that resolving X "requires direct examination of [source]" or that [source] is "the only path," explicitly ask: what other record types could independently establish this same fact? If alternatives exist that were not searched, name them as unsearched alternatives rather than claiming the fact is unresolvable. Asserting unresolvability that was never tested embeds a GPS Component 1 gap inside the GPS Component 5 narrative.
 - **Do not resolve conflicts here** — recommend conflict-resolution. Do not evaluate exhaustiveness here — reference the existing declaration and tier accordingly.
 
 ## Re-invocation behavior
