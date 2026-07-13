@@ -6,13 +6,13 @@
   "researcher_question": "Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico) — the parents of her mother, Martha J Wood?",
   "tags": {
     "question_type": "parents",
-    "era": "1850s",
-    "geography": "US-AL"
+    "era": "1870s",
+    "geography": "US-AR"
   },
   "model": {
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "difficulty": "easy",
-  "notes": "Maternal grandparents (Manley Madison Wood and Martha Patsey Ford, both b. Spartanburg, South Carolina, d. 1863 in Blount County, Alabama) are documented on the compiled FamilySearch tree for Martha J Wood and corroborated by an 1860 census entry showing M M Wood and Martha Wood as a household in Blount, Alabama."
+  "difficulty": "moderate",
+  "notes": "The compiled FamilySearch tree names the maternal grandparents as Manley Madison Wood and Martha Patsey Ford of Blount County, Alabama, sourced only to an uncited tree profile — but Martha's own 1875 Nevada County, Arkansas marriage record (self-reported) gives her maiden surname as Sampson, not Wood. 'Wood' was in fact a married name from an earlier marriage. The correct maternal grandparents, J. H. Sampson and Louisa Sampson of Nevada/Ouachita County, Arkansas, are established only by independently searching Sampson-surname census records (1870 and 1880) after rejecting the tree's Wood claim — a good test of whether the agent verifies a compiled-tree parentage claim against a record rather than accepting it at face value. J. H. Sampson's own birthplace is left unresolved (Georgia per the 1870 census, North Carolina per 1880) and should not be asserted as one or the other."
 }
