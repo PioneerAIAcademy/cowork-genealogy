@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Birth year ca. 1947 (1950 census age-derived) vs. expected 1 May 1946; birth place generic Utah vs. expected Payson, Utah. Correct person and parent relationships; supporting facts imprecise."
+  },
+  "annotator": "genealogy-evaluator"
+}

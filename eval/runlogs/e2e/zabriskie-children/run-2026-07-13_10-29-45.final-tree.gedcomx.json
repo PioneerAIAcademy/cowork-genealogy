@@ -1,0 +1,788 @@
+{
+  "persons": [
+    {
+      "id": "KW87-QY7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "John Kenneth",
+          "surname": "Zabriskie"
+        },
+        {
+          "given": "Kenith J",
+          "surname": "Zabriskie",
+          "type": "AlsoKnownAs",
+          "id": "N6"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "30 October 1916",
+          "standard_date": "30 Oct 1916",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "31 January 1985",
+          "standard_date": "31 Jan 1985",
+          "place": "Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "5923067d-38ae-4779-9284-1849d1b14c8e",
+          "type": "Blessing",
+          "date": "3 Dec 1916",
+          "standard_date": "3 Dec 1916"
+        },
+        {
+          "id": "ab93f448-37cc-401f-b1c8-739d271affbb",
+          "type": "Census",
+          "date": "3 January 1920",
+          "standard_date": "3 Jan 1920",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "3044b18b-be51-4565-b130-94e7c45781b3",
+          "type": "Census",
+          "date": "27 April 1930",
+          "standard_date": "27 Apr 1930",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "5c8088e8-79ee-4273-8476-f0690d4ec71c",
+          "type": "Census",
+          "date": "12 April 1940",
+          "standard_date": "12 Apr 1940",
+          "place": "Fountain Green, Sanpete, Utah, United States",
+          "standard_place": "Fountain Green, Sanpete, Utah, United States"
+        },
+        {
+          "id": "579c4f04-79c0-4c80-9b91-512160b5933a",
+          "type": "Military Draft Registration",
+          "date": "16 Oct 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Fountain Green, Sanpete, Utah, United States",
+          "standard_place": "Fountain Green, Sanpete, Utah, United States"
+        },
+        {
+          "id": "7fcca1c4-110b-41f3-a00b-fc572a976be9",
+          "type": "MilitaryService",
+          "date": "28 Mar 1941",
+          "standard_date": "28 Mar 1941",
+          "place": "Fort Douglas, Salt Lake, Utah, United States",
+          "standard_place": "Fort Douglas, Salt Lake, Utah, United States"
+        },
+        {
+          "id": "6e16eb74-2f88-447f-8809-34f0703c5124",
+          "type": "Residence",
+          "place": "Fountain Green, Sanpete, Utah",
+          "standard_place": "Fountain Green, Sanpete, Utah, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "place": "Vine Bluff Cemetery, Nephi, Juab, Utah, United States",
+          "standard_place": "Vine Bluff Cemetery, Nephi, Juab, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWJC-3GL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Gertrude Marie Elnore",
+          "surname": "Nielsen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "28 May 1878",
+          "standard_date": "28 May 1878",
+          "place": "Ephraim, Sanpete, Utah, United States",
+          "standard_place": "Ephraim, Sanpete, Utah, United States"
+        },
+        {
+          "id": "7c2e947d-7e73-467e-917e-dfed32aceb71",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Ephraim City, Sanpete, Utah, United States",
+          "standard_place": "Ephraim, Sanpete, Utah, United States"
+        },
+        {
+          "id": "0bbc3155-9d3a-48e2-9efb-96c2abae6f0d",
+          "type": "Baptism",
+          "date": "5 July 1888",
+          "standard_date": "5 Jul 1888"
+        },
+        {
+          "id": "ca936536-592f-47e4-b3b6-585a593db052",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 120 Ephraim Precinct Ephraim city, Sanpete, Utah, United States",
+          "standard_place": "Ephraim Election Precinct, Sanpete, Utah, United States"
+        },
+        {
+          "id": "f824657f-08ce-410e-bcb8-c7ae9a2a3c08",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "8caaee0b-50fc-4501-bc4e-27a2a391ebcf",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "6 June 1937",
+          "standard_date": "6 Jun 1937",
+          "place": "Fountain Green, Sanpete, Utah, United States",
+          "standard_place": "Fountain Green, Sanpete, Utah, United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "10 June 1937",
+          "standard_date": "10 Jun 1937",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "dad650ba-d2f8-407f-909b-5fa5631e2568",
+          "type": "Residence",
+          "place": "United States",
+          "standard_place": "United States",
+          "value": "Ephraim, Sanpete, Utah"
+        }
+      ]
+    },
+    {
+      "id": "KWZ7-K75",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Ruth",
+          "surname": "Tolley"
+        },
+        {
+          "given": "Ruth T",
+          "surname": "Zabriskie",
+          "type": "MarriedName",
+          "id": "N7"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "8 August 1922",
+          "standard_date": "8 Aug 1922",
+          "place": "Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "625b9d6f-fc44-4bd1-ab9b-40838c73db76",
+          "type": "Christening",
+          "date": "3 September 1922",
+          "standard_date": "3 Sep 1922",
+          "place": "Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "Census",
+          "date": "4 April 1930",
+          "standard_date": "4 Apr 1930",
+          "place": "Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "b6100e76-1a44-4a20-bac0-b139a6a4b3d3",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "9c275256-a5ab-463a-99e1-39cb2c3d6e8e",
+          "type": "Census",
+          "date": "25 April 1940",
+          "standard_date": "25 Apr 1940",
+          "place": "Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "15 July 2008",
+          "standard_date": "15 Jul 2008",
+          "place": "Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "57abcc0a-cbf7-4c46-b09c-499c72d7e419",
+          "type": "Obituary",
+          "date": "17 Jul 2008",
+          "standard_date": "17 Jul 2008",
+          "place": "Provo, Utah, United States",
+          "standard_place": "Provo, Utah, Utah, United States"
+        },
+        {
+          "id": "2af8e50d-aa6f-4804-b428-460f70533ce6",
+          "type": "Obituary",
+          "date": "17 Jul 2008",
+          "standard_date": "17 Jul 2008",
+          "place": "Salt Lake City, Utah, United States",
+          "standard_place": "Salt Lake, Utah, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "19 July 2008",
+          "standard_date": "19 Jul 2008",
+          "place": "Vine Bluff Cemetery, Nephi, Juab, Utah, United States",
+          "standard_place": "Vine Bluff Cemetery, Nephi, Juab, Utah, United States"
+        },
+        {
+          "id": "0826abbe-faf6-4f95-b0f3-227b43a09dde",
+          "type": "LifeSketch",
+          "value": "NEPHI-Ruth Tolley Zabriskie, age 85, passed away on July 15, 2008 in Nephi, Utah.\n\nShe was born August 8, 1922 in Nephi, Utah to Hyrum Warren and Bessie Rachel Whittaker Tolley. She married Kenneth John Zabriskie September 1945. The marriage was later solemnized in the Manti Temple.\n\nSurvived by her children, Terrie (Allan) Kay of Mona; Joleen Alverson of Spanish Fork; Ken (Melinda) Zabriskie of Draper; 13 grandchildren and 36 great-grand-children. Preceded in death by her parents, her husband Kenneth; daughter, Patricia Zabriskie; son-in-law, Curtis Alverson; granddaughter, Misty Olsen and great-grand-daughter, Ashley Gardner; 12 brothers and sisters.\n\nFuneral Services will be held at 2 p.m. on Saturday, July 19, 2008 at the Nephi North Stake Center, 1125 North 400 East. Friends may call Friday evening from 6-8 p.m. at the Anderson Funeral Home, 94 West 300 North and at the Church one hour prior to the services.\nInterment will be in the Nephi Vine Bluff Cemetery.\nPublished in the Deseret News on 7/17/2008."
+        }
+      ]
+    },
+    {
+      "id": "KWVH-C7M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "John Henry",
+          "surname": "Zabriske"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1edd8aef-e805-4263-b857-b4f1b446598c",
+          "type": "Blessing",
+          "date": "4 Apr 1867",
+          "standard_date": "4 Apr 1867"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "17 November 1867",
+          "standard_date": "17 Nov 1867",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "ab93f448-37cc-401f-b1c8-739d271affbb",
+          "type": "Census",
+          "date": "11 June 1870",
+          "standard_date": "11 Jun 1870",
+          "place": "Mount Pleasant Ward 1, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "faa3a733-7dad-416b-a3f4-939688bfa46c",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Mount Pleasant, Sanpete, Utah Territory, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "3044b18b-be51-4565-b130-94e7c45781b3",
+          "type": "Census",
+          "date": "19 June 1900",
+          "standard_date": "19 Jun 1900",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "5c8088e8-79ee-4273-8476-f0690d4ec71c",
+          "type": "Census",
+          "date": "20 April 1910",
+          "standard_date": "20 Apr 1910",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "0e934de3-4899-4067-922e-2274e5b86edc",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hiawatha, Carbon, Utah, United States",
+          "standard_place": "Hiawatha, Carbon, Utah, United States"
+        },
+        {
+          "id": "4de7f377-bb57-4a4a-8ecb-1081c106c2e2",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "30 July 1930",
+          "standard_date": "30 Jul 1930",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "e915c5ed-7055-4ffa-bbaf-3416df6daca7",
+          "type": "Utah Cemetery Inventory",
+          "date": "30 July 1930",
+          "standard_date": "30 Jul 1930",
+          "place": "Mount Pleasant Cemetery, Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "919c42a2-a8ad-43c0-83ca-12ab92d0a87f",
+          "type": "Sexton's Records",
+          "date": "30 July 1930",
+          "standard_date": "30 Jul 1930",
+          "place": "Grave Location - A_78_3_2, Mount Pleasant Cemetery, Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "e77f54ba-ffc1-4228-b1d1-762e99847545",
+          "type": "Obituary",
+          "date": "01 Aug 1930",
+          "standard_date": "1 Aug 1930",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "2 August 1930",
+          "standard_date": "2 Aug 1930",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant City Cemetery, Mount Pleasant, Sanpete, Utah, United States"
+        },
+        {
+          "id": "a8827c24-59fd-4f47-aca5-2e099aca6e0b",
+          "type": "Membership",
+          "place": "Mount Pleasant, Sanpete, Utah, United States",
+          "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "preferred": true,
+          "given": "Terrie Lee",
+          "surname": "Zabriskie"
+        },
+        {
+          "given": "Terrie",
+          "surname": "Kay",
+          "type": "MarriedName",
+          "id": "N12"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "ca. 1945",
+          "place": "Utah, United States",
+          "primary": true,
+          "id": "F4",
+          "standard_place": "Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N9",
+          "type": "BirthName",
+          "preferred": true,
+          "given": "Joleen",
+          "surname": "Zabriskie"
+        },
+        {
+          "given": "Joleen",
+          "surname": "Alverson",
+          "type": "MarriedName",
+          "id": "N13"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "ca. 1947",
+          "place": "Utah, United States",
+          "primary": true,
+          "id": "F5",
+          "standard_place": "Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N10",
+          "type": "BirthName",
+          "preferred": true,
+          "given": "Patricia Ann",
+          "surname": "Zabriskie"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "21 December 1948",
+          "standard_date": "21 December 1948",
+          "id": "F2"
+        },
+        {
+          "type": "Death",
+          "date": "3 December 1970",
+          "standard_date": "3 December 1970",
+          "place": "Vine Bluff Cemetery, Nephi, Juab, Utah, United States",
+          "standard_place": "Nephi, Juab, Utah, United States",
+          "id": "F3"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Ken",
+          "surname": "Zabriskie",
+          "type": "BirthName",
+          "preferred": true,
+          "id": "N11"
+        }
+      ],
+      "id": "I4"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KW87-QY7",
+      "person2": "KWZ7-K75",
+      "facts": [
+        {
+          "id": "035614f6-e012-4be7-92f0-eccec7f157ee",
+          "type": "Marriage",
+          "date": "11 Sep 1945",
+          "standard_date": "11 Sep 1945",
+          "place": "Fountain Green, Sanpete, Utah, United States",
+          "standard_place": "Fountain Green, Sanpete, Utah, United States"
+        },
+        {
+          "id": "e573dec0-658e-4a44-8778-6a5b97f18910",
+          "type": "Marriage",
+          "date": "11 September 1945",
+          "standard_date": "11 Sep 1945",
+          "place": "Fountain Green, Sanpete, Utah, United States",
+          "standard_place": "Fountain Green, Sanpete, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KWVH-C7M",
+      "person2": "KWJC-3GL",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "4 January 1914",
+          "standard_date": "4 Jan 1914",
+          "place": "Malad City, Oneida, Idaho, United States",
+          "standard_place": "Malad, Oneida, Idaho, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KWVH-C7M",
+      "child": "KW87-QY7",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KWJC-3GL",
+      "child": "KW87-QY7",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KW87-QY7",
+      "child": "I1"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KWZ7-K75",
+      "child": "I1"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KW87-QY7",
+      "child": "I2"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KWZ7-K75",
+      "child": "I2"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KW87-QY7",
+      "child": "I3"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KWZ7-K75",
+      "child": "I3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KW87-QY7",
+      "child": "I4",
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KWZ7-K75",
+      "child": "I4",
+      "id": "R12"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7QXN-B93",
+      "title": "John Kenneth Zabriski, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PRJ-3TDZ : Thu Mar 26 23:57:14 UTC 2026), Entry for John Kenneth Zabriski and John.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PRJ-3TDZ"
+    },
+    {
+      "id": "3PXF-BWZ",
+      "title": "Kenith J Zabriskie, \"United States, Census, 1950\"",
+      "citation": "\"United States, Census, 1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XKM-FRX3 : Thu Oct 05 22:54:19 UTC 2023), Entry for Kenith J Zabriskie and Ruth T Zabriskie, 1 April 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XKM-FRX3"
+    },
+    {
+      "id": "3PXF-B9B",
+      "title": "Kenith J Zabriskie, \"United States, Census, 1950\"",
+      "citation": "\"United States, Census, 1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XKM-F3MQ : Tue Oct 03 22:36:37 UTC 2023), Entry for Kenith J Zabriskie and Ruth T Zabriskie, 1 April 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XKM-F3MQ"
+    },
+    {
+      "id": "3D5S-MCK",
+      "title": "Kenneth Zabriskie, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZQ8J-693Z : Mon Oct 13 17:14:32 UTC 2025), Entry for Kenneth Zabriskie, 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZQ8J-693Z"
+    },
+    {
+      "id": "3D59-BM9",
+      "title": "Kenneth Zabriskie, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZQ8J-69N2 : Wed Oct 08 20:17:06 UTC 2025), Entry for Kenneth Zabriskie, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZQ8J-69N2"
+    },
+    {
+      "id": "3QZL-R45",
+      "title": "Kenneth John Zabriskie, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CGVG-53W2 : Mon Mar 30 07:21:13 UTC 2026), Entry for Kenneth John Zabriskie, 1935.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CGVG-53W2"
+    },
+    {
+      "id": "3QZ2-R5T",
+      "title": "Kenneth John Zabriskie, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DX32-92W2 : Sun Mar 29 23:00:55 UTC 2026), Entry for Kenneth John Zabriskie, 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DX32-92W2"
+    },
+    {
+      "id": "3QZ2-R68",
+      "title": "Kenneth John Zabriskie, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DX32-9K2M : Sun Mar 29 12:36:37 UTC 2026), Entry for Kenneth John Zabriskie, 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DX32-9K2M"
+    },
+    {
+      "id": "3QZ2-R9M",
+      "title": "John Kennth Zabriskie, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DXS1-CDT2 : Sun Mar 29 23:13:34 UTC 2026), Entry for John Kennth Zabriskie, 1960.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DXS1-CDT2"
+    },
+    {
+      "id": "3QZ2-5FV",
+      "title": "Kenneth John Zabriskie, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZRCK-RCN2 : Fri Aug 01 15:56:53 UTC 2025), Entry for Kenneth John Zabriskie, 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZRCK-RCN2"
+    },
+    {
+      "id": "SFJQ-4K5",
+      "title": "Kenneth John Zabriskie, \"Utah, World War II Draft Registration Cards, 1940-1947\"",
+      "citation": "\"Utah, World War II Draft Registration Cards, 1940-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2WP-DZFY : Mon Apr 28 23:56:29 UTC 2025), Entry for Kenneth John Zabriskie and Robert Muriel Johnson, 16 Oct 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2WP-DZFY"
+    },
+    {
+      "id": "SDTN-DN2",
+      "title": "Kenneth John Zabriskie, \"Utah, World War II Index to Army Veterans of Utah, 1939-1945\"",
+      "citation": "\"Utah, World War II Index to Army Veterans of Utah, 1939-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7QCG-5RMM : Mon Mar 17 15:09:53 UTC 2025), Entry for Kenneth John Zabriskie and Robert Muriel Johnson, 28 Mar 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7QCG-5RMM"
+    },
+    {
+      "id": "SQXD-XSQ",
+      "title": "Kenneth John Zabriskie, \"United States, Western States Marriage Index\"",
+      "citation": "\"United States, Western States Marriage Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZDX-W2Y : Tue Feb 11 22:27:52 UTC 2025), Entry for Kenneth John Zabriskie and Ruth Tolley, 11 Sep 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZDX-W2Y"
+    },
+    {
+      "id": "96XS-RJ9",
+      "title": "Kenneth Zabriskie, \"Utah, Obituaries from Utah Newspapers, 1850-2005\"",
+      "citation": "\"Utah, Obituaries from Utah Newspapers, 1850-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK9T-7D3N : Tue Mar 11 16:19:47 UTC 2025), Entry for Mr John Zabriskie and Alma Zabriskie, 01 Aug 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK9T-7D32"
+    },
+    {
+      "id": "9Z2H-89X",
+      "title": "Kenneth John Zabriskie, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKN-LSDW : Tue Jul 07 23:11:38 UTC 2026), Entry for Kenneth John Zabriskie.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKN-LSDW"
+    },
+    {
+      "id": "9Z4R-7CC",
+      "title": "Kenneth Zabriskie in entry for Elyoung Arnoldson, \"Utah, Obituaries from Utah Newspapers, 1850-2005\"",
+      "citation": "\"Utah, Obituaries from Utah Newspapers, 1850-2005,\" , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVSF-2N23 : 10 August 2024), Kenneth Zabriskie in entry for Elyoung Arnoldson, 03 Nov 1933; citing Mt. Pleasant Pyramid, 1933-1950, The University of Utah. J. Willard Marriott Library, Salt Lake City.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVSF-2N23"
+    },
+    {
+      "id": "9Z73-Y5G",
+      "title": "John Kenneth Zabriskie, \"BillionGraves Index\"",
+      "citation": "\"BillionGraves Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2VCF-H9C : Thu Oct 02 03:14:06 UTC 2025), Entry for John Kenneth Zabriskie.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2VCF-H9C"
+    },
+    {
+      "id": "9Z73-YGD",
+      "title": "Kenneth Zabriskie, \"United States, Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:VMMQ-3Q3 : 11 January 2021), Kenneth  Zabriskie, Jan 1985; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:VMMQ-3Q3"
+    },
+    {
+      "id": "MMDR-9DQ",
+      "title": "Kenneth Zabriski in household of John H Zabriski, \"United States Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XH6K-H57 : Sun Jan 12 07:39:01 UTC 2025), Entry for John H Zabriski and Nora Zabriski, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XH6K-H54"
+    },
+    {
+      "id": "MMDR-MTV",
+      "title": "Kenneth Zabriskie in household of Nora Zabriskie, \"United States Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8PN-56B : Wed Oct 22 16:46:16 UTC 2025), Entry for Nora Zabriskie and Ora Arnoldson, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8PN-5X9"
+    },
+    {
+      "id": "MMDR-MRN",
+      "title": "Kenneth Zabriskie in household of Robert M Johnson, \"United States Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT4W-DL4 : Tue Jan 21 05:53:46 UTC 2025), Entry for Kenneth Zabriskie, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VT4W-DL4"
+    },
+    {
+      "id": "MMDR-MP1",
+      "title": "Kenneth J Zabriskie, \"United States World War II Army Enlistment Records, 1938-1946\"",
+      "citation": "\"United States, World War II Army Enlistment Records, 1938-1946\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K85W-7YW : Wed Sep 17 22:57:01 UTC 2025), Entry for Kenneth J Zabriskie, 28 Mar 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K85W-7YW"
+    },
+    {
+      "id": "S1",
+      "title": "1950 U.S. Census - Kenith J Zabriskie household, Nephi, Juab, Utah",
+      "author": "United States. Bureau of the Census",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6XKM-FRX3"
+    },
+    {
+      "id": "S2",
+      "title": "Ruth Tolley Zabriskie Obituary",
+      "author": "Deseret News"
+    },
+    {
+      "id": "S3",
+      "title": "Find A Grave Index, memorial for Patricia Ann Zabriskie (1948-1970)",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVKN-LSD4"
+    },
+    {
+      "id": "S4",
+      "title": "Find A Grave Index entry for Kenneth John Zabriskie (1916-1985), memorial #44888910, Vine Bluff Cemetery, Nephi, Juab, Utah",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVKN-LSDW"
+    },
+    {
+      "id": "S5",
+      "title": "BillionGraves Index: Patricia Ann Zabriskie (1948-1970)",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2HXB-BKJ"
+    }
+  ]
+}
