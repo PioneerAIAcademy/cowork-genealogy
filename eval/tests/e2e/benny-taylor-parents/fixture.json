@@ -1,0 +1,18 @@
+{
+  "id": "benny-taylor-parents",
+  "name": "Benny Raphael Taylor",
+  "source_pid": "KNJ1-TRX",
+  "captured": "2026-07-13",
+  "researcher_question": "Who were the parents of Benny Raphael Taylor (born 1921 in McCammon, Bannock, Idaho; died 1991 in Tillamook, Oregon)?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1920s",
+    "geography": "US-OR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Parents are Silvester Jay Taylor (KW8G-33L, b. 29 May 1877 Fairview, Franklin, Idaho; d. 10 Mar 1944 Garibaldi, Tillamook, Oregon) and Autossie Ann Bair (KWZ8-3RD, b. 21 May 1883 Richmond, Cache, Utah; d. 24 Nov 1962 Winnemucca, Humboldt, Nevada), married 21 Oct 1901 in Logan, Cache, Utah. The family migrated from McCammon, Idaho to Garibaldi, Oregon c.1925-26; the 1930 and 1940 US censuses enumerate Benny ('Bennie') in the household of his father Jay Taylor, and the SSA NUMIDENT/obituary corroborate. Distinctive given names (Autossie, Silvester) keep namespace-confusion risk low. NOTE: both of Benny's wives were stripped alongside the parents because the FamilySearch relatives-expansion reused duplicate fact GUIDs carried by the spouse records, which the strip tool rejects; Benny's two children remain attached to him as starting context."
+}

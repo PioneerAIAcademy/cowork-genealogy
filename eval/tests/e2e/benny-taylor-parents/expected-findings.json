@@ -1,0 +1,61 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Silvester Jay Taylor (born 29 May 1877 in Fairview, Franklin, Idaho; died 10 Mar 1944 in Garibaldi, Tillamook, Oregon) was Benny Raphael Taylor's biological father.",
+      "details": {
+        "subject_person": "Benny Raphael Taylor (KNJ1-TRX)",
+        "relation": "father",
+        "target_person": {
+          "name": "Silvester Jay Taylor",
+          "pid": "KW8G-33L",
+          "birth": "29 May 1877, Fairview, Franklin, Idaho"
+        }
+      },
+      "supporting_sources": [
+        "United States Census, 1940 — Benny (transcribed 'Bennie Taylor') enumerated in the household of Jay Taylor (Silvester Jay Taylor), East Garibaldi Election Precinct, Tillamook, Oregon",
+        "United States Census, 1930 — Benny R Taylor in his parents' household, Garibaldi, Tillamook, Oregon",
+        "Social Security Numerical Identification Files (NUMIDENT), 1936-2007 — application listing Benny's father"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Autossie Ann Bair (born 21 May 1883 in Richmond, Cache, Utah; died 24 Nov 1962 in Winnemucca, Humboldt, Nevada) was Benny Raphael Taylor's biological mother.",
+      "details": {
+        "subject_person": "Benny Raphael Taylor (KNJ1-TRX)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Autossie Ann Bair",
+          "pid": "KWZ8-3RD",
+          "birth": "21 May 1883, Richmond, Cache, Utah"
+        }
+      },
+      "supporting_sources": [
+        "United States Census, 1930 — Benny R Taylor in the household of his parents, Garibaldi, Tillamook, Oregon",
+        "Social Security Numerical Identification Files (NUMIDENT), 1936-2007 — application listing Benny's mother",
+        "GenealogyBank Historical Newspaper Obituaries — obituary naming Benny's parents"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Benny's parents Silvester Jay Taylor and Autossie Ann Bair were married on 21 Oct 1901 in Logan, Cache, Utah.",
+      "details": {
+        "subject_person": "Benny Raphael Taylor (KNJ1-TRX)",
+        "relation": "parents' marriage",
+        "target_person": {
+          "name": "Silvester Jay Taylor & Autossie Ann Bair",
+          "birth": "married 21 Oct 1901, Logan, Cache, Utah"
+        }
+      },
+      "supporting_sources": [
+        "Utah, County Marriages — marriage of Silvester Jay Taylor and Autossie Ann Bair, 21 Oct 1901, Logan, Cache, Utah"
+      ],
+      "required": false
+    }
+  ]
+}

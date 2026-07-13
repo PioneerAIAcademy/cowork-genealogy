@@ -1,0 +1,768 @@
+{
+  "persons": [
+    {
+      "id": "KNJ1-TRX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Benny Raphael",
+          "surname": "Taylor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "19 July 1921",
+          "standard_date": "19 Jul 1921",
+          "place": "McCammon, Bannock, Idaho, United States",
+          "standard_place": "McCammon, Bannock, Idaho, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "9 July 1991",
+          "standard_date": "9 Jul 1991",
+          "place": "Tillamook, Oregon, United States",
+          "standard_place": "Tillamook, Oregon, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "19daa195-9ff7-403d-9528-62c396947c2e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "9f8ccee2-08ee-495d-aacc-5ab69c555940",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "11fe55c2-6ca9-4b35-b6aa-2b75eb94903f",
+          "type": "Military+Draft+Registration",
+          "date": "16 February 1942",
+          "standard_date": "16 Feb 1942",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States",
+          "value": "Construction, Truck Driving, Harbormaster for Port of Bay City (Garibaldi)"
+        },
+        {
+          "id": "0d737eb6-480f-4c5f-89f5-6aa0ab31bbeb",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "85e63063-349e-40d4-ba96-5c9e940091e1",
+          "type": "Residence",
+          "date": "27 November 1962",
+          "standard_date": "27 Nov 1962",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "ec11614c-f0f4-4cca-8dd0-29abe90e2a7b",
+          "type": "Residence",
+          "date": "19 December 1979",
+          "standard_date": "19 Dec 1979",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "L7BB-SP1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Hildagard Bernadine",
+          "surname": "Duclos"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "17 August 1917",
+          "standard_date": "17 Aug 1917",
+          "place": "Ferdinand, Idaho, Idaho, United States",
+          "standard_place": "Ferdinand, Idaho, Idaho, United States"
+        },
+        {
+          "id": "971547bc-4a14-404b-a973-8d12cca16db0",
+          "type": "Christening",
+          "date": "19 Aug 1917",
+          "standard_date": "19 Aug 1917",
+          "place": "Ferdinand, Idaho, Idaho, United States",
+          "standard_place": "Ferdinand, Idaho, Idaho, United States"
+        },
+        {
+          "id": "8a9e7e42-4294-470d-81da-fe87de38375c",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Cottonwood, Idaho, Idaho, United States",
+          "standard_place": "Cottonwood, Idaho, Idaho, United States"
+        },
+        {
+          "id": "71e60aa7-5bb6-4b9c-89ae-1d9e493e47af",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Colton, Whitman, Washington, United States",
+          "standard_place": "Colton, Whitman, Washington, United States"
+        },
+        {
+          "id": "706cf02b-fca1-40e0-bc19-0fb5510e12c6",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Colton, Whitman, Washington, United States",
+          "standard_place": "Colton, Whitman, Washington, United States"
+        },
+        {
+          "id": "2b73af36-ee7f-46d7-bd1c-5ab1cf8d6677",
+          "type": "Social Program Application",
+          "date": "April 1945",
+          "standard_date": "Apr 1945"
+        },
+        {
+          "id": "5930bfda-8d7b-414a-b72b-571203d14d9a",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "3 April 1998",
+          "standard_date": "3 Apr 1998",
+          "place": "Clarkston, Asotin, Washington, United States",
+          "standard_place": "Clarkston, Asotin, Washington, United States"
+        },
+        {
+          "id": "461ac6f5-a76b-4cf7-9d85-8f21ab60ab35",
+          "type": "Burial",
+          "date": "after 3 April 1998",
+          "standard_date": "Aft 3 Apr 1998",
+          "place": "Cottonwood Catholic Cemetery, Cottonwood, Idaho, Idaho, United States",
+          "standard_place": "Saint Mary's Catholic Cemetery, Cottonwood, Idaho, Idaho, United States"
+        },
+        {
+          "id": "e955ce44-5be5-4143-bcb9-3d82684feb05",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "f44421ab-a04a-465a-bd8f-d963241504a8",
+          "type": "Residence",
+          "place": "Clarkston, Asotin, Washington, United States",
+          "standard_place": "Clarkston, Asotin, Washington, United States"
+        },
+        {
+          "id": "a6cd27f3-a23c-45e6-ab77-2cd1f2fc42a3",
+          "type": "Social Program Correspondence",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "KWZ8-3RD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Autossie Ann",
+          "surname": "Bair"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "21 May 1883",
+          "standard_date": "21 May 1883",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "ad4d8c97-486e-4411-8d60-d7f1e41f2d98",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Robin, Bannock, Idaho, United States",
+          "standard_place": "Robin, Bannock, Idaho, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "East Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "b62801ae-f0f2-4a16-859e-9dbb8737220c",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "40b552a4-b1f9-47d8-9a87-f37717773ba4",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+          "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "af26d3a9-80f8-43df-9291-a427ff207b7a",
+          "type": "Residence",
+          "date": "3 April 1950",
+          "standard_date": "3 Apr 1950",
+          "place": "Hobsonville, Tillamook, Oregon, United States",
+          "standard_place": "Hobsonville, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "252a8268-101d-45f4-8688-165d61e64068",
+          "type": "Social Program Claim",
+          "date": "21 May 1951",
+          "standard_date": "21 May 1951"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "24 November 1962",
+          "standard_date": "24 Nov 1962",
+          "place": "Winnemucca, Humboldt, Nevada, United States",
+          "standard_place": "Winnemucca, Humboldt, Nevada, United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "after 24 November 1962",
+          "standard_date": "Aft 24 Nov 1962",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "829d2e8f-8512-4731-bfb6-8f25c065ac4f",
+          "type": "Residence",
+          "date": "27 Nov 1962",
+          "standard_date": "27 Nov 1962",
+          "place": "Garibaldi",
+          "standard_place": "Garibaldi, Rio Grande do Sul, Brazil"
+        },
+        {
+          "id": "4870f4b0-c65f-4d7a-bc1e-95d435c8d1c0",
+          "type": "Obituary",
+          "date": "27 Nov 1962",
+          "standard_date": "27 Nov 1962"
+        }
+      ]
+    },
+    {
+      "id": "GDTJ-WV6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Jacques Francis",
+          "surname": "Taylor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9027e46b-f015-4e66-90fa-6e8c7f22ddef",
+          "type": "Birth",
+          "date": "25 October 1940",
+          "standard_date": "25 Oct 1940",
+          "place": "Washington, United States",
+          "standard_place": "Washington, United States"
+        },
+        {
+          "id": "cc27ebdd-eea8-42aa-ba53-472a122aae7e",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "8dc99e58-5151-48fd-82cf-386116dee3d5",
+          "type": "Death",
+          "date": "15 July 1992",
+          "standard_date": "15 Jul 1992",
+          "place": "Multnomah, Oregon, United States",
+          "standard_place": "Multnomah, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "KW8G-33L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Silvester Jay",
+          "surname": "Taylor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "29 May 1877",
+          "standard_date": "29 May 1877",
+          "place": "Fairview, Franklin, Idaho, United States",
+          "standard_place": "Fairview, Franklin, Idaho, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Franklin, Oneida, Idaho, United States",
+          "standard_place": "Franklin, Oneida, Idaho, United States"
+        },
+        {
+          "id": "e91ebe34-6832-4d0b-85d6-f13a796831b8",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Bannock County, Idaho, United States",
+          "standard_place": "Bannock, Idaho, United States"
+        },
+        {
+          "id": "19162845-a784-493a-b893-9763da341265",
+          "type": "Residence",
+          "date": "from about 1925 to 1926",
+          "standard_date": "Bet Abt 1925 and 1926",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States",
+          "value": "Moved from McCammon, Idaho"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "East Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "3b8759cd-71c9-41de-9777-112dccfd439f",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+          "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "10 March 1944",
+          "standard_date": "10 Mar 1944",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "17 March 1944",
+          "standard_date": "17 Mar 1944",
+          "place": "Lincoln Memorial Park, Portland, Multnomah, Oregon, United States",
+          "standard_place": "Lincoln Memorial Park, Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "184021b5-5a1a-494e-b188-0092f613f5d7",
+          "type": "Occupation",
+          "place": "McCammon, Bannock, Idaho, United States",
+          "standard_place": "McCammon, Bannock, Idaho, United States",
+          "value": "Farmer - 160 Acres"
+        }
+      ]
+    },
+    {
+      "id": "G6J6-NK4",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "LeRoy Dominic",
+          "surname": "Taylor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "281734dc-b09b-4080-80e4-238885036a81",
+          "type": "Birth",
+          "date": "29 August 1936",
+          "standard_date": "29 Aug 1936",
+          "place": "Colton, Whitman, Washington, United States",
+          "standard_place": "Colton, Whitman, Washington, United States"
+        },
+        {
+          "id": "876a5566-4726-47e8-8b8a-690a4eee77f2",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Colton, Whitman, Washington, United States",
+          "standard_place": "Colton, Whitman, Washington, United States"
+        },
+        {
+          "id": "73c748f1-cdf2-4a32-aab6-e4901d4e7131",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "cfd40f1f-1644-46a4-aa95-26fd4d92b0d3",
+          "type": "Death",
+          "date": "4 December 2011",
+          "standard_date": "4 Dec 2011",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "a01f1c42-5502-46be-9f3c-0011fa2cf7b6",
+          "type": "Burial",
+          "place": "Arlington, Virginia, United States",
+          "standard_place": "Arlington, Virginia, United States"
+        }
+      ]
+    },
+    {
+      "id": "LL9V-56G",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Jolene Eleanor",
+          "surname": "Bartchy"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 November 1926",
+          "standard_date": "10 Nov 1926",
+          "place": "Tillamook, Tillamook, Oregon, United States",
+          "standard_place": "Tillamook, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Long Prairie, Tillamook, Oregon, United States",
+          "standard_place": "Long Prairie, Curry, Oregon, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Rural, Tillamook, Oregon",
+          "standard_place": "Tillamook, Oregon, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "South Prairie Election Precinct, Tillamook, Oregon, United States",
+          "standard_place": "South Prairie Election Precinct, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "24 March 2009",
+          "standard_date": "24 Mar 2009",
+          "place": "Battle Ground, Clark, Washington, United States",
+          "standard_place": "Battle Ground, Clark, Washington, United States"
+        },
+        {
+          "id": "e922beb8-d382-4479-8f66-5fcb5cbd66f1",
+          "type": "Burial",
+          "place": "Hudson Cemetery, Rainier, Columbia, Washington, United States",
+          "standard_place": "Columbia, Washington, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KNJ1-TRX",
+      "person2": "LL9V-56G",
+      "facts": [
+        {
+          "id": "f505c733-b426-4e4e-93d9-2f25449c6b73",
+          "type": "Marriage",
+          "date": "23 November 1941",
+          "standard_date": "23 Nov 1941",
+          "place": "Tillamook, Tillamook, Oregon, United States",
+          "standard_place": "Tillamook, Tillamook, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KNJ1-TRX",
+      "person2": "L7BB-SP1",
+      "facts": [
+        {
+          "id": "5169c343-9ece-412d-81c2-a0885dc6ba2b",
+          "type": "Marriage",
+          "date": "25 February 1945",
+          "standard_date": "25 Feb 1945",
+          "place": "Vancouver, Clark, Washington, United States",
+          "standard_place": "Vancouver, Clark, Washington, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "KW8G-33L",
+      "person2": "KWZ8-3RD",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "21 October 1901",
+          "standard_date": "21 Oct 1901",
+          "place": "Logan, Cache, Utah, United States",
+          "standard_place": "Logan, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KW8G-33L",
+      "child": "KNJ1-TRX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KWZ8-3RD",
+      "child": "KNJ1-TRX",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KNJ1-TRX",
+      "child": "G6J6-NK4",
+      "subtype": "Step"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "L7BB-SP1",
+      "child": "G6J6-NK4"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KNJ1-TRX",
+      "child": "GDTJ-WV6"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "L7BB-SP1",
+      "child": "GDTJ-WV6",
+      "subtype": "Step"
+    }
+  ],
+  "sources": [
+    {
+      "id": "96BX-W2D",
+      "title": "Benny R Taylor, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XCS8-45Z : Sat Mar 09 08:25:17 UTC 2024), Entry for Jay S Taylor and Autossie A Taylor, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XCS8-45N"
+    },
+    {
+      "id": "S2QB-3G2",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2ZV-F1DQ : Sun Mar 10 13:24:23 UTC 2024), Entry for Benny R Taylor and Hildegard R Baner, 25 February 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2ZV-F1DQ"
+    },
+    {
+      "id": "SBZ6-S8M",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPM1-W9SN : Fri Mar 08 13:27:58 UTC 2024), Entry for Benny R Taylor and B Taylor, 25 February 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPM1-W9SN"
+    },
+    {
+      "id": "3CX6-KT8",
+      "title": "Benny Tayior, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP1Y-4M2W : Fri Mar 15 04:41:45 UTC 2024), Entry for Alvro B Taylor and Mildred, 14 Aug 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP1Y-4M2N"
+    },
+    {
+      "id": "SL4F-5F6",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMB-BSYR : Fri Mar 08 13:27:59 UTC 2024), Entry for Benny R Taylor and Hildegard Taylor, 25 February 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMB-BSYR"
+    },
+    {
+      "id": "SBZ6-37N",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMB-Y6CL : Fri Mar 08 13:51:48 UTC 2024), Entry for Benny R Taylor and Hildegard Baner, 25 February 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMB-Y6CL"
+    },
+    {
+      "id": "SBZ6-79N",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPM6-8XBW : Fri Mar 08 16:20:59 UTC 2024), Entry for Benny R Taylor and Hildegard B Bauer, 20 February 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPM6-8XBW"
+    },
+    {
+      "id": "33M6-NG6",
+      "title": "Bennie Taylor, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5MM-3LYM : Fri Mar 15 02:29:19 UTC 2024), Entry for Mrs Etta Rowe Solomon and Laverne Montgomery, 19 Dec 1979.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5MM-3LYC"
+    },
+    {
+      "id": "QDLH-77Y",
+      "title": "Benny Rapheal Taylor, \"Oregon, Marriage Records, 1906-1968\"",
+      "citation": "\"Oregon, Marriage Records, 1906-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WBF8-1Q3Z : Sun Mar 10 11:12:06 UTC 2024), Entry for Benny Rapheal Taylor and Tossie Bain, 28 Sep 1962.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WBF8-1Q3Z"
+    },
+    {
+      "id": "SBZ6-7P5",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2ZV-TSPF : Sun Mar 10 17:28:54 UTC 2024), Entry for Benny R Taylor and Hildegard B Bauer, 20 February 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2ZV-TSPF"
+    },
+    {
+      "id": "33M6-LRF",
+      "title": "Bennie Taylor, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5MM-NXCY : Mon Mar 11 23:30:52 UTC 2024), Entry for Eva R Solomon and Laverne Montgomery, 18 Dec 1979.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5MM-NXZW"
+    },
+    {
+      "id": "3PTQ-DHT",
+      "title": "Benny R Taylor, \"United States, Census, 1950\"",
+      "citation": "\"United States, Census, 1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XVB-NBF5 : Tue Mar 19 14:48:39 UTC 2024), Entry for Benny R Taylor and Hilda B Taylor, 11 April 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XVB-NBF5"
+    },
+    {
+      "id": "S2QB-HMP",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2ZV-TSYT : Sat Mar 09 08:13:32 UTC 2024), Entry for Benny R Taylor and Hildegard B Dorlos Bauer, 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2ZV-TSYT"
+    },
+    {
+      "id": "QDLH-Q9L",
+      "title": "Benny Rapheal Taylor, \"Oregon, Marriage Records, 1906-1968\"",
+      "citation": "\"Oregon, Marriage Records, 1906-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WBF7-LQPZ : Sat Mar 09 02:03:14 UTC 2024), Entry for Benny Rapheal Taylor and Tossie Bain, 28 Sep 1962.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WBF7-LQPZ"
+    },
+    {
+      "id": "SQDG-FCH",
+      "title": "Benny R Taylor, \"United States, Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:JG9M-HZ6 : 11 January 2021), Benny R Taylor, 09 Jul 1991; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:JG9M-HZ6"
+    },
+    {
+      "id": "SBZ6-3B7",
+      "title": "Benny R Taylor, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPM1-HBQD : Sun Mar 10 23:08:38 UTC 2024), Entry for Benny R Taylor and Hildegard Baner, 25 February 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPM1-HBQD"
+    },
+    {
+      "id": "3K3H-HFL",
+      "title": "Benny Rapheal Taylor, \"Oregon Death Index, 1971-2008\"",
+      "citation": "\"Oregon Death Index, 1971-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CKJT-12W2 : Fri Jan 10 22:35:38 UTC 2025), Entry for Benny Rapheal Taylor and Rosema, 9 Jul 1991.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CKJT-12W2"
+    },
+    {
+      "id": "QW76-F8L",
+      "title": "Benny R Taylor, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KW1-QCF4 : Sun Jul 05 06:56:06 UTC 2026), Entry for Benny Rapheal Taylor and Jay Taylor.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KW1-QCF4"
+    },
+    {
+      "id": "3NPD-VLL",
+      "title": "Benjamin R Taylor, \"Oregon, Marriage Records, 1906-1968\"",
+      "citation": "\"Oregon, Marriage Records, 1906-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WYTK-K3MM : Fri Mar 08 17:09:43 UTC 2024), Entry for Donald William Varnes and Alfred Mitchell Varnes, 8 Jul 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WYTK-K3ZM"
+    },
+    {
+      "id": "3NPD-K6C",
+      "title": "Benny R Taylor, \"Oregon, Marriage Records, 1906-1968\"",
+      "citation": "\"Oregon, Marriage Records, 1906-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W1JN-NNMM : Sat Mar 09 13:05:58 UTC 2024), Entry for Jacques Francis Taylor and Benny R Taylor, 6 Oct 1963.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W1JN-NN3Z"
+    },
+    {
+      "id": "9KSC-3CR",
+      "title": "Bennie Taylor in household of Jay Taylor, \"United States Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VRTZ-12G : Thu Jan 23 15:49:59 UTC 2025), Entry for Jay Taylor and Tassy Taylor, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VRTZ-125"
+    },
+    {
+      "id": "QW76-Y5Q",
+      "title": "Benny R Taylor, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KW1-LHDK : Tue Jun 30 09:48:56 UTC 2026), Entry for Jacques F Taylor and Benny R Taylor.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KW1-LHD2"
+    },
+    {
+      "id": "9TR5-5CR",
+      "title": "Benny Rapheal Taylor, \"Oregon, Death Index, 1903-1998\"",
+      "citation": "\"Oregon, Death Index, 1903-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZCQ-5XC : Wed Feb 19 09:42:26 UTC 2025), Entry for Benny Rapheal Taylor and Rosema Taylor, 09 Jul 1991.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VZCQ-5XC"
+    },
+    {
+      "id": "SBZ6-93T",
+      "title": "Benny Rapheal Taylor, \"Oregon, World War II Draft Registration Cards, 1940-1945\"",
+      "citation": "\"Oregon, World War II Draft Registration Cards, 1940-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLGY-1BRJ : Thu Apr 17 15:20:05 UTC 2025), Entry for Benny Rapheal Taylor and Jolene Taylor, 16 Feb 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLGY-1BRJ"
+    },
+    {
+      "id": "QZQD-MDR",
+      "title": "Benjamin, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5QW-6DR8 : Fri Mar 15 03:52:30 UTC 2024), Entry for Mrs Autossie Taylor and Mrs Esther Ritts, 27 Nov 1962.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5QW-6DRN"
+    }
+  ]
+}
