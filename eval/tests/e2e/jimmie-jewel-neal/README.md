@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico) — the parents of her mother, Martha J Wood?
+> Who were the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884 in Hillsboro, Hill, Texas, died 7 March 1938 in Carlsbad, Eddy, New Mexico)?
 
 ## What was removed from the starting tree
 
