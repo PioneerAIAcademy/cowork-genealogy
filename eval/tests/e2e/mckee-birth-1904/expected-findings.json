@@ -1,0 +1,24 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Robert Raymond McKee was born on 29 February 1904 (a leap day) in Banbridge, County Down, Northern Ireland.",
+      "details": {
+        "target_person": {
+          "name": "Robert Raymond McKee",
+          "pid": "L8K8-W12"
+        },
+        "fact_type": "Birth",
+        "date": "29 February 1904",
+        "place": "Banbridge, County Down, Northern Ireland, United Kingdom"
+      },
+      "supporting_sources": [
+        "Ireland, Civil Registration Indexes, 1845-1958 — birth entry for Robert Raymond M'Kee, registered Jan-Mar 1904 quarter",
+        "Ireland, Census, 1911 — Robert McKee in the household at Newry, County Down (age consistent with a 1904 birth)",
+        "California, World War II Draft Registration Cards, 1940-1947 — Robert Raymond McKee, giving date of birth 29 Feb 1904"
+      ],
+      "required": true
+    }
+  ]
+}
