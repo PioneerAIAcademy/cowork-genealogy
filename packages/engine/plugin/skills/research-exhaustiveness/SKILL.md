@@ -183,6 +183,17 @@ the offending field — do not blindly retry the same payload.
   or the declaration explicitly justifies why it is inaccessible. A
   known, decisive, accessible record left unsearched fails the
   overturn-risk test by definition.
+- **A parentage conclusion needs a record linking the child to the
+  parents.** For a parentage question, at *probable* or higher the tree
+  must rest on at least one *examined* record that places the **child
+  together with the concluded parents** — the child's own
+  christening/birth, a census household showing the child with them, an
+  emigration record, or a probate naming the child. A record of the
+  parents' *marriage to each other* does **not** satisfy this: it proves
+  the couple married, not that this child is theirs. If no child-linking
+  record can be found, lower the tier or justify it as
+  verified-inaccessible — do not declare exhaustive on indirect,
+  couple-level evidence alone.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary
