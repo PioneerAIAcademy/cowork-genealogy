@@ -228,6 +228,51 @@ def test_avoid_guard_forces_false_when_the_avoided_claim_is_in_the_final_tree():
     assert output["verdict"] == "pass"
 
 
+def test_avoid_guard_exempts_the_fixture_subject_from_the_match():
+    # Look-alike fixture: the avoided namesake shares the SUBJECT's name by
+    # construction (Robert Smith), and the subject legitimately stays in the
+    # tree. Passing the subject's id exempts it, so the guard does NOT force the
+    # finding to false — the judge's "correctly avoided" grade stands.
+    output = _valid_output()
+    tree = _tree_with_robert_smith()  # P1 = Robert Smith
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=tree,
+        subject_person_ids={"P1"},
+    )
+    assert out is output  # nothing forced → same object returned
+    assert out["per_finding"][0]["matched"] == "true"
+    assert out["verdict"] == "pass"
+
+
+def test_avoid_guard_still_catches_a_non_subject_over_claim():
+    # A genuine over-claim attaches a DIFFERENT person than the subject. The
+    # exemption must not shield that: a same-named person under another id is
+    # still forced to false.
+    output = _valid_output()
+    tree = {
+        "persons": [
+            {"id": "SUBJECT", "living": False,
+             "names": [{"id": "N0", "given": "Someone", "surname": "Else"}]},
+            {"id": "P1", "living": False,
+             "names": [{"id": "N1", "given": "Robert", "surname": "Smith"}]},
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    out = apply_avoid_guard(
+        output,
+        expected_findings=_avoid_findings(),
+        final_tree=tree,
+        subject_person_ids={"SUBJECT"},
+    )
+    assert out["per_finding"][0]["matched"] == "false"
+    assert out["avoid_guard"]["forced_false"] == [
+        {"finding_id": "f1", "person_ids": ["P1"]}
+    ]
+
+
 def test_avoid_guard_is_a_no_op_when_the_avoided_claim_is_absent():
     output = _valid_output()
     tree = {"persons": [{"id": "P1", "living": False,
