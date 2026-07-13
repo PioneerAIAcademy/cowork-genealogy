@@ -153,7 +153,10 @@ export interface SimplifiedRelationship {
 export interface SimplifiedSourceReference {
   ref?: string;
   page?: string;
-  quality?: string;
+  /** GEDCOM QUAY, an integer 0–3 — matching the tree schema, the shared TS
+   * types, and the prose spec. Encoded as a string inside the fsmcp:quality
+   * qualifier on the raw-GedcomX side (qualifier values are strings). */
+  quality?: number;
 }
 
 export interface SimplifiedSourceDescription {

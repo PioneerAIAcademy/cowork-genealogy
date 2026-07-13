@@ -25,6 +25,7 @@
   "judge_context": [
     "Should verify all six citation_detail fields are populated: `who` (U.S. Census Bureau), `what` (1850 U.S. Federal Census, population schedule), `when_created` (1850), `when_accessed`, `where` (FamilySearch.org with the NARA microfilm details), `where_within` (Schuylkill County, dwelling and family numbers)",
     "Should apply the replication test: a researcher with only this citation should be able to find the exact record — dwelling 84, family 91 is the level of specificity needed",
-    "src_001's citation is already EE-compliant, so the correct outcome is confirmation with the citation left fundamentally unchanged. Writing in page, sheet, line, or image numbers (or any detail) that does not appear in the source entry is an unsupported enhancement and a failure — even if the resulting citation looks more thorough"
+    "src_001's citation is already EE-compliant, so the correct outcome is confirmation with the citation left fundamentally unchanged. Writing in page, sheet, line, or image numbers (or any detail) that does not appear in the source entry is an unsupported enhancement and a failure — even if the resulting citation looks more thorough",
+    "Copying a detail that appears verbatim in src_001's citation string (e.g. 'Thomas Flynn household') into a structured citation_detail field is an on-file consistency sync and is acceptable, NOT fabrication — the value was already on file in the same source entry"
   ]
 }

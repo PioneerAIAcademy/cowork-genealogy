@@ -75,7 +75,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 | Marriage/couple facts live on the **relationship** (`SimplifiedRelationship.facts`), not the person | `packages/engine/mcp-server/src/types/gedcomx.ts:139` |
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
 | `gedcomx-convert.ts` exports `toSimplified`/`toGedcomX` (+ `collectFacts`/`standardizePlaces`/`toSimplifiedStandardized`) — **no ID-remap or dedup helper there** | `packages/engine/mcp-server/src/utils/gedcomx-convert.ts` |
-| The pure core `mergeGedcomx` (§5–§7) is **already implemented and unit-tested** — only the §5b tool wrappers remain to build | `src/utils/merge-gedcomx.ts` (728 lines), `tests/utils/merge-gedcomx.test.ts` |
+| The pure core `mergeGedcomx` (§5–§7) is **already implemented and unit-tested** — the §5b tool wrappers are shipped | `src/utils/merge-gedcomx.ts` (728 lines), `tests/utils/merge-gedcomx.test.ts` |
 | The hand-done merge protocol this replaces | `packages/engine/plugin/skills/tree-edit/SKILL.md` §"Person merging" |
 
 Richard attached FamilySearch's **`MobMergeUtil.java`** (the match-system merge)
@@ -122,8 +122,11 @@ exposed (§5b explains why).
 The internal, side-effect-free merge. Operates on **SimplifiedGedcomX**
 (`{ persons[], relationships[], sources[], places[] }`); any of
 `relationships`/`sources`/`places` may be absent on an input and is treated as
-empty (never throw on a missing array). It is **not** advertised as an MCP tool on
-its own — the two tools in §5b wrap it.
+empty (never throw on a missing array). Candidate `places[]` and person-level
+`sources[]` are tolerated on input but never enter the result — the persisted
+tree format has neither (see §6.3, §6.7), and the tool layer strips them from
+candidates with a warning before the merge (`sanitizeCandidate`, §5b.2). It is
+**not** advertised as an MCP tool on its own — the two tools in §5b wrap it.
 
 ```typescript
 function mergeGedcomx(
@@ -200,6 +203,13 @@ merge_tree_persons({
 Sequence inside each tool:
 
 1. Read `tree.gedcomx.json` (and, for `merge_tree_persons`, `research.json`).
+   **`merge_record_into_tree` only:** sanitize the inline candidate first —
+   drop top-level `places[]` and person-level `sources[]` (legal in tool
+   output like `record_read`'s `gedcomx`, not in the tree format) with a
+   warning per stripped kind, then validate the sanitized candidate
+   (`sanitizeCandidate` + `validateCandidateGedcomx` in `merge-shared.ts`).
+   `merge_warnings` sanitizes identically so the dry-run merges the same
+   document the writer would.
 2. Run `mergeGedcomx` (§5–§7) to build the new tree in memory.
 3. **`merge_tree_persons` only:** remap `research.json` person-id references from
    each collapsed id → its survivor id (§10).
@@ -322,7 +332,10 @@ survivor (survivor id is kept):
 - **Facts** — union (person facts), then **merge equivalent facts** and **keep
   all distinct facts** (§7.2). For Birth/Death/Christening/Burial, mark the one
   best fact `primary`.
-- **Person source refs** — union, dedup by `ref|page`.
+- **Person source refs** — none. The tree format carries source references on
+  names/facts/relationships, not on persons (`tree-gedcomx.schema.json`
+  `$defs/person` has no `sources`). A candidate persona's person-level refs are
+  stripped by the tool layer with a warning (§5b.2); the core does not fold them.
 
 ### 6.4 Non-paired candidate persons (Mode 1)
 Carried into the result with **remapped** ids — these are the "new relatives."
@@ -351,13 +364,22 @@ Candidate `sources[]` merged into target `sources[]`:
   to the resulting source ids.
 
 ### 6.7 `places[]`
-Candidate `places[]` are carried into the result; a candidate place id that
-collides with a target place id is given a fresh unique id. Nothing references
-place ids in the simplified format (facts carry place **names**), so no ref
-rewriting is needed and v1 does not dedup places by content.
+Candidate `places[]` are **not** carried into the result. The persisted tree
+format has no top-level `places` section (`tree-gedcomx.schema.json` closes the
+root at `persons`/`relationships`/`sources`; facts carry place **names**), so
+carrying them would persist a document the tree schema rejects. The tool layer
+strips candidate places with a warning before the merge (§5b.2); a legacy
+target's own `places` never reach the core: every tool heals the on-disk
+tree at read (`src/validation/tree-sanitize.ts` drops the section with a
+warning), so the merge operates on — and its next write persists — the
+healed document.
+
+> *Changed from rev. 3,* which carried candidate places with id-collision
+> renaming. That behavior wrote trees that failed the tree JSON Schema —
+> the `gedcomx-schema-drift` audit's missed-drift finding.
 
 ### 6.8 Result
-`{ persons, relationships, sources, places }` where every merged pair's survivor
+`{ persons, relationships, sources }` where every merged pair's survivor
 id is preserved, all candidate ids are collision-free, every cross-reference
 resolves, and no names/facts were discarded. Because fact/name ids are unique
 only *within their source array*, a final pass re-ids any duplicate fact/name id
@@ -389,7 +411,9 @@ catalogued in §12.
   letters×10 + diacritics — longer, with diacritics, wins).
 - **Preferred** name = the **largest** equivalence class (most frequent across
   inputs); tie-break by `scoreName`. Mark exactly one `preferred: true`; all other
-  distinct names `preferred: false`.
+  distinct names carry no `preferred` flag at all — absence means false, the
+  schema pins the field to `const: true`, and writing `preferred: false`
+  persists a tree the schema rejects.
 
 ### 7.2 Facts (TS: `factsEquivalent` / `mergeFactGroup` / `mergeFacts`)
 - **Equivalent** when **same `type`** AND **dates compatible** AND **places

@@ -1,5 +1,11 @@
 # Simplified GedcomX Specification
 
+> **Historical snapshot.** The canonical, maintained spec is
+> [`docs/specs/simplified-gedcomx-spec.md`](../../../docs/specs/simplified-gedcomx-spec.md).
+> This copy predates the id-convention rewrite (ids are no longer
+> shape-constrained) and is retained for the Electron app's original
+> design context only.
+
 This document defines the complete schema for `tree.gedcomx.json`, the deliverable file in a genealogy research project. It formalizes the simplification rules described in `docs/gps/simplified-gedcomx.md`.
 
 ## 1. Overview

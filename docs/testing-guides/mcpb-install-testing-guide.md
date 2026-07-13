@@ -117,7 +117,8 @@ extension. **Prerequisite:** Claude Desktop installed (Windows or macOS).
 1. Copy `releases/genealogy-mcp.mcpb` to the machine running Claude Desktop
    (if you built in WSL2, copy it to the Windows side).
 2. Open Claude Desktop → **Settings → Extensions**.
-3. Click **Install Extension…** and select `genealogy-mcp.mcpb`.
+3. Click **Advanced Settings → Install extension** and select
+   `genealogy-mcp.mcpb`.
 4. Confirm **"Genealogy Research"** appears in the extensions list.
 
 ### What success looks like

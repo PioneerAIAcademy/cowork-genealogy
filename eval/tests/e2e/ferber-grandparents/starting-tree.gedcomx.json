@@ -3,6 +3,7 @@
     {
       "id": "I1",
       "gender": "Male",
+      "living": false,
       "names": [
         { "id": "N1", "given": "Charles Hubert", "surname": "Ferber", "preferred": true }
       ],
@@ -24,6 +25,7 @@
     {
       "id": "I2",
       "gender": "Male",
+      "living": false,
       "names": [
         { "id": "N2", "given": "William Hubert", "surname": "Ferber", "preferred": true }
       ],
@@ -38,6 +40,7 @@
     {
       "id": "I3",
       "gender": "Female",
+      "living": false,
       "names": [
         { "id": "N3", "given": "Emma", "surname": "Becker", "preferred": true }
       ],
@@ -51,6 +54,7 @@
     {
       "id": "I8",
       "gender": "Female",
+      "living": false,
       "names": [
         { "id": "N8", "given": "Lydian Inez", "surname": "Hall", "preferred": true }
       ],
@@ -61,6 +65,7 @@
     {
       "id": "I9",
       "gender": "Female",
+      "living": false,
       "names": [
         { "id": "N9", "given": "Harriet Helen", "surname": "Bailey", "preferred": true }
       ],

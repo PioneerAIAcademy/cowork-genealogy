@@ -1,0 +1,17 @@
+{
+  "tool": "place_population",
+  "description": "place_population — Stagstrup parish / Thisted county population context (small rural parish).",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "place": "Stagstrup, Thisted, Denmark",
+    "data": [
+      { "year": 1787, "population": 512 },
+      { "year": 1801, "population": 547 },
+      { "year": 1834, "population": 689 },
+      { "year": 1850, "population": 742 }
+    ],
+    "notes": "Small rural parish in Hassing Herred, Thisted Amt. Farming community of gårdmænd and husmænd; population sizes from the national censuses."
+  }
+}

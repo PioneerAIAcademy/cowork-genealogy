@@ -4,6 +4,18 @@ This document defines the complete schema for `tree.gedcomx.json`, the deliverab
 
 **Machine-readable schema:** [`docs/specs/schemas/tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json). Enum definitions are shared with `research.json` in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json). This prose document is normative for humans; the JSON Schema files are normative for machine validation.
 
+**The JSON Schema is deliberately weaker than the runtime validator on
+cross-references.** JSON Schema 2020-12 cannot express intra-document
+reference integrity — a typo'd relationship endpoint or a source `ref`
+naming no `sources[]` entry lints clean and then hard-fails `tree_edit`
+mid-run. The engine's `validateGedcomx`
+(`packages/engine/mcp-server/src/validation/validator.ts`) and the fixture
+gate's structural mirror (`tree_integrity_errors` in
+`eval/harness/e2e/validate_fixture.py`) both enforce those checks; the
+shared vectors in
+[`schemas/tree-gate-vectors.json`](schemas/tree-gate-vectors.json) pin the
+gates' agreement. **Never use the JSON Schema alone as a validity gate.**
+
 ## 1. Overview
 
 `tree.gedcomx.json` contains resolved persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the file that eventually uploads to FamilySearch. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
@@ -58,6 +70,18 @@ These rules define how full GedcomX maps to simplified GedcomX. The MCP conversi
 
 ## 3. ID Conventions
 
+IDs are strings, non-empty, unique within their array, and immutable once
+created. **No shape is enforced**, by the JSON Schema or by the runtime
+validator. Two kinds of id coexist and both are legal:
+
+- **FamilySearch-native ids, preserved verbatim.** `person_read` returns
+  person and source PIDs (`KNS4-P6W`) and fact UUIDs
+  (`248eaba5-34ae-4182-9874-bfcc07166241`). Conversion never re-mints them —
+  see `gedcomx-convert.ts`, which passes every upstream id through unchanged.
+- **Locally synthesized ids,** for objects FamilySearch does not identify.
+  `person_read` returns names and relationships with no id at all, so one must
+  be assigned. The convention below applies here.
+
 | Prefix | Entity | Example |
 |--------|--------|---------|
 | `I` | persons | `I1`, `I2` |
@@ -66,7 +90,18 @@ These rules define how full GedcomX maps to simplified GedcomX. The MCP conversi
 | `R` | relationships | `R1`, `R2` |
 | `S` | sources | `S1`, `S2` |
 
-IDs are strings, unique within their array, immutable once created. The prefix + number convention matches FamilySearch's GedcomX patterns and ensures no collisions across entity types.
+This is a **naming convention, not a constraint.** Nothing in the codebase
+reads meaning out of an id's shape, and readable variants are common and
+valid in practice (`KNS4-P6W-name-1` for a name, `rel-2` for a relationship).
+A person's membership in the FamilySearch tree is carried by `ark`, never by
+the form of their `id` — a person with no `ark` is not in the FS tree,
+whatever their id looks like.
+
+Which kind a given document uses is the writer's call, made once per
+document: `person_read` snapshots (e.g. e2e fixture trees) preserve FS PIDs;
+project trees built by `init-project` deliberately synthesize `I` ids for
+**all** persons, FS-seeded ones included (see `init-project/SKILL.md`). Both
+are valid documents under this spec.
 
 ---
 
@@ -78,8 +113,9 @@ Array of person objects.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Person ID (`I` prefix) |
+| `id` | string | yes | Person ID. In snapshot-derived documents, the FamilySearch PID when the person is in the FS tree (`KNS4-P6W`), otherwise a synthesized id (`I1`); project trees synthesize `I` ids for all persons. See Section 3 |
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
+| `living` | boolean | no | True when FamilySearch reports the person as living. `person_read` sets it on every person it returns; hand-built trees may omit it. Living people must never appear in a committed e2e fixture (FamilySearch ToS) — the living-person gate in `eval/harness/e2e/author.py` treats both `true` **and** a missing field as a refusal |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
 | `ark` | string | no | Persistent FamilySearch ARK in canonical form (e.g. `ark:/61903/4:1:KGS8-LY1`). The flat lift of full GedcomX's `identifiers["http://gedcomx.org/Persistent"][0]`, with the resolver-URL prefix stripped. Required by tools whose API responses reference persons by ARK (`matchTwoExamples`, future `person_read`/`cets`). Omit on synthesized stub persons with no real-world FS persona. See Section 4.6 |
@@ -90,10 +126,12 @@ Array of person objects.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Name ID (`N` prefix) |
+| `id` | string | yes | Name ID. FamilySearch supplies none, so this is always synthesized (`N1`, or `<person-id>-name-1`). See Section 3 |
 | `preferred` | boolean | no | True if this is the preferred name. Omit rather than setting false |
-| `given` | string | yes | Given name(s) |
+| `given` | string | yes | Given name(s). Spell an unknown given name as `""` — the field is required, matching the runtime validator, the TS types, and the engine's living-person stub convention |
 | `surname` | string | yes | Surname |
+| `prefix` | string | no | Name prefix, e.g. `Rev.`. Emitted by `person_read` when FamilySearch supplies one |
+| `suffix` | string | no | Name suffix, e.g. `Jr.`. Emitted by `person_read` when FamilySearch supplies one |
 | `type` | string | no | Name type: `BirthName`, `MarriedName`, `AlsoKnownAs`, `Nickname`, `Formal`, `Religious`. Omit for untyped names |
 | `sources` | object[] | no | Source references for this name. See source references below |
 
@@ -101,7 +139,7 @@ Array of person objects.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Fact ID (`F` prefix) |
+| `id` | string | yes | Fact ID. The FamilySearch UUID when FS supplied one, otherwise synthesized (`F1`). See Section 3 |
 | `type` | string | yes | Fact type (see enum below) |
 | `primary` | boolean | no | True if this is the primary fact of its type. Omit rather than setting false |
 | `date` | string | no | Date string as originally written (e.g. `2 October 1876`). See Section 4.5 for recognized patterns |
@@ -119,7 +157,7 @@ Array of relationship objects.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Relationship ID (`R` prefix) |
+| `id` | string | yes | Relationship ID. FamilySearch supplies none, so this is always synthesized (`R1`, or `rel-1`). See Section 3 |
 | `type` | string | yes | `ParentChild` |
 | `parent` | string | yes | Person ID of the parent |
 | `child` | string | yes | Person ID of the child |
@@ -131,7 +169,7 @@ Array of relationship objects.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Relationship ID (`R` prefix) |
+| `id` | string | yes | Relationship ID. FamilySearch supplies none, so this is always synthesized (`R1`, or `rel-1`). See Section 3 |
 | `type` | string | yes | `Couple` |
 | `person1` | string | yes | Person ID of first partner |
 | `person2` | string | yes | Person ID of second partner |
@@ -145,19 +183,42 @@ Array of source description objects. These are the simplified equivalents of Ged
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Source ID (`S` prefix) |
+| `id` | string | yes | Source ID. The FamilySearch PID when FS supplied one (`MS88-FLK`), otherwise synthesized (`S1`). See Section 3 |
 | `title` | string | yes | Human-readable title of the source |
 | `citation` | string | no | Formatted citation string. Populated by the proof-conclusion workflow at upload time (copied from `research.json` `sources[].citation`). Omit during active research |
 | `author` | string | no | Creator, agency, or author |
 | `url` | string | no | URL to the digital source |
 
+**`person_read` returns are not directly persistable.** The tool's sources
+may additionally carry a `notes` string array (user-attached FamilySearch
+notes — per `person-read-tool-spec.md`, useful context for the reader), and
+its names and relationships arrive without `id`s (Section 3). Before any of
+it lands in `tree.gedcomx.json`, drop `notes` and synthesize the missing
+ids — `normalize_tree` in `eval/harness/e2e/author.py` does exactly this
+for fixture authoring, and both validation gates reject a verbatim copy.
+
+**Legacy documents are healed at read, not rejected.** Trees persisted before
+the validator closed these shapes (`preferred: false` written by the old
+merge core, top-level `places[]`, person-level `sources`, unknown keys,
+missing ids, string quality values) are repaired in memory by every engine
+tool that reads `tree.gedcomx.json` (`src/validation/tree-sanitize.ts`), with
+one warning per healed class; the next successful tree write persists the
+healed document. Only unambiguous repairs are made — dangling references,
+swapped relationship endpoint keys, and duplicate ids still fail validation.
+
 ### 4.4 Source References
 
-Source references appear on names, facts, and relationships. They link an assertion to a source description with a locator.
+Source references appear on names, facts, and relationships — deliberately
+**not** on persons. Full GedcomX allows person-level source references (a
+FamilySearch record persona typically carries one pointing at its record),
+but in the tree format every reference hangs off the specific name, fact, or
+relationship it attests; the merge tools strip person-level refs from
+candidates rather than carry them (see `merge-gedcomx-spec.md` §6.3). They
+link an assertion to a source description with a locator.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `ref` | string | yes | Source ID (`S` prefix) |
+| `ref` | string | yes | The `id` of a source in the top-level `sources` array |
 | `page` | string | no | Specific locator within the source (page, entry, certificate number, dwelling number). Corresponds to Evidence Explained's "where-within" |
 | `quality` | number | no | Source quality score mimicking GEDCOM's QUAY: `0` = unreliable, `1` = questionable, `2` = secondary evidence, `3` = direct and primary evidence. See design decision below for usage guidance |
 

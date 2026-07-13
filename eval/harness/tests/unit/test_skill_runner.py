@@ -10,6 +10,14 @@ def test_constants_present():
     assert skill_runner.DEFAULT_MODEL.startswith("claude-")
 
 
+def test_task_allowed_for_agent_delegation():
+    """Task moved out of the backstop (agent-mode): plugin subagents are
+    staged into every workspace and a skill delegates only when its
+    SKILL.md instructs it — matching the e2e orchestrator's baseline."""
+    assert "Task" in skill_runner.BASELINE_ALLOWED
+    assert "Task" not in skill_runner.DISALLOWED_BACKSTOP
+
+
 def test_sdk_version_probe_silent_on_pinned_version():
     """0.1.81 is within the known-good range — probe returns None."""
     from harness.skill_runner import _check_sdk_version

@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Father recovered as 'Pete Aiello' (= Pietro), linked to Angelina; birth ~1882 vs expected 1881 and 'Italy' vs Serrastretta are minor precision diffs — full recovery.",
+    "f2": "Mother recovered as 'Felicia Scalise' with the maiden name (Scalise = Scalese variant) — the recoverability risk I flagged proved unfounded; birth ~1882 vs 1894 is a census-age approximation."
+  }
+}
