@@ -302,8 +302,11 @@ score should pull a tentative Strong back to Moderate. But:
   cultures a differing patronymic names a *different father*; a name
   element with no source (an extra middle initial, an added byname)
   stays unexplained until a record accounts for it. Either one **caps
-  confidence and must be recorded** as a `conflicts[]` entry — do not
-  rationalize it inline as "close enough" or reason past it to a link.
+  confidence at `speculative`** and must be **named explicitly in the
+  `pe_` rationale** — do not rationalize it inline as "close enough" or
+  reason past it to a link. Refuse the confident link and surface the
+  mismatch; adjudicating a hard patronymic conflict is
+  conflict-resolution's job, not something to smooth over in the match.
 - When **no score is available** (FTS-, image-, PDF-sourced
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
