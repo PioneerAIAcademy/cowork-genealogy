@@ -55,7 +55,7 @@ All assertions linked to the question via `extracted_for_question_ids`, their pe
 | **Not Proved** | Insufficient evidence to lean toward any conclusion. |
 | **Disproved** | Evidence affirmatively refutes the hypothesis. |
 
-**Decision rules:** Unresolved conflicts are a **hard block on Proved**. Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
+**Decision rules:** Unresolved conflicts are a **hard block on Proved**. **An unresolved conflict that *disputes the concluded fact or relationship itself* caps the tier at `possible`** — which is below the `probable` tree-write threshold (§6), so a disputed conclusion is never encoded in the tree until the conflict is resolved. (Unresolved conflicts on *collateral* facts — details not part of the conclusion — only block Proved, not Probable.) Hedging language ("suggests," "appears to be") blocks Proved — proved means stating the conclusion as fact. When in doubt, tier down.
 
 **Data values are lowercase** (the table labels are capitalized for readability, but the `tier` field stored in `research.json` must be one of `proved` / `probable` / `possible` / `not_proved` / `disproved` — case-sensitive).
 
