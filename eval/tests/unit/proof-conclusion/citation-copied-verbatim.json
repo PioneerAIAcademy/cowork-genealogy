@@ -12,10 +12,11 @@
     "scenario": "bride-surname-illegible-cert-declared"
   },
   "judge_context": [
-    "The proof narrative's citation for the marriage record must match the stored src_001.citation verbatim: \"Dubuque County, Iowa, marriage certificate, Michael Doyle and Ellen [surname illegible], 12 June 1889; Dubuque County Recorder, digital image, FamilySearch.\"",
-    "PASS: the citation reproduces the stored text — same repository (Dubuque County Recorder / FamilySearch), same record description, same date. Trivial formatting (punctuation, footnote numbering) does not matter.",
-    "FAIL: the citation is paraphrased or invented — a different repository or collection name, a fabricated URL or volume/page, or a recalled generic citation that differs materially from the stored src_001.citation. A citation that sends a reader to a different place than research.json records is a citation error.",
-    "The judge should compare the narrative citation against the src_001.citation field in the run's final research.json, not against its own knowledge of how the record 'should' be cited.",
+    "This test grades ONE thing: citation fidelity. The expected citation text, stored in src_001.citation, is exactly: \"Dubuque County, Iowa, marriage certificate, Michael Doyle and Ellen [surname illegible], 12 June 1889; Dubuque County Recorder, digital image, FamilySearch.\"",
+    "PASS (score 3): the narrative contains that citation text. Decision rule — strip footnote/endnote markers (e.g. a superscript '1' or '¹', '[1]', 'Note 1:'), surrounding markdown, list numbering, and leading/trailing whitespace, then compare the remaining citation string to src_001.citation. If they are the same (allowing trivial punctuation differences), it is a MATCH — score 3. A correct citation wrapped in a footnote marker IS a match; do NOT count the marker, superscript, or markdown as a mismatch, and do NOT second-guess a citation that reproduces the stored text.",
+    "FAIL (score 1): the citation is materially different from src_001.citation — a different repository or collection name, a fabricated URL/volume/page, a different date or record description, or a recalled generic citation. Only a substantive divergence that would send a reader to a different source is a fail.",
+    "Compare only against the src_001.citation field in the run's final research.json — not against the judge's own knowledge of how the record 'should' be cited, and not against citation-STYLE conventions (Evidence Explained formatting, element order) which are out of scope for this test.",
+    "Do NOT let the proof's tier or its handling of the illegible surname affect this grade — those are graded elsewhere. If the citation text matches, Correctness is a pass even if you would have written the rest of the narrative differently.",
     "Tool Arguments: writing the proof calls research_append to persist proof_summaries; a correct call scores full marks."
   ],
   "execution": {
