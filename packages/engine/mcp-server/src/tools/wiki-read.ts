@@ -1,6 +1,4 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
-import { getWikiMarkdownDir } from "../auth/config.js";
+import { getWikiApiUrl } from "../auth/config.js";
 import type { WikiReadInput, WikiPageResult } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
@@ -13,26 +11,49 @@ function urlToSlug(url: string): string {
   return decodeURIComponent(match[1]);
 }
 
+interface PageApiResponse {
+  title: string;
+  content: string;
+  source_url: string;
+}
+
 export async function wikiReadTool(input: WikiReadInput): Promise<WikiPageResult> {
   const slug = urlToSlug(input.url);
-  const wikiDir = await getWikiMarkdownDir();
-  const filePath = join(wikiDir, `${slug}.md`);
+  const baseUrl = await getWikiApiUrl();
+  const pageUrl = `${baseUrl}/page/${slug}`;
 
+  let response: Response;
   try {
-    const content = await readFile(filePath, "utf8");
-    return { url: `${FS_WIKI_BASE}/${slug}`, content };
-  } catch {
+    response = await fetch(pageUrl, {
+      method: "GET",
+      headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
+    });
+  } catch (error) {
+    const cause = error instanceof Error ? error.message : String(error);
     throw new Error(
-      `No wiki page found for "${slug}". The page may not exist in the pre-crawled files.`
+      `Could not reach wiki-query-api at ${baseUrl}. Is the server running? (${cause})`
     );
   }
+
+  if (response.status === 404) {
+    throw new Error(
+      `No wiki page found for "${slug}". The page may not exist in the corpus.`
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(`wiki-query-api error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as PageApiResponse;
+  return { url: `${FS_WIKI_BASE}/${slug}`, content: data.content };
 }
 
 export const wikiReadSchema = {
   name: "wiki_read",
   description:
-    "Read any FamilySearch wiki page from the pre-crawled markdown files on disk. " +
-    "Pass the full FamilySearch wiki URL; the page title is extracted and the pre-crawled markdown is returned. " +
+    "Read any FamilySearch wiki page from the hosted wiki-query-api server. " +
+    "Pass the full FamilySearch wiki URL; the page title is extracted and the corresponding markdown is fetched from the server. " +
     "Use this for specific wiki pages not covered by the country-specific tools.",
   inputSchema: {
     type: "object" as const,
