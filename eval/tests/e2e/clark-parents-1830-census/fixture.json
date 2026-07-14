@@ -1,0 +1,19 @@
+{
+  "id": "clark-parents-1830-census",
+  "name": "Christiana Clark",
+  "genre": "strip",
+  "source_pid": "LVS7-1HJ",
+  "captured": "2026-07-13",
+  "researcher_question": "Determine who Christiana Clark's parents were, and (bonus) where they were enumerated in the 1830 census.",
+  "tags": {
+    "question_type": "parents",
+    "era": "1830s",
+    "geography": "US"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Parent identity (William Clark and Hannah Jane Wait) is fully grounded in the FamilySearch tree via the stripped ParentChild relationships. The 1830 census enumeration is a bonus/non-required finding: neither parent has an 1830 residence fact or a live FamilySearch record hint for an 1830 census (checked person_record_matches for both KHDH-JTF and LVS7-BWK — no 1830 hint on either). Hannah Jane Wait was born 1815, so in 1830 she would be ~15 and likely still in her own parents' household, not married to William yet; William Clark (b. abt. 1805) would be ~25. Credit the bonus only if the agent finds and documents a plausible, sourced 1830 enumeration for one or both parents."
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_clark_parents_1830_census",
+    "objective": "Determine who Christiana Clark's parents were, and (bonus) where they were enumerated in the 1830 census.",
+    "subject_person_ids": [
+      "LVS7-1HJ"
+    ],
+    "status": "active",
+    "created": "2026-07-13",
+    "updated": "2026-07-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

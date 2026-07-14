@@ -1,0 +1,63 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "William Clark was the father of Christiana Clark. William was born about 1805 in Canada, resided in Brasher, St. Lawrence, New York by 1850, later moved to Iowa and then California, and died 11 April 1882 in Livermore, Alameda County, California.",
+      "details": {
+        "subject_person": {
+          "name": "Christiana Clark",
+          "pid": "LVS7-1HJ"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "William Clark",
+          "birth": "about 1805, Canada"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for Christiana Clark, listing William Clark as father.",
+        "United States, Census, 1850 — household in Brasher, St. Lawrence, New York, naming Christian Clark alongside William Clark's family."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Hannah Jane Wait was the mother of Christiana Clark. Hannah was born 10 June 1815 in Isle La Motte, Grand Isle County, Vermont, married William Clark, and died 7 December 1893 in Livermore, Alameda County, California.",
+      "details": {
+        "subject_person": {
+          "name": "Christiana Clark",
+          "pid": "LVS7-1HJ"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Hannah Jane Wait",
+          "birth": "10 June 1815, Isle La Motte, Grand Isle, Vermont, United States"
+        }
+      },
+      "supporting_sources": [
+        "FamilySearch Family Tree compiled profile for Christiana Clark, listing Hannah Jane Wait as mother.",
+        "United States, Census, 1850 — household in Brasher, St. Lawrence, New York, naming Hannah J. Clark alongside William Clark's family."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Bonus (not required — no confirmed answer exists in FamilySearch's tree or record hints; neither parent has an 1830 residence fact, and a live record_search for \"William Clark\" in 1830 returned 267,927 matches with no tree-linked candidate, so the name is too common to disambiguate without more work). Credit if the agent attempts to locate an 1830 census enumeration for William Clark and/or Hannah Jane Wait — e.g. searching near their known 1850 residence in Brasher, St. Lawrence, New York, or accounting for Hannah's likely status as a minor still in her own parents' household in 1830 (she was born 1815, so about 15 years old) — and either (a) proposes a specific, source-cited candidate household with sound reasoning for why it plausibly represents them, or (b) explicitly documents that the person cannot be reliably distinguished among many same-named 1830 census entries and stops rather than guessing.",
+      "details": {
+        "target_person": {
+          "name": "William Clark and/or Hannah Jane Wait"
+        },
+        "fact_type": "Residence",
+        "date": "1830",
+        "place": "unknown — no ground-truth answer; grade on process and sourcing, not a specific place"
+      },
+      "supporting_sources": [
+        "No supporting source exists for a specific 1830 place; this finding tests search process and honest reporting, not recovery of a known fact."
+      ],
+      "required": false
+    }
+  ]
+}
