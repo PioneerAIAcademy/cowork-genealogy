@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_record_extraction_017",
+    "skill": "record-extraction",
+    "name": "Marriage record — index title pairs the subject with a PARENT, not the spouse",
+    "type": "positive",
+    "description": "Regression guard derived from the benny-taylor-spouse e2e fixture. A 1962 Oregon marriage record's index title reads 'Entry for Benny Rapheal Taylor and Tossie Bain' — but the record body shows 'Tossie Bain' is the GROOM'S MOTHER (a garbled transcription of Autossie 'Tossie' Bair), while the actual bride is Rosemarie Graham. The extractor must read the record's structured roles, not the misleading index title: the marriage/couple is Benny + Rosemarie Graham, and 'Tossie Bain' is a parent of the groom, never the bride. Guards against attaching an index-title-paired parent as a spouse (a namespace trap amplified when that parent is already the subject's mother in the tree).",
+    "tags": ["extraction", "marriage-record", "namespace-trap", "role-disambiguation", "regression"]
+  },
+  "input": {
+    "user_message": "Extract assertions from this marriage record. The subject is Benny Rapheal Taylor (b. 1921).\n\nOregon, Marriage Records, 1906-1968\nIndex entry title: \"Entry for Benny Rapheal Taylor and Tossie Bain, 28 Sep 1962\"\n\nRecord detail:\nGroom: Benny Rapheal Taylor\n  Age: 41 (birth year 1921)\n  Groom's father: Silvester Jay Taylor\n  Groom's mother: Tossie Bain\nBride: Rosemarie Graham\n  Age: 20 (birth year 1942)\n  Birthplace: Portland, Oregon\n  Bride's father: Arthur L Graham\n  Bride's mother: Rosamund Hoover\nDate of marriage: 28 September 1962\nPlace of marriage: Oregon, United States",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The marriage recorded here is between the groom Benny Rapheal Taylor and the bride Rosemarie Graham. Any assertion or relationship that treats 'Tossie Bain' as Benny's spouse/bride is WRONG.",
+    "The index entry title ('Benny Rapheal Taylor and Tossie Bain') is a misleading transcription artifact: the record body shows 'Tossie Bain' is the GROOM'S MOTHER, not the bride. The extractor must use the record's structured roles, not the index title, to assign relationships.",
+    "'Tossie Bain' should be extracted as the groom's mother (a parent role). It is a garbled form of Autossie 'Tossie' Bair; recognizing it as the mother — not a new spouse — is the point of this record.",
+    "The marriage date (28 Sep 1962) and place (Oregon), and the parties' names, ages, and parents are DIRECT evidence — explicitly stated on the record.",
+    "The bride's birth year (~1942) computed from her stated age is INDIRECT evidence.",
+    "A correct extraction produces a Couple/marriage between Benny Rapheal Taylor and Rosemarie Graham; it must NOT produce a marriage or couple relationship between Benny and Tossie Bain."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
