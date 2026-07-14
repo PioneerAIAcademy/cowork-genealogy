@@ -1,0 +1,19 @@
+{
+  "id": "wilkins-death-kentucky",
+  "name": "Elijah Wilkins",
+  "genre": "strip",
+  "source_pid": "97YZ-J3D",
+  "captured": "2026-07-14",
+  "researcher_question": "Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins of Kentucky, and what information in the certificate confirms his identity?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1870s",
+    "geography": "US-KY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Death record indexed under name variants (Eligie/Elizah/Eligah); several other Wilkins relatives in the same tree share similar names/places, so identity confirmation (spouse Sally/K2BS-YMD, parents James/Margaret) matters for disambiguation."
+}
