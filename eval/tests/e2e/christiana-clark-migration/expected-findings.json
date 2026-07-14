@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Christiana (Schreck) Clark, the widow of William Clark of Coshocton County, Ohio, migrated to Green County, Wisconsin in the late 1840s. The move is recoverable from records independent of the FamilySearch tree: her sons settled in Green County, Wisconsin (son Joseph Clark appears there in the 1850 U.S. census at Monroe; son William Clark by 1849), son Joseph Clark's 1854 marriage at Monroe, Green County names his mother, and a Christiana Clark holds a Wisconsin federal land entry in 1847 (U.S. Bureau of Land Management Tract Books, Mineral Point land office). She died in Green County in 1848.",
+      "details": {
+        "target_person": {
+          "name": "Christiana Schreck Clark",
+          "pid": "GP3R-215"
+        },
+        "fact_type": "Residence",
+        "from_place": "Coshocton County, Ohio, United States",
+        "place": "Green County, Wisconsin, United States"
+      },
+      "supporting_sources": [
+        "1850 U.S. Census, Monroe, Green County, Wisconsin — household of her son Joseph Clark (recoverable via record_search).",
+        "Wisconsin, Marriages, 1836-1930 — 1854 marriage of son Joseph Clark at Monroe, Green County, Wisconsin, naming his mother Christina Clark.",
+        "U.S. Bureau of Land Management Tract Books, 1800-c.1955 — Christiana Clark, Wisconsin land entry, 1847 (Mineral Point land office)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Christiana Clark died on 27 December 1848 at Monroe, Green County, Wisconsin — the destination of her migration. This exact date and place appear on the FamilySearch tree but are not confirmed by an indexed record (her Find a Grave memorial gives burial at Coshocton, Ohio, and a death year of 1849), so it is scored as bonus credit rather than required.",
+      "details": {
+        "target_person": {
+          "name": "Christiana Schreck Clark",
+          "pid": "GP3R-215"
+        },
+        "fact_type": "Death",
+        "date": "27 December 1848",
+        "place": "Monroe, Green, Wisconsin, United States"
+      },
+      "supporting_sources": [
+        "FamilySearch family tree death fact (Monroe, Green, Wisconsin, 1848) — not independently confirmed by an indexed record; Find a Grave records a Coshocton, Ohio burial."
+      ],
+      "required": false
+    }
+  ]
+}

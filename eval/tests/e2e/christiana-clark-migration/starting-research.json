@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_christiana_clark_migration",
+    "objective": "Did Christiana Clark migrate from Coshocton County, Ohio to Green County, Wisconsin?",
+    "subject_person_ids": [
+      "GP3R-215"
+    ],
+    "status": "active",
+    "created": "2026-07-14",
+    "updated": "2026-07-14"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

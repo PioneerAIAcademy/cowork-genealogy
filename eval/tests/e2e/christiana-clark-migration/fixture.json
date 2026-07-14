@@ -1,0 +1,19 @@
+{
+  "id": "christiana-clark-migration",
+  "name": "Christiana (Schreck) Clark — Ohio to Wisconsin migration (1840s)",
+  "genre": "strip",
+  "source_pid": "GP3R-215",
+  "captured": "2026-07-14",
+  "researcher_question": "Did Christiana Clark migrate from Coshocton County, Ohio to Green County, Wisconsin?",
+  "tags": {
+    "question_type": "migration",
+    "era": "1840s",
+    "geography": "US-WI"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Subject is GP3R-215 (tree name 'Christina Schreck'), widow of William Clark (KGCJ-XPW, d.1829 Ohio). Stripped all Wisconsin footprint from the starting tree: her Death fact (Monroe, Green, WI, 1848), son Samuel's LifeSketch (narrates the 1846 Greene Co. move), sons Joseph's 1850 and William's 1849 Green Co. residences, and the Wisconsin Marriages source. Ohio anchors (birth PA, Coshocton residences/tax, Ohio burial, spouse, parents, children with Ohio births) left intact. Migration is rediscoverable by RECORD SEARCH (not from the tree): BLM Tract Books show a Christiana Clark WI land entry 1847; sons Joseph/William appear in Green Co. WI in the 1850 census; Joseph's 1854 Wisconsin marriage names her. Note: her Find A Grave/burial point to Coshocton, OHIO (misdirection), and she died Dec 1848 BEFORE the 1850 census, so no census names HER in WI — exact death date/place is tree-only and is a BONUS finding, not required."
+}
