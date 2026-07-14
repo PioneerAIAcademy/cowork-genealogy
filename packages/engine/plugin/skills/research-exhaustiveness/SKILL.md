@@ -40,6 +40,29 @@ Only evaluate a question whose plan items are all `completed` or
 `skipped`. If any is `in_progress`, refuse to declare and recommend
 finishing the in-flight work first.
 
+## 0. Precondition check (run first)
+
+The `evidence_class` and `independent_verification` criteria in Step 3 are
+meaningless against unclassified assertions, or when the persons the judgment
+depends on have not been identified in the tree. Before applying the five
+threshold questions, run two checks over the assertions tied to this question
+(via `extracted_for_question_ids`):
+
+- **Classification (hard block, all assertions).** Every assertion must have
+  a real `information_quality` and `evidence_type` from
+  `assertion-classification` (not a leftover record-extraction default). If
+  any assertion fails, stop here, name the specific assertion IDs, and
+  recommend `assertion-classification`.
+- **person_evidence (hard block scoped to person identity).** `person_evidence`
+  is identity resolution. Confirm **each person the judgment depends on** — the
+  subject and any candidate parent/relative — is identified by **at least one**
+  linked assertion. If any such person has no linked identity assertion, stop
+  and recommend `person-evidence`. Unlinked *fact* and *negative* assertions
+  about an already-identified person are advisory, not blockers — note them and
+  continue.
+
+Do not declare exhaustive while a blocking check fails.
+
 ## 1. Gather evidence
 
 Read:

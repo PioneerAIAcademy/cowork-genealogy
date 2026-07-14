@@ -94,10 +94,6 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   `record_persona_id`s nulled because the search never staged a sidecar
   (spriggs). D2 can't auto-fill what was never staged; the fix is
   search-skill-side (always pass `projectPath` / surface the staging failure).
-- [ ] **Generate the mock input-schema mirror from compiled schemas** —
-  `eval/harness/harness/mock_mcp.py` hand-maintains tool input schemas and has
-  drifted before (missing `ops`). Generate from the compiled build to kill the
-  drift class.
 - [ ] **Bare agent-tool names in gps-mentor.md / image-reader.md** — the
   agent-mode spike proved bare tool names leave a subagent toolless in the
   unit-harness SDK path (needs `mcp__genealogy__*`), yet these two agents use
@@ -153,6 +149,19 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   a cleanly-recovered single retry — decide with post-composite data.
 
 ## Done
+- ~~Generate the mock input-schema mirror from compiled schemas~~ —
+  **shipped** (2026-07-13): `mock_mcp.py` now pulls both input schemas and
+  descriptions from the compiled `allToolSchemas` (`build/tool-schemas.js`)
+  via a single cached `node` import, killing the drift class. Deleted the
+  ~290-line hand-maintained `_live_tool_input_schema` and the src-regex
+  `tool_catalog.py` (+ its test). Fixture-tool schema precedence is now
+  build → fixture-provided (aspirational tools only) → permissive, so the
+  match-tool fixtures that had no schema (rx_007/008) advertise the real
+  `required: ["id"]` instead of a zero-required `{additionalProperties:true}`
+  stub. Safe because engine deps + a fresh build are already hard
+  prerequisites of every eval run (`$(ENGINE_BUILD)` → `$(ENGINE_DEPS)` +
+  the build-fresh gate); the loader degrades to permissive/stub on a
+  missing build rather than aborting.
 - ~~Negative-evidence `informant_proximity` enum value~~ — **shipped**
   (2026-07-12, the tree_edit/tree_correct + enum-drift-fixes window):
   `researcher` is a valid `informant_proximity` closed-enum value with the

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_wilkins_marriage",
+    "objective": "Who did Elijah Wilkins marry?",
+    "subject_person_ids": [
+      "97YZ-J3D"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
