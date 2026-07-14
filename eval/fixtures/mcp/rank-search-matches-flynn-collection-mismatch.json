@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the single staged Flynn result (from record-search-1850-census-flynn) against tree subject I1 (Patrick Flynn, b.~1845 Ireland). The one candidate (ark MXHY-TP4, 'Patrick Flynn in household of Thomas Flynn') is a GENUINE person match — it scores high (0.9376, matchConfidence 5) because it is the right Patrick — but it comes from 'United States Census, 1850', NOT the 1870 census the search asked for. The high match score is deliberate: it exercises the Step-4 collection sanity-check, proving the skill must not let a strong person-match score override a wrong-collection result. Matched on subjectId (wildcard '~'); independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:MXHY-TP4",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Ireland",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.9376,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

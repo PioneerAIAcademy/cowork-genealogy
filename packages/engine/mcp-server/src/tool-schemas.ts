@@ -38,6 +38,7 @@ import { validateResearchSchemaSchema } from "./tools/validate-research-schema.j
 import { sourceAttachmentsSchema } from "./tools/source-attachments.js";
 import { imageSearchSchema } from "./tools/image-search.js";
 import { personWarningsToolSchema } from "./tools/person-warnings.js";
+import { personQualityToolSchema } from "./tools/person-quality.js";
 import { mergeWarningsSchema } from "./tools/merge-warnings.js";
 import { volumeSearchSchema } from "./tools/volume-search.js";
 import { mergeRecordIntoTreeSchema } from "./tools/merge-record-into-tree.js";
@@ -45,7 +46,10 @@ import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
 import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
 import { treeEditSchema } from "./tools/tree-edit.js";
+import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { researchAppendSchema } from "./tools/research-append.js";
+import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
+import { projectContextSchema } from "./tools/project-context.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -78,6 +82,7 @@ export const allToolSchemas = [
   sourceAttachmentsSchema,
   imageSearchSchema,
   personWarningsToolSchema,
+  personQualityToolSchema,
   mergeWarningsSchema,
   volumeSearchSchema,
   mergeRecordIntoTreeSchema,
@@ -85,5 +90,8 @@ export const allToolSchemas = [
   researchLogAppendSchema,
   convertCalendarSchema,
   treeEditSchema,
+  treeCorrectSchema,
   researchAppendSchema,
+  rankSearchMatchesSchema,
+  projectContextSchema,
 ];

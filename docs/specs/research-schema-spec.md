@@ -76,7 +76,7 @@ All enums are defined here once and referenced by section schemas. Skills must u
 | `project_status` | `active`, `paused`, `completed` | project |
 | `priority` | `high`, `medium`, `low` | questions |
 | `selection_basis` | `timeline_gap`, `unresolved_conflict`, `fan_pivot`, `hypothesis_test`, `objective_decomposition`, `new_evidence`, `record_found_incidentally`, `user_directed` | questions |
-| `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, `unknown` | assertions |
+| `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, `unknown` | assertions |
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
 | `holding_type` | `document`, `prior_research`, `oral_knowledge`, `gedcom`, `photo`, `artifact`, `other` | known_holdings |
@@ -133,7 +133,7 @@ Each skill writes to its own section and reads from others. Skills must never wr
 | `plans` | research-plan; search-records, search-external-sites, search-full-text (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it |
 | `log` | search-records, search-full-text, search-external-sites, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted** |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete |
-| `assertions` | record-extraction, assertion-classification, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
+| `assertions` | record-extraction, convert-dates | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
@@ -382,17 +382,17 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
-| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. Set by record-extraction for `record_search`-sourced assertions; for the focus role it equals the result's `primaryId`. Null for FTS-, image-, and PDF-sourced assertions (no structured GedcomX persona). |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions (no sidecar → supplying a value is a hard error). |
 | `fact_type` | string | yes | The type of fact: `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
 | `date` | string or null | no | Date of the event/fact |
 | `date_certainty` | string or null | no | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, or `between` |
 | `place` | string or null | no | Place description (as recorded) |
-| `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. Copied from the source record's fact when available, else resolved via `place_search`; null if unresolvable or `place` is null. |
+| `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. On assertion appends `research_append` resolves an omitted value itself — sidecar copy first, else geocoding, with a country-contradiction guard (research-append spec §3.6); null if unresolvable or `place` is null; supply `null` explicitly to opt out. |
 | `information_quality` | `information_quality` | yes | Primary, Secondary, or Indeterminate — classified at the assertion level |
 | `informant` | string | yes | Who provided this specific information (e.g., "census enumerator", "attending physician", "son-in-law James Brown", "unknown household member") |
-| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `official_duty`, or `unknown` |
+| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified |
 | `informant_bias_notes` | string or null | no | Notes on potential bias (e.g., "may have misreported age for military eligibility") |
 | `evidence_type` | `evidence_type` | yes | Direct, Indirect, or Negative |
 | `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
@@ -512,8 +512,8 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `start` | string | yes | ISO 8601 date |
-| `end` | string | yes | ISO 8601 date |
+| `start` | string | yes | Date the gap opens, copied verbatim from the bounding event or expected record. Free-form (matches `timeline_event.date`), not restricted to ISO `YYYY-MM-DD` — a bare year like `"1850"` is valid when the boundary is only known to the year (e.g. a missing census). Downstream consumers (`person-warnings`) standardize it. |
+| `end` | string | yes | Date the gap closes, same format rules as `start`. |
 | `expected_events` | string[] | yes | Event types expected in this gap |
 | `severity` | string | yes | `high`, `medium`, or `low` |
 | `notes` | string or null | no | Explanation of why this gap matters to the research question or what it might reveal (e.g., "Missing marriage record could reveal parents' names"). |

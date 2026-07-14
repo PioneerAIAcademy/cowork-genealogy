@@ -24,25 +24,17 @@ from __future__ import annotations
 import pytest
 
 
-# --- Tool-allowlist enforcement ---------------------------------------
-
-def test_no_mcp_tools_called(tool_calls):
-    """proof-conclusion must not call any *research* MCP tools — it's a
-    pure analysis skill that reads research.json and writes a
-    proof_summaries entry plus tree.gedcomx.json updates. The universal
-    verification tool `validate_research_schema` is exempted: post
-    commit 861d3c9 it's a built-in schema check every skill is expected
-    to call at the end of its flow, not a research tool."""
-    mcp_calls = [
-        tc for tc in tool_calls
-        if tc.get("tool", "").startswith("mcp__")
-        and tc.get("tool", "").rsplit("__", 1)[-1] != "validate_research_schema"
-    ]
-    assert not mcp_calls, (
-        f"proof-conclusion should not call MCP tools (other than "
-        f"validate_research_schema), but called: "
-        f"{[tc['tool'] for tc in mcp_calls]}"
-    )
+# --- Tool allowlist ---
+#
+# `test_no_mcp_tools_called` was removed: it forbade every MCP tool except
+# validate_research_schema, which predated proof-conclusion's migration to
+# the `research_append` write tool (commit 86c741d). It is now both wrong
+# (research_append is a sanctioned write path in this skill's allowed-tools)
+# and redundant with the universal `test_tool_allowlist` + `test_ownership_table`
+# checks in test_universal.py, which enforce the real invariant: every call
+# must match the skill's declared allowed-tools, and writes stay within
+# proof-conclusion's owned sections. Same removal already applied to
+# conflict-resolution.
 
 
 # --- New proof_summary structural checks ------------------------------
@@ -198,7 +190,8 @@ def test_q001_disproved_tier(after_state, test):
 # must leave the tree untouched. The two tags below pin both directions:
 #   `no-tree-write`       — the tree must be byte-identical before and after
 #   `tree-write-expected` — the concluded ParentChild relationship must be
-#                           present in the tree afterward
+#                           ADDED by the skill: absent in the pre-state,
+#                           present afterward (catches found-but-lost)
 
 def _tree(state):
     return state.get("tree_gedcomx_json") or state.get("tree_gedcomx")
@@ -215,34 +208,62 @@ def test_no_tree_write_below_probable(before_state, after_state, test):
     after = _tree(after_state)
     if before is None or after is None:
         pytest.skip("Missing tree.gedcomx.json for diff")
-    assert before == after, (
-        "tree.gedcomx.json was modified by a below-probable conclusion — "
-        "the tree must only be written at tier `probable` or higher"
+    # Source-description (S entry) metadata is not a conclusion — a
+    # sources-only diff (e.g. citation backfill on an existing S) is
+    # permitted below probable; facts/relationships/persons are not.
+    def _without_sources(tree):
+        return {k: v for k, v in tree.items() if k != "sources"}
+    assert _without_sources(before) == _without_sources(after), (
+        "tree.gedcomx.json facts/relationships/persons were modified by a "
+        "below-probable conclusion — the tree (beyond source-description "
+        "metadata) must only be written at tier `probable` or higher"
     )
 
 
-def test_tree_write_present_at_probable_plus(after_state, test):
-    """Tagged `tree-write-expected`: at `probable`/`proved` the concluded
-    parentage must be reflected in the tree as a ParentChild relationship
-    (parent I2 -> child I1). (These scenarios already carry the
-    relationship in their pre-state, so this pins the invariant direction —
-    a regression that dropped or never wrote it would fail here.)"""
+def test_tree_relationship_written_at_probable_plus(before_state, after_state, test):
+    """Tagged `tree-write-expected`: at `probable`/`proved` proof-conclusion
+    must WRITE the concluded parentage into the tree as a ParentChild
+    relationship (parent I2 -> child I1). The scenarios ship the persons
+    (I1, I2) present but with NO parentage relationship, so this verifies the
+    skill actually *added* it — absent in the pre-state, present in the
+    post-state.
+
+    That absent->present check is what catches a "found-but-lost" run that
+    concludes in the proof-summary narrative but skips the tree write
+    (proof-conclusion SKILL.md §6): such a run leaves the persons unlinked and
+    fails here even though it produced a proof_summary. A weaker
+    present-in-after check would pass a skipped write whenever the scenario
+    pre-loaded the link — which is exactly how the elizabeth-geach e2e
+    found-but-lost slipped past the suite."""
     if "tree-write-expected" not in test.get("tags", []):
         pytest.skip("not a tree-write-expected scenario")
-    tree = _tree(after_state)
-    if tree is None:
+    after = _tree(after_state)
+    if after is None:
         pytest.skip("Missing tree.gedcomx.json")
-    rels = tree.get("relationships", [])
-    has_pc = any(
-        r.get("type") == "ParentChild"
-        and r.get("parent") == "I2"
-        and r.get("child") == "I1"
-        for r in rels
+
+    def has_pc(tree):
+        return any(
+            r.get("type") == "ParentChild"
+            and r.get("parent") == "I2"
+            and r.get("child") == "I1"
+            for r in (tree or {}).get("relationships", [])
+        )
+
+    before = _tree(before_state)
+    # Guard the guard: the scenario MUST ship the relationship absent, or a
+    # skipped write is undetectable. Fail loudly if someone re-pre-loads it.
+    assert before is not None and not has_pc(before), (
+        "scenario pre-state already contains the concluded ParentChild "
+        "relationship (parent I2 -> child I1); a `tree-write-expected` "
+        "scenario must ship the persons WITHOUT the relationship so this "
+        "guard can verify the skill *added* it (absent -> present)"
     )
-    assert has_pc, (
-        "expected a ParentChild relationship (parent I2 -> child I1) in "
-        "tree.gedcomx.json for a probable/proved conclusion; got "
-        f"relationships={rels!r}"
+    assert has_pc(after), (
+        "proof-conclusion concluded at probable/proved but did NOT write the "
+        "ParentChild relationship (parent I2 -> child I1) into "
+        "tree.gedcomx.json — the conclusion reached the proof summary but "
+        "never the tree (found-but-lost; see proof-conclusion SKILL.md §6). "
+        f"post-state relationships={after.get('relationships', [])!r}"
     )
 
 

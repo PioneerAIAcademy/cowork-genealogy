@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_applegarth_parents_1936",
+    "objective": "Who were the parents of Alan Glen Applegarth, born 29 April 1936 in Ogden, Weber County, Utah, and died 16 May 2023 in Providence, Cache County, Utah?",
+    "subject_person_ids": ["KWZH-XB6"],
+    "status": "active",
+    "created": "2026-07-07",
+    "updated": "2026-07-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

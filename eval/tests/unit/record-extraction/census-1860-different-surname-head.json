@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_record_extraction_014",
+    "skill": "record-extraction",
+    "name": "Differently-surnamed household head is flagged as a FAN lead, not dismissed as a boardinghouse",
+    "type": "positive",
+    "description": "An 1860-style census household where the subject's family (the Flynns) is enumerated inside a household headed by a man with a different surname (Silas Kerrigan, b. ~1798). The skill must extract the household faithfully AND surface the head as possible kin — the ~24-year age gap to Mary Flynn makes a parent-child relationship plausible, and 'Kerrigan' a candidate maiden name worth investigating — as a lead for hypothesis-tracking, rather than silently assuming a boardinghouse or asserting a specific relationship the record doesn't support. Guards the 'differently-surnamed household head is a FAN lead' rule.",
+    "tags": [
+      "census",
+      "1860",
+      "extraction",
+      "household",
+      "fan-lead",
+      "different-surname-head"
+    ]
+  },
+  "input": {
+    "user_message": "Extract assertions from this 1860 census record for a household in Schuylkill County: Silas Kerrigan, age 62, male, born Ireland, laborer; Thomas Flynn, age 42, male, born Ireland, miner; Mary Flynn, age 38, female, born Ireland; Patrick Flynn, age 15, male, born Pennsylvania.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  },
+  "judge_context": [
+    "Should produce atomic assertions — separate `a_` entries per person for name, age/birth year, and birthplace; occupation assertions only for Silas (laborer) and Thomas (miner), never for Mary or Patrick, whose occupation columns are not stated.",
+    "The 1860 census has no relationship column: any reading of family structure (Thomas-Mary as a couple, Patrick as their child, Silas's connection to the Flynns) is indirect evidence inferred from household position, not direct.",
+    "Must treat the differently-surnamed head as a FAN lead: note that Silas Kerrigan (b. ~1798) heading a household that contains the Flynn family could be kin of some kind — the ~24-year age gap to Mary Flynn (b. ~1822) makes a parent-child relationship plausible and 'Kerrigan' a candidate maiden name worth investigating, though the record alone can't confirm the specific relationship. This possibility should be surfaced in the presentation as a lead for hypothesis-tracking, not asserted as fact.",
+    "Must NOT silently dismiss the arrangement as a boardinghouse or unrelated lodging. Acknowledging the boardinghouse possibility alongside the kinship lead is good practice (the record alone cannot distinguish them); assuming it without noting the kin possibility is the failure this test guards against.",
+    "The kinship possibility is a hypothesis lead, not record content — the skill should NOT fabricate a relationship assertion (e.g., Silas as Mary's father) from this record; assertions record only what the census states.",
+    "Scope of the fabrication ban: it applies to CROSS-SURNAME links — anything connecting Silas Kerrigan to the Flynn group. Intra-family household-position inference WITHIN the same-surname family group — Thomas-Mary as spouse_inferred, Patrick as child_inferred of the Flynn couple, with proximity researcher and evidence indirect — is expected, correct 1860-census practice and must not be penalized as fabrication.",
+    "Should distinguish the census enumerator (recorder) from the unknown household informant; pre-1940 census informant is unknown, so information quality for names/ages/birthplaces is indeterminate."
+  ]
+}

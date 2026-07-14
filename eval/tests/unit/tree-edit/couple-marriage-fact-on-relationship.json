@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_tree_edit_013",
+    "skill": "tree-edit",
+    "name": "A marriage fact must be written on the Couple relationship, not on a person",
+    "type": "positive",
+    "description": "The marriage of Thomas Flynn (I2) and Mary Flynn (I3) is documented (St. Patrick's, Schuylkill County, 12 May 1843). The flynn-couple-marriage tree has both persons but NO Couple relationship between them. Because tree_edit has no update_relationship operation, the only correct way to record a couple event is a single add_relationship that creates the Couple relationship WITH the Marriage fact in its facts array. Tests the improvement in tree-edit/SKILL.md and references/relationship-accuracy.md: couple-event facts belong on the Couple relationship, never as a person-level add_fact.",
+    "tags": ["tree-edit", "couple-relationship", "marriage-fact", "add-relationship", "fact-placement"]
+  },
+  "input": {
+    "user_message": "tree-edit: the marriage of Thomas Flynn (I2) and Mary Flynn (I3) is documented in the church marriage register (assertion a_005, source src_005 / S5): married 12 May 1843 at St. Patrick's Church, Schuylkill County, Pennsylvania. Record this marriage in the tree.",
+    "scenario": "flynn-couple-marriage"
+  },
+  "judge_context": [
+    "The core behavior under test is fact PLACEMENT: a couple event must be written on the Couple relationship, not on a person. Grade Correctness primarily on that.",
+    "The correct edit creates a Couple relationship between I2 and I3 via add_relationship, with the Marriage fact supplied in the relationship's facts array in that same call — e.g. relationship: { type: 'Couple', person1: 'I2', person2: 'I3', facts: [{ type: 'Marriage', date: '12 May 1843', place: 'St. Patrick's Church, Schuylkill County, Pennsylvania', sources: [ ... S5 / src_005 ] }] }",
+    "The Marriage date must be written as a GedcomX-parseable value ('12 May 1843' or '1843-05-12') — not an approximation string in the date field",
+    "It is WRONG to write the marriage as a person-level fact via add_fact on I2 or I3. A Marriage stored on a person record misplaces the event; the Couple relationship is its only correct home",
+    "The marriage IS evidence-grounded here: assertion a_005 / source src_005 (tree source S5) documents it as direct primary evidence. The skill should attach that source to the marriage fact and proceed — it must NOT refuse or defer for lack of a source",
+    "There was no Couple relationship in the starting tree, so creating one is expected here (not a duplicate) — this is the fresh-create path, since tree_edit has no update_relationship operation to add facts to an existing relationship",
+    "Edit-minimality still applies: the skill should create exactly the one Couple relationship with the marriage fact and not churn the existing ParentChild relationships (RT1, RT2) or person facts",
+    "COMPLETENESS GRADING NOTE for the judge: this test targets the tree-edit WRITE (creating the Couple relationship with the Marriage fact correctly placed and sourced). The skill's standard post-edit check-warnings pass calls person_warnings, which is not available in the unit-test harness — the skill correctly attempts it and explains the tool is unavailable. Do NOT drag Completeness below pass because the check-warnings follow-up could not run: score Completeness on whether the requested marriage write was completed correctly, not on the unavailable downstream plausibility check"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}

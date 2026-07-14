@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_jan_gallo_father",
+    "objective": "Who was the father of Jan Gallo, born in 1893 in Šútovo, Turany parish, Slovakia (then Suttó, Turány parish, Turócz County, Hungary)?",
+    "subject_person_ids": ["PID-TODO"],
+    "status": "active",
+    "created": "2026-07-03",
+    "updated": "2026-07-03"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

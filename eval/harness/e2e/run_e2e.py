@@ -28,7 +28,7 @@ from e2e.orchestrator import (
     run_e2e_test,
 )
 from e2e.report import print_rollup
-from e2e.result import E2eResult
+from e2e.result import E2eResult, is_committable_run
 
 
 # eval/.env holds ANTHROPIC_API_KEY (written by Setup.bat). The judge talks
@@ -103,10 +103,15 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     print(f"  verdict: {result.verdict}    stop_reason: {result.stop_reason}")
     _print_proof_quality(result)
     print(f"  result: {paths['result']}")
-    if result.verdict != "pass":
+    if not is_committable_run(result.verdict):
         print(
-            "  (scratch run — gitignored; only a passing run validates the "
-            "fixture and is committed)"
+            "  (scratch run — gitignored; the judge didn't run, so there's "
+            "nothing to grade or commit)"
+        )
+    elif result.verdict != "pass":
+        print(
+            f"  (written as a committable {result.verdict} run — retained signal; "
+            "grade it with /grade-e2e-run, then commit it + the .ann.json before landing)"
         )
     return result
 

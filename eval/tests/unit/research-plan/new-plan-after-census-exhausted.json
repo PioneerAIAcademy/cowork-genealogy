@@ -29,6 +29,7 @@
   "judge_context": [
     "Plan items should propose at least one substantive next source — probate, post-1860 censuses, FAN research, naturalization, immigration records — and explain in `rationale` why each is expected to advance q_001"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   }

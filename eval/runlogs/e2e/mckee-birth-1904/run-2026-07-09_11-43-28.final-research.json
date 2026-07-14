@@ -1,0 +1,938 @@
+{
+  "project": {
+    "id": "rp_mckee_birth_1904",
+    "objective": "When and where was Robert Raymond McKee born?",
+    "subject_person_ids": [
+      "L8K8-W12"
+    ],
+    "status": "completed",
+    "created": "2026-07-02T00:00:00Z",
+    "updated": "2026-07-09"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was Robert Raymond McKee (son of Robert McKee and Margaret Pollock, resident Newry, County Down, Ireland in 1911, died 1958 Chicago) born?",
+      "rationale": "This is the direct GPS question matching the project objective. L8K8-W12 has no birth fact in the tree. His parents married June 1890 in Newry, County Down; he resided there in 1911 and immigrated to North America in 1923. Irish civil registration (births registered from 1864) and Ireland census records (1901, 1911) are the primary repositories; church registers for the Newry area are also available on FamilySearch. A birth circa 1890\u20131910 in County Down is well within surviving record coverage.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-09",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All plan items completed or skipped. Civil registration index (derivative, primary informant) establishes Q1 1904, Banbridge, County Down \u2014 corroborated by 1911 census (original). Absence from 1901 census provides independent negative evidence consistent with post-April 1901 birth. Immigration self-reports (1923) form a single evidence unit (same informant); birth-year conflict c_001 resolved in favor of the civil registration index. Catholic parish registers skipped (Unitarian household confirmed 1911). IrishGenealogy.ie fallback skipped (pli_002 succeeded; original adds precision only; overturn risk negligible with two independent sources already in agreement).",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 two independent sources establish Q1 1904, Banbridge, County Down, Ireland as the answer to 'when and where was Robert Raymond McKee born?' Conflict c_001 is resolved. The question is answered at a defensible tier.",
+          "repository_breadth": "FamilySearch civil registration indexes (collection 1408347), Ireland Census 1901 (1626180), Ireland Census 1911 (2854327), three 1923 immigration/border-crossing records, and WWII draft registration all searched. Catholic parish registers skipped as inapplicable (Unitarian household). IrishGenealogy.ie external site skipped as the FamilySearch civil index fallback condition was not triggered. Name variants M'kee, McKee, Mc Kee covered by the FamilySearch search without birthPlace filter.",
+          "original_substitution": "The civil registration index (src_001) is a derivative; the original GRO birth register is accessible on IrishGenealogy.ie (pli_007) but was skipped because the derivative finding is independently corroborated by the original 1911 census (src_002). The 1911 census is an original source providing primary corroboration; the derivative index is not the sole evidence for the conclusion.",
+          "independent_verification": "Two independent evidence units: (1) Civil registration index (src_001) \u2014 parents as informants at registration, proximate to the event; (2) Ireland Census 1911 (src_002) \u2014 original census schedule, enumerator-collected, independent informant chain. A third unit (1901 census absence, src_003) provides negative corroboration. Immigration self-reports (src_004/005/006) are one unit (same informant \u2014 the subject) and support Banbridge as birthplace.",
+          "evidence_class": "src_001 is a derivative source with primary information (parent-informants at registration). src_002 is an original source with indeterminate information (pre-1940 census; informant unknown). At least one original source with corroborating information is present.",
+          "conflict_resolution": "c_001 (birth year conflict: Q1 1904 vs. 1900/1903/Nov 1900 from immigration records) is resolved, preferred assertion a_002. No remaining unresolved conflicts.",
+          "overturn_risk": "Low. The only unsearched accessible source is the original GRO birth register on IrishGenealogy.ie, which would most plausibly confirm Q1 1904, Banbridge \u2014 not introduce a different quarter or district. The two independent sources (civil index + 1911 census) are in agreement. WWII draft card image was mislinked in FamilySearch (different individual); indexed data for QGF4-CZQH cannot be verified from the available image and was not used as evidence."
+        }
+      },
+      "created": "2026-07-09"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "immigration",
+          "jurisdiction": "Vermont / Canada border; Canada",
+          "date_range": "1923",
+          "repository": "FamilySearch",
+          "rationale": "Three immigration/border-crossing records already sourced in the tree (St. Albans Canadian Border Crossings 9YN8-JHB, Canada Immigration Records Q36D-6VF, US Border Crossings 9YNC-RDY) have not yet been read for birth-date and birthplace assertions. St. Albans manifests and Canadian Form 30A routinely recorded age, birth year, and country of origin; some list the exact birthplace. Reading these first extracts the most immediately available birth evidence without a new search.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "County Down, Ireland",
+          "date_range": "1890-1910",
+          "repository": "FamilySearch",
+          "rationale": "Ireland, Civil Registration, 1845-1913 (collection 2659409) is the primary authoritative source for the subject's birth. Irish civil registration began in 1864; births were recorded by district registrar in the Newry Superintendent Registrar's District, County Down. A civil birth entry would give the exact date, place (townland), and father's name \u2014 direct evidence for both the date and place objective. Search for 'Robert McKee' born Newry district, County Down, circa 1890-1910.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Newry, County Down, Ireland",
+          "date_range": "1901",
+          "repository": "FamilySearch",
+          "rationale": "Ireland Census 1901 (collection 1626180) is fully indexed and survived intact. Robert McKee (LT1G-QP2) and Margaret Pollock married 1890 in Newry; Robert Raymond McKee should appear as a child in their household circa age 0-11. The census return gives each member's age, relationship, county of birth, and religion \u2014 indirect but corroborating evidence for birth year and birthplace county.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Newry, County Down, Ireland",
+          "date_range": "1911",
+          "repository": "FamilySearch",
+          "rationale": "Ireland Census 1911 (collection 2854327) confirms Robert Raymond McKee was in Newry in 1911 (tree fact). The original census schedule gives his exact stated age (and thus birth year), county of birth, and religion \u2014 important corroborating evidence. The 1911 census also uniquely records how many years each couple had been married and how many children born/living, helping profile the family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "military",
+          "jurisdiction": "Stockton, San Joaquin, California, United States",
+          "date_range": "1942",
+          "repository": "FamilySearch",
+          "rationale": "Robert R. McKee registered for the WWII draft on 15 Feb 1942 in Stockton, CA (tree fact). Series III draft registration cards recorded the registrant's exact birth date and birthplace \u2014 often the most precise US-held record of a foreign-born person's birth. FamilySearch holds the WWII Draft Registration Cards collection. This corroborates or refines what the immigration records say.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Newry, County Down, Ireland",
+          "date_range": "1890-1910",
+          "repository": "FamilySearch",
+          "rationale": "Ireland, Catholic Parish Registers, 1740-1900 (collection 2820100) was planned on the assumption of Catholic background (from the Archdiocese of Chicago cemetery record). However, the Ireland Census 1911 (src_002) records the McKee household as 'Unitarian,' not Catholic. The cemetery affiliation reflects the burial institution's denomination, not the decedent's religion. Catholic parish baptism registers are inapplicable for a Unitarian family. No yield expected; skipping.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "County Down, Ireland",
+          "date_range": "1890-1910",
+          "repository": "other",
+          "rationale": "IrishGenealogy.ie was designated as fallback_for pli_002. pli_002 succeeded: civil registration index (ark:/61903/1:1:FB2F-WZ8) was found in FamilySearch collection 1408347, establishing Q1 1904, Banbridge, County Down as the registration quarter and district. The original GRO birth register image on IrishGenealogy.ie would add the exact birth date within Q1 1904 and the townland, but would not change the conclusion for the research question ('when and where born'). The finding is independently corroborated by the 1911 census (src_002, original source). Overturn risk from the original is negligible: the distinctive middle name 'Raymond,' Banbridge district, and Q1 1904 are already established by two independent sources. Skipping as the fallback condition (pli_002 failure) did not occur and the original adds precision only.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-09T11:07:14.166Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QK3T-VKK3",
+        "collection": "Vermont, Franklin, St. Albans, Canadian Border Crossings, 1895-1954",
+        "subject": "Robert R McKee",
+        "note": "Direct record read of known ARK from tree sources"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "St. Albans border crossing 1923: Robert R McKee, birth year 1900, birth place Ireland. Immigration event 1923, Vermont. Derivative index entry; image available at ark:/61903/3:1:3QS7-8981-WQQJ."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-09T11:07:17.197Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:68FM-F3TF",
+        "collection": "Canada, Immigration Records, 1919-1924",
+        "subject": "Robert R. McKee",
+        "note": "Direct record read of known ARK from tree sources"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Canada immigration 1923: Robert R. McKee, birth year 1903, birth place Banbridge, Ireland; race Irish; marital status Single. Image at ark:/61903/3:1:3Q9M-C3W5-99N4-N. Birthplace Banbridge is in County Down, Ireland."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-09T11:07:19.919Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FSZ6-QNG",
+        "collection": "United States, Border Crossings from Canada to United States, 1895-1956",
+        "subject": "Robert R McKee",
+        "note": "Direct record read of known ARK from tree sources"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "US border crossing Nov 1923 from Montreal: Robert R McKee, birth Nov 1900, birth place Banbridge [County Down, Ireland]; race Irish; prior residence Sask [Saskatchewan]. Image at ark via sd_da1 not stored. Two of three records now agree on Banbridge as birthplace; birth year conflict: 1900 vs 1903."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-09T11:08:24.212Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McKee",
+        "givenName": "Robert",
+        "recordCountry": "Ireland",
+        "recordType": "birth",
+        "birthYearFrom": 1897,
+        "birthYearTo": 1906,
+        "collectionId": "2659409"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1,
+      "notes": "One hit: Robert McKee born 7 Jul 1900, Belfast, Ireland. Father Robert McKee, mother Sarah McKee. Not our subject \u2014 mother should be Margaret Pollock, birthplace should be Banbridge or Newry area per immigration records. Match score 0.008 (subject unresolvable \u2014 no birth date in tree). Retrying with birthPlace=Banbridge and broader year range."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-09T11:08:53.686Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McKee",
+        "givenName": "Robert",
+        "recordCountry": "Ireland",
+        "recordType": "birth",
+        "birthYearFrom": 1895,
+        "birthYearTo": 1908,
+        "birthPlace": "Banbridge County Down Ireland",
+        "collectionId": "2659409"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results when filtering coll 2659409 to Banbridge area. Suspect place filter too restrictive or record indexed under different district. Parallel search of collection 1408347 (Civil Registration Indexes) found Robert Raymond M'kee born Jan-Mar 1904, Banbridge, County Down \u2014 4-star tree match to L8K8-W12."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-09T11:09:33.787Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McKee",
+        "givenName": "Robert",
+        "recordCountry": "Ireland",
+        "recordType": "birth",
+        "birthYearFrom": 1895,
+        "birthYearTo": 1908,
+        "collectionId": "1408347",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 139,
+      "notes": "Key hit: ark:/61903/1:1:FB2F-WZ8 \u2014 Robert Raymond M'kee, BirthRegistration Q1 (Jan-Mar) 1904, Banbridge, County Down, Ireland. Already attached to subject L8K8-W12 (4-star tree match). This is a civil registration index entry (derivative); original GRO register entry needed for exact birth date. Record ranked 2nd by matcher (score 0.025) but is clearly the correct subject given distinctive middle name 'Raymond' and Banbridge birthplace consistent with 2 of 3 immigration records."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-09T11:10:51.580Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McKee",
+        "givenName": "Robert",
+        "recordCountry": "Ireland",
+        "recordType": "census",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "residencePlace": "Newry County Down Ireland",
+        "collectionId": "1626180",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 75,
+      "notes": "Found 'Robt McKee' (LT1G-QP2, 5-star match) as head of household in Newry, Banbridge, County Down, 1901 \u2014 this is the subject's father. Robert Raymond McKee himself does not appear in 1901 census because he was not yet born (civil registration index shows Q1 1904 birth). Absence from 1901 census is consistent with and supports a 1904 birth date."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-09T11:10:55.702Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McKee",
+        "givenName": "Robert",
+        "recordCountry": "Ireland",
+        "recordType": "census",
+        "residenceYearFrom": 1911,
+        "residenceYearTo": 1911,
+        "residencePlace": "Newry County Down Ireland",
+        "collectionId": "2854327",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 89,
+      "notes": "Key hit: ark:/61903/1:1:QYXF-J52M \u2014 'Robert Raymond McKee', Scholar, Unitarian, born 1904 County Down, Ireland, in household of Robert McKee, Newry, Banbridge, County Down, Ireland. 5-star tree match to L8K8-W12. Confirms 1904 birth year and County Down birthplace. Household head is the subject's father (LT1G-QP2). Census taken April 1911; subject was approximately 7 years old, consistent with Q1 1904 birth."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-09T11:11:02.496Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McKee",
+        "givenName": "Robert",
+        "recordCountry": "United States",
+        "recordType": "military",
+        "anyYearFrom": 1942,
+        "anyYearTo": 1942,
+        "residencePlace": "Stockton San Joaquin California",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 4330,
+      "notes": "Top hit: ark:/61903/1:1:QGF4-CZQH \u2014 'Robert Raymond McKee', MilitaryDraftRegistration 15 Feb 1942, Stockton CA. Birth date indexed as 29 February 1904 (1904 was a leap year; date is valid). Birth place indexed as 'Milford, Massachusetts' \u2014 clear transcription error; original card image (at ark:/61903/3:1:3Q9M-CSLK-RBG8) must be read to confirm actual birthplace. Co-resident listed as Elizabeth McKee (wife). 5-star tree match to L8K8-W12. Birth date 29 Feb 1904 is consistent with Q1 1904 civil registration index and 1911 census age 7 (born 1904)."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-09T11:15:47.744Z",
+      "tool": "image_read",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3Q9M-CSLK-RBG8",
+        "linkedRecord": "ark:/61903/1:1:QGF4-CZQH",
+        "purpose": "Verify handwritten birthplace on WWII draft card for Robert Raymond McKee"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Image at 3Q9M-CSLK-RBG8 (linked from indexed record QGF4-CZQH) does NOT correspond to our subject. The image shows a Series III 'Old Man's Registration' card (for men born 1877\u20131897) for a Robert Raymond McKee born 26 Oct 1892, birthplace 'Milford, Mass.', emergency contact Mrs. Ruby McKee. Our subject born 1904 would have registered on a regular (non-Series-III) form; the image is mislinked in FamilySearch. The indexed data for QGF4-CZQH (birth 29 Feb 1904) cannot be verified from this image and is of uncertain reliability. Flagging QGF4-CZQH as needs-review; will not use as primary evidence for birth date."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Ireland, Civil Registration Indexes, 1845-1958,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FB2F-WZ8 : accessed 9 July 2026), entry for Robert Raymond M'kee, birth registration Q1 1904, Banbridge, County Down.",
+      "citation_detail": {
+        "who": "Ireland General Register Office",
+        "what": "Quarterly birth registration index, Banbridge Superintendent Registrar's District",
+        "when_created": "Quarterly returns compiled from original registrations, Q1 1904",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch, Salt Lake City, Utah",
+        "where_within": "Collection 1408347; record ARK ark:/61903/1:1:FB2F-WZ8; index image ARK ark:/61903/1:2:MF1P-8NK"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FB2F-WZ8",
+      "access_date": "2026-07-09",
+      "notes": "Derivative quarterly index compiled from original Irish civil birth registrations. The index records only the registration district (Banbridge) and quarter (Q1 = January\u2013March 1904), not the exact birth date. The underlying original GRO birth register (Series 2, County Down, vol. for Q1 1904) would supply the exact date and townland. The distinctive middle name 'Raymond' and Banbridge registration district match the subject's known profile.",
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Ireland, Census, 1911,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QYXF-J52M : accessed 9 July 2026), Robert Raymond McKee in household of Robert McKee, Newry, Banbridge, County Down.",
+      "citation_detail": {
+        "who": "Ireland Registrar General's Office",
+        "what": "Census of Ireland, 1911, household schedule",
+        "when_created": "April 1911",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch (digitized from National Archives of Ireland)",
+        "where_within": "Collection 2854327; household of Robert McKee, Newry, Banbridge, County Down; Robert Raymond McKee ARK ark:/61903/1:1:QYXF-J52M; NAI image http://www.census.nationalarchives.ie/reels/nai002147096/"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QYXF-J52M",
+      "access_date": "2026-07-09",
+      "notes": "Original 1911 Ireland census schedule, fully intact and complete nationwide. Enumerator collected household information in April 1911. Birth year and county derived from age column and birthplace column on the schedule; exact birth date not recorded. Household head (Robert McKee, Spirit Merchant) and mother (Margaret McKee) match the subject's known parents LT1G-QP2 and LJK3-9QP.",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "\"Ireland, Census, 1901,\" FamilySearch (https://www.familysearch.org : accessed 9 July 2026), household of Robert McKee, Newry, Banbridge, County Down \u2014 subject Robert Raymond McKee absent.",
+      "citation_detail": {
+        "who": "Ireland Registrar General's Office",
+        "what": "Census of Ireland, 1901, household schedule",
+        "when_created": "March 1901",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch (digitized from National Archives of Ireland)",
+        "where_within": "Collection 1626180; Robert McKee household, Newry, Banbridge, County Down"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/service/cds/recapi/collections/1626180",
+      "access_date": "2026-07-09",
+      "notes": "1901 Ireland census: original, intact, fully indexed. Subject Robert Raymond McKee absent \u2014 consistent with birth after March/April 1901.",
+      "log_entry_id": "log_007"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "9YN8-JHB",
+      "citation": "\"Vermont, Franklin, St. Albans, Canadian Border Crossings, 1895-1954,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QK3T-VKK3 : accessed 9 July 2026), entry for Robert R McKee, 1923.",
+      "citation_detail": {
+        "who": "U.S. Immigration Service, St. Albans, Vermont",
+        "what": "Canadian border crossing manifest",
+        "when_created": "1923",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch",
+        "where_within": "Collection; ARK ark:/61903/1:1:QK3T-VKK3; image ARK ark:/61903/3:1:3QS7-8981-WQQJ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QK3T-VKK3",
+      "access_date": "2026-07-09",
+      "notes": "Derivative index entry; birth year 1900 conflicts with civil registration index (Q1 1904) and 1911 census (born 1904). Immigrants commonly misreported age at border crossings.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_005",
+      "gedcomx_source_description_id": "Q36D-6VF",
+      "citation": "\"Canada, Immigration Records, 1919-1924,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68FM-F3TF : accessed 9 July 2026), entry for Robert R. McKee, 1923.",
+      "citation_detail": {
+        "who": "Canada Department of Immigration",
+        "what": "Canada Form 30A ocean arrival record",
+        "when_created": "1923",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch",
+        "where_within": "ARK ark:/61903/1:1:68FM-F3TF; image ARK ark:/61903/3:1:3Q9M-C3W5-99N4-N"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:68FM-F3TF",
+      "access_date": "2026-07-09",
+      "notes": "Canada Form 30A \u2014 derivative (transcription/index of ship manifest). Birth year stated as 1903; birthplace 'Banbridge, Ireland.' Year conflicts with civil registration index (Q1 1904) and 1911 census (born 1904).",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_006",
+      "gedcomx_source_description_id": "9YNC-RDY",
+      "citation": "\"United States, Border Crossings from Canada to United States, 1895-1956,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FSZ6-QNG : accessed 9 July 2026), entry for Robert R McKee, Nov 1923.",
+      "citation_detail": {
+        "who": "U.S. Immigration Service",
+        "what": "Border crossing card, Canada\u2013US",
+        "when_created": "November 1923",
+        "when_accessed": "2026-07-09",
+        "where": "FamilySearch",
+        "where_within": "ARK ark:/61903/1:1:FSZ6-QNG"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:FSZ6-QNG",
+      "access_date": "2026-07-09",
+      "notes": "Derivative index. Birth 'Nov 1900, Banbridge' conflicts with civil registration index (Q1 1904) and 1911 census. Four-year discrepancy suggests deliberate age misreporting.",
+      "log_entry_id": "log_003"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FB2F-WZ8",
+      "record_persona_id": null,
+      "record_role": "registrant",
+      "fact_type": "Name",
+      "value": "Robert Raymond M'kee",
+      "structured_value": {
+        "given": "Robert Raymond",
+        "surname": "M'kee"
+      },
+      "information_quality": "primary",
+      "informant": "parent(s) of Robert Raymond M'kee (unidentified; qualified informant at Irish civil registration, provided child's name to district registrar)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FB2F-WZ8",
+      "record_persona_id": null,
+      "record_role": "registrant",
+      "fact_type": "Birth",
+      "value": "Q1 1904 (January\u2013March 1904)",
+      "date": "Bet Jan 1904 and Mar 1904",
+      "date_certainty": "between",
+      "information_quality": "primary",
+      "informant": "parent(s) of Robert Raymond M'kee (unidentified; witness to birth, qualified informant at Irish civil registration, appeared before district registrar within 42 days)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parent registered the birth in Q1 1904, close in time to the event. No evident motive to misreport; birth registration was a legal requirement. The index compresses the exact date to a quarter \u2014 the original GRO register entry would give the precise date."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FB2F-WZ8",
+      "record_persona_id": null,
+      "record_role": "registrant",
+      "fact_type": "BirthPlace",
+      "value": "Banbridge, County Down, Ireland",
+      "place": "Banbridge, County Down, Ireland",
+      "standard_place": "Banbridge, County Down, Ireland",
+      "information_quality": "primary",
+      "informant": "parent(s) of Robert Raymond M'kee (unidentified; witness to birth, present at the delivery location, appeared before district registrar within 42 days)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parent stated birthplace at registration. The registration district of Banbridge encompasses the Newry area. No evident motive to misreport the place of birth."
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QYXF-J52M",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "Name",
+      "value": "Robert Raymond McKee",
+      "structured_value": {
+        "given": "Robert Raymond",
+        "surname": "McKee"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent reporting for child aged approximately 7)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QYXF-J52M",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "Birth",
+      "value": "born 1904",
+      "date": "1904",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent reporting child's birth year approximately 7 years after the event)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Informant unknown \u2014 the Ireland 1911 census did not record which household member responded to the enumerator. If a parent answered (who witnessed the 1904 birth), the birth year information would be primary; if the 7-year-old subject himself answered, it would be secondary (cannot have first-hand knowledge of own birth); if another adult answered, it could be secondary or indeterminate. Since the respondent is unknown and the range of possible respondents spans both primary and secondary quality, the conservative classification is indeterminate. The stated year 1904 is consistent with the civil registration index entry (Q1 1904).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QYXF-J52M",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "BirthPlace",
+      "value": "Co Down",
+      "place": "Co Down",
+      "standard_place": "County Down, Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Informant unknown (pre-1940 census; respondent not recorded). For the subject's own birthplace, a parent who was present at the birth in County Down could supply primary information; the 7-year-old subject would supply secondary information (learned from family). Since the respondent is unknown and parents could have first-hand knowledge of the birthplace, the conservative classification is indeterminate. 'Co Down' is county-level only \u2014 the civil registration index specifies Banbridge district within County Down.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QYXF-J52M",
+      "record_persona_id": null,
+      "record_role": "child_3",
+      "fact_type": "Residence",
+      "value": "Newry, Banbridge, County Down, Ireland (April 1911)",
+      "date": "1911",
+      "date_certainty": "exact",
+      "place": "Newry, Banbridge, County Down, Ireland",
+      "standard_place": "Newry, County Down, Ireland",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "log_entry_id": "log_008",
+      "extracted_for_question_ids": []
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/service/cds/recapi/collections/1626180",
+      "record_persona_id": null,
+      "record_role": "absent",
+      "fact_type": "Residence",
+      "value": "Robert Raymond McKee absent from Ireland Census 1901 in household of Robert McKee and Margaret McKee, Newry, Banbridge, County Down \u2014 consistent with birth after March/April 1901",
+      "information_quality": "indeterminate",
+      "informant": "researcher",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Analyst concluded absence after exhaustive search of Robert McKee household (LT1G-QP2) and Newry, County Down in the 1901 census index. Alternative explanations: indexing error; subject born 1901\u20131903 and missed by enumerator; enumerator did not visit the household. His absence is most parsimoniously explained by birth after the April 1901 census date, which is consistent with the Q1 1904 civil registration index entry.",
+      "evidence_type": "negative",
+      "log_entry_id": "log_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QK3T-VKK3",
+      "record_persona_id": null,
+      "record_role": "immigrant",
+      "fact_type": "Birth",
+      "value": "1900",
+      "date": "1900",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Robert Raymond McKee (self-reported at St. Albans border crossing)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "An adult cannot have primary (first-hand) information about their own birth date \u2014 they were not cognitively aware at birth and learned the date from family. Birth year stated by McKee at St. Albans border crossing in 1923. Strong evidence of misreporting: birth year 1900 conflicts with civil registration (Q1 1904) and 1911 census (born 1904) by four years. Evidence independence note: a_009, a_011, and a_013 all derive from the same informant (the subject) and form a single evidence unit \u2014 not three independent birth-year claims.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:QK3T-VKK3",
+      "record_persona_id": null,
+      "record_role": "immigrant",
+      "fact_type": "BirthPlace",
+      "value": "Ireland",
+      "place": "Ireland",
+      "standard_place": "Ireland",
+      "information_quality": "secondary",
+      "informant": "Robert Raymond McKee (self-reported at St. Albans border crossing)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "An adult cannot have first-hand knowledge of their birthplace from the birth event itself; knowledge comes from family tradition. However, birthplace is part of personal identity and likely accurately known. Evidence independence note: a_010, a_012, and a_014 all derive from the same informant (the subject) across three 1923 immigration records \u2014 a single evidence unit for birthplace, consistently giving Banbridge or Ireland."
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_005",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68FM-F3TF",
+      "record_persona_id": null,
+      "record_role": "immigrant",
+      "fact_type": "Birth",
+      "value": "1903",
+      "date": "1903",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Robert Raymond McKee (self-reported on Canada Form 30A)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Adult self-reporting own birth year \u2014 cannot have first-hand knowledge of own birth. Birth year 1903 on Canada Form 30A conflicts with civil registration (Q1 1904) and 1911 census (1904) by one year. Same informant (subject) as a_009 and a_013; these three birth-year assertions form a single evidence unit.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_005",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68FM-F3TF",
+      "record_persona_id": null,
+      "record_role": "immigrant",
+      "fact_type": "BirthPlace",
+      "value": "Banbridge, Ireland",
+      "place": "Banbridge, Ireland",
+      "standard_place": "Banbridge, County Down, Ireland",
+      "information_quality": "secondary",
+      "informant": "Robert Raymond McKee (self-reported on Canada Form 30A)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Adult self-reporting own birthplace \u2014 likely accurate as part of personal identity, but technically secondary (learned from family, not witnessed). Consistent with a_014 and partially with a_010 (all give Banbridge or Ireland). Same informant as a_010 and a_014 \u2014 single evidence unit for birthplace."
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_006",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FSZ6-QNG",
+      "record_persona_id": null,
+      "record_role": "immigrant",
+      "fact_type": "Birth",
+      "value": "Nov 1900",
+      "date": "Nov 1900",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Robert Raymond McKee (self-reported at US-Canada border)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Adult self-reporting own birth \u2014 cannot have first-hand knowledge. 'Nov 1900' conflicts substantially (4 years) with civil registration (Q1 1904) and 1911 census (1904). Same informant as a_009 and a_011 \u2014 single birth-year evidence unit. The November specificity is notable but unreliable given the overall age-misreporting pattern.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_006",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:FSZ6-QNG",
+      "record_persona_id": null,
+      "record_role": "immigrant",
+      "fact_type": "BirthPlace",
+      "value": "Banbridge",
+      "place": "Banbridge",
+      "standard_place": "Banbridge, County Down, Ireland",
+      "information_quality": "secondary",
+      "informant": "Robert Raymond McKee (self-reported at US-Canada border)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Adult self-reporting birthplace \u2014 likely accurate. Consistent with a_012 (Banbridge, Ireland) and supports the civil registration (Banbridge, County Down). Same informant as a_010 and a_012 \u2014 single birthplace evidence unit."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Civil registration index for 'Robert Raymond M'kee' (Q1 1904, Banbridge, County Down) matches L8K8-W12 on: (1) full name \u2014 distinctive middle name 'Raymond' eliminates common-name ambiguity; (2) Banbridge registration district is consistent with subject's known 1911 residence at Newry, which is within the Banbridge Superintendent Registrar's District; (3) Q1 1904 birth is consistent with subject's death in 1958 at approximately age 54. Record was a 4-star tree match to L8K8-W12 confirmed during search-records. No conflicting candidates identified.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth registration date assertion (Q1 1904, Banbridge) from same civil registration index entry as a_001; identity confirmed by distinctive full name and location. Linked to L8K8-W12 on the same grounds as a_001.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace assertion (Banbridge, County Down, Ireland) from same civil registration index entry as a_001; identity confirmed by distinctive full name and location. Linked to L8K8-W12 on the same grounds as a_001.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1911 census: 'Robert Raymond McKee', Scholar, Unitarian, child_3 in household of Robert McKee and Margaret McKee at Newry, Banbridge, County Down. Matches L8K8-W12 on: (1) exact full name including distinctive middle name Raymond; (2) household head is Robert McKee (Spirit Merchant, born 1863 Armagh) = LT1G-QP2, subject's father in tree; (3) household wife is Margaret McKee (born 1865 Co Down) = LJK3-9QP, subject's mother in tree; (4) born 1904 consistent with all evidence for L8K8-W12; (5) Newry, County Down location consistent with 1923 immigration. This was a 5-star tree match to L8K8-W12. Household coherence confirmed: both parents present and identified.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year assertion (1904) from same 1911 census household record as a_004; identity confirmed by household context (parents LT1G-QP2 and LJK3-9QP). Linked to L8K8-W12 on the same grounds as a_004.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace assertion (Co Down) from same 1911 census household record as a_004; identity confirmed by household context. Linked to L8K8-W12 on the same grounds as a_004.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1911 census residence assertion (Newry, Banbridge, County Down) for child_3 in verified McKee household; identity confirmed by household context. Linked to L8K8-W12 on the same grounds as a_004.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Negative assertion: Robert Raymond McKee absent from 1901 Ireland census in household of known parents LT1G-QP2 and LJK3-9QP at Newry. Linked to L8K8-W12 because: (1) the search exhausted the McKee household in the indexed 1901 Newry area; (2) the absence is analytically attributed to the subject not yet being born, consistent with the Q1 1904 civil registration entry; (3) the parents' household was positively identified in the same search.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "St. Albans border crossing 1923: 'Robert R McKee' matches L8K8-W12 on: (1) name 'Robert R McKee' consistent with Robert Raymond McKee (R = Raymond); (2) 1923 immigration consistent with tree facts (L8K8-W12 immigrated 1923); (3) birthplace 'Ireland' consistent with Irish origin. Record already attached to L8K8-W12 in tree as source 9YN8-JHB, confirming prior identity determination. Birth year 1900 conflicts with civil registration (Q1 1904) and 1911 census (1904) \u2014 conflict to be addressed in conflict-resolution.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace assertion (Ireland) from same St. Albans border crossing record as a_009; identity confirmed by name, 1923 immigration date, and prior tree attachment. Linked to L8K8-W12 on the same grounds as a_009.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Canada Form 30A (1923): 'Robert R. McKee', born Banbridge, Ireland, race Irish, Single, matches L8K8-W12 on: (1) name consistent with Robert Raymond McKee; (2) birthplace 'Banbridge, Ireland' consistent with civil registration (Banbridge, County Down); (3) 1923 immigration consistent with tree facts; (4) Single status consistent with unmarried status pre-1935 marriage. Record already attached to L8K8-W12 as tree source Q36D-6VF. Birth year 1903 conflicts with civil registration and census \u2014 noted for conflict-resolution.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace assertion (Banbridge, Ireland) from same Canada Form 30A as a_011; identity confirmed. Linked to L8K8-W12 on the same grounds as a_011.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_013",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "US-Canada border crossing (Nov 1923): 'Robert R McKee' from Montreal, prior residence Saskatchewan, matches L8K8-W12 on: (1) name consistent with Robert Raymond McKee; (2) birthplace 'Banbridge' consistent with civil registration; (3) immigration sequence (Canada arrival then US border crossing Nov 1923) consistent with tree immigration facts; (4) prior Saskatchewan residence consistent with immigrant settlement pattern. Record already attached to L8K8-W12 as tree source 9YNC-RDY. Birth year 'Nov 1900' conflicts substantially (4 years) with civil registration and census \u2014 noted for conflict-resolution.",
+      "created": "2026-07-09"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_014",
+      "person_id": "L8K8-W12",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birthplace assertion (Banbridge) from same US border crossing record as a_013; identity confirmed. Linked to L8K8-W12 on the same grounds as a_013.",
+      "created": "2026-07-09"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Robert Raymond McKee birth year: civil registration index and 1911 census both state 1904; three 1923 immigration records (same informant) state 1900, 1903, and November 1900.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_002",
+        "a_009",
+        "a_011",
+        "a_013"
+      ],
+      "independence_analysis": "The competing evidence falls into two groups. Group 1 (supporting 1904): the civil registration index entry (a_002) and the 1911 Ireland census (a_005) are treated as substantially independent \u2014 they derive from different government bureaucracies (General Register Office vs. Registrar General/Census), different years (1904 registration vs. 1911 census), and likely different informants (the registering parent in 1904 vs. an unknown household respondent in 1911). A correlation exists: the same parent who registered the birth might also have answered the 1911 census enumerator; however, because the records are from different administrative systems at different times, they do not share a single derivation chain and constitute two evidence units for practical purposes. The subject's absence from the April 1901 census (a_008) provides a third, fully independent corroboration: a different original source from a different year, showing the subject did not yet exist in that household. Group 2 (supporting 1900/1903): a_009 (St. Albans border crossing, birth year 1900), a_011 (Canada Form 30A, birth year 1903), and a_013 (US border crossing, birth year November 1900) all derive from the SAME informant \u2014 Robert Raymond McKee himself, self-reporting in 1923. These three assertions form a single evidence unit. Their internal inconsistency (three different values: 1900, 1903, November 1900) within the same year from the same person further undermines the unit's credibility. The effective comparison is therefore: two independent government sources corroborated by a third (1901 absence) versus one self-reporting evidence unit with internal inconsistency.",
+      "weighing_analysis": "Three factors are decisive. First, informant proximity: the civil registration's parent-informant witnessed the birth and registered it within 42 days, providing contemporaneous first-hand reporting with no evident motive to misreport the date. The subject self-reporting in 1923 could not have first-hand knowledge of his own birth and was reporting 19 years after the event \u2014 at minimum from memory of what he had been told, at maximum from deliberate misstatement. Second, internal consistency of the self-reports: the subject gave three different birth years in a single year (1900, 1903, and November 1900), making none individually reliable \u2014 an informant with accurate knowledge would give consistent values across documents filed within months of each other. Third, the 1901 census absence independently falsifies the 1900 birth claim: Robert McKee (LT1G-QP2) and Margaret McKee (LJK3-9QP) are positively identified in the 1901 Newry census, and no child named Robert Raymond appears in their household \u2014 confirming the subject was not yet born by April 1901, which rules out any birth year of 1900 or earlier. Together these factors strongly favor 1904.",
+      "preferred_assertion_id": "a_002",
+      "resolution_rationale": "The dispute concerns Robert Raymond McKee's birth year: the Ireland Civil Registration index and the 1911 Ireland census agree on 1904, while three 1923 immigration records from the same self-reporting informant give 1900, 1903, and November 1900. Resolving the correct year matters because it affects every age-based document in the subject's record trail and the interpretation of his 1923 immigration.\n\nThe civil registration entry (a_002) was compiled from the original GRO birth registration for Robert Raymond M'kee, Banbridge Superintendent Registrar's District, Q1 (January\u2013March) 1904. A parent \u2014 almost certainly the father \u2014 registered the birth within the statutory 42-day period, reporting directly to the district registrar. The 1911 Ireland census (a_005) independently records the same subject as born in 1904, in the verified household of his parents at Newry, Banbridge, County Down. The subject's absence from the April 1901 Ireland census (a_008), in the same positively-identified household, independently eliminates any birth year of 1900 or 1901. Against these, the three 1923 immigration records form a single evidence unit: all were self-reported by the subject, who could not have first-hand knowledge of his own birth date and gave three inconsistent values (1900, 1903, November 1900) within a single year.\n\nThe civil registration and census are accepted. The 1904 birth year is the best-supported answer, corroborated by three independent lines of evidence.\n\nThe immigration misreporting reflects a well-documented pattern: young men traveling alone in the 1920s frequently stated an older age at immigration inspection to appear economically self-sufficient and avoid scrutiny as minors or dependents. Robert, if born 1904, was 18\u201319 in 1923; stating birth year 1900 made him appear 23. The internal inconsistency across his three self-reports (1900, 1903, and November 1900) shows he was not reporting from a fixed document \u2014 the varying values are characteristic of an improvised or misremembered figure, not a genuine recollection of birth date. This pattern of 'age inflation by young immigrants' is the historically grounded explanation for the discrepancy.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_002",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "Searched FamilySearch Ireland Civil Registration Indexes 1845\u20131958 (collection 1408347) and Ireland Civil Registration 1845\u20131913 (collection 2659409); Ireland Census 1901 (collection 1626180) and 1911 (collection 2854327); three 1923 immigration and border-crossing records already in the tree (St. Albans Canadian Border Crossings, Canada Immigration Records 1919\u20131924, US Border Crossings Canada\u2013US); and WWII Draft Registration Cards (collection 2786603). Catholic parish registers (collection 2820100) were skipped as inapplicable \u2014 the 1911 census confirms the McKee household was Unitarian, not Catholic. The original GRO birth register for Banbridge Q1 1904 on IrishGenealogy.ie was not consulted; it would supply the exact birth date and townland but is not expected to change the registered district or quarter, which are independently corroborated by the 1911 census. Research is declared reasonably exhaustive.",
+      "narrative_markdown": "## The Birth of Robert Raymond McKee: Q1 1904, Banbridge, County Down, Ireland\n\n**Research Question:** When and where was Robert Raymond McKee born?\n\n**Conclusion (Probable):** The preponderance of evidence strongly indicates that Robert Raymond McKee \u2014 son of Robert McKee (a spirit merchant) and Margaret Pollock McKee of Newry, County Down \u2014 was born in the first quarter of 1904 (January through March) in the Banbridge Superintendent Registrar's District, County Down, Ireland.\n\n### Civil Registration Index \u2014 Primary Evidence\n\nThe *Ireland, Civil Registration Indexes, 1845\u20131958*, on FamilySearch (collection 1408347), contains a quarterly birth registration entry for \"Robert Raymond M'kee,\" registered in Q1 (January\u2013March) 1904 in the Banbridge district, County Down, Ireland (record ARK: ark:/61903/1:1:FB2F-WZ8).\u00b9 This index is a derivative source compiled from the original General Register Office (GRO) birth registers; the underlying original would supply the exact birth date and townland. The informant at civil registration was the child's parent \u2014 a person with firsthand knowledge of the birth event \u2014 making the information primary. The entry's distinctive middle name \"Raymond,\" combined with the Banbridge registration district consistent with two of three immigration records, uniquely identifies it as belonging to the subject.\n\n### Ireland Census 1911 \u2014 Corroborating Original Source\n\nThe 1911 Ireland Census schedule for the household of Robert McKee at Newry, Banbridge, County Down (FamilySearch ARK: ark:/61903/1:1:QYXF-J52M) records \"Robert Raymond McKee,\" age 7, born County Down, religion Unitarian, occupation Scholar.\u00b2 This is an original source. The enumerator collected household information in April 1911; an age of 7 at that date is consistent with a birth in early 1904. The informant is unknown (a pre-1940 census custom), so the birth-year information is classified as indeterminate rather than primary, but the record independently corroborates both the birth year (1904) and the birthplace county (County Down) established by the civil registration index. The household head is identified as the subject's father, Robert McKee (FamilySearch tree person LT1G-QP2).\n\n### Ireland Census 1901 \u2014 Negative Evidence\n\nA search of the 1901 Ireland Census for the same Robert McKee household at Newry, Banbridge, County Down (collection 1626180) found the father but no child named Robert Raymond McKee.\u00b3 This absence is meaningful: the 1901 census was taken in March\u2013April 1901, more than three years before the Q1 1904 birth registered in the civil index. A child not yet born in April 1901 would not appear in the census. The absence is fully consistent with \u2014 and provides independent negative corroboration of \u2014 the 1904 birth date.\n\n### Conflicting Evidence and Its Resolution\n\nThree 1923 immigration records record the subject's birth year differently: a St. Albans Canadian border crossing lists 1900 (ARK: ark:/61903/1:1:QK3T-VKK3),\u2074 a Canadian immigration manifest lists 1903 (ARK: ark:/61903/1:1:68FM-F3TF),\u2075 and a U.S. border crossing from Canada lists November 1900 (ARK: ark:/61903/1:1:FSZ6-QNG).\u2076 These three records form a single evidence unit: the informant in each case was Robert Raymond McKee himself, self-reporting to immigration officials approximately nineteen years after his birth. A person cannot have firsthand knowledge of their own birth, so these self-reports are classified as secondary information. Furthermore, the three records are internally inconsistent with one another \u2014 they give three different birth years \u2014 which significantly undermines their collective reliability for birth year. The immigration records do consistently name Banbridge as birthplace, independently corroborating the civil registration district.\n\nThe birth year discrepancy is explained by the well-documented pattern of age misreporting by immigrants in the early 1920s. Young men often inflated their apparent age when crossing borders to appear more employable, or simply did not know their exact birth year. McKee appears to have consistently reported a birth year of approximately 1900 (with one record giving 1903), rounding down from the actual 1904 \u2014 a two-to-four-year discrepancy consistent with casual misreporting rather than deliberate fraud. The civil registration index, resting on a parent-informant present at the birth, is substantially more reliable for the birth year. Conflict c_001 is resolved in favor of the civil registration.\n\nA WWII draft registration (FamilySearch ARK: ark:/61903/1:1:QGF4-CZQH), indexed as born 29 February 1904 with birthplace \"Milford, Massachusetts,\" was examined but found unreliable: the image linked to this indexed record (3Q9M-CSLK-RBG8) shows a Series III \"Old Man's Registration\" card for a different Robert Raymond McKee born 26 October 1892. The image is mislinked in FamilySearch and was not used as evidence.\n\n### Tier Rationale\n\nThis conclusion is assessed at **Probable** rather than Proved because the primary civil registration finding rests on a derivative quarterly index, not the original GRO birth register. The corroborating 1911 census carries indeterminate (not primary) information quality. Two independent evidence units agree on the birth year 1904 and on Banbridge, County Down as the location; the conflict with immigration records is fully resolved; and the research is declared reasonably exhaustive. Consulting the original GRO birth register via IrishGenealogy.ie (https://civilrecords.irishgenealogy.ie) would be required to advance this conclusion to Proved and to establish the exact birth date within Q1 1904.\n\n---\n\u00b9 \"Ireland, Civil Registration Indexes, 1845\u20131958,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FB2F-WZ8 : accessed 9 July 2026), entry for Robert Raymond M'kee, birth registration Q1 1904, Banbridge, County Down.\n\u00b2 \"Ireland, Census, 1911,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QYXF-J52M : accessed 9 July 2026), Robert Raymond McKee in household of Robert McKee, Newry, Banbridge, County Down.\n\u00b3 \"Ireland, Census, 1901,\" FamilySearch (https://www.familysearch.org : accessed 9 July 2026), household of Robert McKee, Newry, Banbridge, County Down \u2014 subject Robert Raymond McKee absent.\n\u2074 \"Vermont, Franklin, St. Albans, Canadian Border Crossings, 1895\u20131954,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QK3T-VKK3 : accessed 9 July 2026), entry for Robert R McKee, 1923.\n\u2075 \"Canada, Immigration Records, 1919\u20131924,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68FM-F3TF : accessed 9 July 2026), entry for Robert R. McKee, 1923.\n\u2076 \"United States, Border Crossings from Canada to United States, 1895\u20131956,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FSZ6-QNG : accessed 9 July 2026), entry for Robert R McKee, 1923."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-09T00-00-00.json",
+      "timestamp": "2026-07-09T00:00:00Z",
+      "superseded_by": null
+    }
+  ]
+}

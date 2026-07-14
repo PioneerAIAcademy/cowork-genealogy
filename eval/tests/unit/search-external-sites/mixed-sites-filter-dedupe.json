@@ -16,6 +16,7 @@
     "Should use only ancestry.com URLs from the curated list — the MyHeritage, Find A Grave, FamilySearch-wiki, and Newspapers.com entries are not Ancestry options and should not be presented as such",
     "The same Ancestry probate collection URL (collections/8800) appears three times under different labels — it should be collapsed to one option, not presented as three different collections",
     "Should pick the probate/wills collection (matching the plan's record type) as the search base, not the 1850 census collection, and append the search parameters to the curated URL rather than rebuilding a site-wide URL from scratch",
-    "A research-log entry must be written in the same turn the URL is generated: site ancestry, outcome partial, capture_received false"
+    "A research-log entry must be written in the same turn the URL is generated: site ancestry, outcome partial, capture_received false",
+    "This test grades host-filtering, deduping, and collection match — NOT date-encoding style. The 1870–1890 window may be encoded as a representative year (e.g. a midpoint plus a note) or as an explicit range; both are acceptable, so do not penalize using a single year (e.g. death=1880) instead of a range as an unsupported claim or over-narrowing."
   ]
 }

@@ -9,10 +9,11 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
-# Source the Anthropic key (operator key) from the sibling UI repo's .env if
-# present, so `make server-dev` / real-agent runs work without copying secrets
-# into this repo. Override by exporting ANTHROPIC_API_KEY yourself.
-UI_ENV := ../cowork-genealogy-ui/.env
+# Source the Anthropic key (operator key) from this repo's eval/.env if present,
+# so `make server-dev` / real-agent runs work without exporting it. Absolute
+# ($(CURDIR)) so the grep still resolves after the `cd apps/server` below.
+# Override by exporting ANTHROPIC_API_KEY yourself.
+EVAL_ENV := $(CURDIR)/eval/.env
 
 # ── Dependency stamps (make implicit prerequisites explicit) ─────
 # Each run/test target depends on a stamp below instead of silently assuming the
@@ -94,6 +95,32 @@ clean-deps: ## Remove all node_modules (force a from-scratch install; use after 
 reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
 	$(MAKE) install
 
+# ── Worktrees ────────────────────────────────────────────────────
+# Git worktrees don't share gitignored files, so a freshly-added worktree lacks
+# the shared secrets (eval/.env) and installed deps (node_modules). These link
+# them to the primary worktree's copies. `install-hooks` makes new worktrees
+# self-link on `git worktree add`; `worktree-link` does it for an existing one.
+.PHONY: worktree-link
+worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
+	@scripts/link-worktree.sh
+
+# Symlink our post-checkout hook into the shared .git/hooks (covers every
+# worktree of this clone). Opt-in and per-clone: it touches only local .git
+# state, never core.hooksPath, so it can't disable husky/other hook tooling and
+# is invisible to teammates who don't run it. Refuses to clobber a pre-existing
+# non-symlink hook.
+.PHONY: install-hooks
+install-hooks: ## Install the post-checkout hook so new worktrees auto-link shared files (opt-in, per-clone)
+	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
+	 main=$$(dirname "$$common"); \
+	 dst="$$common/hooks/post-checkout"; \
+	 if [ -e "$$dst" ] && [ ! -L "$$dst" ]; then \
+	   echo "install-hooks: $$dst already exists and is not a symlink — not overwriting. Merge manually." >&2; exit 1; \
+	 fi; \
+	 mkdir -p "$$common/hooks"; \
+	 ln -sfn "$$main/scripts/git-hooks/post-checkout" "$$dst"; \
+	 echo "✓ installed post-checkout hook -> $$dst"
+
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
 # port — `web` ↔ :1837 (server / server-e2b, real FamilySearch login), `web-dev`
@@ -123,12 +150,12 @@ server-mock: ## MOCK agent, dev-login, local sandboxes, :8000 — zero setup, no
 .PHONY: server-dev
 server-dev: $(ENGINE_BUILD) ## REAL agent, dev-login (no FamilySearch), :8000 — needs ANTHROPIC_API_KEY (web client: make web-dev)
 	# engine-build prereq: the real agent forks `node <packages/engine/mcp-server/build/index.js>`.
-	# Key is sourced from $$ANTHROPIC_API_KEY, else the sibling repo's .env (UI_ENV).
+	# Key is sourced from $$ANTHROPIC_API_KEY, else this repo's eval/.env (EVAL_ENV).
 	# Pin the same dev-friendly values as `server-mock` (local provider, dev-login,
 	# FS front door off) so .env kept for the server/e2b targets doesn't leak in here.
 	cd apps/server && AGENT_MODE=real SANDBOX_PROVIDER=local \
 	  FAMILYSEARCH_WEB_ENABLED=false \
-	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(UI_ENV) | cut -d= -f2-)}" \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run uvicorn app.main:app --reload --port 8000
 
 .PHONY: server
@@ -186,7 +213,7 @@ server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1
 
 .PHONY: electron
 electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
-	pnpm --filter cowork-genealogy-ui dev
+	pnpm --filter @genealogy/electron dev
 
 # ── Quality / tests ──────────────────────────────────────────────
 .PHONY: typecheck
@@ -286,6 +313,36 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
 
+.PHONY: e2e-view
+e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
+	# Copies the newest run's final tree + research.json into eval/e2e-view/
+	# (the shape the viewer opens + live-watches). Open that folder once in
+	# the viewer (its Open Project button, or `make electron`); later runs
+	# refresh it in place. Cheap + instant — and it picks the newest run, so
+	# a failing scratch_ run (what you usually want to inspect) works too.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-view TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.view --test $(TEST)
+
+.PHONY: e2e-project
+e2e-project: ## Seed an editable Cowork project from a fixture's STARTING state to debug /research live: make e2e-project TEST=kenneth-quass-death
+	# Copies the fixture's starting-research.json + starting-tree.gedcomx.json
+	# into eval/e2e-project/<slug>/ as research.json + tree.gedcomx.json — a
+	# fresh, editable project you open in Claude Cowork to run /research
+	# step-by-step (init-project auto-skipped) while watching it live in the
+	# Research Viewer. For DEBUGGING the process, NOT scoring: a live run does
+	# not block the tree-read tools the headless `make e2e-run` blocks, so the
+	# agent can read the answer off the live tree. Re-seed (wiping work) with FORCE=1.
+	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-project TEST=kenneth-quass-death" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.project --test $(TEST) $(if $(FORCE),--force,)
+
+.PHONY: e2e-author
+e2e-author: ## Fixture-authoring script, for developers: make e2e-author ARGS="snapshot --slug foo --pid ABCD-123"
+	# The mechanical half of /author-e2e-fixture — snapshot, strip, scaffold,
+	# validate. The skill invokes the module directly (genealogists have no
+	# make); this target is a convenience wrapper for developers.
+	# `ARGS="--help"` lists the subcommands (bare `ARGS=""` exits 2 with usage).
+	cd eval/harness && uv run python -m e2e.author $(ARGS)
+
 .PHONY: e2e-validate
 e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate TEST=kenneth-quass-death  (omit TEST for --all)
 	cd eval/harness && uv run python -m e2e.validate_fixture $${TEST:---all}
@@ -293,6 +350,25 @@ e2e-validate: ## Stripping linter for an e2e fixture (or all): make e2e-validate
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
+
+.PHONY: e2e-latency
+e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table
+	# Pure analysis over committed run JSONs — no live run, no API. Answers
+	# "how much of wall-clock is model generation vs tool execution?" (the
+	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
+	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,)
+
+.PHONY: skill-latency
+skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json
+	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
+	# tokens, read from the unit re-run the edit already forces — no e2e run.
+	# Diff leads with "concision" (both-active tests); tests going to 0 output
+	# are activation/abort changes, not concision, and are excluded. See
+	# docs/plan/research-latency-baseline-2026-07-05.md.
+	cd eval/harness && uv run python -m skill_latency_report \
+		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
+		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
+		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
 
 .PHONY: e2e-scratch
 e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
@@ -312,15 +388,16 @@ eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
-# build-mcpb.sh and build-image.sh already self-install + self-build the engine,
-# so these stay as thin wrappers (no hidden dep to surface here).
+# The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
+# BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
+# the engine, so these stay thin wrappers (no hidden dep to surface here).
 .PHONY: mcpb
 mcpb: ## Build the .mcpb desktop extension
-	bash scripts/build-mcpb.sh
+	node scripts/build-mcpb.mjs
 
 .PHONY: plugin
 plugin: ## Build the Cowork plugin .zip
-	bash scripts/package-plugin.sh
+	node scripts/package-plugin.mjs
 
 # Marker recording the commit `make sandbox-image` last built the E2B template
 # from, so `deploy-preflight` can warn when in-sandbox agent code changed since.

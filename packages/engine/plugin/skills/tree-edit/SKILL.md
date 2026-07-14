@@ -20,6 +20,7 @@ allowed-tools:
   - place_search
   - place_search_all
   - tree_edit
+  - tree_correct
   - merge_tree_persons
   - merge_record_into_tree
   - person_record_matches
@@ -41,9 +42,9 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 ## Ad-hoc edits
 
-Each ad-hoc edit is one `tree_edit` call. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
+Each ad-hoc edit is one tool call: **additions** (`add_*`) go through `tree_edit`; **corrections and removals** (`update_*`, `remove`) go through `tree_correct` — same batched `ops[]`, id rules, validate-on-write, and `.bak` semantics, split only by op authority. Supply content WITHOUT ids — the tool assigns the next `F`/`N`/`I`/`R` id, swaps primary/preferred, resolves `standard_place`, validates the whole project, and writes only `tree.gedcomx.json`. On `{ ok: false, errors }` nothing is written — surface those errors rather than retrying.
 
-**Actually call `tree_edit` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one.
+**Actually call `tree_edit`/`tree_correct` — do not describe the edit or print a summary of what you "would" write.** The change isn't real until the tool call returns `ok: true`; narrate the result only from that returned summary, never from a fabricated one.
 
 ```
 tree_edit({
@@ -59,7 +60,12 @@ tree_edit({
 })
 ```
 
-Other operations: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `add_person` · `add_relationship` · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). For corrections pass only the changed fields — e.g. fix a wrong death date with `tree_edit({ projectPath, operation: "update_fact", personId: "I1", factId: "F2", fact: { date: "1908-03-12" } })`. When something already exists at that id, use `update_*` rather than adding a duplicate.
+Other additions via `tree_edit`: `add_person` · `add_relationship` · `add_source`. Corrections and removals via **`tree_correct`**: `update_fact` (by `factId`) · `update_name` (by `nameId`) · `update_person` (gender/ark) · `update_source` (by `sourceId`) · `remove` (factId or relationshipId only — the one permitted deletion, when proof-conclusion withdrew a conclusion; never removes a person). For corrections pass only the changed fields — e.g. fix a wrong death date with `tree_correct({ projectPath, operation: "update_fact", personId: "I1", factId: "F2", fact: { date: "1908-03-12" } })`. When something already exists at that id, use `update_*` via `tree_correct` rather than adding a duplicate.
+
+### Writing facts correctly
+
+- **Dates must be GedcomX-parseable.** Write a bare year (`1773`), an ISO date (`1908-03-12`), or a spelled date (`12 March 1908`); record any approximation in the source `page` or your reply, not in the `date` string.
+- **Couple-event facts go on the `Couple` relationship, not on a person.** Marriage, Divorce, and other couple events belong in the relationship's `facts` array — supply them in the `add_relationship` call itself: `relationship: { type: "Couple", person1, person2, facts: [{ type: "Marriage", date, place, sources }] }`. A Marriage written as a person `add_fact` misplaces the event. See `references/relationship-accuracy.md`.
 
 ## Person merging
 
@@ -84,7 +90,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 ## Validation
 
-`tree_edit`, `merge_tree_persons`, and `merge_record_into_tree` all validate-before-persist; no separate `validate_research_schema` call is needed. After ANY edit or merge, run **`check-warnings`** to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
+`tree_edit`, `tree_correct`, `merge_tree_persons`, and `merge_record_into_tree` all validate-before-persist; no separate `validate_research_schema` call is needed. After ANY edit or merge, run **`check-warnings`** to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
 
 ## Important rules
 
@@ -107,10 +113,10 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 **Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence`, `notes`, or any field not in `docs/specs/simplified-gedcomx-spec.md` §4.2 — the audit trail belongs in your reply, not in tree fields.
 
-**Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` against that id rather than adding a second entry.
+**Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` (via `tree_correct`) against that id rather than adding a second entry.
 
 ## Re-invocation behavior
 
-**Writes:** persons, relationships, names, and facts in `tree.gedcomx.json` via `tree_edit` and the merge tools. A person merge additionally repoints every `research.json` reference to the deprecated id — `project.subject_person_ids`, `person_evidence[].person_id`, and `timelines[].person_ids` — onto the surviving person.
+**Writes:** persons, relationships, names, and facts in `tree.gedcomx.json` via `tree_edit`/`tree_correct` and the merge tools. A person merge additionally repoints every `research.json` reference to the deprecated id — `project.subject_person_ids`, `person_evidence[].person_id`, and `timelines[].person_ids` — onto the surviving person.
 
-**Re-running against existing state:** update in place; never duplicate. If the target person, relationship, or fact already exists at an id, use the matching `update_*` operation against that id rather than an `add_*`. If the requested value and its supporting source are already present, make no change and report the no-op (see "Requested state already satisfied" above).
+**Re-running against existing state:** update in place; never duplicate. If the target person, relationship, or fact already exists at an id, use the matching `update_*` operation (via `tree_correct`) against that id rather than an `add_*`. If the requested value and its supporting source are already present, make no change and report the no-op (see "Requested state already satisfied" above).

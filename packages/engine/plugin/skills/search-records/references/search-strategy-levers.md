@@ -43,9 +43,12 @@ and expect a specific record.
 | Lever | API change | When to try |
 |---|---|---|
 | Broaden place (county→state→country) | Drop smaller jurisdiction levels from place string | No hits in expected county; boundary changes; ancestor crossed county lines |
+| **Boundary changed since the event** | Search the jurisdiction that existed **at the event date** first (the historical boundary); if that returns nil, retry under the place's **present-day** jurisdiction (`recordCountry` + place string). `place_search_all` lists every jurisdiction the place has belonged to over time — try the historical one first, the most-recent one next. | Any place whose city / county / state / country / parish was renamed, split, merged, or reassigned since the event — a county that split, a parish reorganized, or an empire that dissolved into successor states (Austria-Hungary → Slovakia / Czechia / Hungary / Croatia / Poland / Ukraine…, Prussia → Poland, Ottoman → Balkan states). See the note below. |
 | Narrow place (state→county→town) | Add smaller levels to place string | Too many hits; subject's town is known |
 | Drop place | Clear all place parameters | Subject migrated unexpectedly |
 | Switch event-place | Move place from `birthLikePlace` → `residencePlace` → `marriageLikePlace` → `anyPlace` | Each event occurred in a different place |
+
+**Boundary changes: search the historical jurisdiction first — but watch for the modern-country exception.** The general rule when a place's boundaries have changed (city, county, state, country, or parish renamed, split, merged, or reassigned) is to search the boundary that governed it *at the time of the event*: the record was created under the jurisdiction then in force, so that historical boundary is usually where it is filed. **The exception is FamilySearch's own indexing:** it sometimes files a collection under the place's **present-day** country instead of the historical one. The worked example — a birth in 1893 Šútovo, then Suttó, Turócz County, Kingdom of Hungary — is indexed under **Slovakia** ("Slovakia, Church and Synagogue Books"), because Šútovo is in modern Slovakia. Searching `recordCountry: "Hungary"` (or the historical county "Turócz") returns nil no matter how many name variants you try, because the record isn't filed under Hungary. So search the historical jurisdiction first; when it returns nil, switch `recordCountry` to the present-day country and retry — that is where FamilySearch put the collection. And don't assume the historical empire's religion either (a 1893 Turócz parish is Slovak **Lutheran**, not Catholic) — let the collection, not the assumption, decide.
 
 ## Date levers
 
@@ -76,15 +79,16 @@ and expect a specific record.
 When a search returns 0 hits with reasonable inputs, try in this order:
 
 1. Broaden year range to ±10
-2. Drop given name (surname + place + date)
-3. Drop surname (given name + place + date + relationships)
-4. Wildcard the surname
-5. Wildcard the given name
-6. Switch event type to Any
-7. Broaden place by one jurisdiction level
-8. Drop place entirely
-9. Switch from principal to spouse / parent / child
-10. Search by neighbor or FAN-club member
+2. **If the place's boundaries changed since the event, search the historical jurisdiction first, then the present-day one.** Records are usually filed under the boundary that governed the place at the event date — but FamilySearch sometimes indexes the collection under the modern country instead (e.g. Hungary→Slovakia), so retry `recordCountry` as the present-day country when the historical one returns nil. Try both early; it is a common, silent cause of nil on Central/Eastern-European searches.
+3. Drop given name (surname + place + date)
+4. Drop surname (given name + place + date + relationships)
+5. Wildcard the surname
+6. Wildcard the given name
+7. Switch event type to Any
+8. Broaden place by one jurisdiction level
+9. Drop place entirely
+10. Switch from principal to spouse / parent / child
+11. Search by neighbor or FAN-club member
 
 **Still 0 hits across all variations:** the records may be unindexed.
 Switch to image browsing, Catalog search, Full-Text Search, or

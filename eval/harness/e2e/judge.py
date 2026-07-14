@@ -29,15 +29,24 @@ is no silent best-effort fallback, because a malformed verdict that
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 from typing import Any
 
 import anthropic
 
+from e2e.validate_fixture import check_stripping
+
 
 DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
-DEFAULT_MAX_TOKENS = 4096
+# Generous cap: on a rich run (large tree, several findings, a long proof), the
+# judge's adaptive thinking + the structured verdict together overflowed the old
+# 4096 — the JSON was truncated (stop_reason='max_tokens') → JudgeOutputError →
+# the whole completed run was written "skipped"/ungraded. max_tokens only bills
+# for tokens actually generated, so a high cap is free insurance against silently
+# losing the grade on exactly the hardest, most-interesting runs.
+DEFAULT_MAX_TOKENS = 16384
 
 
 class JudgeOutputError(ValueError):
@@ -184,6 +193,115 @@ def _validate_judge_output(parsed: Any) -> dict[str, Any]:
             f"proof_quality.score {pq['score']!r} is not 1/2/3/null"
         )
     return parsed
+
+
+def derive_verdict(per_finding: dict[str, str], findings: list[dict[str, Any]]) -> str:
+    """Roll per-finding labels up to a pass/partial/fail verdict.
+
+    The judge's own rule (spec §7.2), applied to the **required** findings
+    (``required`` is a mandatory field per §3.4, so no default-handling):
+
+    - ``pass``    — every required finding matched (``true``)
+    - ``fail``    — no required finding even partially matched
+    - ``partial`` — anything in between
+
+    Polarity-agnostic: for an ``avoid`` finding, ``true`` already means
+    "correctly avoided", so it rolls up exactly like a recovered finding. A
+    degenerate fixture with no required findings rolls up over all of them.
+
+    Lives here (not in calibrate_judge, which re-exports it) because it is
+    shared by the calibration gate and by ``apply_avoid_guard``'s recompute.
+    """
+    required_ids = [str(f["id"]) for f in findings if f.get("required")]
+    ids = required_ids or [str(f["id"]) for f in findings]
+    labels = [per_finding.get(fid) for fid in ids]
+    if labels and all(label == "true" for label in labels):
+        return "pass"
+    if not any(label in ("true", "partial") for label in labels):
+        return "fail"
+    return "partial"
+
+
+def _recall(labels: dict[str, str], findings: list[dict[str, Any]], *, required_only: bool) -> float:
+    """The §7.2 recall fraction: matched `true` = 1, `partial` = 0.5."""
+    pool = [f for f in findings if f.get("required")] if required_only else findings
+    if not pool:
+        return 0.0
+    score = {"true": 1.0, "partial": 0.5}
+    return sum(score.get(labels.get(str(f["id"])), 0.0) for f in pool) / len(pool)
+
+
+_VERDICT_RANK = {"fail": 0, "partial": 1, "pass": 2}
+
+
+def apply_avoid_guard(
+    judge_output: dict[str, Any],
+    *,
+    expected_findings: dict[str, Any],
+    final_tree: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Deterministic backstop for ``polarity: "avoid"`` findings (spec §3.4.1).
+
+    The judge grades an ``avoid`` finding ``matched: "true"`` when the agent
+    correctly declined to assert it. The judge is a model, and the failure
+    mode this genre exists to catch — a confidently over-claimed wrong
+    person — is exactly the one a model grader is most likely to excuse. So
+    the objective half is re-checked mechanically: when an avoided claim's
+    target is present in the agent's final tree (``check_stripping``'s
+    matcher — given+surname token overlap, plus fact type for ``fact``
+    findings), that finding is forced to ``matched: "false"``, the recall
+    fractions are recomputed, and the verdict is recomputed downgrade-only.
+    Non-``avoid`` findings are untouched, and the guard never upgrades
+    anything. What it forced is recorded under ``judge_output["avoid_guard"]``
+    and in the affected findings' ``notes``. Returns the input unchanged
+    (same object) when there is nothing to do — including when the judge was
+    skipped or errored (no ``per_finding``).
+    """
+    findings = expected_findings.get("findings") or []
+    avoid = [f for f in findings if str(f.get("polarity", "recover")) == "avoid"]
+    if not avoid or "per_finding" not in judge_output:
+        return judge_output
+
+    suspects = check_stripping({"findings": avoid}, final_tree or {})
+    if not suspects:
+        return judge_output
+
+    hits: dict[str, list[str]] = {}
+    for s in suspects:
+        hits.setdefault(s.finding_id, []).append(s.person_id)
+
+    out = copy.deepcopy(judge_output)
+    graded = {str(e.get("finding_id")): e for e in out["per_finding"]}
+    forced: list[dict[str, Any]] = []
+    for fid, person_ids in sorted(hits.items()):
+        entry = graded.get(fid)
+        if entry is None:
+            # Judge-contract violation (a finding it never graded) — the guard
+            # still records the objective miss rather than letting it vanish.
+            entry = {"finding_id": fid, "matched": "true", "agent_evidence": "", "notes": ""}
+            out["per_finding"].append(entry)
+        if entry.get("matched") == "false":
+            continue  # already failed by the judge; nothing to force
+        note = (
+            f"[avoid-guard] the final tree still contains {', '.join(person_ids)}, "
+            f"which matches this avoid finding's target — forced to false"
+        )
+        entry["matched"] = "false"
+        entry["notes"] = f"{entry.get('notes', '')} {note}".strip()
+        forced.append({"finding_id": fid, "person_ids": person_ids})
+
+    if not forced:
+        return judge_output
+
+    labels = {str(e.get("finding_id")): str(e.get("matched")) for e in out["per_finding"]}
+    out["recall_required"] = _recall(labels, findings, required_only=True)
+    out["recall_total"] = _recall(labels, findings, required_only=False)
+    recomputed = derive_verdict(labels, findings)
+    original = str(judge_output.get("verdict") or "fail")
+    if _VERDICT_RANK.get(recomputed, 0) < _VERDICT_RANK.get(original, 0):
+        out["verdict"] = recomputed
+    out["avoid_guard"] = {"forced_false": forced}
+    return out
 
 
 def run_judge(

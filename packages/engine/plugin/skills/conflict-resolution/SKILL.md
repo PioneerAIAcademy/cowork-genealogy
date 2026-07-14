@@ -7,24 +7,21 @@ allowed-tools:
   - place_distance
   - research_append
   - convert_calendar
-description: Identifies and resolves conflicting genealogical evidence —
-  both fact-level conflicts (three different birthplaces) and identity-level
-  conflicts where multiple candidate persons or records genuinely compete
-  (two Thomas Flynns in the same county; a 1870 census record that might
-  be our subject or a same-named neighbor). Performs source independence
-  analysis, applies the GPS preponderance hierarchy, and writes defensible
-  resolution rationale. GPS Step 4 — Resolution of Conflicting Evidence.
-  Use when the user says "these sources disagree", "resolve this conflict",
-  "which source is right?", "why do these records conflict?", "compare
-  these assertions", "are there two people with this name?", when
+description: >-
+  Identifies and resolves conflicting genealogical evidence — both fact-level
+  conflicts (three different birthplaces) and identity-level conflicts where
+  multiple candidate persons or records genuinely compete (e.g. two same-named
+  people in one county). Performs source independence analysis, applies the
+  GPS preponderance hierarchy, and writes defensible resolution rationale. GPS
+  Step 4 — Resolution of Conflicting Evidence. Use when the user says "these
+  sources disagree", "resolve this conflict", "which source is right?", "why
+  do these records conflict?", "are there two people with this name?", when
   conflicting assertions exist in research.json, or when timeline
   impossibilities suggest an identity conflict. Do NOT use for
-  confidence-calibration review or auditing existing person_evidence
-  links — that's person-evidence's territory; conflict-resolution applies
-  only when multiple candidate identifications genuinely compete. Do NOT
-  use when the user wants to classify evidence (use
-  assertion-classification), wants to build a timeline (use timeline), or
-  wants to write a conclusion (use proof-conclusion).
+  confidence-calibration review or auditing existing person_evidence links
+  (that's person-evidence's territory). Do NOT use to classify evidence (use
+  record-extraction, which owns classification), build a timeline (use
+  timeline), or write a conclusion (use proof-conclusion).
 ---
 
 # Conflict Resolution
@@ -79,6 +76,13 @@ fact conflicts which require at least two).
 ### 1. Identify conflicts
 
 Read `research.json` assertions, person_evidence, and timelines.
+**Trust the existing assertion classifications** (evidence_type,
+directness, informant) as recorded — do NOT re-classify inline, and do
+NOT invoke the record-extraction or check-warnings skills from here.
+If a classification looks wrong and would change the weighing, note it
+and recommend running `record-extraction` (which owns classification
+refinement) as a next step, then proceed with what is recorded.
+
 Look for:
 
 **Fact conflicts:**
@@ -160,8 +164,9 @@ for the full list of factors and rationales.
 
 Evaluate the seven factors (relevance, record category, format,
 informant proximity, directness, consistency, plausibility) for each
-side. Focus on the factors that create meaningful differentiation —
-not all apply to every conflict.
+side, but write up only the **2-3 decisive factors** that actually
+differentiate the sides — do NOT tabulate all seven for every
+assertion. Keep `weighing_analysis` to **~200 words or fewer**.
 
 **After weighing, articulate a defensible rationale (Standard 48).**
 The GPS recognizes four defensible rationales for setting aside
@@ -226,7 +231,12 @@ not among the competing set, will be rejected here), correct the
 `fields`, and call again. Do not retry blindly.
 
 The `resolution_rationale` must follow the **four-part structure**
-(see `references/resolution-writing.md` for full guidance):
+(keep it to **~250 words or fewer** for the common two-way conflict; see
+`references/resolution-writing.md` for full guidance). **Completeness
+outranks the word cap:** in a three-or-more-way conflict, name every
+non-preferred assertion and say why each is less reliable, even if that
+runs past ~250 words — the cap is a default for the simple case, never a
+license to drop a competing assertion from the analysis. The four parts:
 
 1. **State the problem** — What fact is in dispute and why it matters
 2. **Lay out the conflicting evidence** — Present each side with its
@@ -257,7 +267,13 @@ preferred answer, the resolution must follow the evidence.
 **If more evidence is needed (Standard 49):** Deferral is a
 documented finding, not a stopping point — persist it to the
 conflict record (a `research_append` `op: "update"` call as above),
-not only to your reply. On the same write, fill
+not only to your reply. **Gate before any `status: "resolved"`
+write:** can independent evidence actually break the tie? When every
+competing assertion traces to a single source or a single informant,
+weighing cannot resolve the conflict — no matter how thorough your
+analysis reads — so keep `status: "unresolved"` /
+`preferred_assertion_id: null` and name the decisive record types.
+Completing a strong analysis is not, by itself, grounds to resolve. On the same write, fill
 `independence_analysis` and `weighing_analysis` with the work you
 did (these are required regardless of outcome — you analyzed the
 conflict even if you could not resolve it), keep `status:
@@ -331,14 +347,25 @@ section here; recommend the owning skill for any person/link work):
 
 `research_append` validates the whole project before persisting and
 writes nothing on `{ ok: false }`, so a successful write is already
-schema-valid — no separate validation pass is needed. Present each
-conflict with:
-- The competing assertions and their classifications
-- The independence analysis
-- The weighing analysis
-- The resolution (or why it remains unresolved)
-- What this means for the research (does it change any hypothesis?
-  does it unblock any questions?)
+schema-valid — no separate validation pass is needed.
+
+OUTPUT ECONOMY (latency): the independence, weighing, and resolution
+analyses are ALREADY persisted to the `conflicts` entry by
+`research_append`. Wall-clock time is ~linear in the tokens you
+generate (~16-20 ms/token, independent of model tier), so the single
+biggest latency lever is generating fewer tokens. Do NOT reproduce
+`independence_analysis`, `weighing_analysis`, or `resolution_rationale`
+in chat — that full prose lives in the persisted artifact. Present a
+terse summary ONLY, per conflict:
+- The `c_` id written and its `status` (resolved / unresolved / moot)
+- 2-4 sentences: what the conflict was, the decisive finding, and — if
+  resolved — the `preferred_assertion_id`
+- What it means for the research (any hypothesis changed, any question
+  unblocked)
+
+Keep the whole per-conflict summary to the 2-4 sentences above, not a
+paragraph of re-argued analysis; the full argument belongs in the
+persisted `conflicts` entry, not echoed here.
 
 Suggest next steps:
 - Resolved conflict → "This conflict is resolved. Would you like

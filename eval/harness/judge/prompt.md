@@ -50,6 +50,36 @@ proves the skill called a tool with wrong arguments (or called a tool that
 doesn't exist). This is always a failure.
 
 ────────────────────────────────────────
+# Critical: Negative tests (decline / routing / non-activation)
+
+Some tests are **negative tests**: the correct behavior is for the skill
+under test to NOT carry out its own task. When this is the case, the
+**Per-test context** section below states it explicitly ("This is a
+NEGATIVE test…") and names what should have happened instead — decline
+and route to a specific other skill, or (for an out-of-scope request)
+produce no output at all.
+
+On a negative test, grade **Correctness** and **Completeness** against
+that expected behavior — NOT against the quality of any task output that
+happens to appear:
+
+- **Correct decline / routing / non-activation → score 3 (pass).** If the
+  skill declined, and/or the request was handled by the skill it was
+  supposed to route to (or, for an out-of-scope request, no skill acted),
+  Correctness and Completeness are a full pass. Do not lower them because
+  the decline was terse, because the skill performed the handoff by
+  invoking the correct skill, or because that other skill's work appears
+  in the transcript below. Not doing the under-test skill's task is the
+  correct outcome — do not both credit the routing and penalize the base
+  dimensions for "not declining thoroughly enough."
+- **Wrongly performing the task → score 1 (fail).** If the skill instead
+  carried out its own task, or produced substantive output when it should
+  have declined or stayed silent, Correctness and Completeness fail —
+  **even when that output is fluent, accurate-looking, and well-organized.**
+  Polished output for the wrong behavior is a failure, not a pass; do not
+  award craft credit for work that should never have been done.
+
+────────────────────────────────────────
 # Base rubric (always applies)
 
 ## Correctness
@@ -62,12 +92,35 @@ doesn't exist). This is always a failure.
 - **fail:** Outputs include fabricated material, contradict the input
   state, or rest on unsupported claims that change the result.
 
+Presentation is not correctness. Do not lower Correctness because the
+response did not re-print a file's full contents, kept its narration
+brief (some skills instruct brevity — "the content is in the file"), or
+did not restate a validation/tool step in prose. Grade the substance of
+what was produced, not whether the response re-displays it — file writes,
+schema validity, and tool-call counts are checked separately by
+validators. Likewise, correctly **surfacing** a conflict or a flagged
+data gap (e.g. "the tool warns X but the tree shows Y — flagging rather
+than resolving"), or a clearly-marked out-of-scope observation, is not a
+correctness defect when the skill's own instructions call for it. This is
+all distinct from work that was never actually done: a tool that returned
+no records, a required write that never happened, or a claimed edit that
+left the file unchanged remain Correctness failures.
+
+A score of 2 requires naming a concrete incorrect artifact — a wrong
+persisted value, a factually false claim, a missed required action.
+Stylistic "imprecision" or a hypothetically-better alternative is not a
+deduction when the persisted state is correct.
+
 ## Completeness
 - **pass:** The skill addressed everything the user message and input
   state required. No silent omissions of items it should have covered.
 - **partial:** Addressed most of what was asked but missed one piece
   the input state made obvious.
 - **fail:** Missed major portions of what was asked, or stopped early.
+
+"Incomplete" means work the input state required was not done — not that
+the response declined to re-print or re-narrate work it did do (see the
+presentation note under Correctness). Judge substance, not display.
 
 ## Tool Arguments
 Grade whether the args Claude passed to each MCP tool call match what
@@ -96,6 +149,13 @@ reasonable additions or noise.
   "none"), OR the args bear little resemblance to what was expected.
 - **n/a (null score):** the test made zero MCP tool calls. Report
   `score: null` and use the rationale to confirm "no tool calls — N/A."
+
+**Recovered validation retries:** when a call was rejected by a tool's
+own validation (an `ok: false` / validation-error result, not
+`fixture_not_found`) and Claude corrected it in an immediate retry that
+succeeded, score at most **partial (2)** — the error was real, so do not
+give full credit, and the clean recovery means do not fail it either.
+This policy is fixed; do not re-litigate it per run.
 
 ────────────────────────────────────────
 # Skill rubric

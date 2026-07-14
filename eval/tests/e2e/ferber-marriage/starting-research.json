@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_ferber_marriage",
+    "objective": "Who did William Hubert Ferber marry?",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-09",
+    "updated": "2026-07-09"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

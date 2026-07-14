@@ -95,9 +95,10 @@ The MCP server exposes 31 tools.
 | `wikipedia_search` | Wikipedia article summary lookup | None |
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) and return bytes + metadata | OAuth |
+| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata | OAuth |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
+| `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 
@@ -148,14 +149,14 @@ are listed in roughly the order you'd use them in a research project.
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
+| **search-images** | Browses FamilySearch digitized image volumes page-by-page when a record set is digitized but unindexed and not full-text searchable. Finds the volume (`volume_search`), lists its images (`image_search`), and views pages (`image_read`). | "Browse the unindexed Schuylkill County probate films" |
 | **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com. Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
 
 | Skill | What it does | Say this |
 |-------|-------------|----------|
-| **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription). | "Analyze this record" / "Extract assertions" |
-| **assertion-classification** | Refines three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative). | "Classify this evidence" |
+| **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
 | **citation** | Polishes citations to Evidence Explained standards (Who/What/When/Where/Where-within). | "Fix citations" |
 
 ### Identity resolution and analysis
@@ -209,7 +210,8 @@ Code in this checkout), alongside the other dev skills `compare-state` and
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
-| **interpret-e2e-result** | Reads an e2e run log and explains the verdict, stop reason, expected-vs-found gaps, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.), pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the relevant transcript section. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
+| **grade-e2e-run** | Grades an e2e run into its calibration annotation: presents each expected finding + the agent's evidence (blind to the judge's grades), collects the genealogist's true/partial/false labels, and writes `run-<ts>.ann.json`. | "Grade this e2e run" / "Annotate this run for calibration" |
 
 ## Agents
 
@@ -230,22 +232,24 @@ don't load it explicitly.
 3. research-plan             "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
+   search-images             ...or browse unindexed digitized image volumes
    search-external-sites     ...or on Ancestry/MyHeritage/FindMyPast
 5. record-extraction         Extract assertions from found records
-6. assertion-classification  Refine evidence classifications
-7. citation                  Polish citations to Evidence Explained standards
-8. person-evidence           Link assertions to persons in the tree
-9. timeline                  Build chronological timeline, find gaps
-10. conflict-resolution      Resolve disagreements between sources
-11. hypothesis-tracking      Track competing candidates
-12. research-exhaustiveness  Gate before proof — applies the GPS 5
+                             (evidence classifications are written
+                             here and are final at extraction)
+6. citation                  Polish citations to Evidence Explained standards
+7. person-evidence           Link assertions to persons in the tree
+8. timeline                  Build chronological timeline, find gaps
+9. conflict-resolution       Resolve disagreements between sources
+10. hypothesis-tracking      Track competing candidates
+11. research-exhaustiveness  Gate before proof — applies the GPS 5
                              threshold questions and 7-point stop
                              criteria. If not yet exhaustive, loop
                              back to step 3 (extend plan) or step 2
                              (FAN pivot). If exhaustive, advance.
-13. proof-conclusion         Write the GPS conclusion
+12. proof-conclusion         Write the GPS conclusion
     tree-edit                Merge persons, correct facts
-14. project-status           "Where are we? What's next?"
+13. project-status           "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at
@@ -329,7 +333,7 @@ You need both pieces.
 
 1. Download `genealogy-mcp.mcpb` from the latest release
 2. Open Claude Desktop → Settings → Extensions
-3. Click "Install Extension..." and select the .mcpb file
+3. Click "Advanced Settings" → "Install extension" and select the .mcpb file
 4. The "Genealogy Research" extension should appear in your list
 
 ### 2. Install the Cowork plugin
@@ -337,7 +341,7 @@ You need both pieces.
 1. Download `genealogy-plugin.zip` from the latest release
 2. Open Claude Desktop → switch to Cowork tab
 3. Click "Customize" in the left sidebar
-4. Click "Browse plugins" → "Upload custom plugin"
+4. Click "Add" → "Upload Plugin"
 5. Select the .zip file
 
 ### Alternative: install in Claude Code
@@ -453,9 +457,9 @@ What's shipped:
 - **26 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
-  and guardrails (validate-schema, check-warnings, convert-dates). The two
-  e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result) are
-  repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
+  and guardrails (validate-schema, check-warnings, convert-dates). The three
+  e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
+  are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
 - **1 Cowork agent.** `gps-mentor` — a BCG-style senior-genealogist
   review, invoked by `/research` at GPS checkpoints and on demand.
 - **Researcher profile.** `init-project` captures experience level and

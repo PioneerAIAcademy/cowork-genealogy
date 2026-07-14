@@ -94,6 +94,37 @@
       "items": { "type": "string" },
       "description": "Per-test background notes the LLM judge reads to ground its rationales for the base + rubric dimensions. NOT a separate scored source — the judge does not emit a `criteria` dimension. Deterministic checks belong in validators (eval/harness/validators/test_<skill>.py), gated on tags. May be empty."
     },
+    "expected_classifications": {
+      "type": "array",
+      "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications in eval/harness/validators/). Semantics per matcher: at least one NEW assertion (created by the run) with the matcher's record_role + fact_type must exist, and EVERY new assertion with that record_role + fact_type must carry each classification value the matcher declares. The LLM judge still grades the classification dimensions; validator results are the mechanical reference during annotation. Only declare pairs and values the doctrine fixes deterministically.",
+      "items": {
+        "type": "object",
+        "required": ["record_role", "fact_type"],
+        "additionalProperties": false,
+        "properties": {
+          "record_role": {
+            "type": "string",
+            "description": "The assertion's record_role, exactly as the skill persists it (e.g. head_of_household, wife, child_1, deceased)."
+          },
+          "fact_type": {
+            "type": "string",
+            "description": "The assertion's fact_type, exactly as the skill persists it (e.g. name, age, birthplace, residence, relationship, death, cause_of_death)."
+          },
+          "evidence_type": {
+            "type": "string",
+            "description": "Expected evidence_type on every matching new assertion (direct | indirect | negative)."
+          },
+          "informant_proximity": {
+            "type": "string",
+            "description": "Expected informant_proximity on every matching new assertion (self | witness | household_member | family_not_present | researcher | official_duty | unknown)."
+          },
+          "information_quality": {
+            "type": "string",
+            "description": "Expected information_quality on every matching new assertion (primary | secondary | indeterminate)."
+          }
+        }
+      }
+    },
     "negative": {
       "type": "object",
       "required": ["correct_skill", "explanation"],
@@ -107,6 +138,11 @@
         "explanation": {
           "type": "string",
           "description": "Why the tested skill should not activate. Documents the boundary between the two skills."
+        },
+        "grade_on_invariant": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe (e.g. citation refuse-new-source: the skill may or may not fire, but no run may fabricate a source). REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/plan/invariant-grading.md."
         }
       }
     },

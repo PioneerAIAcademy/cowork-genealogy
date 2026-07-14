@@ -1,0 +1,947 @@
+{
+  "persons": [
+    {
+      "id": "249W-9LP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "William Henry",
+          "surname": "Bottemiller",
+          "id": "249W-9LP-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "29 December 1862",
+          "standard_date": "29 Dec 1862",
+          "place": "Franconia Township, Chisago, Minnesota, United States",
+          "standard_place": "Franconia Township, Chisago, Minnesota, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "13 May 1929",
+          "standard_date": "13 May 1929",
+          "place": "Oregon City, Clackamas, Oregon, United States",
+          "standard_place": "Oregon City, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Bertha, Todd, Minnesota, United States",
+          "standard_place": "Bertha, Todd, Minnesota, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Canyon Creek, Highland, Molalla, and Soda Springs Precincts, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "dc8a21ad-1bee-49a1-8870-8bc9e33f359a",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Highland, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "4a5da382-7f3a-45be-82b2-7520cbc8c6af",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Clarks, Clackamas, Oregon, United States",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "397ae26d-5ab2-4e7f-b257-c303ca338d1b",
+          "type": "Burial",
+          "date": "1929",
+          "standard_date": "1929",
+          "place": "Clarkes, Clackamas, Oregon, United States of America",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "9SPC-3H6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Lillie Jane",
+          "surname": "Kleinsmith",
+          "id": "9SPC-3H6-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0590b254-9c0c-444c-b98d-af27463a6425",
+          "type": "Birth",
+          "date": "10 December 1867",
+          "standard_date": "10 Dec 1867",
+          "place": "Lehigh, Pennsylvania, United States",
+          "standard_place": "Lehigh, Pennsylvania, United States"
+        },
+        {
+          "id": "1d97e243-7fa6-499b-8c3c-50c53063ad42",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Lower Milford Township, Lehigh, Pennsylvania, United States",
+          "standard_place": "Lower Milford Township, Lehigh, Pennsylvania, United States"
+        },
+        {
+          "id": "3f8487d5-29da-40d1-93f5-6d150ead9485",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Union, Rice, Kansas, United States",
+          "standard_place": "Union Township, Rice, Kansas, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Canyon Creek, Highland, Molalla, and Soda Springs Precincts, Clackamas, Oregon, United States",
+          "standard_place": "Molalla, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "6247b437-91ac-4ea0-a0d5-e879ac74260a",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Highland, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "f09ab214-7f76-4aae-acf4-57e10a26271d",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Clarks, Clackamas, Oregon, United States",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Clackamas, Oregon",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "b46dafc6-2242-431b-beeb-4ae5686b622c",
+          "type": "Burial",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Clarkes, Clackamas, Oregon, United States of America",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Clarks Election Precinct, Clackamas, Oregon, United States",
+          "standard_place": "Clarks Election Precinct, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "5 August 1940",
+          "standard_date": "5 Aug 1940",
+          "place": "Clarkes, Clackamas, Oregon, United States",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "27YW-V26",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Edwin E.",
+          "surname": "Bottemiller",
+          "id": "27YW-V26-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "16 Jan 1900",
+          "standard_date": "16 Jan 1900",
+          "place": "Clarkes, Clackamas, Oregon, United States",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Canyon Creek, Highland, Molalla, and Soda Springs Precincts, Clackamas, Oregon, United States",
+          "standard_place": "Clackamas, Oregon, United States"
+        },
+        {
+          "id": "5bc67c13-28f0-49b0-b3e8-c4ece12abd1c",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Highland, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "e6e8c307-6775-4121-bcc3-662dcec0d878",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Clackamas, Oregon, United States",
+          "standard_place": "Clackamas, Oregon, United States"
+        },
+        {
+          "id": "b461e22a-118b-4d84-8af8-52c1d8ce45b7",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Beaver Creek, Clackamas, Oregon, United States",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Malden, Whitman, Washington, United States",
+          "standard_place": "Malden, Whitman, Washington, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Malden, Election Precinct 66 Malden, Whitman, Washington, United States",
+          "standard_place": "Election Precinct 66 Malden, Whitman, Washington, United States"
+        },
+        {
+          "id": "6027f919-c0f1-491a-8ada-cfa057ba269c",
+          "type": "Military Draft Registration",
+          "date": "16 February 1942",
+          "standard_date": "16 Feb 1942",
+          "place": "Malden, Whitman, Washington, United States",
+          "standard_place": "Malden, Whitman, Washington, United States"
+        },
+        {
+          "id": "82bba110-f443-4d53-9f2d-67f9733e49a5",
+          "type": "Residence",
+          "date": "5 April 1950",
+          "standard_date": "5 Apr 1950",
+          "place": "San Diego, San Diego, California, United States",
+          "standard_place": "San Diego, San Diego, California, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "July 1971",
+          "standard_date": "Jul 1971",
+          "place": "Washington, United States",
+          "standard_place": "Washington, United States"
+        },
+        {
+          "id": "d99cc0f4-1693-4c31-bcfe-25788ab76c17",
+          "type": "Residence",
+          "place": "Whitman, Washington, United States",
+          "standard_place": "Whitman, Washington, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "Pine City, Whitman, Washington, United States",
+          "standard_place": "Pine City, Whitman, Washington, United States"
+        },
+        {
+          "id": "4a7a1f8f-5077-4c04-971a-508847a16bf1",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "0188e7c4-c5c4-42a8-b044-a7ad032297e8",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "ac9c8ba6-b7fc-4917-949b-7fe77c7ee336",
+          "type": "Residence",
+          "place": "Malden",
+          "standard_place": "Malden, Natal, South Africa"
+        }
+      ]
+    },
+    {
+      "id": "KG2Q-RD6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Mary Sarah",
+          "surname": "Bottemiller",
+          "id": "KG2Q-RD6-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "5 May 1897",
+          "standard_date": "5 May 1897",
+          "place": "Clarkes, Clackamas, Oregon",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1897",
+          "standard_date": "1897",
+          "place": "Oregon, United States",
+          "standard_place": "Oregon, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Canyon Creek, Highland, Molalla, and Soda Springs Precincts, Clackamas, Oregon, United States",
+          "standard_place": "Soda Springs Precinct, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "9ee79d2b-f352-4ead-a81e-c90caa70d293",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Highland, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "1fec59c8-a7e7-48ca-ab15-518c73749b7b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Clarks, Clackamas, Oregon, United States",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Election Precinct 395 Community Acres, Multnomah, Oregon, United States",
+          "standard_place": "Election Precinct 395 Community Acres, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "47905667-ce6e-42fb-9dd1-368c0d96d9e3",
+          "type": "Residence",
+          "date": "6 April 1950",
+          "standard_date": "6 Apr 1950",
+          "place": "Multnomah, Multnomah, Oregon, United States",
+          "standard_place": "Multnomah, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "December 1970",
+          "standard_date": "Dec 1970",
+          "place": "Multnomah, Oregon, United States",
+          "standard_place": "Multnomah, Oregon, United States"
+        },
+        {
+          "id": "6ec4d518-4a4a-4db4-8405-8db5fb572589",
+          "type": "Burial",
+          "place": "Clackamas, Clackamas, Oregon, United States of America",
+          "standard_place": "Clackamas, Clackamas, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "KG77-4NL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Ida Paulena",
+          "surname": "Bottemiller",
+          "id": "KG77-4NL-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "af5814bf-2b2c-406e-99a2-dcf5ab471f75",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Oregon, United States",
+          "standard_place": "Oregon, United States"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 July 1892",
+          "standard_date": "10 Jul 1892",
+          "place": "Clarkes, Clackamas, Oregon, United States",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Clackamas, Oregon, United States",
+          "standard_place": "Clackamas, Oregon, United States"
+        },
+        {
+          "id": "58dbf4ae-b595-4081-bf18-e6fba83de640",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Highland, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1929",
+          "standard_date": "1929",
+          "place": "Malden, Whitman, Washington, United States",
+          "standard_place": "Malden, Whitman, Washington, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Clackamas, Oregon",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "0cd17197-e72f-437e-bb37-c5000e72952f",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Portland, Oregon",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "decf9cf6-141e-43bd-b66c-713783fcd3fc",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Algona, Algona Election Precinct, King, Washington, United States",
+          "standard_place": "Algona Election Precinct, King, Washington, United States"
+        },
+        {
+          "id": "53c1a284-ba99-4848-8520-1a09113c4ab3",
+          "type": "Residence",
+          "date": "17 April 1950",
+          "standard_date": "17 Apr 1950",
+          "place": "King, Benton, Washington, United States",
+          "standard_place": "King, Benton, Washington, United States"
+        },
+        {
+          "id": "eb9e8df3-fb6b-4c51-9330-79521dde4cc8",
+          "type": "Burial",
+          "date": "1983",
+          "standard_date": "1983",
+          "place": "Mountain View Cemetery, Auburn, King, Washington, United States",
+          "standard_place": "Mountain View Cemetery, Auburn, King, Washington, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "26 November 1983",
+          "standard_date": "26 Nov 1983",
+          "place": "Enumclaw, King, Washington, United States",
+          "standard_place": "Enumclaw, King, Washington, United States"
+        },
+        {
+          "id": "4406cb3a-6872-4c5c-8d78-7bb22e918ac4",
+          "type": "Residence",
+          "place": "King, Washington, United States",
+          "standard_place": "King, Washington, United States"
+        },
+        {
+          "id": "f893c280-3123-4eac-bd17-3375d9f16bba",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "27YW-V22",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Claude S.",
+          "surname": "Bottemiller",
+          "id": "27YW-V22-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "4 August 1902",
+          "standard_date": "4 Aug 1902",
+          "place": "Clarkes, Clackamas, Oregon, United States",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "14eeb097-cfc1-4598-b6b6-74a669754836",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Highland, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "299a491e-0a76-403a-859c-8c7cc257d383",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Clarks, Clackamas, Oregon, United States",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1929",
+          "standard_date": "1929",
+          "place": "Oregon City, - Clackamas, Oregon",
+          "standard_place": "Oregon City, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Clackamas, Oregon",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "R, Clackamas, Oregon",
+          "standard_place": "Clackamas, Oregon, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Salem Election Precinct 20, Salem, Ward 6, Marion, Oregon",
+          "standard_place": "Salem Election Precinct 20, Marion, Oregon, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "date": "1970",
+          "standard_date": "1970",
+          "place": "Salem, Marion, Oregon, United States of America",
+          "standard_place": "Salem, Marion, Oregon, United States"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "1 August 1970",
+          "standard_date": "1 Aug 1970",
+          "place": "Salem, Marion, Oregon, United States",
+          "standard_place": "Salem, Marion, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "27YW-V68",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Henry",
+          "surname": "Bottemiller",
+          "id": "27YW-V68-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1894",
+          "standard_date": "1894",
+          "place": "Clarkes, Clackamas, Oregon, United States",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1894",
+          "standard_date": "1894",
+          "place": "Clarkes, Clackamas, Oregon, United States",
+          "standard_place": "Clarkes, Clackamas, Oregon, United States"
+        }
+      ]
+    },
+    {
+      "id": "27YW-V25",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Kenneth J.",
+          "surname": "Bottemiller",
+          "id": "27YW-V25-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "4 June 1906",
+          "standard_date": "4 Jun 1906",
+          "place": "Washington, Oregon, United States",
+          "standard_place": "Washington, Oregon, United States"
+        },
+        {
+          "id": "f527ac94-8e98-407c-bd2f-4ed33670e975",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Highland, Clackamas, Oregon, United States",
+          "standard_place": "Highland, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "3bd9d7d2-b804-4cf1-b267-3f8c1ebe6e62",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Clarks, Clackamas, Oregon, United States",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Clackamas, Oregon",
+          "standard_place": "Beavercreek, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Clarks Election Precinct, Clackamas, Oregon, United States",
+          "standard_place": "Clarks Election Precinct, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "Jan 1985",
+          "standard_date": "Jan 1985",
+          "place": "Oregon",
+          "standard_place": "Oregon, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "249W-9LP",
+      "person2": "9SPC-3H6",
+      "facts": [
+        {
+          "id": "e573dec0-658e-4a44-8778-6a5b97f18910",
+          "type": "Marriage",
+          "date": "02 Dec 1890",
+          "standard_date": "2 Dec 1890",
+          "place": "Clackamas,Oregon",
+          "standard_place": "Clackamas, Clackamas, Oregon, United States"
+        },
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "2 Dec 1890",
+          "standard_date": "2 Dec 1890",
+          "place": "Clackamas, Clackamas, Oregon, United States",
+          "standard_place": "Clackamas, Clackamas, Oregon, United States"
+        }
+      ],
+      "id": "rel-couple-249W-9LP-9SPC-3H6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "249W-9LP",
+      "child": "KG77-4NL",
+      "subtype": "Biological",
+      "id": "rel-pc-249W-9LP-KG77-4NL"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9SPC-3H6",
+      "child": "KG77-4NL",
+      "subtype": "Biological",
+      "id": "rel-pc-9SPC-3H6-KG77-4NL"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "249W-9LP",
+      "child": "27YW-V68",
+      "subtype": "Biological",
+      "id": "rel-pc-249W-9LP-27YW-V68"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9SPC-3H6",
+      "child": "27YW-V68",
+      "subtype": "Biological",
+      "id": "rel-pc-9SPC-3H6-27YW-V68"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "249W-9LP",
+      "child": "KG2Q-RD6",
+      "id": "rel-pc-249W-9LP-KG2Q-RD6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9SPC-3H6",
+      "child": "KG2Q-RD6",
+      "id": "rel-pc-9SPC-3H6-KG2Q-RD6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "249W-9LP",
+      "child": "27YW-V26",
+      "subtype": "Biological",
+      "id": "rel-pc-249W-9LP-27YW-V26"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9SPC-3H6",
+      "child": "27YW-V26",
+      "subtype": "Biological",
+      "id": "rel-pc-9SPC-3H6-27YW-V26"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "249W-9LP",
+      "child": "27YW-V22",
+      "subtype": "Biological",
+      "id": "rel-pc-249W-9LP-27YW-V22"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9SPC-3H6",
+      "child": "27YW-V22",
+      "subtype": "Biological",
+      "id": "rel-pc-9SPC-3H6-27YW-V22"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "249W-9LP",
+      "child": "27YW-V25",
+      "subtype": "Biological",
+      "id": "rel-pc-249W-9LP-27YW-V25"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "9SPC-3H6",
+      "child": "27YW-V25",
+      "subtype": "Biological",
+      "id": "rel-pc-9SPC-3H6-27YW-V25"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S8VD-6PG",
+      "title": "William in entry for Lilly Jane Bottemiller, \"Oregon, Deaths and Burials, 1903-1947\"",
+      "citation": "\"Oregon, Deaths and Burials, 1903-1947\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F8WS-MZG : 9 March 2022), William in entry for Lilly Jane Bottemiller, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F8WS-MZG"
+    },
+    {
+      "id": "S8VD-963",
+      "title": "William Henry Bottemiller, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV2C-WKHM : Tue Apr 01 03:27:01 UTC 2025), Entry for William Henry Bottemiller.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV2C-WKHM"
+    },
+    {
+      "id": "S8VD-W8P",
+      "title": "W H Bottemiller, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMP-CYSL : Wed Mar 06 02:39:42 UTC 2024), Entry for Edwin E Bottemiller and Eunice Coolbaugh, 14 August 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMP-CYSR"
+    },
+    {
+      "id": "S8VD-D7K",
+      "title": "William Bottemiller, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2ZV-32CT : Wed Mar 06 06:03:22 UTC 2024), Entry for Frank Schultz and Ida Bottemiller Ralph, 5 November 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2ZV-328J"
+    },
+    {
+      "id": "3ZQ8-96S",
+      "title": "Wm Bottemiller, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2ZK-85XD : Sun Mar 10 18:52:42 UTC 2024), Entry for Charlie Ralph and Ida P Bottemiller, 9 October 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2ZK-85XK"
+    },
+    {
+      "id": "M9GV-VJM",
+      "title": "William Henry Bottemiller in entry for Mary Sarah Bottemiller, \"Oregon, Births and Christenings, 1868-1929\"",
+      "citation": "\"Oregon, Births and Christenings, 1868-1929\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:HR3P-QY3Z : 12 February 2020), William Henry Bottemiller in entry for Mary Sarah Bottemiller, 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZ5Q-7MP"
+    },
+    {
+      "id": "MS9X-G6V",
+      "title": "Legacy NFS Source: Henry Wilhelm Bottemiller - birth: 29 December 1861; Chisago City, Chisago, Minnesota, United States",
+      "citation": "Authors Files, Unknown, Punchbowl Street, Honolulu, Hawai`i, Page number: Records form Eldon Bottemiller."
+    },
+    {
+      "id": "SWDM-F7D",
+      "title": "Wm Bottemiller, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMK-DLZQ : Sun Mar 10 16:04:00 UTC 2024), Entry for Charlie Ralph and Ida P Bottemiller, 9 October 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMK-DL8Q"
+    },
+    {
+      "id": "3KN1-497",
+      "title": "William Henry Bottemiller, \"Oregon, Oregon State Archives, Births, 1842-1917\"",
+      "citation": "\"Oregon, Oregon State Archives, Births, 1842-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WQ52-L5PZ : Sat Mar 09 00:09:02 UTC 2024), Entry for Edwin Eugene Bottemiller and William Henry Bottemiller, 16 Jan 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WQ52-L5T2"
+    },
+    {
+      "id": "9X5Z-VWF",
+      "title": "William H. Bottemiller in entry for Ida Paulena Bottemiller, \"Oregon, Births and Christenings, 1868-1929\"",
+      "citation": "\"Oregon, Births and Christenings, 1868-1929\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:HR3F-LDMM : 12 February 2020), William H. Bottemiller in entry for Ida Paulena Bottemiller, 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZ5R-MQV"
+    },
+    {
+      "id": "S8VD-92V",
+      "title": "Henry William Battemiller, \"Oregon, Death Index, 1903-1998\"",
+      "citation": "\"Oregon, Death Index, 1903-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZHS-YXF : Wed Feb 19 08:32:08 UTC 2025), Entry for Henry William Battemiller, 13 May 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VZHS-YXF"
+    },
+    {
+      "id": "S8VD-H6D",
+      "title": "William H Boettenellr, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MLYK-BSQ : Wed Aug 13 19:08:41 UTC 2025), Entry for William H Boettenellr and Lilly J Boettenellr, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MLYK-BSQ"
+    },
+    {
+      "id": "S8VD-SNP",
+      "title": "W H Bottemiller, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPML-KTFF : Sat Mar 09 07:22:31 UTC 2024), Entry for Edwin E Bottemiller and Eunice Coolbaugh, 14 August 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPML-KTFK"
+    },
+    {
+      "id": "M9GV-FZD",
+      "title": "William H Rottemiller, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MSDC-G3V : Sat Oct 11 09:16:16 UTC 2025), Entry for William H Rottemiller and Lilly J Rottemiller, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MSDC-G3V"
+    },
+    {
+      "id": "S8VD-MGG",
+      "title": "Henry William Battemiller, \"Oregon, Deaths and Burials, 1903-1947\"",
+      "citation": "\"Oregon, Deaths and Burials, 1903-1947\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F8WM-X8F : 9 March 2022), Henry William Battemiller, 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F8WM-X8F"
+    },
+    {
+      "id": "SWDM-FRX",
+      "title": "William Bottemiller, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMN-4ZKJ : Thu Mar 07 10:59:37 UTC 2024), Entry for Frank Schultz and Ida Ralph, 5 November 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMN-6BMN"
+    },
+    {
+      "id": "S8VD-CVL",
+      "title": "William H Buttimiller, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M48C-K7N : Tue Oct 21 01:36:13 UTC 2025), Entry for William H Buttimiller and Lily J Buttimiller, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M48C-K7N"
+    },
+    {
+      "id": "SLH4-YV1",
+      "title": "William H. Bottemiller in entry for Ida Paulena Bottemiller, \"Oregon, Births and Christenings, 1868-1929\"",
+      "citation": "\"Oregon, Births and Christenings, 1868-1929\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:HR3F-LDMM : 12 February 2020), William H. Bottemiller in entry for Ida Paulena Bottemiller, 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HR3F-LDMM"
+    },
+    {
+      "id": "SWDM-NJ6",
+      "title": "Wm Bottemiller, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMK-8LM7 : Sat Mar 09 00:50:30 UTC 2024), Entry for Charlie Ralph and Ida P Bottemiller, 9 October 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMK-8L91"
+    },
+    {
+      "id": "3DYW-2PK",
+      "title": "William Henry Bottemiller in entry for Mary Sarah Bottemiller, \"Oregon, Births and Christenings, 1868-1929\"",
+      "citation": "\"Oregon, Births and Christenings, 1868-1929\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:HR3P-QY3Z : 12 February 2020), William Henry Bottemiller in entry for Mary Sarah Bottemiller, 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HR3P-QY3Z"
+    },
+    {
+      "id": "3KN1-QCH",
+      "title": "William Henry Bottemiller, \"Oregon, Oregon State Archives, Births, 1842-1917\"",
+      "citation": "\"Oregon, Oregon State Archives, Births, 1842-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W7VK-412M : Sat Mar 09 05:01:01 UTC 2024), Entry for Mary Sariah Bottemiller Dutton and William Henry Bottemiller, 5 May 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W7VK-41PZ"
+    },
+    {
+      "id": "3KN1-7X2",
+      "title": "William H Bottemiller, \"Oregon, Oregon State Archives, Births, 1842-1917\"",
+      "citation": "\"Oregon, Oregon State Archives, Births, 1842-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WQBK-T9N2 : Sat Mar 09 05:59:22 UTC 2024), Entry for Ida Paulena Bottemiller and William H Bottemiller, 10 Jul 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WQBK-T92M"
+    }
+  ]
+}

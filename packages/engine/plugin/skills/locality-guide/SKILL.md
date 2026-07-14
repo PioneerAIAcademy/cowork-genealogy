@@ -1,22 +1,22 @@
 ---
 name: locality-guide
 model: claude-sonnet-4-6
-description: Produces a structured locality research guide for a place and
-  time period — what genealogical records exist, where they're held,
-  jurisdictional history, boundary changes, and research tips. Use when
-  the user says "what records exist for [place]?", "tell me about [place]
-  records", "research guide for [jurisdiction]", "what can I find in 
-  [county/state/country]?", "where are the records for [place]?", "what
-  records or repositories help trace families affected by a fire, epidemic,
-  flood, war, or other disaster in [place]?", "what records survive for
-  [place] after [an event]?", or when research-plan needs jurisdiction
-  context before creating a plan. Do NOT use when the user wants to search
-  records (use search-records), or wants narrative historical context —
-  migration patterns, naming conventions, or why an event happened (use
+description: >-
+  Produces a structured locality research guide for a place and time period —
+  what genealogical records exist, where they're held, jurisdictional history,
+  boundary changes, and research tips. Use when the user says "what records
+  exist for [place]?", "tell me about [place] records", "research guide for
+  [jurisdiction]", "what can I find in [county/state/country]?", "where are
+  the records for [place]?", "what records or repositories help trace families
+  affected by a fire, epidemic, flood, war, or disaster in [place]?", "what
+  records survive for [place] after [an event]?", or when research-plan needs
+  jurisdiction context. Do NOT use when the user wants to search records or
+  execute a specific search plan (use search-records or
+  search-external-sites), or wants narrative historical context — migration
+  patterns, naming conventions, or why an event happened (use
   historical-context); but a question about which records survive or help
   trace families affected by an event is a record-availability question and
-  belongs here. Do NOT use when the user wants to execute a specific search
-  plan (use search-records or search-external-sites).
+  belongs here.
 allowed-tools:
   - wiki_search
   - wiki_read
@@ -32,7 +32,7 @@ allowed-tools:
 
 # Locality Guide
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to narrating once at the start of the survey and once when presenting the guide — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
 
 **Places:** Resolve with `place_search` / `place_search_all`; record `standardPlace` (and `standard_place` on persisted facts). See `references/places-guidance.md`.
 
@@ -58,19 +58,20 @@ Determine place, time period, and scope from the user's request. If the time per
 
 ```
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
-place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wikipedia_search({ query: "Schuylkill County Pennsylvania history" })
 ```
 
-`place_search` returns the canonical `standardPlace` — pass that to `place_population` and other place tools. When boundaries changed across the target period, call `place_search_all` instead: it returns every standard place a location has belonged to over time, which directly informs where records were created and are now held.
+`place_search` returns the canonical `standardPlace` — pass that to `place_population` and the other place tools. `place_population` depends only on that `standardPlace`, so **do not spend a separate turn on it here — issue it inside the Step 3 parallel batch** alongside the other surveys. When boundaries changed across the target period, call `place_search_all` instead: it returns every standard place a location has belonged to over time, which directly informs where records were created and are now held.
 
 Note when the jurisdiction was formed, from what parent, and any boundary changes during the target period. Keep this brief — deep historical context belongs in historical-context (see Decision rules). Note only what directly affects which records exist and where they are held. When a boundary or name change splits a locality's records across two jurisdictions (e.g., a territorial-era set and a later county set), connect them explicitly as one continuous research trail for that place rather than listing them as unrelated record sets.
 
 ### 3. Survey available records and repositories
 
+Once `place_search` (step 2) has returned the `standardPlace`, issue the survey calls in a SINGLE turn as PARALLEL tool calls — `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, and all four `wiki_place_page` sections (home / getting_started / online_records / research_tips) are independent and must NOT be run one-per-turn. Batch them together. The only exception is `wiki_read`: it needs a page URL, so run it right after `wiki_search` returns one. Do not drop any call — parallelize, don't prune.
+
 ```
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
-wiki_read({ url: "<relevant wiki page URL>" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
@@ -78,11 +79,13 @@ wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "resear
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
+# then, once wiki_search returns a page URL:
+wiki_read({ url: "<relevant wiki page URL>" })
 ```
 
 `collections_search` derives the jurisdiction itself from the full `standardPlace` — no need to hand it the enclosing state separately. To widen, drop the leading component and call again (the comma-strip pattern).
 
-`volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. Results paginate; one page is usually enough for a survey.
+`volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. Results paginate; one page is usually enough for a survey. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
 
 `external_links_search` returns a flat list of FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, wiki pages) filtered to the requested time window. The list is not deduplicated — collapse duplicate URLs before listing repositories. **Compare `totalForPlace` and `results.length`:** if `totalForPlace > 0` but `results` is empty, FS has resources for this place outside your time window — note the gap rather than reporting "no online resources." If `totalForPlace === 0`, FS has no curated external links for this place at all.
 
@@ -118,7 +121,7 @@ Use the template in `references/output-format.md`. Fill every section with data 
 - **Be specific about availability.** Name counts and record types concretely — not "records may exist" but "FamilySearch has 3 digitized but unindexed image volumes of Schuylkill County probate records, browsable image by image."
 - **Note gaps honestly.** If records were destroyed or don't exist for this period, say so clearly.
 - **Match records to the target window.** Flag record classes that predate the period (e.g., colonial/Mission-era) or postdate it (e.g., later civil registration) as background context, not prime sources for the years asked, and note where civil infrastructure was sparse or absent in those years. Conversely, if a collection's date range overlaps the target period, include it — don't dismiss a record class as out-of-period and then list it as available.
-- **Flag physical-only records.** Explicitly state when records exist only in physical repositories — online absence does not mean nonexistence.
+- **Flag browse-only, non-English, and physical-only records prominently.** When a volume is 0% name-indexed and not full-text searchable, state plainly it must be browsed image-by-image with no search; if it is non-English (Dutch, German, Spanish sacramental registers, etc.), note the researcher must read the original language. Explicitly state when records exist only in physical repositories — online absence does not mean nonexistence.
 - **Include access information.** For each record type, note where it's held and how to access it.
 - **Cover topical breadth.** Don't stop at vital records and census — use the checklist in `references/locality-broad-context.md`.
 - **Cite the wiki.** When information comes from a FamilySearch wiki article, mention the article title.

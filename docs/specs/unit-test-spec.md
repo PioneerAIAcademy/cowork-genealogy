@@ -11,7 +11,7 @@ Each unit test exercises a single skill in isolation: given a project state and 
 
 There are two kinds of tests per skill:
 
-- **Genealogist tests** (JSON files) — scenario-based tests created by junior genealogists via the [eval CRUD UI](eval-crud-ui-spec.md). Graded by LLM judge using a three-layer rubric, then verified by humans.
+- **Genealogist tests** (JSON files) — scenario-based tests created by junior genealogists via the [eval CRUD UI](eval-crud-ui-spec.md). Graded by an LLM judge using a two-tier rubric (base + skill dimensions), then verified by humans.
 - **Developer tests** (Python files) — deterministic structural validators written by developers. Run against the output of every genealogist test to catch schema violations, broken references, and ownership table breaches.
 
 Unit tests serve two purposes:
@@ -56,7 +56,7 @@ True multi-turn dialogue support (canned user replies, scripted turn arrays) is 
 - The user message that triggers (or shouldn't trigger) the skill
 - A reference to a project state scenario (created or selected by the genealogist)
 - References to MCP tool response fixtures (created or selected by the genealogist)
-- Plain English criteria describing correct behavior (LLM-judge-evaluated)
+- Plain-English `judge_context` notes the LLM judge reads as background to ground its rationales (not scored as a separate dimension)
 
 ### What the test file does not contain
 
@@ -217,8 +217,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 
   "mcp_fixtures": ["string (fixture file names from eval/fixtures/mcp/)"],
 
-  "additional_criteria": [
-    "string (case-specific grading criterion beyond the skill rubric)"
+  "judge_context": [
+    "string (case-specific background note the judge reads to ground its rationale — not a separately scored dimension)"
   ],
 
   "runs_per_test": "number (optional override; default 1)",
@@ -258,8 +258,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "explanation": "string (why the tested skill should not activate)"
   },
 
-  "additional_criteria": [
-    "string (optional — criteria about how the skill should decline)"
+  "judge_context": [
+    "string (background note, e.g. how the skill should decline — read by the judge, not separately scored)"
   ],
 
   "runs_per_test": "number (optional override; default 1)",
@@ -274,7 +274,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `test` | required | required |
 | `input` | required | required |
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
-| `additional_criteria` | required, may be empty array | required, may be empty array |
+| `judge_context` | required, may be empty array | required, may be empty array |
+| `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `negative` | omit | required |
 
 ### JSON Schema
@@ -288,7 +289,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
   "title": "Cowork Genealogy Unit Test",
   "description": "A skill-level evaluation test for Cowork Genealogy.",
   "type": "object",
-  "required": ["test", "input", "additional_criteria"],
+  "required": ["test", "input", "judge_context"],
   "properties": {
     "test": {
       "type": "object",
@@ -372,10 +373,26 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "items": { "type": "string" },
       "description": "Fixture file names (without path or extension) from eval/fixtures/mcp/. Optional for both positive and negative tests."
     },
-    "additional_criteria": {
+    "judge_context": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Case-specific grading criteria beyond the skill rubric. May be empty."
+      "description": "Per-test background notes the LLM judge reads to ground its rationales for the base + rubric dimensions. NOT a separate scored source — the judge does not emit a `criteria` dimension. Deterministic checks belong in validators. May be empty."
+    },
+    "expected_classifications": {
+      "type": "array",
+      "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications). Per matcher: at least one NEW assertion with the matcher's record_role + fact_type must exist, and every new assertion with that pair must carry each declared classification value. See Section 5.10.",
+      "items": {
+        "type": "object",
+        "required": ["record_role", "fact_type"],
+        "properties": {
+          "record_role": { "type": "string" },
+          "fact_type": { "type": "string" },
+          "evidence_type": { "type": "string" },
+          "informant_proximity": { "type": "string" },
+          "information_quality": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
     },
     "negative": {
       "type": "object",
@@ -389,6 +406,11 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "explanation": {
           "type": "string",
           "description": "Why the tested skill should not activate. Documents the boundary between the two skills."
+        },
+        "grade_on_invariant": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/plan/invariant-grading.md."
         }
       },
       "additionalProperties": false
@@ -404,13 +426,19 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "default": false,
       "description": "When true, the scenario files are broken on purpose (validator/guardrail skills). Skips scenario schema validation in the runnability gate, excuses the file-validity validators, and exempts the scenario from the fixture lint. See Section 5.8."
     },
+    "judge_reads_files": {
+      "type": "boolean",
+      "default": false,
+      "description": "Opt-in. When true, the harness includes the actual (truncated) content of the entries this run wrote to research.json / tree.gedcomx.json in what the LLM judge sees, instead of only change counts. Use for skills whose graded deliverable is written to a file rather than echoed in the chat reply. See Section 5.9."
+    },
     "execution": {
       "type": "object",
       "properties": {
         "max_turns": { "type": "integer", "minimum": 1 },
         "max_wall_clock_seconds": { "type": "integer", "minimum": 1 },
         "max_tool_calls": { "type": "integer", "minimum": 1 },
-        "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 }
+        "max_input_tokens_per_turn": { "type": "integer", "minimum": 1 },
+        "sdk_message_silence_seconds": { "type": "integer", "minimum": 1 }
       },
       "description": "Optional per-test overrides of harness execution limits. Defaults documented in Section 15.",
       "additionalProperties": false
@@ -476,21 +504,21 @@ The CRUD UI presents a dropdown of available fixtures for skills that need them.
 
 **Unmatched calls.** If the skill calls a tool whose actual args don't match any fixture's `args` predicate — or calls a tool the test loaded no fixture for at all — the harness records the call as unmatched and **aborts the run** with `aborted_reason: unmatched_tool_call` (Section 15). An unmatched call means the skill operated on a `fixture_not_found` error, so the run can't be graded. Fix the test by adding a fixture (or correcting an existing fixture's `args` predicate) so the call matches.
 
-### 5.4 `additional_criteria`
+### 5.4 `judge_context`
 
-Array of plain English strings. Each criterion describes a case-specific aspect of correct behavior that goes beyond the skill rubric. The LLM judge evaluates these alongside the skill rubric dimensions.
+Array of plain-English strings. Each note gives the judge case-specific background about what correct behavior looks like for this scenario. The judge reads them to **ground its rationales** for the base and rubric dimensions — they are **not** scored as separate dimensions, and the judge emits no dimension for them (see the judge prompt's "Per-test context" section). Deterministic checks (filename format, schema validity, exact tool-call counts) belong in validators, not here.
 
-The skill rubric (Section 7) covers general quality standards that apply to every test for that skill. `additional_criteria` captures things unique to this specific scenario that the rubric doesn't cover. The CRUD UI displays the skill's rubric dimensions so genealogists know what's already covered and can focus on what's specific to their test case.
+The skill rubric (Section 7) covers general quality standards that apply to every test for that skill. `judge_context` captures what is unique to this specific scenario that the rubric can't anticipate, so the judge applies the base + rubric dimensions correctly to this case. The CRUD UI displays the skill's rubric dimensions so genealogists know what's already covered and can focus on what's specific to their test case.
 
-A test with zero additional criteria is still graded on the base rubric (2 dimensions) + skill rubric (3-5 dimensions). This means a junior genealogist can create a useful test even if they only fill in the test metadata and user message — the rubric carries the primary grading weight.
+A test with empty `judge_context` is still graded on the base dimensions (3: Correctness, Completeness, Tool Arguments) + skill rubric (3-5 dimensions). This means a junior genealogist can create a useful test even if they only fill in the test metadata and user message — the rubric carries the primary grading weight.
 
-Guidelines for writing additional criteria:
+Guidelines for writing `judge_context` notes:
 
-- **Focus on what's unique to this scenario.** Don't restate what the skill rubric already covers. If the rubric says "extraction completeness," don't add "should extract all facts." Instead add criteria about *this specific record's* unusual characteristics.
+- **Focus on what's unique to this scenario.** Don't restate what the skill rubric already covers. If the rubric says "extraction completeness," don't add "should extract all facts." Instead note *this specific record's* unusual characteristics.
 - **Be specific.** "Should extract assertions" is too vague. "Should extract assertions for at least 3 persons (head of household, wife, and Patrick)" is testable.
 - **Include reasoning.** "Should classify the relationship as indirect evidence with indeterminate information quality — the 1860 census does not state relationships explicitly (that column was introduced in 1880)" tells the judge *why* the classification is correct.
-- **State negatives when important.** "Should NOT call any MCP search tools — the record is already in context" catches a specific failure mode.
-- **Stay neutral on contested conclusions.** Don't embed an answer key. The author of the test should not also be authoring the criterion that says "the right answer is X." The judge then "agrees" with the author by construction — this is the single biggest validity threat to LLM-as-judge grading. Apply the **neutrality test**: would a genealogist who reached the *opposite* conclusion still endorse this criterion as fair? If not, rewrite to grade the *reasoning*, not the verdict.
+- **State negatives when important.** "Should NOT call any MCP search tools — the record is already in context" catches a specific failure mode. (If the check is fully deterministic — an exact tool-call count or a schema rule — put it in a validator instead; `judge_context` is for the narrative reasoning the judge weighs.)
+- **Stay neutral on contested conclusions.** Don't embed an answer key. The author of the test should not also be authoring the note that says "the right answer is X." Because the judge reads these to ground its scoring, a leaky note biases the base/rubric dimensions toward the author's verdict — the single biggest validity threat to LLM-as-judge grading. Apply the **neutrality test**: would a genealogist who reached the *opposite* conclusion still endorse this note as fair? If not, rewrite to describe the *reasoning* to look for, not the verdict.
 
   | Leaky (don't write) | Neutral (do write) |
   |---|---|
@@ -498,7 +526,7 @@ Guidelines for writing additional criteria:
   | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
   | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
 
-  Senior genealogists review all golden-set additional_criteria for leakage; the master plan (`docs/gps/skill-mcp-testing-plan.md`) covers the review cadence.
+  Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/gps/skill-mcp-testing-plan.md`) covers the review cadence.
 
 ### 5.5 `negative`
 
@@ -545,6 +573,10 @@ Enable it for skills whose graded deliverable is **written to a file rather than
 
 Default `false` reproduces the legacy counts-only judge input **byte-for-byte for every other test and skill**, so enabling it for one skill changes grading nowhere else and does not affect `judge_prompt_hash`. It is a real (non-cosmetic) field, so it is snapshot-tracked: toggling it invalidates the content hash and forces a re-run, like `test.holdout`.
 
+### 5.10 `expected_classifications`
+
+Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `evidence_type`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
+
 ---
 
 ## 6. Negative Tests
@@ -560,7 +592,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | record-extraction | search-records | "search for" vs "analyze this record" |
 | search-records | record-extraction | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
-| conflict-resolution | assertion-classification | conflicting facts vs classifying evidence type |
+| conflict-resolution | record-extraction | conflicting facts vs classifying evidence type (classification is owned by record-extraction since the assertion-classification merge, 2026-07-11) |
 | proof-conclusion | project-status | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
@@ -596,7 +628,7 @@ Grading sequence for a negative test:
    - **`correct_skill: ["x", "y", ...]`** — pass requires at least one of the listed skills is in `skills_invoked`.
 
    Partial credit is reserved for the LLM judge to grade cases where the skill correctly declined but suggested the wrong alternative in its text response (rare; mostly applies when `skills_invoked` is empty but the text recommends a different skill).
-3. **Additional criteria** (if present): evaluated by the LLM judge. Examples: "Should explicitly tell the user this looks like a search request" or "Should NOT call any MCP tools before declining."
+3. **`judge_context`** (if present): the judge reads these notes as background when scoring the base dimensions on the decline — it emits no separate dimension for them. Examples: "Should explicitly tell the user this looks like a search request" or "Should NOT call any MCP tools before declining."
 
 ---
 
@@ -619,7 +651,7 @@ Three independent layers. Each feeds results into the run log. The layers do not
 | Layer | What | Model | Sees | Output |
 |-------|------|-------|------|--------|
 | Layer 1: Deterministic | Structural correctness | Python (no LLM) | Full before/after state + tool calls | Binary pass/fail per check |
-| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario README + diffs + text + tool calls + rubric + criteria | Score + rationale per dimension |
+| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario README + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
 | Layer 3: Human | Verification | Junior + senior genealogists | Both Layer 1 and Layer 2 results | Agree/disagree per dimension |
 
 **Cost optimization:** If Layer 1 validators fail, skip Layer 2 (the LLM judge). The test already failed structurally — don't spend money evaluating quality of broken output.
@@ -642,17 +674,19 @@ See Section 8 for details. Validators check structural correctness at two scopes
 
 Validators operate on the full before/after state and compute the diff internally.
 
-**Test-specific structural assertions** (e.g., "should add exactly 5 assertions") are handled by the LLM judge, not deterministic validators. The judge is good enough at evaluating structural claims from plain English criteria. The human review layer catches cases where the judge miscounts. Deterministic validators focus on things LLMs are bad at (schema conformance, ID referential integrity, ownership tables).
+**Test-specific structural assertions** (e.g., "should add exactly 5 assertions") are handled by the LLM judge, not deterministic validators. The judge is good enough at evaluating structural claims from plain-English `judge_context` notes. The human review layer catches cases where the judge miscounts. Deterministic validators focus on things LLMs are bad at (schema conformance, ID referential integrity, ownership tables).
 
 ### Layer 2: LLM judge
 
-The judge evaluates quality using a three-tier rubric:
+The judge scores two rubric tiers and additionally reads per-test background context:
 
-| Tier | Defined where | Applies to | Who maintains |
-|------|--------------|------------|---------------|
-| Base rubric | Shared across all skills | Every unit test | Developers |
-| Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Senior genealogists |
-| Per-test criteria | `additional_criteria` in test JSON | One test only | Junior genealogists |
+| Tier | Defined where | Applies to | Who maintains | Scored? |
+|------|--------------|------------|---------------|---------|
+| Base rubric | Shared across all skills | Every unit test | Developers | yes — dimensions |
+| Skill rubric | `eval/tests/unit/<skill>/rubric.md` | Every test for one skill | Senior genealogists | yes — dimensions |
+| Per-test context | `judge_context` in test JSON | One test only | Junior genealogists | no — background only |
+
+The base and skill rubrics produce scored dimensions. `judge_context` is **not** scored: the judge reads it only as background to ground its rationales for the base + rubric dimensions (see §5.4).
 
 **Base rubric** — three dimensions that apply to every skill:
 
@@ -662,9 +696,9 @@ The judge evaluates quality using a three-tier rubric:
 | Completeness | Did the skill address everything the input state and user message required? Were there omissions? |
 | Tool Arguments | Did Claude call MCP tools with args that match each matched fixture's declared `args` block? Substring (`~`-prefix) expectations on free-text fields tolerate paraphrase; identifier fields are strict. Multi-call holistically. **Special: N/A.** When the test made zero MCP tool calls, this dimension scores `null` (N/A) — it doesn't penalize stateless skills or tests that legitimately don't call tools. |
 
-Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on 3 base + 3–5 skill rubric + 0–3 per-test criteria.
+Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on 3 base + 3–5 skill rubric dimensions; `judge_context` notes add no scored dimensions.
 
-**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 3 base = 8 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `additional_criteria` are not counted against it but should still be kept to 0-3 per test for the same reason. Each rubric is self-contained. Examples:
+**Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 3 base = 8 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `judge_context` notes are not dimensions and are not counted against it, but keep them concise (~0-3 notes) for the same noise-control reason. Each rubric is self-contained. Examples:
 
 - conflict-resolution: source independence analysis, evidence weighing, resolution completeness
 - record-extraction: assertion atomicity, informant identification, evidence type accuracy
@@ -697,15 +731,15 @@ Conventions: H1 is the skill name, H2 is each dimension name (exactly one H2 per
 - **Single combined dimension:** "Tool usage — correct tool selected for the task, arguments well-formed and faithful to the user's request, response interpreted accurately." Use for skills with a single dominant tool.
 - **Split dimensions:** "Argument quality" and "Response interpretation" as separate dimensions. Use for skills where tool selection is non-trivial (multiple plausible tools) or where the response shape is complex enough that interpretation is its own skill.
 
-These dimensions consume the rubric's 3-5-dimension budget like any other; if the skill's domain reasoning is rich, factor tool usage into the combined form to leave room for substantive criteria. The judge sees `output.tool_calls` (Section 10) and can grade against the captured args and the fixture responses.
+These dimensions consume the rubric's 3-5-dimension budget like any other; if the skill's domain reasoning is rich, factor tool usage into the combined form to leave room for substantive domain dimensions. The judge sees `output.tool_calls` (Section 10) and can grade against the captured args and the fixture responses.
 
 For skills where tool work *is* the work (e.g., `search-records`, `search-full-text`), it is acceptable for a majority of rubric dimensions to be tool-usage dimensions — splitting argument quality, tool selection, and response interpretation across 3 of 5 dimensions, with 2 dimensions remaining for domain reasoning. The "at least one" floor and the 5-dimension cap stand; what flexes is the balance between tool-usage and domain dimensions.
 
 **Tool-usage rubric ≠ tool allowlist validator.** These are independent layers. The Section 8 allowlist validator checks *whether the tool was permitted* (a deterministic, binary "did you stay within your `allowed-tools` frontmatter?" check). The tool-usage rubric dimension grades *how well the permitted tools were used* (argument quality, response interpretation). A skill can pass the allowlist (used only permitted tools) and fail tool-usage (used them poorly), or vice versa.
 
-**Why some dimensions stay at skill level rather than promoted to base.** The base rubric is intentionally minimal (correctness + completeness) because it applies to every skill. Dimensions like citation discipline, evidence weighting, and identity resolution might look cross-cutting but don't apply to stateless skills (`search-wikipedia`, `translation`, `convert-dates`) that have no informants, no citations to discipline, and no identities to resolve. Forcing them into the base would mean grading those skills on dimensions that don't fit. They stay as per-skill rubric dimensions for the skills they actually apply to.
+**Why some dimensions stay at skill level rather than promoted to base.** The base rubric is intentionally minimal (Correctness, Completeness, Tool Arguments) because it applies to every skill. Dimensions like citation discipline, evidence weighting, and identity resolution might look cross-cutting but don't apply to stateless skills (`search-wikipedia`, `translation`, `convert-dates`) that have no informants, no citations to discipline, and no identities to resolve. Forcing them into the base would mean grading those skills on dimensions that don't fit. They stay as per-skill rubric dimensions for the skills they actually apply to.
 
-**How the tiers interact:** A test for record-extraction with 2 additional criteria is graded on 2 base + 3 skill + 2 additional = 7 total dimensions. A test with 0 additional criteria is still graded on 5 dimensions — the rubric carries the primary grading weight.
+**How the tiers interact:** Every test is graded on 3 base + 3–5 skill rubric dimensions (6–8 total). `judge_context` notes add no dimensions — they only ground the judge's rationales — so a test with several notes and one with none are graded on the same dimension set; the rubric carries the grading weight.
 
 **Judge prompt inputs:**
 
@@ -718,7 +752,7 @@ For skills where tool work *is* the work (e.g., `search-records`, `search-full-t
 | tree.gedcomx.json diff | Entries added/modified | GedcomX changes to evaluate |
 | MCP tool calls | Tool name, arguments, responses | Tool usage quality evaluation |
 | Skill rubric | 3-5 dimensions | What to grade on |
-| Additional criteria | 0-N plain English strings | Test-specific expectations |
+| `judge_context` | 0-N plain-English notes | Background to ground rationales (not scored) |
 
 **What the judge does NOT see:** Deterministic validator results. The layers are independent. A schema violation is already captured in Layer 1 — showing it to the judge would bias every quality score downward, double-penalizing structural failures.
 
@@ -728,7 +762,7 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 
 ```
 {rubric}                            — contents of eval/tests/unit/<skill>/rubric.md
-{additional_criteria}               — bullet list from the test JSON
+{judge_context}                     — bullet list from the test JSON
 {scenario_readme}                   — scenario README.md, or "(stateless test)"
 {user_message}                      — verbatim from the test
 {skills_invoked}                    — list of skills Claude actually invoked
@@ -747,16 +781,18 @@ The template is versioned with the harness; its SHA-256 hash is recorded in the 
 {
   "type": "object",
   "required": ["dimensions"],
+  "additionalProperties": false,
   "properties": {
     "dimensions": {
       "type": "array",
       "items": {
         "type": "object",
         "required": ["source", "name", "score", "rationale"],
+        "additionalProperties": false,
         "properties": {
-          "source":    { "enum": ["base", "rubric", "criteria"] },
+          "source":    { "enum": ["base", "rubric"] },
           "name":      { "type": "string" },
-          "score":     { "enum": [1, 2, 3] },
+          "score":     { "anyOf": [{ "enum": [1, 2, 3] }, { "type": "null" }] },
           "rationale": { "type": "string", "minLength": 20 }
         }
       }
@@ -1041,7 +1077,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
     "per_run_outcomes": ["string (one entry per run: pass | partial | fail | aborted)"],
     "aggregated_dimensions": [
       {
-        "source": "string (base | rubric | criteria)",
+        "source": "string (base | rubric)",
         "name": "string",
         "score": "integer (1 | 2 | 3 — modal across runs; 1=fail, 2=partial, 3=pass)",
         "rationale": "string (rationale from the modal run)"
@@ -1128,8 +1164,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
         "skipped": "boolean (true when validators failed or run was aborted)",
         "dimensions": [
           {
-            "source": "string (base | rubric | criteria)",
-            "name": "string (dimension name or criterion text)",
+            "source": "string (base | rubric)",
+            "name": "string (dimension name)",
             "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — currently only on the Tool Arguments base dimension when zero MCP tool calls)",
             "rationale": "string"
           }
@@ -1150,9 +1186,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`totals.cached_input_tokens`** — input tokens served from the prompt cache. For a batched skill suite (all tests for one skill run consecutively), this should be 50%+ of `input_tokens` even at N=1, because the skill prompt is identical across tests within the batch. With N=3 batched, expect 70%+. Lower numbers indicate caching isn't firing and costs will be higher than estimated in Section 11.
 - **`outcome_summary.aggregated_dimensions`** — modal dimension scores across runs (ties resolve toward the lower score). Used by dashboards; per-run dimension scores remain in `runs[].judge.dimensions` for human review.
 
-  **Stratified scoring.** Each dimension carries `source: base | rubric | criteria`. The number of `criteria` dimensions varies per test (driven by `additional_criteria` length), so suite-level pass rates are only apples-to-apples within a single `source` bucket. Dashboards should compute and track `base_pass_rate`, `rubric_pass_rate`, and `criteria_pass_rate` separately for each skill — combining them into a single rate makes the denominator drift as criteria counts change across tests.
+  **Stratified scoring.** Each dimension carries `source: base | rubric`. The base dimensions are a fixed set (3, though Tool Arguments may be N/A), but the number of `rubric` dimensions varies per skill, so suite-level pass rates are only apples-to-apples within a single `source` bucket. Dashboards should compute and track `base_pass_rate` and `rubric_pass_rate` separately for each skill — combining them into a single rate makes the denominator drift as rubric counts change across skills. (`judge_context` is not scored, so it produces no dimensions and no pass-rate bucket.)
 
-- **`runs[].output.activated`** — derived boolean from Section 6's four-rule definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
+- **`runs[].output.activated`** — derived boolean from Section 6's `activated` definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
 - **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Any unmatched call aborts the run with `aborted_reason: unmatched_tool_call` (Section 15) — the skill ran against an error response, so the run isn't scored.
 - **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
@@ -1240,7 +1276,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 
   "mcp_fixtures": ["1860-census-schuylkill-flynn"],
 
-  "additional_criteria": [
+  "judge_context": [
     "Should classify the relationship as indirect evidence with indeterminate information quality — the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880), so the parent-child relationship is inferred from household position, age, and shared surname",
     "Should distinguish the census enumerator (recorder) from the household member who likely provided information (informant)"
   ]
@@ -1270,7 +1306,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "explanation": "The user wants to search for records they haven't found yet, not analyze a record already in context. 'Search for' is the key signal. There is no record data in Claude's context to extract from."
   },
 
-  "additional_criteria": [
+  "judge_context": [
     "Should explicitly suggest search-records as the right tool for this request"
   ]
 }
@@ -1296,7 +1332,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 
   "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
-  "additional_criteria": [
+  "judge_context": [
     "Should save the summary to a file in the user's working folder, not just display it"
   ]
 }
@@ -1320,7 +1356,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "scenario": "flynn-with-birthplace-conflict"
   },
 
-  "additional_criteria": [
+  "judge_context": [
     "Should note that the two census informants may be the same household member, weakening their independence for this specific fact",
     "Resolution should cite both informant proximity (household_member vs family_not_present) and temporal distance (contemporary vs 63 years later) as factors"
   ]
@@ -1348,7 +1384,7 @@ This example shows a test in "needs scenario work" state — the closest scenari
     "scenario_notes": "Need a variant where q_001 (parentage) has exhausted census searches (1850 and 1860 completed in the log) but probate has not been searched yet. The current mid-research-flynn scenario only has the 1850 search completed."
   },
 
-  "additional_criteria": [
+  "judge_context": [
     "Plan should include probate records for Schuylkill County as a plan item",
     "Probate item rationale should explain that a will naming Patrick as son would provide direct evidence of parentage"
   ]
@@ -1382,7 +1418,7 @@ When a dev reads `scenario_notes`, they create a new scenario (e.g., `flynn-cens
     "scenario": "flynn-conflict-and-gap"
   },
 
-  "additional_criteria": [
+  "judge_context": [
     "Should prioritize the conflict over the gap — conflicts affect the reliability of existing conclusions",
     "Should formulate a specific research question targeting the conflict (e.g., 'What is Patrick Flynn's birthplace?'), not a generic 'resolve the conflict'"
   ]
@@ -1685,7 +1721,7 @@ After the skill executes and output is captured:
      → No: continue
      ↓
 2. Run LLM judge (Haiku)
-   Inputs: scenario README, user message, text output, diffs, tool calls, rubric, criteria
+   Inputs: scenario README, user message, text output, diffs, tool calls, rubric, judge_context
    Output: score + rationale per dimension
      ↓
 3. Write run log to eval/runlogs/unit/<skill>/<model>/<timestamp>.json

@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_elizabeth_geach_parents",
+    "objective": "Who were the parents of Elizabeth Geach, born 17 August 1822 in Washington, Ohio, and wife of Jonathan Slack of Union Township, Licking County, Ohio?",
+    "subject_person_ids": ["273D-F9Z"],
+    "status": "active",
+    "created": "2026-07-02",
+    "updated": "2026-07-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

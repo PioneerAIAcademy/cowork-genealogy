@@ -1,0 +1,100 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Victor",
+          "surname": "Spénard",
+          "id": "PID-TODO-name-1"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "p-spouse-orise",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Orise",
+          "surname": "Lesage",
+          "id": "p-spouse-orise-name-1"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "p-child-henri",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Henri",
+          "surname": "Spénard",
+          "id": "p-child-henri-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "p-child-henri-fact-birth",
+          "type": "Birth",
+          "date": "August 1897",
+          "standard_date": "Aug 1897",
+          "place": "Quebec, Canada",
+          "standard_place": "Quebec, Canada"
+        },
+        {
+          "id": "p-child-henri-fact-death",
+          "type": "Death",
+          "date": "1967",
+          "standard_date": "1967",
+          "place": "Quebec, Canada",
+          "standard_place": "Quebec, Canada"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-victor-orise",
+      "type": "Couple",
+      "person1": "PID-TODO",
+      "person2": "p-spouse-orise",
+      "facts": [
+        {
+          "id": "rel-victor-orise-marriage",
+          "type": "Marriage",
+          "date": "29 September 1896",
+          "standard_date": "29 Sep 1896",
+          "place": "Quebec, Canada",
+          "standard_place": "Quebec, Canada"
+        }
+      ]
+    },
+    {
+      "id": "rel-victor-henri",
+      "type": "ParentChild",
+      "parent": "PID-TODO",
+      "child": "p-child-henri"
+    },
+    {
+      "id": "rel-orise-henri",
+      "type": "ParentChild",
+      "parent": "p-spouse-orise",
+      "child": "p-child-henri"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-henri-death-1967",
+      "title": "Death certificate of Henri Spénard, died 1967, Quebec; states he was born August 1897 and names his parents as Victor and Aurise Spénard."
+    },
+    {
+      "id": "src-1921-census",
+      "title": "1921 Census of Canada, Quebec; Henri Spénard (age 23-24) in the household of his parents Victor and Aurise Spénard."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "tool": "image_search",
+  "description": "An image group that resolves but contains no images — image_search returns an empty imageIds array (the spec's zero-image path). Drives nil/empty-group handling: the skill must log a negative browse with scope rather than fabricate contents or claim the volume is missing.",
+  "args": {
+    "imageGroupNumber": "004452257"
+  },
+  "response": {
+    "imageIds": []
+  }
+}

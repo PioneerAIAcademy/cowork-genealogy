@@ -1,0 +1,18 @@
+{
+  "id": "crowther-parents-marriage",
+  "name": "Mary Crowther — parents and marriage (1854–1883)",
+  "source_pid": "218N-WSD",
+  "captured": "2026-07-01",
+  "researcher_question": "Who were the parents of Mary Crowther, born 10 July 1854 in Baltimore, Maryland, and whom did she marry?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1850s",
+    "geography": "US-MD"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Parents (John Crowther and Honor Elizabeth Frances Bosley) and spouse (Edward Levis Prizer, m. 1883) are fully stripped from the starting tree, including a LifeSketch biography fact on daughter Mary Constance Prizer that named both parents directly in its opening sentence (removed in full — see README). Mary's six children with Edward Levis Prizer are kept as anchoring context; they retain their ParentChild edge to Mary but no longer show a father. The parents are attested by 1860 and 1880 U.S. censuses placing Mary in John Crowther's Baltimore County household. The marriage has no single indexed marriage record on FamilySearch — it must be inferred from several 1900s–1910s U.S. and New Jersey state censuses showing Edward and Mary Prizer together with matching children, so the agent should not rely solely on the children's shared surname as proof."
+}

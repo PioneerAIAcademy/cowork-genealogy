@@ -55,6 +55,7 @@
     { "name": "source_attachments" },
     { "name": "image_search" },
     { "name": "person_warnings" },
+    { "name": "person_quality" },
     { "name": "merge_warnings" },
     { "name": "volume_search" },
     { "name": "merge_record_into_tree" },
@@ -62,7 +63,10 @@
     { "name": "research_log_append" },
     { "name": "convert_calendar" },
     { "name": "tree_edit" },
-    { "name": "research_append" }
+    { "name": "tree_correct" },
+    { "name": "research_append" },
+    { "name": "rank_search_matches" },
+    { "name": "project_context" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

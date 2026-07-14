@@ -1,4 +1,6 @@
-node_modules/
+# Bare (no trailing slash) so it also ignores a node_modules *symlink* — the
+# form `make worktree-link` creates to share deps from the primary worktree.
+node_modules
 packages/engine/mcp-server/build/
 
 # Local Claude Code MCP-server registration. Machine-specific: it hardcodes
@@ -41,10 +43,20 @@ eval/runlogs/unit/*/scratch_*.ann.json
 eval/runlogs/unit/*/.partial_*.json
 eval/runlogs/unit/*/.partial_*.json.tmp
 
-# Non-passing e2e runs write as scratch_* — only a passing run validates a
-# fixture and is committed (e2e-test-spec.md §14). Keeps a failed run from
-# being committed as if it had validated the fixture.
+# A skipped e2e run (the judge never ran — the agent crashed before producing
+# a tree, so there is nothing to grade) writes as scratch_* and stays out of
+# version control. Gradeable runs (pass/partial/fail) are committed as
+# run-<ts>.* — a committed fail is retained signal (a capability gap to retry).
+# Fixture validity is separate: only a pass validates a fixture (spec §14).
 eval/runlogs/e2e/*/scratch_*
+
+# `make e2e-view` staging folder — the latest run's final state copied in as
+# research.json + tree.gedcomx.json for the Research Viewer to open. Throwaway.
+eval/e2e-view/
+
+# `make e2e-project` seeds editable Cowork projects from fixtures' starting
+# state here — debugging workspaces, not committed artifacts.
+eval/e2e-project/
 
 # Raw SDK session transcripts copied next to each e2e runlog. Multi-MB forensic
 # data (per-turn timestamps/tokens/thinking) for local latency+cost analysis —

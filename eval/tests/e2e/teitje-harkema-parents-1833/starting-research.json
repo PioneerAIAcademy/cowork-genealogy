@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_teitje_harkema_parents_1833",
+    "objective": "Who were the parents of Teitje Harkema, born 31 July 1833 in Veenhuizen, Norg, Drenthe, Netherlands?",
+    "subject_person_ids": ["LHZM-TR7"],
+    "status": "active",
+    "created": "2026-07-02",
+    "updated": "2026-07-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

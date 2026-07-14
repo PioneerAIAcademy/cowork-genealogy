@@ -80,16 +80,14 @@ this in order. Each step gates the next.
      don't trip cleanly. Iterate until "reasonably reliable" — not
      perfect, just good enough that future fixture failures will
      reflect agent capability rather than primer bugs.
-3. **Eyeball a candidate PID.** Use `person_read` (with
-   `relatives=true sourceDescriptions=true`) against a well-researched
-   person (acceptance criteria below). Check JSON size; pick a different
-   PID if unwieldy.
+3. **Eyeball a candidate PID.** Pick a well-researched person
+   (acceptance criteria below) and snapshot them (§2 of "Creating a new
+   e2e test"). Check JSON size; pick a different PID if unwieldy.
 4. **Author the first fixture.** Run `/author-e2e-fixture` and give it
-   the PID — it reads the tree via `person_read`, you pick what to
-   strip, and it writes the five files. (You don't need a finished
-   research project; that's the secondary path. Or follow §4 in
-   "Creating a new e2e test" to author by hand.) Keep it focused (one
-   question, 1–5 expected findings). Then **run the stripping linter**
+   the PID — it snapshots the tree, you name what to strip, and it
+   writes the fixture files. (Or follow §4 in "Creating a new
+   e2e test" to author by hand.) Keep it focused (one question, 1–5
+   expected findings). Then **run the stripping linter**
    (`uv run python -m e2e.validate_fixture <slug>`; Windows:
    `ValidateFixture.bat`) and resolve any `WARN` before committing — see
    "Creating a new e2e test" §5.
@@ -98,15 +96,15 @@ this in order. Each step gates the next.
    cd eval/harness
    uv run python -m e2e.run_e2e --test <slug>      # Windows: RunE2E.bat
    ```
-6. **Grade the run into a calibration annotation.** Ask Claude Code to grade
+6. **Grade the run into a calibration annotation.** Run `/grade-e2e-run` to grade
    this run — it reads the fixture and the run's two `final-*` siblings (not the
    run log itself, so you grade *blind* to the judge's own calls), shows you each
    expected finding + the agent's evidence, and writes `run-<ts>.ann.json` beside
-   the run log with your `per_finding` labels. Validate it with
-   `uv run python -m e2e.calibrate_judge --dry-run`, then commit the `.ann.json`.
-   **Running the full calibration** (no `--dry-run`) — reading agreement and
-   tuning `judge_prompt.md` — is the maintainer's step, done once a batch of
-   grades exists, not per contributor. See "Judge calibration" below.
+   the run log with your `per_finding` labels, and self-checks that file. Then
+   commit the `.ann.json` — you do **not** run `calibrate_judge`. **All
+   `calibrate_judge` use** (`--dry-run` classification and the full agreement
+   sweep, tuning `judge_prompt.md`) is the maintainer's step, done periodically
+   once a batch of grades exists. See "Judge calibration" below.
 7. **Finalize the spec** at `docs/specs/e2e-test-spec.md` based on
    what the first run actually needed (drop the "Provisional" note).
 8. **Add a second fixture** with non-overlapping tags. Verify both
@@ -157,29 +155,40 @@ Before running any e2e test:
 
 ## Creating a new e2e test
 
-> **Where these skills live.** `author-e2e-fixture` and `interpret-e2e-result`
-> are repo-local dev tooling under `.claude/skills/` (alongside `compare-state`
-> and `draft-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
+> **External (alpha) senior genealogist authoring on Windows?** Follow the
+> friendly start-to-PR click-path in
+> [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — it wraps the
+> steps in this section in a single walkthrough (author → validate → watch a
+> live run → open the fixture PR). The material below is the reference behind it.
+
+> **Where these skills live.** `author-e2e-fixture`, `interpret-e2e-result`, and
+> `grade-e2e-run` are repo-local dev tooling under `.claude/skills/` (alongside
+> `compare-state` and `draft-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
 > picks them up automatically when you work in this checkout, so the `/`-commands
 > below just work. See [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) for why
 > they're a distinct class from the research skills.
 
 **If you're a genealogist**, run the `/author-e2e-fixture` skill from a Claude Code session opened at the **repo root** — the Code
 tab of the Claude desktop app, or `claude` in a terminal (not Cowork).
-The skill needs the host-side MCP tools `person_read` +
-`validate_research_schema`; the committed `.mcp.json` at the repo root
-wires the `genealogy` MCP server, which you approve once on first open
-(be logged in first via `make e2e-login` / `Login.bat`). The
-primary path starts from a FamilySearch person ID: give it a PID and it
-reads that person's well-researched tree via `person_read`, you pick a
-focused subset to strip (the "answer"), and it strips that subset,
-records it as expected findings, and writes the five files **directly
-into `eval/tests/e2e/<slug>/`** (no move needed). No prior research
-project is needed — the tree on FamilySearch is the ground truth. (A secondary
-path converts a research project you just finished, reusing its
-`proof_summaries`; run from that project folder, the secondary path
-writes a `<slug>/` subfolder you then move into
-`eval/tests/e2e/<slug>/`.)
+Be logged in to FamilySearch first (`Login.bat`, or `make e2e-login` for
+developers); the skill shells out to a script that reuses that token, so
+you no longer approve an MCP server on first open. The primary path
+starts from a FamilySearch person ID: give it a PID and it snapshots
+that person's well-researched tree to `unstripped-tree.gedcomx.json` and
+prints an index of every person, relationship, fact and source. You pick
+the focused subset to strip (the "answer"); it strips that subset,
+records it as expected findings, and writes the files **directly into
+`eval/tests/e2e/<slug>/`** (no move needed). No prior research project is
+needed — the tree on FamilySearch is the ground truth. (A secondary,
+PID-less path builds a fixture from a research document when there is
+no PID; a finished research project converts via its subject's PID,
+reusing the project's `proof_summaries` for the question and answer.)
+
+The skill's mechanical half is `eval/harness/e2e/author.py`. It
+normalizes the fetched tree to the simplified-GedcomX schema, refuses on
+any person who is living or unmarked, cascades relationship removals off
+a stripped person, and lints for an answer left behind. Developers can
+drive it directly: `make e2e-author ARGS="snapshot --slug foo --pid ABCD-123"`.
 
 The rest of this section documents the schema and the manual workflow
 for when you want to author by hand, debug a fixture, or review a PR
@@ -196,8 +205,8 @@ Acceptance criteria for a "well-researched" person:
   probate). 5 sources of the same census across multiple years
   doesn't count — diversity matters.
 - **Reasonable tree size.** Not so vast that the JSON is unwieldy
-  (>200 sources, deep ancestor branches). If the `person_read` output
-  is over ~500 KB, narrow scope or pick someone else.
+  (>200 sources, deep ancestor branches). If the snapshot is over
+  ~500 KB, narrow scope or pick someone else.
 - **Clear research question.** You can phrase a natural-language
   question whose answer is anchored in attached evidence (e.g.,
   "Who were John Smith's parents?", "When did Mary Jones die?").
@@ -206,17 +215,21 @@ Acceptance criteria for a "well-researched" person:
 
 ### 2. Eyeball the JSON
 
-Read the unstripped tree before committing to it, via the `person_read`
-MCP tool (in Claude Code with the genealogy MCP server running, and
-logged in via the `login` tool):
+Snapshot the unstripped tree before committing to it:
 
-```text
-person_read personId=<the-pid> relatives=true sourceDescriptions=true
+```bash
+cd eval/harness && uv run python -m e2e.author snapshot --slug <slug> --pid <the-pid>
 ```
 
-It returns simplified GEDCOMX (persons, relationships, sources) — the
-`tree.gedcomx.json` shape. Check JSON size, source count, relationship
-depth. If it's unwieldy, narrow scope or pick a different PID.
+It fetches, normalizes to simplified GEDCOMX (persons, relationships,
+sources — the `tree.gedcomx.json` shape), writes
+`eval/tests/e2e/<slug>/unstripped-tree.gedcomx.json`, and prints an index
+of every id. Check source count and relationship depth. If it's unwieldy,
+delete the directory and pick a different PID.
+
+The snapshot happens exactly once per fixture — the command refuses to
+overwrite an existing one. To see whether FamilySearch has drifted under
+a committed fixture, add `--check`: it diffs and writes nothing.
 
 ### 3. Pick a research question and stripping pattern
 
@@ -357,9 +370,18 @@ A pre-populated `research.json` (full schema in
 
 The unstripped tree per `simplified-gedcomx-spec.md`, with the
 answer information removed. Structure varies by what you stripped
-— there is no minimal template. Start from the live `person_read`
-output and delete the persons / relationships / facts / sources
-that correspond to your research question's answer.
+— there is no minimal template. Derive it from the committed
+`unstripped-tree.gedcomx.json` rather than editing it by hand:
+
+```bash
+cd eval/harness && uv run python -m e2e.author strip --slug <slug> \
+  --persons <ids> --facts <owner>:<fact-id> --sources <ids>
+```
+
+`strip` always reads the snapshot and writes the starting tree, never
+the reverse, so re-running it with a different selector set is free.
+Removing a person cascades to every relationship touching them; sources
+never cascade (whether a source attests the stripped fact is your call).
 
 #### `expected-findings.json`
 
@@ -535,7 +557,17 @@ The full help text:
 uv run python -m e2e.run_e2e --help
 ```
 
-### Debugging `/research` by hand (scratch workspace)
+### Debugging `/research` by hand (scratch workspace — the Claude Code path)
+
+> **Prefer Cowork + the viewer for live debugging.** The recommended way to
+> watch a run unfold with structured output — research log, assertions,
+> conflicts — is `make e2e-project TEST=<slug>` (Windows: `SeedProject.bat`),
+> which seeds an editable project you open in **Claude Cowork** alongside the
+> **Research Viewer**. See eval/README.md → "Debug a fixture interactively
+> (Cowork + the viewer)". The scratch workspace below is the lighter-weight
+> **Claude Code** alternative — no Cowork needed, handy for developers
+> debugging `/research` routing (and the first-time `/research` validation in
+> the setup checklist above).
 
 A headless harness run can't show you *why* the agent stopped or skipped
 a step — you can't watch it think or nudge it. For that, run `/research`
@@ -621,10 +653,12 @@ Each run writes four files to
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree (what the judge graded) |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
 
-All four are committed for a **passing** run (the `run-<ts>.*` names above). A
-non-passing run writes the same four files with a `scratch_<ts>.*` prefix that's
-gitignored — only a passing run validates a fixture (§14 of the spec), so
-failures aren't committed.
+All four are committed for any **gradeable** run — verdict pass, partial, or
+fail (the `run-<ts>.*` names above). A committed `fail` is retained signal (a
+capability gap to retry later) and must be graded like any committed run. Only a
+**skipped** run — the judge never ran, so there's no tree to grade — writes the
+four files with a gitignored `scratch_<ts>.*` prefix. Fixture *validity* is
+separate: only a passing run validates a fixture (§14 of the spec).
 
 ### Interpreting `verdict`
 
@@ -759,20 +793,16 @@ only the human's recall labels:
 
 ### Grading a run
 
-Ask Claude Code to **grade `run-<ts>.json`**. It reads the fixture and the run's
-two `final-*` siblings — **not the run log itself**, so you grade *blind* to the
+Run **`/grade-e2e-run`** on the run. It reads the fixture and the run's two
+`final-*` siblings — **not the run log itself**, so you grade *blind* to the
 judge's own calls (that independence is what makes the agreement number mean
-something) — shows you each expected finding plus the agent's evidence, and writes
-the `.ann.json` with your labels. Then:
+something) — shows you each expected finding plus the agent's evidence, writes the
+`.ann.json` with your labels, and self-checks that file (labels complete, keys
+match the fixture's finding ids). Then commit the `.ann.json`.
 
-```bash
-cd eval/harness
-uv run python -m e2e.calibrate_judge --dry-run   # classifies; no API calls
-```
-
-`--dry-run` is the safe pre-commit check: it flags an incomplete grade (a `null`
-label), a drifted one (its finding ids no longer match the fixture — re-grade or
-delete), or a malformed file. Commit the `.ann.json` once it's clean.
+You do **not** run `calibrate_judge` — not even `--dry-run`. That tool classifies
+*every* annotation in the tree and is the maintainer's step (below). The skill's
+self-check covers the one file you wrote.
 
 **Grading an `avoid` finding** (negative fixtures, spec §3.4.1): the helper shows
 the *absence* of the wrong candidate as the evidence. Label it `true` when that
@@ -794,9 +824,10 @@ boundary call (the judge called the burial a full match; the human downgraded it
 ### Running calibration (maintainer step)
 
 > **This is the maintainer's step, not the contributors'.** Contributors grade
-> their runs and stop at `--dry-run` (validation only). One person runs the full
-> calibration below once a batch of grades exists, because it makes a judge API
-> call per graded run and the result only means something across the whole
+> their runs with `/grade-e2e-run` and commit — they never run `calibrate_judge`.
+> One person (the maintainer) runs it periodically once a batch of grades exists:
+> `--dry-run` to classify the committed annotations, then the full calibration
+> below — a judge API call per graded run, meaningful only across the whole
 > collected set.
 
 ```bash
@@ -846,18 +877,21 @@ intended bootstrap — you don't need a calibrated judge to start grading.
    --test <slug>`). Commit the fixture and its passing run log.
 4. **Read the result** — the `/interpret-e2e-result` skill explains the
    verdict and proof-quality score.
-5. **Grade it** — ask Claude Code to grade the run (see "Grading a run" above),
-   run `uv run python -m e2e.calibrate_judge --dry-run` to validate, and commit
-   the `run-<ts>.ann.json`. *This is the grade correction:* where you disagree
-   with the judge, your `per_finding` label captures it. **Contributors stop at
-   `--dry-run`** — the full `calibrate_judge` makes API calls and is the
-   maintainer's step.
+5. **Grade it** — run `/grade-e2e-run` on the run (see "Grading a run" above)
+   and commit the `run-<ts>.ann.json`. You label each finding *blind* to the
+   judge's own grades, and the skill self-checks the file before you commit.
+   **Contributors never run `calibrate_judge`** — not even `--dry-run`.
+   Classification and the full agreement sweep are the maintainer's step.
+   CI enforces same-PR grading: the `check-e2e-fixtures` action **blocks** the
+   PR if a run log you added produced a final tree but has no committed
+   `.ann.json` sibling (a treeless crash/skip run is exempt — nothing to grade).
 
 **The maintainer**, once enough grades are collected, runs `RunCalibration.bat`
 (full `calibrate_judge` — the only step that calls the judge API at scale), reads
 the per-finding agreement and every disagreement, and tunes
-`eval/harness/e2e/judge_prompt.md`. The annotation *is* the corrected grade —
-there is no separate annotation UI.
+`eval/harness/e2e/judge_prompt.md`. The annotation *is* the human grade,
+arrived at blind — there is no separate annotation UI, and it is not a
+correction of the judge's own labels.
 
 ---
 
@@ -894,5 +928,7 @@ there is no separate annotation UI.
   `starting-tree.gedcomx.json`
 - [`eval/CLAUDE.md`](../eval/CLAUDE.md) — eval framework
   conventions (unit tests; e2e shares the runlog discipline)
+- [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — start-to-PR
+  walkthrough for external (alpha) senior genealogists authoring fixtures
 - [`packages/engine/plugin/skills/research/SKILL.md`](../packages/engine/plugin/skills/research/SKILL.md)
   — the `/research` skill that e2e tests invoke

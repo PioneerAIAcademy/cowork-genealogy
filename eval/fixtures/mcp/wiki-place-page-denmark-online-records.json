@@ -1,0 +1,14 @@
+{
+  "tool": "wiki_place_page",
+  "description": "wiki_place_page online_records for Denmark — the online record sources list.",
+  "args": {
+    "standardPlace": "~",
+    "section": "online_records"
+  },
+  "response": {
+    "place": "Denmark",
+    "section": "online_records",
+    "content": "## Denmark Online Records\n\n- **Denmark, Church Books, 1484-1941** (FamilySearch) — parish registers; indexing varies by parish, many volumes browse-only.\n- **Denmark, Military Levying Rolls (Lægdsruller), 1789-1861** (FamilySearch) — conscription registers of males by levying district; index partial, images browsable.\n- **Denmark Census, 1787-1930** (FamilySearch / DDD Dansk Demografisk Database) — 1787 and 1801 censuses fully searchable.\n- **Denmark, Probate Indexes, 1674-1851** (FamilySearch) — skifteprotokol indexes; originals browse-only.\n- **Rigsarkivet (Danish National Archives, arkivalieronline)** — free images of church books, lægdsruller, and probate originals.",
+    "page_url": "https://www.familysearch.org/en/wiki/Denmark_Online_Genealogy_Records"
+  }
+}

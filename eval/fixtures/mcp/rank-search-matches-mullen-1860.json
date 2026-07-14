@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the staged 1860-census Mullen results against tree subject I1 (Sarah Ann Mullen, b.1852 Dodge County, Wisconsin). The birth-surname search recovered the correct household (Sarah A. Mullen, age 8, child of William Mullen), which scores as a strong match and is unattached (new evidence for extraction). Confirms the pre-marriage search correctly used the BirthName surname 'Mullen' — the record is the right person. Used by the search-records name-shift triage test to exercise the match-ranked review surface + attachment flags without a live match API. Matched on subjectId; independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:WICN-1860-M01",
+        "primaryId": "P1",
+        "personName": "Sarah A. Mullen",
+        "sex": "Female",
+        "birthDate": "1852",
+        "birthPlace": "Wisconsin",
+        "collectionTitle": "United States Census, 1860",
+        "matchScore": 0.9376,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

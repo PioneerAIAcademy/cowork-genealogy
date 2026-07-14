@@ -1,0 +1,21 @@
+{
+  "id": "morris-jenkins-marriage",
+  "name": "Morris Jenkins & Margaret Rees — marriage (1841, Wales)",
+  "source_pid": "LZLK-N12",
+  "captured": "2026-07-01",
+  "researcher_question": "Who did Morris Jenkins marry, and when and where did the marriage take place?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1840s",
+    "geography": "GB-WLS"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 4800
+  },
+  "difficulty": "moderate",
+  "notes": "Marriage to Margaret Rees is indexed in the Carmarthenshire Parish Registers (FamilySearch collection 1403176). The tree records the marriage date as 22 Feb 1841 but the indexed parish register entry says 22 Feb 1842 — agent should find the indexed date. Jenkins is extremely common in Wales, adding search noise. LifeSketch facts on Morris and daughter Eliza that name Margaret have been stripped to avoid leaking the answer, along with census sources whose citations explicitly name Margaret."
+}

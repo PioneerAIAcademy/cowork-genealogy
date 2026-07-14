@@ -36,6 +36,8 @@ from claude_agent_sdk import (
     query,
 )
 
+from harness.auth import env_for_sdk, resolve_auth
+
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
     derive_stop_reason,
@@ -138,6 +140,19 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
+def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
+    """Whether a tool call is denied by THIS fixture's `blocked_tools`.
+
+    Same matching rules as the universal tree block: MCP tools only,
+    matched on the bare advertised name. Used for fixtures whose ground
+    truth a specific tool can surface directly (e.g. `wiki_search` on a
+    fixture built from a wiki case-study article that names the answer).
+    """
+    if not tool_name.startswith("mcp__"):
+        return False
+    return _bare_tool_name(tool_name) in blocked_tools
+
+
 @dataclass
 class FixtureCaps:
     # The DEFAULT caps every fixture inherits for any cap it doesn't set.
@@ -145,7 +160,10 @@ class FixtureCaps:
     # caps from here (don't re-hardcode the numbers there). Tuned so a real
     # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
     # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
-    wall_clock_seconds: int = 3600  # 60 min
+    wall_clock_seconds: int = 7200  # 120 min — the formal GPS apparatus
+    # (research-exhaustiveness + gps-mentor gates + proof-conclusion) pushes a
+    # real full-GPS run well past 60 min; kenneth/elizabeth/teitje all hit the
+    # old 3600 cap mid-proof-conclusion (morris already overrode to 4800).
     inactivity_seconds: int = 600   # 10 min with NO SDK message at all (silence)
     # Abort (or, with resume_on_stall, resume) when the agent makes no PROGRESS
     # — no assistant text and no tool call/result — for this long, even while the
@@ -160,7 +178,11 @@ class FixtureCaps:
     # Voluntary-yield nudges allowed before an autonomous run is permitted to
     # end. The agent sometimes narrates the next step then stops mid-loop; a
     # Stop hook vetoes that, bounded by this cap. See should_continue_run().
-    max_continue_nudges: int = 5
+    # Generous by design: a full GPS proof yields after each of ~10+ sub-skill
+    # steps, so a stingy cap ends the loop before proof-conclusion. The
+    # no-progress check (see should_continue_run) is the real backstop against
+    # a genuinely idle agent; this cap only bounds the worst case.
+    max_continue_nudges: int = 20
 
 
 @dataclass
@@ -176,6 +198,12 @@ class Fixture:
     expected_findings: dict[str, Any]
     starting_research_path: Path
     starting_tree_path: Path
+    # Extra tools denied for THIS fixture's runs, beyond the universal
+    # BLOCKED_TREE_TOOLS — bare advertised names (e.g. "wiki_search").
+    # For fixtures whose ground truth derives from a source an MCP tool
+    # can surface directly (a wiki case-study article naming the answer).
+    # See e2e-test-spec.md §6.1 "Per-fixture blocked tools".
+    blocked_tools: frozenset = frozenset()
 
 
 def load_fixture(fixture_dir: Path) -> Fixture:
@@ -213,6 +241,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         expected_findings=expected,
         starting_research_path=fixture_dir / "starting-research.json",
         starting_tree_path=fixture_dir / "starting-tree.gedcomx.json",
+        blocked_tools=frozenset(fixture_json.get("blocked_tools") or ()),
     )
 
 
@@ -337,7 +366,14 @@ async def _run_agent(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
+    # mcp__-only, for the tool_calls budget cap. Distinct from activity_count
+    # below, which powers the no-progress stop check.
     tool_call_count = {"n": 0}
+    # Any-tool counter (Skill, Read, mcp__, …) for the no-progress check. A
+    # read-only sub-skill step (e.g. research-exhaustiveness deciding "not yet
+    # exhaustive" and writing nothing) is real progress, not a stuck agent —
+    # gating no-progress on mcp__-only calls false-killed runs mid-loop.
+    activity_count = {"n": 0}
     # Every denied attempt to read the answer off the live tree. A
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
@@ -348,7 +384,7 @@ async def _run_agent(
     # bounded by max_continue_nudges + a no-progress check (see
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
-    last_nudge_tool_count = {"n": -1}
+    last_nudge_activity_count = {"n": -1}
 
     run_started = time.monotonic()
 
@@ -379,6 +415,11 @@ async def _run_agent(
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
+        # Count EVERY tool the agent issues (Skill, Read, mcp__, …) toward the
+        # no-progress signal — invoking a sub-skill is progress even when that
+        # skill writes nothing. The mcp__-only budget cap is tool_call_count,
+        # incremented separately below.
+        activity_count["n"] += 1
         if not tool_name.startswith("mcp__"):
             return {}
 
@@ -388,7 +429,11 @@ async def _run_agent(
         bare = _bare_tool_name(tool_name)
         if is_blocked_tree_tool(tool_name):
             blocked_tree_reads.append(
-                {"tool": bare, "args": dict(input_data.get("tool_input") or {})}
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "tree",
+                }
             )
             transcript.append(
                 f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
@@ -404,6 +449,32 @@ async def _run_agent(
                         "tree would hand you the stripped answer for free. "
                         "Recover it through records instead (record_search, "
                         "record_read, fulltext_search, image_search, …)."
+                    ),
+                },
+            }
+        if is_fixture_blocked_tool(tool_name, fixture.blocked_tools):
+            blocked_tree_reads.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "fixture",
+                }
+            )
+            transcript.append(
+                f"\n**[BLOCKED]** `{bare}` denied — disabled by this fixture "
+                "(fixture.json `blocked_tools`).\n"
+            )
+            _emit(f"[blocked fixture tool] {bare}")
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"{bare} is disabled for this benchmark fixture: its "
+                        "ground truth derives from a source this tool can "
+                        "surface directly. Recover the answer through record "
+                        "research instead (record_search, record_read, "
+                        "fulltext_search, image_search, …)."
                     ),
                 },
             }
@@ -433,12 +504,12 @@ async def _run_agent(
             research=research,
             nudges_used=continue_nudges["n"],
             max_nudges=fixture.caps.max_continue_nudges,
-            tool_count=tool_call_count["n"],
-            tool_count_at_last_nudge=last_nudge_tool_count["n"],
+            tool_count=activity_count["n"],
+            tool_count_at_last_nudge=last_nudge_activity_count["n"],
         ):
             return {}
         continue_nudges["n"] += 1
-        last_nudge_tool_count["n"] = tool_call_count["n"]
+        last_nudge_activity_count["n"] = activity_count["n"]
         transcript.append(
             f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
             f"{fixture.caps.max_continue_nudges}: agent yielded before "
@@ -483,10 +554,28 @@ async def _run_agent(
         # re-discovery (17x in the spriggs run). Forcing tool search off loads
         # them once at session start. `env` MERGES onto the inherited environment
         # (claude_agent_sdk subprocess_cli merges os.environ, then options.env),
-        # so this adds the var without dropping ANTHROPIC_API_KEY/PATH.
-        env={"ENABLE_TOOL_SEARCH": "true"},
+        # so this adds the var without dropping PATH.
+        #
+        # env_for_sdk(resolve_auth()) routes the agent run to the operator's
+        # subscription when one is available (suppressing the ANTHROPIC_API_KEY
+        # that run_e2e.load_env_file pushed into os.environ for the judge), and
+        # falls back to injecting the key when there's no subscription. The
+        # judge keeps using the key from os.environ — only the agent subprocess
+        # env is overridden here.
+        env={"ENABLE_TOOL_SEARCH": "true", **env_for_sdk(resolve_auth())},
         model=fixture.agent_model,
         max_turns=fixture.caps.max_turns,
+        # The SDK's stdio transport defaults to a 1 MiB max_buffer_size for a
+        # single JSON message (claude_agent_sdk _DEFAULT_MAX_BUFFER_SIZE). A
+        # live image_read response (base64, ~1.33x the raw bytes) plus its
+        # JSON-RPC/MCP envelope can exceed that even when the tool's own
+        # 700KB inline-image guard (packages/engine/mcp-server/src/tools/
+        # image-read.ts MAX_INLINE_IMAGE_BYTES) has already passed the image
+        # through — observed killing this exact e2e run on a real FamilySearch
+        # death-certificate image (2026-07-08). Raised generously here since
+        # this is eval-harness-only config; it does not change production
+        # Cowork behavior or the tool's own inline-image ceiling.
+        max_buffer_size=10 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],
@@ -784,6 +873,14 @@ async def run_e2e_test(
                     final_tree=final_tree,
                     final_research=final_research,
                     model=fixture.judge_model,
+                )
+                # Deterministic §3.4.1 backstop: an `avoid` finding whose
+                # target is still in the final tree is forced to matched:
+                # "false" and the verdict recomputed (downgrade-only).
+                judge_output = judge_module.apply_avoid_guard(
+                    judge_output,
+                    expected_findings=fixture.expected_findings,
+                    final_tree=final_tree,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")
             except Exception as e:  # noqa: BLE001 — keep the run loggable

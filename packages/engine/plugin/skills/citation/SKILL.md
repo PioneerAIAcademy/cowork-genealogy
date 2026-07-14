@@ -1,9 +1,8 @@
 ---
 name: citation
 model: claude-sonnet-4-6
-description: Refines source citations to Evidence Explained standards. Updates
-  the citation and citation_detail fields on existing source entries in
-  research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
+description: Refines source citations to Evidence Explained standards. Updates citation
+  and citation_detail on existing source entries in research.json. GPS Step 2 — Complete and Accurate Source Citation. Use
   when the user says "cite this source", "fix citations", "format citation",
   "Evidence Explained", "improve citations", "who what when where", when
   source entries have rough working citations that need polishing, or to
@@ -13,7 +12,8 @@ description: Refines source citations to Evidence Explained standards. Updates
   to extract assertions from a record or add a newly found record as a
   source (use record-extraction — even if they also ask for the citation;
   the source entry must exist first), or asks whether information or an
-  informant is primary or secondary (use assertion-classification). Never
+  informant is primary or secondary (use record-extraction, which owns
+  evidence classification). Never
   creates source entries — only refines entries created by
   record-extraction.
 allowed-tools:
@@ -35,7 +35,7 @@ Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in 
 
 **Is the user asking to search for or find records?** → Say "That's a search task — please use search-records." Stop.
 
-**Is the user asking whether an informant or source is primary or secondary?** → Say "That's an evidence-quality question — please use assertion-classification." Stop.
+**Is the user asking whether an informant or source is primary or secondary?** → Say "That's an evidence-quality question — please use record-extraction, which owns evidence classification." Stop.
 
 **Otherwise** (user asks to refine/fix/format/improve a citation on an existing source, or to document a nil search result) → proceed.
 
@@ -58,7 +58,10 @@ record using only your citation? If not, the citation is incomplete.
 
 Every citation must address five elements. In `citation_detail` these
 map to six fields because **When** is split into `when_created` and
-`when_accessed` (both required for online sources):
+`when_accessed` (both required for online sources). **This table is
+internal reasoning scaffolding — use it to derive the six fields; never
+reproduce the table, or a per-field Who/What/When/Where/Wherein
+walkthrough, in your chat response.**
 
 | Element | Field | What to capture | Example |
 |---------|-------|----------------|---------|
@@ -208,15 +211,32 @@ beats a complete-looking citation with invented detail:
    when the research question is about a child in that household —
    swapping in the research subject creates a locator the index
    doesn't contain.
+8. **The informant never belongs in `who` or in the citation
+   string.** `who` is the record's creator; informant identity and
+   quality live in the source's `notes` (and evidence analysis is
+   record-extraction's job).
+9. **Repository/archive chains must come from the source's OWN entry
+   (or the record image).** Corroborating a repository from a
+   DIFFERENT source entry is an inference — rule 6's cross-referencing
+   covers record data (locators, family numbers, places), not custody
+   chains. Mention the inferred repository in `notes` or flag it
+   needs-verification; never write it into the citation as
+   established fact.
 
 ### Review path is read-only
 
 When a citation already meets Evidence Explained standards, confirm
-it and change nothing. Do not "enhance" a compliant citation with
-additional locators, reordered elements, or rephrasing. You may note
-what extra detail (page, sheet, line, image number) the user could
-capture from the record image, but only as a suggestion — never
-written into the fields.
+it and change nothing in the fields. Do not "enhance" a compliant
+citation with additional locators, reordered elements, or rephrasing.
+You may note what extra detail (page, sheet, line, image number) the
+user could capture from the record image, but only as a suggestion —
+never written into the fields.
+
+**Even on this no-change path, echo the compliant `citation` string and
+its `citation_detail` fields in your reply before stating it meets EE
+standards.** This path writes nothing to disk, so your chat response is
+the only place the citation appears — confirming "it's already compliant"
+without showing the citation leaves nothing to evaluate.
 
 ### 3. Format the citation string
 
@@ -224,7 +244,9 @@ Generate the `citation` field following Evidence Explained patterns.
 The citation is a single formatted string that encodes all five
 elements.
 
-**Template by source type:**
+**Template by source type:** These templates are internal reasoning
+scaffolding — use them to build the `citation` string; never reproduce a
+template (or its worked example) in your chat response.
 
 *Examples below show citation shape, not data — never copy a sample number,
 name, or date into a real citation (see Source fidelity rule 3).*
@@ -449,9 +471,23 @@ the genealogical-impossibility warnings the tool also returns.
 
 ### 7. Present results
 
-Show the user each refined citation with the formatted string and
-the structured citation_detail. Highlight any gaps that couldn't
-be filled (e.g., missing microfilm roll number, unknown creator).
+**OUTPUT ECONOMY (latency):** The refined `citation` and `citation_detail`
+are ALREADY persisted to `research.json` by Step 5. Wall-clock time is
+~linear in the tokens you generate (~16-20 ms/token, independent of model
+tier), so generating fewer tokens is the single biggest latency lever. In
+your FINAL chat response, do NOT re-explain each field in prose — no
+Who / What / When / Where / Wherein walkthrough — and do NOT reproduce the
+framework table or the per-source-type templates. Present, per refined
+source, ONLY:
+
+- the `src_` id and the final formatted `citation` string
+- the six-field `citation_detail` JSON block
+- one line per gap that couldn't be filled (e.g. missing microfilm roll
+  number, unknown creator), each with its ask-the-user-to-check-the-image
+  note
+
+That terse output is the whole presentation; the reasoning that produced
+it stays internal.
 
 ## Terminology guardrail
 
@@ -484,7 +520,7 @@ rebuilt to follow the Evidence Explained census pattern.
 | citation_detail fields contradict the citation string | The `citation_detail` fields are the structured truth; regenerate the `citation` string from them |
 | Source was accessed both online and in person | Cite the version you are working from. If the user viewed a digital image, cite the digital access path even if the original is in a courthouse |
 | Multiple informants on one record | This is an extraction/classification concern — do not address it here. Only note the primary creator in `who` |
-| User asks to classify or assess source quality | Redirect to assertion-classification. This skill formats citations, it does not evaluate evidence weight |
+| User asks to classify or assess source quality | Redirect to record-extraction (the classification owner). This skill formats citations, it does not evaluate evidence weight |
 | User calls a source "primary" or "secondary" | Apply the terminology guardrail below: correct gently, keep the citation and `source_classification` unchanged, and never write "primary source" into a citation string |
 
 ## Re-invocation behavior

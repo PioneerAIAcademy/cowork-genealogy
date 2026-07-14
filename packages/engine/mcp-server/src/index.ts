@@ -56,6 +56,8 @@ import { imageSearchTool } from "./tools/image-search.js";
 import type { ImageSearchInput } from "./types/image-search.js";
 import { personWarningsTool } from "./tools/person-warnings.js";
 import type { PersonWarningsInput } from "./types/person-warnings.js";
+import { personQualityTool } from "./tools/person-quality.js";
+import type { PersonQualityInput } from "./types/person-quality.js";
 import { mergeWarnings } from "./tools/merge-warnings.js";
 import type { MergeWarningsInput } from "./types/merge-warnings.js";
 import { volumeSearchTool } from "./tools/volume-search.js";
@@ -77,10 +79,17 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
+import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
 import {
   researchAppend,
   type ResearchAppendInput,
 } from "./tools/research-append.js";
+import { rankSearchMatches } from "./tools/rank-search-matches.js";
+import type { RankSearchMatchesInput } from "./types/rank-search-matches.js";
+import {
+  projectContext,
+  type ProjectContextInput,
+} from "./tools/project-context.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -521,6 +530,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
+  if (request.params.name === "person_quality") {
+    try {
+      const args = request.params.arguments as unknown as PersonQualityInput;
+      const result = await personQualityTool(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
   if (request.params.name === "merge_warnings") {
     try {
       const args = request.params.arguments as unknown as MergeWarningsInput;
@@ -591,10 +610,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
+  if (request.params.name === "tree_correct") {
+    try {
+      const args = request.params.arguments as unknown as TreeCorrectInput;
+      const result = await treeCorrect(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
   if (request.params.name === "research_append") {
     try {
       const args = request.params.arguments as unknown as ResearchAppendInput;
       const result = await researchAppend(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "rank_search_matches") {
+    try {
+      const args = request.params.arguments as unknown as RankSearchMatchesInput;
+      const result = await rankSearchMatches(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "project_context") {
+    try {
+      const args = request.params.arguments as unknown as ProjectContextInput;
+      const result = await projectContext(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

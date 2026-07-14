@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Morris Jenkins married Margaret Rees on 22 February 1842 at Saint Ishmael, Carmarthenshire, Wales.",
+      "details": {
+        "person1": {
+          "name": "Morris Jenkins"
+        },
+        "person2": {
+          "name": "Margaret Rees"
+        },
+        "relationship_type": "Couple",
+        "fact_type": "Marriage",
+        "date": "22 February 1842",
+        "place": "Saint Ishmael, Carmarthenshire, Wales"
+      },
+      "supporting_sources": [
+        "Wales, Carmarthenshire, Parish Registers, 1538-1912, FamilySearch, entry for Morris Jenkins and Margaret Rees, 22 Feb 1842.",
+        "England and Wales, Marriage Registration Index, 1837-1920, FamilySearch, entry for Morris Jenkins, 1842."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Morris Jenkins's wife was Margaret Rees, born 15 May 1821 in Saint Ishmael, Carmarthenshire, Wales.",
+      "details": {
+        "person": {
+          "name": "Margaret Rees",
+          "birth_date": "15 May 1821",
+          "birth_place": "Saint Ishmael, Carmarthenshire, Wales"
+        }
+      },
+      "supporting_sources": [
+        "Wales, Carmarthenshire, Parish Registers, 1538-1912, FamilySearch, entry for Morris Jenkins and Margaret Rees, 22 Feb 1842.",
+        "England and Wales, Census, 1851, FamilySearch, entry for Mooris Jenkins and Margaret Jenkins."
+      ],
+      "required": true
+    }
+  ]
+}

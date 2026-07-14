@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "William Hubert Ferber's wife was Emma Becker. Emma was born 25 March 1870 in Cincinnati, Hamilton County, Ohio, and later died 7 December 1948; her maiden surname was Becker. Recovering her requires establishing the marriage — the 1900 census and city directories show William living with a wife named Emma, but her maiden name Becker comes from the Hamilton County marriage record.",
+      "details": {
+        "subject_person": {
+          "name": "William Hubert Ferber"
+        },
+        "relation": "spouse",
+        "target_person": {
+          "name": "Emma Becker",
+          "birth": "25 March 1870, Cincinnati, Hamilton, Ohio"
+        }
+      },
+      "supporting_sources": [
+        "Ohio, County Marriages, 1789-2016, entry for Wm. H. Ferber and Emma Becker, 1890.",
+        "United States, Census, 1900, Cincinnati, Hamilton County, Ohio, listing William Ferber with wife Emma Ferber."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "William Hubert Ferber married Emma Becker in 1890 in Hamilton County, Ohio. The indexed marriage record and the 1900 census both give the year (1890) and the county (Hamilton, Ohio); the exact day, 10 September 1890, appears only on the original marriage-register image, so recovering the year and county is sufficient (the exact day is a bonus).",
+      "details": {
+        "subject_person": {
+          "name": "William Hubert Ferber"
+        },
+        "fact_type": "Marriage",
+        "date": "1890",
+        "place": "Hamilton, Ohio, United States"
+      },
+      "supporting_sources": [
+        "Ohio, County Marriages, 1789-2016, entry for Wm. H. Ferber and Emma Becker, married 1890, Hamilton County, Ohio (exact day 10 Sep 1890 on the original register image).",
+        "United States, Census, 1900, Cincinnati, Hamilton County, Ohio, giving marriage year 1890 for William and Emma Ferber."
+      ],
+      "required": true
+    }
+  ]
+}
