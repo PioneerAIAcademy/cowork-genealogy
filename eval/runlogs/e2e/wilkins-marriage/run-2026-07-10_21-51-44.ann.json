@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Spouse recovered as person I1 (Sarah Miller) and linked to Elijah via a Couple relationship, corroborated across the marriage index, three censuses, and three children's death certificates.",
+    "f2": "Marriage recovered as December 1834, Kentucky — matches the finding as relaxed to state level (the Kentucky marriage index gives month/year and state; Muhlenberg County is inferable from the censuses and is a bonus). The couple relationship is in the tree and the proof summary states the December 1834 date; the agent did not additionally encode a structured Marriage fact on the relationship, but the date and marriage are established."
+  },
+  "annotator": "ernest"
+}

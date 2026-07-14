@@ -33,11 +33,53 @@ allowed-tools:
 
 **Read `references/gps-proof-writing.md` before writing any conclusion.** It contains GPS standards, proof-conclusion form selection tests, writing standards, and phrasing guidance this skill depends on.
 
-## Preconditions
+## Preconditions — mandatory, mechanical gate (run before Step 1)
 
-Before writing, verify: assertions exist for the question (extracted, classified); person_evidence links them to persons; related conflicts are resolved or acknowledged. If not, tell the user what is missing and recommend the appropriate skill — do not write a conclusion with unclassified or unlinked evidence.
+Run this check before touching Step 1, and show your work. A direct user
+request — "write the conclusion", "move toward proof", "conclude this now" —
+names the destination, not permission to skip the stops on the way there.
+This gate runs regardless of how proof-conclusion was invoked.
 
-If research is **not declared exhaustive**, you may still write at `probable` or `possible` tier. State the research is ongoing and what additional evidence is needed.
+1. Collect every assertion linked to the question via `extracted_for_question_ids`.
+2. **Classification (hard block, all assertions).** For each assertion,
+   confirm `information_quality` and `evidence_type` carry a real, reasoned
+   value (with matching `informant` / `informant_proximity` analysis) — not
+   still carrying record-extraction's best-effort default. If you cannot
+   confirm `assertion-classification` has run on an assertion, treat it as
+   unclassified. List any assertion IDs that fail this check. Classification
+   grounds the tier, so this applies to every assertion tied to the question.
+3. **person_evidence (hard block scoped to person identity).**
+   `person_evidence` is identity resolution — it defeats the unsound
+   assumption that a record is about your person. The hard block is therefore
+   on *identity*, not on every fact. Confirm that **each person the conclusion
+   depends on** — the subject and every candidate parent/relative — is
+   identified by **at least one** linked assertion (a name/identity assertion
+   carrying a `person_evidence` link). List any such person that has **no**
+   linked identity assertion.
+   Unlinked *fact* and *negative* assertions (a birth year, a co-residence, an
+   "unknown father") that pertain to a person already identified above are
+   **advisory, not blockers** — their person is already resolved, and GPS
+   requires them to be analyzed in the narrative, not separately linked. Note
+   any unlinked fact/negative IDs as advisory and proceed.
+4. **Conflicts (hard block).** For each conflict touching this question's
+   assertions, confirm it is `resolved` or carries an explicit
+   acknowledgment. List any conflict IDs that fail this check.
+
+**If step 2 produces failing IDs, step 3 leaves any relied-upon *person*
+without a linked identity assertion, or step 4 produces failing IDs: stop.
+Do not proceed to Step 1.**
+Report the exact failing IDs to the user and recommend the specific skill
+for each gap (`assertion-classification`, `person-evidence`, or
+`conflict-resolution`). In `--autonomous` mode, route to the missing skill
+automatically instead of asking — autonomous mode changes who decides, not
+whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
+do **not** stop the gate — surface them as a note and continue.
+
+Only when the blocking checks pass, proceed to Step 1.
+
+If research is **not declared exhaustive**, you may still write at
+`probable` or `possible` tier — but the checks above still apply
+regardless of exhaustiveness tier.
 
 ## Steps
 

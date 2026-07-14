@@ -1,0 +1,22 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_013",
+    "skill": "research-exhaustiveness",
+    "name": "Precondition proceeds past corroborating-only unlinked assertions",
+    "type": "positive",
+    "description": "Regression test for the narrowed Step-0 precondition. In flynn-exhaustive-ready the parentage-relevant assertions are person_evidence-linked (co-residence a_004/a_010, father-named a_013), while several detail assertions (ages a_002/a_007/a_009, birthplace a_003, death a_011, birth-year a_012) are unlinked but only corroborate facts already carried by linked assertions. All plan items for q_001 are completed, the birthplace conflict is resolved, and three independent sources confirm Thomas Flynn. The narrowed precondition must NOT stop on the unlinked corroborating assertions; it should proceed to evaluate and declare q_001 exhaustive.",
+    "tags": ["research-exhaustiveness", "affirmative-declaration", "stop-criteria", "precondition-gate", "expect-declaration"]
+  },
+  "input": {
+    "user_message": "All planned searches for q_001 are complete. Three independent sources confirm Thomas Flynn as father: 1850 census co-enumeration, 1860 census co-enumeration, and the death certificate naming Thomas directly. The probate search returned negative (log_006). The birthplace conflict (c_001) is resolved. Overturn risk is low — no unsearched record type is likely to name a different father. Please evaluate whether research on q_001 is reasonably exhaustive and, if so, record the declaration: set exhaustive_declaration.declared to true, set status to exhaustive_declared, fill in all seven stop_criteria assessments, and validate the schema.",
+    "scenario": "flynn-exhaustive-ready"
+  },
+  "mcp_fixtures": ["validate-research-schema"],
+  "judge_context": [
+    "This test targets the Step-0 precondition specifically. The parentage-relevant assertions are person_evidence-linked (co-residence a_004/a_010, father-named a_013), while the unlinked assertions (ages a_002/a_007/a_009, birthplace a_003, death a_011, birth-year a_012) only corroborate facts already carried by linked assertions. The correct behavior is to treat them as advisory and PROCEED to evaluate exhaustiveness — NOT to halt at the precondition and defer to person-evidence.",
+    "Claude should update research.json to set q_001.exhaustive_declaration.declared to true and q_001.status to 'exhaustive_declared' via research_append. Verify the write via the file_changes / after-state, not the chat text.",
+    "The exhaustive_declaration.stop_criteria object must contain all seven keys: goal_alignment, repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, overturn_risk — each a 1-2 sentence assessment grounded in the scenario's log entries and assertions. log_entry_ids must reference the supporting log entries.",
+    "It is acceptable to note the unlinked corroborating assertions as an advisory, but that note must not prevent the declaration. A refusal to declare that cites the unlinked assertions as the blocker is a FAIL for this test.",
+    "The question is specifically about the FATHER; three converging sources answer it. The 1870/1880/1900 censuses and other record types are unsearched, but overturn risk is low — exhaustive does not mean exhausting every record type."
+  ]
+}
