@@ -200,7 +200,10 @@ the offending field — do not blindly retry the same payload.
   conclusion?
 - **Named decisive records gate the declaration.** If a record type
   directly answers this question type (parentage: the subject's death
-  record, baptism, or a parent's probate; marriage: the marriage
+  record, baptism, or a parent's probate — plus the subject's own
+  marriage record when the parentage claim rests on a surname assumed
+  from the tree or from indirect evidence like census co-residence,
+  without independent corroboration; marriage: the marriage
   record) — or the draft conclusion itself names a record as
   tier-advancing — do not declare until that record has been searched
   or the declaration explicitly justifies why it is inaccessible. A
