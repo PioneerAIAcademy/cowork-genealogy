@@ -1,0 +1,31 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Ellen", "surname": "Doyle", "type": "MarriedName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1868", "place": "Iowa, United States" },
+        { "id": "F2", "type": "Marriage", "date": "1889-06-12", "place": "Dubuque, Dubuque County, Iowa, United States" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Michael", "surname": "Doyle", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F3", "type": "Birth", "date": "~1865", "place": "Iowa, United States" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "Couple", "person1": "I2", "person2": "I1" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "Dubuque County, Iowa marriage certificate — Michael Doyle and Ellen, 1889" }
+  ]
+}

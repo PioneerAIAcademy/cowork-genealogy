@@ -1,0 +1,21 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_015",
+    "skill": "proof-conclusion",
+    "name": "Narrative citations are copied verbatim from research.json, not paraphrased",
+    "type": "positive",
+    "description": "DRAFT. Guards the new 'citations must be copied directly from research.json' rule. In bride-surname-illegible-cert-declared, src_001 carries a specific stored citation. When the skill writes the proof narrative, its footnote/inline citation for the 1889 marriage record must reproduce the stored src_001.citation verbatim — not a recalled or paraphrased collection/repository/URL.",
+    "tags": ["proof-conclusion", "verbatim-citation", "citation-fidelity", "regression"]
+  },
+  "input": {
+    "user_message": "Exhaustiveness is declared for q_001 — write the proof conclusion, with full citations.",
+    "scenario": "bride-surname-illegible-cert-declared"
+  },
+  "judge_context": [
+    "The proof narrative's citation for the marriage record must match the stored src_001.citation verbatim: \"Dubuque County, Iowa, marriage certificate, Michael Doyle and Ellen [surname illegible], 12 June 1889; Dubuque County Recorder, digital image, FamilySearch.\"",
+    "PASS: the citation reproduces the stored text — same repository (Dubuque County Recorder / FamilySearch), same record description, same date. Trivial formatting (punctuation, footnote numbering) does not matter.",
+    "FAIL: the citation is paraphrased or invented — a different repository or collection name, a fabricated URL or volume/page, or a recalled generic citation that differs materially from the stored src_001.citation. A citation that sends a reader to a different place than research.json records is a citation error.",
+    "The judge should compare the narrative citation against the src_001.citation field in the run's final research.json, not against its own knowledge of how the record 'should' be cited.",
+    "Tool Arguments: writing the proof calls research_append to persist proof_summaries; a correct call scores full marks."
+  ]
+}
