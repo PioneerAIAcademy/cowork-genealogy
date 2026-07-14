@@ -17,5 +17,9 @@
     "PASS REQUIRES: the narrative must name at least one untried alternative record type that could independently establish the maiden surname — e.g. the 1880 premarital US census, an Iowa birth/baptism record, or a death/obituary — and frame it as an unsearched avenue (a research-completeness gap), not as an unavailable source.",
     "A conclusion that declares the maiden surname unresolvable/unobtainable while an obvious alternative record type was never searched is a FAIL, even if the tier is otherwise honest.",
     "Tool Arguments: writing the proof normally calls research_append to persist the proof_summaries entry; a correct research_append call scores full marks. If the skill declines to write pending the gap, no tool call is fine (N/A)."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
 }

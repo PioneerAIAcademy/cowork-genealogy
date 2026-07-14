@@ -17,5 +17,9 @@
     "FAIL: the citation is paraphrased or invented — a different repository or collection name, a fabricated URL or volume/page, or a recalled generic citation that differs materially from the stored src_001.citation. A citation that sends a reader to a different place than research.json records is a citation error.",
     "The judge should compare the narrative citation against the src_001.citation field in the run's final research.json, not against its own knowledge of how the record 'should' be cited.",
     "Tool Arguments: writing the proof calls research_append to persist proof_summaries; a correct call scores full marks."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
 }
