@@ -308,16 +308,40 @@ def normalize_tree(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     dropped: Counter = Counter()
     persons_in, rels_in = raw.get("persons") or [], raw.get("relationships") or []
 
+    # Person and relationship ids must be globally unique — `strip` refuses on a
+    # global duplicate (an ambiguous selector), so warn to match.
     for kind, id_list in (
         ("person", [str(p.get("id")) for p in persons_in if isinstance(p, dict) and p.get("id")]),
         ("relationship", [str(r.get("id")) for r in rels_in if isinstance(r, dict) and r.get("id")]),
-        ("fact", [str(f.get("id")) for f in _all_facts(raw) if isinstance(f, dict) and f.get("id")]),
     ):
         for dup, n in sorted(Counter(id_list).items()):
             if n > 1:
                 warnings.append(
                     f"duplicate {kind} id {dup!r} appears {n} times — ids must be "
                     f"unique, and strip will refuse this tree until they are"
+                )
+    # Fact ids only need to be unique WITHIN a holder — that is all `strip`
+    # (cmd_strip's dup check) and `tree_integrity_errors` enforce. FamilySearch
+    # legitimately reuses one conclusion GUID across different persons in a
+    # relatives-expansion (e.g. the same Birth-fact id on a subject and both
+    # parents); that is harmless — each holder's `--facts <owner>:<id>` selector
+    # stays unambiguous — so a global scan here wrongly told authors strip would
+    # refuse and pushed them to over-strip. Scope the check to the holder.
+    for holder in (*persons_in, *rels_in):
+        if not isinstance(holder, dict):
+            continue
+        hid = str(holder.get("id", "?"))
+        fact_ids = [
+            str(f.get("id"))
+            for f in holder.get("facts") or []
+            if isinstance(f, dict) and f.get("id")
+        ]
+        for dup, n in sorted(Counter(fact_ids).items()):
+            if n > 1:
+                warnings.append(
+                    f"duplicate fact id {dup!r} appears {n} times on {hid} — a "
+                    f"holder's fact ids must be unique, and strip will refuse "
+                    f"this tree until they are"
                 )
     name_ids = _backfill_ids("N", _ids_in(n for p in persons_in for n in p.get("names") or []))
     fact_ids = _backfill_ids("F", _ids_in(_all_facts(raw)))

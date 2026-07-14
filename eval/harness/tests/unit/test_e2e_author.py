@@ -102,6 +102,41 @@ def test_a_synthesized_id_steps_over_one_the_tree_already_uses():
     assert [f["id"] for f in tree["persons"][0]["facts"]] == ["F1", "F2", "F3"]
 
 
+def test_a_fact_id_shared_across_two_persons_is_not_flagged():
+    # FamilySearch's relatives-expansion reuses one conclusion GUID across
+    # different persons (e.g. the same Birth-fact id on a subject and a parent).
+    # That is harmless — each holder's `--facts <owner>:<id>` selector stays
+    # unambiguous — so normalize_tree must NOT warn, and must not tell the
+    # author strip will refuse (which pushed authors to over-strip).
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False, facts=[{"id": "SHARED", "type": "Birth"}]),
+            {"id": "P2", "gender": "Female", "living": False,
+             "names": [{"id": "N2", "given": "Jane", "surname": "Doe"}],
+             "facts": [{"id": "SHARED", "type": "Birth"}]},
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert not any("duplicate fact id" in w for w in warnings), warnings
+
+
+def test_a_fact_id_repeated_within_one_holder_warns():
+    # Per-holder duplication IS what `strip` refuses — its selector would delete
+    # both facts and log one — so normalize_tree warns to match.
+    raw = {
+        "persons": [
+            _person("P1", "John", "Smith", living=False,
+                    facts=[{"id": "DUP", "type": "Birth"}, {"id": "DUP", "type": "Death"}]),
+        ],
+        "relationships": [],
+        "sources": [],
+    }
+    _, warnings = normalize_tree(raw)
+    assert any("duplicate fact id 'DUP'" in w and "on P1" in w for w in warnings), warnings
+
+
 def test_source_references_resolve_against_the_trees_source_ids(tree):
     birth = tree["persons"][0]["facts"][0]
     assert birth["sources"] == [{"ref": CENSUS_SOURCE, "page": "dwelling 84"}]
