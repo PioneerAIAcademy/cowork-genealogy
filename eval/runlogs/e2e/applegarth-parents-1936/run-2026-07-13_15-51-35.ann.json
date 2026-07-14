@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Name/relationship recovered; birth only state-level (Nebraska, no Oshkosh/Garden County) and death entirely absent from tree, but graded true on identity + relationship recovery.",
+    "f2": "Name/relationship recovered; birth only state-level (Utah, no Kaysville/Davis County) and death entirely absent from tree, but graded true on identity + relationship recovery."
+  }
+}
