@@ -9,7 +9,18 @@ Tillamook, Oregon.
 
 ## Research question
 
-> Benny Raphael Taylor's (KNJ1-TRX) tree already records his 1945 marriage to Hildagard Duclos. Did he marry again later, and if so, to whom?
+> How many times did Benny Raphael Taylor marry, and who was each wife? Benny was born 19 July 1921 in McCammon, Bannock, Idaho; resided in Garibaldi, Tillamook, Oregon from the 1930s into the 1970s; and died 9 July 1991 in Tillamook, Oregon.
+
+The question is deliberately **identity-anchored** (birth, residence-span, death)
+and open-ended ("how many / who") so the agent researches broadly rather than
+looking up a single named gap. The **graded** finding is unchanged: recovery of
+the record-only 1962 marriage to Rosemarie Graham (see below). The count framing
+also surfaces the two in-tree marriages — Hildagard (1945, sound) and Jolene
+(1941, a phantom edge no record supports) — but those are **not graded** here:
+Hildagard is already in the tree, and the Jolene phantom cannot be graded as a
+negative finding in a record-hint fixture (the avoid-guard is role-blind and the
+claim is pre-asserted in the tree). Treat any "2 vs 3 wives" count the agent
+reports as flavor, not a pass/fail criterion.
 
 ## What was removed from the starting tree
 
