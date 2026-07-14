@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Emma Becker recovered as person I5 and linked to William (I1) via a Couple relationship, from the 1890 Ohio county marriage index corroborated by the 1900 census household.",
+    "f2": "Marriage recovered to year (1890) and county (Hamilton, Ohio) — matches the finding as relaxed. Exact day (10 Sep 1890) not captured because the original register image was pursued but returned NOT READ; year+county is the recoverable target."
+  },
+  "annotator": "ernest"
+}
