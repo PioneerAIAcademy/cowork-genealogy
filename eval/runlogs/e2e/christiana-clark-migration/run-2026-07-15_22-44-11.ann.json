@@ -1,0 +1,12 @@
+{
+  "annotator": "francis",
+  "per_finding": {
+    "f1": "partial",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Big improvement over the prior run (fail): the agent searched the destination-kin cluster and found sons William/Joseph/Samuel Clark in Green County, WI (1840/1850 censuses) and two 1847 BLM Tract Book land entries for a 'Christiana Clark' in Wisconsin Territory. That is genuine partial recovery of the migration (the family, and a tentative land entry for her, placed in WI). But the bottom-line conclusion still hedged AGAINST her personal residence ('probably did not permanently reside in Green County'), over-weighting her absence from the 1850 Green County census — she died ~1848, before that census, so her absence is expected, not evidence. It also never found the linchpin record (a son's 1854 Monroe marriage naming his mother Christina).",
+    "f2": "Not recovered: tree still carries no Wisconsin death; the agent retained the Ohio burial/death and did not conclude the 27 Dec 1848 Monroe, WI death."
+  }
+}

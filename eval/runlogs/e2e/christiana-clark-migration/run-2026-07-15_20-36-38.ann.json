@@ -1,0 +1,12 @@
+{
+  "annotator": "francis",
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Not recovered — the agent concluded the OPPOSITE ('did not migrate') and wrote an Ohio death/burial (1849 Coshocton) into the tree. It never searched the destination kin cluster (sons Joseph/William in Green County, WI), never found the 1854 Monroe marriage or the 1847 BLM land entry, searched for her in the 1840 WI census (wrong year — she moved ~1846), and treated that nil plus the Find A Grave Ohio-burial misdirection as proof of non-migration.",
+    "f2": "Wrong: tree Death = 1849 Coshocton, Ohio, vs the expected 27 Dec 1848 Monroe, Green, Wisconsin. Consistent with the false non-migration conclusion."
+  }
+}
