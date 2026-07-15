@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "No marriage fact anywhere in the tree: the Couple relationship (rel-anders-unna) has an empty facts array, and neither person carries a Marriage fact -- only 1801 Residence facts (Manger, Hordaland) were added from census evidence. The marriage date/place were not recovered.",
+    "f2": "Tree sources are limited to christening, death/burial, baptism, and 1801-census entries -- no 'Norway, Marriages, 1660-1926' collection entry. The agent's own proof summary (ps_001, tier not_proved) states plainly that six query variants against that collection returned no match."
+  },
+  "annotator": "EdmondOware"
+}

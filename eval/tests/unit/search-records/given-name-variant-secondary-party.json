@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_search_records_021",
+    "skill": "search-records",
+    "name": "Retry a secondary party's given name with a spelling variant, not just query-structure changes",
+    "type": "positive",
+    "description": "Modeled on the real anders-monsen-ancestry e2e fixture: an exact-spelling search for the bride's given name ('Unna') returns zero results because the actual index entry is transcribed 'Urna'. The skill must retry with a given-name spelling variant on the secondary party — not just reshuffle which field holds which value (swap principal/spouse roles, drop surname, drop place) while re-typing the same spelling every time. Two live e2e runs against this exact record missed it by doing only the latter.",
+    "tags": ["search", "marriage", "name-variation", "given-name", "norway", "secondary-party", "regression"]
+  },
+
+  "input": {
+    "user_message": "Execute plan item pli_001 — search FamilySearch collection 1468080 ('Norway, Marriages, 1660-1926') for the marriage of Unna Halsteinsdatter (KZHH-VTX, b. May 1745, Hestdal, Meland, Hordaland), using her as the search principal.",
+    "scenario": "anders-unna-marriage-search",
+    "scenario_notes": null
+  },
+
+  "mcp_fixtures": [
+    "record-search-unna-exact-zero-results",
+    "record-search-urna-variant-marriage-match",
+    "rank-search-matches-anders-unna-marriage"
+  ],
+
+  "judge_context": [
+    "Ground truth: the marriage record exists in collection 1468080 and is indexed as bride 'Urna Halsteinsdr' (a transcription variant of 'Unna Halsteinsdatter'), groom 'Anders Monsen', 25 Jun 1786, Hamre, Hordaland, Norway.",
+    "The fixture 'record-search-unna-exact-zero-results' fires only when givenName is exactly 'Unna' — it always returns zero results, no matter how surname/place/collection filters are varied. The fixture 'record-search-urna-variant-marriage-match' fires on any other givenName against the same collection and returns the positive match. This means the ONLY way to recover the record is to change the spelling of the given name itself (e.g. Unna -> Urna, Udna, Una, Anna) — reshuffling which parameter holds 'Unna', dropping the surname, or dropping the place filter will keep re-triggering the zero-result fixture.",
+    "CRITICAL for Correctness: score 1 if the skill concludes a negative result (or escalates to another repository/record type) after only varying query structure — e.g. swapping which party is 'spouseGivenName' vs. principal, dropping surname, or dropping place — while every record_search call still uses the exact string 'Unna' for the bride's given name. This is precisely the failure mode from two real live runs against this fixture (see docs/plan git history for PR #565 and the anders-monsen-ancestry e2e fixture's README 'What the live runs revealed').",
+    "Score 3 if the skill retries with at least one record_search call whose givenName is a letter-level spelling variant of 'Unna' (Urna, Udna, Una, Anna, etc.) after the first exact-spelling call returns zero results, and recovers the positive match. Score 2 if it eventually stumbles onto the positive match (e.g. by dropping the givenName filter entirely and eyeballing unfiltered results) without ever deliberately trying a spelling variant — this technically recovers the record but doesn't demonstrate the corrected behavior.",
+    "Tool Arguments: expect at least two record_search calls against collectionId '1468080' — one with givenName 'Unna' (zero results) and at least one with a different givenName spelling (positive) — followed by rank_search_matches with subjectId 'LKFW-9XH' and checkAttachments: true.",
+    "Log quality: research_log_append entries should record both the negative (exact-spelling) and positive (variant-spelling) queries as distinct log entries — not overwrite or omit the negative one.",
+    "It is acceptable for the skill to also try a query-structure change (e.g. searching under the groom's name, or without a place filter) as one of its attempts — that is good practice. What must NOT happen is stopping after query-structure changes alone, without ever touching the letters of the given name."
+  ]
+}
