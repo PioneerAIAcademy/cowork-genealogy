@@ -217,8 +217,12 @@ Resolution requires:
 4. Providing a plausible explanation for why the incorrect version
    exists (faulty memory, transcription error, informant motive, etc.)
 
-If you cannot complete all four steps for every conflict, the tier
-stays at Probable or below.
+If you cannot complete all four steps for a conflict, the tier stays
+at Probable or below — and if the unresolved conflict **disputes the
+proposed answer itself** (not a collateral detail), the tier is capped
+at **Possible**, below the `probable` tree-write threshold, so a
+disputed conclusion is not encoded in the tree until the conflict is
+resolved.
 
 ## Features Common to All Proof Conclusions
 

@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_hole_parents_negative",
+    "objective": "Who were the parents of Christian Peter Hole?",
+    "subject_person_ids": ["KD96-TV2"],
+    "status": "active",
+    "created": "2026-07-09",
+    "updated": "2026-07-09"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the 1875 census 'Anders Pedersen' (CP1) vs subject Anders Hansen (I1). Given name, age (~1868), and place (Ringsaker) all align, so the tool returns a high score — but the record's patronymic 'Pedersen' (son of Peder) conflicts with the subject's established 'Hansen' (son of Hans). The high score must NOT auto-link past the patronymic mismatch (person-evidence patronymic-conflict case). Matched on any primaryId pair.",
+  "args": {
+    "primaryId1": "~",
+    "primaryId2": "~"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 7,
+    "score": 0.82,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:ANDERS-HANSEN-I1",
+    "apiTitle": "Matches for ark:/61903/1:1:NCR7-AND",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}
