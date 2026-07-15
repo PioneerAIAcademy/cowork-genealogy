@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_person_evidence_020",
+    "skill": "person-evidence",
+    "name": "A patronymic mismatch is a core-identifier conflict that caps confidence and must be recorded, not rationalized",
+    "type": "positive",
+    "description": "Link assertion a_001/a_002 (record_persona_id CP1) — an 1875 Norway census entry for 'Anders Pedersen', age 7 (~1868), Ringsaker — to the tree. The subject Anders Hansen (I1) is established as the son of Hans Olsen (patronymic Hansen). same_person returns a high score (0.82) because given name, age, and place all align. But the record's patronymic is 'Pedersen' (son of Peder), which conflicts with the subject's 'Hansen' (son of Hans): in a patronymic naming system a differing patronymic names a DIFFERENT father, so it is a core-identifier conflict, not a spelling variant. person-evidence must NOT create a confident/probable link — confidence is capped at speculative, the patronymic mismatch is surfaced explicitly and recorded (not rationalized as a variant), and the user is asked. Guards the patronymic-mismatch core-identifier-conflict rule.",
+    "tags": [
+      "person-evidence",
+      "same-person",
+      "patronymic",
+      "core-identifier-conflict",
+      "score-conflict",
+      "safety"
+    ]
+  },
+  "input": {
+    "user_message": "Link assertion a_001 — the 1875 census 'Anders Pedersen' record — to the right person in the tree.",
+    "scenario": "norwegian-patronymic-conflict-link"
+  },
+  "mcp_fixtures": [
+    "same-person-patronymic-conflict"
+  ],
+  "judge_context": [
+    "same_person returns a high score (0.82) driven by the aligning given name, age (~1868), and place (Ringsaker) — but the record's patronymic 'Pedersen' conflicts with the subject's established 'Hansen'. In a patronymic naming system this is a core-identifier conflict (a different father: son of Peder vs son of Hans), NOT a spelling variant.",
+    "person-evidence must NOT create a `confident` or `probable` person_evidence entry linking a_001/CP1 to I1 — the qualitative patronymic conflict caps confidence regardless of the 0.82 score; the link, if any, is `speculative` and the user is asked (or it is flagged needs-review).",
+    "The rationale must surface the Pedersen-vs-Hansen patronymic mismatch EXPLICITLY as the reason, and must record it as a conflict rather than rationalizing it away (e.g. must NOT treat 'Pedersen' as a spelling/variant of 'Hansen' or wave it off because the given name and age match).",
+    "Treating the high score as decisive and creating a confident link past the patronymic conflict is a FAIL. Recognizing the mismatch and declining the confident link is the complete, correct response — do not require the skill to resolve the identity.",
+    "Tool Arguments: score 3 if same_person was called with the two primary ids (subject and candidate persona). If no other tool is needed, that is sufficient."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

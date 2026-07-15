@@ -1,0 +1,67 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Anders",
+          "surname": "Hansen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1868",
+          "place": "Ringsaker, Hedmark, Norway"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Hans",
+          "surname": "Olsen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "page": "1868 Ringsaker christening",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Norway, Church Books, 1815-1930 — Ringsaker christening of Anders, son of Hans Olsen",
+      "author": "Ringsaker parish"
+    },
+    {
+      "id": "S2",
+      "title": "1875 Norway Census",
+      "author": "Statistics Norway"
+    }
+  ]
+}

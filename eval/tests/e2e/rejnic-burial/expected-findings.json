@@ -1,0 +1,18 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Maria Rejnic (married name Mary Rejnic Kraynak) was buried in Kennedy Township, Allegheny County, Pennsylvania. Her death was in Pittsburgh (Allegheny County) on 18 June 1967; the burial place comes from her Find a Grave memorial.",
+      "details": {
+        "subject_person": { "name": "Maria Rejnic" },
+        "fact_type": "Burial",
+        "place": "Kennedy Township, Allegheny, Pennsylvania, United States"
+      },
+      "supporting_sources": [
+        "Find a Grave Index — memorial for Mary Rejnic Kraynak, burial in Kennedy Township, Allegheny County, Pennsylvania."
+      ],
+      "required": true
+    }
+  ]
+}
