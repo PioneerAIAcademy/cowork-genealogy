@@ -146,6 +146,8 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 **Always keep givenName in variant searches.** Do not drop to a surname-only query — it broadens results to all persons of that surname and makes triage impossible. Keep both surname and givenName on every retry; change the spelling of one or both.
 
+**Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname is a patronymic that changes every generation (-sen/-datter, -son/-dotter) or a farm/emigrant name adopted later — it is the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
+
 ### 3. Execute the search
 
 Call `record_search` with the constructed params plus `projectPath` (the absolute path of the project directory) and **`count: 50`**. Passing `projectPath` stages the raw results host-side, returns a `staged.resultsRef` handle (pass it to `rank_search_matches` in Step 4 **and** `research_log_append` in Step 5), and returns the inline results as **compact stubs** — the bulk per-result GedcomX lives in the staged file (so a large result set can't overflow; no flag needed). `count: 50` fetches a deep-enough pool for the match re-ranker.

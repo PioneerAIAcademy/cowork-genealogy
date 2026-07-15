@@ -31,7 +31,7 @@ and expect a specific record.
 | Drop given name | Clear `q.givenName`; keep `q.surname` + place + date | Given name indexed as initials, nickname, "Infant," or in another language |
 | Drop both names | Use only place + date + `q.sex` + relationship params | Both names corrupted; only structural clues stable |
 | Search by spouse | Swap principal and spouse: put spouse in `q.givenName/surname`, subject in `q.spouseGivenName/spouseSurname` | Subject's name is common; spouse's is unique |
-| Search by parent | Clear principal name; fill `q.fatherGivenName/Surname` and/or `q.motherGivenName/Surname` | Looking for sibling sets; principal may have been "Baby" or stillborn |
+| Search by parent | Clear principal name; fill `q.fatherGivenName/Surname` and/or `q.motherGivenName/Surname` | Looking for sibling sets; principal may have been "Baby" or stillborn; **or the subject's own vital record nils by name — re-anchor on the parent's given name + exact dates before pivoting to indirect evidence** |
 | Search by child | Search child as principal with parent name set to subject | Subject's own records scarce; child's are abundant |
 | Wildcard surname | `q.surname=Sm*th` or `q.surname=*tnam` | Foreign transliteration, indexing errors, married-name variants |
 | Wildcard given name | `q.givenName=Joh*` or `q.givenName=Eli?abeth` | Diminutives, abbreviations, ambiguous handwriting |
@@ -80,14 +80,14 @@ When a search returns 0 hits with reasonable inputs, try in this order:
 
 1. Broaden year range to ±10
 2. **If the place's boundaries changed since the event, search the historical jurisdiction first, then the present-day one.** Records are usually filed under the boundary that governed the place at the event date — but FamilySearch sometimes indexes the collection under the modern country instead (e.g. Hungary→Slovakia), so retry `recordCountry` as the present-day country when the historical one returns nil. Try both early; it is a common, silent cause of nil on Central/Eastern-European searches.
-3. Drop given name (surname + place + date)
-4. Drop surname (given name + place + date + relationships)
-5. Wildcard the surname
-6. Wildcard the given name
-7. Switch event type to Any
-8. Broaden place by one jurisdiction level
-9. Drop place entirely
-10. Switch from principal to spouse / parent / child
+3. **Broaden the place by one jurisdiction level (parish → county → state) — early, before touching names.** Many parishes are indexed only at the county level (especially Scandinavian parishes: e.g. Ringebu is indexed under its county "Oppland"), so an exact-parish search returns nil even when the record exists. Broadening the place is cheaper and higher-yield than burning name variants.
+4. **Re-anchor on a known relative (spouse / parent / child) — before dropping or wildcarding the subject's name.** If the subject's own record nils but you have a relative's name plus exact dates from another record, search by the relative: fill `q.fatherGivenName`/`q.motherGivenName` (or `q.spouseGivenName`), or search a child as principal with the subject as parent. This is often the *primary* recovery move for emigrant-origin cases, where the subject's own record is indexed under names you can't guess.
+5. Drop given name (surname + place + date)
+6. Drop surname (given name + place + date + relationships)
+7. Wildcard the surname
+8. Wildcard the given name
+9. Switch event type to Any
+10. Drop place entirely
 11. Search by neighbor or FAN-club member
 
 **Still 0 hits across all variations:** the records may be unindexed.
