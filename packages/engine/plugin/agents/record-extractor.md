@@ -16,15 +16,19 @@ description: >-
   citations.
 model: claude-sonnet-5
 tools:
-  - mcp__genealogy__project_context
-  - mcp__genealogy__record_read
-  - mcp__genealogy__place_search
-  - mcp__genealogy__place_search_all
-  - mcp__genealogy__research_append
-  - mcp__genealogy__research_log_append
-  - mcp__genealogy__tree_edit
-  - mcp__genealogy__record_person_matches
-  - mcp__genealogy__record_record_matches
+  # Bare tool names, NOT mcp__genealogy__-prefixed — the server mount name
+  # differs by host (Cowork installs the .mcpb under manifest.json's name,
+  # "genealogy-mcp", not "genealogy"), so hardcoded prefixes grant nothing
+  # there. Bare names resolve everywhere; same convention as gps-mentor.
+  - project_context
+  - record_read
+  - place_search
+  - place_search_all
+  - research_append
+  - research_log_append
+  - tree_edit
+  - record_person_matches
+  - record_record_matches
 ---
 
 # Record Extractor
@@ -433,7 +437,9 @@ writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
 net. If a persistence tool shows as deferred, load it via ToolSearch with
-the fully-qualified name (`mcp__genealogy__research_append`) first.
+the bare tool name as the query (e.g. `research_append`) first — not a
+`mcp__genealogy__…`-qualified name, which only resolves on hosts that
+mount the server as `genealogy` (Cowork mounts it as `genealogy-mcp`).
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same
