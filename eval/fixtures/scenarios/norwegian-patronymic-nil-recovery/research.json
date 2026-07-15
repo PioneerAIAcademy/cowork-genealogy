@@ -1,0 +1,194 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify and confirm the parents of Anders Moen, born ca. 1868 in Norway, immigrated to Polk County, Minnesota",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-05"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Anders Moen (b. ~1868, Norway; d. Polk County, MN)?",
+      "rationale": "Primary research objective; US records give the parents' given names but not their Norwegian patronymic identities.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-05-04",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Ringsaker, Hedmark, Norway",
+          "date_range": "1868-1869",
+          "repository": "FamilySearch",
+          "rationale": "Anders's Norwegian christening should name his parents directly and give their patronymic identities, confirming the given names (Hans, Marit) recovered from US records.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-05-02T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Moen",
+        "given": "Anders",
+        "birth_year": 1868,
+        "collection": "1900 US Census, Minnesota"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "notes": "1900 US census, Polk County MN: Anders Moen, b. Oct 1868 Norway, immigrated 1888. Household names his father Hans and mother Marit (given names only; the census gives no patronymic surnames). 'Moen' is the Americanized farm-name surname the family used in the US.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S3",
+      "citation": "1900 U.S. Census, Polk County, Minnesota, population schedule, Anders Moen household; digital image, FamilySearch.org, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1900 U.S. Federal Census, population schedule",
+        "when_created": "1900",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org",
+        "where_within": "Polk County, Minnesota"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": null,
+      "url_archived": null,
+      "notes": "Gives Anders's exact birth month/year (Oct 1868) and parents' given names (Hans, Marit); no patronymic surnames.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "us:census:1900:moen-anders",
+      "record_role": "head",
+      "fact_type": "birth",
+      "value": "born October 1868, Norway",
+      "structured_value": {
+        "year": 1868,
+        "month": 10,
+        "place": "Norway"
+      },
+      "date": "1868-10",
+      "date_certainty": "approximate",
+      "place": "Norway",
+      "information_quality": "secondary",
+      "informant": "Household member reporting to the census enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Census month/year of birth is self/household-reported; approximate.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "us:census:1900:moen-anders",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Hans",
+      "structured_value": {
+        "given": "Hans"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "Household member reporting to the census enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father's given name reported in the US household; no surname/patronymic given.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "us:census:1900:moen-anders",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Marit",
+      "structured_value": {
+        "given": "Marit"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "secondary",
+      "informant": "Household member reporting to the census enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Mother's given name reported in the US household; no surname/patronymic given.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_002",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Father's given name 'Hans' from the 1900 census, linked to the candidate-father stub I2. Patronymic surname unknown until the Norwegian christening is found.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_003",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Mother's given name 'Marit' from the 1900 census, linked to the candidate-mother stub I3. Patronymic surname unknown until the christening is found.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
