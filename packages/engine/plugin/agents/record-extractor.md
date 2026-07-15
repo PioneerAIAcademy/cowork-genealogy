@@ -307,6 +307,7 @@ reporting, secondhand relay, social pressure, duress.
 | Occupation (stated) | unknown household member (likely the worker or spouse) | household_member | |
 | Residence | census enumerator | witness | enumerator visited the dwelling |
 | Relationship (pre-1880) | none — inferred from household position | researcher | no relationship column exists; nobody reported it — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
+| Relationship (1880+, stated) | unknown household member (likely the head or spouse) | household_member | a household member answered the relationship-to-head column with firsthand knowledge → the stated relationship is `direct` (the 1880-onward rule below), not inferred from position |
 
 This table describes facts a record STATES. A **negative** assertion
 (`record_role: "absent"`) always takes `informant: "the researcher"` +
