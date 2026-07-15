@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Jared Howes Munson, born 30 July 1836 in Richfield, New York, was Frederick Curtiss Munson's father.",
+      "details": {
+        "subject_person": "Frederick Curtiss Munson (9WMW-SVC)",
+        "relation": "father",
+        "target_person": {
+          "name": "Jared Howes Munson",
+          "pid": "K8B4-J7F",
+          "birth": "30 July 1836, Richfield, New York"
+        }
+      },
+      "supporting_sources": [
+        "New York, New York City Births, 1846-1909 — Frederick's 31 July 1887 Brooklyn birth index names Jared Howes Munson as father.",
+        "United States Census, 1900 — Frederick C. Munson, age 13, is recorded as son of household head Jared H. Munson in Brooklyn."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Katherine Saguine, born 10 July 1857 in Richmond, New York, was Frederick Curtiss Munson's mother.",
+      "details": {
+        "subject_person": "Frederick Curtiss Munson (9WMW-SVC)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Katherine Saguine",
+          "pid": "KHN1-XNX",
+          "birth": "10 July 1857, Richmond, New York"
+        }
+      },
+      "supporting_sources": [
+        "New York, New York City Births, 1846-1909 — Frederick's 31 July 1887 Brooklyn birth index names Kathrine Seguine as mother.",
+        "United States Census, 1900 — Frederick C. Munson, age 13, is recorded as son of Cathrine V. Munson in the Jared H. Munson household in Brooklyn.",
+        "The FamilySearch tree/API records the same parent profile as Katherine Saguine; treat Seguine/Saquine/Saguine as a documented name-variant question, not as a reason to reject the parent-child evidence."
+      ],
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "frederick-curtiss-munson-parents",
+  "name": "Frederick Curtiss Munson",
+  "genre": "strip",
+  "source_pid": "9WMW-SVC",
+  "captured": "2026-07-15",
+  "researcher_question": "Who were the parents of Frederick Curtiss Munson, born 31 July 1887 in Brooklyn, New York?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1880s",
+    "geography": "US-NY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "A New York City birth index directly names the parents, while the 1900 census independently identifies Frederick as their son. The mother\\x27s surname appears as Seguine in the birth index and Saquine in the FamilySearch tree."
+}

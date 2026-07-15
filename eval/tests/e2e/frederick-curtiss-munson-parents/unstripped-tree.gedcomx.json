@@ -1,0 +1,468 @@
+{
+  "persons": [
+    {
+      "id": "9WMW-SVC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Frederick",
+          "surname": "Curtiss Munson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "31 July 1887",
+          "standard_date": "31 Jul 1887",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "01cbd461-e212-4f87-bc2c-4880086dc56f",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Borough of Brooklyn, Election District 13 New York City Ward 6, Kings, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "b35f7dbf-41f7-483b-998e-da27fb99a6ba",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, A.D. 03, E.D. 12, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "9960d859-0885-47ad-99b3-df527643c446",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "0e178a0c-9a0a-458b-bbeb-3417c319c89c",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Forrest, Mississippi, United States",
+          "standard_place": "Forrest, Mississippi, United States"
+        },
+        {
+          "id": "48bf568d-9517-4158-b624-f6909728c29e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hattiesburg Ward 1, Forrest, Mississippi, United States",
+          "standard_place": "Hattiesburg, Forrest, Mississippi, United States"
+        },
+        {
+          "id": "3a1a2d3d-5a55-4262-8bfe-1cdb9ea2b51f",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Hattiesburg, 2, Forrest, Mississippi, United States",
+          "standard_place": "Hattiesburg, Forrest, Mississippi, United States"
+        },
+        {
+          "id": "7beb88e3-782d-47e2-b613-1176d9fc5fa2",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Hattiesburg, Lamar, Mississippi, United States",
+          "standard_place": "Hattiesburg, Lamar, Mississippi, United States"
+        },
+        {
+          "id": "8d475bb6-e27e-4f1a-8045-941afbc740fe",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Flint, Genesee, Michigan, United States",
+          "standard_place": "Flint, Genesee, Michigan, United States"
+        },
+        {
+          "id": "dd85b99d-1049-492c-8ce1-710269fc1a3f",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "00293d5e-7f2d-4e41-bcce-23a3684d0683",
+          "type": "Ethnicity",
+          "value": "W"
+        },
+        {
+          "id": "efd33570-ca5e-4dea-b13f-85761273d837",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "a05c8d10-a307-4c59-bceb-a2944692eea8",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "K8B4-J7F",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Jared Howes",
+          "surname": "Munson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "30Jul1836",
+          "standard_date": "30 Jul 1836",
+          "place": "Richfield, N. Y.",
+          "standard_place": "Richfield, Otsego, New York, United States"
+        },
+        {
+          "id": "671e2f03-d090-4ffd-8e0c-f6030f7aa9d4",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Richfield, Otsego, New York, United States",
+          "standard_place": "Richfield, Otsego, New York, United States"
+        },
+        {
+          "id": "65a0c122-5d07-4c66-a3c7-70e22e883b35",
+          "type": "Residence",
+          "date": "1855",
+          "standard_date": "1855",
+          "place": "Milo, Yates, New York, United States",
+          "standard_place": "Milo, Yates, New York, United States"
+        },
+        {
+          "id": "2391605c-67d8-4590-8e94-7d9f7f5426ae",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Himrod, Milo, Yates, New York, United States",
+          "standard_place": "Himrod, Milo, Yates, New York, United States"
+        },
+        {
+          "id": "fb2d3238-4012-49bb-8143-6a3275c440cc",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Borough of Brooklyn, Election District 13 New York City Ward 6, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "65c62b90-21e7-4a14-8af0-072fded65e0e",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, A.D. 03, E.D. 12, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "a5a906ed-2bee-4020-8de4-f937998c774d",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "4738e450-5ceb-4647-a1c9-3d1b0edb3b0c",
+          "type": "Ethnicity",
+          "value": "W"
+        }
+      ]
+    },
+    {
+      "id": "LJBS-KBF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Pearl Esther",
+          "surname": "Scholl"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "about 1889",
+          "standard_date": "Abt 1889",
+          "place": "Vickery, Sandusky, Ohio, United States",
+          "standard_place": "Vickery, Sandusky, Ohio, United States"
+        },
+        {
+          "id": "2a9d0376-c241-443c-b6cf-45bd287bda6e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hattiesburg Ward 1, Forrest, Mississippi, United States",
+          "standard_place": "Hattiesburg, Forrest, Mississippi, United States"
+        },
+        {
+          "id": "e97c8e90-ba53-48b9-8eb5-0639a3045935",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Hattiesburg, 2, Forrest, Mississippi, United States",
+          "standard_place": "Hattiesburg, Forrest, Mississippi, United States"
+        },
+        {
+          "id": "d7f459e7-6d58-49e4-82bf-a9d5bf456aa2",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Hattiesburg, Lamar, Mississippi, United States",
+          "standard_place": "Hattiesburg, Lamar, Mississippi, United States"
+        },
+        {
+          "id": "959926ec-09b0-463a-a274-403d621bbc6e",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Flint, Genesee, Michigan, United States",
+          "standard_place": "Flint, Genesee, Michigan, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "a07e4fc6-c02d-4f32-be68-76a1216a1346",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "12497794-5001-4d43-92c7-6948a824d6c4",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "KHN1-XNX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Katherine",
+          "surname": "Saguine"
+        }
+      ],
+      "facts": [
+        {
+          "id": "773d23d4-62e8-4151-9b1a-06c96423cc7c",
+          "type": "Birth",
+          "date": "10 jul 1857",
+          "standard_date": "10 Jul 1857",
+          "place": "Richmond, New York, United States",
+          "standard_place": "Richmond, New York, United States"
+        },
+        {
+          "id": "4ab029f7-66af-4d34-b2d7-544f08598fbc",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "District 02, Seneca, Ontario, New York, United States",
+          "standard_place": "Seneca, Ontario, New York, United States"
+        },
+        {
+          "id": "1b092ee0-c2cc-40bc-b438-809c575f5ae9",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Borough of Brooklyn, Election District 13 New York City Ward 6, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c6f485ac-86d5-488e-a869-b83ccb97a7ef",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "79f3e9e3-577f-446e-b805-e2cd2820ed76",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Kings, New York",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "d58f73eb-cabc-43cd-b4ba-6f5888ca5a5f",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brooklyn Ward 9, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "b76a3477-a82b-46e2-b688-574da212c0a0",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "ec808574-e597-4271-b012-2c7610c5124b",
+          "type": "Death",
+          "date": "30 March 1939",
+          "standard_date": "30 Mar 1939",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "4b01b76d-4f12-46d8-b43d-e5cbe84bd087",
+          "type": "Ethnicity",
+          "value": "W"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "9WMW-SVC",
+      "person2": "LJBS-KBF",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "28 May 1910",
+          "standard_date": "28 May 1910",
+          "place": "Huron, Ohio, United States",
+          "standard_place": "Huron, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "K8B4-J7F",
+      "person2": "KHN1-XNX",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "10 June 1885",
+          "standard_date": "10 Jun 1885",
+          "place": "Richmond, New York, United States",
+          "standard_place": "Richmond, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K8B4-J7F",
+      "child": "9WMW-SVC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KHN1-XNX",
+      "child": "9WMW-SVC",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "WCWW-GFV",
+      "title": "F C Munson, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KH3M-1F3 : Mon Jul 15 04:43:03 UTC 2024), Entry for F C Munson and Pearl E Munson, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KH3M-1F3"
+    },
+    {
+      "id": "7TK5-S5J",
+      "title": "Frederick C Munson, \"New York, State Census, 1905\"",
+      "citation": "\"New York, State Census, 1905\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MK9X-LTQ : Fri Jan 31 22:02:49 UTC 2025), Entry for Jared H Munson and Katherine S Munson, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MK9X-LTW"
+    },
+    {
+      "id": "QN39-TDY",
+      "title": "Fred C Munson, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XMB5-DC3 : Mon Jul 22 03:09:15 UTC 2024), Entry for Fred C Munson and Pearl Munson, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XMB5-DC3"
+    },
+    {
+      "id": "SYL6-42N",
+      "title": "Munson, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WQG-RYD : Wed Mar 12 00:47:05 UTC 2025), Entry for Munson and Jared Howes Munson, 31 Jul 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WQG-RYD"
+    },
+    {
+      "id": "SYL6-W56",
+      "title": "Frederick Munson, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4SG-VMV : Sun Jan 12 03:39:14 UTC 2025), Entry for Frederick Munson and Pearl Munson, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M4SG-VMV"
+    },
+    {
+      "id": "SYL6-7DR",
+      "title": "Frederick C Munson, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MSFZ-K1C : Wed Jan 08 18:39:23 UTC 2025), Entry for Jared H Munson and Cathrine V Munson, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MSFZ-K18"
+    },
+    {
+      "id": "SYL6-3B3",
+      "title": "Frederick Curtiss Munson, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", database with images, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZZR-MPF : 27 June 2024), Frederick Curtiss Munson, 1917-1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZZR-MPF"
+    },
+    {
+      "id": "SYL6-33J",
+      "title": "Frederick Curtiss Munson, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X86Z-GFX : Sun Jan 12 09:54:42 UTC 2025), Entry for Frederick Curtiss Munson and Pearl Esther Scholl, 28 May 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X86Z-GFX"
+    },
+    {
+      "id": "MMBY-687",
+      "title": "1940 U.S. Census -- Michigan",
+      "citation": "Flint, Genesee, Michigan 1940 census"
+    },
+    {
+      "id": "M39R-JY6",
+      "title": "1930 U.S. Census -- Mississippi",
+      "citation": "Hattiesburg, Forrest, Mississippi 1930 census"
+    },
+    {
+      "id": "M39R-JR1",
+      "title": "1920 U.S. Census -- Mississippi",
+      "citation": "Hattiesburg, Forrest, Mississippi 1920 census"
+    },
+    {
+      "id": "MMQG-78H",
+      "title": "1910 U.S. Census -- Ohio",
+      "citation": "Cleveland, Cuyahoga, Ohio 1910 census"
+    },
+    {
+      "id": "MSGQ-2X9",
+      "title": "1900 U.S. Census -- New York",
+      "citation": "Brooklyn, Kings, New York 1900 census"
+    }
+  ]
+}
