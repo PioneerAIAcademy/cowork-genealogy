@@ -204,6 +204,11 @@ class Fixture:
     # can surface directly (a wiki case-study article naming the answer).
     # See e2e-test-spec.md §6.1 "Per-fixture blocked tools".
     blocked_tools: frozenset = frozenset()
+    # The fixture's subject person id(s), from starting-research.json's
+    # project.subject_person_ids (plus a real source_pid). Passed to the
+    # avoid-guard so a same-name subject isn't mis-flagged as the avoided
+    # namesake in a look-alike fixture.
+    subject_person_ids: frozenset = frozenset()
 
 
 def load_fixture(fixture_dir: Path) -> Fixture:
@@ -211,6 +216,22 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_dir = Path(fixture_dir)
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
+
+    # Subject person id(s) for the avoid-guard's subject exemption. Primary
+    # source is starting-research.json's project.subject_person_ids; source_pid
+    # is added when it's a real PID (not the "PID-TODO" marker).
+    subject_ids: set[str] = set()
+    try:
+        starting_research = json.loads(
+            (fixture_dir / "starting-research.json").read_text(encoding="utf-8")
+        )
+        for sid in (starting_research.get("project") or {}).get("subject_person_ids") or []:
+            subject_ids.add(str(sid))
+    except (OSError, json.JSONDecodeError):
+        pass
+    src = fixture_json.get("source_pid")
+    if src and "TODO" not in str(src):
+        subject_ids.add(str(src))
 
     # Fill omitted caps from FixtureCaps() — the single source of default
     # values (don't re-hardcode the numbers here, or they drift).
@@ -242,6 +263,7 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         starting_research_path=fixture_dir / "starting-research.json",
         starting_tree_path=fixture_dir / "starting-tree.gedcomx.json",
         blocked_tools=frozenset(fixture_json.get("blocked_tools") or ()),
+        subject_person_ids=frozenset(subject_ids),
     )
 
 
@@ -881,6 +903,7 @@ async def run_e2e_test(
                     judge_output,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    subject_person_ids=fixture.subject_person_ids,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")
             except Exception as e:  # noqa: BLE001 — keep the run loggable

@@ -1,0 +1,153 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Confirm the identity and records of Anders Hansen, born ca. 1868 in Ringsaker, Hedmark, Norway (son of Hans Olsen)",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-05"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Is the 1875 census 'Anders Pedersen' the same person as the subject Anders Hansen (b. ~1868, son of Hans Olsen)?",
+      "rationale": "A candidate census record turned up under a similar given name and matching age/place; its identity to the subject must be evaluated before linking.",
+      "selection_basis": "record_found_incidentally",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-05-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Ringsaker, Hedmark, Norway",
+          "date_range": "1875",
+          "repository": "FamilySearch",
+          "rationale": "The 1875 Norwegian census should place Anders in his parents' household as a boy of ~7.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-02T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "given": "Anders",
+        "birth_year": 1868,
+        "residence_place": "Ringsaker, Hedmark, Norway",
+        "collection": "Norway Census 1875"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "One candidate: 'Anders Pedersen', age 7 (b. ~1868), in Ringsaker district. Given name and age/place align with the subject, but the patronymic is Pedersen (son of Peder), not Hansen (son of Hans).",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S2",
+      "citation": "1875 Norway Census, Ringsaker, Hedmark, entry for Anders Pedersen (age 7); digital image, FamilySearch.org, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "Census enumerator",
+        "what": "1875 Norway Census, household schedule",
+        "when_created": "1875",
+        "when_accessed": "2026-05-02",
+        "where": "FamilySearch.org",
+        "where_within": "Ringsaker, Hedmark"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+      "url_archived": null,
+      "notes": "Candidate record; patronymic 'Pedersen' differs from the subject's established 'Hansen'.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+      "record_role": "principal",
+      "record_persona_id": "CP1",
+      "fact_type": "name",
+      "value": "Anders Pedersen",
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Pedersen"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "primary",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Patronymic recorded by the enumerator; 'Pedersen' denotes son of Peder.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+      "record_role": "principal",
+      "record_persona_id": "CP1",
+      "fact_type": "birth",
+      "value": "age 7 in 1875",
+      "structured_value": {
+        "year": 1868
+      },
+      "date": "~1868",
+      "date_certainty": "estimated",
+      "place": "Ringsaker, Hedmark, Norway",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age reported in the census; approximate.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,262 @@
+{
+  "persons": [
+    {
+      "id": "KD96-TV2",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "KD96-TV2-name-1",
+          "given": "Christian Peter",
+          "surname": "Hole"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "2 October 1876",
+          "standard_date": "2 Oct 1876",
+          "place": "Ringebu, Oppland, Norway",
+          "standard_place": "Ringebu, Oppland, Norway"
+        },
+        {
+          "id": "988eee71-3c4a-4891-9387-a1d36390ab08",
+          "type": "Christening",
+          "date": "5 November 1876",
+          "standard_date": "5 Nov 1876",
+          "place": "Ringebu, Oppland, Norway",
+          "standard_place": "Ringebu, Oppland, Norway"
+        },
+        {
+          "id": "04fee39d-b1aa-4b03-ab1f-0cf3f767d34f",
+          "type": "Immigration",
+          "date": "1882",
+          "standard_date": "1882",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "d82480ac-f798-47fc-8f4b-24cca05bf356",
+          "type": "Immigration",
+          "date": "1883",
+          "standard_date": "1883"
+        }
+      ]
+    },
+    {
+      "id": "KZY4-FD6",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "KZY4-FD6-name-1",
+          "given": "Edna Marie",
+          "surname": "Wadekamper"
+        }
+      ]
+    },
+    {
+      "id": "M43J-B3P",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "M43J-B3P-name-1",
+          "given": "Owen Kenneth",
+          "surname": "Hole"
+        }
+      ]
+    },
+    {
+      "id": "L2X6-1JR",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "L2X6-1JR-name-1",
+          "given": "Guy Everette",
+          "surname": "Hole"
+        }
+      ]
+    },
+    {
+      "id": "M43J-B7K",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "M43J-B7K-name-1",
+          "given": "Curtis Paul",
+          "surname": "Hole"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "given": "Benjamin",
+          "surname": "Christophersen",
+          "preferred": true,
+          "id": "N1"
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1852",
+          "standard_date": "abt. 1852",
+          "primary": true,
+          "id": "F1"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Matea",
+          "surname": "Pedersdtr",
+          "preferred": true,
+          "id": "N2"
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1857",
+          "standard_date": "abt. 1857",
+          "primary": true,
+          "id": "F2"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Kristofer Kristofersen",
+          "surname": "Hole",
+          "preferred": true,
+          "id": "N3"
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Christopher",
+          "surname": "Jespersen",
+          "preferred": true,
+          "id": "N4"
+        }
+      ],
+      "id": "I4"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Peder",
+          "surname": "Pedersen",
+          "preferred": true,
+          "id": "N5"
+        }
+      ],
+      "id": "I5"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "KD96-TV2",
+      "person2": "KZY4-FD6",
+      "id": "rel-1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KD96-TV2",
+      "child": "M43J-B3P",
+      "id": "rel-2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZY4-FD6",
+      "child": "M43J-B3P",
+      "id": "rel-3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KD96-TV2",
+      "child": "L2X6-1JR",
+      "id": "rel-4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZY4-FD6",
+      "child": "L2X6-1JR",
+      "id": "rel-5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KD96-TV2",
+      "child": "M43J-B7K",
+      "id": "rel-6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZY4-FD6",
+      "child": "M43J-B7K",
+      "id": "rel-7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "KD96-TV2",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "KD96-TV2",
+      "id": "R2"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Entry for Christian Peder, \"Norway Church Books, 1815-1930\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4BXD-XNCV"
+    },
+    {
+      "id": "S2",
+      "title": "Norway, Census, 1875 - Household of Kristofer Kristofersen Hole, Stade Nodre, V\u00e5g\u00e5, Oppland",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:V65K-3XF"
+    },
+    {
+      "id": "S3",
+      "title": "Entry for Benjamin Christophersen, \"Norway Marriages, 1660-1926\"",
+      "url": "https://familysearch.org/ark:/61903/1:2:MY3F-K4X"
+    },
+    {
+      "title": "Entry for Benjamin Christophersen, \"Norway Marriages, 1660-1926\"",
+      "citation": "\"Norway Marriages, 1660-1926\", database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MY3F-K4X : 20 February 2020), Entry for Benjamin Christophersen, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:2:MY3F-K4X",
+      "id": "S4"
+    }
+  ]
+}

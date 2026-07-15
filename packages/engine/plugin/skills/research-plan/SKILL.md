@@ -164,9 +164,11 @@ table and contextual factors checklist.
   marriage, and not folded into a generic "church records" item. The
   couple's marriage record supplies the mother's maiden name (which
   census and death records usually omit) and, by its date relative to
-  the child's birth, is direct evidence of paternity that can confirm or
-  refute a parent named only by indirect or derivative evidence (a death
-  certificate, a single census co-residence). See
+  the child's birth, corroborates a parent named only by indirect or
+  derivative evidence (a death certificate, a single census
+  co-residence). It does **not**, by itself, establish that the subject
+  is their child — that link needs a record placing the child *with* the
+  parents (see `research-exhaustiveness`). See
   `references/record-type-guide.md` ("Identifying parents").
 - **For a male subject in a conscription country (Denmark/Norway from
   1789, and similar continental levy systems), plan the military levy
