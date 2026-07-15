@@ -3,34 +3,37 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Elijah Wilkins died on 30 November 1875 in Muhlenberg, Kentucky, United States.",
+      "description": "Elijah Wilkins died in Muhlenberg County, Kentucky, in the mid-to-late 1870s. A bounded, probate-derived conclusion fully satisfies this finding — e.g. 'died before the December 1885 administrator's bond / the 1881 estate settlement, most likely 1875-1879, in Muhlenberg County' — because no Kentucky death certificate exists for him (statewide registration began 1911, decades after his death) and the only source stating the exact date (30 November 1875) is an Ancestry-only index unreachable through FamilySearch tools. Recovering the exact 30 Nov 1875 date also matches, but is NOT required. Recognizing and stating that no Kentucky death certificate exists for him is part of a correct answer to the research question.",
       "details": {
         "target_person": {
           "name": "Elijah Wilkins",
           "pid": "97YZ-J3D"
         },
         "fact_type": "Death",
-        "date": "30 November 1875",
+        "date": "mid-to-late 1870s (bounded: after the 1870 census, before the 1881 estate settlement / 13 Dec 1885 administrator's bond; exact date 30 Nov 1875 known only from an Ancestry-only index)",
         "place": "Muhlenberg, Kentucky, United States"
       },
       "supporting_sources": [
-        "Kentucky, U.S., Death Records, 1852-1965 — entry for Elizah [Elijah] Wilkins"
+        "Muhlenberg County, Kentucky administrator's bond, 13 December 1885 — Jesse Wilkins appointed administrator of Elijah Wilkins, deceased, intestate",
+        "Muhlenberg County Court estate settlement, July/August 1881 terms — 'Jesse Wilkins Admr of Elijah Wilkins'",
+        "Muhlenberg County probate register entry pairing the same names among 1875-1879 estates",
+        "Kentucky, U.S., Death Records, 1852-1965 — entry for Elizah [Elijah] Wilkins (Ancestry-only index carrying the exact 30 Nov 1875 date; NOT reachable via FamilySearch tools)"
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "source",
-      "description": "The Kentucky death record indexed under name variants (Elizah/Eligie/Eligah Wilkins) is attached as the source for the death fact, and the agent notes the identity is confirmed by matching tree context rather than by name spelling alone: an age consistent with an 1814 birth, and family details matching spouse Sally Wilkins (K2BS-YMD) and parents James Wilkins (KD7X-7WB) and Margaret Elizabeth Jarvis (2W9K-4M8) — distinguishing this Elijah from several same-surname relatives in the same Muhlenberg County tree.",
+      "description": "The death conclusion is anchored to record sources attached in the tree, and the agent confirms the deceased's identity through documented family context rather than name spelling alone — any sound mechanism qualifies: matching the administrator Jesse Wilkins to Elijah's documented son of that name, and/or matching age (born c. 1814), spouse Sally Wilkins, or parents James Wilkins and Margaret Elizabeth Jarvis — thereby distinguishing this Elijah from several same-surname relatives in the same Muhlenberg County tree. Name-variant handling (Elijah/Elizah/Eligie/Eligah) may be part of the reasoning when an indexed death entry is used, but is not required if the conclusion rests on probate records instead.",
       "details": {
         "subject_person": "Elijah Wilkins (97YZ-J3D)",
         "target_person": {
-          "name": "Kentucky, U.S., Death Records, 1852-1965 — entry for Elizah [Elijah] Wilkins"
+          "name": "Death-evidence source(s) attached to the tree — Muhlenberg County probate records (administrator's bond / estate settlement / probate register) and/or a Kentucky death-index entry under a name variant"
         }
       },
       "supporting_sources": [
-        "Kentucky, U.S., Death Records, 1852-1965 — entry for Elizah [Elijah] Wilkins",
-        "Tree context: spouse Sally Wilkins (K2BS-YMD), parents James Wilkins (KD7X-7WB) and Margaret Elizabeth Jarvis (2W9K-4M8)"
+        "Muhlenberg County probate records naming Jesse Wilkins as administrator of Elijah Wilkins",
+        "Tree context: son Jesse Wilkins (independently attested via census and his own 1905 death record), spouse Sally Wilkins (K2BS-YMD), parents James Wilkins (KD7X-7WB) and Margaret Elizabeth Jarvis (2W9K-4M8)"
       ],
       "required": true
     }

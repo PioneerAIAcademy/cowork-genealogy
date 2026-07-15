@@ -1,9 +1,10 @@
-# Elijah Wilkins — death in Kentucky (1875)
+# Elijah Wilkins — death in Kentucky (1870s)
 
 **Source PID:** `97YZ-J3D`
 **Elijah Wilkins is deceased.** (FamilySearch ToS requires
 all committed e2e fixtures to be about deceased persons.) Born 1814,
-died 30 November 1875, both in Muhlenberg, Kentucky, United States.
+died 30 November 1875 (per an Ancestry-only index; see Recalibration),
+both in Muhlenberg, Kentucky, United States.
 
 ## Research question
 
@@ -48,3 +49,35 @@ content. The "confirms his identity" portion of `expected-findings.json`
 (`f2`) is scoped to identity confirmation via cross-referencing tree context
 (age, spouse, parents) rather than requiring specific certificate fields —
 see the fixture-authoring conversation for the scoping decision.
+
+## Recalibration after the first live validation run (2026-07-14)
+
+A live no-cheat `/research` run confirmed the flagged risk above is real,
+and the findings were recalibrated accordingly (taxonomy lane 2 —
+test/fixture issue, not an agent failure):
+
+- **No Kentucky death certificate exists for Elijah at all** — statewide
+  registration began 1911; he died ~1875. The research question's
+  "using Kentucky death certificates" premise is therefore answerable
+  only by recognizing this and pivoting; the question text is kept
+  verbatim from issue #657 because that recognition is part of what the
+  fixture tests.
+- The **exact date (30 Nov 1875) exists only in the Ancestry-only index**
+  (`QJ45-QWZ`) and is not recoverable through FamilySearch tools
+  (`record_read` 404s on it — not an FS ARK).
+- What IS recoverable — and what the live agent rigorously produced — is a
+  **bounded, probate-derived conclusion**: died Muhlenberg County, most
+  likely mid-to-late 1870s, bounded by the 1881 estate settlement and the
+  13 Dec 1885 administrator's bond naming son Jesse Wilkins as
+  administrator of the intestate estate, with alternative candidates
+  ruled out (Probable tier).
+- `f1` was loosened from the exact date to the bounded conclusion (exact
+  date still matches but is not required); `f2` now accepts any sound
+  identity mechanism (administrator-son Jesse linkage and/or age/spouse/
+  parent matching), not only the originally-scoped age/spouse/parents
+  route.
+
+An alternative design — bundling the Ancestry index capture as
+`provided-documents/` to make the exact date recoverable — was considered
+and not taken: the bounded-inference version tests honest evidence
+handling, which is the more valuable behavior for this suite.
