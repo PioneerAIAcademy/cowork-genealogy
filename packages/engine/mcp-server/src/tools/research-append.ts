@@ -317,6 +317,37 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
           `(allowed: ${config.singleton.allowedFields.join(", ")})`,
       );
     }
+    // Completed-gate (GPS Component 4, deterministic): refuse to mark the
+    // project completed while a BLOCKING conflict is unresolved. Blocking =
+    // status "unresolved" AND (identity_question true OR blocks_question_ids
+    // non-empty). "resolved" and "moot" both settle a conflict. This is a
+    // tool precondition on the status transition, not a document-validity
+    // rule — an already-completed project with such a conflict still loads.
+    // Motivated by the wilkins-death-kentucky e2e run where an agent logged
+    // an unresolved identity conflict (wrong-person death certificate,
+    // 43-year birth mismatch) and completed the project anyway; prose-level
+    // guardrails (warnings, mentor) fired and were rationalized away.
+    if (section === "project" && op.fields.status === "completed") {
+      const blocking = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
+        (c: any) =>
+          c &&
+          c.status === "unresolved" &&
+          (c.identity_question === true ||
+            (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
+      );
+      if (blocking.length > 0) {
+        const names = blocking
+          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${c.identity_question ? ", identity" : ""})`)
+          .join(", ");
+        throw new ResearchAppendError(
+          `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
+            "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
+            "Run conflict-resolution for each — set its status to 'resolved' (with " +
+            "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
+            "(with a rationale for why it no longer matters) — then retry completing the project.",
+        );
+      }
+    }
     for (const [k, v] of Object.entries(op.fields)) target[k] = v;
     const stamp = config.singleton.stampTimestamp;
     if (stamp) target[stamp.field] = stamp.kind === "date" ? today() : now();
