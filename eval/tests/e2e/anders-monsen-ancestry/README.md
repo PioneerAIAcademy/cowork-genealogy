@@ -99,4 +99,4 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   remaining bug and more like real run-to-run variance in how much of a
   multi-step search checklist the agent executes before satisficing on an
   alternate (honest, defensible, but off-target) research lead — worth keeping
-  in mind before spending more live-run budget chasin
+  in mind before spending more live-run budget chasing a single clean pass.
