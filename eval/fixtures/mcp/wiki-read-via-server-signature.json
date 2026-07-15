@@ -1,0 +1,17 @@
+{
+  "tool": "wiki_read",
+  "description": "Test fixture for verifying wiki_read fetches via the wiki-query-api server. Returns a wiki page whose content carries a distinctive phrase ('Lackawanna Valley Anthracite Index, 1855-1898') so the corresponding skill test can assert the skill used the server's response rather than guessing from prior knowledge.",
+  "args": {
+    "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Coal_Region_Records"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Coal_Region_Records",
+    "title": "Pennsylvania Coal Region Records",
+    "content": "# Pennsylvania Coal Region Records\n\nResearchers tracing ancestors in the anthracite coal counties of Pennsylvania (Schuylkill, Luzerne, Lackawanna, Northumberland, Carbon) should consult several specialized indexes alongside the standard civil records.\n\n## Lackawanna Valley Anthracite Index, 1855-1898\nThe Lackawanna Valley Anthracite Index, 1855-1898 names approximately 41,000 colliery workers across the lower anthracite field, drawn from company payroll books that survived a 1903 records consolidation. Entries include occupation (loader, breaker boy, mule driver), wage rate, and parish of origin where stated.\n\n## Parish Survival\nMany Catholic parishes in the coal region were established between 1840 and 1870 to serve Irish and Eastern European immigrant communities. Baptismal registers for these parishes are held by the Diocese of Scranton (post-1868) and the Diocese of Harrisburg (pre-1868).\n\n## Tax Records\nPennsylvania state assessors enumerated coal-region residents triennially from 1853; the assessment ledgers list householder, real estate value, occupation, and sometimes nativity.",
+    "sections": [
+      "Lackawanna Valley Anthracite Index, 1855-1898",
+      "Parish Survival",
+      "Tax Records"
+    ]
+  }
+}

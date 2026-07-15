@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const mockGetPlaceCandidateNames = vi.hoisted(() => vi.fn());
 vi.mock("../../src/tools/place-search.js", () => ({
@@ -15,93 +15,121 @@ vi.mock("../../src/utils/place-resolver.js", () => ({
   standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
 }));
 
-const mockReadFile = vi.hoisted(() => vi.fn());
-vi.mock("fs/promises", () => ({
-  readFile: mockReadFile,
-}));
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
 
-const mockGetWikiMarkdownDir = vi.hoisted(() => vi.fn());
+const mockGetWikiApiUrl = vi.hoisted(() => vi.fn());
 vi.mock("../../src/auth/config.js", () => ({
-  getWikiMarkdownDir: mockGetWikiMarkdownDir,
-  getWikiApiUrl: vi.fn(),
+  getWikiApiUrl: mockGetWikiApiUrl,
 }));
 
 import { wikiPlacePageTool } from "../../src/tools/wiki-place-page.js";
 
-const WIKI_DIR = "/test/wiki/dir";
+const API_BASE = "http://localhost:8000";
+
+// Helper: build a mock-fetch response. ok=200 returns a page; ok=404
+// triggers "try the next candidate"; ok=500 throws an upstream error.
+function pageResponse(slug: string, content: string) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      title: slug,
+      content,
+      source_url: `https://www.familysearch.org/en/wiki/${slug}`,
+    }),
+  };
+}
+
+const NOT_FOUND = { ok: false, status: 404, json: async () => ({ detail: "missing" }) };
 
 beforeEach(() => {
   mockGetPlaceCandidateNames.mockReset();
   mockStandardPlaceToPlaceId.mockReset();
   mockStandardPlaceToPlaceId.mockResolvedValue(null); // default: rely on the leaf name
-  mockReadFile.mockReset();
-  mockGetWikiMarkdownDir.mockResolvedValue(WIKI_DIR);
+  mockFetch.mockReset();
+  mockGetWikiApiUrl.mockReset();
+  mockGetWikiApiUrl.mockResolvedValue(API_BASE);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("wikiPlacePageTool — home section", () => {
-  it("reads Portugal_Genealogy.md from the standard place's leaf name", async () => {
-    mockReadFile.mockResolvedValueOnce("# Portugal");
+  it("GETs /page/Portugal_Genealogy from the standard place's leaf name", async () => {
+    mockFetch.mockResolvedValueOnce(pageResponse("Portugal_Genealogy", "# Portugal"));
 
     const result = await wikiPlacePageTool({ standardPlace: "Portugal", section: "home" });
 
-    expect(mockReadFile).toHaveBeenCalledWith(`${WIKI_DIR}/Portugal_Genealogy.md`, "utf8");
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_BASE}/page/Portugal_Genealogy`,
+      expect.objectContaining({ method: "GET" })
+    );
     expect(result.standardPlace).toBe("Portugal");
     expect(result.placeName).toBe("Portugal");
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/Portugal_Genealogy");
-    expect(result).not.toHaveProperty("placeId");
   });
 
   it("derives the leaf from a fully-qualified standard place", async () => {
-    mockReadFile.mockResolvedValueOnce("# Minnesota");
+    mockFetch.mockResolvedValueOnce(pageResponse("Minnesota_Genealogy", "# Minnesota"));
 
     const result = await wikiPlacePageTool({
       standardPlace: "Minnesota, United States",
       section: "home",
     });
 
-    // leaf "Minnesota" -> tries _Genealogy first (succeeds here)
-    expect(mockReadFile).toHaveBeenCalledWith(`${WIKI_DIR}/Minnesota_Genealogy.md`, "utf8");
-    expect(result.standardPlace).toBe("Minnesota, United States");
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_BASE}/page/Minnesota_Genealogy`,
+      expect.objectContaining({ method: "GET" })
+    );
     expect(result.placeName).toBe("Minnesota");
   });
 
-  it("falls back to Manitoba,_Canada_Genealogy.md when plain _Genealogy is missing", async () => {
-    mockReadFile
-      .mockRejectedValueOnce(new Error("ENOENT"))
-      .mockResolvedValueOnce("# Manitoba Genealogy");
+  it("falls back to Manitoba,_Canada_Genealogy when plain _Genealogy is 404", async () => {
+    mockFetch
+      .mockResolvedValueOnce(NOT_FOUND) // Manitoba_Genealogy → 404
+      .mockResolvedValueOnce(pageResponse("Manitoba,_Canada_Genealogy", "# Manitoba"));
 
-    const result = await wikiPlacePageTool({ standardPlace: "Manitoba, Canada", section: "home" });
+    const result = await wikiPlacePageTool({
+      standardPlace: "Manitoba, Canada",
+      section: "home",
+    });
 
-    expect(mockReadFile).toHaveBeenNthCalledWith(1, `${WIKI_DIR}/Manitoba_Genealogy.md`, "utf8");
-    expect(mockReadFile).toHaveBeenNthCalledWith(
-      2,
-      `${WIKI_DIR}/Manitoba,_Canada_Genealogy.md`,
-      "utf8"
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      1,
+      `${API_BASE}/page/Manitoba_Genealogy`,
+      expect.objectContaining({ method: "GET" })
     );
-    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Manitoba,_Canada_Genealogy");
-    expect(result.standardPlace).toBe("Manitoba, Canada");
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      `${API_BASE}/page/Manitoba,_Canada_Genealogy`,
+      expect.objectContaining({ method: "GET" })
+    );
+    expect(result.url).toBe(
+      "https://www.familysearch.org/en/wiki/Manitoba,_Canada_Genealogy"
+    );
   });
 
-  it("handles multi-word place names with underscores", async () => {
-    mockReadFile.mockResolvedValueOnce("# BC");
+  it("handles multi-word place names by underscoring them in the slug", async () => {
+    mockFetch.mockResolvedValueOnce(pageResponse("British_Columbia_Genealogy", "# BC"));
 
     await wikiPlacePageTool({ standardPlace: "British Columbia, Canada", section: "home" });
 
-    expect(mockReadFile).toHaveBeenCalledWith(
-      `${WIKI_DIR}/British_Columbia_Genealogy.md`,
-      "utf8"
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_BASE}/page/British_Columbia_Genealogy`,
+      expect.objectContaining({ method: "GET" })
     );
   });
 
   it("tries additional name variants from the places API when the leaf misses", async () => {
-    // Leaf "Old Name" has no file; resolving yields the canonical wiki name.
     mockStandardPlaceToPlaceId.mockResolvedValueOnce("1927089");
     mockGetPlaceCandidateNames.mockResolvedValueOnce(["Czechia"]);
-    mockReadFile
-      .mockRejectedValueOnce(new Error("ENOENT")) // Old_Name_Genealogy
-      .mockRejectedValueOnce(new Error("ENOENT")) // Old_Name,_Canada_Genealogy
-      .mockRejectedValueOnce(new Error("ENOENT")) // Old_Name,_United_States_Genealogy
-      .mockResolvedValueOnce("# Czechia"); // Czechia_Genealogy
+    mockFetch
+      .mockResolvedValueOnce(NOT_FOUND) // Old_Name_Genealogy
+      .mockResolvedValueOnce(NOT_FOUND) // Old_Name,_Canada_Genealogy
+      .mockResolvedValueOnce(NOT_FOUND) // Old_Name,_United_States_Genealogy
+      .mockResolvedValueOnce(pageResponse("Czechia_Genealogy", "# Czechia"));
 
     const result = await wikiPlacePageTool({ standardPlace: "Old Name", section: "home" });
 
@@ -109,74 +137,96 @@ describe("wikiPlacePageTool — home section", () => {
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/Czechia_Genealogy");
   });
 
-  it("throws when no candidate file exists", async () => {
-    mockReadFile.mockRejectedValue(new Error("ENOENT"));
+  it("throws when every candidate 404s", async () => {
+    mockFetch.mockResolvedValue(NOT_FOUND);
 
     await expect(
       wikiPlacePageTool({ standardPlace: "Nowhere", section: "home" })
     ).rejects.toThrow(/No wiki page found for "Nowhere"/);
   });
 
-  it("rejects an empty/whitespace standardPlace without touching the filesystem", async () => {
+  it("rejects an empty/whitespace standardPlace without touching the server", async () => {
     await expect(
       wikiPlacePageTool({ standardPlace: "  ", section: "home" })
     ).rejects.toThrow(/standardPlace is required/);
-    expect(mockReadFile).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
     expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a 5xx as an upstream error (does NOT treat it as page-not-found)", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Portugal", section: "home" })
+    ).rejects.toThrow(/wiki-query-api error: 500/);
+  });
+
+  it("surfaces a network failure as a friendly server-unreachable error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Portugal", section: "home" })
+    ).rejects.toThrow(/Could not reach wiki-query-api/);
   });
 });
 
 describe("wikiPlacePageTool — getting_started section", () => {
-  it("reads the correct _Getting_Started file", async () => {
-    mockReadFile.mockResolvedValueOnce("# Getting Started");
+  it("GETs the correct _Getting_Started slug", async () => {
+    mockFetch.mockResolvedValueOnce(
+      pageResponse("Portugal_Getting_Started", "# Getting Started")
+    );
 
     await wikiPlacePageTool({ standardPlace: "Portugal", section: "getting_started" });
 
-    expect(mockReadFile).toHaveBeenCalledWith(
-      `${WIKI_DIR}/Portugal_Getting_Started.md`,
-      "utf8"
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_BASE}/page/Portugal_Getting_Started`,
+      expect.objectContaining({ method: "GET" })
     );
   });
 
   it("does not try a Canada variant (no fallback for non-home sections)", async () => {
-    mockReadFile.mockRejectedValueOnce(new Error("ENOENT"));
+    mockFetch.mockResolvedValueOnce(NOT_FOUND);
 
     await expect(
       wikiPlacePageTool({ standardPlace: "Manitoba, Canada", section: "getting_started" })
     ).rejects.toThrow(/No wiki page found for "Manitoba, Canada"/);
-    expect(mockReadFile).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("wikiPlacePageTool — online_records section", () => {
-  it("reads the correct _Online_Genealogy_Records file", async () => {
-    mockReadFile.mockResolvedValueOnce("# Records");
+  it("GETs the correct _Online_Genealogy_Records slug", async () => {
+    mockFetch.mockResolvedValueOnce(
+      pageResponse("Portugal_Online_Genealogy_Records", "# Records")
+    );
 
     await wikiPlacePageTool({ standardPlace: "Portugal", section: "online_records" });
 
-    expect(mockReadFile).toHaveBeenCalledWith(
-      `${WIKI_DIR}/Portugal_Online_Genealogy_Records.md`,
-      "utf8"
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_BASE}/page/Portugal_Online_Genealogy_Records`,
+      expect.objectContaining({ method: "GET" })
     );
   });
 });
 
 describe("wikiPlacePageTool — research_tips section", () => {
-  it("reads the correct _Research_Tips_and_Strategies file", async () => {
-    mockReadFile.mockResolvedValueOnce("# Research Tips");
+  it("GETs the correct _Research_Tips_and_Strategies slug", async () => {
+    mockFetch.mockResolvedValueOnce(
+      pageResponse("Portugal_Research_Tips_and_Strategies", "# Research Tips")
+    );
 
     await wikiPlacePageTool({ standardPlace: "Portugal", section: "research_tips" });
 
-    expect(mockReadFile).toHaveBeenCalledWith(
-      `${WIKI_DIR}/Portugal_Research_Tips_and_Strategies.md`,
-      "utf8"
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${API_BASE}/page/Portugal_Research_Tips_and_Strategies`,
+      expect.objectContaining({ method: "GET" })
     );
   });
 });
 
 describe("wikiPlacePageTool — shared behaviour", () => {
   it("includes standardPlace and placeName in the result", async () => {
-    mockReadFile.mockResolvedValueOnce("# Portugal");
+    mockFetch.mockResolvedValueOnce(pageResponse("Portugal_Genealogy", "# Portugal"));
 
     const result = await wikiPlacePageTool({ standardPlace: "Portugal", section: "home" });
 

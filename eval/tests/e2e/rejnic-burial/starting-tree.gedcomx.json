@@ -1,0 +1,894 @@
+{
+  "persons": [
+    {
+      "id": "L86H-T8G",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Maria",
+          "surname": "Rejnic"
+        }
+      ],
+      "facts": [
+        {
+          "id": "89ab978b-0e9e-4b5b-8568-bb6d7645a76c",
+          "type": "Birth",
+          "date": "15 April 1890",
+          "standard_date": "15 Apr 1890",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "7857227f-fdd6-46cd-9853-d5fb6365de43",
+          "type": "Death",
+          "date": "18 June 1967",
+          "standard_date": "18 Jun 1967",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "8dfe615a-ea9c-4ba3-a87a-878630e2d39a",
+          "type": "Christening",
+          "date": "13 April 1891",
+          "standard_date": "13 Apr 1891",
+          "place": "Stelbach, Sáros, Hungary",
+          "standard_place": "Stelbach, Sáros, Hungary"
+        }
+      ]
+    },
+    {
+      "id": "LK11-1ZH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Kathryn",
+          "surname": "Lackovic",
+          "prefix": "Mrs."
+        }
+      ],
+      "facts": [
+        {
+          "id": "ec88e59b-d379-43d0-8a20-e2bd84faeb10",
+          "type": "Birth",
+          "date": "20 November 1918",
+          "standard_date": "20 Nov 1918",
+          "place": "Sheraden, Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Sheraden, Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "fc1632c7-5ebd-4f8b-92fb-2b0d0d98c64f",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same Place",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "55d49db4-12d9-40a1-b92c-ea629d70d95e",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Cresson Borough, Cambria, Pennsylvania, United States",
+          "standard_place": "Cresson, Cambria, Pennsylvania, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Ward 21, Pittsburgh, Pittsburgh City, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "229d0858-1f46-41bc-bd8a-bb3ce10228b0",
+          "type": "Residence",
+          "date": "4 April 1950",
+          "standard_date": "4 Apr 1950",
+          "place": "Allegheny City, Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Allegheny City, Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "cd923c0b-eb3d-4bcf-8e91-36fc3666e97c",
+          "type": "Residence",
+          "date": "20 Mar 2011",
+          "standard_date": "20 Mar 2011",
+          "place": "Sheraden",
+          "standard_place": "Sheraden, Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "d84a6e68-2207-45ca-a4e4-d5228a041db5",
+          "type": "Death",
+          "date": "20 March 2011",
+          "standard_date": "20 Mar 2011",
+          "place": "Sheraden, Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Sheraden, Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "a7da0f85-9077-40d1-9702-2704918df8bb",
+          "type": "Obituary",
+          "date": "24 Mar 2011",
+          "standard_date": "24 Mar 2011",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "c29484cb-0344-4374-a768-a4cbaf3cbbb8",
+          "type": "Residence",
+          "date": "24 Mar 2011",
+          "standard_date": "24 Mar 2011",
+          "place": "Lackovic"
+        },
+        {
+          "id": "767a09f7-8838-4117-9e36-dfc977ec5ca6",
+          "type": "Burial",
+          "place": "Coraopolis, Allegheny, Pennsylvania, United States",
+          "standard_place": "Coraopolis, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "3db2f734-df67-4215-b5c5-d6c104a4779b",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "f282933a-27cf-4f00-ba12-45010727308a",
+          "type": "Marital Status",
+          "value": "Married"
+        }
+      ]
+    },
+    {
+      "id": "GZ4C-S4R",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Stephen",
+          "surname": "Kraynak"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b75a2b87-8693-490b-a043-2c8ed06bc258",
+          "type": "Birth",
+          "date": "6 September 1920",
+          "standard_date": "6 Sep 1920"
+        },
+        {
+          "id": "a67635fb-85c1-4ae1-ad2b-a76022f9aed2",
+          "type": "Social Program Application",
+          "date": "June 1939",
+          "standard_date": "Jun 1939"
+        },
+        {
+          "id": "fdc22948-94a0-4831-b7a3-091284c1f6ed",
+          "type": "MilitaryDraftRegistration",
+          "date": "13 February 1942",
+          "standard_date": "13 Feb 1942",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "c4f8b0ef-ebc1-4e61-a597-90dfa5c5e4f7",
+          "type": "Residence",
+          "date": "5 April 1950",
+          "standard_date": "5 Apr 1950",
+          "place": "Allegheny City, Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Allegheny City, Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "a619a63c-32d7-43a4-abcc-9a9cc4bf6a2d",
+          "type": "Death",
+          "date": "6 February 2007",
+          "standard_date": "6 Feb 2007",
+          "place": "Allegheny, Pennsylvania, United States",
+          "standard_place": "Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "7a48e7b3-f7ba-43d1-b8ef-8683a9649798",
+          "type": "Obituary",
+          "date": "7 February 2007",
+          "standard_date": "7 Feb 2007",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "f790339a-9155-4fa3-9796-734fb2b8a507",
+          "type": "Obituary",
+          "date": "8 February 2007",
+          "standard_date": "8 Feb 2007",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "8f679b53-bc1b-4e9e-aa9a-5829e8972558",
+          "type": "Burial",
+          "date": "2007",
+          "standard_date": "2007",
+          "place": "McKees Rocks, Allegheny, Pennsylvania, United States",
+          "standard_place": "McKees Rocks, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "4e42b6a5-1bbf-4383-a3e4-9b951fe2bcc3",
+          "type": "Social Program Correspondence",
+          "value": "Social Program Correspondence"
+        },
+        {
+          "id": "54889c2c-cb8f-485f-94c0-84d174cb14d7",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "b7f6f0ea-2154-4423-9e07-b7dbfd8cd9d1",
+          "type": "Previous Residence",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "2e1f30bc-294e-4bc6-891a-047f718130a1",
+          "type": "Race",
+          "value": "White"
+        },
+        {
+          "id": "a344e5bc-38c2-412c-80eb-ad7c42e6403b",
+          "type": "Residence",
+          "place": "Pittsburgh",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "d8a14410-b813-40be-8670-bfa1e3704afe",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "5c5fbf22-cf27-464b-b931-42394a357430",
+          "type": "Occupation",
+          "value": "Chemical Engineer Helper"
+        }
+      ]
+    },
+    {
+      "id": "GQYV-FFS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Joannes",
+          "surname": "Kraynak"
+        }
+      ],
+      "facts": [
+        {
+          "id": "62cca06f-9c7f-4be9-91f6-a27313e50d84",
+          "type": "Birth",
+          "date": "21 September 1883",
+          "standard_date": "21 Sep 1883",
+          "place": "Prešovský, Slovakia",
+          "standard_place": "Prešovský, Slovakia"
+        },
+        {
+          "id": "c1e97224-90c9-4354-962a-57b05dc88781",
+          "type": "Christening",
+          "date": "22 September 1883",
+          "standard_date": "22 Sep 1883",
+          "place": "Blažov, Sáros, Hungary",
+          "standard_place": "Blažov, Sáros, Hungary"
+        },
+        {
+          "id": "0873a245-bbaa-488a-bc43-bfecc2f3526c",
+          "type": "Death",
+          "date": "20 December 1955",
+          "standard_date": "20 Dec 1955",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "L86H-T8P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Stephanus",
+          "surname": "Rejnicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8a157e91-e99e-4dfa-8ad7-3f0c63aef81c",
+          "type": "Birth",
+          "date": "14 August 1863",
+          "standard_date": "14 Aug 1863",
+          "place": "Stelbach, Sabinov, Slovakia (Tichy Potok, Slovakia)",
+          "standard_place": "Tichý Potok, Sabinov, Slovakia"
+        },
+        {
+          "id": "de007c6e-a8a9-430e-9cfb-b3b86853e404",
+          "type": "Baptism",
+          "date": "16 Aug 1863",
+          "standard_date": "16 Aug 1863",
+          "place": "Štelbach, Sabinov, Slovakia",
+          "standard_place": "Tichý Potok, Sabinov, Slovakia"
+        },
+        {
+          "id": "33c6e73f-a556-49ea-8825-82ca6504ef2e",
+          "type": "Death",
+          "date": "11 July 1943",
+          "standard_date": "11 Jul 1943"
+        }
+      ]
+    },
+    {
+      "id": "L86W-X37",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Martha",
+          "surname": "Duda-Basista"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GYW3-2K7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "John",
+          "surname": "Kraynak"
+        }
+      ],
+      "facts": [
+        {
+          "id": "12620907-b89b-40c6-9c59-070edc23a647",
+          "type": "Birth",
+          "date": "2 August 1911",
+          "standard_date": "2 Aug 1911",
+          "place": "Monessen, Westmoreland, Pennsylvania, United States",
+          "standard_place": "Monessen, Westmoreland, Pennsylvania, United States"
+        },
+        {
+          "id": "56c2a2ac-021a-450b-aa59-ac94e265c4d7",
+          "type": "Military Draft Registration",
+          "date": "16 October 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Sheridan, Pittsburgh, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "42d3f50c-55f0-4c28-a5d5-436036e4dc70",
+          "type": "SocialProgramClaim",
+          "date": "15 May 1973",
+          "standard_date": "15 May 1973"
+        },
+        {
+          "id": "3041763a-a1a5-4e57-8219-5c4649b1e52e",
+          "type": "SocialProgramApplication",
+          "date": "30 August 1985",
+          "standard_date": "30 Aug 1985"
+        },
+        {
+          "id": "fc3dcfb3-e7b8-4b34-bc6c-85d12aca07a6",
+          "type": "Death",
+          "date": "29 July 1989",
+          "standard_date": "29 Jul 1989"
+        },
+        {
+          "id": "1f905d52-10a0-435e-9a60-a9684b9cd460",
+          "type": "SocialProgramCorrespondence",
+          "value": "Social Program Correspondence"
+        },
+        {
+          "id": "45f7fc92-004a-4a82-aabc-6ef8fc555bb6",
+          "type": "PreviousResidence",
+          "place": "Miami, Miami-Dade, Florida, United States",
+          "standard_place": "Miami, Miami-Dade, Florida, United States"
+        },
+        {
+          "id": "9b497015-9866-43c6-b91b-32530cfa2079",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GTX8-M9H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Helen Elaine",
+          "surname": "Kraynak"
+        }
+      ],
+      "facts": [
+        {
+          "id": "954fbdd4-6683-44f5-935a-15a01b2717f7",
+          "type": "Birth",
+          "date": "1 August 1927",
+          "standard_date": "1 Aug 1927",
+          "place": "Sharpsville, Mercer, Pennsylvania, United States",
+          "standard_place": "Sharpsville, Mercer, Pennsylvania, United States"
+        },
+        {
+          "id": "68e511c4-86f5-42a5-af7b-785c54910806",
+          "type": "Social Program Application",
+          "date": "March 1943",
+          "standard_date": "Mar 1943"
+        },
+        {
+          "id": "2c734933-c5b8-4a2f-aa4a-39eca8ca0c71",
+          "type": "Death",
+          "date": "2 September 2005",
+          "standard_date": "2 Sep 2005"
+        },
+        {
+          "id": "1be33d15-029b-444b-981f-c954beac67f3",
+          "type": "Residence",
+          "date": "2 September 2005",
+          "standard_date": "2 Sep 2005",
+          "place": "McKees Rocks, Allegheny, Pennsylvania, United States",
+          "standard_place": "McKees Rocks, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "4f0046a1-d42c-48e2-b2da-1199e4413621",
+          "type": "Obituary",
+          "date": "4 September 2005",
+          "standard_date": "4 Sep 2005",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "8e10399e-9a06-4e81-a63c-6b51de15ba31",
+          "type": "Obituary",
+          "date": "5 September 2005",
+          "standard_date": "5 Sep 2005",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "103b36ab-e622-4c0a-9067-3b76a9b94618",
+          "type": "Social Program Correspondence",
+          "value": "Social Program Correspondence"
+        },
+        {
+          "id": "caede221-1e7d-4119-a452-5afe29138695",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "38f4b6f9-6971-462c-bd64-15ec99cf0460",
+          "type": "Previous Residence",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "cd6fe159-799f-459e-8d51-ad98c77c590c",
+          "type": "Burial",
+          "place": "Coraopolis, Allegheny, Pennsylvania, United States",
+          "standard_place": "Coraopolis, Allegheny, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "GQYV-H4X",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "George Charles",
+          "surname": "Kraynak"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e270dc57-cc52-4112-9ec3-08a13051eaaf",
+          "type": "Birth",
+          "date": "15 April 1913",
+          "standard_date": "15 Apr 1913",
+          "place": "Sharpsville, Mercer, Pennsylvania, United States",
+          "standard_place": "Sharpsville, Mercer, Pennsylvania, United States"
+        },
+        {
+          "id": "02b5cf87-0662-48a9-aedd-7579387b97b3",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "McKees Rocks, Allegheny, Pennsylvania, United States",
+          "standard_place": "McKees Rocks, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "f325a8e8-1b43-4058-afaf-6a87326d52a9",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Coraopolis, Allegheny, Pennsylvania, United States",
+          "standard_place": "Coraopolis, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "8b0b6d1a-d4bd-4385-a230-20f1ef39d37b",
+          "type": "Military Draft Registration",
+          "date": "16 October 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Coraopolis, Allegheny, Pennsylvania, United States",
+          "standard_place": "Coraopolis, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "d4cfe2f9-09d4-42be-a00d-e2ec392a4763",
+          "type": "Military Induction",
+          "date": "12 February 1945",
+          "standard_date": "12 Feb 1945",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "cdfe33e3-411a-4e0f-831e-aaaffbad58b7",
+          "type": "MilitaryService",
+          "date": "12 February 1945",
+          "standard_date": "12 Feb 1945",
+          "place": "Pittsburgh, Allegheny, Pennsylvania, United States",
+          "standard_place": "Pittsburgh, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "ec6f0954-7a71-4acd-be9a-315f465681e9",
+          "type": "Residence",
+          "date": "5 April 1950",
+          "standard_date": "5 Apr 1950",
+          "place": "Coraopolis, Allegheny, Pennsylvania, United States",
+          "standard_place": "Coraopolis, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "47e522cb-3931-4316-b31a-c9a7b8901778",
+          "type": "Death",
+          "date": "4 August 1992",
+          "standard_date": "4 Aug 1992"
+        },
+        {
+          "id": "5bfd298c-d539-4d62-86bd-4aad1422ea81",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "cefba82a-2748-414c-96e3-59d5fc2b7cc4",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "9433aca8-336c-4b5e-94e4-5a686fad8050",
+          "type": "Occupation",
+          "value": "Kiln Burner"
+        },
+        {
+          "id": "4b56c3d7-1eb6-42b0-a8b9-b60b56ab4583",
+          "type": "Burial",
+          "place": "Saint Joseph Cemetery, Coraopolis, Allegheny, Pennsylvania, United States",
+          "standard_place": "Saint Joseph Cemetery, Coraopolis, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "6a710cad-94aa-4281-aab1-27963e8171e6",
+          "type": "Residence",
+          "place": "Coraopolis, Allegheny, Pennsylvania, United States",
+          "standard_place": "Coraopolis, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "ceb78bee-3c36-43f0-aaca-036854c0cf6e",
+          "type": "Education",
+          "value": "2 years of high school"
+        },
+        {
+          "id": "4e9c077c-e146-45a2-ac3f-779ad9d5f8a0",
+          "type": "Occupation",
+          "value": "6000"
+        },
+        {
+          "id": "0e94324c-6a1d-4618-a18b-f405273f1c20",
+          "type": "Residence",
+          "place": "Allegheny, Pennsylvania, United States",
+          "standard_place": "Allegheny, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "GBFC-FNH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Margaret",
+          "surname": "Kraynak"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7ab79f5c-1df7-4f7f-be77-f204b8bdae70",
+          "type": "Birth",
+          "date": "8 September 1929",
+          "standard_date": "8 Sep 1929",
+          "place": "Sharpsville, Highland, Ohio, United States",
+          "standard_place": "Sharpsville, Highland, Ohio, United States"
+        },
+        {
+          "id": "f5d595e6-fde4-47bd-9ab4-07e5328de956",
+          "type": "Social Program Application",
+          "date": "January 1945",
+          "standard_date": "Jan 1945"
+        },
+        {
+          "id": "20241464-9f98-44bf-87e8-77e6bb739218",
+          "type": "Death",
+          "date": "18 November 1992",
+          "standard_date": "18 Nov 1992"
+        },
+        {
+          "id": "8ad46bae-7cae-47f1-9003-6072ecf6e247",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "d1f56536-0d12-40fa-9ac5-64d3c3b44fb1",
+          "type": "Previous Residence",
+          "place": "McKees Rocks, Allegheny, Pennsylvania, United States",
+          "standard_place": "McKees Rocks, Allegheny, Pennsylvania, United States"
+        },
+        {
+          "id": "e6d08137-c9c2-4c67-a5bc-899a67a747c8",
+          "type": "Social Program Correspondence",
+          "value": "Social Program Correspondence"
+        }
+      ]
+    },
+    {
+      "id": "GTM4-S75",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Martha Vivian",
+          "surname": "Kraynak"
+        }
+      ],
+      "facts": [
+        {
+          "id": "95e0a6aa-436d-473c-a1ae-f5bc1a61650c",
+          "type": "Birth",
+          "date": "17 October 1914",
+          "standard_date": "17 Oct 1914",
+          "place": "Sharpsville, Mercer, Pennsylvania, United States",
+          "standard_place": "Sharpsville, Mercer, Pennsylvania, United States"
+        },
+        {
+          "id": "61eebdbc-a599-4f55-b1ec-04da7781714a",
+          "type": "Social Program Application",
+          "date": "December 1936",
+          "standard_date": "Dec 1936"
+        },
+        {
+          "id": "f5d504a7-0434-448b-9419-db61caed3708",
+          "type": "Death",
+          "date": "10 March 2003",
+          "standard_date": "10 Mar 2003"
+        },
+        {
+          "id": "b5c8348d-60b6-417e-8ec7-c6058c4e9072",
+          "type": "Social Program Correspondence",
+          "value": "Social Program Correspondence"
+        },
+        {
+          "id": "6736b56c-4e4f-45a9-a50e-66eb75b12e81",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "e30e5b5b-250f-4cf7-9d31-10104fcb5ad0",
+          "type": "Previous Residence",
+          "place": "Carnegie, Allegheny, Pennsylvania, United States",
+          "standard_place": "Carnegie, Allegheny, Pennsylvania, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GQYV-FFS",
+      "person2": "L86H-T8G"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L86H-T8P",
+      "person2": "L86W-X37",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "19 July 1887",
+          "standard_date": "19 Jul 1887",
+          "place": "Youngstown, Mahoning, Ohio, United States",
+          "standard_place": "Youngstown, Mahoning, Ohio, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L86H-T8P",
+      "child": "L86H-T8G"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L86W-X37",
+      "child": "L86H-T8G"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GQYV-FFS",
+      "child": "GYW3-2K7"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L86H-T8G",
+      "child": "GYW3-2K7"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GQYV-FFS",
+      "child": "GQYV-H4X"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L86H-T8G",
+      "child": "GQYV-H4X"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GQYV-FFS",
+      "child": "GTM4-S75"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L86H-T8G",
+      "child": "GTM4-S75"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GQYV-FFS",
+      "child": "LK11-1ZH"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "L86H-T8G",
+      "child": "LK11-1ZH"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "GQYV-FFS",
+      "child": "GZ4C-S4R"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "L86H-T8G",
+      "child": "GZ4C-S4R"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "GQYV-FFS",
+      "child": "GTX8-M9H"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "L86H-T8G",
+      "child": "GTX8-M9H"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "GQYV-FFS",
+      "child": "GBFC-FNH"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "L86H-T8G",
+      "child": "GBFC-FNH"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QTGX-MB1",
+      "title": "Marie Renic, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K95-QX1D : Sun Jul 05 02:27:27 UTC 2026), Entry for Helen Ela Kunca and John Kraynak.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K95-QX1X"
+    },
+    {
+      "id": "7JP5-TCX",
+      "title": "Maria Rejnicz, \"Slovakia, Church and Synagogue Books, 1592-1935\"",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1Q2-VQL : Fri Oct 10 20:19:51 UTC 2025), Entry for Maria Rejnicz and Stephanus Rejnicz, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1Q2-VQL"
+    },
+    {
+      "id": "7JPG-GY1",
+      "title": "Mary Rejnic, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K92-VT96 : Fri Jul 03 15:55:11 UTC 2026), Entry for Stephen Kraynak and John Kraynak.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K92-VT9F"
+    },
+    {
+      "id": "SRPC-VBX",
+      "title": "Maria Rejnicz Apr 1891 AND Nicolaus Nov 1891 (Stephanus Rejnicz & Martha Duda) Line 3 Page 2",
+      "citation": "\"Slovakia, Church and Synagogue Books, 1592-1935,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:S3HT-DT63-QJZ?cc=1554443&wc=9PQW-3TP%3A107654201%2C107702901%2C117629701%2C117629702 : 3 July 2014), Greek Catholic (Grécko-katolícká cirkev) > Sabinov > Štelbach > Baptisms (Krsty) 1810-1907 Marriages (Manželstvá) 1810-1907 Deaths (Úmrtia) 1810-1907 > image 159 of 350; Odbor Archivnictva (The Archives of the Republic), Slovakia.\n\n",
+      "url": "https://familysearch.org/ark:/61903/3:1:S3HT-DT63-QJZ"
+    },
+    {
+      "id": "7JPG-NMW",
+      "title": "Mary Rejnic Kraynak, \"Pennsylvania, County Marriages, 1775-1991\"",
+      "citation": "\"Pennsylvania, County Marriages, 1775-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFQ7-NHJ : Thu May 07 23:24:19 UTC 2026), Entry for Nicholas Lackovic and Kathryn Kraynak, 28 October 1939.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFQ7-NHG"
+    },
+    {
+      "id": "Q139-W56",
+      "title": "Mary Rejnic, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K9V-3LSR : Sun Jul 05 13:53:24 UTC 2026), Entry for Martha Pluskis and Martha Vivian Kraynak.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K9V-3L3S"
+    },
+    {
+      "id": "7SZG-M4F",
+      "title": "Mary Renick, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K3C-62QB : Mon Jul 06 23:04:14 UTC 2026), Entry for John Kraynak and John Kraynack.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K3C-627M"
+    },
+    {
+      "id": "7JPG-2FK",
+      "title": "Mary Rejnich, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K95-Y927 : Sat Jul 04 15:49:12 UTC 2026), Entry for Margaret Kraynak and John Kraynak.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K95-Y922"
+    },
+    {
+      "id": "7BFG-14M",
+      "title": "Mary Kraynak, \"Pennsylvania, World War II Draft Registration Cards, 1940-1945\"",
+      "citation": "\"Pennsylvania, World War II Draft Registration Cards, 1940-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2SX-65W3 : Fri Feb 23 19:04:01 UTC 2024), Entry for John Kraynak and Mary Kraynak, 16 Oct 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2SX-65WW"
+    }
+  ]
+}
