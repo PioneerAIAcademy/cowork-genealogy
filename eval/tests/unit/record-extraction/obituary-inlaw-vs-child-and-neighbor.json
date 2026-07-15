@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_record_extraction_017",
+    "skill": "record-extraction",
+    "name": "Obituary survivor list: maiden-surname vs spouse parentheticals, in-law vs child, neighbor vs kin",
+    "type": "positive",
+    "description": "Extract from an obituary whose survivor list uses BOTH parenthetical conventions. (A) 'given (maiden surname) married surname' — the parenthetical is a SURNAME = a married woman's maiden name, so 'Grace (Whitaker) Tolman' is ONE person (Grace Tolman née Whitaker), not a person plus a spouse. (B) 'given (spouse) surname' — the parenthetical is a GIVEN NAME = a spouse, so 'Robert (Linda) Whitaker' is a son plus his wife (a daughter-in-law), not two children. The agent must disambiguate by what is in the parens, capture the actual child when a survivor and their spouse are both named, tell apart two survivors sharing a given name by surname (Linda Whitaker the daughter-in-law vs Linda Merrill the daughter), and role a neighbor as a FAN associate, not kin. From the applegarth-parents-1936 e2e run + senior-genealogist and Dallan review.",
+    "tags": [
+      "extraction",
+      "obituary",
+      "maiden-name",
+      "in-law",
+      "FAN",
+      "relationship-roles"
+    ]
+  },
+  "input": {
+    "user_message": "Extract assertions from this obituary for Harold Dean Whitaker:\n\nHarold Dean Whitaker, 91, of Logan, Cache County, Utah, passed away peacefully on March 14, 2021. He was born January 8, 1930, in Brigham City, Box Elder County, Utah, the son of Walter and Edith Whitaker. On June 3, 1952, he married Ruth Ann Baxter in the Logan LDS Temple.\n\nHarold is survived by his two children, Robert (Linda) Whitaker of Portland, Oregon, and Linda (Paul) Merrill of Twin Falls, Idaho; by seven grandchildren; and by his sister, Grace (Whitaker) Tolman of Ogden, Utah. He wished to thank his longtime neighbor, Karen Foster, who looked in on him daily during his final year. He was preceded in death by his wife, Ruth, and by his parents.",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "This is an obituary — a family-supplied notice. Grade the RELATIONSHIP ROLES the agent assigns from the survivor list; the source/informant layer is secondary here and should not be penalized as long as roles are read correctly.",
+    "A parenthetical in an obituary name follows one of two conventions and MUST be disambiguated by what is in the parens.",
+    "CONVENTION A — 'given (maiden surname) married surname': the parenthetical is a SURNAME = the woman's maiden name. 'Grace (Whitaker) Tolman' is ONE person: Grace Tolman, nee Whitaker (maiden surname Whitaker, married surname Tolman), Harold's sister. The agent must NOT create a second persona named 'Whitaker' and must NOT treat 'Whitaker' as a spouse. Role her as a sibling (e.g. sister_1) and record Whitaker as her maiden/birth name.",
+    "CONVENTION B — 'given (spouse) surname': the parenthetical is a GIVEN NAME = a spouse. 'Robert (Linda) Whitaker' = son Robert Whitaker plus his wife Linda; Linda is a DAUGHTER-IN-LAW (a child's spouse), NOT a child. 'Linda (Paul) Merrill' = daughter Linda Merrill plus her husband Paul; Paul is a SON-IN-LAW.",
+    "There are TWO different people named Linda and they must NOT be merged: Linda Whitaker (the daughter-in-law, Robert's wife, carrying the family surname by marriage) and Linda Merrill (the actual daughter, under her own married surname Merrill). A correct extraction captures both as distinct personas.",
+    "Correct roles: Robert Whitaker = a child (son) of Harold; Linda (Robert's wife) = daughter_in_law_1, never child; Linda Merrill = a child (the daughter) of Harold; Paul Merrill = son_in_law_1. The agent must still capture Linda Merrill as the daughter — dropping the actual daughter is a key failure this test guards against.",
+    "Karen Foster is a NEIGHBOR (a FAN associate). Extracting a thank-you neighbor is OPTIONAL — the failure this guards against is mis-roling her, not omitting her. IF she is extracted, she must carry a neighbor/FAN role (e.g. neighbor_1), NEVER a daughter-in-law, child, or any kin role. Roling a neighbor as family is the failure.",
+    "Walter and Edith Whitaker are Harold's parents (father/mother of the deceased) and Ruth Ann Baxter is his wife — capturing these is expected but is not the focus of this test.",
+    "Do NOT penalize the agent for hedging on a relationship it genuinely cannot resolve, but it must not: (a) read a maiden surname in parens as a spouse or a separate person (Convention A); (b) treat a parenthetical spouse as a second child (Convention B); (c) merge the two Lindas; (d) drop the real daughter; or (e) role the neighbor as kin."
+  ],
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  }
+}
