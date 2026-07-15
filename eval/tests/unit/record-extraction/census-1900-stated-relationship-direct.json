@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_record_extraction_018",
+    "skill": "record-extraction",
+    "name": "1880+ census: stated relationship-to-head is direct evidence, not inferred",
+    "type": "positive",
+    "description": "Extract from a 1900 census household. Unlike the 1850/1860 census, the 1900 census HAS a relationship-to-head column, so each person's relationship to the head is STATED by the record, not inferred from household position. The parent-child relationship (head/wife -> the stated 'Son') and the spousal relationship (head <-> the stated 'Wife') are therefore DIRECT evidence. The agent must NOT downgrade a stated 'Son'/'Daughter'/'Wife' to indirect on the grounds that a household relationship isn't necessarily biological parentage — from 1880 on the record STATES the relationship, and stated = direct. Mirrors the applegarth-parents-1936 e2e run, where the agent classified a 1940-census stated 'son' as indirect. From senior-genealogist (Shaunese) + Dallan review.",
+    "tags": [
+      "census",
+      "1900",
+      "extraction",
+      "direct-evidence",
+      "relationship-stated",
+      "relationship-roles"
+    ]
+  },
+  "input": {
+    "user_message": "Extract assertions from this 1900 U.S. Federal Census household in Springfield, Sangamon County, Illinois. The census form has a 'Relationship to head of household' column; the values are shown in brackets:\n\n- George Bennett [Head], white, male, age 45, born Ohio, farmer\n- Sarah Bennett [Wife], white, female, age 42, born Ohio\n- Charles Bennett [Son], white, male, age 16, born Illinois, farm laborer\n- Emma Bennett [Daughter], white, female, age 12, born Illinois, at school",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "This is a 1900 U.S. Federal Census — a census from 1880 onward, which HAS an explicit 'relationship to head of household' column. This is the crux of the test: because the record STATES each person's relationship to the head, those stated relationships are DIRECT evidence, not inferred from household position. This is the opposite of the pre-1880 (1850/1860) rule, where relationships have no column and must be inferred (indirect).",
+    "The stated relationship 'Son' for Charles means the parent-child relationship between George/Sarah and Charles is DIRECT evidence (the record states it). Likewise 'Daughter' for Emma -> parent-child is DIRECT, and 'Wife' for Sarah -> the couple relationship with George is DIRECT. The agent must classify these relationship assertions as evidence_type 'direct', NOT 'indirect'.",
+    "KEY FAILURE THIS GUARDS AGAINST: do NOT downgrade a stated 'Son'/'Daughter'/'Wife' to indirect by reasoning that 'a household relationship is not necessarily biological parentage' or 'living in the household only implies the relationship'. From 1880 on the record explicitly STATES the relationship; stated = direct. The direct/indirect axis is stated-vs-inferred, not biological-certainty. (A distinct, later analytical step may weigh whether a stated 'son' is biological vs. step/adopted — but that does not make the relationship assertion 'indirect' at extraction.)",
+    "Informant layer: a household member (likely the head or spouse) answered the relationship-to-head column, so relationship assertions take informant_proximity 'household_member' — NOT the enumerator (the enumerator is the recorder, not the informant), and NOT 'researcher' (that is the pre-1880 no-column convention, which does not apply here).",
+    "Assertion atomicity still applies: separate a_ entries for each person's name, age, birthplace, and (where stated) occupation — not compound assertions. Birth year computed from a stated age is INDIRECT (arithmetic); the stated age itself is DIRECT; stated birthplace is DIRECT.",
+    "Do NOT invent facts the record does not state (e.g. an occupation for Sarah or Emma beyond what is listed; Emma 'at school' is a school-attendance datum, not an occupation). Faithful capture only.",
+    "It is acceptable for the agent to also note the relationship as biologically unconfirmed or to flag corroboration as a next step — that is fine — but it must still classify the stated relationship assertion itself as evidence_type 'direct'."
+  ],
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  }
+}
