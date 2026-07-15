@@ -146,6 +146,8 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 
 **Query-structure changes are not a substitute for name-spelling changes.** Twice on the same real record (see `references/collection-quirks.md`, Norway section), the agent tried several searches that changed *which field* held which value — switching which party was `spouseGivenName` vs. the principal, dropping the surname filter, dropping the place filter — while re-typing the exact same spelling of the secondary given name every time. That is not a name variant; it is the same name run through a different query shape, and it does not surface a transcription-variant record. Before moving to another repository, confirm you can point to at least one search where a **letter in the secondary given name itself** was changed (not just which parameter it was assigned to).
 
+**When secondary-party name variants are exhausted and still weak, drop the secondary filter instead of switching repositories.** Across repeated live runs against the same Norwegian marriage record (see `references/collection-quirks.md`, Norway section), the searches that actually recovered the target record dropped the secondary-party name filter entirely — searching the principal alone, scoped only by collection/date/place — rather than continuing to guess spelling combinations on the secondary party or pivoting to a different collection/record type. This is a required fallback, not an optional one: before concluding a plan item is exhausted or moving to another repository, run at least one principal-only search (no `spouseGivenName`/`fatherSurname`/etc.) with `count: 50`, then `rank_search_matches` with `checkAttachments: true` over the full candidate pool. A candidate with `attachedToSubject: true` is a strong confirming signal here — FamilySearch's own matcher already linked it to this person — even when its raw `matchScore` looks unremarkable (a real recovered case scored only 0.632 at rank 2 of 58). This is the inverse of the "attached → deprioritize" guidance in Step 4: that guidance is for *discovering new* evidence, where an attached record is old news; when the plan item's goal is *confirming* a fact already suspected (a marriage date, a birth record), an attached record is exactly the target and should be read via `record_read`, not skipped.
+
 **Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** Use explicit spelling variants instead.
 
 **Always keep givenName in variant searches.** Do not drop to a surname-only query — it broadens results to all persons of that surname and makes triage impossible. Keep both surname and givenName on every retry; change the spelling of one or both.
@@ -207,8 +209,14 @@ candidates; you still confirm the top ones:
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
   it as `needs-review` and confirm by other means, not on score alone.
 - **Attachment status** is already on each match: attached-to-subject → note and
-  deprioritize; attached-to-other → potentially relevant; unattached → prioritize
-  (new evidence).
+  deprioritize *when the goal is discovering new evidence*; attached-to-other →
+  potentially relevant; unattached → prioritize (new evidence). **When the plan
+  item's goal is instead confirming a specific fact already suspected** (e.g. "did
+  this marriage happen, and when") rather than discovering something new, an
+  attached-to-subject candidate is exactly the target, not noise — FamilySearch's
+  own matcher already vetted the link. Read it via `record_read` even at a
+  moderate `matchScore`, rather than passing over it in search of unattached
+  "new" evidence.
 - **Collection sanity-check.** Verify the matched record's collection actually
   answers the question asked — a 1870-census query returning an 1850 result is a
   near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
