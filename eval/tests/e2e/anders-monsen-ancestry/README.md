@@ -15,7 +15,7 @@
 
 ## What the starting tree contains
 
-- Anders Monsen himself: birth (1759, Håtuft, Meland), christening (7 April 1759, Hamre kirke, Osterøy), death (1821, Åsebø), burial (8 January 1821, Manger).
+- Anders Monsen's birth is 1759 in Håtuft, Meland, his christening is 7 April 1759 in Hamre kirke, Osterøy, his death is in 1821 in Åsebø and he was buried 8 January 1821 in Manger.
 - His parents, both fully identified and linked via `ParentChild`: Mons Monsen "Qvamme" (`LKFW-9ML`, b. 1724 Nedre Kvamme, christened 1 Oct 1724 Hamre kirke, d. 1779 Åsebø) and Anna Andersdatter (`LKFW-9QR`, b. 1739 Bjørnestad, christened 5 Apr 1739 Meland, d. 1805 Åsebø). These were the answer in a prior version of this fixture (parents/christening question) — they are now given context, not the tested finding.
 - His spouse Unna Halsteinsdatter (`KZHH-VTX`) as a known person: birth (May 1745, Hestdal, Meland) and christening (27 May 1745, Hamre). The `Couple` relationship to Anders exists but carries no marriage fact.
 - Three non-marriage sources: the christening record, the "Norway, Baptisms, 1634-1927" index entry, and the death/burial record.
@@ -99,4 +99,4 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   remaining bug and more like real run-to-run variance in how much of a
   multi-step search checklist the agent executes before satisficing on an
   alternate (honest, defensible, but off-target) research lead — worth keeping
-  in mind before spending more live-run budget chasing a single clean pass.
+  in mind before spending more live-run budget chasin
