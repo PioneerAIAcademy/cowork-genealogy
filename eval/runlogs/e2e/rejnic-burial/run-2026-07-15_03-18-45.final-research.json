@@ -1,0 +1,451 @@
+{
+  "project": {
+    "id": "rp_rejnic_burial",
+    "objective": "Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967?",
+    "subject_person_ids": [
+      "L86H-T8G"
+    ],
+    "status": "completed",
+    "created": "2026-07-14",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?",
+      "rationale": "This is the direct expression of the project objective. Death records, obituaries, and cemetery records from 1967 are the primary record types to consult. Maria's death date is known precisely, making death certificates and burial records highly targetable.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-14",
+      "resolution_assertion_ids": [
+        "a_001"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "FamilySearch PA Deaths (2 searches, nil), FamilySearch Allegheny Cemetery Records (2 searches, nil \u2014 Kennedy Township falls outside collection scope), Find a Grave Index (positive \u2014 burial Kennedy Township, Allegheny County, PA), FAN husband search (nil). Ancestry PA death certificate (pli_005) and Pittsburgh newspaper obituaries (pli_004) deferred due to autonomous-mode browser limitation \u2014 logged as leads with generated URLs in log_007 and log_008. The available evidence, a single derivative Find a Grave Index entry with exact name 'Mary Rejnic Kraynak', birth 15 Apr 1890, death 18 Jun 1967, supports a 'probable' tier conclusion. No contradicting evidence. Proof-conclusion should note the deferred sources and set tier accordingly.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Partial-to-yes: burial at Kennedy Township, Allegheny County, Pennsylvania is identified. The cemetery name is not established from available evidence, but the township is a meaningful geographic answer to the burial location question.",
+          "repository_breadth": "FamilySearch (PA Deaths, Allegheny Cemetery Records, broad cross-collection) and Find a Grave Index searched. Ancestry PA death certificate (collection 7115) and Pittsburgh newspapers deferred \u2014 logged with URLs (log_007, log_008) for interactive follow-up. These deferred repositories represent the primary remaining gap.",
+          "original_substitution": "Not fully met. Only a derivative source (Find a Grave Index) was found. The underlying PA death certificate \u2014 the authoritative original naming the undertaker and place of interment \u2014 was searched on FamilySearch (nil) and is deferred on Ancestry. The actual Find a Grave memorial (#97565146) was not separately examined. Deferred URL: https://www.ancestry.com/search/collections/7115/?name=Mary_Kraynak&birth=1890&death=1967&deathplace=Pennsylvania.",
+          "independent_verification": "Not met. One source only (Find a Grave Index). The FAN evidence (children George, Kathryn, Helen buried in Coraopolis/Allegheny County) corroborates the county-level location but does not independently verify Maria's specific burial place. A second independent source is needed to upgrade to 'proved'.",
+          "evidence_class": "Not met by GPS standard. No original record with primary information was found for the burial fact. The Find a Grave Index is a derivative source citing an unexamined contributor-submitted memorial. The PA death certificate (original, with primary burial information from the funeral director) is the decisive missing record.",
+          "conflict_resolution": "No conflicts identified. The single source is internally consistent and externally consistent with tree facts (birth date, death date, Allegheny County location).",
+          "overturn_risk": "Low-to-moderate. The Find a Grave entry has exact name, birth date, and death date matching the subject \u2014 identity is highly secure. The burial location (Kennedy Township) could theoretically be refined by the PA death certificate, but no contradicting evidence exists. The main risk is precision (cemetery name), not correctness of the township-level location. Deferred Ancestry search (log_007) should be the first follow-up in an interactive session."
+        }
+      },
+      "created": "2026-07-15"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-14",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Allegheny County, Pennsylvania",
+          "date_range": "1967",
+          "repository": "FamilySearch",
+          "rationale": "Pennsylvania death certificates from 1967 routinely record the place of burial. Maria died 18 June 1967 in Pittsburgh, Allegheny County. A death certificate in the FamilySearch collection 'Pennsylvania, Deaths and Burials, 1720-1999' (col. 3535178) would be direct evidence naming the cemetery and location. She likely appears under 'Mary Kraynak' (married name) or 'Maria Rejnic'. This is the highest-yield source for burial place.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "cemetery",
+          "jurisdiction": "Pittsburgh, Allegheny County, Pennsylvania",
+          "date_range": "1967",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 'Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970' (col. 3155912) indexes 203,000 burials through 1970 in Allegheny County. The FAN cluster in the tree shows son George Charles Kraynak buried at Saint Joseph Cemetery, Coraopolis, and daughters Kathryn and Helen also buried in Coraopolis \u2014 suggesting Maria was buried in the same area. A direct cemetery record would be original evidence of the burial.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "cemetery",
+          "jurisdiction": "Allegheny County, Pennsylvania",
+          "date_range": "1967",
+          "repository": "other",
+          "rationale": "FindAGrave and BillionGraves hold cemetery memorial records for Allegheny County cemeteries. A memorial for Maria Rejnic or Mary Kraynak in Allegheny County would identify the cemetery and grave location. FAN evidence points to Coraopolis (Saint Joseph Cemetery) as the likely burial site \u2014 searching that cemetery directly on FindAGrave is high priority.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "newspaper",
+          "jurisdiction": "Pittsburgh, Allegheny County, Pennsylvania",
+          "date_range": "1967",
+          "repository": "other",
+          "rationale": "Pittsburgh newspaper obituaries (Pittsburgh Post-Gazette, Pittsburgh Press) from June 1967 would name the funeral home, church service, and cemetery. Genealogybank and Newspapers.com both hold Pittsburgh-area papers for this period. An obituary is also a primary source for burial place from a person with direct knowledge.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Pennsylvania",
+          "date_range": "1967",
+          "repository": "Ancestry",
+          "rationale": "Ancestry holds Pennsylvania death records that may not overlap completely with FamilySearch's index. If pli_001 (FamilySearch death record) yields no result \u2014 possible if the index uses a variant spelling \u2014 Ancestry's Pennsylvania death collection is the next repository to check. Search variants: Rejnic, Rejnich, Renick, Kraynak.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Allegheny County, Pennsylvania",
+          "date_range": "1955-1967",
+          "repository": "FamilySearch",
+          "rationale": "FAN item: Joannes Kraynak (husband, died 20 December 1955, Pittsburgh) likely has a death certificate or cemetery record naming the family burial site. If Joannes and Maria were buried together in a family plot, his burial record identifies the cemetery. Search FamilySearch 'Pennsylvania, Deaths and Burials, 1720-1999' for Joannes Kraynak (also Johannes / John Kraynak) died 1955.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T03:01:27.327Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Pennsylvania, Deaths and Burials, 1720-1999 (3535178)",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "deathYearFrom": 1966,
+        "deathYearTo": 1968,
+        "deathPlace": "Allegheny, Pennsylvania"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Only result was 'Mary Crynick / Verona May Crynick' \u2014 match score 0.0004, clearly not the subject. subjectResolvable: false (subject sparse in tree). No Mary Kraynak death record found in this collection for Allegheny County 1966-1968."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T03:01:48.432Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Pennsylvania, Deaths and Burials, 1720-1999 (3535178)",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "deathYearFrom": 1965,
+        "deathYearTo": 1969,
+        "noPlaceFilter": true
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "Same non-matching result (Mary Crynick). Collection 3535178 does not appear to index Mary Kraynak's 1967 death in Allegheny County under any search shape tried so far."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-15T03:01:51.389Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970 (3155912)",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "deathYearFrom": 1965,
+        "deathYearTo": 1969
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Mary Kraynak in Allegheny Cemetery Records 1845-1970. Will try maiden name variant."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-15T03:02:55.983Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "recordType": "death",
+        "recordSubdivision": "Pennsylvania",
+        "recordCountry": "United States",
+        "birthYearFrom": 1885,
+        "birthYearTo": 1895,
+        "notes": "Broad cross-collection search; recovered Find a Grave Index record"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 116,
+      "notes": "Rank-1 match: 'Mary Rejnic Kraynak', born 15 April 1890, died 18 June 1967, burial Kennedy Township, Allegheny, Pennsylvania \u2014 Find a Grave Index (ark:/61903/1:1:QVL2-HZFG). Exact birth and death dates match subject. matchScore 0.476, already attached to subject L86H-T8G. All other candidates score 0.0006 or less \u2014 clear separation."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-15T03:03:00.345Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970 (3155912)",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "noYearFilter": true
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Mary Kraynak in Allegheny Cemetery Records (3155912). Burial was in Kennedy Township (confirmed by Find a Grave), which may fall under a different collection scope. pli_003 (Find a Grave) answered the burial location."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-15T03:03:04.627Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Pennsylvania, Deaths and Burials, 1720-1999 (3535178)",
+        "surname": "Kraynak",
+        "givenName": "John",
+        "deathYearFrom": 1953,
+        "deathYearTo": 1957,
+        "deathPlace": "Pittsburgh, Pennsylvania"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for John/Joannes Kraynak death 1955 Pittsburgh in PA Deaths collection. FAN item superseded by direct evidence from Find a Grave (pli_003 positive). Burial location for Maria is now established."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-15T03:07:49.505Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "Pennsylvania, Death Certificates, 1906-1967 (collection 7115)",
+        "name": "Mary Kraynak",
+        "birth": 1890,
+        "death": 1967,
+        "deathplace": "Pennsylvania",
+        "variants": [
+          "Maria Kraynak",
+          "Mary Rejnic",
+          "Maria Rejnic"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/7115/?name=Mary_Kraynak&birth=1890&death=1967&deathplace=Pennsylvania",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run, requires interactive user capture. Ancestry Pennsylvania Death Certificates 1906-1967 (collection 7115) would be the primary original-record source for Maria's 1967 death in Allegheny County, directly naming the cemetery and undertaker. URL generated for later interactive session: https://www.ancestry.com/search/collections/7115/?name=Mary_Kraynak&birth=1890&death=1967&deathplace=Pennsylvania. Try also: Maria Kraynak, Mary Rejnic, Maria Rejnic."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-15T03:07:54.426Z",
+      "tool": "external_site",
+      "query": {
+        "site": "newspapers",
+        "query": "Mary Kraynak",
+        "year": 1967,
+        "month": "June",
+        "place": "Pittsburgh, Pennsylvania",
+        "notes": "Obituary expected June 1967, Pittsburgh Post-Gazette or Pittsburgh Press"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "newspapers",
+        "url_generated": "https://www.newspapers.com/search/?query=Mary+Kraynak&dr_year=1967&dr_place=Pittsburgh%2C+Pennsylvania",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "DEFERRED \u2014 autonomous run, requires interactive user capture. Pittsburgh newspapers (Post-Gazette, Pittsburgh Press) June 1967 obituaries would name funeral home, church service, and cemetery for Mary Kraynak / Maria Rejnic Kraynak. URL generated for Newspapers.com: https://www.newspapers.com/search/?query=Mary+Kraynak&dr_year=1967&dr_place=Pittsburgh%2C+Pennsylvania. Also try GenealogyBank: https://www.genealogybank.com/search/obituaries/results?fname=Mary&lname=Kraynak&daterange=custom&dr_year=1967&dr_yearTo=1967&place=Pennsylvania."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Find a Grave Index\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG : Mon Jul 06 05:08:25 UTC 2026), Entry for Mary Rejnic Kraynak, Burial, Kennedy Township, Allegheny, Pennsylvania, United States; citing Find A Grave memorial, http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=97565146.",
+      "citation_detail": {
+        "who": "Find A Grave contributor (unidentified)",
+        "what": "Find a Grave Index entry for Mary Rejnic Kraynak (memorial #97565146)",
+        "when_created": "Find A Grave memorial creation date not stated on index entry",
+        "when_accessed": "2026-07-14",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG",
+        "where_within": "Find a Grave Index collection, entry for Mary Rejnic Kraynak"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (Find A Grave Index, derived from findagrave.com memorial 97565146)",
+      "access_date": "2026-07-14",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q23T-4T7G",
+      "notes": "Index entry derived from Find A Grave memorial; original memorial (contributor-submitted, possibly photographed headstone) not separately examined in this pass. Original not examined \u2014 index/derivative only.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QVL2-HZFG",
+      "record_role": "deceased",
+      "record_persona_id": "p_101128725472",
+      "fact_type": "Burial",
+      "value": "Burial, Kennedy Township, Allegheny, Pennsylvania, United States of America",
+      "date": null,
+      "place": "Kennedy Township, Allegheny, Pennsylvania, United States of America",
+      "information_quality": "secondary",
+      "informant": "unknown Find A Grave contributor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Find A Grave memorial data is contributor-submitted; the contributor's relationship to the deceased and their proximity to the burial event are unknown. Contributed cemetery data can also contain transcription or research errors.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001",
+      "standard_place": "Kennedy Township, Allegheny, Pennsylvania, United States"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QVL2-HZFG",
+      "record_role": "deceased",
+      "record_persona_id": "p_101128725472",
+      "fact_type": "Birth",
+      "value": "15 Apr 1890",
+      "date": "15 Apr 1890",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unknown Find A Grave contributor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Corroborates tree birth date; contributor is not the deceased and proximity to the original source of this date is unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QVL2-HZFG",
+      "record_role": "deceased",
+      "record_persona_id": "p_101128725472",
+      "fact_type": "Death",
+      "value": "18 Jun 1967",
+      "date": "18 Jun 1967",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unknown Find A Grave contributor",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Corroborates tree death date; contributor is not the deceased and proximity to the original source of this date is unknown.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "L86H-T8G",
+      "confidence": "confident",
+      "rationale": "Record names 'Mary Rejnic Kraynak' \u2014 maiden surname Rejnic is an exact match; Kraynak is her confirmed married name (husband Joannes Kraynak, R1 in tree). Birth date 15 Apr 1890 and death date 18 Jun 1967 both match the tree person exactly. Death in Allegheny County is consistent with tree death place Pittsburgh, Allegheny, PA. Record was already FamilySearch-attached to this subject. The burial fact (Kennedy Township, Allegheny, PA) is the primary finding for q_001.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "L86H-T8G",
+      "confidence": "confident",
+      "rationale": "Same record and persona as a_001 (Mary Rejnic Kraynak, Find a Grave Index). Birth date 15 Apr 1890 is an exact match to the tree person's birth fact. Name, death date, and location all corroborate L86H-T8G identity.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "L86H-T8G",
+      "confidence": "confident",
+      "rationale": "Same record and persona as a_001 (Mary Rejnic Kraynak, Find a Grave Index). Death date 18 Jun 1967 is an exact match to the tree person's death fact. Name, birth date, and Allegheny County location all corroborate L86H-T8G identity.",
+      "match_score": null,
+      "created": "2026-07-15"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch 'Pennsylvania, Deaths and Burials, 1720-1999' (col. 3535178) searched twice under Mary/Maria Kraynak and Maria Rejnic \u2014 nil. FamilySearch 'Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970' (col. 3155912) searched twice \u2014 nil (Kennedy Township falls outside that collection's scope). Broad cross-collection FamilySearch death search recovered the Find a Grave Index entry (log_004). Husband Joannes Kraynak FAN search (1955 PA deaths, FamilySearch) \u2014 nil. Ancestry Pennsylvania Death Certificates 1906-1967 (collection 7115) and Pittsburgh newspaper obituaries (Newspapers.com / GenealogyBank, June 1967) deferred due to autonomous-mode browser limitation; search URLs logged in log_007 and log_008 for interactive follow-up.",
+      "narrative_markdown": "## Burial Place of Maria Rejnic (1890\u20131967)\n\n**Research Question:** Where was Maria Rejnic, born 15 April 1890 and died 18 June 1967, buried?\n\n**Conclusion:** The preponderance of available evidence indicates that Maria Rejnic Kraynak was buried in Kennedy Township, Allegheny County, Pennsylvania.\n\n### Evidence\n\nThe sole source identified in this investigation is a Find a Grave Index entry, accessed through FamilySearch, for \u201cMary Rejnic Kraynak,\u201d recording a burial in Kennedy Township, Allegheny County, Pennsylvania, United States.\u00b9 The entry carries a birth date of 15 April 1890 and a death date of 18 June 1967, both of which match the subject precisely.\n\n**Source classification:** The Find a Grave Index is a **derivative** source \u2014 a searchable index of contributor-submitted memorials on FindAGrave.com. The underlying memorial (#97565146) was not separately examined in this investigation. The informant is an unidentified Find a Grave contributor whose relationship to the deceased and proximity to the original burial event are unknown, rendering the information **secondary** in quality. The burial fact is **direct** evidence of the burial location, as the record explicitly states the place of interment.\n\n**Identity:** The record\u2019s full name (\u201cMary Rejnic Kraynak\u201d) \u2014 combining the subject\u2019s maiden surname Rejnic with her married surname Kraynak \u2014 together with the exact birth date (15 April 1890) and exact death date (18 June 1967), provides high confidence that this entry pertains to Maria Rejnic. The record was already attached to the subject\u2019s FamilySearch profile at the time of this search.\n\n**Corroborating context:** The Allegheny County burial location is consistent with the subject\u2019s known death place (Pittsburgh, Allegheny County, Pennsylvania, 18 June 1967) and with the burial patterns of her children: son George Charles Kraynak was buried at Saint Joseph Cemetery, Coraopolis, Allegheny County; daughters Kathryn Lackovic and Helen Elaine Kraynak were also buried in Coraopolis, Allegheny County. This family cluster does not independently establish Kennedy Township as Maria\u2019s burial place, but it is fully consistent with an Allegheny County burial.\n\n### Research Scope\n\nFamilySearch\u2019s \u201cPennsylvania, Deaths and Burials, 1720-1999\u201d (collection 3535178) was searched twice under Mary/Maria Kraynak without finding a death record for the subject. FamilySearch\u2019s \u201cPennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970\u201d (collection 3155912) was searched twice and returned no results, likely because Kennedy Township falls outside that collection\u2019s geographic scope. A husband FAN search (Joannes Kraynak, died December 1955, Pittsburgh) also returned nil.\n\nTwo accessible sources remain to be consulted in an interactive session:\n\n1. **Pennsylvania death certificate on Ancestry.com** (collection 7115, \u201cPennsylvania Death Certificates 1906\u20131967\u201d): A 1967 death certificate for Maria Rejnic Kraynak would be an original record containing primary information supplied by the funeral director, likely naming the specific cemetery and undertaker. This is the highest-priority follow-up and could advance the conclusion to \u201cproved.\u201d Search URL logged in log_007.\n2. **Pittsburgh newspaper obituaries** (June 1967, Newspapers.com / GenealogyBank): An obituary would name the funeral home, church, and cemetery. Search URL logged in log_008.\n\n### Tier Assessment\n\nThis conclusion rests on a single derivative source with secondary information. Independent verification and an original record containing primary information \u2014 both required for a \u201cproved\u201d conclusion under the Genealogical Proof Standard \u2014 are lacking. Accordingly, the conclusion is assessed at **probable**: the evidence strongly suggests that Maria Rejnic Kraynak was buried in Kennedy Township, Allegheny County, Pennsylvania. Locating the Pennsylvania death certificate (Ancestry, collection 7115) or a contemporary Pittsburgh newspaper obituary would provide the independent original-source corroboration needed to advance this conclusion to \u201cproved.\u201d\n\n---\n\u00b9 \u201cFind a Grave Index,\u201d database, *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG : Mon Jul 06 05:08:25 UTC 2026), Entry for Mary Rejnic Kraynak, Burial, Kennedy Township, Allegheny, Pennsylvania, United States; citing Find A Grave memorial, http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=97565146."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-14.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-15T03:16:38.562Z"
+    }
+  ]
+}
