@@ -206,6 +206,19 @@ candidates; you still confirm the top ones:
   residences, FAN network) — before treating it as the subject's. Absent that
   confirmation, flag it `needs-review`, keep the plan item `in_progress`, and do
   not hand the record or its parents to extraction as the subject's.
+  **The excuse can point either direction — both are still excuses.** The
+  imprecision doesn't have to sit on the *matched record's* side to be a
+  rationalization: a same-name match carrying an exact, precise date (a parish
+  baptism, a marriage register entry) that conflicts with the tree's own
+  approximate estimate (itself often a census-derived age) is not resolved by
+  noting that the *tree's* number is the fuzzy one. A precise record's exact
+  date disagreeing with an approximate estimate by several years is the same
+  disqualifying signal as the reverse case — the record's greater precision
+  makes the conflict a stronger caution flag, not a reason to relax scrutiny
+  because "the other number was only an estimate anyway." Present this pattern
+  to the user as `needs-review — possible namesake`, not as a "Top Match," and
+  do not phrase the conclusion as "almost certainly the right person" with the
+  date reduced to a footnote.
 - **Needs-review band.** A genuinely *different* same-name/same-place person can
   land inside the match band, and sparse/dateless records score unstably. When the
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
@@ -263,6 +276,9 @@ Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce t
 - Explain the mismatch in `notes`
 - Still pass `stagedResultsRef`
 - **Stop after confirming the mismatch.** Variant spellings will NOT fix a collection mismatch — do not execute them, and do not recommend them as next steps. Suggest a different source or collection filter instead.
+- **A collection mismatch is not a nil, and repeating it is not "still exhausting levers."** If a follow-up attempt at fixing the *collection* targeting (an explicit `collectionId` pin, a broadened year window) still returns the same wrong-collection record, that repetition is itself the confirmation — it does not mean the mismatch is still unconfirmed, and it is not license to reach for Step 8's nil-lever escalation (spelling/phonetic variants) next. The record that keeps surfacing is real; it simply isn't from the collection being asked about.
+  ❌ WRONG: three straight 1870-census queries all return the 1850 record → try a "Flinn" spelling variant next.
+  ✅ CORRECT: three straight 1870-census queries all return the 1850 record → stop, log the pattern, and suggest a different collection/repository (a different state's archive, Ancestry's independently-indexed 1870 census) — never a spelling change.
 
 **outcome values:**
 - `positive`: Matching results found
@@ -300,6 +316,8 @@ Never treat an index entry as equivalent to examining the original record.
 
 ### 8. Handle nil results
 
+**This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch (Step 5) is a different failure mode with a narrower, separate remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
+
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
 2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry as a separate `research_log_append` call immediately after it completes — do not batch log calls at the end.**
    **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
@@ -316,7 +334,12 @@ Never treat an index entry as equivalent to examining the original record.
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
-7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass" on a Q→O error), no FamilySearch variant will ever surface that record. Other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`), so they can recover records FamilySearch cannot — which is exactly why the escalation is triggered by the nil signal here, not planned upfront (planning external items preemptively clutters the plan when FamilySearch works). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** In the nil log entry's `notes`, record that FamilySearch variants were exhausted and external sites should be checked. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
+7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass" on a Q→O error), no FamilySearch variant will ever surface that record. Other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`), so they can recover records FamilySearch cannot — which is exactly why the escalation is triggered by the nil signal here, not planned upfront (planning external items preemptively clutters the plan when FamilySearch works). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for the user to approve.
+
+   ❌ WRONG: Ending your response with "FamilySearch is exhausted — would you like me to check Ancestry?" without having called the skill. Offering the escalation in prose is not escalating.
+   ✅ CORRECT: Call `Skill("search-external-sites")` in this same turn, before writing your summary, and present the URLs it returns as part of your results.
+
+   In the nil log entry's `notes`, record that FamilySearch variants were exhausted and external sites should be checked. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
 
 ### 9. Present results
 
