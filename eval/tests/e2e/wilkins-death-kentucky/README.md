@@ -32,12 +32,16 @@ identity confirmation.
 
 ## Expected difficulty
 
-medium — The death record is indexed under name variants (Elizah/Eligie/
-Eligah Wilkins), and the same Muhlenberg County tree contains several other
-Wilkins relatives with overlapping given names and places. The agent must
-confirm identity by matching the record against tree context (age consistent
-with an 1814 birth, spouse Sally, parents James Wilkins and Margaret
-Elizabeth Jarvis) rather than by name spelling alone.
+hard (raised from medium after two headless runs) — No death certificate
+exists for the subject, yet the question's premise pulls the plan toward
+the indexed certificate collections, where two same-named men with real
+certificates (d. 1918 Paducah; d. 1940 Central City) are magnetic wrong
+answers — each headless run took a different one. The correct path is
+breaking out of the premise into probate. Identity discipline matters
+throughout: the tree contains several Wilkins relatives with overlapping
+names/places, and both wrong certificates fail against tree context (age
+consistent with an 1814 birth, spouse Sally, parents James Wilkins and
+Margaret Elizabeth Jarvis).
 
 ## Notes for reviewers
 

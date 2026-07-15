@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_research_plan_016",
+    "skill": "research-plan",
+    "name": "A record-type premise in the question does not narrow a death plan (probate included)",
+    "type": "positive",
+    "description": "wilkins-first-plan: q_001 asks 'Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins (b. c. 1814)?' — but the locality survey shows statewide Kentucky certificates began 1911 while the subject (last documented 1870) almost certainly died decades earlier, and county registers have 1860s-1870s gaps. A sound first plan searches the presupposed certificate/register collections AND the other primary death record types — probate/estate records above all. Guards the SKILL.md 'a record type named in the question is a lead, not a scope limit' improvement (issue #657 diagnosis: two headless runs planned certificates only and each attached a different same-named man's certificate).",
+    "tags": ["planning", "death", "kentucky", "record-type-selection", "premise-breadth", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 — using Kentucky death certificates, when and where did Elijah Wilkins die?",
+    "scenario": "wilkins-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-muhlenberg",
+    "place-search-kentucky-catchall",
+    "place-search-all-muhlenberg",
+    "collections-search-kentucky",
+    "wiki-search-kentucky",
+    "wiki-place-page-kentucky-research-tips",
+    "wiki-place-page-kentucky-online-records",
+    "external-links-search-kentucky",
+    "volume-search-muhlenberg",
+    "place-population-muhlenberg"
+  ],
+  "judge_context": [
+    "The plan MUST include at least one plan item targeting probate/estate records (record_type 'probate' — administrator bonds, estate settlements, probate registers at the Muhlenberg County court), alongside any death-certificate/register items. The collections-search fixture surfaces 'Kentucky Probate Records, 1727-1990', the wiki fixtures state probate is the primary death evidence for pre-1911 Kentucky deaths, and volume_search surfaces the browse-only Muhlenberg probate volumes.",
+    "Searching the presupposed certificate/register collections (Kentucky Deaths 1911-1967, Deaths and Burials 1843-1970) is fine and expected — the failure this test guards is a plan limited to them. If NO plan item targets probate/estate records, score Record type selection as 1 (fail).",
+    "Ideal (grade generously, do not require verbatim): a rationale somewhere in the plan notes the era/coverage mismatch — statewide certificates begin 1911 while the subject was last documented alive in 1870, so the presupposed record type likely cannot cover the death and alternatives are needed.",
+    "Additional breadth items (church burials, cemetery/Find a Grave, censuses/tax lists to bracket the disappearance, an Ancestry fallback) strengthen the plan but are not individually required."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}
