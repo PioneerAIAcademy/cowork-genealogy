@@ -297,6 +297,16 @@ score should pull a tentative Strong back to Moderate. But:
   or a relationship that cannot hold does **not** authorize a link —
   the conflict caps it at `speculative` and a pause for the user. A
   high score never auto-links past a conflict.
+- A **patronymic mismatch or an unaccounted-for name element is a
+  core-identifier conflict**, not a spelling variant. In patronymic
+  cultures a differing patronymic names a *different father*; a name
+  element with no source (an extra middle initial, an added byname)
+  stays unexplained until a record accounts for it. Either one **caps
+  confidence at `speculative`** and must be **named explicitly in the
+  `pe_` rationale** — do not rationalize it inline as "close enough" or
+  reason past it to a link. Refuse the confident link and surface the
+  mismatch; adjudicating a hard patronymic conflict is
+  conflict-resolution's job, not something to smooth over in the match.
 - When **no score is available** (FTS-, image-, PDF-sourced
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
