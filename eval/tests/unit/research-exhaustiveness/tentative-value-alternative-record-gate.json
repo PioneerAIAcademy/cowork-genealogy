@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_014",
+    "skill": "research-exhaustiveness",
+    "name": "Tentative value resolvable by an alternative record gates the declaration",
+    "type": "positive",
+    "description": "DRAFT. Guards the new 'tentative-value sweep' hard-block. In bride-surname-illegible-cert, q_001 (Ellen's maiden surname) has a completed plan and linked identifying assertions, and the user asks to declare exhaustive — but the maiden surname is tentative (a_001 value 'Ellen [?]', illegible on the only record). The illegibility is a single record's data-quality issue, not genuine source inaccessibility: a premarital record never searched (1880 census showing Ellen under her maiden surname in her father's household, or an Iowa birth/baptism) could independently resolve it. The skill must decline to declare and route to research-plan, rather than invoke the inaccessible-source exception.",
+    "tags": ["research-exhaustiveness", "tentative-value-sweep", "decline-declaration", "alternative-record", "regression"]
+  },
+  "input": {
+    "user_message": "The plan for the maiden-surname question is complete and the marriage certificate is examined — please declare the research on q_001 reasonably exhaustive.",
+    "scenario": "bride-surname-illegible-cert"
+  },
+  "judge_context": [
+    "Should NOT set q_001.exhaustive_declaration.declared to true and should NOT set the question status to exhaustive_declared, despite the completed plan, the linked identifying assertions, and the user's explicit request.",
+    "Should run the tentative-value sweep: recognize that assertion a_001's maiden surname is tentative/unresolved (value 'Ellen [?]', flagged illegible in the register image) — the target of the question is not actually established.",
+    "Should classify the uncertainty as a single record's data-quality issue that a DIFFERENT record type could independently resolve, NOT as genuine source inaccessibility. The illegible marriage certificate is therefore not a valid inaccessible-source stopping point.",
+    "Should name at least one specific alternative record type that was never searched and could establish the maiden surname independently — e.g. the 1880 US census (Ellen as a child under her maiden surname in her father's household), an Iowa birth or baptism record, or a death/obituary naming her maiden name.",
+    "Should recommend extending the plan (research-plan) with an item targeting that alternative record type — not an early termination (the records are accessible) and not a declaration.",
+    "When the skill DECLINES to declare, it need not emit a formal 7-key stop_criteria object; addressing the unmet threshold in prose is sufficient for a pass.",
+    "Tool Arguments: this is a decline/review response — no MCP tool call is required. If no tools are called, Tool Arguments should be N/A."
+  ]
+}

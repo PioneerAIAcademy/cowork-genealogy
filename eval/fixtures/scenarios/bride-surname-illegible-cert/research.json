@@ -1,0 +1,186 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Establish the maiden surname of Ellen (wife of Michael Doyle), whose surname is illegible on their 1889 Dubuque County, Iowa marriage certificate.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What was the maiden surname of Ellen (b. ~1868), who married Michael Doyle on 12 June 1889 in Dubuque, Dubuque County, Iowa? Her surname is illegible on the marriage certificate.",
+      "rationale": "The 1889 marriage certificate is the only record gathered so far, and the bride's surname is illegible in the register image. Her maiden surname is needed to trace her origin family.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-06-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-06-01",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "Dubuque County, Iowa",
+          "date_range": "1889",
+          "repository": "FamilySearch",
+          "rationale": "The county marriage record for Michael Doyle and Ellen should state the bride's maiden surname and her parents.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-06-01T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Doyle",
+        "given": "Michael",
+        "recordType": "marriage",
+        "recordCountry": "United States"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Dubuque County marriage certificate, 12 June 1889: groom Michael Doyle; bride 'Ellen' — surname illegible in the register image (clerk's hand + fading). Bride's parents' names also illegible. This is the only record gathered so far.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Dubuque County, Iowa, marriage certificate, Michael Doyle and Ellen [surname illegible], 12 June 1889; Dubuque County Recorder, digital image, FamilySearch.",
+      "citation_detail": {
+        "who": "County recorder",
+        "what": "Marriage certificate",
+        "when_created": "1889",
+        "when_accessed": "2026-06-01",
+        "where": "Dubuque County Recorder, Iowa",
+        "where_within": "Marriage certificate, Michael Doyle and Ellen, 12 June 1889"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-06-01",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MDOYLE-1889",
+      "url_archived": null,
+      "notes": "Bride's given name 'Ellen' is clear; her surname and her parents' names are illegible in the register image.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MDOYLE-1889",
+      "record_role": "bride",
+      "record_persona_id": "BP1",
+      "fact_type": "name",
+      "value": "Ellen [?]",
+      "structured_value": {
+        "given": "Ellen",
+        "surname": "[?]"
+      },
+      "information_quality": "primary",
+      "informant": "The bride and groom, reporting to the county recorder",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Bride's given name 'Ellen' is legible; her maiden surname is illegible in the register image (transcription/OCR ambiguity). The maiden surname is unresolved from this record alone.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MDOYLE-1889",
+      "record_role": "bride",
+      "record_persona_id": "BP1",
+      "fact_type": "marriage",
+      "value": "Married Michael Doyle on 12 June 1889 in Dubuque, Dubuque County, Iowa",
+      "date": "1889-06-12",
+      "place": "Dubuque, Dubuque County, Iowa, United States",
+      "information_quality": "primary",
+      "informant": "The bride and groom, reporting to the county recorder",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MDOYLE-1889",
+      "record_role": "groom",
+      "record_persona_id": "GP1",
+      "fact_type": "name",
+      "value": "Michael Doyle",
+      "structured_value": {
+        "given": "Michael",
+        "surname": "Doyle"
+      },
+      "information_quality": "primary",
+      "informant": "The bride and groom, reporting to the county recorder",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "The bride 'Ellen' on the 1889 Doyle marriage is the subject Ellen Doyle; only her maiden surname is unresolved.",
+      "match_score": null,
+      "created": "2026-06-01"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "The groom Michael Doyle on the 1889 marriage is the tree person Michael Doyle.",
+      "match_score": null,
+      "created": "2026-06-01"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
