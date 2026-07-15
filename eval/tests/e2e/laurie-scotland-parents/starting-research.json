@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_laurie_scotland_parents",
+    "objective": "Who were the parents of John Laurie, born about 1859 in Glasgow, Lanarkshire, Scotland, who married Ellen Cahill in New York in 1888 and died in 1909 in New York City?",
+    "subject_person_ids": [
+      "GPZR-3X2"
+    ],
+    "status": "active",
+    "created": "2026-07-14",
+    "updated": "2026-07-14"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
