@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the staged christening candidate (Anders, son of Hans Olsen & Marit Pedersdatter, ark 9XKT-M2P) against subject I1 (Anders Moen). It ranks #1 with a strong score — given name, exact birth month/year (Oct 1868), and both recovered parent given names (Hans, Marit) all align. Matched on subjectId; independent of the per-run stagedResultsRef.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:9XKT-M2P",
+        "primaryId": "P1",
+        "personName": "Anders (son of Hans Olsen and Marit Pedersdatter)",
+        "sex": "Male",
+        "birthDate": "October 1868",
+        "birthPlace": "Ringsaker, Hedmark, Norway",
+        "collectionTitle": "Norway, Church Books, 1815-1930",
+        "matchScore": 0.9,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}
