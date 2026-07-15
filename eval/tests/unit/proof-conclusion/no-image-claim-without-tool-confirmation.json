@@ -5,7 +5,7 @@
     "name": "Don't claim a digital image is accessible without tool-confirmed evidence",
     "type": "positive",
     "description": "Modeled on a real anders-monsen-ancestry e2e run: the sole source is a FamilySearch index entry whose record_search response carried no imageId/artifacts field, and record_read was never called to check for a digitized image. A prior run's narrative nonetheless asserted the digital church-book image was 'accessible' -- an unsupported claim the proof-conclusion fix ('never claim a digital image exists unless the tool data confirms it') was written to prevent. This test checks the narrative respects that limit while still reaching a probable-tier conclusion.",
-    "tags": ["proof", "marriage", "source-analysis", "image-claim", "tree-write-expected", "regression"]
+    "tags": ["proof", "marriage", "source-analysis", "image-claim", "regression"]
   },
   "input": {
     "user_message": "Write the final proof conclusion for q_001 -- when and where Anders Monsen married Unna Halsteinsdatter.",
@@ -21,6 +21,7 @@
   ],
   "judge_reads_files": true,
   "execution": {
+    "max_turns": 30,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300
   }
