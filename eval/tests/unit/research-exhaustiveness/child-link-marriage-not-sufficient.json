@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_014",
+    "skill": "research-exhaustiveness",
+    "name": "A couple's marriage does not satisfy the child-link requirement for a parentage declaration",
+    "type": "positive",
+    "description": "q_001 (parentage of Patrick Flynn) in flynn-marriage-only-no-child-link has a fully completed plan whose only positive result is the parents' marriage to each other (Thomas Flynn m. Mary Doyle, 1843, before Patrick's ~1845 birth). The baptism and census searches that would place the CHILD with the parents came back negative, and the tree holds no ParentChild link. The user asks to declare exhaustive. The skill must refuse: a couple's marriage proves they married, not that this child is theirs — a record linking the child to the parents (christening, census household, emigration, probate naming the child) is still required. Guards the child-link rule against completion bias when a convincing couple-level record has been found.",
+    "tags": [
+      "research-exhaustiveness",
+      "decline-declaration",
+      "child-link",
+      "decisive-record-gate",
+      "no-exhaustive-declaration"
+    ]
+  },
+  "input": {
+    "user_message": "The whole plan for the parentage question is complete and we even found the parents' marriage — go ahead and declare q_001 reasonably exhaustive.",
+    "scenario": "flynn-marriage-only-no-child-link"
+  },
+  "judge_context": [
+    "Should NOT set `q_001.exhaustive_declaration.declared` to true and should NOT set the question status to `exhaustive_declared`, despite every plan item being `completed` and despite the user pointing to the marriage record. Completed plan items and a couple's marriage do not by themselves satisfy reasonably exhaustive research for a parentage question.",
+    "Should identify that no examined record links the CHILD (Patrick) to the concluded parents — the only positive evidence (a_001) is the couple's marriage TO EACH OTHER, which proves Thomas and Mary married (and supplies the maiden name) but does not establish that Patrick is their son. A child-linking record is still needed: Patrick's own christening/baptism, a census household showing him with them, an emigration record, or a probate naming him as their child.",
+    "Recognizing that the decisive child-linking record here is Patrick's baptism (pli_002, searched negative) and that its absence — not the presence of the marriage — is what blocks the declaration is the strongest form of the answer.",
+    "Should recommend continuing rather than declaring — e.g. examining original parish register images, adjacent parishes, or emigration/passenger records that could place Patrick with the couple — and must NOT frame this as an honest early termination (the records are plausibly accessible, just not yet found).",
+    "Must NOT accept the marriage as sufficient parentage evidence on its own. Treating 'the couple married before the birth' as establishing the parent-child link is the exact over-claim this test guards against.",
+    "Stop criteria coverage: when the skill DECLINES to declare, it does NOT need to emit a formal stop_criteria object with all seven keys — addressing the unmet thresholds in prose is sufficient for a pass. A structured 7-key object is only required when declared is set to true.",
+    "Tool Arguments: this is a decline/review response — Claude is not expected to call validate_research_schema or any MCP tool. If no tools are called, Tool Arguments should be N/A."
+  ]
+}

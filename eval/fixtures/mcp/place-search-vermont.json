@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Vermont, used by ut_historical_context wiki_place_page server-migration test. Catch-all predicate because Vermont is the only place this test resolves.",
+  "args": {
+    "placeName": "~"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Vermont, United States",
+        "type": "State",
+        "dateRange": "+1791/",
+        "latitude": 44.0,
+        "longitude": -72.7,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Vermont&focusedId=46"
+      }
+    ]
+  }
+}

@@ -37,15 +37,18 @@ it can be a skill script.
 
 ### External service dependencies
 
-Two MCP tools call hosted sidecar services rather than public APIs:
+Several MCP tools call hosted sidecar services rather than public APIs:
 
-- `wiki_search` calls the hosted `wiki-query-api` (a FastAPI server in
-  a sibling repo) for RAG retrieval over the FamilySearch Wiki.
+- `wiki_search`, `wiki_read`, and `wiki_place_page` all call the hosted
+  `wiki-query-api` (a FastAPI server in a sibling repo). `wiki_search`
+  hits `POST /search` for RAG retrieval; `wiki_read` and `wiki_place_page`
+  hit `GET /page/{title}` for a specific wiki page. The pre-crawled
+  markdown corpus lives on the server, not on each developer's laptop.
 - `place_population` calls the hosted Pop Stats API.
 
-The MCP code is HTTP-only for both — it does not import or depend on
-any Python code from either service. The base URL for `wiki_search`
-can be overridden per-user via `wikiApiUrl` in
+The MCP code is HTTP-only for all of these — it does not import or
+depend on any Python code from those services. The base URL for the
+wiki tools can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
 instance); end users do not need to set this for normal operation.
 
@@ -261,18 +264,17 @@ Two distinct config sources:
 
 2. **Per-user, on the user's machine:** `~/.familysearch-mcp/`
    directory, `mode: 0o600`. Holds `tokens.json` (OAuth tokens from
-   `login`) and `config.json` (per-user tunables like `wikiApiUrl`,
-   `wikiMarkdownDir`). `loadConfig` / `saveConfig` read and write
-   the per-user JSON. **Do not** introduce env-var fallbacks — the
-   files are the sole sources. New per-user keys go on `AppConfig`
-   in `src/types/auth.ts` and are read via `loadConfig()`.
+   `login`) and `config.json` (per-user tunables like `wikiApiUrl`).
+   `loadConfig` / `saveConfig` read and write the per-user JSON.
+   **Do not** introduce env-var fallbacks — the files are the sole
+   sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
+   and are read via `loadConfig()`.
 
 Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `wiki_search` | When using `wiki_search` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
-| `wikiMarkdownDir` | `wiki_read`, `wiki_place_page` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
+| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 | `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 
@@ -289,7 +291,7 @@ line — not an inconsistency to "fix":
 
 - **API/wire surfaces use camelCase.** MCP tool parameters
   (`birthPlace`, `personId`, `collectionId`), `~/.familysearch-mcp/config.json`
-  keys (`wikiApiUrl`, `wikiMarkdownDir`), and the upstream **full**
+  keys (`wikiApiUrl`, `popStatsUrl`), and the upstream **full**
   GedcomX returned by FamilySearch (`sourceDescriptions`, `resourceId`)
   are all camelCase.
 - **Persisted project documents use snake_case.** `research.json` and

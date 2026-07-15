@@ -159,6 +159,26 @@ List every person mentioned and assign a `record_role`:
   could surface a maiden name) and flag it in your summary for
   hypothesis-tracking. Never assert a specific relationship without
   evidence; report ambiguity rather than resolving it silently.
+- **Obituaries — read the survivor list precisely.** A name with a
+  parenthetical follows one of two conventions; disambiguate by *what is in
+  the parens*:
+  - **`given (maiden surname) married surname`** (the common one) — the
+    parenthetical is a **surname**: a married woman shown with her maiden
+    name, e.g. "Mary (Johnson) Smith" = Mary Smith, *née* Johnson. This is
+    **one** person — record the married surname as her name and the maiden
+    surname as an alternate/birth name; do **not** create a second persona
+    out of the parenthetical.
+  - **`given (spouse) surname`** — the parenthetical is a **given name**:
+    a person plus their spouse, e.g. "John (Mary) Smith" = John Smith with
+    spouse Mary. This is **two** people; the spouse is a **child-in-law**
+    (a child's spouse), not a child.
+  Tell apart two survivors who share a given name by surname (a married-in
+  "<Given> <FamilySurname>" vs a daughter under her own married surname),
+  and capture both. Role a child's spouse `son_in_law_N` /
+  `daughter_in_law_N`, never `child_N`, and still capture the actual
+  child. Neighbors, friends, pallbearers, and caregivers named in an
+  obituary are FAN associates (`neighbor_1`, `friend_1`) — never role them
+  as kin without a stated relationship.
 
 **Extraction policy (BCG Standard 27):** extract all facts relevant to
 any open research question, plus identifying facts (name, age/birth,

@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Burial place recovered as Kennedy Township, Allegheny County, Pennsylvania — encoded as a Burial fact on the subject, from the FamilySearch Find a Grave Index (top hit), matching the finding. Proof honestly tiered 'probable' and graded thin (2): it rests on a single derivative source; the PA death certificate (original, would name the specific cemetery) was on Ancestry/behind browser capture and unreachable in autonomous mode, so no independent corroboration. No blocked tree-reads."
+  },
+  "annotator": "ernest"
+}

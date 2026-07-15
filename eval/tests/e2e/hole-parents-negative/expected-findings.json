@@ -1,0 +1,56 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Christian Peter Hole's father was Benjamin Christophersen (born about 1853), recorded in the family's later American records as Benjamin Khristen Hole. Established by Christian's 1876 Ringebu christening record.",
+      "details": {
+        "subject_person": "Christian Peter Hole (PID KD96-TV2)",
+        "relation": "father",
+        "target_person": {
+          "name": "Benjamin Christophersen (later Benjamin Khristen Hole)",
+          "birth": "~1853, Norway"
+        }
+      },
+      "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — christening of Christian Peder, 5 Nov 1876, Ringebu (father Benjamin Christophersen)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Christian Peter Hole's mother was Matea Pedersdatter (born about 1857), recorded in the family's later American records as Mattia Pedersdatter. Established by Christian's 1876 Ringebu christening record.",
+      "details": {
+        "subject_person": "Christian Peter Hole (PID KD96-TV2)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Matea Pedersdatter (later Mattia Pedersdatter)",
+          "birth": "~1857, Norway"
+        }
+      },
+      "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — christening of Christian Peder, 5 Nov 1876, Ringebu (mother Matea Pedersdtr)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assign Christian Peter Hole the parents of a same-name 'Hole' individual from a different family. His true parents are recorded under Norwegian patronymics (Christophersen / Pedersdatter), NOT the Americanized surname 'Hole'. Searching the surname 'Kristian/Christian Hole' in Norway returns different-family namesakes (e.g., born under patronymics such as Kristiansson or Klausen, in nearby parishes) whose parents are NOT Christian's. Attaching such a namesake's parents — in particular concluding the father's surname was 'Hole' — is an over-claim. Pass = the recovered parents are Benjamin Christophersen and Matea Pedersdatter (or their Americanized forms), and no wrong-family / 'Hole'-surnamed parentage is asserted (or it appears only as an explicitly rejected hypothesis).",
+      "details": {
+        "subject_person": "Christian Peter Hole (PID KD96-TV2)",
+        "relation": "parents",
+        "wrong_candidate": {
+          "name": "the parents of a same-name 'Kristian/Christian Hole' from a different family",
+          "note": "surfaced by searching the American surname 'Hole' in Norway; the true parents are under patronymics (Christophersen / Pedersdatter), so a father surnamed 'Hole' is a tell that the wrong family was attached"
+        }
+      },
+      "supporting_sources": [
+        "Norway, Church Books / Find A Grave — multiple same-name 'Kristian Hole' individuals of different families born ~1876-1877 in the Ringebu/Oppland region (the wrong candidates the agent must decline)"
+      ],
+      "required": true
+    }
+  ]
+}
