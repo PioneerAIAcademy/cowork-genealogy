@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial",
+    "f3": "true",
+    "f4": "true",
+    "f5": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f2": "Mary appears in the tree only as Thomas's wife, not as a child of Peter/Rebecca — i.e., not as Elizabeth's sibling."
+  }
+}
