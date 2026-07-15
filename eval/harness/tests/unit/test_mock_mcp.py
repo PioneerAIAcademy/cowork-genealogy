@@ -114,12 +114,14 @@ def test_fixture_without_args_is_rejected():
             create_mock_server(["noargs"], tmp)
 
 
-def test_fixture_with_input_schema_is_advertised():
-    """Fixture authors can declare a typed input schema."""
+def test_fixture_input_schema_honored_for_tool_absent_from_build():
+    """A fixture-provided input_schema is the escape hatch for aspirational
+    tools that have fixtures but no compiled .ts source. For a tool absent
+    from the build, the fixture's declared schema is advertised verbatim."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         (tmp / "typed.json").write_text(json.dumps({
-            "tool": "wikipedia_search",
+            "tool": "future_tool_not_in_build",
             "args": {"query": "X"},
             "input_schema": {
                 "type": "object",
@@ -129,6 +131,54 @@ def test_fixture_with_input_schema_is_advertised():
             "response": {"title": "X"},
         }))
         server, _, tools_by_name = create_mock_server(["typed"], tmp)
-        tool_obj = tools_by_name["wikipedia_search"]
+        tool_obj = tools_by_name["future_tool_not_in_build"]
         assert tool_obj.input_schema["required"] == ["query"]
         assert "query" in tool_obj.input_schema["properties"]
+
+
+def test_build_schema_advertised_for_fixture_backed_tool():
+    """The core of the drift fix: a fixture-backed tool that exists in the
+    compiled build advertises the real production input schema, not a
+    permissive stub. Regression for rx_007/008 (match-tool fixtures had no
+    schema, so the model probed with `{}`). Skips gracefully if the build
+    is absent (the loader degrades to a permissive schema, no schema to
+    assert)."""
+    from harness.mock_mcp import _load_build_tool_catalog
+
+    if not _load_build_tool_catalog().get("record_person_matches"):
+        pytest.skip("mcp-server build not present; build catalog unavailable")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        # A fixture with NO input_schema of its own — the schema must come
+        # from the build, not the permissive fallback.
+        (tmp / "match.json").write_text(json.dumps({
+            "tool": "record_person_matches",
+            "args": {"id": "9XKV-ABC"},
+            "response": {"matches": []},
+        }))
+        server, _, tools_by_name = create_mock_server(["match"], tmp)
+        schema = tools_by_name["record_person_matches"].input_schema
+        # Real production schema: `id` is required and it is not the
+        # permissive `additionalProperties: True` fallback.
+        assert schema.get("required") == ["id"]
+        assert schema.get("additionalProperties") is not True
+
+
+def test_live_tool_advertises_build_schema():
+    """Live tools pull their input schema from the same build catalog. The
+    `ops` batch array on research_append is the field the old hand-maintained
+    mirror once dropped — assert it is advertised. Skips if the build is
+    absent."""
+    from harness.mock_mcp import _load_build_tool_catalog
+
+    if not _load_build_tool_catalog().get("research_append"):
+        pytest.skip("mcp-server build not present; build catalog unavailable")
+
+    # Live tools register regardless of fixtures, so any fixture set works.
+    server, _, tools_by_name = create_mock_server(
+        ["wikipedia-search-schuylkill-county"], FIXTURES_DIR
+    )
+    schema = tools_by_name["research_append"].input_schema
+    assert "ops" in schema["properties"]
+    assert schema["properties"]["ops"]["type"] == "array"

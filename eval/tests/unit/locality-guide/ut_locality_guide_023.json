@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_locality_guide_023",
+    "skill": "locality-guide",
+    "name": "wiki_place_page fetches a place's wiki page via the wiki-query-api server and uses the returned content",
+    "type": "positive",
+    "description": "Companion to ut_locality_guide_022 but for wiki_place_page. After the wiki tools migration off local disk, this verifies the skill invokes wiki_place_page for a state, the harness returns a fixture whose content carries a distinctive marker (the Vermont 1771 Grant Survey Schedule), and the skill surfaces that marker in its locality guide. Asserts (a) the skill called wiki_place_page with the Vermont standardPlace and a valid section, and (b) the response content actually flowed through into the user-facing answer.",
+    "tags": [
+      "wiki-place-page",
+      "server-migration",
+      "uses-tool-response",
+      "vermont"
+    ]
+  },
+  "input": {
+    "user_message": "I'm researching ancestors who lived in Vermont in the late 1700s, before statehood. Build me a locality research guide for Vermont covering that pre-statehood period. Pull the Vermont FamilySearch wiki place page so the guide reflects what FamilySearch documents about Vermont's records, not just what you already know.",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 720
+  },
+  "mcp_fixtures": [
+    "wiki-place-page-via-server-signature",
+    "wiki-place-page-any",
+    "place-search-vermont",
+    "place-search-all-any",
+    "place-population-any",
+    "external-links-search-any",
+    "wiki-search-any",
+    "wikipedia-search-any",
+    "wiki-read-any"
+  ],
+  "judge_context": [
+    "The skill MUST call wiki_place_page at least once with `standardPlace: 'Vermont, United States'` (or the leaf 'Vermont') — the request explicitly asks the skill to pull the Vermont place page. Returning a guide without invoking wiki_place_page is a failure regardless of how plausible the guide reads, because the migration target is the server-side fetch path.",
+    "The skill MUST reference the distinctive content the fixture returns — name the 'Vermont 1771 Grant Survey Schedule' (or its approximate-1,800-grantees scope, or the New Hampshire-grants-rejected-by-New-York provenance) somewhere in the locality guide. This proves the skill consumed the server's response rather than generating Vermont commentary from memory. A guide that talks about Vermont records in general terms without ever citing that specific grant-survey schedule has not actually consumed the wiki_place_page response.",
+    "The skill MAY also cite the 1857 civil-registration start date or the town-history reprints — those are bonus signals that the response was read in full."
+  ]
+}
