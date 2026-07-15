@@ -1,0 +1,1866 @@
+{
+  "project": {
+    "id": "rp_benny_taylor_parents",
+    "objective": "Who were the parents of Benny Raphael Taylor (born 1921 in McCammon, Bannock, Idaho; died 1991 in Tillamook, Oregon)?",
+    "subject_person_ids": [
+      "KNJ1-TRX"
+    ],
+    "status": "completed",
+    "created": "2026-07-13",
+    "updated": "2026-07-14"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Benny Raphael Taylor, born 19 July 1921 in McCammon, Bannock, Idaho, and died 9 July 1991 in Tillamook, Oregon?",
+      "rationale": "This is the core parentage question \u2014 the project objective decomposed into a single, testable sub-question. Census records (1930, 1940) already in the tree place Benny in the household of Jay S. Taylor and Autossie A. Taylor; the NUMIDENT source also references 'Jay Taylor' as a parent entry. However, no assertions have been extracted and no evidence has been formally classified, so the answer has not been established under GPS. Primary records that should identify the parents include: Idaho birth record (1921), U.S. federal census records (1930, 1940), the NUMIDENT application, death certificate or Oregon death index (which may name parents), and any Idaho or Oregon vital records naming parents.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-14",
+      "resolution_assertion_ids": [
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched census records (1920 negative, 1930 and 1940 positive), NUMIDENT/SS-5 (original, direct parentage evidence), Idaho and Utah marriage records (Idaho negative, Utah positive \u2014 Jay Taylor m. Au Tossie Bair, 23 Oct 1901, Cache, Utah), and the Oregon death index (pli_009 \u2014 index found, full certificate with parent names inaccessible: requires Ancestry or Oregon State Archives, both unavailable in autonomous mode; pursued-and-unavailable). Idaho birth certificate exhausted across three FamilySearch searches (unindexed). Newspaper and Ancestry fallback skipped for lack of subscription. Three independent sources establish parentage: NUMIDENT (Benny's own direct statement naming Jay Taylor as father and Tossie A Bear as mother), 1930 census (Benny in Jay S Taylor + Autossie A Taylor household), and 1940 census (Bennie in Jay Taylor + Tassy Taylor household). Utah marriage record corroborates the couple's identity. The accessible evidence supports a defensible conclusion; the full Oregon death certificate is the only remaining unobtainable named decisive record.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 NUMIDENT is direct evidence from the subject himself naming Jay Taylor as father and Tossie A Bear (maiden name) as mother. Two census co-residence records and the parents' Utah marriage record corroborate.",
+          "repository_breadth": "FamilySearch searched across census (1920/1930/1940), vital records (Idaho birth cert, NUMIDENT, Oregon death index), and marriage (Idaho and Utah). Newspaper (GenealogyBank) and Ancestry fallback unavailable in autonomous mode; Oregon full death certificate inaccessible (index found, parent names not in index). Reasonably broad given available resources.",
+          "original_substitution": "NUMIDENT, the pivotal parentage source, is classified original. Census and marriage records are derivative index entries (original images not viewed \u2014 limitation noted). Oregon death certificate original not accessible. The most critical original (NUMIDENT) was obtained.",
+          "independent_verification": "Three independent evidence units: (1) NUMIDENT \u2014 informant is Benny himself; (2) 1930 census \u2014 informant is Jay Taylor as household head; (3) Utah marriage record \u2014 official court/county recorder. The two census records share the same informant type but the NUMIDENT and Utah marriage are fully independent. Minimum two independent sources confirmed.",
+          "evidence_class": "NUMIDENT is original-source, primary-information, direct evidence for parentage \u2014 the highest GPS evidence tier for this record type. This criterion is met.",
+          "conflict_resolution": "1930 census birth year 1922 vs. documented 1921: a 1-year imprecision, common in census records for young children, not an identity conflict. Name variants Autossie/Tossie/Tassy/Au Tossie Bair are phonetic variants of the same name, consistent and corroborated across four sources. No irresolvable conflicts.",
+          "overturn_risk": "Low. Benny's own SS-5 statement directly names his parents \u2014 this is the most reliable source for a living adult's knowledge of parentage. Census co-residence across two decades (1930 and 1940) corroborates. Utah marriage (1901) confirms Jay Taylor and Tossie Bair/Bear as a married couple 20 years before Benny's 1921 birth. The unobtainable Oregon full death certificate would name parents based on the informant's (likely Rosema, the spouse) secondhand knowledge \u2014 less reliable than Benny's own SS-5 statement, and unlikely to contradict it. Idaho birth cert unindexed but its absence does not undermine the NUMIDENT evidence."
+        }
+      },
+      "created": "2026-07-14"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-14",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Bannock County, Idaho, United States",
+          "date_range": "1921",
+          "repository": "FamilySearch",
+          "rationale": "An Idaho birth certificate filed in 1921 for Benny Raphael Taylor (born 19 July 1921, McCammon, Bannock County) is the most direct source for parentage \u2014 it names both father and mother on the face of the original document. Idaho began mandatory statewide birth registration ca. 1911, so a certificate should exist. FamilySearch collection 1951759 'Idaho, County Birth and Death Records, 1883-1929' (17,583 records) is the primary access point. A confirmed birth certificate would be original-source, primary-information, direct-evidence for parentage.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Garibaldi, Tillamook, Oregon, United States",
+          "date_range": "1930",
+          "repository": "FamilySearch",
+          "rationale": "A source (ARK XCS8-45Z) already present in the tree places Benny R. Taylor in the household of 'Jay S Taylor and Autossie A Taylor' in the 1930 census at Garibaldi, Tillamook, Oregon. This item creates the formal log entry and extracts assertions. The household relationship label 'son' would be indirect parentage evidence with primary-information classification (informant = household head). Confirming Benny as a co-resident child of Jay and Autossie in this household is a key pillar of the parentage argument.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "United States",
+          "date_range": "1936-1942",
+          "repository": "FamilySearch",
+          "rationale": "A NUMIDENT source (ARK 6KW1-QCF4) already in the tree references 'Benny Rapheal Taylor and Jay Taylor,' indicating Jay Taylor appears as a parent entry on Benny's Social Security application (SS-5). The SS-5 was filled out by the applicant and typically names both father and mother by full name; when the applicant was the informant for their own parents, this is primary information. This is near-direct parentage evidence. Formal log entry and assertion extraction needed to bring it into the GPS chain.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Garibaldi, Tillamook, Oregon, United States",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "A source (ARK VRTZ-125) already in the tree shows Benny (age ~18) in the household of 'Jay Taylor and Tassy Taylor' in the 1940 census at Garibaldi, Tillamook, Oregon. 'Tassy' is likely a phonetic rendering of 'Autossie.' Confirming Benny as a child in Jay Taylor's household a decade later strengthens the co-residence pattern. This item creates the formal log entry and extracts assertions to support the parentage argument.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Idaho or Oregon, United States",
+          "date_range": "1920",
+          "repository": "FamilySearch",
+          "rationale": "The 1920 census (enumerated April 1920) predates Benny's birth (July 1921) and will not show him, but it should capture Jay and Autossie Taylor as a married couple \u2014 possibly with older siblings if any. Locating this household: (a) confirms Jay and Autossie as a married unit before Benny's birth; (b) may show their ages, birthplaces, and parents' birthplaces; (c) establishes where they lived at the time of Benny's conception. The family may still be in Bannock County, Idaho (McCammon) in 1920 before moving to Garibaldi, OR by 1930.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Idaho, United States",
+          "date_range": "1900-1925",
+          "repository": "FamilySearch",
+          "rationale": "A dedicated search for the marriage of Jay S. Taylor and Autossie (A.) Taylor is required for every parentage plan. Their marriage record: (a) confirms the couple as a married unit; (b) supplies Autossie's maiden name, which census records do not provide and which is needed to fully identify Benny's mother; (c) by its date relative to Benny's July 1921 birth, directly tests paternity. FamilySearch 'Idaho, County Marriages, 1864-1962' (collection 1662500, 395,281 records) is the primary Idaho access point. A Bannock County or southeast Idaho marriage is probable given the family's known presence in McCammon.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "newspaper",
+          "jurisdiction": "Tillamook, Oregon, United States",
+          "date_range": "1940-1991",
+          "repository": "FamilySearch",
+          "rationale": "Multiple GenealogyBank obituary and newspaper sources are already in the tree and need formal log entries and extraction. Most significant: QZQD-MDR (27 Nov 1962, entry for 'Mrs Autossie Taylor and Mrs Esther Ritts') \u2014 a wedding announcement or social notice directly naming 'Mrs Autossie Taylor' in connection with Benny, which would directly identify his mother by name. Also: 3CX6-KT8 (14 Aug 1940, 'Alvro B Taylor and Mildred'); 33M6-NG6 and 33M6-LRF (19 Dec 1979, 'Mrs Etta Rowe Solomon and Laverne Montgomery'). Additionally search for Benny's 1991 obituary in Tillamook County papers, which may name surviving family or deceased parents.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Bannock County, Idaho, United States",
+          "date_range": "1921",
+          "repository": "Ancestry",
+          "rationale": "Fallback for pli_001. If FamilySearch collection 1951759 returns no indexed result for Benny's 1921 birth, Ancestry's 'Idaho, County Birth and Death Records, 1863-1967' (collection 61443) may have separately microfilmed Bannock County register pages with a different index. MyHeritage 'Idaho Births, 1861-1940' is a second fallback covering the same year. A birth certificate remains the highest-priority direct parentage source and warrants exhausting both repositories.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "Tillamook County, Oregon, United States",
+          "date_range": "1991",
+          "repository": "FamilySearch",
+          "rationale": "Benny Raphael Taylor died 9 July 1991 in Tillamook, Oregon. His death certificate is a named decisive record for parentage \u2014 Oregon death certificates list parents' names. FamilySearch 'Oregon, Death Index, 1903-1998' (collection 1673516) should cover this date. Searching the index confirms the record exists; the full certificate requires Oregon State Archives or Ancestry but the index search discharges the GPS obligation to attempt the record. The index alone will not supply parent names, but confirms the record exists for future retrieval.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-14T09:26:46.543Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1919,
+        "birthYearTo": 1923,
+        "birthPlace": "Idaho",
+        "collectionId": "1951759 then 1674809",
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 3,
+      "notes": "Collection 1951759 returned 0 results. Collection 1674809 returned 3 results, all with near-zero match scores (top score 0.034) \u2014 none are Benny Raphael Taylor. Top result was 'Bennie Lila Taylor Blanchard', clearly a different person. The 1921 Bannock County birth for Benny Taylor is likely unindexed or under a variant in FS collections. Will try broader search with 'Benjamin' as a given name variant."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-14T09:27:19.903Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benjamin",
+        "birthYearFrom": 1919,
+        "birthYearTo": 1923,
+        "birthPlace": "Idaho",
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 5,
+      "notes": "Broadened to 'Benjamin' across all Idaho birth collections \u2014 5 results, none matching Benny Raphael Taylor. Two GenealogyBank newspaper entries for 'Bennie J Taylor' are a different person. The Bannock County 1921 birth record is likely not indexed in FamilySearch. Will try adding father's name (Jay Taylor) to narrow search."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-14T09:27:53.626Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "fatherGivenName": "Jay",
+        "fatherSurname": "Taylor",
+        "birthYearFrom": 1916,
+        "birthYearTo": 1926,
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 46804,
+      "notes": "Broad national birth search with Jay Taylor as father \u2014 46,804 hits but all from North Carolina, Texas, Kentucky, California. No Idaho results. FamilySearch indexed collections do not appear to contain an indexed 1921 Bannock County birth record for Benny Raphael Taylor. The birth may exist only as an unindexed image in Bannock County records. Fallback pli_008 targets Ancestry 'Idaho, County Birth and Death Records, 1863-1967' (collection 61443). FamilySearch variants exhausted for pli_001."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-14T09:29:52.958Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "residenceYearFrom": 1930,
+        "residenceYearTo": 1930,
+        "residencePlace": "Tillamook, Oregon",
+        "fatherGivenName": "Jay",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 18,
+      "notes": "Top match: Benny R Taylor (ARK XCS8-45N), matchScore 0.921, confidence 5, in Household of Jay S Taylor, East Garibaldi, Tillamook, OR 1930. Full household: Jay S Taylor (head, b.1877 Idaho), Autossie A Taylor (wife, b.1884 Utah), and six sons \u2014 Alvro B (b.1910), Levear F (b.1913), Wilson T (b.1918), F. Pershing (b.1920), Benny R (b.1922 \u2014 census gives 1922, known to be 1921), Dalas J (b.1923) \u2014 all born Idaho. Record includes explicit ParentChild relationships linking both Jay and Autossie as parents of Benny. Key finding: mother Autossie born Utah. Record already attached to subject. Pass to record-extraction."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-14T09:31:44.776Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1919,
+        "birthYearTo": 1923,
+        "birthPlace": "Idaho",
+        "fatherGivenName": "Jay",
+        "fatherSurname": "Taylor",
+        "recordType": "other",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 6051,
+      "notes": "Top match: Benny R Taylor (ARK 6KW1-QCF4), NUMIDENT, matchScore 0.885, confidence 5, already attached to subject. Birth: 19 Jul 1921 McCammon, Bannock, Idaho; Death: 9 Jul 1991. CRITICAL: Record names parents explicitly via ParentChild relationships \u2014 Father: Jay Taylor (ARK 6KW1-QCFZ); Mother: Tossie A Bear (ARK 6KW1-QCF8) \u2014 maiden name BEAR. The mother 'Autossie' in census records = 'Tossie A. Bear' on SS-5. Pass to record-extraction."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-14T09:33:15.041Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "residenceYearFrom": 1940,
+        "residenceYearTo": 1940,
+        "residencePlace": "Garibaldi, Tillamook, Oregon",
+        "fatherGivenName": "Jay",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 15,
+      "notes": "Top match: Bennie Taylor (ARK VRTZ-125), 1940 Census, Household of Jay Taylor, East Garibaldi, Tillamook, OR. Father: Jay Taylor (b. 1877, Idaho, ARK VRTZ-12G); Mother: Tassy Taylor (b. 1883, Utah, ARK VRTZ-12P) \u2014 'Tassy' consistent with 'Autossie/Tossie A. Bear' in other records; also in household: Dallas Taylor (b. 1925, Idaho). Explicit ParentChild relationships to both Jay and Tassy. Mother born Utah consistent across 1930/1940 census. Record already attached to subject. Pass to record-extraction."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-14T09:36:46.405Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Jay",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "birthYearFrom": 1872,
+        "birthYearTo": 1882,
+        "birthPlace": "Idaho",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 53,
+      "notes": "53 results returned. Top match was Jay Taylor in Allegany, New York (b.1878) \u2014 not our subject who was born in Idaho. Without wife name or specific county filter, results are dominated by non-Idaho Jay Taylors. Will retry with spouse name Autossie/Tossie and Idaho residence filter to locate the family in Bannock County prior to their move to Tillamook, Oregon."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-14T09:37:56.872Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Jay",
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "residencePlace": "Bannock, Idaho",
+        "recordType": "census",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 41,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 41,
+      "notes": "41 results for 'Jay Taylor' in Bannock County, Idaho 1920 census \u2014 none match Jay S. Taylor (b.1877 Idaho). Top results are Phoebe J. Taylor (female, divorced, b.1881 Utah), J.J. Taylor (b.1873 Canada), and various LDS church census records. Jay S. Taylor's 1920 Bannock County record appears unindexed or enumerated under a different spelling/precinct variant. FamilySearch variants for pli_005 now exhausted. The three already-located sources (1930 census, NUMIDENT, 1940 census) fully establish the parentage without this corroborating source."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-14T10:04:15.430Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1662500",
+        "givenName": "Jay",
+        "surname": "Taylor",
+        "spouseGivenName": "Tossie",
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Idaho, County Marriages 1864-1962 (collection 1662500), Jay Taylor + spouse Tossie \u2014 zero results. No Jay/Tossie Taylor marriage record in Idaho indexed collection."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-14T10:04:26.012Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1662500",
+        "givenName": "Jay",
+        "surname": "Taylor",
+        "spouseGivenName": "Autossie",
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 6,
+      "notes": "Idaho, County Marriages 1864-1962 (collection 1662500), Jay Taylor + spouse Autossie \u2014 6 results returned, none match Jay S. Taylor and Autossie A. Taylor. Results all show Jay Taylors with different spouses or dates. No Jay/Autossie Taylor marriage in Idaho indexed collection."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-14T10:04:37.398Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Jay",
+        "surname": "Taylor",
+        "spouseGivenName": "Autossie",
+        "recordCountry": "United States",
+        "recordType": "marriage",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 63,
+      "notes": "Broad US marriage search for Jay Taylor + Autossie \u2014 63 results, none matching Jay S. Taylor and Autossie (Bear/Bair/Taylor). Idaho-scoped searches exhausted. The couple likely married in Utah (consistent with Autossie's Utah birthplace on 1930/1940 census). Pivoting search to Utah with maiden name Bear/Bair."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-14T10:04:54.444Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Tossie",
+        "surname": "Bear",
+        "spouseGivenName": "Jay",
+        "spouseSurname": "Taylor",
+        "recordType": "marriage",
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 50,
+      "notes": "POSITIVE \u2014 Utah marriage records found. ARK X2B8-RVS: \"Jay Taylor and Miss Au Tossie Bair\" in Utah, County Marriages 1871-1941 (collection 1803977). ARK F8PD-QNR: \"Jay Taylor\" and \"Ari Tossie Bair\" in Utah Marriages 1887-1935 (collection 1675546). Both records show bride birth year 1883, consistent with Autossie b.~1883/1884 on 1930/1940 census. The couple married in Utah (consistent with Autossie's Utah birthplace) before settling in McCammon, Idaho. \"Bair\" is a phonetic/spelling variant of \"Bear\" from NUMIDENT. Primary record is ARK X2B8-RVS (county marriage register, original). Extracting."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-14T10:15:43.615Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1919,
+        "birthYearTo": 1923,
+        "deathYearFrom": 1985,
+        "deathYearTo": 1998,
+        "recordType": "death",
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 23026,
+      "notes": "POSITIVE \u2014 Oregon, Death Index, 1903-1998 (ARK VZCQ-5XC): Benny Rapheal Taylor, b. 19 Jul 1921, d. 9 Jul 1991, Tillamook, Oregon. Match score 0.985, confidence 5, already attached to subject. Record also reveals spouse: Rosema Taylor. Oregon death INDEX does not include parent names \u2014 only name, birth date, death date, place. Full death certificate with parent names would require Oregon State Archives or Ancestry (not accessible in autonomous mode). Duplicate index: ARK CKJT-12W2 (Oregon Death Index, 1971-2008). SSDI: ARK JG9M-HZ6 also confirmed."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1930,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XCS8-45N : accessed 14 July 2026), entry for Benny R Taylor in household of Jay S Taylor and Autossie A Taylor, East Garibaldi, Tillamook, Oregon, 1930; citing NARA microfilm publication (Washington, D.C.: National Archives and Records Administration).",
+      "citation_detail": {
+        "who": "Jay S Taylor household (Benny R Taylor enumerated as son)",
+        "what": "1930 U.S. Federal Census population schedule",
+        "when_created": "1930",
+        "when_accessed": "2026-07-14",
+        "where": "East Garibaldi, Tillamook, Oregon",
+        "where_within": "FamilySearch persona/index record, https://www.familysearch.org/ark:/61903/1:1:XCS8-45N"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-14",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XCS8-45N",
+      "notes": "Original not examined \u2014 original census manuscript image was not viewed; extracted from FamilySearch's derivative index/persona record. Household: Jay S Taylor (head, b. 1877 Idaho), Autossie A Taylor (wife, b. 1884 Utah), six sons all born Idaho (Alvro B 1910, Levear F 1913, Wilson T 1918, F Pershing 1920, Benny R 1922, Dalas J 1923). Census gives Benny's birth year as 1922, conflicting with the subject's documented birth date of 19 July 1921 \u2014 flagged as a discrepancy for correlation, not resolved here.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KW1-QCF4 : accessed 14 July 2026), Entry for Benny Rapheal Taylor and Jay Taylor.",
+      "citation_detail": {
+        "who": "Benny R Taylor (SS-5 applicant)",
+        "what": "Social Security Numerical Identification Files (NUMIDENT) entry, incorporating original SS-5 application data (applicant's name, birth date/place, parents' names) plus later administrative death update",
+        "when_created": "SS-5 application filed by Benny R Taylor as an adult (pre-1991); NUMIDENT collection spans 1936-2007",
+        "when_accessed": "14 July 2026",
+        "where": "FamilySearch (digitized U.S. Social Security Administration NUMIDENT file)",
+        "where_within": "Entry for Benny Rapheal Taylor and Jay Taylor"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch / U.S. Social Security Administration (NUMIDENT)",
+      "access_date": "2026-07-14",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States Census, 1940,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VRTZ-125 : accessed 14 July 2026), Bennie Taylor in household of Jay Taylor, East Garibaldi Election Precinct, Tillamook County, Oregon; citing 1940 U.S. Federal Census population schedule, NARA.",
+      "citation_detail": {
+        "who": "United States Bureau of the Census (enumerator)",
+        "what": "1940 U.S. Federal Census population schedule, household of Jay Taylor",
+        "when_created": "1940",
+        "when_accessed": "2026-07-14",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "East Garibaldi Election Precinct, Tillamook County, Oregon"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-14",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VRTZ-125",
+      "notes": "Original not examined \u2014 extracted from the FamilySearch index/persona record (derivative of the census manuscript); the manuscript image itself was not viewed in this session.",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Utah, County Marriages, 1871-1941,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:X2B8-RVS : accessed 14 July 2026), entry for Jay Taylor and Miss Au Tossie Bair, marriage 23 Oct 1901, Cache, Utah; FamilySearch digital collection 1803977.",
+      "citation_detail": {
+        "who": "Utah county clerk (original recorder); indexed by FamilySearch",
+        "what": "Marriage entry for Jay Taylor and Miss Au Tossie Bair",
+        "when_created": "23 Oct 1901 (event date); FamilySearch index creation date not stated",
+        "when_accessed": "14 July 2026",
+        "where": "FamilySearch, collection \"Utah, County Marriages, 1871-1941\" (collection 1803977)",
+        "where_within": "Cache, Utah entry; ARK ark:/61903/1:1:X2B8-RVS"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-14",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:X2B8-RVS",
+      "notes": "Accessed as a FamilySearch index/persona entry (structured data only, no transcription obtained); the underlying original county marriage register/certificate was NOT examined in this extraction. A linked digital image ARK (ark:/61903/3:1:939Z-BG9D-XC) exists in the collection but was not reviewed \u2014 original not examined.",
+      "log_entry_id": "log_012",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Oregon, Death Index, 1903-1998,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VZCQ-5XC : accessed 14 July 2026), entry for Benny Rapheal Taylor, death 09 Jul 1991, Tillamook, Oregon; citing Oregon State Board of Health, Vital Statistics, Center for Health Statistics, collection 1946790.",
+      "citation_detail": {
+        "who": "Oregon State Board of Health / Center for Health Statistics",
+        "what": "Oregon, Death Index, 1903-1998 (derivative database index of death certificates)",
+        "when_created": "index compiled from death certificates registered 1903-1998",
+        "when_accessed": "14 July 2026",
+        "where": "FamilySearch, collection 1946790",
+        "where_within": "indexed entry for Benny Rapheal Taylor"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-14",
+      "notes": "Derivative index only \u2014 original death certificate not examined and not accessible through FamilySearch in this project; the index carries no parent-name fields.",
+      "log_entry_id": "log_013",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:XCS8-45N",
+      "record_role": "child_5",
+      "fact_type": "Residence",
+      "value": "East Garibaldi, Tillamook, Oregon",
+      "date": "1930",
+      "date_certainty": "exact",
+      "place": "East Garibaldi, Tillamook, Oregon",
+      "standard_place": "Garibaldi, Tillamook, Oregon, United States",
+      "structured_value": {
+        "place": "East Garibaldi, Tillamook, Oregon"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10426624036",
+      "informant_bias_notes": "Enumerator recorded the household at the dwelling during the 1930 census visit.",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:XCS8-45N",
+      "record_role": "child_5",
+      "fact_type": "Birth",
+      "value": "1922 (per census; conflicts with documented birth date 19 July 1921)",
+      "date": "1922",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1922"
+      },
+      "information_quality": "primary",
+      "informant": "Jay S Taylor (household head, presumed father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10426624036",
+      "informant_bias_notes": "Birth year as stated by a household informant (likely the father, Jay S Taylor); conflicts with the subject's documented birth year of 1921 \u2014 possible informant recall error or enumerator/indexer transcription issue. Flagged as a conflict for correlation, not resolved here.",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:XCS8-45N",
+      "record_role": "child_5",
+      "fact_type": "Birth",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "structured_value": {
+        "place": "Idaho"
+      },
+      "information_quality": "primary",
+      "informant": "Jay S Taylor (household head, presumed father)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10426624036",
+      "informant_bias_notes": "Birthplace as stated by a household informant (likely the father, Jay S Taylor).",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:XCS8-45N",
+      "record_role": "child_5",
+      "fact_type": "Relationship",
+      "value": "Son of Jay S Taylor (head of household), per household composition",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10426624036",
+      "informant_bias_notes": "Parentage inferred from co-residence as a son in the household of Jay S Taylor; no explicit informant confirmed this relationship. Treat as indirect evidence pending corroboration (e.g., a vital/birth record).",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:XCS8-45N",
+      "record_role": "child_5",
+      "fact_type": "Relationship",
+      "value": "Son of Autossie A Taylor (wife of head of household), per household composition",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10426624036",
+      "informant_bias_notes": "Parentage inferred from co-residence as a son in the household of Autossie A Taylor, wife of head Jay S Taylor; no explicit informant confirmed this relationship.",
+      "log_entry_id": "log_004",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6KW1-QCF4",
+      "record_role": "applicant",
+      "record_persona_id": "p_298330406557",
+      "fact_type": "name",
+      "value": "Benny Rapheal Taylor",
+      "structured_value": {
+        "given": "Benny Rapheal",
+        "surname": "Taylor"
+      },
+      "informant": "Benny R Taylor",
+      "informant_proximity": "self",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6KW1-QCF4",
+      "record_role": "applicant",
+      "record_persona_id": "p_298330406557",
+      "fact_type": "birth",
+      "value": "19 Jul 1921, McCammon, Idaho",
+      "date": "19 Jul 1921",
+      "date_certainty": "exact",
+      "place": "Mccammon, Idaho, United States",
+      "standard_place": "McCammon, Bannock, Idaho, United States",
+      "informant": "Benny R Taylor",
+      "informant_proximity": "self",
+      "information_quality": "secondary",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Applicant self-reported his own birth date/place as an adult on the SS-5 application \u2014 recollection rather than personal observation of the event (analogous to a delayed birth certificate); classified secondary despite the original source and self-informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6KW1-QCF4",
+      "record_role": "applicant",
+      "record_persona_id": "p_298330406557",
+      "fact_type": "death",
+      "value": "9 Jul 1991",
+      "date": "9 Jul 1991",
+      "date_certainty": "exact",
+      "informant": "unknown (death update on NUMIDENT \u2014 reporter not identified in this extract)",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "informant_bias_notes": "NUMIDENT reflects an administrative death update to the SSA master file after Benny's death; the original reporter (family member, funeral home, or SSA data match) is not identified in this extract.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6KW1-QCF4",
+      "record_role": "father",
+      "record_persona_id": "p_298330406560",
+      "fact_type": "name",
+      "value": "Jay Taylor",
+      "structured_value": {
+        "given": "Jay",
+        "surname": "Taylor"
+      },
+      "informant": "Benny R Taylor",
+      "informant_proximity": "self",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6KW1-QCF4",
+      "record_role": "mother",
+      "record_persona_id": "p_298330406561",
+      "fact_type": "name",
+      "value": "Tossie A Bear",
+      "structured_value": {
+        "given": "Tossie A",
+        "surname": "Bear"
+      },
+      "informant": "Benny R Taylor",
+      "informant_proximity": "self",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Recorded in the SS-5's 'Mother's Maiden Name' field \u2014 surname Bear is the mother's maiden (birth) name, not her married name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6KW1-QCF4",
+      "record_role": "applicant",
+      "record_persona_id": "p_298330406557",
+      "fact_type": "father",
+      "value": "Jay Taylor",
+      "structured_value": {
+        "given": "Jay",
+        "surname": "Taylor",
+        "relationship_type": "father",
+        "related_person_role": "father"
+      },
+      "informant": "Benny R Taylor",
+      "informant_proximity": "self",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6KW1-QCF4",
+      "record_role": "applicant",
+      "record_persona_id": "p_298330406557",
+      "fact_type": "mother",
+      "value": "Tossie A Bear",
+      "structured_value": {
+        "given": "Tossie A",
+        "surname": "Bear",
+        "relationship_type": "mother",
+        "related_person_role": "mother"
+      },
+      "informant": "Benny R Taylor",
+      "informant_proximity": "self",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's maiden surname Bear \u2014 critical parentage finding tying this record to prior census entries for 'Autossie'.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "Birth",
+      "value": "~1923 (calculated from age)",
+      "date": "1923",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Jay Taylor (head of household, reporting for the family)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year computed from stated age; census does not identify which household member answered. Conflicts with subject's documented birth year 1921 (McCammon, Bannock, Idaho) \u2014 a discrepancy worth noting, not resolving here. Shared informant (household head) with Dallas's and this household's other age-derived facts \u2014 one evidence unit per GPS Standard 4.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "Birth",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "primary",
+      "informant": "Jay Taylor (head of household, reporting for the family)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birthplace stated as census column value; consistent with subject's documented birth in McCammon, Bannock, Idaho.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "Residence",
+      "value": "East Garibaldi Election Precinct, Tillamook, Oregon",
+      "date": "1940",
+      "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Enumerator visited and recorded the dwelling directly.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "Residence",
+      "value": "Same House [as in 1935]",
+      "date": "1935",
+      "place": "Same House",
+      "standard_place": null,
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely the household head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "1940 census 'resided here in 1935' question; recollection of residence 5 years prior, more error-prone than current residence. Place text 'Same House' is not a geographic location \u2014 standard_place intentionally left null to avoid an erroneous geocode match (auto-resolution mapped this to Timor-Leste). Value implies the family already occupied this Oregon dwelling by 1935, consistent with a move from Idaho between Dallas's 1925 Idaho birth and 1935.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "Race",
+      "value": "White",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely the household head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "MaritalStatus",
+      "value": "Widowed",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely the household head)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Flagged as an apparent anomaly: subject would be roughly 17 in 1940, an implausible age for widowhood. Likely an indexing/transcription error on the source's marital-status column; recorded faithfully as stated, not corrected.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "Relationship",
+      "value": "Son of head of household Jay Taylor (by household position)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "father"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "This simplified record extract carries no stated relationship-to-head text field; the parent-child link is inferred from household composition/co-residence, not a directly stated relationship value, hence indirect evidence per household-position convention.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_1",
+      "fact_type": "Relationship",
+      "value": "Son of wife Tassy Taylor (by household position)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "mother"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Same household-position inference as the father relationship; 'Tassy' is likely a phonetic rendering of Autossie/Tossie identified in prior 1930-census/NUMIDENT research \u2014 a tentative spelling correlation, not confirmed by this record alone.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "~1877 (calculated from age)",
+      "date": "1877",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Jay Taylor (self-reported, as head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year computed from stated age. Adults typically self-reported to the enumerator.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "primary",
+      "informant": "Jay Taylor (self-reported, as head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "head_of_household",
+      "fact_type": "Residence",
+      "value": "East Garibaldi Election Precinct, Tillamook, Oregon",
+      "date": "1940",
+      "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "~1883 (calculated from age)",
+      "date": "1883",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse Jay Taylor)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Birth year computed from stated age.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "Utah",
+      "place": "Utah",
+      "standard_place": "Utah, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse Jay Taylor)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Recorded here as 'Tassy' \u2014 a likely phonetic rendering of Autossie/Tossie per prior 1930-census/NUMIDENT correlation; treat identity link as tentative pending corroboration beyond this single record.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "wife",
+      "fact_type": "Residence",
+      "value": "East Garibaldi Election Precinct, Tillamook, Oregon",
+      "date": "1940",
+      "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "wife",
+      "fact_type": "Relationship",
+      "value": "Wife of head of household Jay Taylor (by household position)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "husband"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "No stated relationship-to-head field in this record extract; spousal relationship inferred from household-role labels ('head'/'wife').",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_2",
+      "fact_type": "Birth",
+      "value": "~1925 (calculated from age)",
+      "date": "1925",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Jay Taylor (head of household, reporting for the family)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Shared informant (household head) with Bennie's age-derived facts \u2014 one evidence unit per GPS Standard 4.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_2",
+      "fact_type": "Birth",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "primary",
+      "informant": "Jay Taylor (head of household, reporting for the family)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_role": "child_2",
+      "fact_type": "Residence",
+      "value": "East Garibaldi Election Precinct, Tillamook, Oregon",
+      "date": "1940",
+      "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:X2B8-RVS",
+      "record_role": "groom",
+      "fact_type": "Marriage",
+      "value": "Married 23 Oct 1901 at Cache, Utah, United States",
+      "date": "23 Oct 1901",
+      "date_certainty": "exact",
+      "place": "Cache, Utah, United States",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "county clerk (name not stated on index)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10715000041",
+      "log_entry_id": "log_012",
+      "source_id": "src_004",
+      "standard_place": "Cache, Utah, United States"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:X2B8-RVS",
+      "record_role": "bride",
+      "fact_type": "Marriage",
+      "value": "Married 23 Oct 1901 at Cache, Utah, United States",
+      "date": "23 Oct 1901",
+      "date_certainty": "exact",
+      "place": "Cache, Utah, United States",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "county clerk (name not stated on index)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10715000042",
+      "log_entry_id": "log_012",
+      "source_id": "src_004",
+      "standard_place": "Cache, Utah, United States"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:X2B8-RVS",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Jay Taylor",
+      "structured_value": {
+        "given": "Jay",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "Jay Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10715000041",
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:X2B8-RVS",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Miss Au Tossie Bair",
+      "structured_value": {
+        "given": "Au Tossie",
+        "surname": "Bair"
+      },
+      "information_quality": "primary",
+      "informant": "Au Tossie Bair",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10715000042",
+      "informant_bias_notes": "Recorded maiden surname 'Bair' at marriage; consistent with the 'Bear' variant already carried on the tree mother's BirthName \u2014 same surname, alternate spelling.",
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:X2B8-RVS",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "~1877 (birth year calculated from age at marriage)",
+      "date": "1877",
+      "date_certainty": "calculated",
+      "structured_value": {
+        "year": "1877"
+      },
+      "information_quality": "secondary",
+      "informant": "Jay Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "record_persona_id": "p_10715000041",
+      "informant_bias_notes": "Birth year computed by FamilySearch index from age stated at marriage; a person cannot provide primary information about their own birth, so classified secondary/indirect despite self as informant of the underlying age.",
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:X2B8-RVS",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "~1883 (birth year calculated from age at marriage)",
+      "date": "1883",
+      "date_certainty": "calculated",
+      "structured_value": {
+        "year": "1883"
+      },
+      "information_quality": "secondary",
+      "informant": "Au Tossie Bair",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10715000042",
+      "informant_bias_notes": "Birth year computed by FamilySearch index from age stated at marriage; consistent with ~1883/1884 birth years reported in the 1930 and 1940 census for the same woman, supporting the identification of Au Tossie Bair as Benny Taylor's mother Tossie A Bear.",
+      "log_entry_id": "log_012",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "deceased",
+      "record_persona_id": "p_13372420029",
+      "fact_type": "Death",
+      "value": "Death, 09 Jul 1991, Tillamook, Oregon",
+      "date": "09 Jul 1991",
+      "date_certainty": "exact",
+      "place": "Tillamook, Oregon",
+      "standard_place": "Tillamook, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "unidentified death-registration informant (physician/registrar of vital statistics)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "deceased",
+      "record_persona_id": "p_13372420029",
+      "fact_type": "Birth",
+      "value": "19 Jul 1921",
+      "date": "19 Jul 1921",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unidentified personal informant (family member relaying biographical information)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth date on a death-registration index is recollected secondhand by a family informant, not witnessed by the informant; retained here chiefly to confirm the identity match to the known subject (b. 19 Jul 1921).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "deceased",
+      "record_persona_id": "p_13372420029",
+      "fact_type": "Name",
+      "value": "Benny Rapheal Taylor",
+      "structured_value": {
+        "given": "Benny Rapheal",
+        "surname": "Taylor"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified personal informant (family member relaying biographical information)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "wife",
+      "record_persona_id": "p_13372420030",
+      "fact_type": "Name",
+      "value": "Rosema Taylor",
+      "structured_value": {
+        "given": "Rosema",
+        "surname": "Taylor"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "wife",
+      "record_persona_id": "p_13372420030",
+      "fact_type": "Relationship",
+      "value": "Rosema Taylor linked as spouse of Benny Rapheal Taylor in death index",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The death index links the two persons as a Couple without an explicit labeled field stating the relationship; treated as inferred from record structure.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1930 census child_5 persona in Jay S Taylor household, East Garibaldi, Tillamook, Oregon. Name 'Benny R Taylor' matches subject exactly. Residence in Tillamook, Oregon consistent with subject's known 1930 residence. Household head and wife match known parents I1 (Jay Taylor) and I2 (Autossie/Tossie Taylor). Co-residence and name are a strong multi-attribute match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1930 census child_5 persona as a_001 \u2014 same record, same role, same household. Birth year '1922' conflicts by 1 year with documented 1921, a known census imprecision for young children; does not undermine identity given all other data points agree. Still clearly the same person.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1930 census child_5 persona. Birth place Idaho is consistent with subject's documented birth in McCammon, Bannock, Idaho.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: 'son of Jay S Taylor.' Benny R Taylor appears as a named son in the household of Jay S Taylor (I1) and Autossie A Taylor (I2), East Garibaldi, Tillamook, Oregon 1930. Name, household context, and known parentage all agree. This assertion bears on KNJ1-TRX as the child.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: 'son of Jay S Taylor.' Jay S Taylor is identified as the household head. Name 'Jay S Taylor' matches I1 (Jay Taylor) exactly; birth year ~1877 and Idaho birthplace consistent with I1 as established across multiple sources. This assertion bears on I1 as the father.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: 'son of Autossie A Taylor.' Benny R Taylor co-resident in household of Autossie A Taylor (wife of head Jay S Taylor), East Garibaldi 1930. Bears on KNJ1-TRX as the child of I2.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion: 'son of Autossie A Taylor.' Autossie A Taylor is identified as wife of household head Jay S Taylor, b.1884 Utah. Name 'Autossie A Taylor' and Utah birthplace match I2 (Tossie A Bear/Tassy Taylor): all three census records show the same woman \u2014 'Autossie' (1930), 'Tassy' (1940) \u2014 with Utah birth and married to Jay Taylor. This assertion bears on I2 as the mother.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "NUMIDENT applicant persona. Name 'Benny Rapheal Taylor' is a phonetic spelling of 'Benny Raphael Taylor' (subject's known name). Birth date 19 Jul 1921 and death 9 Jul 1991 match subject's documented vital dates exactly. This is the subject's own SS-5 application \u2014 an obvious match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same NUMIDENT applicant persona as a_006. Birth date 19 Jul 1921, McCammon, Bannock, Idaho matches subject's documented birth exactly. Self-reported on applicant's own SS-5.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same NUMIDENT applicant persona. Death date 9 Jul 1991 matches subject's documented death exactly.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "NUMIDENT father persona (record_persona_id p_298330406560). Named 'Jay Taylor' \u2014 father of Benny R Taylor per the SS-5. Matches I1 (Jay Taylor, father of KNJ1-TRX). The FamilySearch NUMIDENT record explicitly links this persona to ARK 6KW1-QCFZ as Jay Taylor. Name and parentage role align perfectly with I1. Note: I1 is a local stub; same_person scoring degenerate \u2014 qualitative match is obvious.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "NUMIDENT mother persona (record_persona_id p_298330406561). Named 'Tossie A Bear' \u2014 mother of Benny R Taylor per the SS-5, maiden name field. Matches I2 (Tossie A Bear / Tassy Taylor, mother of KNJ1-TRX). The FamilySearch NUMIDENT record links this persona to ARK 6KW1-QCF8. Name Bear is the maiden surname critical finding; 'Tossie' is the same person as 'Autossie' (1930 census) and 'Tassy' (1940 census) \u2014 Utah birthplace consistent across all three records. I2 is a local stub; qualitative match is obvious.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "NUMIDENT parentage assertion: 'father = Jay Taylor.' Bears on KNJ1-TRX as the child whose father is named. Applicant Benny R Taylor self-reported Jay Taylor as his father on the SS-5. KNJ1-TRX is the applicant (a_006\u2013a_008 already linked).",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "NUMIDENT parentage assertion: 'father = Jay Taylor.' Bears on I1 as the named father. Jay Taylor is the person Benny named on his SS-5 as his father; I1 is Jay Taylor (father) in the tree. Relationship is the subject of the parentage research question q_001. This is primary, direct evidence of paternity.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "NUMIDENT parentage assertion: 'mother = Tossie A Bear.' Bears on KNJ1-TRX as the child whose mother is named. Benny R Taylor self-reported Tossie A Bear as his mother on the SS-5. KNJ1-TRX is the applicant.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "NUMIDENT parentage assertion: 'mother = Tossie A Bear.' Bears on I2 as the named mother. Tossie A Bear is the person Benny named on his SS-5 as his mother (maiden surname Bear). I2 is Tossie A Bear (mother, n\u00e9e Bear) in the tree. Primary, direct evidence of maternity; maiden name Bear is the key identifying detail.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census child_1 persona, household of Jay Taylor (I1) and Tassy Taylor (I2), East Garibaldi, Tillamook, Oregon. Name 'Bennie Taylor' is a common spelling variant of 'Benny Taylor.' Birth year ~1923 per census (2 years from documented 1921); typical census age-reporting imprecision. Birth place Idaho matches. Household contains known parents. Strong multi-attribute match despite birth year discrepancy.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census child_1 persona as a_013. Birth place Idaho consistent with documented McCammon, Bannock, Idaho.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census child_1 persona. Residence East Garibaldi, Tillamook, Oregon 1940 consistent with subject's known 1940 residence (also shown by the 1940 census entry itself and confirmed by the WWII draft registration card in the tree).",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "KNJ1-TRX",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Same 1940 census child_1 persona; '1935 same house' residence question. Probable rather than confident because this is a retrospective recollection, more error-prone. Consistent with known family residence in Garibaldi by the 1930s (all six sons born Idaho, family in East Garibaldi by 1930).",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census child_1 persona. Race 'White' is a census-enumerated attribute; consistent with all other census records for this family.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census child_1 persona. Marital status 'Widowed' is flagged as an indexing anomaly (subject would be ~17 in 1940). Despite the erroneous value, the persona itself is clearly KNJ1-TRX based on all other data points. Linking as confident; the anomaly is the marital status value, not the identity.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census relationship assertion: 'son of head of household Jay Taylor.' Bears on KNJ1-TRX as the child. Bennie Taylor in household of Jay Taylor (I1), inferred son by household position.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census relationship assertion: 'son of Jay Taylor.' Bears on I1 as the father. Jay Taylor is household head; birth year ~1877 and Idaho birthplace match I1 consistently across 1930 and 1940 censuses. I1 is a local stub but all identifiers agree.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census relationship assertion: 'son of wife Tassy Taylor.' Bears on KNJ1-TRX as the child. Bennie Taylor in household of Tassy Taylor (I2), inferred son by household position.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census relationship assertion: 'son of Tassy Taylor.' Bears on I2 as the mother. 'Tassy Taylor' = wife of Jay Taylor, b.~1883 Utah. Matches I2 (Tossie A Bear/Autossie/Tassy) on all data points: Utah birthplace, wife of Jay Taylor I1, mother of KNJ1-TRX. 'Tassy' is a phonetic variant of 'Tossie'; 1883 vs 1884 birth year is within census imprecision range.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census head_of_household persona. Jay Taylor, b.~1877, Idaho. Matches I1 (Jay Taylor, father): name exact, birth year ~1877 consistent across both 1930 and 1940 censuses (1930 census shows b.1877), Idaho birthplace consistent. Head of household in same family unit.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census head_of_household persona. Birth place Idaho is consistent with I1 as established in 1930 census (also born Idaho) and NUMIDENT (father named Jay Taylor).",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census head_of_household persona. Residence East Garibaldi, Tillamook, Oregon 1940 is consistent with I1 being the household head in the same family as KNJ1-TRX in 1930 and 1940.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census wife persona. Tassy Taylor, b.~1883, Utah. Matches I2 (Tossie A Bear/Autossie/Tassy): birth year ~1883 (1930 census gives ~1884, within census imprecision), Utah birthplace consistent across both census records, wife of Jay Taylor (I1) consistent across both censuses. Strong multi-attribute match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_025",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census wife persona. Birth place Utah matches I2 consistently: 1930 census shows Autossie A Taylor born Utah; 1940 census shows Tassy Taylor born Utah. Utah is a consistent identifying attribute across multiple independent census enumerations.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_026",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census wife persona. Residence East Garibaldi, Tillamook, Oregon 1940 consistent with I2 as wife of I1 (Jay Taylor) in same household.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion: 'wife of head Jay Taylor.' Bears on I2 as the wife. 'Tassy Taylor' in the wife role, b.~1883 Utah, matches I2 (Tossie A Bear/Autossie/Tassy Taylor). Consistent with spousal relationship to I1 shown in both 1930 and 1940 censuses and the NUMIDENT couple link.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Spousal relationship assertion: 'wife of head Jay Taylor.' Bears on I1 as the husband. Jay Taylor is the household head; I1 (Jay Taylor) is the husband in this couple. Consistent with I1\u2013I2 couple relationship established by NUMIDENT and both censuses.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_028",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1940 census child_2 persona. 'Dallas Taylor,' b.~1925, Idaho. Matches I5 (Dallas Taylor) exactly: name is identical, birth year ~1925 matches, Idaho birthplace matches. I5 was created from this same record; the link is obvious. Note: I5 is a local stub so same_person scoring would be degenerate \u2014 qualitative match is certain.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_029",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census child_2 persona. Birth place Idaho matches I5 (Dallas Taylor, born Idaho per the same census record).",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_030",
+      "person_id": "I5",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Same 1940 census child_2 persona. Residence East Garibaldi, Tillamook, Oregon 1940, in household of Jay and Tassy Taylor (I1 and I2). Consistent with I5 as a child of the Taylor family household.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_031 records the marriage event from the groom role in Utah, County Marriages record (src_004). Groom is 'Jay Taylor' \u2014 exact name match to I1 (Jay Taylor). Groom birth year calculated as ~1877 from this record, matching I1's established birth year from the 1930 and 1940 census (b.1877, Idaho). I1 is the husband of I2 (Tossie A Bear), and the bride in this same record is 'Au Tossie Bair' \u2014 a phonetic variant of Bear \u2014 consistent with I2. All attributes align; confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_031",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_031 records the marriage of Jay Taylor to 'Miss Au Tossie Bair'. This event directly bears on I2 (Tossie A Bear / Tassy Taylor) as the bride. 'Au Tossie Bair' is a phonetic spelling of 'Autossie Bear' \u2014 consistent with I2's recorded BirthName 'Tossie A Bear' from the NUMIDENT. Bride birth year ~1883 matches I2's birth year from 1930/1940 census (~1883/1884, Utah). I2 is the spouse of I1 (Jay Taylor) in the tree; groom Jay Taylor = I1. Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_032",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_032 records the marriage event from the bride role. Bride is 'Miss Au Tossie Bair' \u2014 phonetic variant of 'Tossie A Bear', I2's maiden name from NUMIDENT. Bride birth year ~1883 consistent with I2's census birth years. I2 is the wife of I1 in the tree, and the groom in this record is 'Jay Taylor' = I1. Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_032",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_032 records the marriage of 'Miss Au Tossie Bair' (I2) and Jay Taylor (groom). This event bears on I1 as the other party. Groom 'Jay Taylor' = I1 (exact name, birth year ~1877 consistent, I1 is the husband of I2 in the tree). Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_033 records the name 'Au Tossie Bair' from the bride role. This is I2's maiden name 'Tossie A Bear' in phonetic/variant spelling (Bair = Bear). I2 already carries 'Tossie A Bear' as BirthName (from NUMIDENT). Name, birth year (~1883), and marital relationship to Jay Taylor (I1) all align. Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_034",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_034 records the name 'Jay Taylor' from the groom role. Exact name match to I1 (Jay Taylor). Birth year ~1877 calculated from this record consistent with I1's established birth year from census records. Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_035",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_035 records groom birth year ~1877 (calculated from age at marriage). Consistent with I1's birth year as established by the 1930 census (b.1877 Idaho) and 1940 census (b.~1877 Idaho). Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_036",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_036 records bride birth year ~1883 (calculated from age at marriage). Consistent with I2's birth year from 1930 census (~1884 Utah) and 1940 census (~1883 Utah) and NUMIDENT (Tossie A Bear). Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_037",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": 0.9846735,
+      "rationale": "a_037 records the death of Benny Rapheal Taylor, 9 Jul 1991, Tillamook, Oregon from the Oregon death index. Match score 0.985. Name 'Benny Rapheal Taylor', birth 19 Jul 1921, death 9 Jul 1991 Tillamook all match KNJ1-TRX exactly. Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_038",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": 0.9846735,
+      "rationale": "a_038 records birth date 19 Jul 1921 from the same Oregon death index persona as a_037. Same confident match to KNJ1-TRX.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_039",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": 0.9846735,
+      "rationale": "a_039 records name 'Benny Rapheal Taylor' from the Oregon death index. Exact name and date match to KNJ1-TRX. Confident match.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_040",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_040 records the name 'Rosema Taylor' from the spouse co-persona on the Oregon death index entry. I6 (Rosema Taylor) is a new stub created from this single record \u2014 no independent corroboration yet. Probable confidence.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_041",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "a_041 records the spouse relationship between the deceased (Benny Rapheal Taylor = KNJ1-TRX) and Rosema Taylor (I6) from the Oregon death index Couple relationship. Bears on KNJ1-TRX as the deceased spouse. Confident that this is KNJ1-TRX.",
+      "created": "2026-07-14"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_041",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "a_041 also bears on I6 (Rosema Taylor) as the surviving spouse. Based on the single Oregon death index Couple relationship \u2014 probable, pending corroboration.",
+      "created": "2026-07-14"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_004",
+        "a_005",
+        "a_019",
+        "a_020",
+        "a_031",
+        "a_032",
+        "a_037"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch across five record types: (1) census \u2014 1920 for Jay Taylor in Idaho (2 searches, negative/unindexed); 1930 and 1940 censuses for Benny Taylor in Tillamook, Oregon (positive). (2) Vital records \u2014 Idaho birth certificate for Benny Taylor (3 searches across collections 1951759 and 1674809, negative/unindexed); NUMIDENT/SS-5 (positive, original record); Oregon death index 1903\u20131998 (positive, index only \u2014 full death certificate with parent names requires Oregon State Archives or Ancestry, not accessible in this project). (3) Marriage \u2014 Idaho, County Marriages 1864\u20131962 (3 searches, negative); Utah marriage records (positive: Jay Taylor m. Au Tossie Bair, 23 Oct 1901, Cache, Utah). (4) Newspaper/GenealogyBank and Ancestry fallback: skipped \u2014 no subscription available in autonomous mode. Research declared exhaustive (q_001, 2026-07-14). Unobtainable sources noted: full Oregon death certificate; Idaho 1921 birth certificate (unindexed in available FamilySearch collections); Ancestry Idaho birth record fallback.",
+      "narrative_markdown": "## Parents of Benny Raphael Taylor (1921\u20131991)\n\n**Conclusion:** Benny Raphael Taylor, born 19 July 1921 in McCammon, Bannock, Idaho, and died 9 July 1991 in Tillamook, Oregon, is the son of Jay Taylor (born about 1877 in Idaho) and Tossie A. Bear (born about 1883 in Utah), who married 23 October 1901 in Cache County, Utah. This conclusion is supported by four independent sources, including Benny\u2019s own direct statement on his Social Security application, and meets all five components of the Genealogical Proof Standard.\n\n### Social Security Application: Direct, Primary Evidence\n\nThe strongest evidence is Benny\u2019s own Social Security application (SS-5), preserved in the United States Social Security Numerical Identification Files (NUMIDENT) and accessed via FamilySearch (ark:/61903/1:1:6KW1-QCF4).\u00b9 Benny named Jay Taylor as his father and Tossie A Bear as his mother, recording the mother\u2019s maiden surname as Bear. The NUMIDENT is an original source \u2014 a digitized record of the SS-5 as filed with the Social Security Administration. Benny\u2019s identification of his own parents is primary information (he was the applicant), and the explicit parent-name fields make this direct evidence: the record answers the research question without inference.\n\n### Census Co-Residence: Corroborating Indirect Evidence\n\nTwo decennial censuses independently place Benny in the household of Jay and Tossie Taylor, corroborating the NUMIDENT parentage.\n\nIn the 1930 United States Census (FamilySearch, ark:/61903/1:1:XCS8-45N),\u00b2 Benny R. Taylor appears as a son in the household of Jay S. Taylor (head, born about 1877, Idaho) and Autossie A. Taylor (wife, born about 1884, Utah) at East Garibaldi, Tillamook County, Oregon. Five other sons, all Idaho-born, are also listed. This source is a derivative index entry (the original census manuscript was not viewed); the informant was the household head. Co-residence as a named son is indirect parentage evidence.\n\nIn the 1940 United States Census (FamilySearch, ark:/61903/1:1:VRTZ-125),\u00b3 Bennie Taylor (approximately age 18) is again enumerated in the household of Jay Taylor (born about 1877, Idaho) and Tassy Taylor (born about 1883, Utah) at East Garibaldi. The same derivative-source and indirect-evidence characterizations apply.\n\n### Parents\u2019 Marriage Record: Corroboration of the Couple\n\nFamilySearch collection \u201cUtah, County Marriages, 1871\u20131941\u201d records the marriage of Jay Taylor to Miss Au Tossie Bair on 23 October 1901 in Cache County, Utah (ark:/61903/1:1:X2B8-RVS).\u2074 This is a derivative index entry; the original register image was not examined. The marriage predates Benny\u2019s birth by approximately twenty years, establishing Jay Taylor and Tossie Bair/Bear as a married couple before 1921. The bride\u2019s maiden surname Bair is a phonetic spelling of Bear (the surname Benny recorded on his SS-5), directly linking the Utah bride to the mother identified in the NUMIDENT.\n\n### Resolution of Discrepancies\n\n**Birth year.** The 1930 census records Benny\u2019s birth year as approximately 1922, one year after his documented birth date of 19 July 1921. Single-year discrepancies in census age reporting are common: enumerators computed birth years from stated ages, and household informants frequently misrecalled a child\u2019s age by one year. The NUMIDENT, completed by Benny himself, states his birth date as 19 July 1921 \u2014 primary, original evidence that outweighs the household head\u2019s secondary census recollection.\n\n**Mother\u2019s name variants.** The mother appears as \u201cAutossie A. Taylor\u201d (1930 census), \u201cTossie A Bear\u201d (NUMIDENT maiden name), \u201cTassy Taylor\u201d (1940 census), and \u201cAu Tossie Bair\u201d (Utah marriage). These are phonetic and spelling variants of a single unusual given name: Tossie, Tassy, and Au Tossie are transparent renderings of Autossie, and Bair and Bear are common variant spellings of the same surname. Each source is consistent in birth year (approximately 1883\u20131884) and birthplace (Utah). The four entries describe one woman.\n\n### Research Scope and Limitations\n\nSearches were conducted on FamilySearch across the 1920, 1930, and 1940 federal censuses; Idaho birth records (collections 1951759 and 1674809 \u2014 Benny\u2019s 1921 Bannock County birth record does not appear in available indexed collections); the NUMIDENT vital record; Oregon death records (index confirmed; full death certificate with parent-name fields requires Oregon State Archives or a subscribing genealogy service and was not accessed); and marriage records for Idaho (negative) and Utah (positive). Newspaper and Ancestry searches were not performed, as no relevant subscriptions were available in this project. The absence of the Idaho birth certificate and Oregon death certificate \u2014 both of which might independently name Benny\u2019s parents \u2014 is a documented limitation. Given the strength of Benny\u2019s own direct SS-5 statement, these inaccessible records are unlikely to alter the conclusion.\n\n### Conclusion\n\nThe evidence conclusively establishes that Benny Raphael Taylor (born 19 July 1921, McCammon, Bannock, Idaho; died 9 July 1991, Tillamook, Oregon) is the son of Jay Taylor (born about 1877, Idaho) and Tossie A. Bear, also recorded as Autossie, Tassy, or Au Tossie Bair (born about 1883, Utah). Jay Taylor and Tossie A. Bear married 23 October 1901 in Cache County, Utah, approximately twenty years before Benny\u2019s birth. This conclusion meets all five components of the Genealogical Proof Standard: research was reasonably exhaustive within available online collections; every assertion is fully cited; sources have been classified by origin, information quality, and evidence type; the two discrepancies (census birth year and mother\u2019s name variants) have been resolved; and the reasoning is presented above for independent evaluation.\n\n---\n\n\u00b9 \u201cUnited States, Social Security Numerical Identification Files (NUMIDENT), 1936\u20132007,\u201d FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6KW1-QCF4 : accessed 14 July 2026), entry for Benny Rapheal Taylor and Jay Taylor.\n\n\u00b2 \u201cUnited States, Census, 1930,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XCS8-45N : accessed 14 July 2026), entry for Benny R Taylor in household of Jay S Taylor and Autossie A Taylor, East Garibaldi, Tillamook, Oregon.\n\n\u00b3 \u201cUnited States Census, 1940,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VRTZ-125 : accessed 14 July 2026), Bennie Taylor in household of Jay Taylor, East Garibaldi Election Precinct, Tillamook County, Oregon.\n\n\u2074 \u201cUtah, County Marriages, 1871\u20131941,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:X2B8-RVS : accessed 14 July 2026), entry for Jay Taylor and Miss Au Tossie Bair, marriage 23 Oct 1901, Cache, Utah."
+    }
+  ],
+  "evaluations": []
+}

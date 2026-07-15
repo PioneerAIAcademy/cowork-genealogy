@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f3": "Parents' marriage recovered but date off by 2 days (tree 23 Oct 1901 vs expected 21 Oct 1901) and place at county level only (Cache, Utah; expected city Logan)."
+  }
+}

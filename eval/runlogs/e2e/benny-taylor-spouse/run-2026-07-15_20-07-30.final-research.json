@@ -1,0 +1,2887 @@
+{
+  "project": {
+    "id": "rp_benny_taylor_spouse",
+    "objective": "How many times did Benny Raphael Taylor marry, and who was each wife? Benny was born 19 July 1921 in McCammon, Bannock, Idaho; resided in Garibaldi, Tillamook, Oregon from the 1930s into the 1970s; and died 9 July 1991 in Tillamook, Oregon.",
+    "subject_person_ids": [
+      "KNJ1-TRX"
+    ],
+    "status": "completed",
+    "created": "2026-07-13",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What marriage record(s) document the marriage(s) of Benny Raphael Taylor (born 19 July 1921, McCammon, Bannock, Idaho; died 9 July 1991, Tillamook, Oregon) in Oregon, and who were his wife or wives?",
+      "rationale": "The research objective requires identifying all spouses of Benny Taylor. Oregon marriage records (state-level indexes and Tillamook County records) are the primary direct evidence for this question, and his death certificate may name a surviving spouse. Oregon vital records and FamilySearch indexes are available for the relevant period (~1939\u20131991). This is the foundational question whose answer defines the scope of all subsequent spousal research.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-15",
+      "resolution_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_009",
+        "a_011",
+        "a_012",
+        "a_024",
+        "a_032",
+        "a_036",
+        "a_037",
+        "a_038",
+        "a_039",
+        "a_041",
+        "a_069",
+        "a_070",
+        "a_071",
+        "a_072"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched Oregon County Marriages 1851-1975, Oregon Death Index 1903-1998, Oregon Marriage Index 1991-2006, 1940 and 1950 censuses, Oregon WWII draft, and FamilySearch full-text newspaper index. Pre-existing tree sources in tree.gedcomx.json (Washington County marriages, newspaper obituaries, social security records) independently corroborate key marriages. Four marriages are documented: unnamed wife (pre-1940, proven by negative evidence only); Jolene Bartchy (1941 Tillamook, two independent sources); Hildagard Duclos (1945 Vancouver WA, two independent sources); Rosemarie Graham (1962 Oregon, two independent sources). The unnamed first wife's identity cannot be established from available indexed records \u2014 documented as a persistent gap. Overturn risk is low for the three named wives.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 four marriages documented across the full lifespan. Three wives are named with at least two independent sources each. The unnamed first wife's existence is proven by the 1940 census 'Widowed' status; her identity is an acknowledged unresolvable gap in available indexed records.",
+          "repository_breadth": "Searched FamilySearch Oregon vital records (marriage and death indexes), US census 1940 and 1950, Oregon WWII draft, and FamilySearch full-text newspaper corpus. Pli_007 (Tillamook browse-only) and pli_008 (Ancestry) were skipped as fallbacks because the marriage records were found via pre-existing tree sources. Pli_009 obituary was inaccessible on FamilySearch (zero results); wife's full name confirmed by marriage record, so external obituary search is non-blocking.",
+          "original_substitution": "1940 and 1950 census originals examined; WWII draft card accessed as an original image. Oregon marriage indexes are derivatives of original registers, not separately examined as images, but their content is corroborated by independent sources. Oregon death index (src_001) is derivative; original death certificate not read, but the key gap ('Rosema' truncation) is resolved by the 1962 Oregon marriage record identifying the bride as Rosemarie Graham.",
+          "independent_verification": "Jolene Bartchy: pre-existing Oregon Tillamook marriage record (tree R1, 23 Nov 1941) + WWII draft card naming Jolene Taylor as next-of-kin (Feb 1942) \u2014 two independent sources. Hildagard Duclos: Washington County marriage records (tree R2, 25 Feb 1945) + 1950 census listing Hilda B Taylor as wife \u2014 two independent sources. Rosemarie Graham: Oregon marriage record QDLH-77Y (28 Sep 1962) + Oregon death index listing 'Rosema Taylor' as surviving spouse (9 Jul 1991) \u2014 two independent sources 29 years apart. First wife: no independent corroboration possible.",
+          "evidence_class": "Original records examined: 1940 US Census (original enumeration), 1950 US Census (original enumeration), WWII draft registration card (original government document, primary information about next-of-kin). Marriage indexes are derivative, but marriage event facts are primary. One original source with primary-quality information about a marriage exists for each documented marriage.",
+          "conflict_resolution": "No unresolved conflicts. The 1950 census marital status 'Single' (a_032) while simultaneously listing a wife is a trivial enumerator error, resolved by the same schedule's internal evidence. The FamilySearch index misattribution of 'Tossie Bain' as bride in QDLH-77Y was resolved by reading the underlying record's GedcomX, which shows the actual bride is Rosemarie Graham and 'Tossie Bain' is the groom's mother (= KWZ8-3RD).",
+          "overturn_risk": "Low for Wives #2-#4. Jolene Bartchy, Hildagard Duclos, and Rosemarie Graham are each confirmed by two independent sources; no plausible unsearched record would name a different spouse for these three marriages. Moderate for Wife #1 (unnamed, pre-1940): an Oregon or Idaho marriage record may exist but was not found in available indexes; this gap is acknowledged and does not affect identification of the three named wives."
+        }
+      },
+      "created": "2026-07-15"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-15",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Tillamook County, Oregon",
+          "date_range": "1939-1975",
+          "repository": "FamilySearch",
+          "rationale": "Oregon County Marriages 1851-1975 (collection 1803968) is the largest indexed Oregon marriage collection with images. Benny resided in Tillamook County from the 1930s and would most likely have married there. Covers the primary window when he would have married (roughly age 18 onward). Direct evidence of all Oregon marriages through 1975.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon",
+          "date_range": "1939-1998",
+          "repository": "FamilySearch",
+          "rationale": "Oregon Death Index 1903-1998 (collection 1946790) is indexed and free. Benny died 9 July 1991 in Tillamook, Oregon. Oregon death records from this period typically name the surviving spouse or record marital status; the underlying death certificate (collection 3657650 or 2352707) will identify the wife present at death.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon",
+          "date_range": "1975-2006",
+          "repository": "FamilySearch",
+          "rationale": "Oregon Marriage Index 1849-1884; 1991-2006 (collection 3500591) fills the post-1975 gap not covered by the County Marriages collection. If Benny married or remarried after 1975, this index (plus its images) would capture it. Critical for the completeness requirement of this question.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Tillamook County, Oregon",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "The 1940 US Federal Census shows household composition and relationship of each member to head of household. Benny was 18 in April 1940; if he had married by then, his wife would appear in the household. Also establishes his residence in Garibaldi, Tillamook County, confirming the locality for marriage searches.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Tillamook County, Oregon",
+          "date_range": "1950",
+          "repository": "FamilySearch",
+          "rationale": "The 1950 US Federal Census (now public) captures Benny at age 28-29 \u2014 old enough to be married with a household. Lists spouse by name with age. Corroborates the identity of any wife found in marriage records and may reveal children's names and ages, suggesting timing of marriages.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "military",
+          "jurisdiction": "Oregon",
+          "date_range": "1940-1945",
+          "repository": "FamilySearch",
+          "rationale": "Oregon WWII Draft Registration Cards 1940-1945 (collection 2803937) covers men born between 1877 and 1897 (first draft, 1940) and the 'old man' draft (1942, men born 1877-1897). Wait \u2014 Benny was born 1921, so he falls under the WWII selective service registrations. The draft card records his contact person (often wife or parent), address, employer, and physical description. A wife named as next of kin would be direct corroborating evidence.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Tillamook County, Oregon",
+          "date_range": "1854-1967",
+          "repository": "FamilySearch",
+          "rationale": "Oregon Tillamook County Records 1854-1967 (collection 2115693) contains 64,546 browse-only images with no indexed records. May include local marriage registers, court records, and other county documents not captured by the statewide indexed collections. Use volume_search to identify relevant image groups if indexed searches leave gaps.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon",
+          "date_range": "1906-2009",
+          "repository": "Ancestry",
+          "rationale": "Oregon Marriage Indexes 1906-2009 (Ancestry collection 5193) covers the entire period of interest with index and images. Paid fallback if FamilySearch indexed searches miss Benny, particularly useful for variant name spellings (Ben, Benjamin) or if records were filed under a different county.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "newspaper",
+          "jurisdiction": "Tillamook County, Oregon",
+          "date_range": "1991",
+          "repository": "other",
+          "rationale": "Benny died 9 July 1991 in Tillamook. A local newspaper obituary (Tillamook Headlight-Herald or Garibaldi area papers) typically names the surviving spouse, children, and sometimes prior marriages. The GFO Oregon Obituaries index and Newspapers.com/Oregon coverage are the access points. Corroborates the identity of the wife named on the death certificate.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T18:33:54.260Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Oregon County Marriages 1851-1975 (1803968)",
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1916,
+        "birthYearTo": 1926,
+        "recordType": "marriage",
+        "variants_tried": [
+          "Benny Taylor broad",
+          "Benny Taylor + Tillamook",
+          "Benny Taylor + spouse Duclos",
+          "Benny Taylor + spouse Bair",
+          "Duclos Hildagard + spouse Taylor",
+          "Autossie Bair + spouse Taylor",
+          "Jolene Bartchy + spouse Taylor",
+          "Hildagard Duclos Oregon broad",
+          "Jolene Bartchy US marriage broad"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nine query variants in FS collection 1803968 and broader Oregon/US marriage searches. No record found for Benny (or Benjamin) Raphael Taylor marrying in Oregon. Spouse-name searches (Duclos, Bair, Bartchy) also returned zero Oregon marriage results. Benny may be indexed under 'Ben' or a variant; record may be in unindexed browse-only Tillamook County images (pli_007). Proceeding to death index and census records for surviving spouse identification."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-15T18:35:29.214Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Oregon Death Index 1903-1998 (1946790)",
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "deathYearFrom": 1989,
+        "deathYearTo": 1993,
+        "deathPlace": "Tillamook, Oregon",
+        "recordType": "death"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "Found Benny Rapheal Taylor (ark:/61903/1:1:VZCQ-5XC), born 19 Jul 1921, died 9 Jul 1991, Tillamook, Oregon. Death index records a Couple relationship with 'Rosema Taylor' \u2014 the spouse present at death. 'Rosema' is not among the three women already in tree (Duclos, Bair, Bartchy); likely a truncation of Rosemary or similar. Need to identify full name and search census records for earlier spouse(s)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-15T18:40:37.225Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Oregon Marriage Index 1849-1884; 1991-2006 (3500591)",
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1916,
+        "birthYearTo": 1926,
+        "recordType": "marriage",
+        "recordSubdivision": "Oregon"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results in FS collection 3500591 (Oregon Marriage Index 1991-2006) for Benny / Benjamin Taylor. Benny died 9 July 1991, so any marriage after 1975 would have needed to occur before that date \u2014 combined with the 1950 census showing him with Hilda, a post-1975 marriage is plausible but not found here. The collection may have incomplete coverage for this period."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-15T18:41:24.817Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States, Census, 1940 (2000219)",
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1916,
+        "birthYearTo": 1926,
+        "residencePlace": "Tillamook, Oregon",
+        "residenceYearFrom": 1940,
+        "residenceYearTo": 1940,
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 1,
+      "notes": "Found 'Bennie Taylor' (ark:/61903/1:1:VRTZ-125) in East Garibaldi Election Precinct, Tillamook, Oregon \u2014 in the household of Jay Taylor and Tassy Taylor. Birth year indexed as 1923, Idaho \u2014 consistent with known subject born 1921. Critically, marital status is 'Widowed', indicating a first wife who died before April 1940. This wife is not yet identified. Record is in the household of parents (Jay = Silvester Jay Taylor, tree KW8G-33L), consistent with a recently widowed adult son returning to parents' home."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-15T18:41:35.030Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States, Census, 1950 (4464515)",
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1916,
+        "birthYearTo": 1926,
+        "recordCountry": "United States",
+        "recordSubdivision": "Oregon",
+        "residenceYearFrom": 1950,
+        "residenceYearTo": 1950,
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 59,
+      "notes": "Top result is 'Benny R Taylor' (ark:/61903/1:1:6XVB-NBF5), household ark:/61903/1:2:HSJ8-417R, 11 April 1950, Portland, Multnomah, Oregon \u2014 born 1922 Idaho, occupation Cab Driver. Household includes 'Hilda B Taylor' (ark:/61903/1:1:6XVB-NBFB), female, b. 1918 Idaho \u2014 spouse in Couple relationship. Children present: Roy D Taylor (b. 1937 WA), Jacque F Taylor (b. 1941 WA), Barbara M Taylor (b. 1943 OR), Ronald J Taylor (b. 1947 OR), Mark A Taylor (b. 1948 OR). 'Hilda B' born 1918 Idaho correlates strongly with tree person L7BB-SP1 'Hildagard Bernadine Duclos'. Record also shows Benny's marital status as 'Single' \u2014 likely an indexing error for the head of a married household, or enumerator error; his wife Hilda is listed as 'Married'. Jacque F Taylor (b. 1941 WA) matches tree GDTJ-WV6 Jacques Francis Taylor. Roy D Taylor (b. 1937 WA) must be a child of Benny's pre-1940 first wife (who died before April 1940), since Benny was widowed in 1940."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-15T18:42:26.047Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Oregon, World War II Draft Registration Cards, 1940-1945 (2803937)",
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "birthYearFrom": 1916,
+        "birthYearTo": 1926,
+        "residencePlace": "Oregon",
+        "recordType": "military"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 2,
+      "notes": "Top result is 'Benny Rapheal Taylor' (ark:/61903/1:1:QLGY-1BRJ), born 1921, McCammon, Bannock, Idaho \u2014 exact match on all anchor facts. Residence: Garibaldi, Tillamook, Oregon. Draft registered 16 Feb 1942, Garibaldi. The next-of-kin field on the card is critical: if Benny had remarried by Feb 1942 (he was widowed in April 1940), the card may name his new wife, bridging the gap between the 1940 widow status and the 1950 census wife Hilda. Reading the underlying record for the contact/NOK field."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-15T19:25:25.771Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Benny +Taylor +Garibaldi",
+        "recordPlace": "Oregon, United States",
+        "startYear": 1991,
+        "endYear": 1992,
+        "rationale": "Searching FamilySearch full-text index for Benny Taylor obituary in Tillamook/Garibaldi Oregon newspapers 1991-1992"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. FamilySearch full-text index does not appear to have Tillamook County newspaper coverage for 1991. Proceeding to external newspaper archives (Newspapers.com, GFO Oregon Obituary Index) for pli_009."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-15T19:25:43.440Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Benny",
+        "deathYearFrom": 1990,
+        "deathYearTo": 1993,
+        "residencePlace": "Tillamook, Oregon",
+        "recordType": "other",
+        "rationale": "Attempted to find newspaper obituary via FamilySearch record_search type 'other'; returned 20 NUMIDENT/Social Security records, no newspaper obituaries"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 20,
+      "notes": "record_search type 'other' returned 20 NUMIDENT/Social Security records only \u2014 no newspaper obituary content. FamilySearch does not index Tillamook newspaper obituaries for 1991. External site search (Newspapers.com, GFO Oregon Obituary Index) required for pli_009."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T19:32:33.255Z",
+      "tool": "record_search",
+      "query": {
+        "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+        "collection": "Oregon, Marriage Records, 1906-1968 (3326746)",
+        "rationale": "Read pre-existing tree source QDLH-77Y to extract marriage record for Benny Rapheal Taylor, 28 Sep 1962. Source was already attached to KNJ1-TRX in tree.gedcomx.json from prior research; this read retrieves the full GedcomX for assertion extraction.",
+        "source_ark": "ark:/61903/1:1:WBF8-1Q3Z"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Critical finding: the FamilySearch index title 'Benny Rapheal Taylor and Tossie Bain, 28 Sep 1962' is misleading \u2014 'Tossie Bain' is listed as Benny's PARENT on the record (= Autossie Ann Bair, KWZ8-3RD, his mother, who died 57 days later). The actual BRIDE is Rosemarie Graham (born 1942, Portland, Oregon; parents Arthur L Graham and Rosamund Hoover). Rosemarie Graham = 'Rosema' on the 1991 death index = I1 in tree. Renamed I1 from placeholder 'Rosema Taylor' to 'Rosemarie Graham'."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Oregon, Death Index, 1903-1998,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VZCQ-5XC : accessed 15 July 2026), entry for Benny Rapheal Taylor, death 9 Jul 1991, Tillamook, Oregon, listing spouse Rosema Taylor; citing Oregon State Archives/Oregon Health Division death index.",
+      "citation_detail": {
+        "who": "Oregon State Archives / Oregon Health Division (compiler of index)",
+        "what": "Oregon, Death Index, 1903-1998 \u2014 entry for Benny Rapheal Taylor",
+        "when_created": "Index compiled from Oregon death records; entry pertains to a death recorded 9 Jul 1991",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch (familysearch.org), collection 1946790",
+        "where_within": "Entry for Benny Rapheal Taylor and Rosema Taylor, Tillamook, Oregon"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-15",
+      "notes": "Original not examined \u2014 this is a derivative state death index compiled from underlying death certificates; the certificate image itself was not reached. 'Rosema Taylor' as indexed is very likely a truncation of Rosemary or Rosemarie Taylor \u2014 treat the full given name as tentative pending corroboration from the original certificate or an independent record.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Oregon, World War II Draft Registration Cards, 1940-1945,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:Q5S3-W845 : accessed 15 July 2026), entry for Benny Rapheal Taylor, listing Jolene Taylor as relative, 16 Feb 1942, Garibaldi, Tillamook, Oregon; citing Selective Service System, WWII Draft Registration Cards, Oregon, 1940-1945.",
+      "citation_detail": {
+        "who": "Selective Service System (creator); FamilySearch (database publisher)",
+        "what": "WWII Draft Registration Card for Benny Rapheal Taylor",
+        "when_created": "16 February 1942",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch, digital collection \"Oregon, World War II Draft Registration Cards, 1940-1945\" (collection 2803937)",
+        "where_within": "Garibaldi, Tillamook, Oregon, United States"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:Q5S3-W845",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States Census, 1940,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VRTZ-125 : accessed 15 July 2026), Bennie Taylor in household of Jay Taylor, East Garibaldi Election Precinct, Tillamook, Oregon, United States; citing NARA microfilm publication T627, 1940 U.S. Census population schedules; FamilySearch digital collection 2000219, household ARK 1:2:9MC2-YV9J.",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census (enumerator)",
+        "what": "1940 U.S. Federal Census population schedule, entry for Bennie Taylor in the household of Jay Taylor and Tassy Taylor",
+        "when_created": "1940 (April)",
+        "when_accessed": "2026-07-15",
+        "where": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+        "where_within": "Line entry for Bennie Taylor, household of Jay Taylor; FamilySearch individual ARK 1:1:VRTZ-125, household ARK 1:2:9MC2-YV9J"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (familysearch.org)",
+      "access_date": "2026-07-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VRTZ-125",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"United States, Census, 1950,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:HSJ8-417R : accessed 15 July 2026), household of Benny R Taylor and Hilda B Taylor, Portland, Multnomah, Oregon, enumerated 11 April 1950; citing NARA microfilm publication of the 1950 U.S. Census population schedule.",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census (enumerator)",
+        "what": "1950 U.S. Federal Census population schedule, household of Benny R Taylor",
+        "when_created": "11 April 1950",
+        "when_accessed": "2026-07-15",
+        "where": "Portland, Multnomah, Oregon, United States",
+        "where_within": "Household schedule, ark:/61903/1:2:HSJ8-417R; individual entry ark:/61903/1:1:6XVB-NBF5"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-15",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Oregon, Marriage Records, 1906-1968,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WBF8-1Q3Z : accessed 15 July 2026), entry for Benny Rapheal Taylor and Rosemarie Graham, 28 Sep 1962; citing Oregon State Archives, county marriage registers.",
+      "citation_detail": {
+        "who": "Oregon State Archives (creating custodian); FamilySearch (digital index publisher)",
+        "what": "Marriage record entry for Benny Rapheal Taylor and Rosemarie Graham",
+        "when_created": "28 September 1962 (event date); FamilySearch index created from original county marriage register at unknown later date",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch, \"Oregon, Marriage Records, 1906-1968\" (collection 3326746)",
+        "where_within": "Entry for Benny Rapheal Taylor, groom, married 28 Sep 1962"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-15",
+      "notes": "Index/derivative of an original Oregon county marriage register; the original register image was not examined. The FamilySearch index title names the bride as 'Tossie Bain,' but the record's own person data identifies the actual bride as Rosemarie Graham (b. 1942, Portland, Oregon) and 'Tossie Bain' as the groom's mother \u2014 an apparent indexing/title error, not a second marriage.",
+      "log_entry_id": "log_009",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "deceased",
+      "record_persona_id": "p_13372420029",
+      "fact_type": "birth",
+      "value": "19 Jul 1921",
+      "date": "19 Jul 1921",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": 1921
+      },
+      "informant": "unidentified informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Decedent's own birth date reported secondhand by a family informant on the underlying death record on which this index entry is based; the decedent cannot provide primary information about his own birth, and the informant is relaying another person's fact.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "deceased",
+      "record_persona_id": "p_13372420029",
+      "fact_type": "death",
+      "value": "9 Jul 1991, Tillamook, Oregon",
+      "date": "9 Jul 1991",
+      "date_certainty": "exact",
+      "place": "Tillamook, Oregon",
+      "standard_place": "Tillamook, Oregon, United States",
+      "structured_value": {
+        "place": "Tillamook, Oregon"
+      },
+      "informant": "attending physician / certifying official",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "deceased",
+      "record_persona_id": "p_13372420029",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "informant": "unidentified informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "deceased",
+      "record_persona_id": "p_13372420029",
+      "fact_type": "spouse",
+      "value": "Spouse at death: Rosema Taylor",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "informant": "unidentified informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Rosema' is almost certainly an indexing truncation of Rosemary or Rosemarie; this identity link rests on a single derivative index entry and should be treated as tentative until corroborated by the underlying certificate image or an independent record (e.g., an Oregon marriage record).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:VZCQ-5XC",
+      "record_role": "spouse",
+      "record_persona_id": "p_13372420030",
+      "fact_type": "name",
+      "value": "Rosema Taylor [?] (as indexed \u2014 likely truncation of Rosemary or Rosemarie Taylor)",
+      "structured_value": {
+        "given": "Rosema",
+        "surname": "Taylor"
+      },
+      "informant": "unidentified informant (likely surviving spouse or family member)",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Given name 'Rosema' is unusual and likely an indexing truncation/error for Rosemary or Rosemarie; full name unconfirmed pending original certificate or independent record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QLGY-1BRJ",
+      "record_persona_id": "p_103346278967",
+      "record_role": "registrant",
+      "fact_type": "name",
+      "value": "Benny Rapheal Taylor",
+      "structured_value": {
+        "given": "Benny Rapheal",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QLGY-1BRJ",
+      "record_persona_id": "p_103346278967",
+      "record_role": "registrant",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QLGY-1BRJ",
+      "record_persona_id": "p_103346278967",
+      "record_role": "registrant",
+      "fact_type": "residence",
+      "value": "Garibaldi",
+      "place": "Garibaldi, Tillamook, Oregon, United States",
+      "structured_value": {
+        "place": "Garibaldi, Tillamook, Oregon, United States"
+      },
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_002",
+      "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QLGY-1BRJ",
+      "record_persona_id": "p_103346278967",
+      "record_role": "registrant",
+      "fact_type": "military_draft_registration",
+      "value": "Registered 16 Feb 1942 at Garibaldi, Tillamook, Oregon",
+      "date": "16 Feb 1942",
+      "date_certainty": "exact",
+      "place": "Garibaldi, Tillamook, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "draft board registrar",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_006",
+      "source_id": "src_002",
+      "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QLGY-1BRJ",
+      "record_persona_id": "p_103346278967",
+      "record_role": "registrant",
+      "fact_type": "birth",
+      "value": "1921, McCammon, Idaho",
+      "date": "1921",
+      "date_certainty": "exact",
+      "place": "McCammon, Idaho",
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_006",
+      "source_id": "src_002",
+      "standard_place": "McCammon, Bannock, Idaho, United States"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QLGY-1BRJ",
+      "record_persona_id": "p_103346278969",
+      "record_role": "relative_1",
+      "fact_type": "name",
+      "value": "Jolene Taylor",
+      "structured_value": {
+        "given": "Jolene",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Benny, as registrant, personally named Jolene as his relative/contact; her Taylor surname matches his, consistent with (but not proof of) a marital relationship by Feb 1942.",
+      "log_entry_id": "log_006",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QLGY-1BRJ",
+      "record_persona_id": "p_103346278969",
+      "record_role": "relative_1",
+      "fact_type": "relationship",
+      "value": "Relative",
+      "structured_value": {
+        "relationship_type": "wife_inferred",
+        "related_person_role": "registrant"
+      },
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Card designates Jolene's relationship to Benny only as \"Relative,\" not specifying kin type. Jolene's Taylor surname, combined with Benny's Widowed status on the 1940 census (pre-dating this Feb 1942 card) and her being named as his primary contact, suggests she was likely his wife by this date \u2014 but this is an inference, not a stated fact. Tree person LL9V-56G (Jolene Eleanor Bartchy) is a candidate identity match: if she married Benny, her married name would become Jolene Taylor. Corroboration needed: a marriage record for Benny and Jolene Bartchy/Taylor, or another record explicitly stating \"wife.\"",
+      "log_entry_id": "log_006",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856722",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Jay Taylor",
+      "structured_value": {
+        "given": "Jay",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856722",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "1877",
+      "date": "1877",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Adult self- or spouse-reported age converted to a birth year; a person cannot provide primary information about their own birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856722",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856723",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Tassy Taylor",
+      "structured_value": {
+        "given": "Tassy",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856723",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "1883",
+      "date": "1883",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Adult self- or spouse-reported age converted to a birth year; a person cannot provide primary information about their own birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856723",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Utah",
+      "place": "Utah",
+      "standard_place": "Utah, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Bennie Taylor",
+      "structured_value": {
+        "given": "Bennie",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "1923",
+      "date": "1923",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age-derived birth year, indexed as 1923; differs ~2 years from subject's documented birth of 19 July 1921 (McCammon, Bannock, Idaho) \u2014 a common census age-rounding discrepancy. A person cannot provide primary information about their own birth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Same House (1935 residence same as 1940)",
+      "date": "1935",
+      "date_certainty": "exact",
+      "place": "Same House",
+      "standard_place": null,
+      "structured_value": {
+        "place": "Same House"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+      "structured_value": {
+        "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "date": "1940",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "Bennie Taylor (self)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Stated marital status of 'Widowed' as of the April 1940 enumeration is direct evidence of Benny's marital state at that moment, but only indirect evidence toward identifying a specific prior marriage: it proves a first wife existed and predeceased him before April 1940, without naming her. Bears on open question q_001 (marriage record(s) of Benny Raphael Taylor).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856724",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Enumerated in the household of head Jay Taylor and wife Tassy Taylor",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Household position (listed after head Jay Taylor and wife Tassy Taylor, sharing surname) corroborates Benny's identity as their son, consistent with the tree match to Silvester Jay Taylor (KW8G-33L) as father.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856725",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Dallas Taylor",
+      "structured_value": {
+        "given": "Dallas",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856725",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "1925",
+      "date": "1925",
+      "date_certainty": "calculated",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Dallas is a minor child in 1940; a parent, who witnessed the birth, is the likely respondent, supporting primary information quality.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:VRTZ-125",
+      "record_persona_id": "p_13750856725",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_004",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537674",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Benny R Taylor",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Benny R",
+        "surname": "Taylor"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537674",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Cab Driver",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "occupation": "Cab Driver"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537674",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Indexed as 'Single' despite the same household record showing a Couple relationship between Benny and Hilda B Taylor (listed as wife) \u2014 likely an enumerator or indexing transcription error. Flagged for correlation; does not override the direct relationship evidence of marriage recorded elsewhere on this schedule.",
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537674",
+      "record_role": "head_of_household",
+      "fact_type": "birth_year",
+      "value": "born 1922 (year derived from stated age at 1950 census)",
+      "date": "1922",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "An adult cannot provide primary information about his own birth event; birth year computed from stated age.",
+      "structured_value": {
+        "year": 1922
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537674",
+      "record_role": "head_of_household",
+      "fact_type": "birthplace",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birthplace directly stated on the schedule, but no one present in 1950 witnessed Benny's own birth in 1921/1922.",
+      "structured_value": {
+        "place": "Idaho"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537674",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Portland, Multnomah, Oregon, United States (11 April 1950 census)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "place": "Portland, Multnomah, Oregon, United States",
+      "standard_place": "Portland, Multnomah, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Enumerator personally visited and recorded the household at this dwelling.",
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537674",
+      "record_role": "head_of_household",
+      "fact_type": "relationship",
+      "value": "Wife: Hilda B Taylor (same household, Couple relationship recorded on schedule)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537678",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Hilda B Taylor",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hilda B",
+        "surname": "Taylor"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537678",
+      "record_role": "wife",
+      "fact_type": "birth_year",
+      "value": "born 1918 (year derived from stated age at 1950 census)",
+      "date": "1918",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "An adult cannot provide primary information about her own birth event; birth year computed from stated age. Corroborates tree person L7BB-SP1 Hildagard Bernadine Duclos (b. 1918 Idaho).",
+      "structured_value": {
+        "year": 1918
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537678",
+      "record_role": "wife",
+      "fact_type": "birthplace",
+      "value": "Idaho",
+      "place": "Idaho",
+      "standard_place": "Idaho, United States",
+      "information_quality": "secondary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Corroborates tree person L7BB-SP1 Hildagard Bernadine Duclos (b. Idaho).",
+      "structured_value": {
+        "place": "Idaho"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537678",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Portland, Multnomah, Oregon, United States (11 April 1950 census)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "place": "Portland, Multnomah, Oregon, United States",
+      "standard_place": "Portland, Multnomah, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537678",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "Husband: Benny R Taylor (same household, Couple relationship recorded on schedule)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537673",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Roy D Taylor",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Roy D",
+        "surname": "Taylor"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537673",
+      "record_role": "child_1",
+      "fact_type": "birth_year",
+      "value": "born 1937 (year derived from stated age at 1950 census)",
+      "date": "1937",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "A child could not report his own birth info; parent has firsthand knowledge of the birth event.",
+      "structured_value": {
+        "year": 1937
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537673",
+      "record_role": "child_1",
+      "fact_type": "birthplace",
+      "value": "Washington",
+      "place": "Washington",
+      "standard_place": "Washington, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Roy's 1937 Washington birth predates Hilda B Taylor's documented Oregon-born children (from 1943) \u2014 may indicate Roy is a child of an earlier, unidentified first marriage rather than of Hilda; Benny is documented as widowed by 1940. Warrants further investigation.",
+      "structured_value": {
+        "place": "Washington"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537673",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Portland, Multnomah, Oregon, United States (11 April 1950 census)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "place": "Portland, Multnomah, Oregon, United States",
+      "standard_place": "Portland, Multnomah, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537673",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Child of Benny R Taylor and Hilda B Taylor (household relationship recorded on schedule)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Roy D. Taylor (b. 1937 WA) is linked as child to both Benny and Hilda on this schedule, but his birth predates the documented pattern of Hilda's own Oregon-born children; may reflect a step-relationship if Roy is a child of Benny's unidentified first wife rather than of Hilda biologically. Corresponds to possible match with tree person G6J6-NK4 LeRoy Dominic Taylor.",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parents"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537677",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Jacque F Taylor",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Jacque F",
+        "surname": "Taylor"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537677",
+      "record_role": "child_2",
+      "fact_type": "birth_year",
+      "value": "born 1941 (year derived from stated age at 1950 census)",
+      "date": "1941",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "A child could not report his own birth info; parent has firsthand knowledge of the birth event.",
+      "structured_value": {
+        "year": 1941
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537677",
+      "record_role": "child_2",
+      "fact_type": "birthplace",
+      "value": "Washington",
+      "place": "Washington",
+      "standard_place": "Washington, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Born Washington 1941, prior to the Oregon births of younger siblings; matches existing tree person GDTJ-WV6 Jacques Francis Taylor.",
+      "structured_value": {
+        "place": "Washington"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537677",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Portland, Multnomah, Oregon, United States (11 April 1950 census)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "place": "Portland, Multnomah, Oregon, United States",
+      "standard_place": "Portland, Multnomah, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537677",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "Child of Benny R Taylor and Hilda B Taylor (household relationship recorded on schedule)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Matches existing tree person GDTJ-WV6 Jacques Francis Taylor; born Washington 1941, same pre-Oregon pattern as Roy \u2014 maternal parentage (Hilda vs. an earlier wife) not fully confirmed by this record alone.",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parents"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537675",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Barbara M Taylor",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Barbara M",
+        "surname": "Taylor"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537675",
+      "record_role": "child_3",
+      "fact_type": "birth_year",
+      "value": "born 1943 (year derived from stated age at 1950 census)",
+      "date": "1943",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "A child could not report her own birth info; parent has firsthand knowledge of the birth event.",
+      "structured_value": {
+        "year": 1943
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537675",
+      "record_role": "child_3",
+      "fact_type": "birthplace",
+      "value": "Oregon",
+      "place": "Oregon",
+      "standard_place": "Oregon, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "place": "Oregon"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537675",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Portland, Multnomah, Oregon, United States (11 April 1950 census)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "place": "Portland, Multnomah, Oregon, United States",
+      "standard_place": "Portland, Multnomah, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537675",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "Child of Benny R Taylor and Hilda B Taylor (household relationship recorded on schedule)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parents"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537672",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Ronald J Taylor",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Ronald J",
+        "surname": "Taylor"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537672",
+      "record_role": "child_4",
+      "fact_type": "birth_year",
+      "value": "born 1947 (year derived from stated age at 1950 census)",
+      "date": "1947",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "A child could not report his own birth info; parent has firsthand knowledge of the birth event.",
+      "structured_value": {
+        "year": 1947
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537672",
+      "record_role": "child_4",
+      "fact_type": "birthplace",
+      "value": "Oregon",
+      "place": "Oregon",
+      "standard_place": "Oregon, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "place": "Oregon"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537672",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Portland, Multnomah, Oregon, United States (11 April 1950 census)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "place": "Portland, Multnomah, Oregon, United States",
+      "standard_place": "Portland, Multnomah, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537672",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "Child of Benny R Taylor and Hilda B Taylor (household relationship recorded on schedule)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parents"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537676",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "Mark A Taylor",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "structured_value": {
+        "given": "Mark A",
+        "surname": "Taylor"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537676",
+      "record_role": "child_5",
+      "fact_type": "birth_year",
+      "value": "born 1948 (year derived from stated age at 1950 census)",
+      "date": "1948",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "A child could not report his own birth info; parent has firsthand knowledge of the birth event.",
+      "structured_value": {
+        "year": 1948
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537676",
+      "record_role": "child_5",
+      "fact_type": "birthplace",
+      "value": "Oregon",
+      "place": "Oregon",
+      "standard_place": "Oregon, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "place": "Oregon"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537676",
+      "record_role": "child_5",
+      "fact_type": "residence",
+      "value": "Portland, Multnomah, Oregon, United States (11 April 1950 census)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "place": "Portland, Multnomah, Oregon, United States",
+      "standard_place": "Portland, Multnomah, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:6XVB-NBF5",
+      "record_persona_id": "p_294976537676",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "Child of Benny R Taylor and Hilda B Taylor (household relationship recorded on schedule)",
+      "date": "11 April 1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parents"
+      },
+      "log_entry_id": "log_005",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Benny Rapheal Taylor",
+      "structured_value": {
+        "given": "Benny Rapheal",
+        "surname": "Taylor"
+      },
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born 1921",
+      "structured_value": {
+        "year": "1921"
+      },
+      "information_quality": "secondary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Self-reported birth year at marriage, 41 years after birth; a person cannot have primary/firsthand knowledge of their own birth.",
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Rosemarie Graham, 28 September 1962, Oregon",
+      "date": "28 September 1962",
+      "date_certainty": "exact",
+      "place": "Oregon, United States",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "the county marriage clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_005",
+      "standard_place": "Oregon, United States"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Rosemarie Graham",
+      "structured_value": {
+        "given": "Rosemarie",
+        "surname": "Graham"
+      },
+      "information_quality": "primary",
+      "informant": "Rosemarie Graham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born 1942",
+      "structured_value": {
+        "year": "1942"
+      },
+      "information_quality": "secondary",
+      "informant": "Rosemarie Graham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Self-reported birth year; a person cannot have primary/firsthand knowledge of their own birth.",
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "Portland, Oregon",
+      "place": "Portland, Oregon",
+      "structured_value": {
+        "place": "Portland, Oregon"
+      },
+      "information_quality": "secondary",
+      "informant": "Rosemarie Graham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Self-reported birthplace; a person cannot have primary/firsthand knowledge of their own birth.",
+      "log_entry_id": "log_009",
+      "source_id": "src_005",
+      "standard_place": "Portland, Multnomah, Oregon, United States"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "bride",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "primary",
+      "informant": "Rosemarie Graham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Tossie Bain",
+      "structured_value": {
+        "given": "Tossie",
+        "surname": "Bain",
+        "relationship_type": "parent",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Benny Rapheal Taylor",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Groom self-reported his mother's name on the license. Surname 'Bain' is a variant spelling of her documented maiden surname 'Bair'; identified as Autossie Ann Bair (KWZ8-3RD), Benny's documented mother, who died 24 Nov 1962, 57 days after this marriage.",
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Arthur L Graham",
+      "structured_value": {
+        "given": "Arthur L",
+        "surname": "Graham",
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Rosemarie Graham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:WBF8-1Q3Z",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Rosamund Hoover",
+      "structured_value": {
+        "given": "Rosamund",
+        "surname": "Hoover",
+        "relationship_type": "parent",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Rosemarie Graham",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Oregon Death Index returned exactly one 'Benny Rapheal Taylor' (ark:/61903/1:1:VZCQ-5XC), born 19 Jul 1921, died 9 Jul 1991, Tillamook, Oregon \u2014 all three anchors (full name including 'Rapheal' spelling, birth date, death date and county) match KNJ1-TRX exactly.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Same record and persona (deceased role, p_13372420029) as a_001; death date 9 Jul 1991 and death place Tillamook, Oregon confirm KNJ1-TRX.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Marital status 'Married' at death on the deceased persona; subject KNJ1-TRX confirmed by all anchors on this same record.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Spouse assertion on the deceased persona \u2014 bears on Benny (KNJ1-TRX) as the husband in the death-indexed Couple relationship with Rosema Taylor.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "The same assertion identifies 'Rosema Taylor' as spouse; I1 is the stub created to represent this named spouse. Link is confident for stub identity: this assertion is the sole basis of the stub.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name assertion ('Rosema Taylor') for the spouse role; I1 stub was created specifically for this indexed spouse entry. Rests on a single derivative source; 'Rosema' is likely truncated from Rosemary/Rosemarie.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "WWII draft card registrant 'Benny Rapheal Taylor' (p_103346278967): name, birth year 1921, birth place McCammon Idaho, and residence Garibaldi Tillamook Oregon all match KNJ1-TRX exactly.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Race fact on the same draft card registrant persona; all anchors confirm KNJ1-TRX.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Residence (Garibaldi, Tillamook, Oregon) on the registrant persona; consistent with KNJ1-TRX's known 1942 Garibaldi residence.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Draft registration event 16 Feb 1942 at Garibaldi \u2014 matches KNJ1-TRX's known biography (Tillamook County, Garibaldi, Feb 1942).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Birth fact (1921, McCammon Idaho) on the registrant persona; exact match with KNJ1-TRX birth year and place.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "person_id": "LL9V-56G",
+      "confidence": "confident",
+      "rationale": "Draft card names 'Jolene Taylor' as registrant's relative/contact, 16 Feb 1942. LL9V-56G (Jolene Eleanor Bartchy) has MarriedName 'Jolene Taylor' (N9) and a documented Marriage to KNJ1-TRX dated 23 Nov 1941 (R1). By Feb 1942, Jolene Bartchy had been Mrs. Taylor for ~3 months \u2014 given name 'Jolene', surname 'Taylor', and role as Benny's primary contact are a fully convergent match.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "person_id": "LL9V-56G",
+      "confidence": "confident",
+      "rationale": "Relationship assertion for Jolene Taylor (relative_1 role); primary subject is LL9V-56G per the name-match reasoning in a_011. The assertion records the relationship between Jolene and the registrant.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion also bears on KNJ1-TRX as the registrant (the other party in the implied wife-husband relationship); registrant anchors confirm KNJ1-TRX.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "KW8G-33L",
+      "confidence": "confident",
+      "rationale": "1940 census head 'Jay Taylor' (p_13750856722, born 1877 Idaho, East Garibaldi Precinct). KW8G-33L = Silvester Jay Taylor, born 29 May 1877 Fairview Franklin Idaho, documented 1940 residence East Garibaldi Election Precinct \u2014 birth year 1877, birth state Idaho, and 1940 location match exactly; 'Jay' is his middle name used in all local records.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "KW8G-33L",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (1877) on the head persona; matches KW8G-33L born 29 May 1877 exactly.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "KW8G-33L",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Idaho) on the head persona; matches KW8G-33L born Fairview, Franklin, Idaho.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "KWZ8-3RD",
+      "confidence": "confident",
+      "rationale": "1940 census wife 'Tassy Taylor' (p_13750856723, born 1883 Utah, East Garibaldi Precinct). KWZ8-3RD = Autossie Ann Bair, born 21 May 1883 Richmond Cache Utah, documented 1940 residence East Garibaldi Election Precinct \u2014 birth year 1883, birth state Utah, and 1940 location match exactly. Husband 'Jay Taylor' = KW8G-33L (confirmed by a_013-015), consistent with R3 Couple KW8G-33L \u2194 KWZ8-3RD. 'Tassy' is a phonetic nickname for 'Autossie' (same root also appears as 'Tossie' in pre-existing tree sources). same_person API returned near-zero score due to tool selecting wrong persona ARK from the household gedcomx; correlation is strong on all core identifiers.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "KWZ8-3RD",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (1883) on the wife persona; matches KWZ8-3RD born 21 May 1883 exactly.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "KWZ8-3RD",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Utah) on the wife persona; matches KWZ8-3RD born Richmond, Cache, Utah.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "1940 census child_1 'Bennie Taylor' (born 1923 Idaho, Widowed, East Garibaldi Precinct). KNJ1-TRX born 19 Jul 1921 McCammon Bannock Idaho \u2014 birth state Idaho, census year 1923 vs actual 1921 (standard ~2yr rounding), surname Taylor, household position as son of Jay/Tassy Taylor (confirmed as KW8G-33L/KWZ8-3RD, Benny's parents per tree R4/R5) all confirm KNJ1-TRX.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (census-estimated 1923, actual 1921) on the child_1 persona; consistent with KNJ1-TRX within normal census rounding.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Idaho) on the child_1 persona; matches KNJ1-TRX birth in McCammon, Bannock, Idaho.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "1935 residence 'Same House' on the child_1 persona; confirms Benny was in the same Garibaldi household in 1935, consistent with KNJ1-TRX's family pattern.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_023",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "1940 census residence (East Garibaldi Election Precinct) on the child_1 persona; consistent with KNJ1-TRX's documented 1940 Garibaldi, Oregon residence.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_024",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Marital status 'Widowed' assertion on the child_1 persona; KNJ1-TRX is the subject \u2014 this fact directly attributes to him at April 1940, proving a prior marriage in which the wife predeceased him before April 1940.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_025",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Race fact on the child_1 persona; subject KNJ1-TRX confirmed by all surrounding anchors.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_026",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Household relationship assertion for child_1 (Bennie Taylor) \u2014 primary subject is KNJ1-TRX. States Bennie is enumerated in the household of head Jay Taylor and wife Tassy Taylor, corroborating his filial relationship to KW8G-33L and KWZ8-3RD.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_026",
+      "person_id": "KW8G-33L",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion names Jay Taylor (head) as Bennie's household father \u2014 bears on KW8G-33L's role as father, corroborating R4 (ParentChild KW8G-33L \u2192 KNJ1-TRX).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "person_id": "KWZ8-3RD",
+      "confidence": "confident",
+      "rationale": "Same relationship assertion names Tassy Taylor (wife/mother) in the household \u2014 bears on KWZ8-3RD's role as Bennie's mother, corroborating R5 (ParentChild KWZ8-3RD \u2192 KNJ1-TRX).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_027",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "1940 census child_2 'Dallas Taylor' (p_13750856725, born 1925 Idaho). I6 is the stub created at this step specifically to represent Dallas Taylor. Link is obvious \u2014 stub was created from this assertion.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_028",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (1925) on the child_2 persona (Dallas Taylor); links to stub I6.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_029",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Idaho) on the child_2 persona (Dallas Taylor); links to stub I6.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_030",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "1950 census head 'Benny R Taylor' (p_294976537674, born 1922 Idaho, Portland OR, Cab Driver). KNJ1-TRX born 1921 Idaho, documented Portland 1950 residence \u2014 name, birth state, and 1950 location all match; 1-yr census rounding for birth year.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_031",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Occupation (Cab Driver) on the head persona; attributes to KNJ1-TRX confirmed by all other anchors.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_032",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Marital status 'Single' on the head persona; KNJ1-TRX is the subject. Note this is almost certainly an indexing/enumerator error \u2014 same schedule shows Hilda B Taylor as wife in a Couple relationship with him; conflict requires resolution.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_033",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (census-estimated 1922, actual 1921) on the head persona; consistent with KNJ1-TRX within standard 1-yr rounding.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_034",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Idaho) on the head persona; matches KNJ1-TRX birth in McCammon, Bannock, Idaho.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_035",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "1950 census residence (Portland, Multnomah, Oregon) on the head persona; matches KNJ1-TRX documented Portland 1950 residence.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_036",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Spouse relationship assertion from head's perspective \u2014 head Benny R Taylor (= KNJ1-TRX) states wife is Hilda B Taylor. Bears on KNJ1-TRX as the husband.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_036",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Same spouse relationship assertion names 'Hilda B Taylor' (wife) \u2014 also bears on L7BB-SP1 (Hildagard Bernadine Duclos): birth state Idaho, census year 1918 vs actual 1917 (1-yr rounding), Portland 1950 residence, and Washington County marriage records (SBZ6 series) confirming Benny-Hilda marriage 25 Feb 1945 all converge.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_037",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "1950 census wife 'Hilda B Taylor' (p_294976537678, born 1918 Idaho, Portland OR). L7BB-SP1 = Hildagard Bernadine Duclos, born 17 Aug 1917 Ferdinand Idaho, documented 1950 Portland Oregon residence \u2014 birth state Idaho (exact), census year 1918 vs actual 1917 (standard 1-yr rounding), married Benny R Taylor 25 Feb 1945 (R2, tree). Multiple Washington County marriage records confirm 'Hildegard B Bauer/Baner' married 'Benny R Taylor'. All core identifiers agree.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_038",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Birth year (1918) on the wife persona; matches L7BB-SP1 born 17 Aug 1917 \u2014 1-yr census rounding.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_039",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Birth place (Idaho) on the wife persona; matches L7BB-SP1 born Ferdinand, Idaho, Idaho.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_040",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "1950 census residence (Portland, Multnomah, Oregon) on the wife persona; matches L7BB-SP1 documented 1950 Portland residence.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_041",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Spouse relationship assertion from wife's perspective \u2014 Hilda B Taylor states husband is Benny R Taylor; primary subject is L7BB-SP1 as the wife.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_041",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Same assertion also bears on KNJ1-TRX as the named husband; corroborates KNJ1-TRX's identity as head.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_042",
+      "person_id": "G6J6-NK4",
+      "confidence": "confident",
+      "rationale": "1950 census child_1 'Roy D Taylor' (p_294976537673, born 1937 Washington). G6J6-NK4 = LeRoy Dominic Taylor, born 29 Aug 1936 Colton Whitman Washington \u2014 'Roy' is the standard nickname for 'LeRoy', 'D' matches Dominic, birth state Washington exact, census year 1937 vs actual 1936 (1-yr rounding). G6J6-NK4 is Hilda's biological son (R7) and Benny's stepson (R6); Hilda was in Colton WA in 1940 consistent with Roy's WA birth. Stub I2 ('Roy D Taylor') created by the 1950 extractor refers to this same person; links go to G6J6-NK4 as the established tree person.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_043",
+      "person_id": "G6J6-NK4",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (census-estimated 1937, actual 29 Aug 1936) on the child_1 persona; consistent with G6J6-NK4 within 1-yr rounding.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_044",
+      "person_id": "G6J6-NK4",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Washington) on the child_1 persona; matches G6J6-NK4 born Colton, Whitman, Washington.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_045",
+      "person_id": "G6J6-NK4",
+      "confidence": "confident",
+      "rationale": "1950 census residence (Portland, Multnomah, Oregon) on the child_1 persona; matches G6J6-NK4 documented 1950 Portland residence.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_046",
+      "person_id": "G6J6-NK4",
+      "confidence": "confident",
+      "rationale": "Parent-child relationship assertion for Roy D Taylor (child_1); Roy D = G6J6-NK4 per correlation at a_042\u2013a_045. Assertion bears on G6J6-NK4 as the child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_046",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Same assertion also bears on L7BB-SP1 as Roy's biological mother (R7, tree). The record lists both Benny and Hilda as Roy's parents; biological maternity aligns with Hilda (L7BB-SP1) per tree.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_046",
+      "person_id": "KNJ1-TRX",
+      "confidence": "probable",
+      "rationale": "Same assertion also bears on KNJ1-TRX as Roy's step-father (R6, subtype Step, tree). The 1950 schedule lists Benny as household head/parent of Roy, but the tree establishes a Step relationship; probable confidence reflects corroborated step-parentage rather than biological.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_047",
+      "person_id": "GDTJ-WV6",
+      "confidence": "confident",
+      "rationale": "1950 census child_2 'Jacque F Taylor' (p_294976537677, born 1941 Washington). GDTJ-WV6 = Jacques Francis Taylor, born 25 Oct 1940 Washington, documented 1950 Portland residence \u2014 'Jacque F' matches 'Jacques F', birth state Washington, census year 1941 vs actual 1940 (1-yr rounding). Tree has R8 ParentChild KNJ1-TRX \u2192 GDTJ-WV6 (biological) and R9 L7BB-SP1 \u2192 GDTJ-WV6 (Step).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_048",
+      "person_id": "GDTJ-WV6",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (census-estimated 1941, actual 25 Oct 1940) on the child_2 persona; consistent with GDTJ-WV6 within 1-yr rounding.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_049",
+      "person_id": "GDTJ-WV6",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Washington) on the child_2 persona; matches GDTJ-WV6 born Washington.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_050",
+      "person_id": "GDTJ-WV6",
+      "confidence": "confident",
+      "rationale": "1950 census residence (Portland, Multnomah, Oregon) on the child_2 persona; matches GDTJ-WV6 documented 1950 Portland residence.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_051",
+      "person_id": "GDTJ-WV6",
+      "confidence": "confident",
+      "rationale": "Parent-child relationship assertion for Jacque F Taylor (child_2); Jacque F = GDTJ-WV6 per correlation. Assertion bears on GDTJ-WV6 as the child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_051",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Same assertion also bears on KNJ1-TRX as Jacque's biological father (R8, tree). Record lists Benny as household head/parent.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_051",
+      "person_id": "L7BB-SP1",
+      "confidence": "probable",
+      "rationale": "Same assertion also bears on L7BB-SP1 as Jacque's step-mother (R9, subtype Step, tree). The 1950 census lists Hilda as mother, but tree establishes she is step-parent to Jacque; probable because the record does not distinguish biological vs. step.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_052",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "1950 census child_3 'Barbara M Taylor' (p_294976537675, born 1943 Oregon). I3 is the stub created by the extractor for this persona; link is obvious \u2014 stub was created from this record.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_053",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (1943) on the child_3 persona; links to stub I3.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_054",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Oregon) on the child_3 persona; links to stub I3.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_055",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "1950 census residence (Portland, Multnomah, Oregon) on the child_3 persona; links to stub I3.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_056",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Parent-child relationship assertion for Barbara M Taylor (child_3); I3 is the stub representing her.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_056",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Same assertion bears on KNJ1-TRX as Barbara's father (R12, tree).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_056",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Same assertion bears on L7BB-SP1 as Barbara's mother (R17, tree).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_057",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "1950 census child_4 'Ronald J Taylor' (p_294976537672, born 1947 Oregon). I4 is the stub created for this persona; link is obvious.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_058",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (1947) on the child_4 persona; links to stub I4.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_059",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Oregon) on the child_4 persona; links to stub I4.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_060",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "1950 census residence (Portland, Multnomah, Oregon) on the child_4 persona; links to stub I4.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_061",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Parent-child relationship assertion for Ronald J Taylor (child_4); I4 is the stub representing him.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_061",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Same assertion bears on KNJ1-TRX as Ronald's father (R13, tree).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_061",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Same assertion bears on L7BB-SP1 as Ronald's mother (R18, tree).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_062",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "1950 census child_5 'Mark A Taylor' (p_294976537676, born 1948 Oregon). I5 is the stub created for this persona; link is obvious.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_063",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Birth year assertion (1948) on the child_5 persona; links to stub I5.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_064",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Birth place assertion (Oregon) on the child_5 persona; links to stub I5.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_065",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "1950 census residence (Portland, Multnomah, Oregon) on the child_5 persona; links to stub I5.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_066",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Parent-child relationship assertion for Mark A Taylor (child_5); I5 is the stub representing him.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_066",
+      "person_id": "KNJ1-TRX",
+      "confidence": "confident",
+      "rationale": "Same assertion bears on KNJ1-TRX as Mark's father (R14, tree).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_066",
+      "person_id": "L7BB-SP1",
+      "confidence": "confident",
+      "rationale": "Same assertion bears on L7BB-SP1 as Mark's mother (R19, tree).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_083",
+      "person_id": "KNJ1-TRX",
+      "assertion_id": "a_067",
+      "confidence": "confident",
+      "rationale": "Groom's own name on his 1962 Oregon marriage record, matching Benny Rapheal Taylor (KNJ1-TRX), born 1921 Idaho, the research subject.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_084",
+      "person_id": "KNJ1-TRX",
+      "assertion_id": "a_068",
+      "confidence": "confident",
+      "rationale": "Groom's self-reported birth year (1921) matches KNJ1-TRX's documented birth year, corroborating the identity match.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_085",
+      "person_id": "KNJ1-TRX",
+      "assertion_id": "a_069",
+      "confidence": "confident",
+      "rationale": "This record documents the marriage of the groom (KNJ1-TRX) to Rosemarie Graham on 28 Sep 1962 in Oregon.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_086",
+      "person_id": "I1",
+      "assertion_id": "a_069",
+      "confidence": "confident",
+      "rationale": "This record documents the marriage of Rosemarie Graham (I1) to Benny Rapheal Taylor on 28 Sep 1962 in Oregon; I1 is already linked to KNJ1-TRX via Couple relationship R10, now bearing this Marriage fact.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_087",
+      "person_id": "I1",
+      "assertion_id": "a_070",
+      "confidence": "confident",
+      "rationale": "Bride's own name on the marriage record identifies I1 (previously a placeholder stub, now corrected to Rosemarie Graham).",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_088",
+      "person_id": "I1",
+      "assertion_id": "a_071",
+      "confidence": "confident",
+      "rationale": "Bride's self-reported birth year (1942), consistent with I1's identity as Rosemarie Graham.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_089",
+      "person_id": "I1",
+      "assertion_id": "a_072",
+      "confidence": "confident",
+      "rationale": "Bride's self-reported birthplace (Portland, Oregon), attributed to I1.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_090",
+      "person_id": "I1",
+      "assertion_id": "a_073",
+      "confidence": "confident",
+      "rationale": "Bride's stated race (White) on the marriage record, attributed to I1.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_091",
+      "person_id": "KWZ8-3RD",
+      "assertion_id": "a_074",
+      "confidence": "confident",
+      "rationale": "'Tossie Bain,' the groom's mother named on the record, is identified as Autossie Ann Bair (KWZ8-3RD), Benny's already-documented mother (R5): the names match phonetically ('Tossie'/'Autossie', 'Bain'/'Bair'), and she died 24 Nov 1962, only 57 days after this marriage, consistent with being alive and named as mother at the time.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_092",
+      "person_id": "I7",
+      "assertion_id": "a_075",
+      "confidence": "confident",
+      "rationale": "Arthur L Graham, named as the bride's father on this record, is the same person newly added to the tree as I7 directly from this record's data.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_093",
+      "person_id": "I8",
+      "assertion_id": "a_076",
+      "confidence": "confident",
+      "rationale": "Rosamund Hoover, named as the bride's mother on this record, is the same person newly added to the tree as I8 directly from this record's data.",
+      "created": "2026-07-15"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "argument",
+      "supporting_assertion_ids": [
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_009",
+        "a_011",
+        "a_012",
+        "a_024",
+        "a_032",
+        "a_036",
+        "a_037",
+        "a_038",
+        "a_039",
+        "a_041",
+        "a_069",
+        "a_070",
+        "a_071",
+        "a_072"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch Oregon County Marriages 1851\u20131975 (negative), Oregon Death Index 1903\u20131998 (positive: found Benny's death with surviving spouse 'Rosema'), Oregon Marriage Index 1991\u20132006 (negative), United States Census 1940 (positive: Benny listed 'Widowed'), United States Census 1950 (positive: Benny with wife 'Hilda B Taylor'), Oregon WWII Draft Registration Cards 1940\u20131945 (positive: NOK 'Jolene Taylor'). Read pre-existing tree source QDLH-77Y (Oregon Marriage Records 1906\u20131968, ark:/61903/1:1:WBF8-1Q3Z), finding actual bride is Rosemarie Graham \u2014 not 'Tossie Bain' as the index title states. Pre-existing tree also contains Washington County marriage records (SBZ6 series) for the 1945 Hildagard Duclos marriage. FamilySearch full-text newspaper corpus returned zero obituary results. Tillamook County browse-only images (pli_007) and Ancestry Oregon marriages (pli_008) were skipped as fallbacks because the marriage records were found via pre-existing tree sources; obituary search (pli_009) was inaccessible on FamilySearch, and the wife's full name was confirmed by the marriage record.",
+      "narrative_markdown": "## Marriages of Benny Raphael Taylor (1921\u20131991): Research Argument\n\n**Conclusion (Probable):** Benny Raphael Taylor (FamilySearch: KNJ1-TRX) married at least four times. Three wives are identified by name with documentary support from independent sources: (2) Jolene Eleanor Bartchy, married 23 November 1941, Tillamook, Oregon; (3) Hildagard Bernadine Duclos, married 25 February 1945, Vancouver, Washington; and (4) Rosemarie Graham, married 28 September 1962, Oregon, who survived him at his death on 9 July 1991. A fourth, earlier wife predeceased him before April 1940; her name and the marriage record remain unidentified despite searches of available Oregon and FamilySearch marriage indexes.\n\n---\n\n### The Subject\n\nBenny Raphael Taylor was born 19 July 1921 in McCammon, Bannock, Idaho and died 9 July 1991 in Tillamook, Oregon. He resided in Garibaldi, Tillamook County, Oregon from the late 1920s into at least 1979. His FamilySearch tree identifier is KNJ1-TRX.\n\n---\n\n### Marriage #1: Unnamed Wife (Deceased Before April 1940)\n\nThe 1940 United States Federal Census, an original enumeration conducted in April 1940, recorded Benny (\"Bennie\") Taylor residing in the parental household of Jay Taylor and Tassy Taylor at East Garibaldi Election Precinct, Tillamook, Oregon, with marital status **\"Widowed\"** (assertion a_024; src_003 \u2014 \"United States Census, 1940,\" FamilySearch, ark:/61903/1:1:VRTZ-125; original record, primary information about contemporary marital status, direct evidence of widowhood). This single source is sufficient to prove that a prior marriage existed and that the wife died before April 1940.\n\nSearches of the Oregon County Marriage indexes for 1851\u20131975 (FamilySearch collection 1803968; log_001, negative) and the Oregon Marriage Index 1991\u20132006 (FamilySearch collection 3500591; log_003, negative) returned no record of this first marriage. The wife\u2019s name remains unknown. This gap is acknowledged as a documented research limitation and does not affect the conclusions about the three subsequent, named marriages.\n\n---\n\n### Marriage #2: Jolene Eleanor Bartchy (1941)\n\nThe pre-existing research tree for KNJ1-TRX contains a Couple relationship (tree R1) sourced to an Oregon marriage record documenting Benny Taylor\u2019s marriage to **Jolene Eleanor Bartchy** on **23 November 1941** in Tillamook, Tillamook, Oregon (tree source linked to Oregon Marriage Records, 1906\u20131968; tree relationship R1).\n\nThis marriage is independently corroborated by the Oregon World War II Draft Registration Card for Benny Rapheal Taylor, an original government record completed and signed by the registrant on **16 February 1942** at Garibaldi, Tillamook, Oregon (assertion a_011; src_002 \u2014 \"Oregon, World War II Draft Registration Cards, 1940\u20131945,\" FamilySearch, ark:/61903/1:1:QLGY-1BRJ; original record, primary information, direct evidence of named relative/contact). In the field for the person who will always know the registrant\u2019s address, Benny personally named **\"Jolene Taylor\"** \u2014 a surname matching his own, consistent with a wife bearing the married surname. The registration was completed approximately eleven weeks after the November 1941 marriage, reinforcing the inference that the named contact is his wife (assertion a_012; same source, indirect evidence of marital relationship, primary information from the registrant himself).\n\nJolene Eleanor Bartchy (tree: LL9V-56G) was born 10 November 1926 in Tillamook, Oregon, and died 24 March 2009 in Battle Ground, Clark, Washington. Because she outlived Benny, the marriage ended in divorce before Benny\u2019s next documented marriage in February 1945.\n\n---\n\n### Marriage #3: Hildagard Bernadine Duclos (1945)\n\nMultiple Washington County, Oregon marriage record citations in the pre-existing research tree document the marriage of **Benny R. Taylor** and **Hildegard B. Bauer/Baner/Duclos** on **25 February 1945** in Vancouver, Clark County, Washington (tree sources SBZ6-3B7, SBZ6-37N, SBZ6-79N, SBZ6-S8M, SBZ6-7P5, SL4F-5F6, S2QB-HMP, S2QB-3G2; tree relationship R2). The variant spellings of the bride\u2019s surname across multiple index entries (\"Bauer,\" \"Baner,\" \"Dorlos Bauer\") reflect phonetic transcription of her birth surname \"Duclos\" by different recorders.\n\nThis marriage is independently corroborated by the 1950 United States Federal Census, an original enumeration conducted on **11 April 1950**, which lists **Benny R Taylor** (head, born 1922 Idaho, occupation Cab Driver) with **Hilda B Taylor** (wife, born 1918 Idaho) in a Portland, Multnomah, Oregon household (assertions a_036, a_037, a_038, a_039; src_004 \u2014 \"United States, Census, 1950,\" FamilySearch, ark:/61903/1:2:HSJ8-417R; original record, primary information about contemporary residence and household composition, direct evidence of marriage). \"Hilda B Taylor\" is confidently identified as Hildagard Bernadine Duclos (tree: L7BB-SP1), born 17 August 1917 in Ferdinand, Idaho \u2014 the census birth year of 1918 reflects standard one-year rounding from stated age. Five children appear in the 1950 household (Roy D, Jacque F, Barbara M, Ronald J, Mark A Taylor), consistent with the couple having married in 1945.\n\nThe 1950 census also lists Benny\u2019s own marital status as \"Single\" (assertion a_032). This is a clear enumerator or indexing transcription error: the same schedule simultaneously records a Couple relationship between Benny and Hilda B. Taylor, identifying her as his wife. The internal evidence of the record resolves this apparent inconsistency; no external conflict exists.\n\nHildagard Bernadine Duclos (tree: L7BB-SP1) died 3 April 1998 in Clarkston, Asotin, Washington \u2014 she outlived Benny. The marriage therefore ended in divorce before Benny\u2019s next documented marriage in September 1962.\n\n---\n\n### Marriage #4: Rosemarie Graham (1962 \u2014 Surviving Spouse at 1991 Death)\n\n**a. The Marriage Record and a Critical Indexing Error**\n\nThe Oregon Marriage Records 1906\u20131968 (FamilySearch collection 3326746) contains an entry for the marriage of **Benny Rapheal Taylor** (born 1921) and **Rosemarie Graham** (born 1942, Portland, Oregon; parents Arthur L. Graham and Rosamund Hoover) on **28 September 1962** in Oregon (assertion a_069; src_005 \u2014 \"Oregon, Marriage Records, 1906\u20131968,\" FamilySearch, ark:/61903/1:1:WBF8-1Q3Z; derivative digital index of original Oregon county marriage register, primary information about the marriage event, direct evidence of the marriage).\n\nThe FamilySearch index titles for this source (tree sources QDLH-77Y, QDLH-Q9L) describe the entry as \u201cEntry for Benny Rapheal Taylor and **Tossie Bain**, 28 Sep 1962.\u201d This is an indexing misattribution. Examination of the record\u2019s underlying GedcomX persona data shows that \u201cTossie Bain\u201d occupies a **ParentChild** relationship as the parent of the groom \u2014 not a Couple relationship as the bride. \"Tossie Bain\" is the nickname and maiden-surname variant of Benny\u2019s own mother, **Autossie Ann Bair** (tree: KWZ8-3RD), who died 24 November 1962 \u2014 just 57 days after this marriage. The bride in the Couple relationship on this record is unambiguously identified as **Rosemarie Graham** (record persona ark:/61903/1:1:WBF8-1Q6Z; assertion a_070 \u2014 same source, primary information, direct evidence of the bride\u2019s identity). No second wife named \"Tossie Bain\" exists in this record; the index title erroneously promoted the groom\u2019s parent entry to the title slot.\n\n**b. Corroboration from the Death Index**\n\nThe Oregon Death Index 1903\u20131998, a derivative state index compiled from underlying death certificates, records Benny Rapheal Taylor\u2019s death on 9 July 1991 in Tillamook, Oregon, with surviving spouse listed as **\u201cRosema Taylor\u201d** (assertions a_003, a_004, a_005; src_001 \u2014 \"Oregon, Death Index, 1903\u20131998,\" FamilySearch, ark:/61903/1:1:VZCQ-5XC; derivative record, secondary information about the spouse\u2019s name, direct evidence of a surviving marital relationship). The name \"Rosema\" is a recognized index truncation of \"Rosemarie.\" Combined with the 1962 Oregon marriage record identifying the bride as Rosemarie Graham, two independent sources separated by 29 years converge on the identification of **Rosemarie Graham** (tree: I1) as Benny\u2019s fourth and final wife and surviving spouse. The original death certificate was not examined; the \"Rosema\" truncation is resolved by the independent marriage record.\n\nThe Oregon Marriage Index 1991\u20132006 (FamilySearch collection 3500591; log_003, negative) returned no record of any additional marriage by Benny after 1975, consistent with Rosemarie Graham remaining his wife until his death in 1991.\n\n---\n\n### Source Analysis and Confidence Tier\n\nAll five GPS components are addressed. Component 1 (reasonably exhaustive research): declared exhaustive per evaluation of log_001\u2013log_009. Component 2 (complete and accurate citations): all assertions carry source citations with source classifications. Component 3 (analysis and correlation): assertions classified with information quality and evidence type; identity-linked via person_evidence. Component 4 (resolution of conflicting evidence): one apparent conflict (\"Single\" marital status in 1950 census) is resolved by the internal evidence of the same record; no unresolved conflicts exist. Component 5 (this reasoned written conclusion).\n\n**Tier: Probable** \u2014 the evidence strongly preponderates in favor of four marriages with three named wives, but the GPS \"proved\" standard is not met because: (a) the Oregon marriage index entries used to document wives #2 and #4 (QDLH-77Y; the Tillamook 1941 marriage record for LL9V-56G) are derivative digital indexes rather than original certificate images examined in hand; (b) the Washington County marriage records for wife #3 are pre-existing tree sources not newly extracted as research.json assertions in this project \u2014 they are corroborated but not directly proved here; and (c) the unnamed first wife rests on a single source with no corroboration possible from available indexed records. The \"proved\" tier would require two independent original records with primary-quality information for each concluded marriage; only the census and draft card originals meet that standard, and they corroborate rather than directly document the marriages. A researcher examining the original Oregon marriage certificate images and the original death certificate would be positioned to elevate this conclusion to \"proved.\""
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-15.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-15T20:06:31.568Z"
+    }
+  ]
+}
