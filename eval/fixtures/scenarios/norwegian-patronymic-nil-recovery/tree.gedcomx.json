@@ -1,0 +1,101 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Anders",
+          "surname": "Moen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1868-10",
+          "place": "Norway",
+          "sources": [
+            {
+              "ref": "S3",
+              "page": "1900 US Census, Polk County, MN"
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Immigration",
+          "date": "1888",
+          "place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Hans",
+          "surname": "Moen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Marit",
+          "surname": "Moen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S3",
+          "page": "1900 US Census, Polk County, MN",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S3",
+          "page": "1900 US Census, Polk County, MN",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S3",
+      "title": "1900 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    }
+  ]
+}

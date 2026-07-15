@@ -1,0 +1,95 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1845",
+          "place": "Ireland"
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "1908-03-12",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [
+            {
+              "ref": "S2",
+              "page": "Death cert. no. 4521"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Flynn",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1818",
+          "place": "Ireland"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Doyle",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "primary": true,
+          "date": "~1822",
+          "place": "Ireland"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "Ireland, Catholic Parish Registers — Marriages",
+      "author": "National Library of Ireland"
+    },
+    {
+      "id": "S2",
+      "title": "Pennsylvania Death Certificates",
+      "author": "Pennsylvania Dept. of Health"
+    }
+  ]
+}

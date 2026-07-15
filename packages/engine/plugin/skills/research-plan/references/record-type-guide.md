@@ -26,12 +26,17 @@ county marriage bonds/licenses, or a church marriage register — kept
 and do not fold it into a generic "church records" item. Its rationale
 must state that the marriage: (a) confirms the couple as a unit; (b)
 supplies the **mother's maiden name**, which census and death records
-usually omit; and (c) by its date relative to the child's birth is
-direct evidence of **paternity** — able to confirm or refute a father
-who is otherwise named only by indirect or derivative evidence (e.g., a
-death certificate or a single census co-residence). This item belongs in
-essentially every parentage plan, even when a parent already appears in
-the tree from indirect evidence.
+usually omit; and (c) by its date relative to the child's birth,
+**corroborates** a father otherwise named only by indirect or derivative
+evidence (e.g., a death certificate or a single census co-residence).
+**Note the limit:** the couple's marriage proves *they* married and dates
+their union — it is **not**, by itself, evidence that *this* child is
+theirs. A parentage conclusion still needs a record that places the child
+*with* the parents (the child's own christening/birth, a census household,
+or a probate naming the child); the marriage record strengthens that case
+but cannot stand as its sole basis. This item belongs in essentially every
+parentage plan, even when a parent already appears in the tree from
+indirect evidence.
 
 **Identifying parents — sons in conscription countries: plan the levy
 rolls.** Where a national conscription system enrolled boys from birth
