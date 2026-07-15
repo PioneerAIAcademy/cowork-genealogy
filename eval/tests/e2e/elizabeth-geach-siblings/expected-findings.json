@@ -1,0 +1,104 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Jacob (D) Geach was a sibling of Elizabeth Geach — a son of Peter Geach and Rebecca Geach of Licking County, Ohio. He is named as one of six minor heirs (Jacob, Elizabeth, Mary, Thomas, William, and Nancy Geach) in the 1836 Licking County Court of Common Pleas probate petition for the estate of the intestate Peter Geach.",
+      "details": {
+        "subject_person": {
+          "name": "Elizabeth Geach",
+          "pid": "273D-F9Z"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Jacob Geach",
+          "birth": "about 1818"
+        }
+      },
+      "supporting_sources": [
+        "Licking County, Ohio, Common Pleas probate petition for the estate of Peter Geach (intestate) — names widow Rebecca Geach and minor children Jacob, Elizabeth, Mary, Thomas, William, and Nancy Geach (recoverable via FamilySearch full-text search)."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Mary Geach was a sibling of Elizabeth Geach — a daughter of Peter Geach and Rebecca Geach of Licking County, Ohio. She is named as one of the six minor heirs in the same 1836 Licking County probate petition for the estate of Peter Geach.",
+      "details": {
+        "subject_person": {
+          "name": "Elizabeth Geach",
+          "pid": "273D-F9Z"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Mary Geach",
+          "birth": "about 1824"
+        }
+      },
+      "supporting_sources": [
+        "Licking County, Ohio, Common Pleas probate petition for the estate of Peter Geach (intestate) — names widow Rebecca Geach and minor children Jacob, Elizabeth, Mary, Thomas, William, and Nancy Geach."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Thomas Geach was a sibling of Elizabeth Geach — a son of Peter Geach and Rebecca Geach of Licking County, Ohio. He is named as one of the six minor heirs in the same 1836 Licking County probate petition for the estate of Peter Geach.",
+      "details": {
+        "subject_person": {
+          "name": "Elizabeth Geach",
+          "pid": "273D-F9Z"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Thomas Geach",
+          "birth": "about 1827"
+        }
+      },
+      "supporting_sources": [
+        "Licking County, Ohio, Common Pleas probate petition for the estate of Peter Geach (intestate) — names widow Rebecca Geach and minor children Jacob, Elizabeth, Mary, Thomas, William, and Nancy Geach."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "William (W) Geach was a sibling of Elizabeth Geach — a son of Peter Geach and Rebecca Geach of Licking County, Ohio. He is named as one of the six minor heirs in the same 1836 Licking County probate petition for the estate of Peter Geach.",
+      "details": {
+        "subject_person": {
+          "name": "Elizabeth Geach",
+          "pid": "273D-F9Z"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "William Geach",
+          "birth": "about 1830"
+        }
+      },
+      "supporting_sources": [
+        "Licking County, Ohio, Common Pleas probate petition for the estate of Peter Geach (intestate) — names widow Rebecca Geach and minor children Jacob, Elizabeth, Mary, Thomas, William, and Nancy Geach."
+      ],
+      "required": true
+    },
+    {
+      "id": "f5",
+      "type": "relationship",
+      "description": "Nancy Geach was a sibling of Elizabeth Geach — a daughter of Peter Geach and Rebecca Geach of Licking County, Ohio. She is named as one of the six minor heirs in the same 1836 Licking County probate petition for the estate of Peter Geach.",
+      "details": {
+        "subject_person": {
+          "name": "Elizabeth Geach",
+          "pid": "273D-F9Z"
+        },
+        "relation": "sibling",
+        "target_person": {
+          "name": "Nancy Geach",
+          "birth": "about 1833"
+        }
+      },
+      "supporting_sources": [
+        "Licking County, Ohio, Common Pleas probate petition for the estate of Peter Geach (intestate) — names widow Rebecca Geach and minor children Jacob, Elizabeth, Mary, Thomas, William, and Nancy Geach."
+      ],
+      "required": true
+    }
+  ]
+}
