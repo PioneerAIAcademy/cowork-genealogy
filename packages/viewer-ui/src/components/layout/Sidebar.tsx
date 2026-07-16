@@ -52,6 +52,7 @@ export default function Sidebar({
     },
     { key: 'questions', label: 'Questions', countFn: () => research?.questions.length ?? 0 },
     { key: 'plans', label: 'Plans', countFn: () => research?.plans.length ?? 0 },
+    { key: 'localities', label: 'Localities', countFn: () => research?.localities?.length ?? 0 },
     { key: 'log', label: 'Research Log', countFn: () => research?.log.length ?? 0 },
     { key: 'sources', label: 'Sources', countFn: () => research?.sources.length ?? 0 },
     { key: 'assertions', label: 'Assertions', countFn: () => research?.assertions.length ?? 0 },

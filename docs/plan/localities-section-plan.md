@@ -1,9 +1,11 @@
 # Plan: `localities` section — persist place/locale research knowledge
 
-> **Status:** in progress (branch `locality-guide-persistence`). Steps 1–4 landed
+> **Status:** in progress (branch `locality-guide-persistence`). Steps 1–5 landed
 > (schema, `research_append`+`project_context`, `locality-guide` persist + test,
-> `research-plan` invoke/read/stage + `search-records` general reflex). Remaining:
-> runlog re-run + annotation for the two step-4 skills, and step 5 (Electron viewer). 
+> `research-plan` invoke/read/stage + `search-records` general reflex, viewer
+> Localities tab). Remaining: runlog re-run + annotation for the three touched
+> skills (locality-guide, research-plan, search-records) — needs the judge API +
+> genealogist — before the PR can pass the check-runlogs gate. 
 > **Goal:** give the place/locale knowledge `locality-guide` produces a durable
 > home in `research.json`, make `locality-guide` actually read all the
 > place-oriented wiki pages and persist what it learns, ensure `research-plan`
