@@ -33,6 +33,8 @@ import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { resolveStandardPlace } from "../utils/place-resolver.js";
+import { stdDate } from "../utils/date-standardize.js";
+import { MONTH_NUM } from "../utils/date-constants.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
@@ -287,6 +289,158 @@ function normalizeDateFields(entry: Record<string, unknown>): void {
   }
 }
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DD_MON_YYYY_RE = /^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/;
+
+/** Convert a human-written date to ISO `YYYY-MM-DD`, or null if it can't be
+ *  resolved unambiguously to a full day. Reuses the genealogical `stdDate`
+ *  standardizer (handles i18n month names, `July 12, 2026`, dashed forms, etc.),
+ *  which yields a canonical `DD Mon YYYY`; a form without a day (`Jul 2026`) or a
+ *  range/modifier does not match and returns null. */
+function humanDateToIso(raw: string): string | null {
+  if (ISO_DATE_RE.test(raw)) return raw;
+  const m = DD_MON_YYYY_RE.exec(stdDate(raw));
+  if (!m) return null;
+  const monNum = MONTH_NUM.get(m[2]);
+  if (monNum === undefined) return null;
+  return `${m[3]}-${String(monNum).padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+}
+
+/** Normalize a source's `access_date` to ISO in place. The schema requires ISO
+ *  `YYYY-MM-DD`; models routinely supply a human form (`12 July 2026`), which is
+ *  persisted verbatim and then hard-fails the JSON-Schema validator. Rewrite a
+ *  parseable human date to ISO; leave an ISO/absent/non-string value untouched,
+ *  and leave an unparseable value in place so the joint validator reports the
+ *  real problem (a rejection the caller can then correct) rather than the tool
+ *  silently inventing a date. Only sources carry `access_date`, so this is a
+ *  no-op for every other section. */
+function normalizeAccessDate(entry: Record<string, unknown>): void {
+  const v = entry.access_date;
+  if (typeof v !== "string" || ISO_DATE_RE.test(v)) return;
+  const iso = humanDateToIso(v);
+  if (iso) entry.access_date = iso;
+}
+
+/** Canonical assertion `fact_type` spellings, plus the common non-canonical
+ *  forms the model emits, keyed by a *normalized comparison form* (lowercased,
+ *  every non-alphanumeric character stripped) so casing/underscore/camelCase
+ *  variants all collapse to one key: `Cause of Death`, `cause_of_death`, and
+ *  `CauseOfDeath` all key on `causeofdeath`.
+ *
+ *  `fact_type` is an OPEN enum (`fact_type_recommended` in enums.schema.json),
+ *  so this is a best-effort *translator*, NOT a closed allow-list: a value whose
+ *  normalized key is not present passes through UNCHANGED (an unrecognized fact
+ *  type is legal, just left un-normalized). Two things this buys us that the
+ *  eval validator's own casefolding cannot: (1) mapping *semantic* aliases the
+ *  casefold can't reach — `father_name`→`name`, `parentage`→`relationship` —
+ *  and (2) one canonical spelling in the persisted file for downstream skills
+ *  and the judge.
+ *
+ *  Event place/date are ATTRIBUTES of the event fact, not their own fact types
+ *  (matching the tree + GedcomX, which have no `Birthplace`/`Deathplace` type —
+ *  birthplace is the `place` of a `Birth` fact). So a place-of-event variant is
+ *  folded into the event type — `birthplace`/`place_of_birth` → `birth`,
+ *  `deathplace` → `death` — and `PLACE_VARIANT_KEYS` (below) additionally lifts
+ *  the place VALUE into the machine-readable `place` field so the folded
+ *  assertion is distinguishable from the event's date-claim by field population
+ *  (`place != null` = the place-claim, `date != null` = the date-claim). This
+ *  keeps birthplace and birth-date *independently classifiable* as separate
+ *  `birth` assertions (census: a `direct` place-claim + an `indirect`
+ *  computed-year claim) while giving downstream code one grouping key per event.
+ *  `sex`/`gender` stay distinct — a model mislabeling those is a content error
+ *  we surface, not silently "correct". */
+const FACT_TYPE_ALIASES: Record<string, string> = {
+  // name — plus the role-prefixed variants the model emits when it folds
+  // "whose name" into the fact_type instead of leaving it to the record_role
+  // (father_name on a father_of_deceased role → just `name`).
+  name: "name",
+  fathername: "name",
+  mothername: "name",
+  parentname: "name",
+  spousename: "name",
+  maidenname: "name",
+  fullname: "name",
+  givenname: "name",
+  age: "age",
+  // birth EVENT — date and place are attributes of the one `birth` fact, so the
+  // place variants fold in here and PLACE_VARIANT_KEYS lifts the place value.
+  birth: "birth",
+  birthdate: "birth",
+  dateofbirth: "birth",
+  birthplace: "birth",
+  placeofbirth: "birth",
+  residence: "residence",
+  occupation: "occupation",
+  // relationship — plus the bare-structure aliases the model reaches for.
+  relationship: "relationship",
+  parentage: "relationship",
+  familycomposition: "relationship",
+  gender: "gender",
+  sex: "sex",
+  race: "race",
+  // death / burial / christening EVENTS — place variants fold into the event.
+  death: "death",
+  deathdate: "death",
+  dateofdeath: "death",
+  deathplace: "death",
+  placeofdeath: "death",
+  causeofdeath: "cause_of_death",
+  durationofillness: "duration_of_illness",
+  burial: "burial",
+  burialplace: "burial",
+  placeofburial: "burial",
+  christening: "christening",
+  christeningplace: "christening",
+  baptism: "christening",
+  marriage: "marriage",
+  marriagelicense: "marriage",
+};
+
+/** Normalized keys of the place-of-event fact_type variants. When the model
+ *  labels an assertion with one of these, `canonicalizeAssertionLabels` folds
+ *  the type into the event (via FACT_TYPE_ALIASES) AND lifts the place value
+ *  into the `place` field if it is not already there — so the machine-readable
+ *  place survives the fold and the assertion reads as the event's place-claim. */
+const PLACE_VARIANT_KEYS = new Set([
+  "birthplace",
+  "placeofbirth",
+  "deathplace",
+  "placeofdeath",
+  "burialplace",
+  "placeofburial",
+  "christeningplace",
+]);
+
+/** Reduce a label to its normalized comparison key: lowercase, then drop every
+ *  non-alphanumeric character. */
+function labelKey(raw: string): string {
+  return raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function isBlank(v: unknown): boolean {
+  return typeof v !== "string" || v.trim() === "";
+}
+
+/** Best-effort canonicalization of an assertion's `fact_type` in place. Maps a
+ *  known alias (by normalized key) to its canonical spelling, and folds a
+ *  place-of-event variant into the event type while lifting its place value into
+ *  the `place` field (see the doc comment on FACT_TYPE_ALIASES). Leaves an
+ *  unrecognized value untouched (open enum). No-op for a non-assertion entry
+ *  (only assertions carry `fact_type`) or a non-string value. */
+function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
+  const ft = entry.fact_type;
+  if (typeof ft !== "string") return;
+  const key = labelKey(ft);
+  const canonical = FACT_TYPE_ALIASES[key];
+  if (canonical) entry.fact_type = canonical;
+  // A folded place-of-event variant must keep its place machine-readable: if
+  // neither `place` nor `standard_place` is set, lift the human `value` (which
+  // for a place-claim IS the place string, e.g. "Ireland") into `place`.
+  if (PLACE_VARIANT_KEYS.has(key) && isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(entry.value)) {
+    entry.place = entry.value;
+  }
+}
+
 function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<string>): AppliedOp {
   const section = op.section;
   const config = SECTIONS[section];
@@ -371,6 +525,8 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
     delete rest.id;
     const newEntry: Record<string, unknown> = { id: entryId, ...rest };
     normalizeDateFields(newEntry);
+    normalizeAccessDate(newEntry);
+    canonicalizeAssertionLabels(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
       newEntry[stamp.field] = stamp.kind === "date" ? today() : now();
@@ -432,6 +588,8 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
       existing[k] = v;
     }
     normalizeDateFields(existing);
+    normalizeAccessDate(existing);
+    canonicalizeAssertionLabels(existing);
     entryId = op.entryId;
     resultEntry = existing;
   } else {

@@ -449,6 +449,22 @@ async function applyOperation(
     case "add_person": {
       if (!input.person) throw new TreeEditError("add_person requires a `person`");
       if (input.person.id) throw new TreeEditError("add_person `person` must not carry an id");
+      // Tolerate a singular `name: {given, surname, ...}` where the schema wants
+      // a `names: [...]` array — a common model shape slip (observed on ~15% of
+      // add_person calls). Lift it into a single-element array; the object shape
+      // already matches a names[] element. Reject if BOTH are supplied (ambiguous
+      // — don't silently pick one). This is pure shape normalization: no name
+      // content is parsed or invented.
+      const rawPerson = input.person as SimplifiedPerson & { name?: SimplifiedName };
+      if (rawPerson.name !== undefined) {
+        if (rawPerson.names !== undefined) {
+          throw new TreeEditError(
+            "add_person: supply `names` (an array) OR a single `name`, not both",
+          );
+        }
+        rawPerson.names = [rawPerson.name];
+        delete rawPerson.name;
+      }
       const personId = nextId(tree, "I");
       const nMax = maxIdNum(tree, "N");
       const names = (input.person.names ?? []).map((n, i) => ({ ...n, id: `N${nMax + 1 + i}` }));

@@ -655,6 +655,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("outcome" in entry) {
       checkEnum(entry.outcome, "log_outcome", lp, report);
     }
+    // A log entry's plan_item_id must be a plan-item id (^pli_) or null. The
+    // JSON-Schema validator enforces that prefix; validate_research_schema here
+    // did not — a drift that let a bad value (e.g. a question id q_001 stuffed
+    // into the slot) pass here while the JSON-Schema validator rejected it,
+    // hard-failing the write downstream. Close the gap by MATCHING the schema:
+    // a prefix check, not full ref-existence (JSON Schema can't express
+    // ref-existence, and requiring it here would reject a well-formed but
+    // dangling pli_ that the schema accepts — a new divergence in the other
+    // direction).
+    if (entry.plan_item_id) {
+      checkIdPrefix(entry.plan_item_id, ID_PREFIXES.plan_items, lp, report);
+    }
 
     const ext = entry.external_site;
     if (entry.tool === "external_site" && ext === null) {
