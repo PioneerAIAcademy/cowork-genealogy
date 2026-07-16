@@ -37,6 +37,18 @@ export interface ProjectContextSource {
   assertionCount: number;
 }
 
+export interface ProjectContextLocality {
+  id: string;
+  place: string;
+  forPlace: string | null;
+  timePeriod: string | null;
+  jurisdictions: { name: string; dateRange: string | null }[];
+  collections: { id: string; title: string; dateRange: string | null }[];
+  quirks: string[];
+  /** Wiki sections actually fetched (pages_read with found:true) — read-coverage. */
+  pagesRead: string[];
+}
+
 export type ProjectContextResult =
   | {
       ok: true;
@@ -44,6 +56,7 @@ export type ProjectContextResult =
       openQuestions: ProjectContextQuestion[];
       persons: ProjectContextPerson[];
       sources: ProjectContextSource[];
+      localities: ProjectContextLocality[];
     }
   | { ok: false; errors: string[] };
 
@@ -154,12 +167,46 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     });
   }
 
+  // Localities: compact place/locale projection for research-plan — the
+  // actionable bits (jurisdictions, collections, quirks) + read-coverage.
+  // guide_markdown is omitted (large prose); read research.json for the full text.
+  const localities: ProjectContextLocality[] = [];
+  for (const l of Array.isArray(research?.localities) ? research.localities : []) {
+    if (!l || typeof l !== "object" || typeof l.id !== "string") continue;
+    const jurisdictions = (Array.isArray(l.jurisdictions) ? l.jurisdictions : [])
+      .filter((j: any) => j && typeof j === "object" && typeof j.name === "string")
+      .map((j: any) => ({ name: j.name, dateRange: typeof j.date_range === "string" ? j.date_range : null }));
+    const collections = (Array.isArray(l.collections) ? l.collections : [])
+      .filter((c: any) => c && typeof c === "object" && typeof c.id === "string")
+      .map((c: any) => ({
+        id: c.id,
+        title: typeof c.title === "string" ? c.title : "",
+        dateRange: typeof c.date_range === "string" ? c.date_range : null,
+      }));
+    const quirks = (Array.isArray(l.quirks) ? l.quirks : []).filter(
+      (q: any): q is string => typeof q === "string",
+    );
+    const pagesRead = (Array.isArray(l.pages_read) ? l.pages_read : [])
+      .filter((p: any) => p && typeof p === "object" && p.found === true && typeof p.section === "string")
+      .map((p: any) => p.section as string);
+    localities.push({
+      id: l.id,
+      place: typeof l.place === "string" ? l.place : "",
+      forPlace: typeof l.for_place === "string" ? l.for_place : null,
+      timePeriod: typeof l.time_period === "string" ? l.time_period : null,
+      jurisdictions,
+      collections,
+      quirks,
+      pagesRead,
+    });
+  }
+
   const projectStatus =
     research?.project && typeof research.project === "object" && typeof research.project.status === "string"
       ? research.project.status
       : null;
 
-  return { ok: true, projectStatus, openQuestions, persons, sources };
+  return { ok: true, projectStatus, openQuestions, persons, sources, localities };
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -173,7 +220,10 @@ export const projectContextSchema = {
     "[{id, name, gender, sourceRefs}] — every tree person with the distinct S ids " +
     "it already cites; and sources [{id, repository, " +
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
-    "source with the record ids its assertions cover. One call gives the context " +
+    "source with the record ids its assertions cover; and localities [{id, place, " +
+    "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
+    "place/locale research knowledge (from locality-guide) that research-plan uses " +
+    "to stage searches (guide_markdown prose is omitted here). One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Writes " +

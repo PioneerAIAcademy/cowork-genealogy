@@ -71,6 +71,7 @@ const SECTIONS: Record<string, SectionConfig> = {
   proof_summaries: { prefix: "ps_" },
   evaluations: { prefix: "ev_", stampTimestamp: { field: "timestamp", kind: "datetime" } },
   known_holdings: { prefix: "kh_", stampTimestamp: CREATED_DATE },
+  localities: { prefix: "loc_", stampTimestamp: CREATED_DATE },
   // Singleton metadata (one object, not a list): update-only field writes.
   // proof-conclusion sets `project.status: "completed"` here at the end of a
   // GPS cycle; the tool stamps `project.updated` (iso_date).
@@ -1224,6 +1225,7 @@ export const researchAppendSchema = {
           "proof_summaries",
           "evaluations",
           "known_holdings",
+          "localities",
           "project",
         ],
         description:
@@ -1276,6 +1278,7 @@ export const researchAppendSchema = {
                 "proof_summaries",
                 "evaluations",
                 "known_holdings",
+                "localities",
                 "project",
               ],
               description: "The research.json section this op writes.",
