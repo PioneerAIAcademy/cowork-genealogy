@@ -210,7 +210,7 @@ async def _run_one_test_async(
     # denied by the allowlist.
     if spec.type == "negative" and spec.mcp_fixtures:
         neg_fixtures = load_fixtures(spec.mcp_fixtures, paths.fixtures_dir)
-        fixture_tools = {f"mcp__Genealogy_Research__{f['tool']}" for f in neg_fixtures}
+        fixture_tools = {f"mcp__genealogy__{f['tool']}" for f in neg_fixtures}
         skill_baseline = list(set(skill_baseline) | fixture_tools)
 
     runs: list[SingleRun] = []
@@ -343,7 +343,7 @@ async def _execute_single_run(
             # If a tool doesn't exist in registered_mcp_tools, there's no
             # handler for it, so the call can't possibly have reached the mock.
             for call in result.attempted_mcp_calls:
-                tool_name = call["tool"].removeprefix("mcp__Genealogy_Research__")
+                tool_name = call["tool"].removeprefix("mcp__genealogy__")
                 if tool_name not in result.registered_mcp_tools:
                     # Type 1: tool doesn't exist at all — abort
                     result.aborted_reason = "unmatched_tool_call"

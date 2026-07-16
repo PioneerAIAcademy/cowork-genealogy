@@ -268,7 +268,7 @@ def create_mock_server(
             _workspace=workspace,
         ):
             entry: dict[str, Any] = {
-                "tool": f"mcp__Genealogy_Research__{_name}",
+                "tool": f"mcp__genealogy__{_name}",
                 "args": dict(args),
                 "expected_args": None,
                 "matched": {"kind": "none", "index": None},
