@@ -72,12 +72,13 @@ bug that actually lives in a tool.
 
 ### Step 3 — Capture it as a test 🤖 Claude Code
 
-In the same **Claude Code** session, they make a small **unit test** that
-reproduces the bug — "given a census record that has a page/line, the citation
-must include it." *(Soon this will be one command,
-`draft-unit-test --from-e2e`; today you hand-author the test by copying a nearby
-citation test and dropping in the Schuster scenario.)* The test starts as a draft
-under `eval/tests/unit/citation/`.
+In the same **Claude Code** session, Ben runs the **`mine-unit-test`** skill,
+points it at Ana's project folder, and pastes her Did/Should/Gap note. It writes a
+small **unit test** that reproduces the bug — "given a census record that has a
+page/line, the citation must include it" — plus a scenario and mock fixtures (built
+from the project's saved search results), all marked *draft* under
+`eval/tests/unit/citation/` and `eval/fixtures/`. Ben skims the draft; the scenario
+carve is the part worth double-checking.
 
 ### Step 4 — Run it, and mark what's wrong ⌨️ Terminal → 🌐 browser
 
