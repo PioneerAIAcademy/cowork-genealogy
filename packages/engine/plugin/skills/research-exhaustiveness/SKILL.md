@@ -105,10 +105,14 @@ Write a 1-2 sentence assessment for each:
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
-    image over the MCP transport cap, or nil across `record_search` /
-    `fulltext_search` / `image_search` / external sites after the bounded
-    search-records attempts) is *pursued-and-unavailable*, not an unsearched
-    gap. **Only** when the **accessible** evidence already supports a
+    image over the MCP transport cap; a record **sealed by privacy law** —
+    e.g. a recent U.S. vital record embargoed ~100 years and released before
+    then only to the registrant or a direct heir; or nil across
+    `record_search` / `fulltext_search` / `image_search` / external sites
+    after the bounded search-records attempts) is *pursued-and-unavailable*,
+    not an unsearched gap. A privacy-sealed record must **not** be counted as
+    an outstanding gap in the threshold questions, nor recommended as a next
+    step to obtain. **Only** when the **accessible** evidence already supports a
     defensible conclusion, do not loop `research-plan` to re-attempt it: set
     `status: "exhaustive_declared"` (note the limitation in a `stop_criteria`
     note + `overturn_risk`) and route to `proof-conclusion`, which sets the
@@ -205,18 +209,10 @@ the offending field — do not blindly retry the same payload.
   tier-advancing — do not declare until that record has been searched
   or the declaration explicitly justifies why it is inaccessible. A
   known, decisive, accessible record left unsearched fails the
-  overturn-risk test by definition.
-- **A parentage conclusion needs a record linking the child to the
-  parents.** For a parentage question, at *probable* or higher the tree
-  must rest on at least one *examined* record that places the **child
-  together with the concluded parents** — the child's own
-  christening/birth, a census household showing the child with them, an
-  emigration record, or a probate naming the child. A record of the
-  parents' *marriage to each other* does **not** satisfy this: it proves
-  the couple married, not that this child is theirs. If no child-linking
-  record can be found, lower the tier or justify it as
-  verified-inaccessible — do not declare exhaustive on indirect,
-  couple-level evidence alone.
+  overturn-risk test by definition — but a decisive record that is
+  **sealed by privacy law** (e.g. a recent birth certificate embargoed
+  ~100 years, heir-request only) counts as inaccessible: note the
+  limitation and declare on the accessible evidence; do not gate on it.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary

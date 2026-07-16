@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_research_exhaustiveness_014",
+    "skill": "research-exhaustiveness",
+    "name": "A privacy-sealed record is not an exhaustiveness gap and must not be recommended",
+    "type": "positive",
+    "description": "q_001 (parents of Alan Glen Applegarth, b. 1936) in recent-birth-sealed is established from the 1940 and 1950 censuses and the 1926 marriage. The one undone plan item (pli_004) is Alan's own 1936 Utah birth certificate, which is privacy-sealed (~100 years; public ~2036; released before then only to the registrant or a direct heir). The skill must treat that record as NOT reasonably available: it must not refuse to declare exhaustive on account of it, must not list it as an outstanding searchable gap, and must not recommend obtaining it as a routine next step. Guards the record-access privacy rule surfaced by the applegarth-parents-1936 e2e run.",
+    "tags": [
+      "research-exhaustiveness",
+      "record-access",
+      "privacy-sealed",
+      "100-year-rule",
+      "reasonably-available"
+    ]
+  },
+  "input": {
+    "user_message": "The census and marriage searches for q_001 are done and the parents are established. Assess whether the research on q_001 is reasonably exhaustive.",
+    "scenario": "recent-birth-sealed"
+  },
+  "judge_context": [
+    "The one undone plan item (pli_004) — Alan's own 1936 Utah birth certificate — is privacy-sealed: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. This is documented in pli_004's rationale and in log_004. The skill must treat it as a record that is NOT reasonably available, not as an outstanding search gap.",
+    "FAILURE MODES this guards against: (a) refusing to declare exhaustive SOLELY because the 1936 birth certificate was not obtained; (b) listing the sealed birth certificate as an outstanding searchable record still to be pursued; (c) recommending the researcher obtain the sealed birth certificate as a next step to advance the tier. Any of these is a fail.",
+    "The parents (John Obrien Applegarth and Olive Annie Harvey) are established by independent sources: the 1940 and 1950 U.S. censuses (Alan in the household) and the 1926 Weber County marriage (the parental couple and the mother's maiden name). On this evidence the skill MAY declare q_001 reasonably exhaustive; if it does, that is correct and the sealed birth record does not block it.",
+    "Contrast (do not conflate): a record that is merely unsearched-but-accessible WOULD gate a declaration under the decisive-record rule. This birth certificate is unobtainable by privacy law, so it does NOT gate the declaration. The distinction is exactly the point of this test.",
+    "The skill must NOT claim the birth certificate was examined or invent its contents.",
+    "Acceptable pass: (a) declares q_001 reasonably exhaustive, noting the sealed birth record as an access limitation rather than a gap; OR (b) if it declines for a DIFFERENT legitimate reason, it still does not cite the sealed birth certificate as the outstanding searchable gap and does not recommend obtaining it.",
+    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema); a review/decline with no MCP tool call → Tool Arguments is N/A."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  }
+}
