@@ -353,13 +353,15 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
 	# Reasoning is pinned so runs are reproducible (see the runlog's usage block:
-	# agent_model / effort_level / max_output_tokens / cli_version). Override:
+	# agent_model / subagent_model_override / effort_level / max_output_tokens / cli_version).
+	# Override:
 	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
+	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
 	# A/B these to find what clears a runaway-thinking subagent freeze
-	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... MAX_OUTPUT_TOKENS=16000
+	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death

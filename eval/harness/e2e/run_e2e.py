@@ -192,6 +192,18 @@ def main(argv: list[str] | None = None) -> int:
             "thinking. Recorded in the runlog."
         ),
     )
+    parser.add_argument(
+        "--agent-model",
+        default=None,
+        help=(
+            "Override the model for BOTH the parent agent and every staged "
+            "subagent (rewrites each agent's `.md` model pin). Default: unset = "
+            "fixture default parent (claude-sonnet-4-6) + each subagent's own pin "
+            "(record-extractor = claude-sonnet-5). Set e.g. claude-sonnet-4-6 to "
+            "run the whole flow under Cowork's model and test whether the "
+            "sonnet-5 record-extractor freeze reproduces. Recorded in the runlog."
+        ),
+    )
     args = parser.parse_args(argv)
 
     fixtures_root: Path = args.fixtures_root
@@ -219,6 +231,7 @@ def main(argv: list[str] | None = None) -> int:
         "resume_on_stall": args.resume_on_stall,
         "effort_level": args.effort_level,
         "max_output_tokens": args.max_output_tokens,
+        "agent_model": args.agent_model,
     }
 
     results: list[E2eResult] = []

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -285,12 +286,28 @@ def provided_documents(fixture: Fixture) -> list[Path]:
     return sorted(p for p in d.iterdir() if p.is_file() and not p.name.startswith("."))
 
 
+def _override_agent_model(md_text: str, model: str) -> str:
+    """Rewrite a staged subagent's ``model:`` frontmatter to ``model``.
+
+    Overrides the agent's own pin (e.g. record-extractor's ``claude-sonnet-5``)
+    so an e2e run can be executed against a different model — e.g. to test
+    whether the sonnet-5 record-extractor freeze reproduces under sonnet-4-6,
+    the model Cowork uses. Inserts a ``model:`` line if the agent has none.
+    """
+    if re.search(r"(?m)^model:[ \t]*.*$", md_text):
+        return re.sub(r"(?m)^model:[ \t]*.*$", f"model: {model}", md_text, count=1)
+    if md_text.startswith("---\n"):
+        return f"---\nmodel: {model}\n" + md_text[len("---\n"):]
+    return md_text  # no frontmatter to pin into
+
+
 def build_workspace(
     fixture: Fixture,
     target: Path,
     skills_dir: Path,
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
     effort_level: str | None = None,
+    agent_model: str | None = None,
 ) -> Path:
     """Populate a temp dir with fixture starting state + plugin skills + agents.
 
@@ -321,7 +338,15 @@ def build_workspace(
         agents_target = target / ".claude" / "agents"
         agents_target.mkdir(parents=True, exist_ok=True)
         for agent_file in sorted(agents_dir.glob("*.md")):
-            shutil.copy(agent_file, agents_target / agent_file.name)
+            dest = agents_target / agent_file.name
+            if agent_model is None:
+                shutil.copy(agent_file, dest)
+            else:
+                # Override every staged subagent's model pin (see agent_model).
+                dest.write_text(
+                    _override_agent_model(agent_file.read_text(encoding="utf-8"), agent_model),
+                    encoding="utf-8",
+                )
 
     # Optionally pin the run's reasoning effort via a PROJECT-level setting.
     # setting_sources=["project"] reads this file; the CLAUDE_EFFORT env var does
@@ -388,6 +413,7 @@ async def _run_agent(
     mcp_server_entry: Path,
     resume_on_stall: bool = False,
     max_output_tokens: int | None = None,
+    agent_model: str | None = None,
 ) -> tuple[
     list[dict[str, Any]],
     list[str],
@@ -618,7 +644,9 @@ async def _run_agent(
             **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
             **env_for_sdk(resolve_auth()),
         },
-        model=fixture.agent_model,
+        # Parent model: the --agent-model override (also applied to staged
+        # subagents in build_workspace) or the fixture's default.
+        model=agent_model or fixture.agent_model,
         max_turns=fixture.caps.max_turns,
         # The SDK's stdio transport defaults to a 1 MiB max_buffer_size for a
         # single JSON message (claude_agent_sdk _DEFAULT_MAX_BUFFER_SIZE). A
@@ -892,6 +920,7 @@ async def run_e2e_test(
     resume_on_stall: bool = False,
     effort_level: str | None = "high",
     max_output_tokens: int | None = None,
+    agent_model: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -899,7 +928,11 @@ async def run_e2e_test(
     Code session / shell (which made verdicts non-reproducible):
     ``effort_level`` (low|medium|high|xhigh|max, default "high" to match Cowork)
     via a project-level setting; ``max_output_tokens`` (None = CLI default,
-    sonnet-5 → 32000) via CLAUDE_CODE_MAX_OUTPUT_TOKENS. Both are logged.
+    sonnet-5 → 32000) via CLAUDE_CODE_MAX_OUTPUT_TOKENS. ``agent_model`` (None =
+    fixture default for the parent + each subagent's own `.md` pin) overrides the
+    model for BOTH the parent and every staged subagent — e.g. run the whole flow
+    under claude-sonnet-4-6 to test whether the sonnet-5 record-extractor freeze
+    reproduces under Cowork's model. All are logged.
     """
     fixture = load_fixture(fixture_dir)
     if not mcp_server_entry.exists():
@@ -911,7 +944,9 @@ async def run_e2e_test(
     started_at = time.time()  # real clock (counts system sleep)
     started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
-        workspace = build_workspace(fixture, Path(tmp), skills_dir, effort_level=effort_level)
+        workspace = build_workspace(
+            fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
+        )
 
         (
             tool_calls,
@@ -926,6 +961,7 @@ async def run_e2e_test(
             mcp_server_entry=mcp_server_entry,
             resume_on_stall=resume_on_stall,
             max_output_tokens=max_output_tokens,
+            agent_model=agent_model,
         )
 
         final_research = read_research_json(workspace)
@@ -980,10 +1016,14 @@ async def run_e2e_test(
             "slept_seconds": max(0.0, real_seconds - active_seconds),
             "judge_seconds": judge_seconds,
             # Reasoning config, so a run is self-describing when A/B'ing effort ×
-            # output-budget vs subagents[] behavior. `agent_model` is the parent
-            # model; subagents pin their own model in their .md (record-extractor
-            # = sonnet-5). `max_output_tokens` / `cli_version` come from _run_agent.
-            "agent_model": fixture.agent_model,
+            # output-budget × model vs subagents[] behavior. `agent_model` is the
+            # effective PARENT model. `subagent_model_override` is non-null only
+            # when --agent-model forced every staged subagent off its own `.md`
+            # pin (record-extractor's default is sonnet-5); null means each
+            # subagent used its pin. `max_output_tokens` / `cli_version` come from
+            # _run_agent.
+            "agent_model": agent_model or fixture.agent_model,
+            "subagent_model_override": agent_model,
             "effort_level": effort_level,
         }
 

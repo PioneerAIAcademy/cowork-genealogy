@@ -192,3 +192,27 @@ def test_cli_version_captured_from_init_message(tmp_path, monkeypatch):
     )
     _tc, _t, usage, *_ = _run(_fixture(tmp_path), tmp_path)
     assert usage["cli_version"] == "2.1.208"
+
+
+def test_agent_model_override_sets_parent_model(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_query(**kw):
+        captured["model"] = kw["options"].model
+        return _FakeAgen([(0.0, _sys()), (0.0, _result())])
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    _run(_fixture(tmp_path), tmp_path, agent_model="claude-sonnet-4-6")
+    assert captured["model"] == "claude-sonnet-4-6"
+
+
+def test_parent_model_defaults_to_fixture_when_no_override(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_query(**kw):
+        captured["model"] = kw["options"].model
+        return _FakeAgen([(0.0, _sys()), (0.0, _result())])
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    _run(_fixture(tmp_path), tmp_path)  # _fixture uses the default agent_model
+    assert captured["model"]  # a concrete model id, not None
