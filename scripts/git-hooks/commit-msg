@@ -1,0 +1,44 @@
+#!/bin/sh
+# commit-msg — nudge for a human Co-authored-by trailer on paired commits.
+#
+# We squash-merge on GitHub, and GitHub folds the Co-authored-by trailers from a
+# PR's commits into the squash commit — so the only place credit gets recorded
+# is on your local commits. This hook reminds you to add the trailer when someone
+# paired with you. It is a WARNING, not a gate: some work is genuinely solo, so a
+# missing trailer never blocks the commit (exit 0 always).
+#
+# "Human" excludes AI co-authors: any `Co-authored-by:` whose email is
+# @anthropic.com (the Claude trailer this repo appends) does not count. Add other
+# AI/bot domains to BOT_RE below if we start using them.
+#
+# Args: <path-to-commit-message-file>. Trailers are extracted with
+# `git interpret-trailers --parse`, which finds the trailer block and skips the
+# `#` comment lines and any --verbose diff, so we don't hand-parse the message.
+#
+# Installed into the shared .git/hooks/ by `make install-hooks` (NOT via
+# core.hooksPath, so it cannot disable husky or other hook tooling). The source
+# of truth is this file, scripts/git-hooks/commit-msg, tracked in the repo.
+
+BOT_RE='@anthropic\.com>'
+
+# Merge commits have no "co-author" concept — don't cry wolf on them.
+git_dir=$(git rev-parse --git-dir 2>/dev/null) || exit 0
+[ -e "$git_dir/MERGE_HEAD" ] && exit 0
+
+human=$(git interpret-trailers --parse "$1" 2>/dev/null \
+  | grep -i '^Co-authored-by:' \
+  | grep -vi "$BOT_RE")
+
+if [ -z "$human" ]; then
+  printf '%s\n' \
+    "commit-msg: ⚠ no human Co-authored-by trailer found." \
+    "  If someone paired with you on this commit, credit them so it survives the" \
+    "  squash-merge:" \
+    "" \
+    "    Co-authored-by: Their Name <their-github-email>" \
+    "" \
+    "  (Claude/AI co-authors don't count.) Solo work? Ignore this — the commit is" \
+    "  proceeding; this is only a reminder." >&2
+fi
+
+exit 0

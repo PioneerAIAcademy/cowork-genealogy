@@ -104,22 +104,25 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
 	@scripts/link-worktree.sh
 
-# Symlink our post-checkout hook into the shared .git/hooks (covers every
-# worktree of this clone). Opt-in and per-clone: it touches only local .git
-# state, never core.hooksPath, so it can't disable husky/other hook tooling and
-# is invisible to teammates who don't run it. Refuses to clobber a pre-existing
-# non-symlink hook.
+# Symlink our shared git hooks into the shared .git/hooks (covers every worktree
+# of this clone): post-checkout auto-links shared files into new worktrees;
+# commit-msg warns when a commit has no human Co-authored-by trailer. Opt-in and
+# per-clone: it touches only local .git state, never core.hooksPath, so it can't
+# disable husky/other hook tooling and is invisible to teammates who don't run
+# it. Refuses to clobber a pre-existing non-symlink hook.
 .PHONY: install-hooks
-install-hooks: ## Install the post-checkout hook so new worktrees auto-link shared files (opt-in, per-clone)
+install-hooks: ## Install shared git hooks (post-checkout, commit-msg) — opt-in, per-clone
 	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
 	 main=$$(dirname "$$common"); \
-	 dst="$$common/hooks/post-checkout"; \
-	 if [ -e "$$dst" ] && [ ! -L "$$dst" ]; then \
-	   echo "install-hooks: $$dst already exists and is not a symlink — not overwriting. Merge manually." >&2; exit 1; \
-	 fi; \
 	 mkdir -p "$$common/hooks"; \
-	 ln -sfn "$$main/scripts/git-hooks/post-checkout" "$$dst"; \
-	 echo "✓ installed post-checkout hook -> $$dst"
+	 for hook in post-checkout commit-msg; do \
+	   dst="$$common/hooks/$$hook"; \
+	   if [ -e "$$dst" ] && [ ! -L "$$dst" ]; then \
+	     echo "install-hooks: $$dst already exists and is not a symlink — not overwriting. Merge manually." >&2; exit 1; \
+	   fi; \
+	   ln -sfn "$$main/scripts/git-hooks/$$hook" "$$dst"; \
+	   echo "✓ installed $$hook hook -> $$dst"; \
+	 done
 
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's

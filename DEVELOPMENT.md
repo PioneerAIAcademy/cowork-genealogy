@@ -25,6 +25,16 @@ After building, both artifacts land in `releases/`:
 ls releases/
 ```
 
+## Git hooks
+
+Run `make install-hooks` once per clone (opt-in, per-clone) to symlink our
+shared hooks: `post-checkout` auto-links shared files into new worktrees, and
+`commit-msg` warns (never blocks) when a commit lacks a **human**
+`Co-authored-by:` trailer. When you pair, credit the other contributor so it
+survives our squash-merges — `Co-authored-by: Their Name <their-github-email>`
+as the last line of the commit message. Claude/AI co-authors don't satisfy the
+check.
+
 ## Smoke-test tools against live APIs
 
 Bypass the MCP harness to debug a tool in isolation:
