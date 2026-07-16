@@ -163,7 +163,7 @@ Before running any e2e test:
 
 > **Where these skills live.** `author-e2e-fixture`, `interpret-e2e-result`, and
 > `grade-e2e-run` are repo-local dev tooling under `.claude/skills/` (alongside
-> `compare-state` and `draft-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
+> `compare-state`, `draft-unit-test`, and `mine-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
 > picks them up automatically when you work in this checkout, so the `/`-commands
 > below just work. See [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) for why
 > they're a distinct class from the research skills.
@@ -772,10 +772,9 @@ research in Cowork.** That is also the *easiest* fuel: the seeded project direct
 
 The design and rationale live in
 [`docs/plan/gated-skill-improvement-slice.md`](plan/gated-skill-improvement-slice.md);
-this is the operational how-to. The gate (step 6, `make gate-skill`) and the
-improver's edit budget (step 5) **landed in PR 1**; the mining step (step 3) still
-uses **forthcoming** tooling (marked below), with a hand-authoring path so the loop
-runs today.
+this is the operational how-to. **Every step below runs today** — the gate
+(`make gate-skill`, step 6), the improver's ≤3-edit budget (step 5), and the
+`mine-unit-test` skill (`.claude/skills/mine-unit-test/`, step 3).
 
 **Preconditions for the live Cowork steps (1 and 7):** be logged in to
 FamilySearch (`make e2e-login`, once a day) and have the genealogy tools installed
@@ -814,19 +813,17 @@ the transcript, place the cause — this is `skill-lifecycle.md` §5's lane rule
 The last two lanes proceed to a unit test (a record-type fix lands in its
 playbook/table; a core-doctrine fix in `SKILL.md`).
 
-**3. Mine a unit test that exhibits the issue.** *(Forthcoming: a `--from-e2e` mode
-on `draft-unit-test` that reads the Cowork project directly, identifies the
-responsible sub-skill, carves the scenario, and synthesizes the mock fixtures.)*
-Until it lands, **hand-author** the `_draft` test in a **Claude Code** session:
-copy the nearest existing test of the owning sub-skill from
-`eval/tests/unit/<skill>/`, then lift the scenario state
-(`research.json` / `tree.gedcomx.json` / `results/`) from the seeded
-`eval/e2e-project/<slug>/` directory into `eval/fixtures/scenarios/<slug>/`, and
-turn the `results/` tool responses into mock fixtures under `eval/fixtures/mcp/`.
-(Note: today's `draft-unit-test` skill runs only from inside a *feedback-case*
-directory — it reads `.feedback-repo-root`/`_feedback/` from its working dir and
-has no way to target a Cowork project — so it can't be pointed at the seed
-directly; that's what the forthcoming mode adds.) **Keep the test general** — it
+**3. Mine a unit test that exhibits the issue.** In a **Claude Code** session at
+the repo root, run the **`mine-unit-test`** skill (`.claude/skills/mine-unit-test/`)
+— point it at the Cowork project (`--project <dir>`) or a recorded e2e run
+(`--e2e-run <dir>`), and give it your Did/Should/Gap note. It applies the lane
+gate (Step 2 above), localizes to the sub-skill, carves a mid-flow scenario from
+the project state, synthesizes mock fixtures from the project's `results/` sidecars
+(the `log[].query` gives the args, `results/<log_id>.json` the response), and
+writes a `_draft` test + scenario + fixtures under `eval/`. It's **guided
+authoring** — treat the scenario carve especially as a first cut to verify.
+(`mine-unit-test` is the sibling of `draft-unit-test`, which mines from a submitted
+*feedback case* instead.) **Keep the test general** — it
 must capture the *class* of mistake, not memorize the one scenario (a case-patch
 is a regression in disguise).
 
@@ -914,7 +911,7 @@ corrected grades and releases the run-log version.
 |---|---|---|
 | 1 Notice | `make e2e-project` + Research Viewer | **Cowork** |
 | 2 Classify | judgment + `results/` + transcript | Claude Code |
-| 3 Mine | `draft-unit-test` *(→ `--from-e2e`)* | Claude Code (repo root) |
+| 3 Mine | `mine-unit-test` | Claude Code (repo root) |
 | 4 Run + annotate | `make eval-skill` + CRUD UI (`make eval-ui`) | Claude Code / browser |
 | 5 Audit + improve | `rubric-critic`, `skill-improver` | Claude Code |
 | 6 Gate | `make gate-skill` + `make eval-skill` + CRUD UI | Claude Code / browser |
