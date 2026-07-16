@@ -28,6 +28,7 @@ allowed-tools:
   - external_links_search
   - wikipedia_search
   - volume_search
+  - research_append
 ---
 
 # Locality Guide
@@ -69,6 +70,8 @@ Note when the jurisdiction was formed, from what parent, and any boundary change
 
 Once `place_search` (step 2) has returned the `standardPlace`, issue the survey calls in a SINGLE turn as PARALLEL tool calls — `place_population`, `collections_search`, `volume_search`, `external_links_search`, `wiki_search`, and all four `wiki_place_page` sections (home / getting_started / online_records / research_tips) are independent and must NOT be run one-per-turn. Batch them together. The only exception is `wiki_read`: it needs a page URL, so run it right after `wiki_search` returns one. Do not drop any call — parallelize, don't prune.
 
+**All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the primary source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. If the exact-place page 404s, broaden the `standardPlace` one jurisdiction level (a county has no page; its state/country does) and retry before recording `found: false`.
+
 ```
 place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
@@ -101,7 +104,46 @@ For each record type, assign a digitization level using the table in `references
 
 ### 5. Compile and present
 
-Use the template in `references/output-format.md`. Fill every section with data from tool results. Consult the topical breadth checklist in `references/locality-broad-context.md`. Output the guide directly to the user — this skill does not write to `research.json` or `tree.gedcomx.json`.
+Use the template in `references/output-format.md`. Fill every section with data from tool results. Consult the topical breadth checklist in `references/locality-broad-context.md`. Present the guide to the user, then persist it (Step 6).
+
+### 6. Persist the locality
+
+Write one `localities` entry so the knowledge survives for `research-plan` (and the
+Research Viewer) instead of being discarded. This is the whole point of the survey —
+an un-persisted guide helps only the current turn. Use `research_append`:
+
+```
+research_append({
+  projectPath: "<absolute path to the project directory>",
+  section: "localities",
+  op: "append",                       // op: "update" with entryId to refresh an existing loc_ for the same place
+  entry: {
+    place: "Pennsylvania, United States",          // the jurisdiction the guide covers
+    for_place: "Schuylkill County, Pennsylvania",  // the specific place of interest, if narrower
+    time_period: "1840-1880",
+    jurisdictions: [ /* from place_search_all: { name, date_range } — border/name succession */ ],
+    collections: [ /* from collections_search: { id, title, date_range } */ ],
+    quirks: [
+      // short, actionable gotchas a searcher must know — distilled from the wiki
+      // research-tips / online-records pages, e.g.:
+      "Parish records indexed only at the county level — search the county, not the exact parish."
+    ],
+    guide_markdown: "<the guide you just presented, in markdown>",
+    pages_read: [
+      { section: "home", url: "<page url or null>", found: true },
+      { section: "getting_started", url: "...", found: true },
+      { section: "online_records", url: "...", found: true },
+      { section: "research_tips", url: "...", found: false }   // 404 for this place → found:false, still recorded
+    ],
+    source: "locality-guide"
+  }
+})
+```
+
+The tool assigns the `loc_` id and stamps `created`. **`pages_read` must list all four
+sections** (each with its `found` outcome) — this is how read-coverage is audited.
+Do not put the applied per-search decision here; that goes in a plan item's
+`rationale` when `research-plan` uses this entry.
 
 ## Decision rules
 
@@ -128,4 +170,6 @@ Use the template in `references/output-format.md`. Fill every section with data 
 
 ## Re-invocation behavior
 
-This skill writes no project state — it presents the guide directly to the user and does not modify `research.json` or `tree.gedcomx.json`. Safe to re-invoke; re-running produces a fresh guide for the requested place and period.
+**Writes:** one `localities[]` entry per place-jurisdiction (via `research_append`). Does not modify `tree.gedcomx.json`.
+
+**On repeat invocation for the same place:** update the existing `loc_` entry (`op: "update"` with its `entryId`) rather than appending a duplicate — supersede-not-delete, so the knowledge is refreshed in place. A genuinely new place gets a new `loc_` entry.
