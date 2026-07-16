@@ -28,6 +28,16 @@ HARNESS_DIR = Path(__file__).resolve().parents[1]
 JUDGE_PROMPT_PATH = HARNESS_DIR / "judge" / "prompt.md"
 
 DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
+# Pin the judge's first sample to greedy decoding so one transcript grades the
+# same way run to run. Scope matters: only the *judge* is pinned. The skill run
+# under test still samples freely (claude-agent-sdk exposes no temperature), so
+# this removes grading jitter, not test-outcome jitter. Greedy decoding narrows
+# variance; it is not a determinism guarantee.
+#
+# Model-gated: Haiku 4.5 accepts sampling params. The e2e judge's Opus 4.8 does
+# not — `temperature` is removed on the Opus 4.7/4.8 family and returns a 400,
+# so that judge cannot be pinned at all (see e2e/judge.py).
+JUDGE_TEMPERATURE = 0.0
 JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
@@ -384,13 +394,20 @@ def grade(
     # before giving up rather than failing the whole test on one bad draw.
     # (A max_tokens clip is NOT transient: re-sampling won't help, so surface
     # it immediately so the operator bumps the cap.)
+    #
+    # Only the first attempt is pinned to JUDGE_TEMPERATURE. Re-samples
+    # deliberately fall back to default sampling: at temperature=0 a retry
+    # re-decodes the identical prompt to the identical malformed output, so
+    # pinning every attempt would collapse this recovery loop into three copies
+    # of one bad draw. Pinned when it can be, sampled when it has to be.
     last_parse_error: JudgeError | None = None
-    for _attempt in range(3):
+    for attempt in range(3):
         response = _create_message_with_retry(
             client=client,
             model=model,
             prefix=prefix,
             suffix=suffix,
+            temperature=JUDGE_TEMPERATURE if attempt == 0 else None,
         )
         if response.stop_reason == "max_tokens":
             raise JudgeError(
@@ -420,7 +437,9 @@ def grade(
     )
 
 
-def _create_message_with_retry(*, client, model, prefix, suffix, _attempts=3):
+def _create_message_with_retry(
+    *, client, model, prefix, suffix, temperature=None, _attempts=3
+):
     """Call Anthropic with retry-with-backoff on transient errors.
 
     Wraps client.messages.create so a 529 overload or rate-limit response
@@ -432,8 +451,16 @@ def _create_message_with_retry(*, client, model, prefix, suffix, _attempts=3):
     and a varying suffix (per-test content). cache_control: ephemeral on
     the prefix lets the second+ test in a batched skill run hit the
     Anthropic prompt cache (spec §11 targets 50%+ at N=1).
+
+    `temperature=None` omits the parameter entirely rather than sending the
+    API's default value — the caller asks for default sampling without this
+    module having to hardcode what that default currently is.
     """
     import time as _time
+
+    sampling_kwargs: dict[str, Any] = {}
+    if temperature is not None:
+        sampling_kwargs["temperature"] = temperature
 
     delay = 1.0
     last_error: Exception | None = None
@@ -457,6 +484,7 @@ def _create_message_with_retry(*, client, model, prefix, suffix, _attempts=3):
                         ],
                     }
                 ],
+                **sampling_kwargs,
             )
         except (anthropic.APIStatusError, anthropic.APIConnectionError) as e:
             last_error = e
