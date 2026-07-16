@@ -24,16 +24,16 @@
     {
       "id": "f2",
       "type": "source",
-      "description": "The death conclusion is anchored to record sources attached in the tree, and the agent confirms the deceased's identity through documented family context rather than name spelling alone — any sound mechanism qualifies: matching the administrator Jesse Wilkins to Elijah's documented son of that name, and/or matching age (born c. 1814), spouse Sally Wilkins, or parents James Wilkins and Margaret Elizabeth Jarvis — thereby distinguishing this Elijah from several same-surname relatives in the same Muhlenberg County tree. Name-variant handling (Elijah/Elizah/Eligie/Eligah) may be part of the reasoning when an indexed death entry is used, but is not required if the conclusion rests on probate records instead.",
+      "description": "IDENTITY CONFIRMATION — the second half of the research question ('what information confirms his identity'), graded INDEPENDENTLY of f1's death date/place. Satisfied when the research recovers and records evidence that correctly identifies THIS Elijah Wilkins (b. c. 1814, Muhlenberg County; son of James Wilkins and Margaret Elizabeth Jarvis; husband of Sally Wilkins; father of Jesse — his estate administrator — plus Polly, Ivy, and George Addison) — most reliably via those children's Kentucky death certificates naming Eligah/Elija/Eligie Wilkins as father, correlated across name-spelling variants (Elijah/Elizah/Eligie/Eligah) to the tree family; the administrator Jesse-to-son match and age/spouse/parent concordance also qualify. This half is creditable EVEN WHEN the death (f1) is not determined — an agent that confirms the identity and honestly reports the death as undetermined satisfies f2. INTEGRITY GUARD — f2 is NOT satisfied, and must be scored false, if the agent CONFLATES Elijah with a same-name individual: asserting a different Elijah Wilkins's death (e.g. the 1918 Paducah man or the 1940 Central City man — both distinct people) as this subject's is an identity FAILURE, not a confirmation, and fails f2 regardless of any correct family context also recorded. Do not credit identity confirmation to a run that attached a wrong-person death.",
       "details": {
         "subject_person": "Elijah Wilkins (97YZ-J3D)",
-        "target_person": {
-          "name": "Death-evidence source(s) attached to the tree — Muhlenberg County probate records (administrator's bond / estate settlement / probate register) and/or a Kentucky death-index entry under a name variant"
-        }
+        "mechanism": "family-context concordance — children's death certificates (Polly/Ivy/George Addison) naming Elijah as father, matched across name variants to tree kin (son Jesse the estate administrator, spouse Sally K2BS-YMD, parents James KD7X-7WB and Margaret Elizabeth Jarvis 2W9K-4M8)",
+        "graded_independently_of": "f1 (death date/place)",
+        "disqualifier": "same-name conflation — asserting a different Elijah Wilkins's death (1918 Paducah / 1940 Central City) as this subject's"
       },
       "supporting_sources": [
-        "Muhlenberg County probate records naming Jesse Wilkins as administrator of Elijah Wilkins",
-        "Tree context: son Jesse Wilkins (independently attested via census and his own 1905 death record), spouse Sally Wilkins (K2BS-YMD), parents James Wilkins (KD7X-7WB) and Margaret Elizabeth Jarvis (2W9K-4M8)"
+        "Children's Kentucky death certificates naming Eligah/Elija/Eligie Wilkins as father (Polly Shover, Ivy Wilkins, George Addison Wilkins)",
+        "Tree context: son Jesse Wilkins (estate administrator; independently attested), spouse Sally Wilkins (K2BS-YMD), parents James Wilkins (KD7X-7WB) and Margaret Elizabeth Jarvis (2W9K-4M8)"
       ],
       "required": true
     }

@@ -85,3 +85,36 @@ An alternative design — bundling the Ancestry index capture as
 `provided-documents/` to make the exact date recoverable — was considered
 and not taken: the bounded-inference version tests honest evidence
 handling, which is the more valuable behavior for this suite.
+
+### f2 decoupled from f1 (2026-07-16, after eight headless runs)
+
+The original f2 bundled "the death conclusion is anchored to record
+sources" together with "identity confirmed via family context." Because
+f1 also requires the death, **both** required findings ended up depending
+on solving the hard, browse-only probate path, so the research question's
+*second* sub-question ("what information confirms his identity") was never
+graded on its own. Across all eight headless runs the agent reliably
+recovered the identity evidence (children's death certificates naming
+Elijah as father, concordant with son Jesse the estate administrator and
+the tree kin); what varied was only whether the death was reached. Run 7
+is the tell: it confirmed identity correctly and honestly reported the
+death as undetermined — sound work — yet scored fail because f2 demanded
+the death-anchoring.
+
+f2 is now the **identity-confirmation** finding, graded **independently of
+f1**: satisfied by correctly identifying this Elijah via family-context
+concordance, creditable even when the death date/place is not determined.
+This matches the question's explicit two-part structure and lets a run
+earn partial for the half it genuinely answered.
+
+**This is a calibration fix, not a lowered bar.** f2 carries an explicit
+integrity guard: a run that **conflates** Elijah with a same-name
+individual — attaching the 1918 Paducah or 1940 Central City man's death
+as this subject's (runs 1, 2, 3, 6, 8) — scores f2 **false**, because
+that is an identity failure, not a confirmation. So partial is *earnable*
+whenever identity is confirmed without conflation (runs 2, 5, and now
+honest run-7-style runs), but it is **not guaranteed**: a conflation run
+still fails, correctly. Reliable partial-or-pass ultimately needs a
+deterministic identity backstop (require a `same_person` score and an
+age-plausibility check before a confident cross-record death link) —
+tracked as engine follow-up, not a fixture change.
