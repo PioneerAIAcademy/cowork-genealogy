@@ -1,0 +1,66 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine the date and place of death of Elijah Wilkins (b. c. 1814, Muhlenberg County, Kentucky), last documented alive in the 1870 census",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-16",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": ["none"],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Elijah Wilkins (b. c. 1814, Muhlenberg County, Kentucky) die?",
+      "rationale": "The census trail goes cold after 1870. No Kentucky death certificate is expected (statewide registration began 1911, decades after his likely death); the county estate administration is the primary death evidence.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-16",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "probate",
+          "jurisdiction": "Muhlenberg County, Kentucky",
+          "date_range": "1870-1890",
+          "repository": "FamilySearch",
+          "rationale": "With no death certificate expected pre-1911, the county estate administration (administrator's bond, settlement) brackets the death and is the primary evidence. Kentucky Probate Records, 1727-1990 covers Muhlenberg.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
