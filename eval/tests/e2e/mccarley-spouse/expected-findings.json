@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Moses J McCarley Sr's wife was Elizabeth Patton, born about 1761 in Kentucky and died 1832 in Owen County, Indiana. She was the mother of his children. (The marriage index abbreviates her surname as 'Patt'.)",
+      "details": {
+        "subject_person": { "name": "Moses J McCarley" },
+        "relation": "spouse",
+        "target_person": { "name": "Elizabeth Patton", "birth": "about 1761, Kentucky" }
+      },
+      "supporting_sources": [
+        "Kentucky, County Marriages, 1786-1965 — marriage of Moses McCarley and Elizabeth Patt(on), 24 July 1792, Lincoln County, Kentucky.",
+        "Records of the couple's children naming their mother."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Moses J McCarley Sr married Elizabeth Patton on 24 July 1792 in Lincoln County, Kentucky.",
+      "details": {
+        "subject_person": { "name": "Moses J McCarley" },
+        "fact_type": "Marriage",
+        "date": "24 July 1792",
+        "place": "Lincoln, Kentucky, United States"
+      },
+      "supporting_sources": [
+        "Kentucky, County Marriages, 1786-1965, entry for Moses McCarley and Elizabeth Patt(on), 24 Jul 1792, Lincoln County, Kentucky."
+      ],
+      "required": true
+    }
+  ]
+}

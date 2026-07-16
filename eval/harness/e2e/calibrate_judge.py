@@ -145,6 +145,7 @@ def grade_case(
             judge_output,
             expected_findings=case["expected_findings"],
             final_tree=case["final_tree"],
+            subject_person_ids=case.get("subject_person_ids"),
         )
     except Exception as e:  # noqa: BLE001 — record, don't abort the sweep
         result.error = f"{type(e).__name__}: {e}"
@@ -377,12 +378,22 @@ def load_annotated_runs(
             human["notes"] = notes
         if "proof_quality_score" in ann:
             human["proof_quality_score"] = ann["proof_quality_score"]
+        # Subject id(s) for the avoid-guard's subject exemption — a real
+        # source_pid plus final_research's project.subject_person_ids.
+        subject_ids: set[str] = set()
+        src = fixture.get("source_pid")
+        if src and "TODO" not in str(src):
+            subject_ids.add(str(src))
+        if final_research:
+            for sid in (final_research.get("project") or {}).get("subject_person_ids") or []:
+                subject_ids.add(str(sid))
         cases.append({
             "id": f"{slug}/{stem}",
             "research_question": fixture.get("researcher_question", ""),
             "expected_findings": expected,
             "final_tree": final_tree,
             "final_research": final_research,
+            "subject_person_ids": sorted(subject_ids),
             "human": human,
         })
 

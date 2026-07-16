@@ -1,0 +1,13 @@
+{
+  "annotator": "promise",
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Tree birth ~1852 vs expected ~1853 — within birth-estimate tolerance; father linked I1 -> KD96-TV2.",
+    "f3": "Wrong-family 'Hole' namesake (I3 Kristofer Kristofersen Hole) present in the tree as a census stub but NOT linked as a parent of KD96-TV2; true parents attached under patronymics (Christophersen/Pedersdtr). Correctly declined the trap."
+  }
+}

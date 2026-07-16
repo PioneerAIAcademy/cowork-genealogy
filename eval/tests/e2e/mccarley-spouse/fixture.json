@@ -1,0 +1,19 @@
+{
+  "id": "mccarley-spouse",
+  "name": "Moses J McCarley Sr — spouse",
+  "genre": "strip",
+  "source_pid": "L7P6-3TT",
+  "captured": "2026-07-14",
+  "researcher_question": "Who was the spouse of Moses J McCarley Sr, who was born 17 January 1767 and died 9 April 1844?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1790s",
+    "geography": "US-KY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Moses J McCarley Sr (b. 17 Jan 1767, d. 9 Apr 1844 Owen Co., Indiana) married Elizabeth Patton (b. ~1761 KY, d. 1832 IN) on 24 Jul 1792 in Lincoln County, Kentucky. Stripped: spouse Elizabeth Patton, the couple/marriage relationship, and the three Kentucky county-marriage records; also removed a thin stray second-spouse stub ('Boyd', no marriage fact or children) so no spouse remains. Left as anchors: Moses's parents, his ten children (linked to him as father), the 1810 census, Find a Grave, and his birth/death. Spouse is recoverable from the indexed 1792 Lincoln Co. KY marriage record (top hit, confidence 4) and from the children's records naming their mother."
+}
