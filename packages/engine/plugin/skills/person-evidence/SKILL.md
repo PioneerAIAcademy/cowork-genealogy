@@ -538,8 +538,16 @@ When multiple candidates share the same name in the same area:
 - **Rationale is mandatory.** Every link must explain WHY. "Name
   matches" is insufficient — include age, place, household context,
   relationship fit.
-- **Relationship assertions link to multiple persons.** Always
-  create links for both parties in a relationship assertion.
+- **Relationship assertions link to multiple persons — but "link" means
+  the `pe_` entries, not a tree relationship.** Create a `pe_` link for
+  each party a relationship assertion names (a marriage record → one `pe_`
+  for each spouse; a will naming an heir → one for the testator and one for
+  the heir). Do **not** create the `Couple`/`ParentChild` relationship
+  itself, and do **not** write the couple-event fact (Marriage, Divorce)
+  here — person-evidence owns stub `persons` and `pe_` links only. The
+  relationship and its facts are written later by proof-conclusion →
+  tree-edit, which own the `relationships` section (see also "proof-conclusion
+  populates them later" under stub creation).
 
 ## Re-invocation behavior
 
