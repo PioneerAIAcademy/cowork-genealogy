@@ -1,0 +1,9 @@
+# Git hooks must keep LF endings on every platform.
+#
+# Git for Windows defaults core.autocrlf=true, which would otherwise check these
+# out with CRLF. A `#!/bin/sh` script with CRLF endings does not run: the
+# trailing \r turns `exit 0` into `exit $'0\r'` ("numeric argument required"),
+# which exits 255. For commit-msg that non-zero exit makes git REJECT the
+# commit — inverting the hook's "warn, never block" contract for exactly the
+# Windows teammates it is meant to help.
+scripts/git-hooks/** text eol=lf
