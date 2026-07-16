@@ -772,10 +772,9 @@ research in Cowork.** That is also the *easiest* fuel: the seeded project direct
 
 The design and rationale live in
 [`docs/plan/gated-skill-improvement-slice.md`](plan/gated-skill-improvement-slice.md);
-this is the operational how-to. The gate (step 6, `make gate-skill`) and the
-improver's edit budget (step 5) **landed in PR 1**; the mining step (step 3) uses
-the **`mine-unit-test`** skill (`.claude/skills/mine-unit-test/`), shipped in this
-PR — so the whole loop runs today.
+this is the operational how-to. **Every step below runs today** — the gate
+(`make gate-skill`, step 6), the improver's ≤3-edit budget (step 5), and the
+`mine-unit-test` skill (`.claude/skills/mine-unit-test/`, step 3).
 
 **Preconditions for the live Cowork steps (1 and 7):** be logged in to
 FamilySearch (`make e2e-login`, once a day) and have the genealogy tools installed
