@@ -759,6 +759,12 @@ test plus a `SKILL.md` edit**, measured before you adopt it. This section is tha
 bridge: how an issue you *notice while researching* becomes a committed fix that
 can't silently come back.
 
+> **New to this loop? Read the ELI5 walkthrough first:**
+> [`e2e-testing-example.md`](e2e-testing-example.md) follows one concrete example
+> — a citation missing its page/line — end to end, calling out which of **Cowork /
+> Claude Code / terminal** each step happens in. The section below is the terse
+> reference behind that story.
+
 In practice you rarely catch this as a *recorded* e2e failure — teams fix skills
 before the PR — so the real trigger is a **human noticing something wrong during
 research in Cowork.** That is also the *easiest* fuel: the seeded project directory
