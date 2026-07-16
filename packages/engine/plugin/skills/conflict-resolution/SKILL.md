@@ -86,10 +86,17 @@ refinement) as a next step, then proceed with what is recorded.
 Look for:
 
 **Fact conflicts:**
-- Same person, same fact_type, different values. Compare assertions
-  linked to the same person_id via person_evidence.
-- Use `structured_value` for programmatic comparison where available
-  (birth year as number, place as string).
+- Same person, same fact_type **and same attribute**, different values.
+  Compare assertions linked to the same person_id via person_evidence.
+  Event place/date are attributes of the one event fact, so a `birth`
+  place-claim (`place` set) and a `birth` date-claim (`date` set) share
+  the `birth` fact_type but are **not** a conflict — compare place with
+  place and date with date. A real birthplace conflict is two `birth`
+  assertions with different `place` values; a birth-year conflict is two
+  with different `date` values.
+- Use `place`/`standard_place`, `date`, and `structured_value` for
+  programmatic comparison (birth year as date/number, place as string) —
+  not the free-text `value`.
 
 **Identity conflicts:**
 - Timeline impossibilities (from the timeline skill) — two events
