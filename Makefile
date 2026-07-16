@@ -104,22 +104,40 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
 	@scripts/link-worktree.sh
 
-# Symlink our post-checkout hook into the shared .git/hooks (covers every
-# worktree of this clone). Opt-in and per-clone: it touches only local .git
-# state, never core.hooksPath, so it can't disable husky/other hook tooling and
-# is invisible to teammates who don't run it. Refuses to clobber a pre-existing
-# non-symlink hook.
+# Install our shared git hooks into the shared .git/hooks (covers every worktree
+# of this clone): post-checkout auto-links shared files into new worktrees;
+# commit-msg warns when a commit has no human Co-authored-by trailer. Opt-in and
+# per-clone: it touches only local .git state, never core.hooksPath, so it can't
+# disable husky/other hook tooling and is invisible to teammates who don't run
+# it. Refuses to clobber a hook that isn't ours.
+#
+# We copy scripts/git-hooks/shim.sh (a stub that re-execs the tracked hook)
+# rather than symlink the hook itself, so InstallHooks.bat can do the identical
+# thing on Windows, where file symlinks need admin rights. See shim.sh for why.
+# Keep the two installers in step.
+#
+# The `rm -f` before `cp` is load-bearing, not tidiness: upgrading from the old
+# symlink install, `cp` would follow the symlink and write the shim straight into
+# the tracked scripts/git-hooks/<hook> it points at.
 .PHONY: install-hooks
-install-hooks: ## Install the post-checkout hook so new worktrees auto-link shared files (opt-in, per-clone)
+install-hooks: ## Install shared git hooks (post-checkout, commit-msg) — opt-in, per-clone
 	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
 	 main=$$(dirname "$$common"); \
-	 dst="$$common/hooks/post-checkout"; \
-	 if [ -e "$$dst" ] && [ ! -L "$$dst" ]; then \
-	   echo "install-hooks: $$dst already exists and is not a symlink — not overwriting. Merge manually." >&2; exit 1; \
-	 fi; \
+	 shim="$$main/scripts/git-hooks/shim.sh"; \
+	 [ -f "$$shim" ] || { echo "install-hooks: $$shim not found — check out a branch that has it." >&2; exit 1; }; \
 	 mkdir -p "$$common/hooks"; \
-	 ln -sfn "$$main/scripts/git-hooks/post-checkout" "$$dst"; \
-	 echo "✓ installed post-checkout hook -> $$dst"
+	 for hook in post-checkout commit-msg; do \
+	   dst="$$common/hooks/$$hook"; \
+	   if [ -e "$$dst" ] || [ -L "$$dst" ]; then \
+	     if [ ! -L "$$dst" ] && ! grep -q 'cowork-genealogy managed hook shim' "$$dst" 2>/dev/null; then \
+	       echo "install-hooks: $$dst already exists and is not ours — not overwriting. Merge manually." >&2; exit 1; \
+	     fi; \
+	     rm -f "$$dst"; \
+	   fi; \
+	   cp "$$shim" "$$dst"; \
+	   chmod +x "$$dst"; \
+	   echo "✓ installed $$hook hook -> $$dst"; \
+	 done
 
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
@@ -268,6 +286,21 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
+
+.PHONY: gate-skill
+gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
+	# Component A of the E->A->B loop (docs/plan/gated-skill-improvement-slice.md).
+	# Runs the mined motivating test + the skill's holdout tests on your working-tree
+	# candidate (one side, mock-backed) and compares to the incumbent scores from the
+	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
+	# step 4, with human .ann corrections overlaid. Prints a per-dimension comparison
+	# + a LOOKS GOOD / NEEDS YOUR EYES / INCONCLUSIVE signal. Measurement only — a
+	# person adopts. Writes no run-logs, needs no git, never mutates the tree. Apply
+	# the improver's edits to the working-tree SKILL.md FIRST, then gate; DIMENSION
+	# names the failing dimension the edit targets (optional).
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007" >&2; exit 1; }
+	@test -n "$(TEST)" || { echo "ERROR: set TEST (the mined test id), e.g. make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007" >&2; exit 1; }
+	cd eval/harness && uv run python skill_gate.py --skill $(SKILL) --test $(TEST) $(if $(DIMENSION),--dimension "$(DIMENSION)",)
 
 .PHONY: eval-timings
 eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]

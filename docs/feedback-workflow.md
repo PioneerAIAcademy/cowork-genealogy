@@ -183,15 +183,15 @@ cd ~/cowork-genealogy/eval/app && npm run dev
 ```
 
 Open the URL the dev server prints. Find the new test in the list
-(marked DRAFT). Edit it:
+(a first cut — the files are schema-clean, so they run as-is). Refine it:
 
 - **Tighten the `judge_context` bullets** so they're specific
   assertions, not vague hopes.
 - **Prune the scenario** to the minimum that exhibits the bug.
 - **Refine the MCP fixture** `args` predicates and `response`
   placeholders if the auto-extracted values look off.
-- **Flip `pii_review_required` to `false`** after you've reviewed
-  the scenario for personal data that needs generalizing (names →
+- **Review the scenario for PII** before committing — the auto-scrub is
+  best-effort, so generalize anything that slipped through (names →
   `Person A`, exact dates → decade, specific places → county).
 
 ### 6. Run the test

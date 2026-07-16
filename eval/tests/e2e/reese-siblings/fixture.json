@@ -1,0 +1,19 @@
+{
+  "id": "reese-siblings",
+  "name": "Mary Reese — siblings",
+  "genre": "strip",
+  "source_pid": "G9VJ-1WS",
+  "captured": "2026-07-15",
+  "researcher_question": "Who were the siblings of Mary Reese, born 1880 in New York and died 22 June 1933?",
+  "tags": {
+    "question_type": "siblings",
+    "era": "1880s",
+    "geography": "US-NY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Mary Reese (b. 1880 NY, d. 22 Jun 1933 Queens NY) was a daughter of Lewis Joseph Reese and Laura Amelia Scott. Her nine siblings: Clarence (1869), Elizabeth Jane (1875), Lewis (1878), Lora A (1883), Martin Joseph (1885), Jenny (1887), Fanny (1888), Richard (1890), Emily Florence (1892) Reese. Stripped all nine sibling persons + their parent links. Anchors kept: Mary and her parents. Reachability confirmed: the 1880 census 'Household of Louis Reese' lists the early siblings (Clarence, Elizabeth/Lizzie, Lewis); the 1892 NY state and 1900 censuses cover the later ones. Required = the 3 in the 1880 census; bonus = the 6 born after 1880."
+}
