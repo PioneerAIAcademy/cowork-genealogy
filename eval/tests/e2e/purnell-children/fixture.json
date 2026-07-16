@@ -1,0 +1,19 @@
+{
+  "id": "purnell-children",
+  "name": "Thomas Purnell — children (1810s-1820s Trowbridge, Wiltshire)",
+  "genre": "strip",
+  "source_pid": "K2X7-2KZ",
+  "captured": "2026-07-16",
+  "researcher_question": "Who were the children of Thomas Purnell of Trowbridge, Wiltshire?",
+  "tags": {
+    "question_type": "children",
+    "era": "1810s-1820s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Strip fixture. Removed all 4 children (Mary chr.1816, Elizabeth chr.1823, Thomas chr.1823, Job b.~1826) as PERSONS, cascading their 8 ParentChild links to both Thomas (K2X7-2KZ) and wife Amy Newman; also removed the 6 child-enumerating baptism sources. Retained: parents (Job Purnall + Mary), spouse Amy Newman, marriage 1816, residences, burial 1826, and Thomas's own christening as anchors. All 4 children recoverable from Wiltshire parish baptism registers naming Thomas as father (England, Births and Christenings / Wiltshire Church Records), corroborated by 1841/1861 census; Job further confirmed by later records (job-purnell fixtures). NOTE the tree spells the elder generation 'Purnall' but children 'Purnell'. Subject died young (1826), so no census lists his household — evidence is baptisms, not a household census."
+}

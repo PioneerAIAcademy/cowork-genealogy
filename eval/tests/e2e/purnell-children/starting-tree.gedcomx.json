@@ -1,0 +1,348 @@
+{
+  "persons": [
+    {
+      "id": "K2X7-2KZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Thomas",
+          "surname": "Purnall"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1796",
+          "standard_date": "1796",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "15 January 1826",
+          "standard_date": "15 Jan 1826",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "26 June 1796",
+          "standard_date": "26 Jun 1796",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England"
+        },
+        {
+          "id": "2ab1edbb-8833-42e8-8e64-83352a04c86a",
+          "type": "Baptism",
+          "date": "26 Jun 1796",
+          "standard_date": "26 Jun 1796",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "15 January 1826",
+          "standard_date": "15 Jan 1826",
+          "place": "St James, Trowbridge, Wiltshire, England UK",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "258a427d-04b6-432f-ba69-49f867c5d692",
+          "type": "Residence",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England"
+        },
+        {
+          "id": "00e72a2c-853c-4813-a447-e63eb89816fe",
+          "type": "Residence",
+          "place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "K2TX-8C3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Job",
+          "surname": "Purnall"
+        }
+      ],
+      "facts": [
+        {
+          "id": "625b9d6f-fc44-4bd1-ab9b-40838c73db76",
+          "type": "Christening",
+          "date": "16 JUL 1769",
+          "standard_date": "16 Jul 1769",
+          "place": "Trowbridge,Wiltshire,England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "16 July 1769",
+          "standard_date": "16 Jul 1769",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "f3db62f6-703e-4e9c-87eb-3734af789638",
+          "type": "Baptism",
+          "date": "16 Jul 1769",
+          "standard_date": "16 Jul 1769",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "5 August 1833",
+          "standard_date": "5 Aug 1833",
+          "place": "Studley in Trowbridge, Wiltshire, England",
+          "standard_place": "Studley in Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "26 September 1833",
+          "standard_date": "26 Sep 1833",
+          "place": "St. James Parish Church, Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "6d959769-4c21-4f4b-ae2f-642d459cd439",
+          "type": "Residence",
+          "place": "Trowbridge",
+          "standard_place": "New Hope, Bucks, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "KPCS-958",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Amy",
+          "surname": "Newman"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1793",
+          "standard_date": "1793",
+          "place": "Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "14 Jul 1793",
+          "standard_date": "14 Jul 1793",
+          "place": "Saint James, Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "ff26128d-d08a-40c2-be22-2717d65b84e7",
+          "type": "Residence",
+          "date": "25 Feb 1816",
+          "standard_date": "25 Feb 1816",
+          "place": "Trowbridge",
+          "standard_place": "Trowbridge, Preston, West Virginia, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "11 March 1863",
+          "standard_date": "11 Mar 1863",
+          "place": "County Lunatic Asylam, Devizes, Wiltshire, England UK",
+          "standard_place": "Devizes, Wiltshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "GHCB-KPH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Mary",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "e6fb94a0-a4a5-4149-9007-d774ff8528d8",
+          "type": "Birth",
+          "date": "1756",
+          "standard_date": "1756",
+          "place": "England",
+          "standard_place": "England"
+        },
+        {
+          "id": "6f7e7ca8-6c78-467d-bd6d-78d14077ef37",
+          "type": "Burial",
+          "date": "17 August 1831",
+          "standard_date": "17 Aug 1831",
+          "place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "bb281e38-3026-4b33-b7a1-3c5ea7419bbc",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K2X7-2KZ",
+      "person2": "KPCS-958",
+      "facts": [
+        {
+          "id": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
+          "type": "Marriage",
+          "date": "25 FEB 1816",
+          "standard_date": "25 Feb 1816",
+          "place": "Trowbridge,Wiltshire,England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "b894a2e8-ce9c-46d9-a5e6-a0dd277b8076",
+          "type": "Marriage",
+          "date": "25 Feb 1816",
+          "standard_date": "25 Feb 1816",
+          "place": "Trowbridge, Wiltshire, England, United Kingdom",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        },
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "Abt 1822",
+          "standard_date": "Abt 1822",
+          "place": "of Trowbridge, Wiltshire, England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "K2TX-8C3",
+      "person2": "GHCB-KPH",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "27 APR 1794",
+          "standard_date": "27 Apr 1794",
+          "place": "Trowbridge,Wiltshire,England",
+          "standard_place": "Trowbridge, Wiltshire, England, United Kingdom"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K2TX-8C3",
+      "child": "K2X7-2KZ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GHCB-KPH",
+      "child": "K2X7-2KZ",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "WHTV-JVF",
+      "title": "Thomas Parnell, \"England, Wiltshire, Church Records, 1518-1990\"",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DSR-NJT1 : Sat Mar 09 04:40:24 UTC 2024), Entry for Mary Parnell and Thomas Parnell, 1 September 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DSR-NJY9"
+    },
+    {
+      "id": "WHTV-J7K",
+      "title": "Thomas Purnel, \"England, Wiltshire, Church Records, 1518-1990\"",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D3V-WQDN : Wed Sep 24 20:59:50 UTC 2025), Entry for Hannah Sims and James Sims, 22 Sep 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D3V-WQDP"
+    },
+    {
+      "id": "WHTV-JSB",
+      "title": "Thomas Purnel, \"England, Wiltshire, Church Records, 1518-1990\"",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D3V-6N75 : Tue Sep 17 10:06:28 UTC 2024), Entry for Thomas Prunel and Thomas Purnel, 22 Sep 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D3V-6N7R"
+    },
+    {
+      "id": "Q6TB-KH6",
+      "title": "Thomas Purnell, \"England, Wiltshire, Church Records, 1518-1990\"",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D3K-YMGX : Tue Sep 17 09:37:42 UTC 2024), Entry for Thomas Purnell and Amy Newman, 25 Feb 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D3K-YMGX"
+    },
+    {
+      "id": "32F6-VKZ",
+      "title": "Thomas Purnall, \"England, Wiltshire, Church Records, 1518-1990\"",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DSB-GJPD : Sun Mar 10 23:53:15 UTC 2024), Entry for Thomas Purnall and Job Purnall, 26 June 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DSB-GJPD"
+    },
+    {
+      "id": "32F6-VSZ",
+      "title": "Thomas Purnall, \"England, Wiltshire, Church Records, 1518-1990\"",
+      "citation": "\"England, Wiltshire, Church Records, 1518-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DSR-PVZ9 : Fri Mar 08 18:15:40 UTC 2024), Entry for Thomas Purnall and Job Purnall, 26 June 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DSR-PVZ9"
+    },
+    {
+      "id": "9B47-6CD",
+      "title": "Thos. Purnell, \"England, Deaths and Burials, 1538-1991\"",
+      "citation": "\"England, Deaths and Burials, 1538-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:J8JT-HBW : Sun Apr 26 11:45:57 UTC 2026), Entry for Thos. Purnell, 15 Jan 1826.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J8JT-HBW"
+    },
+    {
+      "id": "9B47-ZWB",
+      "title": "Thomas Purnall, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:J9X2-5TY : 2 May 2026), Thomas Purnall, 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J9X2-5TY"
+    },
+    {
+      "id": "9B47-CC7",
+      "title": "Thomas Purnall, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:J9XL-PQJ : 2 May 2026), Thomas Purnall, 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:J9XL-PQJ"
+    },
+    {
+      "id": "9B47-CQ5",
+      "title": "Thomas Purnall, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NR5Q-7DD : 5 February 2023), Thomas Purnall, 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NR5Q-7DD"
+    },
+    {
+      "id": "9B47-HT2",
+      "title": "Thomas Purnall, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NR53-2F6 : 5 February 2023), Thomas Purnall, 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NR53-2F6"
+    }
+  ]
+}

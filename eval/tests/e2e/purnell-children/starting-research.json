@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_purnell_children",
+    "objective": "Who were the children of Thomas Purnell of Trowbridge, Wiltshire?",
+    "subject_person_ids": [
+      "K2X7-2KZ"
+    ],
+    "status": "active",
+    "created": "2026-07-16",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

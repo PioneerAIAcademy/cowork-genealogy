@@ -1,0 +1,86 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mary Purnell was a daughter of Thomas Purnell (of Trowbridge, Wiltshire) and his wife Amy (Newman). She was christened 1 September 1816 at Trowbridge, Wiltshire, and her baptism names Thomas as her father.",
+      "details": {
+        "subject_person": {
+          "name": "Thomas Purnell",
+          "pid": "K2X7-2KZ"
+        },
+        "relation": "child",
+        "target_person": {
+          "name": "Mary Purnell",
+          "birth": "christened 1 September 1816, Trowbridge, Wiltshire, England"
+        }
+      },
+      "supporting_sources": [
+        "England, Births and Christenings, 1538-1975 / Wiltshire parish register — baptism of Mary Purnell, 1 Sep 1816, Trowbridge, father Thomas Purnell."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Elizabeth Purnell was a daughter of Thomas Purnell (of Trowbridge, Wiltshire) and his wife Amy (Newman). She was christened 6 August 1823 at Trowbridge, Wiltshire (born about 1822), and her baptism names Thomas as her father.",
+      "details": {
+        "subject_person": {
+          "name": "Thomas Purnell",
+          "pid": "K2X7-2KZ"
+        },
+        "relation": "child",
+        "target_person": {
+          "name": "Elizabeth Purnell",
+          "birth": "christened 6 August 1823, Trowbridge, Wiltshire, England"
+        }
+      },
+      "supporting_sources": [
+        "England, Births and Christenings, 1538-1975 / Wiltshire parish register — baptism of Elizabeth Purnell, 6 Aug 1823, Trowbridge, father Thomas Purnell.",
+        "England and Wales Census, 1841 — Elizabeth Purnell, Trowbridge."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Thomas Purnell (the younger) was a son of Thomas Purnell (of Trowbridge, Wiltshire) and his wife Amy (Newman). He was christened 6 August 1823 at Trowbridge, Wiltshire, and his baptism names Thomas (the elder) as his father.",
+      "details": {
+        "subject_person": {
+          "name": "Thomas Purnell",
+          "pid": "K2X7-2KZ"
+        },
+        "relation": "child",
+        "target_person": {
+          "name": "Thomas Purnell the younger",
+          "birth": "christened 6 August 1823, Trowbridge, Wiltshire, England"
+        }
+      },
+      "supporting_sources": [
+        "England, Births and Christenings, 1538-1975 / Wiltshire parish register — baptism of Thomas Purnell, 6 Aug 1823, Trowbridge, father Thomas Purnell."
+      ],
+      "required": true
+    },
+    {
+      "id": "f4",
+      "type": "relationship",
+      "description": "Job Purnell was a son of Thomas Purnell (of Trowbridge, Wiltshire) and his wife Amy (Newman), born about 1826. His baptism in the Wiltshire parish registers names Thomas as his father.",
+      "details": {
+        "subject_person": {
+          "name": "Thomas Purnell",
+          "pid": "K2X7-2KZ"
+        },
+        "relation": "child",
+        "target_person": {
+          "name": "Job Purnell",
+          "birth": "about 1826, Trowbridge, Wiltshire, England"
+        }
+      },
+      "supporting_sources": [
+        "England, Births and Christenings, 1538-1975 — Job Purnell, father Thomas Purnell (Wiltshire).",
+        "Later records for Job Purnell of Trowbridge (marriage 1844, 1851 census) corroborate the identity."
+      ],
+      "required": true
+    }
+  ]
+}
