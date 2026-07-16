@@ -106,11 +106,14 @@ For each record type, assign a digitization level using the table in `references
 
 Use the template in `references/output-format.md`. Fill every section with data from tool results. Consult the topical breadth checklist in `references/locality-broad-context.md`. Present the guide to the user, then persist it (Step 6).
 
-### 6. Persist the locality
+### 6. Persist the locality (only inside a research project)
 
-Write one `localities` entry so the knowledge survives for `research-plan` (and the
-Research Viewer) instead of being discarded. This is the whole point of the survey —
-an un-persisted guide helps only the current turn. Use `research_append`:
+**When running inside a research project** — a `research.json` exists at the project
+path (e.g. `locality-guide` was invoked by `research-plan`) — write one `localities`
+entry so the knowledge survives for `research-plan` (and the Research Viewer) instead
+of being discarded. This is the whole point of the survey — an un-persisted guide
+helps only the current turn. **If there is no project** (standalone locality Q&A with
+no `research.json`), skip this step: just present the guide. Use `research_append`:
 
 ```
 research_append({
@@ -170,6 +173,6 @@ Do not put the applied per-search decision here; that goes in a plan item's
 
 ## Re-invocation behavior
 
-**Writes:** one `localities[]` entry per place-jurisdiction (via `research_append`). Does not modify `tree.gedcomx.json`.
+**Writes** (only when a research project is present): one `localities[]` entry per place-jurisdiction (via `research_append`). Standalone Q&A (no `research.json`) writes nothing. Never modifies `tree.gedcomx.json`.
 
 **On repeat invocation for the same place:** update the existing `loc_` entry (`op: "update"` with its `entryId`) rather than appending a duplicate — supersede-not-delete, so the knowledge is refreshed in place. A genuinely new place gets a new `loc_` entry.
