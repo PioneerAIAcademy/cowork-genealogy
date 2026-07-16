@@ -269,6 +269,21 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
+.PHONY: gate-skill
+gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
+	# Component A of the E->A->B loop (docs/plan/gated-skill-improvement-slice.md).
+	# Runs the mined motivating test + the skill's holdout tests on your working-tree
+	# candidate (one side, mock-backed) and compares to the incumbent scores from the
+	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
+	# step 4, with human .ann corrections overlaid. Prints a per-dimension comparison
+	# + a LOOKS GOOD / NEEDS YOUR EYES / INCONCLUSIVE signal. Measurement only — a
+	# person adopts. Writes no run-logs, needs no git, never mutates the tree. Apply
+	# the improver's edits to the working-tree SKILL.md FIRST, then gate; DIMENSION
+	# names the failing dimension the edit targets (optional).
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007" >&2; exit 1; }
+	@test -n "$(TEST)" || { echo "ERROR: set TEST (the mined test id), e.g. make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007" >&2; exit 1; }
+	cd eval/harness && uv run python skill_gate.py --skill $(SKILL) --test $(TEST) $(if $(DIMENSION),--dimension "$(DIMENSION)",)
+
 .PHONY: eval-timings
 eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
 	# Reads the timing instrumentation already in the run logs — does NOT
