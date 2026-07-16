@@ -335,6 +335,15 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
 
+.PHONY: e2e-thinking-probe
+e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in ~1 min (needs ANTHROPIC_API_KEY)
+	# Replays the exact delegation message that froze the frederick-munson run
+	# against sonnet-5 under three thinking configs (32k / off / 4k) with a
+	# stubbed tool loop, and reports which RAN AWAY vs ACTED. A one-turn API
+	# probe instead of a 15-min e2e run — settles the thinking-vs-model question.
+	# No MCP/FamilySearch calls; the API key comes from the shell or eval/.env.
+	cd eval/harness && uv run python -m e2e.try_record_extractor_thinking $(if $(MODEL),--model $(MODEL),)
+
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
@@ -343,8 +352,16 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
+	# Reasoning is pinned so runs are reproducible (see the runlog's usage block:
+	# agent_model / subagent_model_override / effort_level / max_output_tokens / cli_version).
+	# Override:
+	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
+	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
+	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
+	# A/B these to find what clears a runaway-thinking subagent freeze
+	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
