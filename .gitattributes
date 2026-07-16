@@ -1,0 +1,16 @@
+# Shell scripts must keep LF endings on every platform.
+#
+# Git for Windows defaults core.autocrlf=true, so without this these files check
+# out with CRLF on a Windows clone — and a `#!/bin/sh` script with CRLF does not
+# run under Git Bash. The trailing \r becomes part of the last token on every
+# line: `set -eu` parses as `set -eu<CR>` ("invalid option", exit 2), `exit 0` as
+# `exit $'0\r'` ("numeric argument required", exit 255).
+#
+# Not hypothetical. The post-checkout hook runs scripts/link-worktree.sh on
+# `git worktree add`, and calls it with `|| true` so as never to fail a
+# checkout — meaning on Windows it fails *silently*, leaving the new worktree
+# with no linked node_modules or .env and no clue why.
+#
+# Extensionless scripts (git hooks) are covered separately, next to the hooks
+# themselves.
+*.sh text eol=lf
