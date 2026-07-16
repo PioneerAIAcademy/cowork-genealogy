@@ -373,3 +373,99 @@ def test_grading_tool_schema_matches_spec():
     assert set(enum_branch["enum"]) == {1, 2, 3}
     assert null_branch == {"type": "null"}
     assert item_schema["properties"]["rationale"]["minLength"] == 20
+
+
+# --- sampling / temperature pinning -------------------------------------
+
+
+class _RecordingClient:
+    """Fake Anthropic client: records create() kwargs, replays scripted responses."""
+
+    def __init__(self, responses):
+        self._responses = list(responses)
+        self.calls: list[dict] = []
+        self.messages = SimpleNamespace(create=self._create)
+
+    def _create(self, **kwargs):
+        self.calls.append(kwargs)
+        return self._responses.pop(0)
+
+
+def _usage():
+    return SimpleNamespace(
+        input_tokens=10, cache_read_input_tokens=0, output_tokens=5
+    )
+
+
+def _parseable_response():
+    tool_block = SimpleNamespace(
+        type="tool_use",
+        name="submit_grading",
+        input={"dimensions": _base_dims_with_tool_arguments_null()},
+    )
+    return SimpleNamespace(
+        content=[tool_block], stop_reason="tool_use", usage=_usage()
+    )
+
+
+def _malformed_response():
+    """A draw _extract_dimensions rejects — dimensions is not a list."""
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": "nonsense"},
+    )
+    return SimpleNamespace(
+        content=[tool_block], stop_reason="tool_use", usage=_usage()
+    )
+
+
+def _grade_with(monkeypatch, rubric, responses):
+    client = _RecordingClient(responses)
+    monkeypatch.setattr(judge, "_make_client", lambda auth: client)
+    out = judge.grade(
+        rubric=rubric,
+        judge_context=[],
+        scenario_readme="",
+        user_message="do the thing",
+        skills_invoked=[],
+        text_response="done",
+        file_changes_summary="",
+        tool_calls=[],
+        auth=SimpleNamespace(api_key="test-key"),
+    )
+    return client, out
+
+
+def test_judge_first_sample_is_temperature_pinned(sample_rubric, monkeypatch):
+    """One transcript should grade the same way run to run."""
+    client, _ = _grade_with(monkeypatch, sample_rubric, [_parseable_response()])
+    assert len(client.calls) == 1
+    assert client.calls[0]["temperature"] == 0.0
+    assert judge.JUDGE_TEMPERATURE == 0.0
+
+
+def test_judge_resample_drops_back_to_default_sampling(sample_rubric, monkeypatch):
+    """The re-sample loop recovers from a malformed draw only if the retry can
+    draw something *different*. Pinned at temperature=0 the retry would re-decode
+    the identical prompt to the identical bad output, silently turning three
+    attempts into one. Retries must therefore omit the pin.
+    """
+    client, out = _grade_with(
+        monkeypatch, sample_rubric, [_malformed_response(), _parseable_response()]
+    )
+    assert len(client.calls) == 2
+    assert client.calls[0]["temperature"] == 0.0
+    assert "temperature" not in client.calls[1]
+    assert [d["name"] for d in out.dimensions] == [
+        "Correctness",
+        "Completeness",
+        "Tool Arguments",
+    ]
+
+
+def test_create_message_omits_temperature_when_none():
+    """None omits the kwarg rather than hardcoding whatever the API default is."""
+    client = _RecordingClient([_parseable_response()])
+    judge._create_message_with_retry(
+        client=client, model="m", prefix="p", suffix="s", temperature=None
+    )
+    assert "temperature" not in client.calls[0]

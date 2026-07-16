@@ -185,6 +185,21 @@ The skill harness pins a specific model per skill via `model:` in `packages/engi
 
 `judge_model` is project-global, not per-run-versioned — bumping the judge model is a separate decision that invalidates historical comparisons.
 
+**Judge temperature.** The unit judge pins its first sample to `temperature=0`
+(`harness/judge.py::JUDGE_TEMPERATURE`) so one transcript grades the same way run
+to run. Like `judge_model`, it is project-global and not recorded per run. It was
+adopted 2026-07-16 as a deliberate trade: **grades from before that date are not
+comparable to grades after it**, because they were drawn at the API default of
+`temperature=1`. Re-sample attempts after a malformed draw intentionally fall back
+to default sampling — a pinned retry would re-decode the same bad output — so a
+re-sampled grade is unpinned; this is rare and preferred over failing the test.
+
+This pins *grading*, not *outcomes*: the skill run is still unpinned (see "Eval vs
+production parity" below), and greedy decoding narrows variance rather than
+guaranteeing determinism. The **e2e judge is not pinned and cannot be** — sampling
+parameters are removed on its Opus 4.7/4.8-family model and return a 400. Don't
+file that asymmetry as a bug.
+
 ## What This Framework Does NOT Cover
 
 - MCP tool code correctness (use Vitest in `packages/engine/mcp-server/tests/`)
@@ -197,7 +212,7 @@ The skill harness pins a specific model per skill via `model:` in `packages/engi
 The harness is deliberately *not* a perfect reproduction of how skills run in Cowork. A passing eval suite does not guarantee identical production behavior. The known divergences:
 
 - **`setting_sources=["project"]`.** Production loads `["user","project"]`. Eval omits `"user"` so a developer's `~/.claude/skills/` doesn't contaminate routing tests.
-- **No `temperature=0`.** The installed `claude-agent-sdk` doesn't expose a `temperature` field. Variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`).
+- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`). This is about the *skill run only*: the unit judge is temperature-pinned (see "Model Pinning" above), so the residual single-run jitter is the skill's behavior, not its grade.
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate.
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
 - **Concurrent execution.** Eval runs tests through a bounded thread pool *within a single invocation* (RAM-aware default ~4–8 slots; override with `--concurrency N`, or `--concurrency 1` to force serial). Tests are submitted **longest-first** (estimated from each test's `max_wall_clock_seconds` cap) so a long-pole test can't land in the last wave and stretch the makespan tail. To cover several skills, pass them to **one** invocation — `--skill a b c` (or `make eval-skill SKILL="a b c"`); each skill still writes its own releasable run log and they all share the one pool. **Still avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each spawns its own Claude Code SDK subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`); the in-process pool (one invocation, many skills) is the safe way to parallelize. The retry mechanism recovers most transient stalls.

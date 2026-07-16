@@ -190,9 +190,9 @@ statistical bake-off:
 - **One run is enough for a big fix.** A real problem is a dimension that
   fails *consistently* (a 1, not a flicker); a single run sees that.
   Don't require multiple runs to chase small score deltas you can't trust
-  — the harness has no `temperature=0`, so treat a sub-noise movement as
-  noise, not victory. (Bump `runs_per_test` only when you genuinely need
-  to measure a marginal change later.)
+  — the skill run has no `temperature=0` (only the judge is pinned), so
+  treat a sub-noise movement as noise, not victory. (Bump `runs_per_test`
+  only when you genuinely need to measure a marginal change later.)
 - **Gate on the named problem, not the mean.** The question is "did the
   dimension that was failing now pass, with nothing obvious regressing?"
   — a binary a single run answers — not "did the weighted mean rise by
