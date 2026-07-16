@@ -1,0 +1,88 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "John Laurie (Sr.) was the father of John Laurie. Born 1833 in the Gorbals, Glasgow, Lanarkshire, Scotland; an iron moulder; remained in the Glasgow area (Tradeston, Shettleston, Old Kilpatrick) through the 1901 census; died 1910. He appears as John's father on the 1859 baptism and as head of the household in which young John is enumerated in the 1861 and 1871 Scottish censuses.",
+      "details": {
+        "subject_person": {
+          "name": "John Laurie",
+          "pid": "GPZR-3X2"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "John Laurie",
+          "birth": "1833, Gorbals, Glasgow, Lanarkshire, Scotland"
+        }
+      },
+      "supporting_sources": [
+        "1859 baptism, Scotland Presbyterian & Protestant Church Records, Glasgow — child John Lawrie, father John Lawrie.",
+        "1861 and 1871 Scotland censuses, Glasgow / Tradeston — John (Sr.) as household head with young John."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Mary Marshall was the biological mother of John Laurie. Born about 1837; a power-loom weaver; married John Laurie (Sr.) on 13 March 1857 in Tradeston, Glasgow; died 27 December 1860 in Glasgow, about a year after this John was born. She is named as the mother on the 1859 baptism. Because she died in 1860 and the father remarried in 1861, she does NOT appear in the later census households — recovering her requires the baptism plus the marriage/death timeline, not the census.",
+      "details": {
+        "subject_person": {
+          "name": "John Laurie",
+          "pid": "GPZR-3X2"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Mary Marshall",
+          "birth": "about 1837, Scotland"
+        }
+      },
+      "supporting_sources": [
+        "1859 baptism, Scotland Presbyterian & Protestant Church Records, Glasgow — mother Mary Marshall.",
+        "Marriage of John Laurie and Mary Marshall, 13 Mar 1857, Tradeston; Mary Marshall's death, 27 Dec 1860, Glasgow."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "The agent must NOT conclude that Agnes Wardrop was this John Laurie's mother. Agnes Wardrop married John Laurie (Sr.) on 3 October 1861 — after this John was born (1859) and after his biological mother Mary Marshall died (1860) — so she is a stepmother. She appears alongside young John in the 1871 Scottish census, which is exactly why she is an attractive but wrong answer.",
+      "details": {
+        "subject_person": {
+          "name": "John Laurie",
+          "pid": "GPZR-3X2"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Agnes Wardrop",
+          "birth": "about 1835, Barony, Lanarkshire, Scotland"
+        }
+      },
+      "supporting_sources": [
+        "Marriage of John Laurie (Sr.) and Agnes Wardrop, 3 Oct 1861, Tradeston — later than John's 1859 birth.",
+        "1871 Scotland census — Agnes present as the father's wife, not John's biological mother."
+      ],
+      "required": true,
+      "polarity": "avoid"
+    },
+    {
+      "id": "f4",
+      "type": "fact",
+      "description": "The research record documents the negative conclusion: the woman enumerated with John in the 1871 Scottish census (Agnes Wardrop / Lawrie) was his father's later wife — a stepmother — and not his biological mother, because the father remarried in 1861 after the biological mother Mary Marshall died in 1860. Distinguishing the stepmother from the biological mother via the marriage/death timeline is the required reasoning, not an incidental note.",
+      "details": {
+        "subject_person": {
+          "name": "John Laurie",
+          "pid": "GPZR-3X2"
+        },
+        "relation": "stepmother-distinguished-from-mother",
+        "target_person": {
+          "name": "Agnes Wardrop",
+          "birth": "about 1835, Barony, Lanarkshire, Scotland"
+        }
+      },
+      "supporting_sources": [
+        "Timeline: John born 1859; Mary Marshall (mother) died 27 Dec 1860; father married Agnes Wardrop 3 Oct 1861."
+      ],
+      "required": true
+    }
+  ]
+}
