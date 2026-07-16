@@ -40,6 +40,14 @@ from e2e.validate_fixture import check_stripping
 
 
 DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
+# This judge is NOT temperature-pinned, and cannot be. The unit judge pins its
+# first sample to temperature=0 (harness/judge.py::JUDGE_TEMPERATURE), but
+# sampling parameters are removed on the Opus 4.7/4.8 family: sending
+# `temperature` here returns a 400 ("`temperature` is deprecated for this
+# model"). The asymmetry is an upstream API constraint, not an oversight — do
+# not "fix" it by adding temperature=0. Pinning would mean dropping to an older
+# judge model, which is a bigger loss than the grading jitter it would buy back.
+#
 # Generous cap: on a rich run (large tree, several findings, a long proof), the
 # judge's adaptive thinking + the structured verdict together overflowed the old
 # 4096 — the JSON was truncated (stop_reason='max_tokens') → JudgeOutputError →

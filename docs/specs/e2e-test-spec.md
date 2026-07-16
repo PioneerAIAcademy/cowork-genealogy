@@ -651,6 +651,43 @@ Single run per test. Pass rates will jitter run-to-run from LLM
 non-determinism; do not over-interpret small deltas in aggregate
 trends.
 
+Two variance sources hide behind that sentence. The **agent run** is the
+dominant one — long-horizon research against live FamilySearch, different
+every time. The **judge** contributes separately, and is the one we can
+actually measure, because `calibrate_judge` replays fixed recorded inputs
+(the committed `final-tree` / `final-research` siblings), so anything that
+moves between two sweeps is the judge alone.
+
+**Measured judge noise floor** — 2026-07-16, 41 annotations / 107 findings,
+`claude-opus-4-8`, two back-to-back sweeps over identical inputs:
+
+| | Sweep A | Sweep B |
+|---|---|---|
+| Per-finding agreement (gating) | 86% (92/107) | 85% (91/107) |
+| Proof-quality (advisory) | 62% (21/34) | 68% (23/34) |
+| Verdict | MEETS | MEETS |
+
+Two findings out of 107 changed judge label, both borderline `true`/`partial`
+calls. Practical reading: **treat per-finding agreement deltas of ≲2 points as
+noise**, and treat the advisory proof-quality axis as noisy enough (6 points
+across two sweeps at n=34, where one finding is worth ~3) that only large
+moves carry signal. The gate holds 5–6 points of margin over the ≥80% target,
+so this jitter does not threaten the verdict. Caveat: two sweeps give a point
+estimate of the noise, not a bound — re-measure before trusting a small delta
+to justify a decision.
+
+**The e2e judge is deliberately not temperature-pinned, and cannot be.**
+Sampling parameters are removed on the Opus 4.7/4.8 family: sending
+`temperature` returns a 400 (`` `temperature` is deprecated for this model ``).
+Pinning would mean freezing this judge on a 4.5/4.6-era model, and the
+measurement above is why that trade isn't worth taking — 1 point of judge
+self-inconsistency sits an order of magnitude below the ~20 points of human
+inter-rater disagreement the ≥80% target is itself set to approximate
+(`calibrate_judge.py::PER_FINDING_TARGET`), and it lands on exactly the
+borderline calls where humans disagree with each other too. The *unit* judge is
+pinned (`harness/judge.py::JUDGE_TEMPERATURE`); its model still accepts the
+parameter.
+
 Before the suite grows beyond the first fixture, sanity-check the
 judge prompt against the first run trace: if the judge's verdict
 diverges from what eyeballing the transcript would say, fix the
