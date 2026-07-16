@@ -1,0 +1,357 @@
+{
+  "persons": [
+    {
+      "id": "KWZH-XB6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Alan Glen",
+          "surname": "Applegarth",
+          "id": "KWZH-XB6-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "19360429",
+          "standard_date": "29 Apr 1936",
+          "place": "Ogden, Weber, Utah",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "aa35192a-bbff-4cd0-862b-83709a8a2f74",
+          "type": "Death",
+          "date": "16 May 2023",
+          "standard_date": "16 May 2023",
+          "place": "Providence, Cache, Utah, United States",
+          "standard_place": "Providence, Cache, Utah, United States"
+        },
+        {
+          "id": "631f319e-e0d7-4fca-9128-75bd006da48b",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "e90b16bb-5ef2-4f2b-b901-a57defdcbb50",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "South Boise Election Precinct, Ada, Idaho, United States",
+          "standard_place": "South Boise Election Precinct, Ada, Idaho, United States"
+        },
+        {
+          "id": "659433d2-5c24-412d-8be5-ecef1eea560d",
+          "type": "Residence",
+          "date": "April 1, 1950",
+          "standard_date": "1 Apr 1950",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "5b51adaf-bcc2-4abf-be92-5515cfd5be2b",
+          "type": "Residence",
+          "date": "19 Sep 2010",
+          "standard_date": "19 Sep 2010",
+          "place": "Providence, Utah",
+          "standard_place": "Providence, Cache, Utah, United States"
+        },
+        {
+          "id": "45fcb081-d84d-4041-bf10-f5620d79e2ab",
+          "type": "Obituary",
+          "date": "22 May 2023",
+          "standard_date": "22 May 2023",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "d465e655-b20a-408e-8f41-b285ad03e1ba",
+          "type": "Burial",
+          "date": "25 May 2023",
+          "standard_date": "25 May 2023",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWZH-XBN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Carole Sue",
+          "surname": "Checketts",
+          "id": "KWZH-XBN-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "25 October 1937",
+          "standard_date": "25 Oct 1937",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "c2d0e00d-a4ea-467b-94c8-249b541e43ad",
+          "type": "Residence",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "3044b18b-be51-4565-b130-94e7c45781b3",
+          "type": "Obituary",
+          "date": "2010",
+          "standard_date": "2010",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "17 September 2010",
+          "standard_date": "17 Sep 2010",
+          "place": "Murray, Salt Lake, Utah, United States",
+          "standard_place": "Murray, Salt Lake, Utah, United States"
+        },
+        {
+          "id": "79bd58e6-4ec5-41f2-bade-a3260c27cc20",
+          "type": "Obituary",
+          "date": "18 September 2010",
+          "standard_date": "18 Sep 2010",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "21 September 2010",
+          "standard_date": "21 Sep 2010",
+          "place": "Ogden City Cemetery, Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden City Cemetery, Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "e129742e-2da5-43bc-8aea-c002e847dfd3",
+          "type": "LifeSketch",
+          "value": "Carole Sue Checketts Applegarth was a loving and caring wife, mother, grandmother, great-grandmother and special friend to many. Carole was born in Ogden, Utah, on Oct. 25, 1937, to Willard (Bill) Glen and Mina Susan Brown Checketts. She died peacefully in Murray, Utah of natural causes on Sept. 17, 2010. She lived her early life in Ogden and graduated from Ogden High School. She married her high school sweetheart and best friend, Alan Glen Applegarth, on Oct. 28, 1954, in the Salt Lake LDS Temple. They were blessed with two children to whom Carole dedicated her life.\nHer chosen profession was motherhood and homemaking; she also had several other jobs during her life. She worked at Walker Bank as a teller and then at Utah State University Carousel Square food services as an administrative assistant.\nCarole was a devoted member of the Church of Jesus Christ of Latter-day Saints and served in various church positions throughout her life. She enjoyed serving others and spent many hours volunteering at the Logan Regional Hospital, where she was the director of volunteers.\nCarole loved to spend time with people. She enjoyed being surrounded by her friends, family, and loved ones as often as possible and they loved being with her. She filled their hearts with laughter and their stomachs with chocolate. Flowers were her passion, especially the roses from her mother's garden. She was a patient listener, a faithful advisor and an amazing example of faith and perseverance exemplifying great trust in the Lord Jesus Christ. She handled the difficulties in her life with grace, dignity and a cheerful positive attitude.\nCarole is survived by her husband, a meticulous and loving caregiver, Alan Glen Applegarth of Providence; by her two children, Mark Alan (Shauna) Applegarth of Omaha, Neb., and Shauna Sue (Val) Jensen of Santaquin, Utah; and by her brothers W. Craig (Glenda) Checketts of Bountiful, Utah, and Alan G. (Reylyn) Checketts of Eagleville, Penn.; 11 grandchildren, Daniel (Heidi) Applegarth, Keresa (Shane) Walker, Valishia (Steven) Hawkins, Kirsten (Stephan) Taeger, Anjillica (Adam) Navarro, Katelynd (Benjamin) Blake, Braydon Jensen, David Applegarth, Myriah Jensen, Shanelle Applegarth, Shaunese Jensen; and by 12 great-grandchildren.\nShe was preceded in death by her parents and her sister, Gloria Gay Checketts Cummins."
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "John Obrien",
+          "surname": "Applegarth",
+          "preferred": true,
+          "id": "N1"
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1905",
+          "place": "Nebraska, United States",
+          "primary": true,
+          "id": "F1",
+          "standard_place": "Nebraska, United States"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Olive Harvey Annie",
+          "surname": "Applegarth",
+          "preferred": true,
+          "id": "N2"
+        }
+      ],
+      "id": "I2",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1906",
+          "place": "Kaysville, Davis, Utah, United States",
+          "primary": true,
+          "id": "F2",
+          "standard_place": "Kaysville, Davis, Utah, United States"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "Mark Alan",
+          "surname": "Applegarth",
+          "preferred": true,
+          "id": "N3"
+        }
+      ],
+      "id": "I3"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Couple",
+      "person1": "KWZH-XB6",
+      "person2": "KWZH-XBN",
+      "facts": [
+        {
+          "id": "a9214f47-7cfb-49e5-9560-5e91652b8442",
+          "type": "Marriage",
+          "date": "19541028",
+          "standard_date": "28 Oct 1954",
+          "place": "Salt Lake City, Salt Lake, Utah",
+          "standard_place": "Salt Lake City, Salt Lake, Utah, United States"
+        }
+      ],
+      "id": "rel-couple-KWZH-XB6-KWZH-XBN"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "KWZH-XB6",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "KWZH-XB6",
+      "id": "R2"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "id": "R3",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "20 October 1926",
+          "place": "Weber County, Utah, United States",
+          "primary": true,
+          "id": "F3",
+          "standard_place": "Weber, Tararua, New Zealand"
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KWZH-XB6",
+      "child": "I3",
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KWZH-XBN",
+      "child": "I3",
+      "id": "R5"
+    }
+  ],
+  "sources": [
+    {
+      "id": "M9QV-LB3",
+      "title": "Legacy NFS Source: Alan Glen Applegarth - Individual or family possessions: birth-name: Alan Glen Applegarth"
+    },
+    {
+      "id": "QCY4-WG5",
+      "title": "Obituary of Alan Glen Applegarth ",
+      "url": "https://www.allenmortuaries.net/obituaries/Alan-Applegarth/#!/Obituary"
+    },
+    {
+      "id": "M9C5-MWZ",
+      "title": "Legacy NFS Source: Alan Glen Applegarth  - Government record: birth-name: Alan Glen Applegarth "
+    },
+    {
+      "id": "M9C5-M33",
+      "title": "Legacy NFS Source: Alan Glen Applegarth  - Individual or family possessions: birth-name: Alan Glen Applegarth"
+    },
+    {
+      "id": "MSXS-68V",
+      "title": "Legacy NFS Source: Alan Glen Applegarth - birth: 29 April 1936; Ogden Utah Temple, Ogden, Weber, Utah, United States"
+    },
+    {
+      "id": "QL59-XS2",
+      "title": "Alan Glenn Applegarth, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8778-JZ6Z : Mon Mar 30 07:26:18 UTC 2026), Entry for Alan Glenn Applegarth, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8778-JZ6Z"
+    },
+    {
+      "id": "QJCM-75T",
+      "title": "Alan Glen Applegarth, \"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62SL-XR8P : Mon Mar 11 00:33:14 UTC 2024), Entry for Alan Glen Applegarth, 18 May 2023.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62SL-XR8P"
+    },
+    {
+      "id": "QC6B-ZZ3",
+      "title": "Alan Glen Applegarth in entry for Carole Sue Checketts Applegarth, \"Utah, ObitsUtah Obituary Index, 2010-2013\"",
+      "citation": "\"Utah, ObitsUtah Obituary Index, 2010-2013,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:QVSC-KGZQ : 17 March 2018), Alan Glen Applegarth in entry for Carole Sue Checketts Applegarth, 2010; citing Utah Funeral Directors Association, Utah.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVSC-KGZQ"
+    },
+    {
+      "id": "QL59-CH4",
+      "title": "Alan Glen Applegarth, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DLHW-TCN2 : Sun Mar 29 22:44:20 UTC 2026), Entry for Alan Glen Applegarth, 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DLHW-TCN2"
+    },
+    {
+      "id": "78QJ-4KX",
+      "title": "Alan Glen Applegarth, \"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\"",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK54-CSVY : Wed Jan 15 22:32:00 UTC 2025), Entry for Carole Sue Checketts Applegarth and Gloria Gay Checketts Cummins, 19 Sep 2010.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK54-CQMZ"
+    },
+    {
+      "id": "QL59-CK2",
+      "title": "Alan Glen Applegarth, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8MKB-TKT2 : Mon Mar 30 07:28:24 UTC 2026), Entry for Alan Glen Applegarth, 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8MKB-TKT2"
+    },
+    {
+      "id": "7H7F-9LV",
+      "title": "Alan Glen Applegarth, \"United States, Obituary Records, 2014-2023\"",
+      "citation": "\"United States, Obituary Records, 2014-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:61RR-BGFT : Wed Nov 13 03:46:01 UTC 2024), Entry for Carole Sue Checketts Applegarth and Willard Bill Glen Checketts, 7 January 2020.",
+      "url": "https://familysearch.org/ark:/61903/1:1:61RR-BGF1"
+    },
+    {
+      "id": "S1",
+      "title": "Entry for Alan Glen Applegarth, \"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:H3SX-M678"
+    },
+    {
+      "id": "S2",
+      "title": "LDS Church Census, North Weber Utah Stake, 1940 \u2014 entry for Olive Annie Hardy Applegarth",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8778-JZW2"
+    },
+    {
+      "id": "S3",
+      "title": "Utah, Weber County Marriages, 1887-1941 \u2014 entry for Jack Applegarth and Olive Harvey, 20 Oct 1926",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QK6K-4FCD"
+    },
+    {
+      "id": "S4",
+      "title": "Household of John O'Brien Applegarth, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", North Weber Utah Stake, 1940",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8778-JZ3Z"
+    },
+    {
+      "id": "S5",
+      "title": "Household of Alan Glenn Applegarth, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", North Weber Utah Stake, 1940",
+      "author": "The Church of Jesus Christ of Latter-day Saints",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:8778-JZ6Z"
+    }
+  ]
+}
