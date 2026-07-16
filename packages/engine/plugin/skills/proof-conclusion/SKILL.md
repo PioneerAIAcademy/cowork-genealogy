@@ -113,6 +113,8 @@ Do not restate evidence already quoted verbatim elsewhere — cite it. Most conc
 
 The `narrative_markdown` is the **authoritative GPS conclusion** — if structured fields disagree, the narrative governs. It must be **self-contained**: readable without the JSON and uploadable to FamilySearch as a Memory/Document. Write in the Statement / Summary / Argument form selected above (section headings, evidence summary, conflict resolution, tier declaration, inline citations on every factual claim). Organize by significance, not chronology. Name informants when their identity affects weighing. State source classifications explicitly so the reader sees the three-layer analysis.
 
+**Never claim a digital image exists unless the tool data confirms it.** Only describe a source as having an "accessible" or "digitized" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`). A source-description ARK or citation URL is not itself proof of a linked image — many FamilySearch collections are index-only, and telling a reader an image is "accessible" when it isn't sends them looking for something that doesn't exist.
+
 ### 5. Write the proof_summaries entry
 
 `research_append({ projectPath, section: "proof_summaries", op: "append", entry })` without an `id` — the tool assigns `ps_NNN`, validates the whole project, and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
@@ -164,7 +166,7 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier).
+- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years).
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
 
