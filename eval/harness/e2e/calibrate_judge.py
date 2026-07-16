@@ -52,12 +52,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from e2e import judge as judge_module
+from e2e.env import ENV_FILE, load_env_file
 from e2e.judge import derive_verdict  # shared with apply_avoid_guard; re-exported for our callers
 
 
@@ -500,6 +502,23 @@ def main(argv: list[str] | None = None) -> int:
     if not cases:
         print(
             "\nNothing graded yet — no complete annotations to calibrate against.",
+            file=sys.stderr,
+        )
+        return 2
+
+    # The judge reads ANTHROPIC_API_KEY from the process env; the key normally
+    # lives in eval/.env (Setup.bat writes it there), so load it the way every
+    # other e2e entry point does. Check up front and abort: without a key every
+    # case fails with an auth error, and because case errors block the target
+    # the sweep would report "BELOW target" — an auth problem indistinguishable
+    # from a judge that genuinely missed the gate, on the one number this script
+    # exists to produce. Fail loudly instead of reporting a grade nobody earned.
+    load_env_file()
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print(
+            f"\nNo ANTHROPIC_API_KEY. Set it in the environment or in {ENV_FILE} "
+            "(Setup.bat prompts for it). The judge needs it — nothing was "
+            "graded, so this is not a calibration result.",
             file=sys.stderr,
         )
         return 2
