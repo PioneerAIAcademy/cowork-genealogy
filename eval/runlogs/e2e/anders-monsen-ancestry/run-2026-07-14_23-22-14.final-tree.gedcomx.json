@@ -17,32 +17,40 @@
           "type": "Birth",
           "date": "1759",
           "standard_date": "1759",
-          "place": "Håtuft, Frekhaug, Hordaland, Norway",
-          "standard_place": "Håtuft, Meland, Hordaland, Norway"
+          "place": "H\u00e5tuft, Frekhaug, Hordaland, Norway",
+          "standard_place": "H\u00e5tuft, Meland, Hordaland, Norway"
         },
         {
           "id": "anders-christening-1",
           "type": "Christening",
           "date": "7 April 1759",
           "standard_date": "7 Apr 1759",
-          "place": "Hamre kirke, Hamre, Osterøy, Hordaland, Norway",
-          "standard_place": "Hamre Kyrkje, Osterøy, Hordaland, Norway"
+          "place": "Hamre kirke, Hamre, Oster\u00f8y, Hordaland, Norway",
+          "standard_place": "Hamre Kyrkje, Oster\u00f8y, Hordaland, Norway"
         },
         {
           "id": "anders-death-1",
           "type": "Death",
           "date": "1821",
           "standard_date": "1821",
-          "place": "Åsebø, Radøy, Hordaland, Norway",
-          "standard_place": "Åsebø, Manger, Hordaland, Norway"
+          "place": "\u00c5seb\u00f8, Rad\u00f8y, Hordaland, Norway",
+          "standard_place": "\u00c5seb\u00f8, Manger, Hordaland, Norway"
         },
         {
           "id": "anders-burial-1",
           "type": "Burial",
           "date": "8 January 1821",
           "standard_date": "8 Jan 1821",
-          "place": "Manger kirkegård, Radøy, Alver, Hordaland, Norway",
-          "standard_place": "Manger Kyrkjegard, Radøy, Hordaland, Norway"
+          "place": "Manger kirkeg\u00e5rd, Rad\u00f8y, Alver, Hordaland, Norway",
+          "standard_place": "Manger Kyrkjegard, Rad\u00f8y, Hordaland, Norway"
+        },
+        {
+          "type": "Residence",
+          "date": "1801",
+          "standard_date": "1801",
+          "place": "Manger, Hordaland, Norway",
+          "id": "F1",
+          "standard_place": "Manger, Rathbran, County Wicklow, Ireland"
         }
       ]
     },
@@ -64,24 +72,24 @@
           "type": "Birth",
           "date": "1724",
           "standard_date": "1724",
-          "place": "Nedre Kvamme, Lindås, Hordaland, Norway",
-          "standard_place": "Nedre Kvamme, Lindås, Hordaland, Norway"
+          "place": "Nedre Kvamme, Lind\u00e5s, Hordaland, Norway",
+          "standard_place": "Nedre Kvamme, Lind\u00e5s, Hordaland, Norway"
         },
         {
           "id": "mons-christening-1",
           "type": "Christening",
           "date": "1 October 1724",
           "standard_date": "1 Oct 1724",
-          "place": "Hamre kirke, Hamre, Osterøy, Hordaland, Norway",
-          "standard_place": "Hamre Kyrkje, Osterøy, Hordaland, Norway"
+          "place": "Hamre kirke, Hamre, Oster\u00f8y, Hordaland, Norway",
+          "standard_place": "Hamre Kyrkje, Oster\u00f8y, Hordaland, Norway"
         },
         {
           "id": "mons-death-1",
           "type": "Death",
           "date": "1779",
           "standard_date": "1779",
-          "place": "Åsebø, Meland, Hordaland, Norway",
-          "standard_place": "Åsebø, Manger, Hordaland, Norway"
+          "place": "\u00c5seb\u00f8, Meland, Hordaland, Norway",
+          "standard_place": "\u00c5seb\u00f8, Manger, Hordaland, Norway"
         }
       ]
     },
@@ -102,8 +110,8 @@
           "type": "Birth",
           "date": "1739",
           "standard_date": "1739",
-          "place": "Bjørnestad, Meland, Hordaland, Norway",
-          "standard_place": "Bjørnestad, Hammer, Hordaland, Norway"
+          "place": "Bj\u00f8rnestad, Meland, Hordaland, Norway",
+          "standard_place": "Bj\u00f8rnestad, Hammer, Hordaland, Norway"
         },
         {
           "id": "anna-christening-1",
@@ -118,8 +126,8 @@
           "type": "Death",
           "date": "1805",
           "standard_date": "1805",
-          "place": "Åsebø, Meland, Hordaland, Norway",
-          "standard_place": "Åsebø, Manger, Hordaland, Norway"
+          "place": "\u00c5seb\u00f8, Meland, Hordaland, Norway",
+          "standard_place": "\u00c5seb\u00f8, Manger, Hordaland, Norway"
         }
       ]
     },
@@ -154,6 +162,37 @@
         {
           "id": "unna-death-1",
           "type": "Death"
+        },
+        {
+          "type": "Residence",
+          "date": "1801",
+          "standard_date": "1801",
+          "place": "Manger, Hordaland, Norway",
+          "id": "F2",
+          "standard_place": "Manger, Rathbran, County Wicklow, Ireland"
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "type": "BirthName",
+          "given": "J\u00f8rgen",
+          "surname": "Andersen",
+          "id": "N1",
+          "preferred": true
+        }
+      ],
+      "id": "I1",
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1796",
+          "standard_date": "1796",
+          "place": "Manger, Hordaland, Norway",
+          "id": "F3",
+          "standard_place": "Manger, Rathbran, County Wicklow, Ireland"
         }
       ]
     }
@@ -179,6 +218,18 @@
       "parent": "LKFW-9QR",
       "child": "LKFW-9XH",
       "subtype": "Biological"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "LKFW-9XH",
+      "child": "I1",
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZHH-VTX",
+      "child": "I1",
+      "id": "R2"
     }
   ],
   "sources": [
@@ -190,7 +241,7 @@
     {
       "id": "QKQ1-3QH",
       "title": "Anders Monsen Christening - Maland, Hamre, Hordaland, Norway",
-      "citation": "Den norske kirke, Hamre parish, (Hordaland county) \"Ministerialbok, 1750-1761,\" Døbte (Christened), page 103, entry 24, Anders, 7 April 1759; digital images, Arkivverket.no, (www.Digitalarkivet.no : accessed 13 December 2023); Statsarkivet (State Archive) in Bergen, Norway.",
+      "citation": "Den norske kirke, Hamre parish, (Hordaland county) \"Ministerialbok, 1750-1761,\" D\u00f8bte (Christened), page 103, entry 24, Anders, 7 April 1759; digital images, Arkivverket.no, (www.Digitalarkivet.no : accessed 13 December 2023); Statsarkivet (State Archive) in Bergen, Norway.",
       "url": "https://www.familysearch.org/photos/artifacts/186975195"
     },
     {
@@ -198,6 +249,12 @@
       "title": "Anders, \"Norway, Baptisms, 1634-1927\"",
       "citation": "\"Norway, Baptisms, 1634-1927\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NCJT-Q8X : 3 June 2024), Anders, 1759.",
       "url": "https://familysearch.org/ark:/61903/1:1:NCJT-Q8X"
+    },
+    {
+      "title": "Norway, Census, 1801 \u2014 Household of Ingebor Nielsdatter and Anders Monsen, Manger, Hordaland",
+      "citation": "\"Norges folketelling, 1801\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:8YM8-4GN2 : Sun Oct 12 18:32:55 UTC 2025), Entry for Ingebor Nielsdatter and Anders Monsen, 1801. Record ARK: https://www.familysearch.org/ark:/61903/1:2:4HXX-9H6Z",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4HXX-9H6Z",
+      "id": "S1"
     }
   ]
 }
