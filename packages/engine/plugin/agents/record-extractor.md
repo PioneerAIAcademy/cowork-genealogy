@@ -16,15 +16,15 @@ description: >-
   citations.
 model: claude-sonnet-5
 tools:
-  - mcp__genealogy__project_context
-  - mcp__genealogy__record_read
-  - mcp__genealogy__place_search
-  - mcp__genealogy__place_search_all
-  - mcp__genealogy__research_append
-  - mcp__genealogy__research_log_append
-  - mcp__genealogy__tree_edit
-  - mcp__genealogy__record_person_matches
-  - mcp__genealogy__record_record_matches
+  - mcp__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__record_read
+  - mcp__Genealogy_Research__place_search
+  - mcp__Genealogy_Research__place_search_all
+  - mcp__Genealogy_Research__research_append
+  - mcp__Genealogy_Research__research_log_append
+  - mcp__Genealogy_Research__tree_edit
+  - mcp__Genealogy_Research__record_person_matches
+  - mcp__Genealogy_Research__record_record_matches
 ---
 
 # Record Extractor

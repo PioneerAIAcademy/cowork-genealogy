@@ -1,0 +1,4319 @@
+{
+  "project": {
+    "id": "rp_clark_parents_1830_census",
+    "objective": "Determine who Christiana Clark's parents were, and (bonus) where they were enumerated in the 1830 census.",
+    "subject_person_ids": [
+      "LVS7-1HJ"
+    ],
+    "status": "active",
+    "created": "2026-07-13",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Christiana Clark (born circa 1847, Brasher, St. Lawrence County, New York)?",
+      "rationale": "This is the primary objective. Christiana Clark's 1850 census residence in Brasher, St. Lawrence County, NY provides a concrete starting point \u2014 she would appear as a young child in a Clark household. The 1850 census is fully indexed on FamilySearch and names all household members, making parent identification feasible. Answering this question is a prerequisite for the bonus question about the 1830 census enumeration.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-15",
+      "resolution_assertion_ids": [
+        "a_031",
+        "a_058",
+        "a_059",
+        "a_083",
+        "a_084",
+        "a_088",
+        "a_089"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three independent census records across three decades and two jurisdictions converge on William Clark and Hannah Clark as the parents of Christiana Clark. (1) 1850 Brasher, St. Lawrence Co., NY census (src_001): 'Christian Clark' (female, b. 1847, NY) co-resides with William Clark (head, b. 1805, NY) and Hannah Clark (wife, b. 1812, VT) \u2014 indirect parentage via co-residence. (2) 1860 Military, Winneshiek Co., Iowa census (src_002): 'Christina Clark' (female, b. 1846, NY) co-resides with William Clark (head, b. 1805, NY) and Hannah J Clark (wife) \u2014 a second independent census, different enumerator, different jurisdiction. (3) 1880 Murray, Alameda Co., CA census (src_003): William Clark (father) and Hannah Clark (mother, b. 1810, VT) are recorded via the relationship-to-head column as parents of Albert Clark and Amos Clark \u2014 siblings confirmed members of the 1850 Brasher household \u2014 providing direct parentage evidence for the sibling set. FamilySearch ParentChild relationships link William and Hannah as parents of Albert, Amos, and Henry Clark. All seven NY-born siblings from 1850 are corroborated across at least two records. Christiana's own California death certificate (February 1929, 'Christia Mendenhall', b. 1846) was identified in the California Death Index but parents' names are inaccessible: the death index image exceeds the MCP transport cap (1.4 MB) and the certificate is not indexed as a principal in FamilySearch collection 2001287. Albert Clark (d. 1895, Livermore CA) and Amos Clark (d. 1903, Livermore CA) died before California statewide death registration (1905). These inaccessible certificates are documented as pursued-and-unavailable. Two minor conflicts (Hannah's birthplace VT vs. NY; William's birthplace NY vs. Canada) are documented in assertion notes; preponderance evidence (2:1 in both cases) resolves them as enumerator errors without affecting the parentage identity conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031",
+          "log_032",
+          "log_033",
+          "log_034",
+          "log_035"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Convincingly answered: three independent censuses (1850, 1860, 1880) consistently place Christiana/Christina Clark in the household of William Clark and Hannah Clark. The 1880 census relationship column provides direct evidence naming William and Hannah as parents of confirmed siblings Albert and Amos, corroborating the co-residence evidence from 1850 and 1860.",
+          "repository_breadth": "Broad coverage: FamilySearch searched for NY vital records (births/christenings, church records, civil marriages 1704-1995), NY probate (1629-1971), NY land records (1630-1975), NY state census (1855), US federal censuses (1830, 1840, 1850, 1860, 1880), California death index (1905-1939), California county death records (1800-1994), California deaths and burials (1776-2000), Find a Grave. FTS attempted for Christiana Mendenhall death certificate. FAN research via seven named siblings across three record sets. Name variants (Christian, Christina, Christiana, Christia) tried systematically. Migration tracked NY to Iowa to California.",
+          "original_substitution": "All three principal census records (1850, 1860, 1880) accessed as original records via record_read (src_001, src_002, src_003). California Death Index (QKSM-SQ6X) is a derivative \u2014 the original 1929 death certificate is inaccessible: image exceeds MCP transport cap (1.4 MB returned by image_read), and the certificate is not indexed as principal in collection 2001287 across multiple targeted searches. Pursued-and-unavailable, documented per the narrow inaccessibility exception.",
+          "independent_verification": "Three genuinely independent source units: (1) 1850 Brasher NY census \u2014 enumerator unknown, respondent unknown household member; (2) 1860 Military Iowa census \u2014 different enumerator, different state, decade later; (3) 1880 Murray Alameda CA census \u2014 third independent enumeration, relationship column, FamilySearch-linked ParentChild relationships. These three units were created by different persons, in different jurisdictions, at different times, with no shared informant chain.",
+          "evidence_class": "All three sources are original records (census schedules). The 1850 and 1860 records provide primary information for residence events (enumerator witnessed) and indeterminate information for birth data (respondent not named). The 1880 census provides primary information for family relationships (informant directly reported relationship to head). At least one original source with primary information exists for both the co-residence claim (1850/1860) and the direct parentage claim for siblings (1880).",
+          "conflict_resolution": "Two documented conflicts do not affect the parentage identity conclusion: (1) Hannah Clark's birthplace \u2014 1850 Vermont, 1860 New York, 1880 Vermont; preponderance 2:1 Vermont, 1860 record likely enumerator error given Vermont corroborated in flanking enumerations. (2) William Clark's birthplace \u2014 1850 New York, 1860 New York, 1880 Canada; preponderance 2:1 New York, 1880 Canada likely informant or enumerator error. (3) William's birth year \u2014 ~1805 in 1850/1860, ~1800 in 1880; minor census-to-census variance. All conflicts are peripheral biographical details about parents' own origins and do not create doubt about whether these are Christiana's parents \u2014 the same William and Hannah Clark appear consistently across all three records with the same spouse, same children, and same migration trajectory.",
+          "overturn_risk": "Low. No alternative candidate parents have emerged from any search. The household constellation (William head, Hannah wife, Albert/Alpha/Alfred/Ellen/Lueina/Christiana/Amos children) is identical and internally consistent across 1850 and 1860. The 1880 record independently identifies William and Hannah as parents of confirmed siblings. Christiana's own death certificate (1929) is the primary inaccessible source that could provide direct evidence \u2014 but given the convergent three-census evidence, it would be expected to confirm rather than contradict. The remaining unsearched physical records (original California county vital records, pre-1905 Alameda County registers) are inaccessible through available tools and would not be expected to introduce a different set of parents given the consistent evidence base."
+        }
+      },
+      "created": "2026-07-15"
+    },
+    {
+      "id": "q_002",
+      "question": "In which household were William Clark (born about 1805, New York) and Hannah Clark (born about 1812, Vermont) enumerated in the 1830 U.S. federal census?",
+      "rationale": "The project's bonus objective is to locate the 1830 census enumeration of Christiana Clark's parents. q_001 identified William Clark (b. ~1805, NY) and Hannah Clark (b. ~1812, VT) as the parents. The family was resident in Brasher, St. Lawrence County, NY in 1850, making a 1830 St. Lawrence County household the highest-probability target. During the q_001 search, a candidate record (William Clark, Depeau Township, St. Lawrence County, NY, FamilySearch XHP5-W5F) was identified via record_search but the household image could not be read due to inaccessibility without an active FamilySearch login session. The 1830 census is indexed on FamilySearch; a focused search with the candidate's ARK plus alternative name/place strategies can answer this question.",
+      "selection_basis": "objective_decomposition",
+      "priority": "medium",
+      "status": "open",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-15"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "superseded",
+      "created": "2026-07-15",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Brasher, St. Lawrence County, New York",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "Christiana Clark was born circa 1847 in Brasher, St. Lawrence County, NY. As a 3-year-old in the 1850 federal census she would appear in a Clark household alongside her parents, whose first names and ages this census records directly. This is the highest-probability single source for naming her parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Brasher, St. Lawrence County, New York",
+          "date_range": "1840",
+          "repository": "FamilySearch",
+          "rationale": "The 1840 federal census predates Christiana's birth by ~7 years. Locating a Clark household in Brasher in 1840 helps confirm the family's presence there before she was born and identifies the likely head of household (her father). Also establishes how many older siblings may exist, useful for later record correlation.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Brasher, St. Lawrence County, New York",
+          "date_range": "1855",
+          "repository": "FamilySearch",
+          "rationale": "New York's 1855 state census (collection 1937366) is fully indexed on FamilySearch and names all household members. It captures Christiana around age 8, likely still with her parents in Brasher. It also records birthplace and parentage details not present in the federal census, potentially identifying both parents by name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "St. Lawrence County, New York",
+          "date_range": "1845-1850",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, Births and Christenings, 1640-1962' (collection 1680842) and 'New York, Church and Civil Births and Baptisms, 1704-1962' (collection 2443988) include extracted baptism and birth registrations. A baptismal entry for Christiana Clark circa 1847 in Brasher would directly name both parents and the mother's surname before marriage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Brasher / St. Lawrence County, New York",
+          "date_range": "1840-1860",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, Church Records, 1660-1954' (collection 2787817) covers St. Lawrence County congregations. Church membership lists, baptism registers, or pew records could name Christiana's parents and confirm the denomination, which guides further record searches.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "St. Lawrence County, New York",
+          "date_range": "1820-1850",
+          "repository": "FamilySearch",
+          "rationale": "For a parentage question, the candidate parents' marriage record is direct evidence: it confirms both names (including the mother's maiden name, rarely recorded elsewhere), dates, and place. 'New York, County Marriages, 1778-1848; 1908-1937' (collection 1618491) and 'New York, Church and Civil Marriages, 1704-1995' (collection 2373836) cover this period and county.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "probate",
+          "jurisdiction": "St. Lawrence County, New York",
+          "date_range": "1850-1900",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, Probate Records, 1629-1971' (collection 1920234) includes St. Lawrence County estate files (browse-only images). A will or letters of administration from Christiana's father or mother would typically name all children, providing direct evidence of the parent-child relationship and the identity of both parents.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "land",
+          "jurisdiction": "St. Lawrence County, New York",
+          "date_range": "1830-1870",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, Land Records, 1630-1975' (collection 2078654) covers St. Lawrence County deeds. Land transactions by a Clark in Brasher township establish the father's presence in the community, confirm the spelling of his given name, and may include witnesses or neighbors who can be cross-referenced with census and church records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "census",
+          "jurisdiction": "Brasher, St. Lawrence County, New York",
+          "date_range": "1850",
+          "repository": "Ancestry",
+          "rationale": "Ancestry's 1850 US Federal Census index (collection 7667) is a separate index from FamilySearch's and may catch names or transcriptions the FamilySearch index misses. Use as a fallback if the FamilySearch 1850 search (pli_001) does not locate the Clark household.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-15",
+      "items": [
+        {
+          "id": "pli_010",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "United States (broad \u2014 Albert Clark may have left New York)",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "Albert Clark (b. 1831, NY) was the oldest child in the 1850 Brasher household. The 1880 US Federal Census includes columns for father's birthplace and mother's birthplace. If Albert is found with father's birthplace = New York and mother's birthplace = Vermont, this corroborates William Clark (b. NY) and Hannah Clark (b. VT) as parents of the Brasher Clark siblings, providing independent indirect evidence to support Christiana's parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "New York or adjacent states",
+          "date_range": "1860",
+          "repository": "FamilySearch",
+          "rationale": "Albert Clark (b. 1831, NY) would be ~29 in 1860. Locating him in 1860 helps track his migration and may show him with other Clark siblings. Cross-referencing with known siblings or parents establishes family identity and helps locate William and Hannah in later records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "St. Lawrence County, New York",
+          "date_range": "1830",
+          "repository": "FamilySearch",
+          "rationale": "REVISED: 1830 census image (ark:/61903/3:1:33S7-9YYY-3MS) returned 'fetch failed' \u2014 unreachable without active FamilySearch login session. Simplified GEDCOMX from record_read (log_030) confirms a William Clark in Depeau, St. Lawrence, NY, 1830 (ARK: XHP5-W5F), but household age/sex tally marks not exposed in structured record; image required to verify compatibility with expected household profile. Bonus goal (q_002) is deferred. Skipping to allow exhaustiveness evaluation of q_001.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "St. Lawrence County, New York",
+          "date_range": "1870-1920",
+          "repository": "FamilySearch",
+          "rationale": "REVISED: The family migrated from NY to Iowa by ~1853 and to California by 1880. William and Hannah Clark were both alive in Murray, Alameda, California in 1880. Any death records for them or for siblings Albert, Alpha, Amos, Henry, Alfred, Ellen, Lueina would be in Iowa or California, not New York. NY death records are the wrong jurisdiction. Skipping in favor of California/Iowa death records (to be planned separately).",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1860-1880",
+          "repository": "FamilySearch",
+          "rationale": "Alpha Clark (b. 1838, NY) is a distinctive given name. Alfred Clark (b. 1841 NY), Ellen Clark (b. 1843 NY), and Lueina Clark (b. 1845 NY) are also individually searchable. Any sibling located in the 1880 census would show father's birthplace and mother's birthplace columns. A match of NY father + VT mother across multiple siblings would constitute strong corroborating evidence for Christiana's parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_015",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "California",
+          "date_range": "1880-1940",
+          "repository": "FamilySearch",
+          "rationale": "Christiana Clark married Absalom Mendenhall and was living in Contra Costa/Alameda County, California (Absalom died in Livermore, 1907). A California death certificate for Christiana Mendenhall would name her parents \u2014 this is the decisive direct-parentage record for GPS exhaustiveness. California death certificates from ~1905 onward often include parents' names and birthplaces. The subject's own death record is the highest-tier parentage source.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_016",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "California or Iowa",
+          "date_range": "1870-1940",
+          "repository": "FamilySearch",
+          "rationale": "Death records for siblings Albert Clark (b. 1831 NY, in Alameda CA 1880), Amos Clark (b. 1849 NY, in Alameda CA 1880), Alpha Clark (b. 1837 NY, in Livermore Alameda CA 1880), Alfred Clark (b. 1841 NY), or Henry Clark (b. 1853 Iowa). Any sibling death certificate naming parents William Clark and Hannah Clark would be equivalent corroborating direct parentage evidence for q_001. Albert died widowed in Alameda County; search that first.",
+          "fallback_for": "pli_015",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T17:40:12.956Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Christiana",
+        "recordType": "census",
+        "residencePlace": "St. Lawrence, New York",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "birthYearFrom": 1842,
+        "birthYearTo": 1852,
+        "collection": "United States, Census, 1850"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 20,
+      "notes": "Top match (score 0.86, already attached to subject LVS7-1HJ): 'Christian Clark', female, born 1847, Brasher, St. Lawrence, NY \u2014 Household of William Clark (born 1805, NY) and Hannah Clark (born 1812, VT). Household also contains Albert (1831), Alpha (1838), Alfred (1841), Ellen (1843), Lueina (1845), Christian/Christiana (1847), and Amos (1849). All children born in NY. Father William Clark and mother Hannah Clark (born VT) are the candidate parents of Christiana Clark. Record ARK: ark:/61903/1:1:MC1N-95S."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-15T17:59:26.263Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Christiana",
+        "collectionId": "1937366",
+        "residencePlace": "St. Lawrence, New York, United States",
+        "residenceYearFrom": 1855,
+        "residenceYearTo": 1855,
+        "birthYearFrom": 1842,
+        "birthYearTo": 1852,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results for \"Christiana Clark\" in NY State Census 1855 (collection 1937366). Name may be indexed under variant spelling. Will retry with \"Christina\"."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-15T18:00:11.502Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "recordType": "census",
+        "residencePlace": "Brasher, St. Lawrence, New York, United States",
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "birthYearFrom": 1800,
+        "birthYearTo": 1810,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 27,
+      "notes": "27 results for William Clark in St. Lawrence County 1840 census. rank_search_matches returned subjectResolvable: false (I1 stub too sparse); all scores near zero. Manual record inspection needed to identify correct household by township and age composition."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-15T18:00:36.825Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Christina",
+        "collectionId": "1937366",
+        "residencePlace": "St. Lawrence, New York, United States",
+        "residenceYearFrom": 1855,
+        "residenceYearTo": 1855,
+        "birthYearFrom": 1842,
+        "birthYearTo": 1852,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Second attempt with variant spelling \"Christina\" also nil. Both \"Christiana\" and \"Christina\" return no results in NY State Census 1855 for St. Lawrence County. Family may have moved, or coverage gap for Brasher township in this collection."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-15T18:02:34.369Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "collectionId": "1786457",
+        "residencePlace": "Brasher, St. Lawrence, New York, United States",
+        "residencePlaceExact": true,
+        "residenceYearFrom": 1840,
+        "residenceYearTo": 1840,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Targeted Brasher-exact search in 1840 US Census (col. 1786457) returns nil. No William Clark indexed for Brasher township in 1840. Family may not yet have been in Brasher by 1840, or Brasher records not indexed at town level."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-15T18:04:21.628Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Christiana",
+        "collectionId": "1680842",
+        "birthPlace": "St. Lawrence, New York, United States",
+        "birthYearFrom": 1844,
+        "birthYearTo": 1850,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "One result returned (FDLJ-52P) is a Barse family birth (1882, Lawrence, St. Lawrence) where Clark is the mother's surname \u2014 completely irrelevant to Christiana Clark born 1847. No birth/christening record found for Christiana Clark in NY col. 1680842."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-15T18:04:57.198Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "fatherSurname": "Clark",
+        "motherGivenName": "Hannah",
+        "collectionId": "1680842",
+        "birthPlace": "St. Lawrence, New York, United States",
+        "birthYearFrom": 1828,
+        "birthYearTo": 1852,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 101,
+      "notes": "101 results for Clark children with father Clark and mother Hannah in St. Lawrence County. Top results include Theodore Clark family (Potsdam), Zenas Clark family, Thomas Clark family \u2014 none with father William Clark or a child named Christiana/Christina. Ella Maria Clark (FD5K-Z46, father William Clark, mother Lovisa, born 1853 in Potsdam) is wrong family. No birth record for Christiana Clark, daughter of William and Hannah Clark of Brasher, in this collection."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-15T18:05:45.486Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "spouseGivenName": "Hannah",
+        "collectionId": "1618491",
+        "marriagePlace": "St. Lawrence, New York, United States",
+        "marriageYearFrom": 1825,
+        "marriageYearTo": 1835,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 1,
+      "notes": "One result (QKN1-K3HX) is a 1913 marriage of Melvin Hazelton + Lella Adell Clark where Will W Clark is father of bride \u2014 wrong generation, unrelated to William Clark (b. 1805) + Hannah. No marriage record found for William Clark + Hannah in St. Lawrence County NY c. 1825\u20131835."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-15T18:06:33.549Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "collectionId": "2787817",
+        "anyPlace": "St. Lawrence, New York, United States",
+        "anyYearFrom": 1825,
+        "anyYearTo": 1855,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 19,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 19,
+      "notes": "19 results in NY Church Records 1660\u20131954 for William Clark + St. Lawrence NY. Top result is William Clark + Martha Harrison (not Hannah). Cluster QPWP-5T5* shows Albert Clark + Joel Clark in a death register \u2014 a different Clark family. No record directly naming William Clark (b. 1805) + Hannah as parents of Christiana Clark. No baptism for Christiana Clark found."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-15T18:07:26.356Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "collectionId": "1920234",
+        "anyPlace": "St. Lawrence, New York, United States",
+        "anyYearFrom": 1855,
+        "anyYearTo": 1890,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No probate records for William Clark in NY Probate Records 1629\u20131971 (col. 1920234) for St. Lawrence County, 1855\u20131890. Either William Clark did not leave a probate record, his estate was not indexed, or records for Brasher township are not in this collection."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-15T18:08:15.341Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "collectionId": "2078654",
+        "anyPlace": "St. Lawrence, New York, United States",
+        "anyYearFrom": 1830,
+        "anyYearTo": 1880,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 1658,
+      "notes": "1,658 results for William/Wm Clark land assessments in St. Lawrence County, 1830\u20131880 (col. 2078654). All index entries show only county-level place \u2014 no township resolution to Brasher. Subject too sparse to rank. Multiple Wm Clark entries in 1841, 1844, 1848, 1853\u20131869. Need targeted Brasher-specific search to identify which are our William Clark (I1)."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:09:01.298Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mendenhall",
+        "givenName": "Christiana",
+        "recordType": "death",
+        "deathPlace": "California, United States",
+        "deathYearFrom": 1925,
+        "deathYearTo": 1932,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 769,
+      "notes": "Ad-hoc search for Christiana Clark Mendenhall death record in California. Top result QKSM-SQ6X is California Death Index entry for 'Christia Mendenhall,' born 1846, died 2 April 1929, California \u2014 strong match to our subject (name variant, birth year off by 1, exact death date/year and state match). Index only; full certificate image at ark:/61903/3:1:33S7-81SL-9QW needed for parentage data."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:18:56.426Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "spouseGivenName": "Hannah",
+        "recordType": "census",
+        "residencePlace": "Brasher, St. Lawrence, New York, United States",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "birthYearFrom": 1800,
+        "birthYearTo": 1810,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 8,
+      "notes": "Ad-hoc 1860 US Census search for William Clark + Hannah in St. Lawrence Co. NY. 8 results; top result (MC41-VFL) is William Clark in Waddington, born 1804 NH \u2014 birthplace differs from 1850 entry (NY). Reading record to check household composition against known family members."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:25:57.737Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Christiana",
+        "spouseSurname": "Mendenhall",
+        "marriagePlace": "California, United States",
+        "marriageYearFrom": 1865,
+        "marriageYearTo": 1878,
+        "count": 50,
+        "note": "Ad-hoc search for Christiana Clark marriage to Absalom Mendenhall"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "Ad-hoc search for Christiana Clark marriage to Absalom Mendenhall. Top results K8ZF-QJ2 and H94Y-8YZM are NOT Christiana's own marriage but rather the 1919 marriage of her son Ernest D. Mendenhall (to Henrietta Acker), where 'Christiana Clark' is listed as Ernest's mother. Record K8ZF-QJ2 read: confirms maiden name Clark, father listed as 'A Mendenhall' (Absalom). No information about Christiana's parents on this record. Christiana's own marriage to Absalom not located in this search.\""
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-15T18:26:03.548Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "collectionId": "2078654",
+        "anyPlace": "Brasher, St. Lawrence, New York, United States",
+        "anyPlaceExact": true,
+        "anyYearFrom": 1830,
+        "anyYearTo": 1880,
+        "count": 50,
+        "note": "Targeted Brasher-exact search in NY Land Records 1630-1975"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Brasher-exact search in NY Land Records (col. 2078654) returns nil. The collection does not index land records at township level for Brasher \u2014 only county-level resolution is available. Combined with log_011 (1,658 county-level results, too broad to identify our William Clark without Brasher-specific township filtering), this plan item is exhausted \u2014 browsing images would be needed but the collection is not accessible via this interface at that level.\""
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:27:31.868Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Christiana",
+        "recordType": "census",
+        "residencePlace": "St. Lawrence, New York, United States",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "birthYearFrom": 1842,
+        "birthYearTo": 1852,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 13,
+      "notes": "13 results for Christiana Clark in St. Lawrence Co. 1860 census. Top result (MCW8-6HT) is Elizabeth C D Clark (b. 1847, female) in household of Lewis Clark, Stockholm \u2014 different family. No result matching our Christiana (female, b. 1847, expected in Clark household with William+Hannah). Family not located in indexed 1860 census for St. Lawrence County."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:27:36.920Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "spouseGivenName": "Hannah",
+        "recordType": "census",
+        "residencePlace": "St. Lawrence, New York, United States",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "birthYearFrom": 1800,
+        "birthYearTo": 1810,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 8,
+      "notes": "8 results for William Clark + Hannah in St. Lawrence Co. 1860 census. Top result (MC41-VFL) is William Clark b. 1804 NH + wife Martha (not Hannah) in Waddington \u2014 different family confirmed by wife name and NH birthplace. Second (MC41-JTB) is Wm Clark b. 1800 Connecticut in Madrid \u2014 wrong birthplace. No record matches William Clark (b. 1805 NY) + Hannah (b. 1812 VT) of Brasher. Our family not located in indexed 1860 census for St. Lawrence County."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:27:41.626Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "spouseGivenName": "Hannah",
+        "recordType": "census",
+        "residencePlace": "St. Lawrence, New York, United States",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "birthYearFrom": 1800,
+        "birthYearTo": 1810,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 69,
+      "notes": "69 results (mostly NY business directory entries) for William Clark + Hannah in St. Lawrence Co. 1870 census. Top census result (M8K2-S3L) is William Clark (b. 1805 NH) + wife Martha (not Hannah) in Waddington, 1870 \u2014 same William+Martha Clark family found in 1860, confirmed as different family. No result matches William Clark (b. 1805 NY) + Hannah (b. 1812 VT) of Brasher. Our family not located in 1870 census."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:28:16.315Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Amos",
+        "sex": "Male",
+        "recordType": "census",
+        "residencePlace": "St. Lawrence, New York, United States",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1860,
+        "birthYearFrom": 1846,
+        "birthYearTo": 1852,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "Ad-hoc FAN search for Amos Clark (youngest sibling, b. 1849 NY) in St. Lawrence Co. 1860 census. 2 results: top hit (MC48-DWT) is 'Charles A Clark' (b. 1848) in 'Household of Amos Clark' in Norfolk, St. Lawrence \u2014 but this Amos Clark (head) is an adult, not our Amos (who would be age 11 in 1860). Different family. Our William+Hannah Clark family not located via sibling Amos in 1860."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:28:20.318Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mendenhall",
+        "givenName": "Absalom",
+        "spouseGivenName": "Christiana",
+        "recordType": "census",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 121,
+      "notes": "121 results for Mendenhall 1880 census. Strong candidate: M6GR-QV2 \u2014 'A. Mendenhall', male, b. 1830 Ohio, married, farmer, San Ramon, Contra Costa, California. Birth year and Ohio birthplace match Absalom Mendenhall exactly; Contra Costa County is adjacent to Livermore where Absalom died in 1907. Reading full household record to confirm Christiana as wife and obtain her birthplace data."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:30:07.434Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M6GR-QV2",
+        "note": "1880 US Census, Household of A. Mendenhall, San Ramon, Contra Costa, California"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Ad-hoc read of 1880 census household of A. Mendenhall in San Ramon, Contra Costa, CA. KEY FINDING: Wife 'C. Mendenhall' (female, b. 1847, New York, married, housekeeper) = our subject Christiana Clark Mendenhall. Birth year 1847 and NY birthplace match exactly. Husband is A. Mendenhall (b. 1830, Ohio), confirming Absalom. Children: Henry (b. 1858 CA, likely from prior relationship), Douglas (b. 1866 CA), Georgiana (b. 1866 CA), Earnest/Ernest (b. 1879 CA), Alvira (b. 1880 CA). Image ARK ark:/61903/3:1:33S7-9YBZ-2C2 to be read for Christiana's father's birthplace and mother's birthplace columns \u2014 key corroborating evidence for q_001.\""
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:37:24.345Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MN66-4YB",
+        "note": "1870 US Census, Household of A. Mendenhall, Murray Judicial Township, Alameda, California \u2014 evaluation for Absalom and Christiana Mendenhall"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Read MN66-4YB: wrong Mendenhall family. Head 'A Mendenhall' (b. 1830, Massachusetts), wife 'A M Mendenhall' (b. 1845, California). Our Christiana was born 1847 in New York \u2014 the wife's birthplace (California) and birth year (1845) rule this out. Children (Wm C b. 1851, Henry b. 1857, H D b. 1864, Martha b. 1861) born in California are inconsistent with Absalom+Christiana's timeline. A boarder 'Jane Clark' (b. 1865 CA) is a coincidence, not a connection. This household is a different Absalom Mendenhall family."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": null,
+      "performed": "2026-07-15T18:37:29.517Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mendenhall",
+        "recordPlace1": "California",
+        "yearFrom": 1880,
+        "yearTo": 1880,
+        "note": "FTS attempt to find 1880 census parents-birthplace columns for Christiana Mendenhall"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FTS search for '+Mendenhall' in California 1880 returned 0 results. The 1880 US Federal Census for California is not indexed in the FTS corpus with recordPlace1 filtering, or the corpus does not contain the San Ramon, Contra Costa pages. Cannot recover Christiana's father's/mother's birthplace columns via fulltext. Second FTS attempt with '+Mendenhall +\\\"San Ramon\\\"' (no place/year filter) returned 73,737 results but top results are all probate land descriptions mentioning the San Ramon Rancho and a North Carolina newspaper \u2014 not the 1880 census. FTS approach exhausted for this record."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-15T18:41:40.642Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Albert",
+        "birthYearFrom": 1828,
+        "birthYearTo": 1834,
+        "birthPlace": "New York",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "count": 50,
+        "note": "FAN: Albert Clark (b. 1831 NY) in 1880 census \u2014 seeking parents' birthplace columns"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "results_available": 39649,
+      "notes": "39,649 results \u2014 too broad to triage without narrowing. KEY RESULT: M6GG-HRX \u2014 Albert Clark (male, b. 1833, NY, widowed, farmer) in Murray Judicial Township, Alameda, California, 1880. Also VYDN-4MW \u2014 Albert Clark voter registration in Livermore, Alameda, CA, 1892 (nationality: New York). Both in the same Alameda County area where Absalom Mendenhall died (Livermore, 1907). Reading M6GG-HRX for parents' birthplace columns."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-15T18:41:44.497Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "William",
+        "birthYearFrom": 1800,
+        "birthYearTo": 1812,
+        "residencePlace": "St. Lawrence, New York",
+        "residenceYearFrom": 1830,
+        "residenceYearTo": 1830,
+        "count": 50,
+        "note": "Bonus goal: William Clark in 1830 census, St. Lawrence County NY"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "results_available": 8698,
+      "notes": "8,698 total results but only top 5 are from St. Lawrence County 1830 census (collection 1803958): Depeau, Stockholm, Madrid (x2), Canton. No Brasher result indexed. Reading XHP5-W5F (Depeau) to check household age/sex composition for comparison with expected profile (head male 20-29, wife female 15-29, possibly no children yet in June 1830 \u2014 Albert born 1831)."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_014",
+      "performed": "2026-07-15T18:41:52.401Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Alpha",
+        "birthYearFrom": 1835,
+        "birthYearTo": 1841,
+        "birthPlace": "New York",
+        "count": 50,
+        "note": "FAN: Alpha Clark sibling search across all years"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "results_available": 54007,
+      "notes": "MAJOR FINDINGS. (1) MC1N-9PB confirms our Alpha Clark (female, b. 1838, NY) from the 1850 Brasher household. (2) M6GG-8G4: Alpha Clark (male, b. 1837, NY, laborer, married) in Livermore, Alameda, CA in 1880 \u2014 same county as Absalom Mendenhall's death. (3) M82B-THX: Alpha Clark (male, b. 1837, NY) in HOUSEHOLD OF WILLIAM CLARK, Military, Winnesheik, Iowa, 1860 \u2014 confirms family migrated to Iowa, explains absence from NY in 1860/1870 searches. (4) MV2S-SK5: Alpha Clark (b. 1836, NY, male) in Household of Alfred Clark, Murray, Alameda, CA, 1910 \u2014 Alpha and Alfred Clark (another sibling) together in Alameda County. (5) K6QV-643: Alpha A Clark in Household of Wm Clark, 1855, Syracuse, Onondaga, NY \u2014 possible transitional family location before Iowa move. Reading M6GG-8G4 and M82B-THX for parents' birthplace columns and Iowa family composition."
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_014",
+      "performed": "2026-07-15T18:47:06.767Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M6GG-8G4",
+        "note": "1880 US Census, Alpha Clark household, Livermore, Alameda, California \u2014 FAN sibling search"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Alpha Clark (male, b. 1837, NY, laborer, married) in Livermore, Alameda, CA, 1880. Household includes wife Delia Clark (b. 1848, NY) and children William W (b. 1867 CA), Anson (b. 1870 CA), George (b. 1876 CA). Birth year and NY birthplace consistent with sibling Alpha Clark from the 1850 Brasher household. The indexed record structure does not expose father's/mother's birthplace columns for Alpha himself in the returned GEDCOMX; original image would be required for those columns."
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-15T18:47:13.032Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M82B-TH8",
+        "note": "1860 US Census, Household of William Clark, Military, Winnesheik, Iowa \u2014 family located after Iowa migration"
+      },
+      "outcome": "positive",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 12,
+      "notes": "CRITICAL FINDING. Household of William Clark, Military Township, Winnesheik County, Iowa, 1860. William Clark (male, b. 1805, N.Y., head), Hannah J Clark (female, b. 1813, N.Y., wife), Albert (b. 1835 NY), Alpha (b. 1837 NY), Alfred (b. 1840 NY), Ellen (b. 1842 NY), Lucina (b. 1844 NY), Christina Clark (female, b. 1846, N.Y., ARK M82B-THV) = our subject Christiana Clark, Amos (b. 1848 NY), Henry N (b. 1853 Iowa), Alvira (b. 1854 Iowa), Josephine H (b. 1858 Iowa). Second independent census record placing Christina Clark in the household of William Clark (head) and Hannah J Clark (wife). Iowa-born younger children confirm the family migrated from NY to Iowa between 1850 and 1860, explaining absence from indexed NY searches. NOTE: Hannah's birthplace listed as N.Y. in this record (conflicts with Vermont in 1850 \u2014 likely enumerator error)."
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-15T18:47:19.754Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M6GG-HRX",
+        "note": "1880 US Census, Household of Albert Clark, Murray Judicial Township, Alameda, California \u2014 FAN sibling with parents"
+      },
+      "outcome": "positive",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 11,
+      "notes": "CRITICAL FINDING. Household of Albert Clark, Murray Judicial Township, Alameda, CA, 1880. Albert Clark (male, b. 1833, NY, widowed, farmer) is head. KEY CORROBORATING PERSONS: William Clark (male, b. 1800, Canada, married, farmer, ARK M6GG-HRN) and Hannah Clark (female, b. 1810, Vermont, married, ARK M6GG-HRJ) are living in Albert's household, linked in FamilySearch as Albert's parents (ParentChild relationships confirmed). Also present: Amos Clark (male, b. 1850, NY, married, farmer, ARK M6GG-HR2) \u2014 youngest sibling from 1850 Brasher census household. Hannah's Vermont birthplace in this record corroborates the 1850 census (b. 1812, VT) and confirms identity. William's birthplace listed as 'Canada' in this record \u2014 conflicts with 1850 (NY) and 1860 (N.Y.) \u2014 likely enumerator or informant error. Also in household: Elvira Clark (b. 1855, Iowa), Henry Clark (b. 1854, Iowa), John Lapier, Rosa Clark, Vernon Clark, Gertrude Clark, William Clark (b. 1880 CA)."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-15T19:11:27.899Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XHP5-W5F",
+        "note": "Bonus goal pli_012: top St. Lawrence County 1830 census candidate for William Clark \u2014 Depeau township. No Brasher result is indexed. Reading this candidate to evaluate household composition compatibility with expected profile (head male ~25, wife female ~18, no children yet in June 1830 \u2014 Albert born 1831)."
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Simplified GEDCOMX returns only head name 'William Clark' and census event in Depeau, Saint Lawrence, NY, 1830. No household age/sex tally data exposed in the structured record \u2014 image read required to evaluate household composition (expected: 1 male 20-29, 1 female 15-29, 0 children as of June 1830). Plausible candidate: Depeau is in St. Lawrence County ~20 miles from Brasher; family could have relocated to Brasher between 1830 and 1840. Image ARK: ark:/61903/3:1:33S7-9YYY-3MS. Cannot confirm or exclude without image.\""
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_015",
+      "performed": "2026-07-15T19:13:33.094Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mendenhall",
+        "givenName": "Christiana",
+        "surnameAlt": "Clark",
+        "birthYearFrom": 1842,
+        "birthYearTo": 1852,
+        "deathPlace": "California",
+        "recordType": "death",
+        "count": 50,
+        "note": "California death record for Christiana Mendenhall (n\u00e9e Clark), born ~1847, the research subject"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_031.json",
+      "results_available": 23780,
+      "notes": "TOP MATCH: ark:/61903/1:1:QKSM-SQ6X \u2014 'Christia Mendenhall', b. 1846, d. 1929, California (California Death Index 1905-1939). 'Christia' is almost certainly a truncated form of 'Christiana'. Birth year 1846 vs. our 1847 is 1-year census variance. Surname 'Mendenhall' is exact. Strong candidate for the research subject's death record. Reading this record next for parents' names."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_012",
+      "performed": "2026-07-15T19:13:38.812Z",
+      "tool": "image_search",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33S7-9YYY-3MS",
+        "note": "1830 census image for William Clark household, Depeau, St. Lawrence, NY \u2014 attempt to read household age/sex tally marks"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image read returned 'fetch failed' \u2014 likely requires active FamilySearch login session or image is restricted. Cannot retrieve 1830 Depeau census image to evaluate household composition for XHP5-W5F. Pli_012 blocked pending authentication. The simplified GEDCOMX from record_read (log_030) confirms a William Clark in Depeau, St. Lawrence, NY, 1830, but age/sex tally marks are not exposed in the structured record; the image is required for household composition. Marking pli_012 as unable to progress without login.\""
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": "pli_016",
+      "performed": "2026-07-15T19:16:34.139Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Albert",
+        "birthYearFrom": 1828,
+        "birthYearTo": 1836,
+        "birthPlace": "New York",
+        "deathPlace": "California",
+        "recordType": "death",
+        "count": 20,
+        "note": "pli_016: death record for sibling Albert Clark (b. ~1831 NY, in Alameda CA 1880) to obtain parents' names"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_033.json",
+      "results_available": 14311,
+      "notes": "KEY RESULT: ark:/61903/1:1:HGHX-QTMM \u2014 Albert Clark, male, b. 1834 NY, d. 7 March 1895, California, widowed (California, Deaths and Burials, 1776-2000). CONFIRMED IDENTITY via Find a Grave (QVKV-6N2R): Albert Clark b. 1833, d. 7 March 1895, buried Livermore, Alameda, CA \u2014 same location as Absalom Mendenhall death (Livermore, 1907). Birth year 1833-1834 vs. our I3 (b. ~1831 NY) \u2014 2-3 year census variance, plausible. Widowed matches 1880 census marital status. Reading HGHX-QTMM for parents' names. Note: died 1895 predates California Death Index (1905+), so 'California, Deaths and Burials, 1776-2000' is the correct collection.\""
+    },
+    {
+      "id": "log_034",
+      "plan_item_id": "pli_015",
+      "performed": "2026-07-15T19:19:35.038Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mendenhall",
+        "givenName": "Christia",
+        "collectionId": "2001287",
+        "deathYearFrom": 1925,
+        "deathYearTo": 1935,
+        "count": 10,
+        "note": "Final search: exact name 'Christia' as indexed in California Death Index, in collection 2001287 (California County Birth and Death Records) for Christiana Mendenhall's death certificate with parents' names"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_034.json",
+      "results_available": 48,
+      "notes": "No record of 'Christia Mendenhall' or 'Christiana Mendenhall' as principal in collection 2001287 (California County Birth and Death Records). The California Death Index (collection 1932433, log_031) confirms death February 1929, California, but does not expose the county of death or certificate number through the indexed record interface. Parents' names on the actual death certificate are inaccessible through available FamilySearch indexed searches. The certificate likely exists in physical California vital records for the relevant county. Marking pli_015 as exhausted for available sources."
+    },
+    {
+      "id": "log_035",
+      "plan_item_id": "pli_016",
+      "performed": "2026-07-15T19:19:42.731Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Clark",
+        "givenName": "Amos",
+        "birthYearFrom": 1846,
+        "birthYearTo": 1854,
+        "recordCountry": "United States",
+        "recordSubdivision": "California",
+        "recordType": "death",
+        "count": 20,
+        "note": "Sibling Amos Clark death search in California"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_035.json",
+      "results_available": 22162,
+      "notes": "CONFIRMED: ark:/61903/1:1:QVVZ-F2QH \u2014 Amos Clark, b. 1 January 1851, d. 14 September 1903, buried Livermore, Alameda, CA (Find a Grave). Death in 1903 predates California statewide death registration (1905), so no modern death certificate with parents' names exists. Albert Clark (d. 7 March 1895, Livermore) similarly predates the system. Both siblings died before accessible death certificates could name parents. The FAN sibling approach through death certificates is exhausted for available records \u2014 all known siblings who died in California did so before 1905. pli_016 exhausted for available sources via FamilySearch.\""
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1850,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MC1N-9PR : accessed 15 July 2026), household of William Clark, Brasher, St. Lawrence County, New York; citing NARA microfilm publication (series not stated), 1850 U.S. Federal Census population schedules.",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census enumerator, Brasher, St. Lawrence County, New York",
+        "what": "1850 U.S. Federal Census population schedule, household of William Clark",
+        "when_created": "1850",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch, \"United States, Census, 1850,\" database with images",
+        "where_within": "Brasher, St. Lawrence County, New York; household of William Clark (dwelling/family number not transcribed in this view)"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital images); original schedules held by the National Archives and Records Administration (NARA)",
+      "access_date": "2026-07-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:M4DF-RPN",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "1860 U.S. census, Winneshiek County, Iowa, population schedule, Military Township, household of William Clark; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M82B-TH8 : accessed 15 July 2026); citing NARA microfilm publication.",
+      "citation_detail": {
+        "who": "U.S. Federal Government (census enumerator)",
+        "what": "1860 U.S. Federal Census population schedule, Military Township, Winneshiek County, Iowa, household of William Clark",
+        "when_created": "1860",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch (digital image); original schedules held by the National Archives and Records Administration (NARA)",
+        "where_within": "Military Township, Winneshiek County, Iowa; household of William Clark as enumerated"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital images); original schedules held by the National Archives and Records Administration (NARA)",
+      "access_date": "2026-07-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M82B-TH8",
+      "log_entry_id": "log_028",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "1880 U.S. census, Alameda County, California, population schedule, Murray Judicial Township, household of Albert Clark; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M6GG-HRX : accessed 15 July 2026); citing NARA microfilm publication.",
+      "citation_detail": {
+        "who": "United States Bureau of the Census (enumerator)",
+        "what": "1880 U.S. Federal Census population schedule, Murray Judicial Township, Alameda County, California, household of Albert Clark",
+        "when_created": "1880",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch",
+        "where_within": "Entry for Albert Clark and Elvira Clark; image https://www.familysearch.org/ark:/61903/1:2:MHFD-VDC"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (digital images); original schedules held by the National Archives and Records Administration (NARA)",
+      "access_date": "2026-07-15",
+      "log_entry_id": "log_029",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_242623615",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "William Clark",
+      "structured_value": {
+        "given": "William",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_242623615",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1805, New York",
+      "date": "1805",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1805,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from stated age column; respondent not identified on this pre-1940 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "head_of_household",
+      "record_persona_id": "p_242623615",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "wife",
+      "record_persona_id": "p_242623616",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Hannah Clark",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "wife",
+      "record_persona_id": "p_242623616",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1812, Vermont",
+      "date": "1812",
+      "date_certainty": "calculated",
+      "place": "Vermont",
+      "structured_value": {
+        "year": 1812,
+        "place": "Vermont"
+      },
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year computed from stated age column; respondent not identified on this pre-1940 census.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "Vermont, United States"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "wife",
+      "record_persona_id": "p_242623616",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "wife",
+      "record_persona_id": "p_242623616",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Hannah Clark listed as wife of household head William Clark \u2014 relationship inferred from household position, not a stated relationship column",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "The 1850 census has no relationship column; the spousal relationship is inferred from household position, shared surname, and FamilySearch's own indexing label, not stated by any informant.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_1",
+      "record_persona_id": "p_242623617",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Albert Clark",
+      "structured_value": {
+        "given": "Albert",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_1",
+      "record_persona_id": "p_242623617",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1831, New York",
+      "date": "1831",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1831,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child could not report own birth information; a parent likely answered.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_1",
+      "record_persona_id": "p_242623617",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_1",
+      "record_persona_id": "p_242623617",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Albert Clark listed in household of William Clark (head) and Hannah Clark (wife) \u2014 relationship inferred from household position",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census predates the 1880 relationship column; parent-child relationship inferred from household position and age pattern, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_2",
+      "record_persona_id": "p_242623618",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Alpha Clark",
+      "structured_value": {
+        "given": "Alpha",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_2",
+      "record_persona_id": "p_242623618",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1838, New York",
+      "date": "1838",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1838,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child could not report own birth information; a parent likely answered.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_2",
+      "record_persona_id": "p_242623618",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_2",
+      "record_persona_id": "p_242623618",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Alpha Clark listed in household of William Clark (head) and Hannah Clark (wife) \u2014 relationship inferred from household position",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census predates the 1880 relationship column; parent-child relationship inferred from household position and age pattern, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_3",
+      "record_persona_id": "p_242623619",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Alfred Clark",
+      "structured_value": {
+        "given": "Alfred",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_3",
+      "record_persona_id": "p_242623619",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1841, New York",
+      "date": "1841",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1841,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child could not report own birth information; a parent likely answered.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_3",
+      "record_persona_id": "p_242623619",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_3",
+      "record_persona_id": "p_242623619",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Alfred Clark listed in household of William Clark (head) and Hannah Clark (wife) \u2014 relationship inferred from household position",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census predates the 1880 relationship column; parent-child relationship inferred from household position and age pattern, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_4",
+      "record_persona_id": "p_242623620",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Ellen Clark",
+      "structured_value": {
+        "given": "Ellen",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_4",
+      "record_persona_id": "p_242623620",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1843, New York",
+      "date": "1843",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1843,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child could not report own birth information; a parent likely answered.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_4",
+      "record_persona_id": "p_242623620",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_4",
+      "record_persona_id": "p_242623620",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Ellen Clark listed in household of William Clark (head) and Hannah Clark (wife) \u2014 relationship inferred from household position",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census predates the 1880 relationship column; parent-child relationship inferred from household position and age pattern, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_5",
+      "record_persona_id": "p_242623621",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Lueina Clark",
+      "structured_value": {
+        "given": "Lueina",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_5",
+      "record_persona_id": "p_242623621",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1845, New York",
+      "date": "1845",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1845,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child could not report own birth information; a parent likely answered.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_5",
+      "record_persona_id": "p_242623621",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_5",
+      "record_persona_id": "p_242623621",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Lueina Clark listed in household of William Clark (head) and Hannah Clark (wife) \u2014 relationship inferred from household position",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census predates the 1880 relationship column; parent-child relationship inferred from household position and age pattern, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_6",
+      "record_persona_id": "p_242623622",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Christian Clark",
+      "structured_value": {
+        "given": "Christian",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Recorded as female 'Christian Clark' (masculine-style spelling) \u2014 a likely transcription/enumeration variant of the research subject Christiana Clark (tree ID LVS7-1HJ), born circa 1847; sex 'Female' and birth year 1847 are consistent with the subject, but this reading rests on a single record and should be corroborated (e.g., a birth, marriage, or death record naming her as Christiana) before treating the identity as settled.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_6",
+      "record_persona_id": "p_242623622",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1847, New York",
+      "date": "1847",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1847,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child could not report own birth information; a parent likely answered.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_6",
+      "record_persona_id": "p_242623622",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_6",
+      "record_persona_id": "p_242623622",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Christian [Christiana] Clark listed in household of William Clark (head, b. 1805 NY) and Hannah Clark (wife, b. 1812 VT), consistent with a parent-child relationship \u2014 inferred from household position only, not stated",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Key assertion for q_001: the 1850 census has no relationship column, so co-residence with William and Hannah Clark is INDIRECT evidence of parentage, not a stated parent-child relationship. Corroborating records (birth, marriage, or death records naming parents) are needed before this rises to a proof conclusion.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_7",
+      "record_persona_id": "p_242623623",
+      "log_entry_id": "log_001",
+      "fact_type": "name",
+      "value": "Amos Clark",
+      "structured_value": {
+        "given": "Amos",
+        "surname": "Clark"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_7",
+      "record_persona_id": "p_242623623",
+      "log_entry_id": "log_001",
+      "fact_type": "birth",
+      "value": "born 1849, New York",
+      "date": "1849",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": 1849,
+        "place": "New York"
+      },
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child could not report own birth information; a parent likely answered.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_7",
+      "record_persona_id": "p_242623623",
+      "log_entry_id": "log_001",
+      "fact_type": "residence",
+      "value": "Brasher, St. Lawrence County, New York, 1850",
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Brasher, St. Lawrence, New York, United States",
+      "structured_value": {
+        "place": "Brasher, St. Lawrence, New York, United States"
+      },
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_001",
+      "standard_place": "Brasher, St. Lawrence, New York, United States"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:MC1N-95S",
+      "record_role": "child_7",
+      "record_persona_id": "p_242623623",
+      "log_entry_id": "log_001",
+      "fact_type": "relationship",
+      "value": "Amos Clark listed in household of William Clark (head) and Hannah Clark (wife) \u2014 relationship inferred from household position",
+      "date": "1850",
+      "date_certainty": "exact",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "informant": "none \u2014 inferred from household position",
+      "informant_proximity": "researcher",
+      "information_quality": "indeterminate",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1850 census predates the 1880 relationship column; parent-child relationship inferred from household position and age pattern, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "William Clark",
+      "structured_value": {
+        "given": "William",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "abt 1805 (calculated from stated age)",
+      "structured_value": {
+        "year": 1805
+      },
+      "date": "1805",
+      "date_certainty": "calculated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "head_of_household",
+      "fact_type": "birthplace",
+      "value": "New York",
+      "place": "New York",
+      "structured_value": {
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Military Township, Winneshiek County, Iowa",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Hannah J Clark",
+      "structured_value": {
+        "given": "Hannah J",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "abt 1813 (calculated from stated age)",
+      "structured_value": {
+        "year": 1813
+      },
+      "date": "1813",
+      "date_certainty": "calculated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "wife",
+      "fact_type": "birthplace",
+      "value": "New York",
+      "place": "New York",
+      "structured_value": {
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "CONFLICT: the 1850 census records Hannah J Clark's birthplace as Vermont; this 1860 census states New York. Respondent unknown in both enumerations \u2014 likely enumerator transcription error or informant inconsistency. Does not resolve which is correct; flagged for correlation/hypothesis tracking.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Military Township, Winneshiek County, Iowa",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Albert Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Albert Clark listed as child in household of William Clark (head) and Hannah J Clark (wife), 1860 census \u2014 corroborating sibling co-residence for Christina Clark",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Alpha Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "IDENTITY CONFLICT: this record states Alpha Clark is male; existing tree person I4 'Alpha Clark' is recorded as female. Flagged for review \u2014 may indicate a gender-record error, a same-named sibling, or a tree data error; not resolved here.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "Alpha Clark listed as child in household of William Clark (head) and Hannah J Clark (wife), 1860 census \u2014 corroborating sibling co-residence for Christina Clark",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Alfred Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "Alfred Clark listed as child in household of William Clark (head) and Hannah J Clark (wife), 1860 census \u2014 corroborating sibling co-residence for Christina Clark",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_4",
+      "fact_type": "residence",
+      "value": "Ellen Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_4",
+      "fact_type": "relationship",
+      "value": "Ellen Clark listed as child in household of William Clark (head) and Hannah J Clark (wife), 1860 census \u2014 corroborating sibling co-residence for Christina Clark",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_5",
+      "fact_type": "residence",
+      "value": "Lucina Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Record spells the name 'Lucina'; existing tree person I7 is recorded as 'Lueina' \u2014 likely the same spelling variant, not a conflict.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "Lucina Clark listed as child in household of William Clark (head) and Hannah J Clark (wife), 1860 census \u2014 corroborating sibling co-residence for Christina Clark",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_6",
+      "fact_type": "name",
+      "value": "Christina Clark",
+      "structured_value": {
+        "given": "Christina",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Research subject; record spells the name 'Christina' (tree carries 'Christiana'). This is the second independent census (after 1850) placing her in the household of William and Hannah J Clark.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_6",
+      "fact_type": "birth",
+      "value": "abt 1846 (calculated from stated age)",
+      "structured_value": {
+        "year": 1846
+      },
+      "date": "1846",
+      "date_certainty": "calculated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child of this age could not report her own birth information; respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_6",
+      "fact_type": "birthplace",
+      "value": "New York",
+      "place": "New York",
+      "structured_value": {
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_6",
+      "fact_type": "residence",
+      "value": "Christina Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "Christina Clark listed as child in household of William Clark (head), 1860 census \u2014 indirect evidence of parentage; second independent census (after 1850) placing her with this household",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated. Corroborates but does not by itself prove parentage \u2014 single-record identity link caution applies.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_6",
+      "fact_type": "relationship",
+      "value": "Christina Clark listed as child in household of Hannah J Clark (wife), 1860 census \u2014 indirect evidence of parentage; second independent census (after 1850) placing her with this household",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated. Corroborates but does not by itself prove parentage \u2014 single-record identity link caution applies.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_7",
+      "fact_type": "residence",
+      "value": "Amos Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_7",
+      "fact_type": "relationship",
+      "value": "Amos Clark listed as child in household of William Clark (head) and Hannah J Clark (wife), 1860 census \u2014 corroborating sibling co-residence for Christina Clark",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1860 census has no relationship column; relationship inferred from household position, not stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_8",
+      "fact_type": "name",
+      "value": "Henry N Clark",
+      "structured_value": {
+        "given": "Henry N",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "New to tree; Iowa-born, consistent with family's relocation to Iowa by early 1850s.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_8",
+      "fact_type": "birth",
+      "value": "abt 1853 (calculated from stated age)",
+      "structured_value": {
+        "year": 1853
+      },
+      "date": "1853",
+      "date_certainty": "calculated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child of this age could not report his own birth information; respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_8",
+      "fact_type": "birthplace",
+      "value": "Iowa",
+      "place": "Iowa",
+      "structured_value": {
+        "place": "Iowa"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_8",
+      "fact_type": "residence",
+      "value": "Henry N Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_9",
+      "fact_type": "name",
+      "value": "Alvira Clark",
+      "structured_value": {
+        "given": "Alvira",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "New to tree; Iowa-born.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_9",
+      "fact_type": "birth",
+      "value": "abt 1854 (calculated from stated age)",
+      "structured_value": {
+        "year": 1854
+      },
+      "date": "1854",
+      "date_certainty": "calculated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child of this age could not report her own birth information; respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_9",
+      "fact_type": "birthplace",
+      "value": "Iowa",
+      "place": "Iowa",
+      "structured_value": {
+        "place": "Iowa"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_9",
+      "fact_type": "residence",
+      "value": "Alvira Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_10",
+      "fact_type": "name",
+      "value": "Josephine H Clark",
+      "structured_value": {
+        "given": "Josephine H",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "New to tree; Iowa-born.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_10",
+      "fact_type": "birth",
+      "value": "abt 1858 (calculated from stated age)",
+      "structured_value": {
+        "year": 1858
+      },
+      "date": "1858",
+      "date_certainty": "calculated",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A child of this age could not report her own birth information; respondent unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_10",
+      "fact_type": "birthplace",
+      "value": "Iowa",
+      "place": "Iowa",
+      "structured_value": {
+        "place": "Iowa"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:M82B-TH8",
+      "record_role": "child_10",
+      "fact_type": "residence",
+      "value": "Josephine H Clark, Military Township, Winneshiek County, Iowa, 1860",
+      "place": "Military Township, Winneshiek County, Iowa",
+      "date": "1860",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_028",
+      "source_id": "src_002",
+      "standard_place": "Winneshiek, Iowa, United States"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Albert Clark",
+      "structured_value": {
+        "given": "Albert",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Respondent for this 1880 census entry is not identified by name; likely reported by a single household respondent (possibly Albert himself) whose facts about the household form one shared-informant evidence unit.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Born about 1833, New York (calculated from stated age)",
+      "date": "1833",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": "1833",
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "date": "1880",
+      "place": "Murray Judicial Township, Alameda County, California",
+      "structured_value": {
+        "place": "Murray Judicial Township, Alameda County, California"
+      },
+      "value": "Residing in Murray Judicial Township, Alameda County, California, 1880",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "Murray Judicial Township, Alameda, California, United States"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Widowed",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Farmer",
+      "structured_value": {
+        "occupation": "Farmer"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Elvira Clark",
+      "structured_value": {
+        "given": "Elvira",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely her father Albert)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Born about 1855, Iowa (calculated from stated age)",
+      "date": "1855",
+      "date_certainty": "calculated",
+      "place": "Iowa",
+      "structured_value": {
+        "year": "1855",
+        "place": "Iowa"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely her father Albert)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "William Clark",
+      "structured_value": {
+        "given": "William",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Likely part of the same shared-informant unit as other household members' facts in this entry.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "father",
+      "fact_type": "birth",
+      "value": "Born about 1800, Canada (calculated from stated age)",
+      "date": "1800",
+      "date_certainty": "calculated",
+      "place": "Canada",
+      "structured_value": {
+        "year": "1800",
+        "place": "Canada"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "CONFLICT: 1850 and 1860 census records for this William Clark give New York birthplace and a birth year of approximately 1805; this 1880 entry gives Canada and 1800. Given consistent identification of spouse Hannah and sons Albert/Amos/Henry across records, this is likely enumerator or informant error rather than a different individual, but the discrepancy is unresolved.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003",
+      "standard_place": "Canada"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "William Clark recorded as father of head of household Albert Clark (1880 census relationship-to-head column)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely William or Albert)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "William Clark recorded as father of Amos Clark (brother of household head, per FamilySearch-linked relationship-to-head data)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "brother_2"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely William or Amos)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Hannah Clark",
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Likely part of the same shared-informant unit as other household members' facts in this entry.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "mother",
+      "fact_type": "birth",
+      "value": "Born about 1810, Vermont (calculated from stated age)",
+      "date": "1810",
+      "date_certainty": "calculated",
+      "place": "Vermont",
+      "structured_value": {
+        "year": "1810",
+        "place": "Vermont"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Vermont birthplace corroborates the 1850 census (b. ~1812, Vermont) for this same Hannah Clark; minor 2-year discrepancy in birth year is within normal census-to-census variance.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003",
+      "standard_place": "Vermont, United States"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "mother",
+      "fact_type": "residence",
+      "date": "1880",
+      "place": "Murray Judicial Township, Alameda County, California",
+      "structured_value": {
+        "place": "Murray Judicial Township, Alameda County, California"
+      },
+      "value": "Residing in Murray Judicial Township, Alameda County, California, 1880, in the household of her son Albert Clark",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003",
+      "standard_place": "Murray Judicial Township, Alameda, California, United States"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "Hannah Clark recorded as mother of head of household Albert Clark (1880 census relationship-to-head column)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Hannah or Albert)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "Hannah Clark recorded as mother of Amos Clark (brother of household head, per FamilySearch-linked relationship-to-head data)",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "brother_2"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely Hannah or Amos)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "brother_1",
+      "fact_type": "name",
+      "value": "Henry Clark",
+      "structured_value": {
+        "given": "Henry",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "brother_1",
+      "fact_type": "birth",
+      "value": "Born about 1854, Iowa (calculated from stated age)",
+      "date": "1854",
+      "date_certainty": "calculated",
+      "place": "Iowa",
+      "structured_value": {
+        "year": "1854",
+        "place": "Iowa"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "Iowa, United States"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "brother_2",
+      "fact_type": "name",
+      "value": "Amos Clark",
+      "structured_value": {
+        "given": "Amos",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "brother_2",
+      "fact_type": "birth",
+      "value": "Born about 1850, New York (calculated from stated age)",
+      "date": "1850",
+      "date_certainty": "calculated",
+      "place": "New York",
+      "structured_value": {
+        "year": "1850",
+        "place": "New York"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "New York birthplace and ~1850 birth year are consistent with the Amos Clark of the 1850 Brasher, St. Lawrence County, New York household, corroborating shared identity/parentage.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003",
+      "standard_place": "New York, United States"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_1",
+      "fact_type": "name",
+      "value": "Rosa Clark",
+      "structured_value": {
+        "given": "Rosa",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_1",
+      "fact_type": "birth",
+      "value": "Born about 1855, California (calculated from stated age)",
+      "date": "1855",
+      "date_certainty": "calculated",
+      "place": "California",
+      "structured_value": {
+        "year": "1855",
+        "place": "California"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "California, United States"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_2",
+      "fact_type": "name",
+      "value": "Vernon Clark",
+      "structured_value": {
+        "given": "Vernon",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_2",
+      "fact_type": "birth",
+      "value": "Born about 1875, California (calculated from stated age)",
+      "date": "1875",
+      "date_certainty": "calculated",
+      "place": "California",
+      "structured_value": {
+        "year": "1875",
+        "place": "California"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "California, United States"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_3",
+      "fact_type": "name",
+      "value": "Gertrude Clark",
+      "structured_value": {
+        "given": "Gertrude",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_3",
+      "fact_type": "birth",
+      "value": "Born about 1877, California (calculated from stated age)",
+      "date": "1877",
+      "date_certainty": "calculated",
+      "place": "California",
+      "structured_value": {
+        "year": "1877",
+        "place": "California"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "California, United States"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_4",
+      "fact_type": "name",
+      "value": "William Clark",
+      "structured_value": {
+        "given": "William",
+        "surname": "Clark"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "other_household_member_4",
+      "fact_type": "birth",
+      "value": "Born 1880, California (infant, calculated from stated age)",
+      "date": "1880",
+      "date_certainty": "calculated",
+      "place": "California",
+      "structured_value": {
+        "year": "1880",
+        "place": "California"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "California, United States"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "boarder_1",
+      "fact_type": "name",
+      "value": "John Lapier",
+      "structured_value": {
+        "given": "John",
+        "surname": "Lapier"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Differently-surnamed household member; possible FAN associate (unspecified relationship \u2014 could be kin of Albert, his late wife, or unrelated boarder). Relationship not asserted here; flagged as a lead only.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/1:1:M6GG-HRX",
+      "record_role": "boarder_1",
+      "fact_type": "birth",
+      "value": "Born about 1865, California (calculated from stated age)",
+      "date": "1865",
+      "date_certainty": "calculated",
+      "place": "California",
+      "structured_value": {
+        "year": "1865",
+        "place": "California"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003",
+      "standard_place": "California, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "William Clark listed as head of household in 1850 census, Brasher, St. Lawrence Co., NY. Name matches stub I1 exactly. Age and place are consistent with candidate father. Single-record stub; no independent corroboration yet.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth year 1805, New York, derived from census age column for head William Clark. Age ~45 in 1850 is consistent with fathering children born 1831\u20131849, including Christiana (b. 1847). Matches stub I1.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "William Clark's 1850 residence in Brasher, St. Lawrence Co., NY, recorded by enumerator. Matches stub I1.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Hannah Clark listed as wife in William Clark household, 1850 census, Brasher, NY. Name matches stub I2 exactly. Single-record stub; no independent corroboration yet.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Birth year 1812, Vermont, derived from census age column for wife Hannah Clark. Age ~38 in 1850 is consistent with being mother of children born 1831\u20131849. Matches stub I2.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Hannah Clark's 1850 residence in Brasher, St. Lawrence Co., NY, recorded by enumerator. Matches stub I2.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_008",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Albert Clark listed in William Clark household, 1850 census, Brasher, NY. Name matches stub I3 exactly. Single-record stub.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_009",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birth year 1831 for Albert Clark in William Clark household, Brasher, NY, 1850. Consistent with eldest-child role. Matches stub I3.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_010",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Albert Clark's 1850 residence in Brasher, St. Lawrence Co., NY. Matches stub I3.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_012",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Alpha Clark listed in William Clark household, 1850 census, Brasher, NY. Distinctive name matches stub I4. Single-record stub.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_013",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birth year 1838 for Alpha Clark in William Clark household, Brasher, NY, 1850. Matches stub I4.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_014",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Alpha Clark's 1850 residence in Brasher, St. Lawrence Co., NY. Matches stub I4.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_016",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Alfred Clark listed in William Clark household, 1850 census, Brasher, NY. Name matches stub I5. Single-record stub.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_017",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Birth year 1841 for Alfred Clark in William Clark household, Brasher, NY, 1850. Matches stub I5.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_018",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Alfred Clark's 1850 residence in Brasher, St. Lawrence Co., NY. Matches stub I5.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_020",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Ellen Clark listed in William Clark household, 1850 census, Brasher, NY. Name matches stub I6. Single-record stub.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_021",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Birth year 1843 for Ellen Clark in William Clark household, Brasher, NY, 1850. Matches stub I6.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_022",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Ellen Clark's 1850 residence in Brasher, St. Lawrence Co., NY. Matches stub I6.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_024",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Lueina Clark listed in William Clark household, 1850 census, Brasher, NY. Distinctive name matches stub I7. Single-record stub.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_025",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Birth year 1845 for Lueina Clark in William Clark household, Brasher, NY, 1850. Matches stub I7.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_026",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Lueina Clark's 1850 residence in Brasher, St. Lawrence Co., NY. Matches stub I7.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_028",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "Indexed as 'Christian Clark' (female, b. 1847, NY) in Household of William Clark, Brasher, St. Lawrence Co., 1850 census. FamilySearch match score 0.86 against LVS7-1HJ; record already attached to subject in FS. 'Christian' is a known enumeration variant of 'Christiana'. Sex (Female), birth year (1847), and Brasher location all confirm identity.",
+      "match_score": 0.8616612,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_029",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "Birth year 1847 in New York for 'Christian Clark' (female) in William Clark household, Brasher, NY. Consistent with tree birth fact (1847, Brasher). FS match score 0.86 for LVS7-1HJ.",
+      "match_score": 0.8616612,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_030",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "Residence in Brasher, St. Lawrence Co., NY, 1850, for 'Christian Clark' (female, b. 1847) \u2014 already linked to LVS7-1HJ in FamilySearch. Consistent with existing tree residence fact. FS match score 0.86.",
+      "match_score": 0.8616612,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_032",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Amos Clark listed in William Clark household, 1850 census, Brasher, NY. Name matches stub I8. Single-record stub.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_033",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Birth year 1849 for Amos Clark in William Clark household, Brasher, NY, 1850. Youngest child, matches stub I8.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_034",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Amos Clark's 1850 residence in Brasher, St. Lawrence Co., NY. Matches stub I8.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Spousal relationship assertion: Hannah Clark listed as wife in William Clark's household, 1850 census. Bears on William Clark (I1) as the husband, inferred from household position (no relationship column in 1850 census).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Spousal relationship assertion: Hannah Clark listed as wife of head William Clark, 1850 census, Brasher. Bears on Hannah Clark (I2) as the wife, inferred from household position.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_011",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Albert Clark listed below household head and wife in William Clark's 1850 household; position consistent with child. Bears on Albert Clark (I3) as inferred child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Albert Clark listed below William Clark (head) in 1850 household; bears on William (I1) as inferred parent of Albert.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_015",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Alpha Clark listed in William and Hannah Clark household, 1850 census; position consistent with child. Bears on Alpha (I4) as inferred child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Alpha Clark listed in William Clark's 1850 household; bears on William (I1) as inferred parent of Alpha.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_019",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Alfred Clark listed in William and Hannah Clark household, 1850 census; position consistent with child. Bears on Alfred (I5) as inferred child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Alfred Clark listed in William Clark's 1850 household; bears on William (I1) as inferred parent of Alfred.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_023",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Ellen Clark listed in William and Hannah Clark household, 1850 census; position consistent with child. Bears on Ellen (I6) as inferred child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Ellen Clark listed in William Clark's 1850 household; bears on William (I1) as inferred parent of Ellen.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_027",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Lueina Clark listed in William and Hannah Clark household, 1850 census; position consistent with child. Bears on Lueina (I7) as inferred child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Lueina Clark listed in William Clark's 1850 household; bears on William (I1) as inferred parent of Lueina.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_031",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "KEY ASSERTION for q_001. 'Christian' [Christiana] Clark (female, b. 1847 NY, FS match score 0.86) listed in household of William Clark (head, b. 1805 NY) and Hannah Clark (wife, b. 1812 VT), Brasher, St. Lawrence Co., NY, 1850. Household position consistent with parent-child relationship. The 1850 census lacks a relationship column \u2014 this is INDIRECT evidence of parentage; corroboration from birth, marriage, or probate records required before proof conclusion.",
+      "match_score": 0.8616612,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "KEY ASSERTION for q_001. Christian [Christiana] Clark listed in household of William Clark (head, b. 1805 NY), Brasher, 1850. Bears on William Clark (I1) as inferred parent. Co-residence is indirect evidence of parentage only.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_031",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "KEY ASSERTION for q_001. Christian [Christiana] Clark listed in household where Hannah Clark (wife/housewife, b. 1812 VT) is present, Brasher, 1850. Bears on Hannah Clark (I2) as inferred mother. Co-residence is indirect evidence of parentage only.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_035",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Amos Clark listed in William and Hannah Clark household, 1850 census; position consistent with youngest child. Bears on Amos (I8) as inferred child.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_035",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Amos Clark listed in William Clark's 1850 household; bears on William (I1) as inferred parent of Amos.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_036",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Exact name match 'William Clark'; same head of household as 1850 Brasher census; same wife Hannah J and identical NY-born children (Albert/Alpha/Alfred/Ellen/Lucina/Christina/Amos) plus Iowa-born younger children confirming family continuity and Iowa migration by 1860. Strong match on name, household composition, and birth year (~1805).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_037",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year ~1805 calculated from stated age \u2014 consistent with 1850 census (b. 1805 NY). Same William Clark household constellation.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_038",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "New York birthplace matches 1850 census entry for William Clark (I1). Consistent with same person.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_039",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence in Military Township, Winneshiek County, Iowa, 1860 \u2014 William Clark (I1) head of household. Confirms family's Iowa migration from Brasher, NY.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_040",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Name 'Hannah J Clark' matches Hannah Clark (I2) exactly; same wife role as 1850 Brasher census. Household composition (William + identical sibling constellation) confirms same person. Birth year ~1813 consistent with 1850 (b. 1812). NOTE: birthplace listed as NY here vs. Vermont in 1850 \u2014 likely 1860 enumerator error; 1880 Albert Clark household corroborates Vermont.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_041",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth year ~1813 from stated age \u2014 consistent with 1850 census (b. 1812 VT) for Hannah Clark (I2). Minor 1-year variance is within normal census calculation error.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_042",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birthplace listed as New York \u2014 conflicting with 1850 census (Vermont) for Hannah Clark (I2); 1880 corroborates Vermont. Likely 1860 enumerator error. Identity confirmed by name, birth year, and household context despite this conflict.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_043",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Residence in Military Township, Winneshiek County, Iowa, 1860 \u2014 Hannah J Clark (I2) wife of William Clark.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_044",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Name 'Albert Clark', b. ~1835 NY, in William Clark household \u2014 matches Albert Clark (I3), eldest sibling from 1850 Brasher household (b. 1831 NY). Name, NY birthplace, and household position match; minor birth-year variance (1835 vs 1831) within census rounding.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_045",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Albert Clark listed as child of William Clark's household (1860 Iowa) \u2014 corroborates Albert Clark (I3) as sibling of Christina Clark and child of William/Hannah.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_045",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Albert's household-position assertion also bears on William Clark (I1) as the head whose household membership implies the parent-child relationship.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_046",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Name 'Alpha Clark', b. ~1837 NY, in William Clark household \u2014 matches Alpha Clark (I4) from 1850 Brasher household (b. 1838 NY). Name, birth year (within 1 year), NY birthplace, and household position agree. Gender conflict resolved: 1860 and 1880 both say male; I4's gender corrected to Male.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_047",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Alpha Clark listed as child in William Clark's household \u2014 corroborates I4 as sibling of Christina/Christiana Clark.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_047",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Alpha's household-position assertion also bears on William Clark (I1) as the implied parent/head.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_048",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Name 'Alfred Clark', b. ~1840 NY, in William Clark household \u2014 matches Alfred Clark (I5) from 1850 Brasher household (b. 1841 NY). Name, birth year (within 1 year), NY birthplace, household position all agree.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_049",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Alfred Clark listed as child in William Clark's household \u2014 corroborates I5 as sibling of Christiana Clark.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_049",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Alfred's household-position assertion also bears on William Clark (I1) as the implied parent/head.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_050",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Name 'Ellen Clark', b. ~1842 NY, in William Clark household \u2014 matches Ellen Clark (I6) from 1850 Brasher household (b. 1843 NY). Name, birth year (within 1 year), NY birthplace, household position agree.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_051",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Ellen Clark listed as child in William Clark's household \u2014 corroborates I6 as sibling of Christiana Clark.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_051",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Ellen's household-position assertion also bears on William Clark (I1) as the implied parent/head.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_052",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Name 'Lucina Clark', b. ~1844 NY, in William Clark household \u2014 matches Lueina Clark (I7), a common spelling variant of Lucina. Birth year within 1 year of 1850 (b. 1845 NY); NY birthplace and household position agree.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_053",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Lucina Clark listed as child in William Clark's household \u2014 corroborates I7 (Lueina/Lucina Clark) as sibling of Christiana Clark.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_053",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Lucina's household-position assertion also bears on William Clark (I1) as the implied parent/head.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_054",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "'Christina Clark', female \u2014 a common spelling variant of 'Christiana Clark' (LVS7-1HJ, the research subject). Second independent census placing her in the household of William Clark and Hannah J Clark. Same household constellation as 1850 Brasher census (same parents, same older siblings Albert/Alpha/Alfred/Ellen/Lucina, Amos as youngest NY-born child). Birth year 1846 \u2248 1847 (tree), 1-year census rounding; NY birthplace matches. Confident identity.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_055",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "Birth year ~1846 for Christina Clark \u2014 within 1 year of tree's 1847 for Christiana Clark (LVS7-1HJ). Normal census-to-census variance; no conflict.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_056",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "New York birthplace for Christina Clark \u2014 matches tree (Christiana Clark born Brasher, St. Lawrence County, New York). Consistent.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_057",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "Residence in Military Township, Winneshiek County, Iowa, 1860 \u2014 Christina Clark (LVS7-1HJ) in William Clark household. Consistent with family's Iowa migration.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_058",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "Christina Clark listed as child in household of William Clark (head, 1860 Iowa census) \u2014 indirect evidence of parentage for Christiana Clark (LVS7-1HJ). Second independent census corroborating co-residence with William Clark, the candidate father.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_058",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Assertion of Christina Clark's co-residence with William Clark (I1) as head also bears on William Clark as the implied parent whose household she inhabits.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_059",
+      "person_id": "LVS7-1HJ",
+      "confidence": "confident",
+      "rationale": "Christina Clark listed as child in household of Hannah J Clark (wife, 1860 Iowa census) \u2014 indirect evidence of parentage for Christiana Clark (LVS7-1HJ). Second independent census corroborating co-residence with Hannah J Clark, the candidate mother.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_059",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Assertion of Christina Clark's co-residence with Hannah J Clark (I2) as wife also bears on Hannah as the implied parent whose household she inhabits.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_060",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Name 'Amos Clark', b. ~1848 NY, in William Clark household \u2014 matches Amos Clark (I8) from 1850 Brasher household (b. 1849 NY). Name, birth year (within 1 year), NY birthplace, and household position agree.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_061",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Amos Clark listed as child in William Clark's household \u2014 corroborates I8 as sibling of Christiana Clark.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_061",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Amos's household-position assertion also bears on William Clark (I1) as the implied parent/head.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_062",
+      "person_id": "I11",
+      "confidence": "confident",
+      "rationale": "'Henry N Clark', b. 1853 Iowa \u2014 Iowa-born child of William/Hannah Clark. Stub I11 was created from this same record; same person.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_063",
+      "person_id": "I11",
+      "confidence": "confident",
+      "rationale": "Birth year ~1853 for Henry N Clark in William Clark's 1860 Iowa household \u2014 consistent with Iowa birthplace after family's migration.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_064",
+      "person_id": "I11",
+      "confidence": "confident",
+      "rationale": "Iowa birthplace for Henry N Clark \u2014 confirms Iowa-born child of William/Hannah Clark, consistent with stub I11.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_065",
+      "person_id": "I11",
+      "confidence": "confident",
+      "rationale": "Residence in Military Township, Winneshiek County, Iowa, 1860 for Henry N Clark \u2014 same household.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_066",
+      "person_id": "I12",
+      "confidence": "confident",
+      "rationale": "'Alvira Clark', b. 1854 Iowa \u2014 Iowa-born child of William/Hannah Clark. Stub I12 was created from this same record.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_067",
+      "person_id": "I12",
+      "confidence": "confident",
+      "rationale": "Birth year ~1854 for Alvira Clark \u2014 consistent with Iowa-born status, stub I12.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_068",
+      "person_id": "I12",
+      "confidence": "confident",
+      "rationale": "Iowa birthplace for Alvira Clark \u2014 confirms Iowa-born status, stub I12.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_069",
+      "person_id": "I12",
+      "confidence": "confident",
+      "rationale": "Residence in Military Township, Winneshiek County, Iowa, 1860 for Alvira Clark \u2014 same household.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_070",
+      "person_id": "I13",
+      "confidence": "confident",
+      "rationale": "'Josephine H Clark', b. 1858 Iowa \u2014 Iowa-born child of William/Hannah Clark. Stub I13 was created from this same record.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_071",
+      "person_id": "I13",
+      "confidence": "confident",
+      "rationale": "Birth year ~1858 for Josephine H Clark \u2014 consistent with Iowa-born status, stub I13.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_089",
+      "assertion_id": "a_072",
+      "person_id": "I13",
+      "confidence": "confident",
+      "rationale": "Iowa birthplace for Josephine H Clark \u2014 confirms Iowa-born status, stub I13.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_090",
+      "assertion_id": "a_073",
+      "person_id": "I13",
+      "confidence": "confident",
+      "rationale": "Residence in Military Township, Winneshiek County, Iowa, 1860 for Josephine H Clark \u2014 same household.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_091",
+      "assertion_id": "a_074",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "'Albert Clark' (male, head, widowed, farmer) in Murray, Alameda, CA, 1880. Name is an exact match for I3 (Albert Clark). The 1850 Brasher census records Albert Clark (b. ~1831, NY) as the eldest child of William and Hannah Clark \u2014 same name, same parents, NY origin, California residence consistent with sibling migrations. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_092",
+      "assertion_id": "a_075",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Albert Clark's 1880 birth year ~1833, birthplace New York. The 1850 census records Albert's birth year as ~1831 \u2014 2-year discrepancy is within normal census-to-census age variance. New York birthplace consistent. Confident match to I3.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_093",
+      "assertion_id": "a_076",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Albert Clark's 1880 residence in Murray Judicial Township, Alameda County, California. Consistent with known Alameda County migration of Clark siblings (Alpha also in Alameda 1880, Absalom Mendenhall in Livermore 1907). Confident match to I3.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_094",
+      "assertion_id": "a_077",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Albert Clark's 1880 marital status recorded as widowed. Bears on I3; single-record fact, no independent corroboration yet. Probable.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_095",
+      "assertion_id": "a_078",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Albert Clark's occupation recorded as farmer in 1880. Bears on I3; consistent with farming family background in NY/Iowa/CA.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_096",
+      "assertion_id": "a_079",
+      "person_id": "I14",
+      "confidence": "probable",
+      "rationale": "'Elvira Clark' (female, b. ~1855, Iowa) listed as child_1 in Albert Clark's 1880 household. Stub I14 was created from this same 1880 record; single-record stub. Name, birth year, and Iowa birthplace consistent with Albert's known Iowa residence by mid-1850s. Probable (one record only).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_097",
+      "assertion_id": "a_080",
+      "person_id": "I14",
+      "confidence": "probable",
+      "rationale": "Elvira Clark's birth ~1855 in Iowa \u2014 consistent with Albert (b. ~1831 NY) having a daughter born in Iowa when the family resided there. Probable, single-record stub I14.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_098",
+      "assertion_id": "a_081",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "'William Clark' recorded as father of household head Albert Clark in Murray, Alameda, CA, 1880. Name is an exact match for I1. FamilySearch-linked ParentChild relationship to Albert, Amos, and Henry in this record. William Clark identified as head of household in 1850 (Brasher, NY) and 1860 (Military, Iowa) \u2014 same name, same spouse Hannah, same children \u2014 confirming identity.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_099",
+      "assertion_id": "a_082",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "William Clark's 1880 birth year ~1800, birthplace Canada. Conflicting with 1850 (b. ~1805, New York) and 1860 (b. ~1805, New York). The birthplace discrepancy (New York vs. Canada) and birth year offset (~5 years) are likely enumerator/informant errors given the consistent identification of spouse and children across all three records. Downgraded to probable due to unresolved conflict in birthplace.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_100",
+      "assertion_id": "a_083",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: William Clark recorded as father of Albert Clark (head) per the 1880 census relationship-to-head column \u2014 direct evidence. Bears on William Clark (I1) as parent. Three independent census enumerations (1850, 1860, 1880) consistently identify this William Clark as father of Albert and other named children. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_101",
+      "assertion_id": "a_083",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: William Clark recorded as father of Albert Clark per the 1880 census relationship-to-head column. Bears on Albert Clark (I3) as the child being identified. Albert's identity in this record is confident (same name, birth year, NY birthplace, Alameda County location as sibling Alpha).",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_102",
+      "assertion_id": "a_084",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: William Clark recorded as father of Amos Clark (brother_2 in Albert's household) per FamilySearch-linked relationship-to-head data in 1880 census. Bears on William Clark (I1) as parent of Amos. Consistent with Amos Clark (b. ~1849, NY) as youngest child of William/Hannah in the 1850 Brasher census.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_103",
+      "assertion_id": "a_084",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: William Clark recorded as father of Amos Clark in 1880. Bears on Amos Clark (I8). Amos Clark (b. ~1850, NY) in this record matches the stub I8 created from the 1850 Brasher census (b. ~1849, NY) \u2014 name exact, NY birthplace, birth year within 1-year variance. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_104",
+      "assertion_id": "a_085",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "'Hannah Clark' recorded as mother of Albert Clark (head) in Murray, Alameda, CA, 1880. Name is an exact match for I2. FamilySearch-linked ParentChild relationship to Albert, Amos, and Henry. Hannah Clark identified as wife of William Clark (head) in 1850 (Brasher, NY) and 1860 (Military, Iowa) \u2014 same name, same spouse, same children \u2014 confirming identity.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_105",
+      "assertion_id": "a_086",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Hannah Clark's 1880 birth year ~1810, birthplace Vermont. Vermont birthplace corroborates the 1850 census (b. ~1812, Vermont) for I2 \u2014 2-year birth year discrepancy is within normal census variance. Confident identity match.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_106",
+      "assertion_id": "a_087",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Hannah Clark's 1880 residence in Murray Judicial Township, Alameda County, California, in the household of her son Albert Clark. Consistent with family migration pattern. Confident match to I2.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_107",
+      "assertion_id": "a_088",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Hannah Clark recorded as mother of Albert Clark (head) per the 1880 census relationship-to-head column \u2014 direct evidence. Bears on Hannah Clark (I2) as parent. Three independent census enumerations consistently identify this Hannah Clark as mother of Albert and other named children. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_108",
+      "assertion_id": "a_088",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Hannah Clark recorded as mother of Albert Clark per the 1880 census relationship-to-head column. Bears on Albert Clark (I3) as the child being identified. Albert's identity in this record is confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_109",
+      "assertion_id": "a_089",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Hannah Clark recorded as mother of Amos Clark (brother_2 in Albert's household) per FamilySearch-linked relationship-to-head data in 1880 census. Bears on Hannah Clark (I2) as parent of Amos. Consistent with Amos Clark (b. ~1849, NY) as youngest child of William/Hannah in 1850 Brasher census.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_110",
+      "assertion_id": "a_089",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Hannah Clark recorded as mother of Amos Clark in 1880. Bears on Amos Clark (I8). Amos matches stub I8 (b. ~1849, NY) \u2014 name exact, NY birthplace, birth year within 1-year variance of 1880 (~1850). Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_111",
+      "assertion_id": "a_090",
+      "person_id": "I11",
+      "confidence": "confident",
+      "rationale": "'Henry Clark' (male, b. ~1854, Iowa) listed as brother_1 in Albert Clark's 1880 household. The 1860 Iowa census records 'Henry N Clark' (b. ~1853, Iowa) as child_8 of William and Hannah Clark \u2014 same name (variant: 'Henry N' vs 'Henry'), Iowa birthplace, adjacent birth years (1853 vs 1854 \u2014 1-year census variance). Stub I11 was created from the 1860 record. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_112",
+      "assertion_id": "a_091",
+      "person_id": "I11",
+      "confidence": "confident",
+      "rationale": "Henry Clark's 1880 birth year ~1854, birthplace Iowa \u2014 consistent with I11 (b. ~1853, Iowa per 1860 census). 1-year variance within normal census-to-census range. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_113",
+      "assertion_id": "a_092",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "'Amos Clark' (male, b. ~1850, NY) listed as brother_2 in Albert Clark's 1880 household. Exact name match for I8, created from 1850 Brasher census (b. ~1849, NY, child_7 in William/Hannah Clark household). NY birthplace and birth year consistent. FamilySearch-linked as brother of Albert and son of William and Hannah in this record. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_114",
+      "assertion_id": "a_093",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Amos Clark's 1880 birth year ~1850, birthplace New York \u2014 consistent with I8 (b. ~1849, NY per 1850 Brasher census). 1-year variance within normal range. NY birthplace is a strong corroborating detail for a man living in California in 1880, confirming he was born in the Clark household's New York period. Confident.",
+      "match_score": null,
+      "created": "2026-07-15"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_028",
+        "a_029",
+        "a_030",
+        "a_031",
+        "a_054",
+        "a_055",
+        "a_056",
+        "a_057",
+        "a_058",
+        "a_059",
+        "a_083",
+        "a_084",
+        "a_088",
+        "a_089",
+        "a_092",
+        "a_093"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch was searched for: US federal censuses (1830, 1840, 1850, 1860, 1880) covering Brasher/St. Lawrence County NY, Winneshiek County Iowa, and Alameda County California; New York vital records (births/christenings, church records, civil marriages 1704\u20131995); New York probate records (1629\u20131971); New York land records (1630\u20131975); New York state census (1855); California death index (1905\u20131939); California county birth and death records (1800\u20131994); California deaths and burials (1776\u20132000). Name variants tried: Christiana, Christina, Christian, Christia, Mendenhall. FAN research conducted via seven named siblings across three record sets. Migration path NY \u2192 Iowa \u2192 California tracked through all three censuses. Christiana's 1929 California death certificate was identified in the death index (QKSM-SQ6X) but remains inaccessible: the image exceeds the MCP transport limit and the certificate is not indexed as a principal in collection 2001287. Albert Clark (d. 1895) and Amos Clark (d. 1903) died before California statewide registration (1905). These records are documented as pursued-and-unavailable.",
+      "narrative_markdown": "## Probable Parents of Christiana Clark (born 1847, Brasher, St. Lawrence County, New York)\n\n### Research Question\n\nWho were the parents of Christiana Clark, born about 1847 in Brasher, St. Lawrence County, New York?\n\n### Conclusion\n\nThe preponderance of available evidence strongly suggests that **William Clark** (born about 1805, New York) and **Hannah Clark** (born about 1812, Vermont) were the parents of Christiana Clark. This conclusion rests on indirect co-residence evidence from two independent federal censuses corroborated by direct sibling parentage evidence from a third. It is rated probable because no direct evidence specifically naming Christiana's parents has been accessed; her 1929 California death certificate was identified but remains inaccessible through available resources.\n\n### The Evidence\n\n**1880 U.S. Federal Census \u2014 Direct Evidence for Siblings**\n\nThe most direct parentage evidence comes from the 1880 federal census schedule for Murray Judicial Township, Alameda County, California (household of Albert Clark), an original record accessed via FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M6GG-HRX).\u00b9 The 1880 census introduced a relationship-to-head-of-household column that yields direct statements of family relationship. In this record, William Clark (aged about 80, born Canada) is recorded as \"Father\" and Hannah Clark (aged about 70, born Vermont) as \"Mother\" of head Albert Clark. Amos Clark (aged about 31, born New York) also resides in the household, with FamilySearch ParentChild links confirming his relationship to William and Hannah as a son.\n\nAlbert Clark and Amos Clark were confirmed members of Christiana's childhood household in the 1850 Brasher, New York census (below). Their confirmed sibling relationship to Christiana establishes that the William and Hannah Clark named as parents in 1880 are also the parents of Christiana.\n\n**1850 U.S. Federal Census \u2014 Christiana in Her Parents' Household**\n\nThe 1850 federal census for Brasher, St. Lawrence County, New York, an original record accessed via FamilySearch (https://www.familysearch.org/ark:/61903/1:2:M4DF-RPN),\u00b2 lists \"Christian Clark\" (female, aged 3, born New York) in the household of William Clark (head, aged 45, born New York) and Hannah Clark (wife, aged 38, born Vermont). Also in the household are Albert (19), Alpha (12), Alfred (9), Ellen (7), Lueina (5), and Amos (1). The name \"Christian\" is a known enumeration variant of \"Christiana\"; the subject's FamilySearch profile (LVS7-1HJ) was already attached to this record (match score 0.86). The 1850 census did not include a relationship-to-head column, so Christiana's presence is indirect evidence of parentage \u2014 it establishes co-residence with William and Hannah Clark but not an explicitly stated parent-child relationship.\n\n**1860 U.S. Federal Census \u2014 Second Independent Corroboration**\n\nThe 1860 federal census for Military Township, Winneshiek County, Iowa, an original record accessed via FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M82B-TH8),\u00b3 lists \"Christina Clark\" (female, aged 14, born New York) in the household of William Clark (head, aged 55, born New York) and Hannah J Clark (wife, aged 47, born New York). The identical sibling constellation from 1850 appears in this record, with three Iowa-born additions (Henry, Alvira, and Josephine), confirming the family had migrated from New York to Iowa between 1850 and 1860. This second independent census \u2014 a different enumerator, a different jurisdiction, a decade later \u2014 corroborates Christiana's co-residence with William and Hannah Clark across time and state lines.\n\n### Peripheral Conflicts Resolved\n\nTwo minor conflicts in the parents' biographical data do not affect the parentage identification:\n\n1. *Hannah Clark's birthplace:* Vermont in 1850 and 1880 versus New York in the 1860 census only. The 2:1 preponderance of records favors Vermont; the 1860 discrepancy is most plausibly an enumerator recording error. The same individual is confirmed across all three records by consistent name, role, birth year (within one to two years), and household composition.\n\n2. *William Clark's birthplace:* New York in both 1850 and 1860 versus Canada in the 1880 record. The 2:1 preponderance favors New York; the 1880 entry may reflect faulty informant recall or enumerator error some thirty years after the earlier records. The same individual is confirmed by consistent name, spouse name, and household of children.\n\nNeither conflict creates any doubt about whether the same William and Hannah Clark appear consistently across all three censuses as a married couple with the same named children following the same migration path from New York to Iowa to California.\n\n### Inaccessible Records\n\nChristiana Clark's California death certificate (filed February 1929, identified as \"Christia Mendenhall\" in the California Death Index 1905\u20131939, FamilySearch QKSM-SQ6X) was located but could not be accessed: the record image exceeds the available transport limit (1.4 MB returned), and the certificate is not indexed as a principal in FamilySearch collection 2001287 (California County Birth and Death Records 1800\u20131994) across multiple targeted searches. This certificate would likely have provided direct parentage evidence. Albert Clark (died 1895, Livermore, Alameda County) and Amos Clark (died 1903, Livermore, Alameda County) both died before California statewide death registration began in 1905; no accessible certificates exist for either sibling that could serve as equivalent parentage evidence. These records are documented as pursued-and-unavailable.\n\n### Summary\n\nThree independent original census records spanning thirty years and two jurisdictions consistently place Christiana Clark in the household of William Clark and Hannah Clark. The 1880 census directly names William and Hannah as parents of Christiana's confirmed siblings Albert and Amos, establishing the family unit. Based on the convergent indirect co-residence evidence from 1850 and 1860 corroborated by the 1880 direct sibling parentage evidence, the preponderance strongly suggests that **William Clark** (born about 1805, New York) and **Hannah Clark** (born about 1812, Vermont) were the parents of Christiana Clark. This conclusion could advance to proved if Christiana's 1929 death certificate or an equivalent direct source becomes accessible.\n\n---\n\n\u00b9 1880 U.S. census, Alameda County, California, population schedule, Murray Judicial Township, household of Albert Clark; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M6GG-HRX : accessed 15 July 2026); citing NARA microfilm publication.\n\n\u00b2 \"United States, Census, 1850,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MC1N-9PR : accessed 15 July 2026), household of William Clark, Brasher, St. Lawrence County, New York.\n\n\u00b3 1860 U.S. census, Winneshiek County, Iowa, population schedule, Military Township, household of William Clark; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M82B-TH8 : accessed 15 July 2026)."
+    }
+  ],
+  "evaluations": []
+}

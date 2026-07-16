@@ -1,0 +1,9 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true"
+  },
+  "proof_quality_score": 3,
+  "annotator": "genealogy-evaluator"
+}
