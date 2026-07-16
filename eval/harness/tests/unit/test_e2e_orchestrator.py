@@ -166,6 +166,32 @@ def test_build_workspace_stages_plugin_agents(tmp_path: Path):
     assert "name: gps-mentor" in staged.read_text(encoding="utf-8")
 
 
+def test_build_workspace_writes_project_effort_level(tmp_path: Path):
+    """effort_level writes a project-level setting the CLI honors (env var doesn't)."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir, effort_level="medium")
+
+    settings = workspace / ".claude" / "settings.json"
+    assert settings.exists()
+    assert json.loads(settings.read_text(encoding="utf-8")) == {"effortLevel": "medium"}
+
+
+def test_build_workspace_no_settings_when_effort_level_unset(tmp_path: Path):
+    """Default (None) writes no settings.json — preserves the CLI default effort."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir)
+
+    assert not (workspace / ".claude" / "settings.json").exists()
+
+
 def test_build_workspace_default_agents_dir_includes_gps_mentor(tmp_path: Path):
     """The default agents_dir points at the real plugin agents/, so the
     shipped gps-mentor agent lands in the workspace with no extra wiring."""

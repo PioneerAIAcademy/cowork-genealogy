@@ -166,6 +166,32 @@ def main(argv: list[str] | None = None) -> int:
             "not a double-applied write); pass --no-resume-on-stall to disable."
         ),
     )
+    parser.add_argument(
+        "--effort-level",
+        choices=["low", "medium", "high", "xhigh", "max"],
+        default="high",
+        help=(
+            "Pin the run's reasoning effort via a project-level setting "
+            "(.claude/settings.json effortLevel). Session-wide. Default: high "
+            "(matches Cowork). setting_sources=['project'] already isolates from "
+            "the user's effortLevel, and CLAUDE_EFFORT is output-only, so this is "
+            "the sole working effort lever. Vary it to test whether a runaway-"
+            "thinking subagent freeze clears (see subagents[].runaway_thinking)."
+        ),
+    )
+    parser.add_argument(
+        "--max-output-tokens",
+        type=int,
+        default=None,
+        help=(
+            "Cap the model's output budget via CLAUDE_CODE_MAX_OUTPUT_TOKENS "
+            "(session-wide). Default: unset = the CLI default (sonnet-5 -> 32000). "
+            "This env var IS inherited from the launching shell, so pass it "
+            "explicitly for reproducible runs. Lower it (e.g. 16000, 8000) to test "
+            "whether it bounds a subagent that fills the output budget with "
+            "thinking. Recorded in the runlog."
+        ),
+    )
     args = parser.parse_args(argv)
 
     fixtures_root: Path = args.fixtures_root
@@ -191,6 +217,8 @@ def main(argv: list[str] | None = None) -> int:
         "skills_dir": args.skills_dir,
         "skip_judge": args.skip_judge,
         "resume_on_stall": args.resume_on_stall,
+        "effort_level": args.effort_level,
+        "max_output_tokens": args.max_output_tokens,
     }
 
     results: list[E2eResult] = []

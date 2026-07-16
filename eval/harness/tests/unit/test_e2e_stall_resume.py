@@ -151,3 +151,44 @@ def test_resume_recovers_a_stall_in_safe_state(tmp_path, monkeypatch):
     assert aborted is None  # completed via resume, no abort
     assert usage["resumes"] == 1
     assert calls["n"] == 2  # query was re-issued with resume
+
+
+def _run(fx, tmp_path, **kw):
+    return asyncio.run(
+        _run_agent(fixture=fx, workspace=tmp_path, mcp_server_entry=Path("dummy"), **kw)
+    )
+
+
+def test_max_output_tokens_injected_into_env_and_logged(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_query(**kw):
+        captured["env"] = dict(kw["options"].env)
+        return _FakeAgen([(0.0, _sys()), (0.0, _result())])
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    _tc, _t, usage, *_ = _run(_fixture(tmp_path), tmp_path, max_output_tokens=16000)
+    assert captured["env"]["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] == "16000"
+    assert usage["max_output_tokens"] == 16000
+
+
+def test_max_output_tokens_absent_from_env_when_unset(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_query(**kw):
+        captured["env"] = dict(kw["options"].env)
+        return _FakeAgen([(0.0, _sys()), (0.0, _result())])
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    _tc, _t, usage, *_ = _run(_fixture(tmp_path), tmp_path)
+    assert "CLAUDE_CODE_MAX_OUTPUT_TOKENS" not in captured["env"]
+    assert usage["max_output_tokens"] is None
+
+
+def test_cli_version_captured_from_init_message(tmp_path, monkeypatch):
+    init = SystemMessage(subtype="init", data={"session_id": "S1", "version": "2.1.208"})
+    monkeypatch.setattr(
+        orchestrator, "query", lambda **kw: _FakeAgen([(0.0, init), (0.0, _result())])
+    )
+    _tc, _t, usage, *_ = _run(_fixture(tmp_path), tmp_path)
+    assert usage["cli_version"] == "2.1.208"
