@@ -268,7 +268,7 @@ def create_mock_server(
             _workspace=workspace,
         ):
             entry: dict[str, Any] = {
-                "tool": f"mcp__genealogy__{_name}",
+                "tool": f"mcp__Genealogy_Research__{_name}",
                 "args": dict(args),
                 "expected_args": None,
                 "matched": {"kind": "none", "index": None},
@@ -347,7 +347,7 @@ def create_mock_server(
         decorated = tool(live_tool_name, description, input_schema)(live_handler)
         tools.append(decorated)
 
-    server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
+    server = create_sdk_mcp_server(name="Genealogy_Research", version="1.0.0", tools=tools)
     tools_by_name = {t.name: t for t in tools}
     return server, call_log, tools_by_name
 
@@ -430,7 +430,7 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
                 }
 
         entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__validate_research_schema",
+            "tool": "mcp__Genealogy_Research__validate_research_schema",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
@@ -499,7 +499,7 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
                 }
 
         entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__research_log_append",
+            "tool": "mcp__Genealogy_Research__research_log_append",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
@@ -568,7 +568,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                 }
 
         entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__research_append",
+            "tool": "mcp__Genealogy_Research__research_append",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
@@ -645,7 +645,7 @@ def _make_compiled_tool_handler(
                 }
 
         entry: dict[str, Any] = {
-            "tool": f"mcp__genealogy__{tool_name}",
+            "tool": f"mcp__Genealogy_Research__{tool_name}",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
