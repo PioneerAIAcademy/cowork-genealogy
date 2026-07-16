@@ -117,6 +117,7 @@ const ID_PREFIXES: Record<string, string> = {
   timelines: "t_",
   proof_summaries: "ps_",
   evaluations: "ev_",
+  localities: "loc_",
 };
 
 /**
@@ -337,6 +338,7 @@ export const RESEARCH_SHAPES = {
     "project", "researcher_profile", "known_holdings", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
+    "localities",
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
@@ -428,6 +430,11 @@ export const RESEARCH_SHAPES = {
   evaluation_entry: new Set([
     "id", "focus", "target_id", "target_type", "verdict", "file_path",
     "timestamp", "superseded_by",
+  ]),
+  locality: new Set([
+    "id", "place", "for_place", "time_period", "jurisdictions",
+    "collections", "quirks", "guide_markdown", "pages_read", "source",
+    "created", "updated",
   ]),
 };
 
@@ -893,6 +900,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
   // Evaluations
   validateEvaluations(data, ids, path, report);
+  validateLocalities(data, path, report);
 
   return ids;
 }
@@ -969,6 +977,34 @@ function validateEvaluations(
         addError(report, ep, `timestamp '${ev.timestamp}' is not a valid ISO 8601 date-time`);
       }
     }
+  }
+}
+
+function validateLocalities(
+  data: any,
+  path: string,
+  report: ValidationReport
+): void {
+  // Optional section: place/locale research knowledge written by locality-guide.
+  // Nested objects (jurisdictions / collections / pages_read items) are closed in
+  // the schema but not deep-checked here (same precedent as structured_value).
+  const localities = Array.isArray(data.localities) ? data.localities : [];
+  for (let i = 0; i < localities.length; i++) {
+    const loc = localities[i];
+    const lp = `${path}/localities[${i}]`;
+    checkRequired(
+      loc,
+      ["id", "place", "pages_read", "source", "created"],
+      lp,
+      report,
+      NULLABLE_FIELDS
+    );
+    checkAllowedKeys(loc, RESEARCH_SHAPES.locality, "localities", lp, report);
+    if ("id" in loc) {
+      checkIdPrefix(loc.id, ID_PREFIXES.localities, lp, report);
+    }
+    if ("created" in loc) checkIsoDate(loc, "created", lp, report);
+    if ("updated" in loc && loc.updated != null) checkIsoDate(loc, "updated", lp, report);
   }
 }
 

@@ -1738,6 +1738,27 @@ describe("Research closed shapes", () => {
           superseded_by: null,
         },
       ],
+      localities: [
+        {
+          id: "loc_001",
+          place: "Norway",
+          for_place: "Ringebu, Oppland, Norway",
+          time_period: "1870-1880",
+          jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
+          collections: [
+            { id: "4237104", title: "Norway, Church Books, 1797-1958", date_range: "1797-1958" },
+          ],
+          quirks: ["Indexed only at county level (Oppland)."],
+          guide_markdown: "## Norway\nChurch books are the core source.",
+          pages_read: [
+            { section: "home", url: "https://x/Norway_Genealogy", found: true },
+            { section: "research_tips", url: null, found: false },
+          ],
+          source: "locality-guide",
+          created: "2026-01-02",
+          updated: "2026-01-02",
+        },
+      ],
     };
   }
 
@@ -1797,6 +1818,7 @@ describe("Research closed shapes", () => {
     },
     { site: "proof_summaries", plant: (r) => (r.proof_summaries[0].zz_extra = true) },
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
+    { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
   ];
 
   for (const v of vectors) {
@@ -1848,6 +1870,7 @@ describe("Research closed shapes", () => {
       timeline_impossibility: schema.$defs.timeline_impossibility,
       proof_summary: schema.$defs.proof_summary,
       evaluation_entry: schema.$defs.evaluation_entry,
+      locality: schema.$defs.locality,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());
