@@ -127,8 +127,8 @@ time, regardless of how directly the request named the destination.
    | `proof-conclusion` just wrote `<ps_id>` | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. |
    | All questions are `resolved` and `project.status` still `active` | **First verify:** does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and `target_id` equal to that `ps_id`? If any resolved question's proof summary has no proof-critique evaluation on record, that question is not actually done — go back and run the mentor gate on it before writing `project.status = "completed"`. Marking a question `resolved` is not, by itself, evidence this check happened. Once verified: write `project.status = "completed"` via `research_append`, then stop. |
    | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `proof-conclusion` |
-   | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship is not yet in `tree.gedcomx.json`** | `proof-conclusion` again for the same question — it must encode the relationship before you proceed (see **Tree-encoding gate**) |
-   | `proof-conclusion` wrote `<ps_id>` (and, at tier ≥ probable, its concluded relationship is now in `tree.gedcomx.json`) | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
+   | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included) | `proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
+   | `proof-conclusion` wrote `<ps_id>` (and, at tier ≥ probable, its concluded relationship or fact is now in `tree.gedcomx.json`) | **`proof-critique` mentor review** on `<ps_id>` (advisory — see Mentor checkpoints), then continue |
    | All questions are `resolved`, **every tier-≥-probable conclusion is encoded in `tree.gedcomx.json`** (see **Tree-encoding gate**), and `project.status` still `active` | Write `project.status = "completed"` via `research_append`, then stop |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
@@ -222,29 +222,33 @@ time, regardless of how directly the request named the destination.
 
 **A conclusion is not done until the tree reflects it.** `proof-conclusion`
 writes two things — the `proof_summaries` narrative *and* the concluded
-relationship in `tree.gedcomx.json` (its §6, at tier ≥ probable). The narrative
-is the argument; the tree is the deliverable, where the researcher's answer
-actually lives. A proof summary whose relationship is missing from the tree is a
-**found-but-lost** result: the question looks answered on paper while the tree
-still doesn't show it. In long runs the agent sometimes writes the summary and
-skips the tree write — so verify it, don't assume it.
+**relationship or fact** in `tree.gedcomx.json` (its §6, at tier ≥ probable).
+The narrative is the argument; the tree is the deliverable, where the
+researcher's answer actually lives. A proof summary whose conclusion is missing
+from the tree is a **found-but-lost** result: the question looks answered on
+paper while the tree still doesn't show it. In long runs the agent sometimes
+writes the summary and skips the tree write — so verify it, don't assume it.
 
 After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
 
-1. **Read `tree.gedcomx.json` and confirm the concluded relationship is present**
-   — a `ParentChild` linking the concluded parent(s) to the child for a
-   parentage question, a `Couple` for a marriage — between the persons the proof
-   concluded.
+1. **Read `tree.gedcomx.json` and confirm the concluded relationship or fact is
+   present** — match the check to the question type: a `ParentChild` linking
+   the concluded parent(s) to the child for a parentage question, a `Couple`
+   for a marriage, **a `Death`/`Birth`/`Marriage` fact carrying the concluded
+   date and place on the subject person for a vital-event question**. A bounded
+   conclusion still encodes as a fact — use the proof's bounded expression as
+   the fact's `date` (e.g. `"between 1879 and 1885"`) rather than leaving the
+   fact off because no exact date was proved.
 2. **If it is missing, re-invoke `proof-conclusion` for the same question** (its
-   §6 writes the relationship). Do this *before* the `proof-critique` mentor
-   review and before anything marks the question resolved.
+   §6 writes the relationship or fact). Do this *before* the `proof-critique`
+   mentor review and before anything marks the question resolved.
 3. **This is a hard gate.** Unlike the advisory mentor, it blocks: never let
    `question-selection` mark the question resolved, and never write
    `project.status = "completed"`, while any tier-≥-probable conclusion is
    unencoded in the tree. A run does not finish with a conclusion that never
    reached the tree.
 
-At tier `possible` / `not_proved` / `disproved` no relationship is expected (the
+At tier `possible` / `not_proved` / `disproved` no tree write is expected (the
 conclusion is a documented lead, not a tree assertion), so the gate is satisfied
 trivially.
 
