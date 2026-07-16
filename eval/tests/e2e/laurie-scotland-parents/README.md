@@ -9,8 +9,7 @@ in 1888; died 7 December 1909 in New York City.
 ## Research question
 
 > Who were the parents of John Laurie, born about 1859 in Glasgow, Lanarkshire,
-> Scotland, who married Ellen Cahill in New York in 1888 and died in 1909 in New
-> York City?
+> Scotland?
 
 ## Why this fixture exists — the teaching trap
 
