@@ -109,6 +109,20 @@ def test_signal_needs_eyes_on_holdout_regression_even_if_fix_lands():
     assert any("regression" in r for r in sig.reasons)
 
 
+def test_signal_needs_eyes_when_a_gate_test_is_ungraded():
+    # A holdout test that aborted on the candidate produces no dims -> baseline
+    # graded it, candidate scored None. That can't be a "regression" score-wise,
+    # but it must block LOOKS GOOD (we can't confirm no regression). Regression
+    # of the ut_citation_014 dry-run bug.
+    mined = compare(_scores([("base", "Correctness", 1)]),
+                    scores_of(_entry([("base", "Correctness", 3)])))  # fix landed
+    holdout = {"ut_h_001": compare(_scores([("base", "Completeness", 3)]),
+                                   scores_of({}))}  # candidate: no dims (aborted)
+    sig = compute_signal(mined, holdout)
+    assert sig.verdict == "NEEDS YOUR EYES"
+    assert any("could not be graded" in r for r in sig.reasons)
+
+
 def test_signal_named_dimension_restricts_target():
     # Correctness reproduces+fixes; the named target 'Completeness' never failed
     # on the incumbent -> inconclusive on the named dimension.

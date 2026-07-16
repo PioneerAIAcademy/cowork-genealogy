@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass, field
@@ -176,7 +177,25 @@ def compute_signal(
             f"{_SCORE_LABEL[r.candidate]}"
         )
 
-    if fixed and not regressions:
+    # Coverage gap: a dimension the baseline graded that the candidate did NOT
+    # (the candidate test aborted or the judge was skipped). `candidate=None`
+    # can't be a "regression" score-wise, but it means we can't confirm the
+    # result on that test — so it must block LOOKS GOOD, not pass silently.
+    def _has_gap(rows: list[DimRow]) -> bool:
+        return any(r.incumbent is not None and r.candidate is None for r in rows)
+
+    ungraded: list[str] = []
+    if _has_gap(mined_rows):
+        ungraded.append("the motivating test")
+    ungraded += [f"holdout {tid}" for tid, rows in holdout_rows_by_test.items()
+                 if _has_gap(rows)]
+    for u in ungraded:
+        reasons.append(
+            f"{u} could not be graded on the candidate (it aborted or the judge "
+            f"was skipped) — can't confirm no regression; investigate."
+        )
+
+    if fixed and not regressions and not ungraded:
         return GateSignal("LOOKS GOOD", reasons)
     return GateSignal("NEEDS YOUR EYES", reasons)
 
@@ -352,8 +371,8 @@ def render_report(
     out += [f"  - {r}" for r in signal.reasons]
     out.append(f"- Incumbent baseline: `{baseline.path.name}` (your step-4 run, "
                f"human-corrected)  ·  Candidate: working tree"
-               + ("  ·  ⚠ SKILL.md matches the baseline — did you apply the edits?"
-                  if no_edit else ""))
+               + ("  ·  ⚠ no uncommitted edit to this skill — did you apply the "
+                  "improver's edits?" if no_edit else ""))
     out.append(f"- Motivating test: `{mined_test_id}`  ·  Holdout: "
                f"{', '.join(f'`{h}`' for h in holdout_ids) or '(none)'}")
     out.append(f"- Judge: `{judge_model}`  ·  ~${total_cost:.2f} this round "
@@ -370,6 +389,23 @@ def render_report(
                 "**inert**. Designate 2-3 via the CRUD UI Hold-out toggle "
                 "(plan §6.5)._", ""]
     return "\n".join(out)
+
+
+def _has_uncommitted_skill_edit(skill: str) -> bool:
+    """True if the working-tree SKILL.md has uncommitted changes vs `git HEAD` —
+    i.e. there is an edit to actually evaluate. A single `git diff --quiet` sanity
+    check (NOT the heavy tree machinery); on any git error, assume an edit exists
+    so the gate never blocks on a non-git checkout."""
+    rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "diff", "--quiet", "HEAD", "--", rel]
+        )
+    except (OSError, ValueError):
+        return True
+    if r.returncode not in (0, 1):  # git error (e.g. not a repo) -> don't false-warn
+        return True
+    return r.returncode == 1  # 0 = no diff; 1 = uncommitted changes
 
 
 def _build_is_stale() -> bool:
@@ -472,14 +508,13 @@ def main(argv: list[str] | None = None) -> int:
         print("  WARNING: no ANTHROPIC_API_KEY — the judge will fail and every "
               "dimension will be ungraded. Set it before gating.", file=sys.stderr)
 
-    # A byte-equal SKILL.md between the baseline snapshot and the working tree
-    # means no candidate edit is applied — surface it, don't fail.
-    working_md = (REPO_ROOT / f"packages/engine/plugin/skills/{args.skill}/SKILL.md")
-    no_edit = (
-        baseline.skill_md is not None
-        and working_md.exists()
-        and baseline.skill_md.strip() == working_md.read_text(encoding="utf-8").strip()
-    )
+    # Is there actually an uncommitted edit to evaluate? (git diff vs HEAD.) A
+    # stale baseline with no current edit is the main false-positive trap — the
+    # gate would otherwise credit unrelated committed drift (or judge noise) as a
+    # "fix." Comparing against the baseline *snapshot* body can't catch this (a
+    # stale baseline differs from the working tree for unrelated reasons), so ask
+    # git whether the operator has actually changed the skill.
+    no_edit = not _has_uncommitted_skill_edit(args.skill)
 
     gate_specs = [mined_spec] + holdout_specs
     from harness.versioning import now_utc_filename_timestamp
@@ -496,6 +531,13 @@ def main(argv: list[str] | None = None) -> int:
     holdout_rows_by_test = {s.id: rows_for(s.id) for s in holdout_specs}
     signal = compute_signal(mined_rows, holdout_rows_by_test,
                             named_dimension=args.dimension)
+    if no_edit and signal.verdict != "NEEDS YOUR EYES":
+        signal = GateSignal("NEEDS YOUR EYES", [
+            "no uncommitted edit to this skill's SKILL.md — there is nothing to "
+            "evaluate (apply the improver's edits first). The baseline run-log may "
+            "also predate the committed body; run a fresh `make eval-skill` if "
+            "unsure.",
+        ] + signal.reasons)
     total_cost = sum(
         float((e.get("totals") or {}).get("total_cost_usd") or 0.0)
         for e in cand_entries.values()
