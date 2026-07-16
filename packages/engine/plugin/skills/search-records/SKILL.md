@@ -142,6 +142,12 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 - Initials (J. Smith)
 - Maiden names for married women
 
+**Secondary names need variants too — including the given name, not just the surname.** The same variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`, and other secondary-party parameters, not just the principal's own name — an exact-match assumption on a spouse or parent's name can produce a false negative just as easily as one on the principal (e.g. a bride indexed as "Urna" when the tree has "Unna"). A run that only varies the secondary surname (e.g. Halsteinsdatter → Halstensdatter) while leaving the secondary given name fixed still misses this class of error — the given name needs its own spelling/phonetic variants tried (Unna → Urna, Anna, Una), not just the patronymic. If several searches with a secondary name come back empty, before concluding a genuine negative: (1) try spelling variants on the secondary given name itself, (2) try spelling variants on the secondary surname, and (3) try both varied together — don't stop after varying only one half of the secondary name.
+
+**Query-structure changes are not a substitute for name-spelling changes.** Twice on the same real record (see `references/collection-quirks.md`, Norway section), the agent tried several searches that changed *which field* held which value — switching which party was `spouseGivenName` vs. the principal, dropping the surname filter, dropping the place filter — while re-typing the exact same spelling of the secondary given name every time. That is not a name variant; it is the same name run through a different query shape, and it does not surface a transcription-variant record. Before moving to another repository, confirm you can point to at least one search where a **letter in the secondary given name itself** was changed (not just which parameter it was assigned to).
+
+**When secondary-party name variants are exhausted and still weak, drop the secondary filter instead of switching repositories.** Across repeated live runs against the same Norwegian marriage record (see `references/collection-quirks.md`, Norway section), the searches that actually recovered the target record dropped the secondary-party name filter entirely — searching the principal alone, scoped only by collection/date/place — rather than continuing to guess spelling combinations on the secondary party or pivoting to a different collection/record type. This is a required fallback, not an optional one: before concluding a plan item is exhausted or moving to another repository, run at least one principal-only search (no `spouseGivenName`/`fatherSurname`/etc.) with `count: 50`, then `rank_search_matches` with `checkAttachments: true` over the full candidate pool. A candidate with `attachedToSubject: true` is a strong confirming signal here — FamilySearch's own matcher already linked it to this person — even when its raw `matchScore` looks unremarkable (a real recovered case scored only 0.632 at rank 2 of 58). This is the inverse of the "attached → deprioritize" guidance in Step 4: that guidance is for *discovering new* evidence, where an attached record is old news; when the plan item's goal is *confirming* a fact already suspected (a marriage date, a birth record), an attached record is exactly the target and should be read via `record_read`, not skipped.
+
 **Do NOT use wildcard characters (`*`, `?`, `%`) in `record_search` parameters.** Use explicit spelling variants instead.
 
 **Always keep givenName in variant searches.** Do not drop to a surname-only query — it broadens results to all persons of that surname and makes triage impossible. Keep both surname and givenName on every retry; change the spelling of one or both.
@@ -200,13 +206,32 @@ candidates; you still confirm the top ones:
   residences, FAN network) — before treating it as the subject's. Absent that
   confirmation, flag it `needs-review`, keep the plan item `in_progress`, and do
   not hand the record or its parents to extraction as the subject's.
+  **The excuse can point either direction — both are still excuses.** The
+  imprecision doesn't have to sit on the *matched record's* side to be a
+  rationalization: a same-name match carrying an exact, precise date (a parish
+  baptism, a marriage register entry) that conflicts with the tree's own
+  approximate estimate (itself often a census-derived age) is not resolved by
+  noting that the *tree's* number is the fuzzy one. A precise record's exact
+  date disagreeing with an approximate estimate by several years is the same
+  disqualifying signal as the reverse case — the record's greater precision
+  makes the conflict a stronger caution flag, not a reason to relax scrutiny
+  because "the other number was only an estimate anyway." Present this pattern
+  to the user as `needs-review — possible namesake`, not as a "Top Match," and
+  do not phrase the conclusion as "almost certainly the right person" with the
+  date reduced to a footnote.
 - **Needs-review band.** A genuinely *different* same-name/same-place person can
   land inside the match band, and sparse/dateless records score unstably. When the
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
   it as `needs-review` and confirm by other means, not on score alone.
 - **Attachment status** is already on each match: attached-to-subject → note and
-  deprioritize; attached-to-other → potentially relevant; unattached → prioritize
-  (new evidence).
+  deprioritize *when the goal is discovering new evidence*; attached-to-other →
+  potentially relevant; unattached → prioritize (new evidence). **When the plan
+  item's goal is instead confirming a specific fact already suspected** (e.g. "did
+  this marriage happen, and when") rather than discovering something new, an
+  attached-to-subject candidate is exactly the target, not noise — FamilySearch's
+  own matcher already vetted the link. Read it via `record_read` even at a
+  moderate `matchScore`, rather than passing over it in search of unattached
+  "new" evidence.
 - **Collection sanity-check.** Verify the matched record's collection actually
   answers the question asked — a 1870-census query returning an 1850 result is a
   near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
@@ -251,6 +276,9 @@ Pass: `projectPath`, `tool`, `planItemId`, `query` (enough detail to reproduce t
 - Explain the mismatch in `notes`
 - Still pass `stagedResultsRef`
 - **Stop after confirming the mismatch.** Variant spellings will NOT fix a collection mismatch — do not execute them, and do not recommend them as next steps. Suggest a different source or collection filter instead.
+- **A collection mismatch is not a nil, and repeating it is not "still exhausting levers."** If a follow-up attempt at fixing the *collection* targeting (an explicit `collectionId` pin, a broadened year window) still returns the same wrong-collection record, that repetition is itself the confirmation — it does not mean the mismatch is still unconfirmed, and it is not license to reach for Step 8's nil-lever escalation (spelling/phonetic variants) next. The record that keeps surfacing is real; it simply isn't from the collection being asked about.
+  ❌ WRONG: three straight 1870-census queries all return the 1850 record → try a "Flinn" spelling variant next.
+  ✅ CORRECT: three straight 1870-census queries all return the 1850 record → stop, log the pattern, and suggest a different collection/repository (a different state's archive, Ancestry's independently-indexed 1870 census) — never a spelling change.
 
 **outcome values:**
 - `positive`: Matching results found
@@ -288,6 +316,8 @@ Never treat an index entry as equivalent to examining the original record.
 
 ### 8. Handle nil results
 
+**This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch (Step 5) is a different failure mode with a narrower, separate remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
+
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
 2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry as a separate `research_log_append` call immediately after it completes — do not batch log calls at the end.**
    **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
@@ -304,7 +334,12 @@ Never treat an index entry as equivalent to examining the original record.
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
-7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass" on a Q→O error), no FamilySearch variant will ever surface that record. Other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`), so they can recover records FamilySearch cannot — which is exactly why the escalation is triggered by the nil signal here, not planned upfront (planning external items preemptively clutters the plan when FamilySearch works). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** In the nil log entry's `notes`, record that FamilySearch variants were exhausted and external sites should be checked. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
+7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass" on a Q→O error), no FamilySearch variant will ever surface that record. Other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`), so they can recover records FamilySearch cannot — which is exactly why the escalation is triggered by the nil signal here, not planned upfront (planning external items preemptively clutters the plan when FamilySearch works). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, invoke `Skill("search-external-sites")` with the same person attributes to generate Ancestry (and, where the researcher subscribes, MyHeritage/FindMyPast) search URLs. **Do this immediately — do not ask the user first and do not wait until step 9.** This is a tool call you make in this turn, not an option you narrate for the user to approve.
+
+   ❌ WRONG: Ending your response with "FamilySearch is exhausted — would you like me to check Ancestry?" without having called the skill. Offering the escalation in prose is not escalating.
+   ✅ CORRECT: Call `Skill("search-external-sites")` in this same turn, before writing your summary, and present the URLs it returns as part of your results.
+
+   In the nil log entry's `notes`, record that FamilySearch variants were exhausted and external sites should be checked. Do not treat the plan item as resolved on the FamilySearch nil alone — leave its status `in_progress` until the external search has been checked. Skip this only for low-value items, or when a fallback plan item already targets an external site.
 
 ### 9. Present results
 

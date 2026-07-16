@@ -113,6 +113,8 @@ Do not restate evidence already quoted verbatim elsewhere — cite it. Most conc
 
 The `narrative_markdown` is the **authoritative GPS conclusion** — if structured fields disagree, the narrative governs. It must be **self-contained**: readable without the JSON and uploadable to FamilySearch as a Memory/Document. Write in the Statement / Summary / Argument form selected above (section headings, evidence summary, conflict resolution, tier declaration, inline citations on every factual claim). Organize by significance, not chronology. Name informants when their identity affects weighing. State source classifications explicitly so the reader sees the three-layer analysis.
 
+**Never claim a digital image exists unless the tool data confirms it.** Only describe a source as having an "accessible" or "digitized" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`). A source-description ARK or citation URL is not itself proof of a linked image — many FamilySearch collections are index-only, and telling a reader an image is "accessible" when it isn't sends them looking for something that doesn't exist.
+
 ### 5. Write the proof_summaries entry
 
 `research_append({ projectPath, section: "proof_summaries", op: "append", entry })` without an `id` — the tool assigns `ps_NNN`, validates the whole project, and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.

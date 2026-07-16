@@ -14,9 +14,9 @@ see §3.)*
 verified against the code; 33 confirmed findings are folded into this draft.
 **Implementation status:** components **A** (the gate — `eval/harness/skill_gate.py`
 + `make gate-skill` + `tests/unit/test_skill_gate.py`) and **B** (the improver's
-≤3-edit budget) **landed in PR 1** alongside this doc. Component **E**
-(`draft-unit-test --from-e2e`) is the follow-up PR; until it lands, its step in the
-loop keeps the manual hand-authoring path.
+≤3-edit budget) **landed in PR 1**. Component **E** ships in **PR 2** as
+**`mine-unit-test`** (`.claude/skills/mine-unit-test/`) — a sibling of
+`draft-unit-test`, not a mode on it (§8).
 **Related:** [`docs/skill-lifecycle.md`](../skill-lifecycle.md) (the loop this
 plugs into), the vendored description optimizer (`eval/triggering/`), and
 [microsoft/SkillOpt](https://github.com/microsoft/SkillOpt) (the inspiration).
@@ -144,8 +144,6 @@ skill**.
 - LR scheduler, warm-up, multi-epoch, rejected-edit buffer, cross-skill meta memory.
 - A machine-appliable diff format from the improver. The human applies the ≤3
   edits by hand (they're reviewing them anyway) — see §7 and the §6.2 seam.
-- A structured `skills_invoked` list on the e2e run-log (would mechanize E's
-  localization; §8.2). Deferred.
 - Wiring the gate's verdict into the CRUD-UI review/release trail (§6.3, §11).
 
 ## 5. The governing constraint: the reward is an LLM judge
@@ -348,9 +346,12 @@ clean, attributable fix.
 ## 8. Component E — mining a unit test from a noticed failure
 
 The fuel — the hard cases `skill-lifecycle.md` begs for, drawn from real research
-rather than synthetic happy-paths. E adapts the existing `draft-unit-test` skill
-(which already scaffolds a test + scenario + fixtures from a **feedback case**) to
-read the **research state where the failure surfaced** instead.
+rather than synthetic happy-paths. E ships as **`mine-unit-test`**
+(`.claude/skills/mine-unit-test/`), a **sibling** of `draft-unit-test` (which
+scaffolds from a **feedback case**). Same output format — anchored in
+`unit-test-spec.md` — but a different input: the **research state where the failure
+surfaced**. (A sibling, not a mode on `draft-unit-test`, keeps that
+feedback-case-coupled skill and its triggering untouched.)
 
 ### 8.0 Step 0 — classify before mining (the lane gate)
 
@@ -373,7 +374,7 @@ rule, applied at the moment of noticing.
 
 ### 8.1 What it does
 
-A new **`--from-e2e` mode** (or sibling skill) on `draft-unit-test`. Its **primary
+`mine-unit-test` (`.claude/skills/mine-unit-test/`). Its **primary
 input is the live Cowork research project** where the human noticed the issue —
 the `make e2e-project` working directory (`research.json` + `tree.gedcomx.json` +
 `results/`). That directory **is** the persisted state, so the scenario is largely
@@ -388,22 +389,23 @@ already built. The human's articulation of the issue supplies the
 - The human's noticed-issue description (or, on the recorded path,
   `interpret-e2e-result`'s attribution) — **which sub-skill owns it**.
 
-Outputs land in the **same sinks** `draft-unit-test` already writes
+Outputs land in the **same sinks** `draft-unit-test` writes
 (`eval/tests/unit/<skill>/<slug>.json`, `eval/fixtures/scenarios/<slug>/`,
 `eval/fixtures/mcp/<name>.json`, all `_draft`). **Then the mandatory run+annotate
 stage** (§3): run the mined test, and annotate its failing dimension with the
 Did/Should/Gap comment the human already holds — without it the improver proposes
-nothing. (Fix in passing: `draft-unit-test` step 2 has a stale path
-`$REPO/plugin/skills/` → `packages/engine/plugin/skills/`.)
+nothing. (Also fixed in this PR: `draft-unit-test`'s stale `$REPO/plugin/skills/`
+→ `packages/engine/plugin/skills/` path.)
 
 ### 8.2 The three hard gaps (why E is guided authoring, not a generator)
 
 The readers converged on three places E cannot be fully mechanized:
 
-1. **Localization.** The e2e run-log has **no structured `skills_invoked` list**;
-   attributing a missed finding to *one* sub-skill means a human reading the
-   transcript's `Skill` blocks, guided by `interpret-e2e-result`. (A structured
-   field would mechanize this — deferred, §4.)
+1. **Localization.** The run-log's `tool_calls` already records the ordered
+   `Skill` invocations (filter `tool == "Skill"`, read `args.skill`), so listing
+   which sub-skills ran is mechanical — a one-liner, not a transcript scan.
+   Attributing a missed *finding* to the one sub-skill that owned it is still
+   judgment, guided by `interpret-e2e-result`.
 2. **Mid-flow state.** A unit test needs the state the sub-skill saw **mid-flow**;
    the e2e artifacts capture **end** state. Reconstructing the minimal scenario is
    the single hardest hand-authored step.
@@ -504,12 +506,12 @@ payoff.
   next round" overflow; verified on one real run-log.
 
 **E (mine):**
-- `draft-unit-test --from-e2e` produces a `_draft`, mock-backed, **generalized**
-  unit test + scenario + fixtures for one real noticed failure (Cowork-noticed or
-  recorded), correctly localized (human-given on the Cowork path, or via
-  `interpret-e2e-result` on the recorded path), with the lane-1 tool-defect check
-  applied and non-body causes routed away (§8.3). The stale `plugin/skills/` path
-  is fixed.
+- `mine-unit-test` produces a `_draft`, mock-backed, **generalized** unit test +
+  scenario + fixtures for one real noticed failure (Cowork-noticed or recorded),
+  correctly localized (human-given on the Cowork path, or via `interpret-e2e-result`
+  on the recorded path), with the lane-1 tool-defect check applied and non-body
+  causes routed away (§8.3). The `draft-unit-test` stale `plugin/skills/` path is
+  fixed.
 
 **End-to-end pilot (the acceptance test for the whole idea):** on **one** pilot
 skill = intersection of `{has ≥2 holdout tests}` and `{has a recent, cleanly-
@@ -538,9 +540,11 @@ Most design questions are resolved above; these want a human call:
    explicit spec list (recommended — avoids the releasability/union pitfalls). Any
    reason to instead invest in a reusable `--holdout` selector on `run_tests.py`
    for other callers? (YAGNI says no until a second caller appears.)
-4. **`skills_invoked` on the e2e run-log.** Build the structured field now to
-   mechanize E's localization, or keep localization human-guided and defer?
-   (Recommendation: defer.)
+4. **`skills_invoked` — resolved.** No new field needed: the run-log's
+   `tool_calls` already records the ordered `Skill` invocations, so
+   `mine-unit-test` / `interpret-e2e-result` read the sub-skill list from there
+   (a one-liner). Localizing a missed *finding* to the owning sub-skill stays a
+   human judgment.
 
 ## Appendix — verified anchor points
 
@@ -590,7 +594,8 @@ All confirmed against the tree on `worktree-skillopt-eab-plan`:
   `expected-findings.json` absent from the final tree.
 - **`draft-unit-test`:** writes `eval/tests/unit/<skill>/<slug>.json`,
   `eval/fixtures/scenarios/<slug>/`, `eval/fixtures/mcp/<name>.json`, all `_draft`;
-  never sets `holdout`; stale path `$REPO/plugin/skills/` at step 2.
+  never sets `holdout`; had a stale `$REPO/plugin/skills/` path at step 2 (fixed
+  in this PR).
 - **`mock_mcp`:** matches by `tool` + `args` (dotted paths; `~` prefix =
   case-insensitive substring; else exact; first match wins); `LIVE_TOOLS =
   {validate_research_schema, research_log_append, research_append, tree_edit,

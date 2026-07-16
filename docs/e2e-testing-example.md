@@ -8,6 +8,13 @@ in**. For the terse reference version of these steps, see
 for the whole authoring→release lifecycle, see
 [`skill-lifecycle.md`](skill-lifecycle.md).
 
+> **The roles, names, and slug here are just for the story.** "Ana" (genealogist)
+> and "Ben" (developer) split the work to make it concrete, but the split is only
+> illustrative — **anyone can do any step they're comfortable with**, and one person
+> can run the whole loop. The Schuster family and the `schuster-census` slug in the
+> commands below are invented for the example too; for a real run, use an existing
+> fixture slug from `eval/tests/e2e/`.
+
 ---
 
 ## The three places you'll work
@@ -32,6 +39,20 @@ Ana (genealogist) is researching the Schuster family. She asks Claude to cite a
 citation — but it **leaves out the page and line number**. Without that, no one
 could ever open that exact record again. Ana and Ben (developer) turn this into a
 permanent fix.
+
+---
+
+> **Before you start (one-time setup).** Two things gate this loop; skip them and the
+> steps below silently do nothing.
+> - **Cowork steps (1 and 7)** need the genealogy tools installed *into Cowork*: log in
+>   to FamilySearch (`make e2e-login`, once a day), then `make mcpb` and `make plugin`.
+>   Plain `make engine-build` wires only the Claude Code side — in Cowork the project
+>   would open with no tools and there'd be nothing to notice or confirm.
+> - **Grading steps (4 and 6)** call the LLM judge, which needs an Anthropic API key in
+>   `eval/.env` (`ANTHROPIC_API_KEY=…`; `Setup.bat` sets this on Windows). Without it
+>   every dimension comes back *ungraded* and the loop produces nothing gradeable.
+>
+> The middle steps run on saved mock data, so you don't need to be online for them.
 
 ---
 
@@ -72,14 +93,33 @@ bug that actually lives in a tool.
 
 ### Step 3 — Capture it as a test 🤖 Claude Code
 
-In the same **Claude Code** session, they make a small **unit test** that
-reproduces the bug — "given a census record that has a page/line, the citation
-must include it." *(Soon this will be one command,
-`draft-unit-test --from-e2e`; today you hand-author the test by copying a nearby
-citation test and dropping in the Schuster scenario.)* The test starts as a draft
-under `eval/tests/unit/citation/`.
+In the same **Claude Code** session, Ben runs the **`mine-unit-test`** skill,
+points it at Ana's project folder, and pastes her Did/Should/Gap note. It writes a
+small **unit test** that reproduces the bug — "given a census record that has a
+page/line, the citation must include it" — plus a scenario and mock fixtures (built
+from the project's saved search results), all marked *draft* under
+`eval/tests/unit/citation/` and `eval/fixtures/`. Ben skims the draft and checks one
+thing above all: the test must state the **general** rule — "any census record with a
+page/line must include it" — not "this one Schuster record." A test that only
+recognizes this exact record is a fake win: it turns green without the skill actually
+getting better. (The scenario carve is the part most worth a second look.)
+
+When it finishes, `mine-unit-test` prints the new test's **id** — a string like
+`ut_citation_019`, also the `id` field in the file it wrote under
+`eval/tests/unit/citation/`. That's the `TEST=` value you'll need in Step 6.
 
 ### Step 4 — Run it, and mark what's wrong ⌨️ Terminal → 🌐 browser
+
+> **First time improving this skill? Set its hold-out tests first — before the run
+> below.** Hold-out tests are 2–3 *individual* unit tests (not whole runs) that the
+> improver in Step 5 is forbidden to look at, so they can catch a "fix" that only
+> games the tests it was shown. Mark them in the grading UI: run `make eval-ui`, open
+> each test, and flip the **"Hold out from the skill-improver"** switch on — pick
+> diverse, stable ones and leave them set. Do it *before* the `make eval-skill` run
+> below, because toggling hold-out changes the test and would otherwise spoil this run
+> as the clean "before" baseline. (`citation` already has its hold-out tests set —
+> `ut_citation_001` and `ut_citation_014` — so you can skip this for citation; a
+> brand-new skill usually has none.)
 
 Ben runs the skill's tests (which now include the new one) from a **terminal**:
 
@@ -97,10 +137,6 @@ He finds the new test, sees which quality dimension it failed, and pastes **Ana'
 Did/Should/Gap note** into that dimension's comment. This matters: the improver in
 the next step will do nothing with a brand-new test *unless* it carries a human
 comment like this. Ana already wrote it in Step 1 — now it's on the record.
-
-> **First time on this skill?** `citation` needs 2–3 "hold-out" tests (safety-net
-> tests the improver isn't allowed to look at). Ben marks a couple in the browser
-> UI *before* this run, so the run above becomes the clean "before" baseline.
 
 ### Step 5 — Ask Claude to improve the skill 🤖 Claude Code
 
@@ -130,29 +166,42 @@ make gate-skill SKILL=citation TEST=<the new test's id>
 The gate re-runs the new test plus the hold-out tests on the edited skill and
 compares to the "before" baseline from Step 4. It prints one of:
 
-- **LOOKS GOOD** — the failing dimension now passes and nothing regressed.
+- **LOOKS GOOD** — the failing dimension now passes and nothing regressed → go do the
+  release run below.
 - **NEEDS YOUR EYES** — the fix didn't land, or a hold-out test dropped. Read the
-  table and decide.
-- **INCONCLUSIVE** — the test didn't actually fail on the old skill (a weak test).
+  table, adjust the edit in `SKILL.md`, and re-run `make gate-skill` — don't open the
+  PR yet.
+- **INCONCLUSIVE** — the bug didn't reproduce on the *old* skill. Usually a too-weak
+  test, but grading isn't deterministic, so it can also be plain run-to-run luck →
+  re-run once; if it stays inconclusive, go back to Step 3 for a sharper test.
 
 It's **advice, not a verdict** — Ben still decides. Then he does one full run to
-produce the record the PR needs, and marks any disagreements in the browser UI:
+produce the record the PR needs:
 
 ```
 make eval-skill SKILL=citation
 ```
 
+Then he grades it in the browser UI (`make eval-ui`): click **Agree with all**, then
+correct only the few dimensions he disagrees with. **Every** dimension has to be
+reviewed — leaving any un-graded makes the PR's automated check fail.
+
 ### Step 7 — Confirm it in Cowork 🖥️ Cowork
 
-Ana redoes the same citation in **Cowork** and sees the page/line is now there.
-This is the real-world sanity check; the unit test from Step 3 is the durable
-guard that stops the bug from ever coming back.
+First rebuild and re-upload the plugin so Cowork runs the *edited* skill, not the old
+one: `make plugin`. (Cowork runs the uploaded plugin `.zip`, not your working tree —
+skip this and the fix will look like it did nothing.) Then Ana redoes the same
+citation in **Cowork** and sees the page/line is now there. This is the real-world
+sanity check; the unit test from Step 3 is the durable guard that stops the bug from
+ever coming back.
 
 ### Step 8 — Open the PR ⌨️ Terminal / GitHub
 
-Ben opens a pull request with the skill edit + the new test + the run record + the
-grades. A senior reviewer reads the corrected grades and, if it's a real
-improvement, releases it. Done.
+Ben opens a pull request — **one skill per PR** — with the skill edit + the new test
+*and the scenario folder and mock fixtures `mine-unit-test` created for it* (under
+`eval/tests/unit/citation/` and `eval/fixtures/`; commit only the test JSON and it
+can't run) + the run record + the grades. A senior reviewer reads the corrected
+grades and, if it's a real improvement, releases it. Done.
 
 ---
 
