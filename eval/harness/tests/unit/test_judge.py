@@ -97,6 +97,28 @@ def test_extract_dimensions_happy_path():
     assert names == ["Correctness", "Completeness", "Tool Arguments"]
 
 
+def test_extract_dimensions_strips_unknown_fields():
+    """Sonnet 5 emits an extra `index` field on each grading dimension.
+    The run-log schema is additionalProperties:False on dimensions, so an
+    unstripped extra key crashes run-log validation for the whole suite.
+    _extract_dimensions must project each dimension to the known field set.
+    """
+    dims = _base_dims_with_tool_arguments_null()
+    for i, d in enumerate(dims):
+        d["index"] = i  # the field Sonnet 5 adds
+    dims[0]["some_future_field"] = "junk"
+    tool_block = SimpleNamespace(
+        type="tool_use", name="submit_grading", input={"dimensions": dims},
+    )
+    response = SimpleNamespace(content=[tool_block])
+    out = judge._extract_dimensions(response)
+    for d in out:
+        assert set(d) <= {"source", "name", "score", "rationale"}, d
+    assert [d["name"] for d in out] == [
+        "Correctness", "Completeness", "Tool Arguments"
+    ]
+
+
 def test_extract_dimensions_rejects_missing_tool_arguments():
     """Adding Tool Arguments as a required base dimension means the
     judge can no longer omit it."""

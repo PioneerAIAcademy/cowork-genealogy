@@ -87,6 +87,13 @@ GRADING_TOOL = {
 _REQUIRED_BASE_DIMENSIONS = ("Correctness", "Completeness", "Tool Arguments")
 _NULLABLE_BASE_DIMENSIONS = ("Tool Arguments",)
 
+# The fields a grading dimension may carry — derived from the tool schema so
+# it stays in sync. Used to strip any extra keys a judge model emits (Sonnet 5
+# adds a null `index`) before the run-log's strict schema rejects them.
+_GRADING_DIM_KEYS = frozenset(
+    GRADING_TOOL["input_schema"]["properties"]["dimensions"]["items"]["properties"]
+)
+
 
 class JudgeError(Exception):
     pass
@@ -185,6 +192,7 @@ def render_prompt(
     text_response: str,
     file_changes_summary: str,
     tool_calls: list[dict[str, Any]],
+    before_state: str = "(none)",
 ) -> str:
     """Fill the judge prompt template slots into one flat string.
 
@@ -201,6 +209,7 @@ def render_prompt(
         text_response=text_response,
         file_changes_summary=file_changes_summary,
         tool_calls=tool_calls,
+        before_state=before_state,
     )
     return prefix + suffix
 
@@ -215,6 +224,7 @@ def render_prompt_parts(
     text_response: str,
     file_changes_summary: str,
     tool_calls: list[dict[str, Any]],
+    before_state: str = "(none)",
 ) -> tuple[str, str]:
     """Render the prompt as (stable_prefix, varying_suffix).
 
@@ -243,6 +253,7 @@ def render_prompt_parts(
     }
     varying_slots = {
         "judge_context": ctx_block,
+        "before_state": before_state or "(none)",
         "scenario_readme": scenario_readme or "(stateless test)",
         "user_message": user_message,
         "skills_invoked": skills_text,
@@ -349,6 +360,7 @@ def grade(
     tool_calls: list[dict[str, Any]],
     auth: AuthConfig,
     model: str = DEFAULT_JUDGE_MODEL,
+    before_state: str = "(none)",
 ) -> JudgeOutput:
     """Run the judge and return structured dimensions + cost."""
     prefix, suffix = render_prompt_parts(
@@ -360,6 +372,7 @@ def grade(
         text_response=text_response,
         file_changes_summary=file_changes_summary,
         tool_calls=tool_calls,
+        before_state=before_state,
     )
 
     client = _make_client(auth)
@@ -499,6 +512,19 @@ def _extract_dimensions(response) -> list[dict[str, Any]]:
     dims = tu.input.get("dimensions", [])
     if not isinstance(dims, list):
         raise JudgeError("submit_grading.dimensions is not a list")
+
+    # Project each dimension to the known field set. The grading-tool schema
+    # is additionalProperties:False, but that is NOT enforced on tool_use
+    # input without strict mode, so a model can emit extra fields — Sonnet 5
+    # adds an `index` key to array items. The run-log schema
+    # (additionalProperties:False on dimensions) then rejects the whole run
+    # log, crashing the entire suite at flush time. Keep only the fields we
+    # consume and persist so the judge is robust to any model's extras.
+    dims = [
+        {k: v for k, v in d.items() if k in _GRADING_DIM_KEYS}
+        for d in dims
+        if isinstance(d, dict)
+    ]
 
     # Coerce string null markers to None — the model occasionally returns "N/A"
     # or "null" as a string despite the tool schema specifying {type: null}.

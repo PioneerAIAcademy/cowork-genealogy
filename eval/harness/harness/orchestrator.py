@@ -433,6 +433,7 @@ async def _execute_single_run(
                 scenario_readme=scenario_readme,
                 result=result,
                 file_changes=file_changes,
+                before_snapshot=before_snapshot,
                 auth=auth,
                 judge_model=judge_model,
             )
@@ -858,6 +859,7 @@ def _run_judge(
     scenario_readme: str,
     result,
     file_changes,
+    before_snapshot: dict[str, Any] | None = None,
     auth: AuthConfig,
     judge_model: str,
 ) -> JudgeOutput:
@@ -888,6 +890,7 @@ def _run_judge(
         tool_calls=result.tool_calls,
         auth=auth,
         model=judge_model,
+        before_state=_summarize_before_state(before_snapshot),
     )
 
 
@@ -993,6 +996,64 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
             f"full length {len(content_block)} chars]"
         )
     return "\n".join(lines) + "\n" + content_block
+
+
+# Caps for the before-state block. Per-field cap is generous enough to carry
+# a full citation/source note; the overall cap bounds the judge prompt against
+# a large pre-existing project.
+_BEFORE_STATE_STRING_MAX = 4_000
+_BEFORE_STATE_MAX_CHARS = 40_000
+
+
+def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
+    """Render the source entries that existed BEFORE the skill ran, so the
+    judge can mechanically check "not on file" / "fabricated" claims.
+
+    The judge has produced fabrication-class citation failures — asserting
+    that on-file source text was absent or invented — when it had no view of
+    the pre-existing state. Surfacing the before-run `sources` (research.json,
+    `src_` ids) and source descriptions (tree.gedcomx.json, `S` ids) makes
+    such claims checkable against what was actually on file.
+
+    Bounded per-field and overall so a large project can't blow the prompt.
+    Returns "(none)" when there was no prior state (e.g. an empty-project
+    scenario) — itself the correct signal: nothing was on file, so any
+    "altered/removed an existing source" claim is unfounded.
+    """
+    if not before_snapshot:
+        return "(none)"
+    research = before_snapshot.get("research_json")
+    tree = before_snapshot.get("tree_gedcomx_json")
+    research_sources = research.get("sources") if isinstance(research, dict) else None
+    tree_sources = tree.get("sources") if isinstance(tree, dict) else None
+
+    blocks: list[str] = []
+    if research_sources:
+        summarized = _summarize_response(
+            research_sources, string_max=_BEFORE_STATE_STRING_MAX
+        )
+        blocks.append(
+            "research.json sources on file before this run (src_ ids):\n"
+            + json.dumps(summarized, ensure_ascii=False, indent=2)
+        )
+    if tree_sources:
+        summarized = _summarize_response(
+            tree_sources, string_max=_BEFORE_STATE_STRING_MAX
+        )
+        blocks.append(
+            "tree.gedcomx.json source descriptions on file before this run "
+            "(S ids):\n" + json.dumps(summarized, ensure_ascii=False, indent=2)
+        )
+    if not blocks:
+        return "(none)"
+    rendered = "\n\n".join(blocks)
+    if len(rendered) > _BEFORE_STATE_MAX_CHARS:
+        rendered = (
+            rendered[:_BEFORE_STATE_MAX_CHARS]
+            + f"\n[before-state truncated by harness for prompt size; "
+            f"full length {len(rendered)} chars]"
+        )
+    return rendered
 
 
 def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
