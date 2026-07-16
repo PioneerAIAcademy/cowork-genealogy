@@ -1,0 +1,19 @@
+{
+  "id": "laurie-scotland-parents",
+  "name": "John Laurie",
+  "genre": "strip",
+  "source_pid": "GPZR-3X2",
+  "captured": "2026-07-14",
+  "researcher_question": "Who were the parents of John Laurie, born about 1859 in Glasgow, Lanarkshire, Scotland?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1850s",
+    "geography": "GB-SCT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Stepmother trap: the father remarried after the biological mother died young, so the woman appearing with John in the Scottish censuses is a stepmother, not his mother. The biological mother is recoverable only from the 1859 baptism plus the marriage/death timeline."
+}

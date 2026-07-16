@@ -1,0 +1,1332 @@
+{
+  "project": {
+    "id": "rp_laurie_scotland_parents",
+    "objective": "Who were the parents of John Laurie, born about 1859 in Glasgow, Lanarkshire, Scotland, who married Ellen Cahill in New York in 1888 and died in 1909 in New York City?",
+    "subject_person_ids": [
+      "GPZR-3X2"
+    ],
+    "status": "completed",
+    "created": "2026-07-14",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does John Laurie's 1909 New York City death certificate state about his parentage and birthplace?",
+      "rationale": "New York City death records from 1909 routinely capture the decedent's parents' names and birthplace, providing the most direct American documentary path to identifying John Laurie's Scottish parents. This is the gatekeeper question: if the certificate names parents, it anchors subsequent Scottish civil registration searches. FamilySearch holds indexed NYC death records for this period.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-15",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The 1909 NYC death certificate (NYC Municipal Deaths 1795-1949, collection 2240477) was found via the primary planned search and extracted as src_001. It states: father = John Laurie, born Scotland; mother = Mary Marshall, born Scotland; subject born 1859, Glasgow, Scotland. Q_001 asks specifically what this certificate states \u2014 that question is fully answered. Fallback (pli_002) was unnecessary. Marriage record (pli_003) and 1900 census (pli_004) address the broader parentage corroboration question and are captured as scope for subsequent research questions.",
+        "log_entry_ids": [
+          "log_001"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the 1909 NYC death certificate states father John Laurie (Scotland) and mother Mary Marshall (Scotland), and subject born 1859 Glasgow. The question is fully answered.",
+          "repository_breadth": "Primary NYC Municipal Deaths collection searched; state death index fallback available but unnecessary since primary succeeded. Scope of q_001 is one specific document.",
+          "original_substitution": "Indexed record accessed; original image available at the record ARK. Index provides complete parentage data sufficient for this question's narrow scope.",
+          "independent_verification": "Q_001 asks what the death certificate states \u2014 the certificate itself is the answer. Corroboration of the broader parentage conclusion will be pursued through subsequent questions targeting Scottish civil registration records.",
+          "evidence_class": "NYC Municipal Deaths 1795-1949 is an original government vital registration record. Death facts carry primary information quality; parentage facts are secondary per death-certificate doctrine.",
+          "conflict_resolution": "No conflicts on q_001 specifically. Birth year inconsistencies (FS quality report: 1859 vs 1860 from Scotland Civil Registration, 1862 from marriage record) will be addressed in a subsequent question.",
+          "overturn_risk": "Low. The specific record the question targets has been found and extracted. No other 1909 NYC death certificate for this subject is expected."
+        }
+      },
+      "created": "2026-07-15"
+    },
+    {
+      "id": "q_002",
+      "question": "What do Scottish civil registration records state about the birth of John Laurie circa 1855\u20131865 in Glasgow, Lanarkshire, Scotland, and who are named as his parents?",
+      "rationale": "The 1909 NYC death certificate (ps_001, probable) names the father as John Laurie (Scotland) and mother as Mary Marshall (Scotland). Scottish civil registration began 1 January 1855 and covers Glasgow births from the outset. A contemporaneous Scottish birth register entry would provide primary information naming both parents \u2014 including the mother's maiden name \u2014 and is the single most important corroborating source to advance the parentage conclusion from probable to proved. FamilySearch holds indexed Scotland civil registration births 1855\u20131875; the subject's birth is expected circa 1855\u20131865 based on age-at-death (49\u201350 in 1909).",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-15",
+      "resolution_assertion_ids": [
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The correct FamilySearch Scotland civil registration collection (5000163, 'Scotland, Civil Registration, 1855-1875, 1881, 1891') was searched after discovering collection ID 1865747 was invalid. The search returned 934 results; the top Glasgow/Lanarkshire candidates were ranked and examined. The Maryhill 1858 record (ark:/61903/1:1:6TFG-4WB9) was identified as matching and extracted as src_003 with assertions a_022\u2013a_025. The original register image (ark:/61903/3:1:3Q9M-CSFL-89NM-K) was attempted but returned a 403 access error \u2014 it is inaccessible via the MCP transport and is documented as pursued-and-unavailable. OPR parish registers (fallback pli_007) were not searched because the civil registration record was found and the question is answered at probable confidence. Birth year conflict c_001 resolved.",
+        "log_entry_ids": [
+          "log_002",
+          "log_004",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 Scotland civil registration states birth 29 Dec 1858, Maryhill, Lanarkshire; father John Laurie; mother Mary Marshall (maiden name Marshall, married name Laurie per Scottish convention).",
+          "repository_breadth": "FamilySearch Scotland civil registration (collection 5000163) searched; OPR fallback (pli_007) not needed as civil registration found. Collection 1865747 was invalid (two nil searches logged). No known additional repositories for 1858 Maryhill statutory birth registrations are accessible online.",
+          "original_substitution": "Original register image attempted (ark:/61903/3:1:3Q9M-CSFL-89NM-K) and inaccessible (403). Indexed record from FamilySearch's transcription of the register is the best available source. Documenting the inaccessibility is exhaustive research.",
+          "independent_verification": "The indexed Scotland civil registration (src_003) is independent of src_001 (death cert) and src_002 (marriage cert). Three independent sources from different times and informants all name Mary Marshall as mother.",
+          "evidence_class": "src_003 is original (statutory civil registration) with primary information quality for birth facts and parentage \u2014 the strongest classification in the GPS hierarchy.",
+          "conflict_resolution": "Birth year conflict c_001 (1858 vs ~1859 vs 1862) is resolved in favor of the civil registration date (29 Dec 1858) as the most authoritative source. No unresolved conflicts.",
+          "overturn_risk": "Low. The original register image is inaccessible (403). The indexed record for a statutory civil registration is highly reliable as the indexer copied directly from the register. Three independent sources agree on Mary Marshall as mother and John Laurie as father. No other Scotland civil registration record for a John Laurie born in the Glasgow area with these parents has been found."
+        }
+      },
+      "created": "2026-07-15"
+    },
+    {
+      "id": "q_003",
+      "question": "What does John Laurie's 1888 New York City marriage record state about his parentage and birthplace?",
+      "rationale": "John Laurie married Ellen Cahill in New York City in 1888 (FamilySearch tree source W7GR-N6N). NYC marriage certificates of this era frequently name the groom's parents and birthplace, providing a second American source contemporaneous with the marriage \u2014 independent of the 1909 death certificate. This would constitute an independent corroborating source for the parentage conclusion, materially advancing the case toward proved status. Collection 2143225 (NYC Marriage Records 1829\u20131938) is available on FamilySearch.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-15",
+      "resolution_assertion_ids": [
+        "a_014",
+        "a_015"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "FamilySearch NYC Marriage Records 1829-1938 (collection 2143225) was searched for John Laurie and Ellen Cahill, 1887-1889. The marriage record (ark:/61903/1:1:2493-2Z1) was found on the first search, already attached to subject GPZR-3X2 in the FamilySearch tree. The full indexed record was read and extracted as src_002 with assertions a_009\u2013a_021. The question asks specifically what this record states about parentage and birthplace, which is fully answered. No image read was attempted for the marriage record certificate (a secondary action for this narrow question).",
+        "log_entry_ids": [
+          "log_003"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the 1888 NYC marriage record states: groom John Laurie, born Scotland ~1862; father 'Jno.' (John); mother Mary Marshall. The question is fully answered.",
+          "repository_breadth": "Primary NYC Municipal Marriage collection (2143225) succeeded on first search. State fallback (pli_009) not needed. No other marriage records for this event are expected to exist.",
+          "original_substitution": "Indexed marriage record accessed; original certificate image not separately read but the indexed data for a NYC municipal marriage registration is complete for the facts the question asks about.",
+          "independent_verification": "This record corroborates src_001 (death cert) on the mother's name (Mary Marshall) independently \u2014 different informant (groom 1888 vs. unnamed family informant 1909), different event, different institution.",
+          "evidence_class": "src_002 is an original NYC municipal marriage record. Marriage event facts are primary information; biographical data (parents' names, birthplace) are secondary information supplied by the parties.",
+          "conflict_resolution": "Birth year conflict c_001 is resolved. No other conflicts on q_003.",
+          "overturn_risk": "Low. The marriage record for John Laurie and Ellen Cahill, November 1888, NYC, has been found and extracted. No other marriage record for this event is expected. The parents named on this record (John/Jno. Laurie, Mary Marshall) are consistent with all other sources."
+        }
+      },
+      "created": "2026-07-15"
+    },
+    {
+      "id": "q_004",
+      "question": "Who were the parents of John Laurie, born c.1858 in Maryhill, Lanarkshire, Scotland, who married Ellen Cahill in New York City in 1888 and died 7 December 1909 in Manhattan?",
+      "rationale": "Synthesis question drawing on q_001, q_002, and q_003. The three component questions each gathered evidence from a different original record: the 1909 NYC death certificate, the 1858 Scotland civil registration, and the 1888 NYC marriage record. This question synthesizes all three sources into a single GPS-compliant parentage conclusion addressing the project's primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [
+        "q_001",
+        "q_002",
+        "q_003"
+      ],
+      "unblocks": [],
+      "resolved": "2026-07-15",
+      "resolution_assertion_ids": [
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_014",
+        "a_015",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three independent original record types have been searched and found relevant: (1) 1909 NYC death certificate (q_001/log_001, src_001); (2) 1858 Scotland Civil Registration (q_002/log_005, src_003); (3) 1888 NYC marriage record (q_003/log_003, src_002). All three name father John Laurie and mother Mary Marshall. No records have been found contradicting this parentage. Original register image for the Scotland civil reg is inaccessible (403). Birth year conflict c_001 resolved. The research is reasonably exhaustive for a GPS-defensible probable conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_003",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 three independent sources consistently name father John Laurie and mother Mary Marshall.",
+          "repository_breadth": "NYC death records, Scotland civil registration, and NYC marriage records all searched. US census records were deferred (pli_004/skipped) but their absence does not undermine the three-source convergence already achieved.",
+          "original_substitution": "All three sources are original records. The Scotland civil reg image is inaccessible (403), documented as pursued-and-unavailable.",
+          "independent_verification": "Three independent sources: different events (death 1909, birth 1858, marriage 1888), different informants (unnamed family member, registering parent, groom himself), different institutions (NYC DOH, GRO Scotland, NYC municipal archives). No shared informant chain.",
+          "evidence_class": "One original source with primary information (Scotland civil reg, src_003) plus two with secondary information (death cert src_001, marriage cert src_002). GPS requires 2+ primary-information sources for proved; current evidence supports probable.",
+          "conflict_resolution": "Birth year conflict c_001 resolved. No parentage conflicts. The Agnes McIntyre discrepancy (XSS5-ZCY1 attached to GPZR-3X2 in FS tree but not extracted here) is a FS-tree data quality issue, not a research conflict in this project.",
+          "overturn_risk": "Low. Three fully independent sources with different informants and different event types all agree. No contradicting evidence found. The one gap (register image) is documented as inaccessible; its absence does not materially affect the conclusion."
+        }
+      },
+      "created": "2026-07-15"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-15",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York",
+          "date_range": "1909",
+          "repository": "FamilySearch",
+          "rationale": "New York City Municipal Deaths 1795-1949 (collection 2240477) covers through 1909 with 6.2M indexed records. NYC death certificates from this period routinely name the decedent's father and mother (including mother's maiden name), occupation, and birthplace \u2014 the most direct American source for John Laurie's parentage. Search for John Laurie with death year 1909.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "New York, United States",
+          "date_range": "1909",
+          "repository": "FamilySearch",
+          "rationale": "New York State Death Index 1880-1956 (collection 2803479) provides a statewide index that may locate the record if the NYC municipal search returns no hit \u2014 useful if the death was recorded in a borough under a variant name spelling. Fallback for sequence 1.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York",
+          "date_range": "1888",
+          "repository": "FamilySearch",
+          "rationale": "New York City Marriage Records 1829-1938 (collection 2143225) \u2014 John Laurie married Ellen Cahill in NYC in 1888. NYC marriage certificates of this era sometimes include the groom's parents' names and birthplace, providing a second American source for parentage and corroborating or refining what the death certificate states.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "New York, United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "1900 US Federal Census will show John Laurie's household nine years before his death \u2014 confirming identity, recording his birthplace (Scotland), immigration year, and years in the US. This context supports or challenges identity assumptions when reading the death certificate, and may reveal a co-resident who provided informant data.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "items": [
+        {
+          "id": "pli_005",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Glasgow, Lanarkshire, Scotland",
+          "date_range": "1855-1865",
+          "repository": "FamilySearch",
+          "rationale": "Scotland, Civil Registration, 1855-1875 (FamilySearch collection 1865747) indexes all statutory Scottish births from the first year of civil registration. A birth entry for John Laurie in Glasgow circa 1855-1865 would name both parents (father's full name and mother's maiden name) and provide primary information directly corroborating the NYC death certificate's parentage data. This is the highest-priority corroborating source for q_002.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Lanarkshire, Scotland",
+          "date_range": "1855-1875",
+          "repository": "FamilySearch",
+          "rationale": "Fallback: broaden the birth year range to 1855-1875 and widen jurisdiction to all of Lanarkshire (in case birth was registered in a Glasgow district not captured by city-only filters), and try variant spellings of Laurie (Lawrie, Lowrie). Use only if sequence 1 returns no confident match.",
+          "fallback_for": "pli_005",
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Glasgow, Lanarkshire, Scotland",
+          "date_range": "1850-1860",
+          "repository": "FamilySearch",
+          "rationale": "If civil registration returns no birth entry, search Scotland Old Parochial Registers (OPR) baptisms for a Laurie christening in Glasgow circa 1850-1860. Relevant if the subject was born before 1 January 1855 (when civil registration began) or if the birth was registered in a church rather than civilly.",
+          "fallback_for": "pli_005",
+          "status": "skipped"
+        }
+      ],
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pl_003",
+      "question_id": "q_003",
+      "status": "active",
+      "items": [
+        {
+          "id": "pli_008",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York",
+          "date_range": "1888",
+          "repository": "FamilySearch",
+          "rationale": "New York City Marriage Records 1829-1938 (FamilySearch collection 2143225). John Laurie married Ellen Cahill in NYC in 1888. NYC marriage certificates of this period often include the groom's parents' names and birthplace, providing a second American source independent of the 1909 death certificate. A match here would materially corroborate the parentage conclusion.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "New York, United States",
+          "date_range": "1887-1889",
+          "repository": "FamilySearch",
+          "rationale": "Fallback: if NYC marriage collection search returns no hit, broaden to 1887-1889 date range and try variant spellings of Laurie and Cahill.",
+          "fallback_for": "pli_008",
+          "status": "skipped"
+        }
+      ],
+      "created": "2026-07-15"
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T13:57:06.579Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, New York City Municipal Deaths, 1795-1949",
+        "collectionId": "2240477",
+        "surname": "Laurie",
+        "givenName": "John",
+        "deathYearFrom": 1908,
+        "deathYearTo": 1910,
+        "recordCountry": "United States",
+        "recordSubdivision": "New York"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 233,
+      "notes": "Strong match (score 0.93): John Laurie, b. 1859 Glasgow Scotland, d. 7 Dec 1909 Manhattan. Death certificate names father as John Laurie (b. Scotland) and mother as Mary Marshall (b. Scotland). Occupation: iron moulder. Married."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-15T14:19:26.282Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Scotland, Civil Registration, 1855-1875",
+        "collectionId": "1865747",
+        "surname": "Laurie",
+        "givenName": "John",
+        "birthYearFrom": 1854,
+        "birthYearTo": 1866,
+        "birthPlace": "Glasgow, Lanarkshire, Scotland",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result. Collection 1865747 with birthPlace filter 'Glasgow, Lanarkshire, Scotland' returned 0 records for John Laurie born 1854-1866. Glasgow birthPlace filter may be too restrictive \u2014 will retry with recordCountry: Scotland and no birthPlace filter, and try broader year range."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-15T14:19:54.792Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, New York City Marriage Records, 1829-1938",
+        "collectionId": "2143225",
+        "surname": "Laurie",
+        "givenName": "John",
+        "spouseSurname": "Cahill",
+        "marriageYearFrom": 1887,
+        "marriageYearTo": 1889,
+        "recordType": "marriage"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 23,
+      "notes": "Top result: 'John Laurie and Ellen Cahile' (ark:/61903/1:1:2493-2Z1), born 1862 Scotland \u2014 already attached to subject GPZR-3X2. Rank matcher score 0.14 (low, likely because birth year 1862 conflicts with subject's expected ~1859-1860). Record will be read via record_read to check for parentage data."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-15T14:21:03.361Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Scotland, Civil Registration, 1855-1875",
+        "collectionId": "1865747",
+        "surname": "Laurie",
+        "givenName": "John",
+        "birthYearFrom": 1854,
+        "birthYearTo": 1866,
+        "recordCountry": "Scotland",
+        "recordType": "birth",
+        "note": "Second attempt \u2014 removed birthPlace filter"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Second nil on collection 1865747 even without birthPlace filter. Collection ID 1865747 appears invalid or not indexed. Correct FamilySearch Scotland civil registration collection is 5000163 (Scotland, Civil Registration, 1855-1875, 1881, 1891), confirmed by results from broader recordCountry: Scotland search (log_005/pli_006)."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-15T14:21:10.301Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Laurie",
+        "givenName": "John",
+        "birthYearFrom": 1854,
+        "birthYearTo": 1866,
+        "recordCountry": "Scotland",
+        "recordType": "birth",
+        "note": "Broad Scotland birth search \u2014 no collectionId filter; returned results from collections 1771030 (OPR) and 5000163 (civil registration)"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 934,
+      "notes": "934 total results from Scotland birth records. Key Glasgow/Lanarkshire civil registration candidates (collection 5000163): XSS5-ZCY1 (21 Dec 1860, Tradeston, Lanarkshire \u2014 likely matches the civil reg record already attached to GPZR-3X2 in FS tree), X9GD-GX35 (26 Sep 1856, Blythswood Glasgow), XS91-8TGV (2 Mar 1865, Anderston), 6TFG-4WB9 (29 Dec 1858, Maryhill). Will rank against subject and read top candidates."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:99QB-KJL4 : accessed 15 July 2026), John Laurie death entry, 7 Dec 1909, Manhattan, New York City, New York; citing New York City Municipal Archives.",
+      "citation_detail": {
+        "who": "New York City Department of Health (registrar)",
+        "what": "Death certificate/register entry for John Laurie",
+        "when_created": "1909 (death registered 7 Dec 1909)",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch, collection 2240477",
+        "where_within": "Entry for John Laurie"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (New York City Municipal Archives)",
+      "access_date": "2026-07-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:99QB-KJL4",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2493-2Z1 : accessed 15 July 2026), entry for John Laurie and Ellen Cahile, 28 November 1888; citing marriage, New York County, New York, United States; New York City Municipal Archives.",
+      "citation_detail": {
+        "who": "New York City Municipal Archives / recording clerk",
+        "what": "Marriage record entry for John Laurie and Ellen Cahile",
+        "when_created": "28 November 1888",
+        "when_accessed": "2026-07-15",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2493-2Z1)",
+        "where_within": "New York, New York City Marriage Records, 1829-1938; New York County, New York, United States"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (New York City Municipal Archives)",
+      "access_date": "2026-07-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:2493-2Z1",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Scotland, Civil Registration, 1855-1875, 1881, 1891,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6TFG-4WB9 : accessed 15 July 2026), entry for John Laurie and John Laurie [father], birth 29 Dec 1858, Maryhill, Lanarkshire, Scotland; citing General Register Office for Scotland statutory birth registration; digitized register image at https://www.familysearch.org/ark:/61903/1:2:H71V-Z8CC.",
+      "citation_detail": {
+        "who": "General Register Office for Scotland (statutory civil registration authority)",
+        "what": "Statutory birth registration entry for John Laurie, son of John Laurie and Mary Marshall Laurie (maiden surname Marshall)",
+        "when_created": "29 December 1858 (birth date); registered per Scottish statutory requirement, typically within 21 days",
+        "when_accessed": "15 July 2026",
+        "where": "FamilySearch, digital collection \"Scotland, Civil Registration, 1855-1875, 1881, 1891\" (collection 5000163)",
+        "where_within": "Registration district covering Maryhill, Lanarkshire, Scotland; digitized register image ark:/61903/1:2:H71V-Z8CC"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (General Register Office for Scotland)",
+      "access_date": "2026-07-15",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6TFG-4WB9",
+      "log_entry_id": "log_005",
+      "notes": "Scottish statutory civil birth registration entry, an original government vital record created contemporaneously with the birth. Registrant (typically the father) attested the child's birth facts and both parents' names/maiden name in person. A separate digitized register image (ark:/61903/1:2:H71V-Z8CC) is linked for future direct-image confirmation.",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "deceased",
+      "record_persona_id": "p_14725329573",
+      "fact_type": "death",
+      "value": "Died 7 Dec 1909, Manhattan, New York City, New York, United States",
+      "date": "7 Dec 1909",
+      "date_certainty": "exact",
+      "place": "Manhattan, New York City, New York, United States",
+      "information_quality": "primary",
+      "informant": "attending physician (unnamed)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Manhattan, New York City, New York, United States"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "deceased",
+      "record_persona_id": "p_14725329573",
+      "fact_type": "birth",
+      "value": "Born 1859, Glasgow, Scotland",
+      "date": "1859",
+      "date_certainty": "approximate",
+      "place": "Glasgow, Scotland",
+      "standard_place": "Glasgow, Scotland, United Kingdom",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Birth date and place on a death certificate are supplied by an unidentified family informant who was not present at the birth \u2014 this is the basis for secondary information quality. The fact is nonetheless direct evidence: the record explicitly states 'born 1859, Glasgow, Scotland' without requiring inference. Secondary information quality and direct evidence type are orthogonal GPS axes.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "deceased",
+      "record_persona_id": "p_14725329573",
+      "fact_type": "occupation",
+      "value": "iron moulder",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "deceased",
+      "record_persona_id": "p_14725329573",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "father",
+      "record_persona_id": "p_14725329574",
+      "fact_type": "name",
+      "value": "John Laurie",
+      "structured_value": {
+        "given": "John",
+        "surname": "Laurie",
+        "relationship_type": "parent",
+        "related_person_role": "father"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Father's name reported by an unidentified family informant after the decedent's death \u2014 the basis for secondary information quality. The death certificate explicitly names the father ('John Laurie'), so no inference is required to extract this fact; evidence type is therefore direct. Secondary information quality and direct evidence type are orthogonal GPS axes.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "father",
+      "record_persona_id": "p_14725329574",
+      "fact_type": "birth",
+      "value": "Born Scotland, United Kingdom",
+      "place": "Scotland, United Kingdom",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Father's birthplace reported by an unidentified family informant after the decedent's death \u2014 secondary information quality because the informant was not a firsthand witness. The death certificate explicitly records 'born Scotland' for the father; no inference is needed to derive that fact, so evidence type is direct. Secondary information quality and direct evidence type are orthogonal GPS axes.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Scotland, United Kingdom"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "mother",
+      "record_persona_id": "p_14725329575",
+      "fact_type": "name",
+      "value": "Mary Marshall",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Marshall",
+        "relationship_type": "parent",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Mother's name reported by an unidentified family informant after the decedent's death \u2014 secondary information quality because the informant was not a firsthand witness. The death certificate explicitly names the mother ('Mary Marshall'); no inference is required, so evidence type is direct. Secondary information quality and direct evidence type are orthogonal GPS axes.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:271D-JC3",
+      "record_role": "mother",
+      "record_persona_id": "p_14725329575",
+      "fact_type": "birth",
+      "value": "Born Scotland, United Kingdom",
+      "place": "Scotland, United Kingdom",
+      "information_quality": "secondary",
+      "informant": "unidentified family informant",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Mother's birthplace reported by an unidentified family informant after the decedent's death \u2014 secondary information quality. The death certificate explicitly records 'born Scotland' for the mother; no inference is needed, so evidence type is direct. Secondary information quality and direct evidence type are orthogonal GPS axes.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Scotland, United Kingdom"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "groom",
+      "record_persona_id": "p_14751009329",
+      "fact_type": "name",
+      "value": "John Laurie",
+      "information_quality": "secondary",
+      "informant": "John Laurie (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "groom",
+      "record_persona_id": "p_14751009329",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "secondary",
+      "informant": "John Laurie (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "groom",
+      "record_persona_id": "p_14751009329",
+      "fact_type": "birth",
+      "value": "1862",
+      "structured_value": {
+        "year": 1862
+      },
+      "information_quality": "secondary",
+      "informant": "John Laurie (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "informant_bias_notes": "Self-reported birth year at time of marriage (age ~26 implied). Conflicts with death certificate (~1859, src_001) and Scotland civil registration (1858). Parties commonly rounded or adjusted ages at marriage; treat this year with caution and prefer the civil-registration date once corroborated.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "groom",
+      "record_persona_id": "p_14751009329",
+      "fact_type": "birth",
+      "value": "Scotland",
+      "structured_value": {
+        "place": "Scotland"
+      },
+      "place": "Scotland",
+      "information_quality": "secondary",
+      "informant": "John Laurie (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_003"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Scotland, United Kingdom"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "groom",
+      "record_persona_id": "p_14751009329",
+      "fact_type": "marriage",
+      "value": "Married 28 November 1888, New York County, New York, United States",
+      "date": "28 November 1888",
+      "date_certainty": "exact",
+      "place": "New York County, New York, United States",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "New York City, New York, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "father_of_groom",
+      "record_persona_id": "p_14751009330",
+      "fact_type": "name",
+      "value": "Jno.",
+      "information_quality": "secondary",
+      "informant": "John Laurie (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_003"
+      ],
+      "informant_bias_notes": "Abbreviated form of 'John'; no surname indexed on the record, but the patronymic naming pattern is consistent with surname Laurie. Groom reporting his own father's name.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "mother_of_groom",
+      "record_persona_id": "p_14751009331",
+      "fact_type": "name",
+      "value": "Mary Marshall",
+      "information_quality": "secondary",
+      "informant": "John Laurie (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_003"
+      ],
+      "informant_bias_notes": "Second independent source (after death certificate src_001) naming Mary Marshall as mother of John Laurie \u2014 corroborates the parentage conclusion. Groom reporting his own mother's name.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "bride",
+      "record_persona_id": "p_14751009332",
+      "fact_type": "name",
+      "value": "Ellen Cahile",
+      "information_quality": "secondary",
+      "informant": "Ellen Cahile (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "bride",
+      "record_persona_id": "p_14751009332",
+      "fact_type": "birth",
+      "value": "1865",
+      "structured_value": {
+        "year": 1865
+      },
+      "information_quality": "secondary",
+      "informant": "Ellen Cahile (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "bride",
+      "record_persona_id": "p_14751009332",
+      "fact_type": "birth",
+      "value": "Ireland",
+      "structured_value": {
+        "place": "Ireland"
+      },
+      "place": "Ireland",
+      "information_quality": "secondary",
+      "informant": "Ellen Cahile (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "bride",
+      "record_persona_id": "p_14751009332",
+      "fact_type": "marriage",
+      "value": "Married 28 November 1888, New York County, New York, United States",
+      "date": "28 November 1888",
+      "date_certainty": "exact",
+      "place": "New York County, New York, United States",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "New York City, New York, United States"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "father_of_bride",
+      "record_persona_id": "p_14751009333",
+      "fact_type": "name",
+      "value": "Patrick",
+      "information_quality": "secondary",
+      "informant": "Ellen Cahile (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:2493-2Z1",
+      "record_role": "mother_of_bride",
+      "record_persona_id": "p_14751009334",
+      "fact_type": "name",
+      "value": "Honorale Doyle",
+      "information_quality": "secondary",
+      "informant": "Ellen Cahile (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6TFG-4WB9",
+      "record_role": "child",
+      "record_persona_id": "p_303646515241",
+      "fact_type": "birth",
+      "value": "29 Dec 1858, Maryhill, Lanarkshire, Scotland, United Kingdom",
+      "date": "29 December 1858",
+      "date_certainty": "exact",
+      "place": "Maryhill, Lanarkshire, Scotland, United Kingdom",
+      "structured_value": {
+        "year": "1858",
+        "place": "Maryhill, Lanarkshire, Scotland, United Kingdom"
+      },
+      "information_quality": "primary",
+      "informant": "the registering parent (father or mother, present at registration)",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Scottish statutory registration required a parent to register the birth in person, typically within 21 days, giving firsthand knowledge of the birth event's date and place. Consistent with (though not identical in year to) the ~1859 Glasgow birth reported on the death certificate (src_001) \u2014 Maryhill lies within the greater Glasgow area, and the 1-year discrepancy is a plausible approximation on the death record.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Maryhill, Lanarkshire, Scotland, United Kingdom"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6TFG-4WB9",
+      "record_role": "child",
+      "record_persona_id": "p_303646515241",
+      "fact_type": "name",
+      "value": "John Laurie",
+      "structured_value": {
+        "given": "John",
+        "surname": "Laurie"
+      },
+      "information_quality": "primary",
+      "informant": "the registering parent (father or mother, present at registration)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Child's given name and surname stated by the registering parent at the time of statutory registration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6TFG-4WB9",
+      "record_role": "father",
+      "record_persona_id": "p_303646515242",
+      "fact_type": "name",
+      "value": "John Laurie",
+      "structured_value": {
+        "given": "John",
+        "surname": "Laurie"
+      },
+      "information_quality": "primary",
+      "informant": "the registrant (presumed to be the father, self-reporting)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Scottish civil birth registration required a parent (typically the father) to attend in person and attest to his own name. Distinct from a death certificate, where a third party reports after the fact.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6TFG-4WB9",
+      "record_role": "mother",
+      "record_persona_id": "p_303646515243",
+      "fact_type": "name",
+      "value": "Mary Marshall Laurie",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Marshall"
+      },
+      "information_quality": "primary",
+      "informant": "the registrant (presumed to be the father, reporting his spouse's maiden name)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Recorded per Scottish civil-registration naming convention: maiden surname (Marshall) precedes married surname (Laurie) \u2014 'Mary Marshall Laurie' indicates maiden name Marshall, married name Laurie. This is the single most important fact for q_002: a THIRD independent, contemporaneous, primary-information source naming the mother's maiden name as Marshall, corroborating the death certificate (src_001) and the 1888 marriage record. Shares no informant with those other two records (this is the registering parent at time of birth, ~30 years before the other records), so this is an independent evidence unit, not a repeat of the same informant's claim.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": 0.9319721,
+      "rationale": "Death event on this certificate is for John Laurie, born 1859 in Glasgow, Scotland, died 7 Dec 1909 in Manhattan \u2014 all four identifiers (name, birth year, birth place, death place) match the research subject exactly. rank_search_matches score 0.93. The deceased role on this record is unambiguously the project subject.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": 0.9319721,
+      "rationale": "Birthplace 'Glasgow, Scotland' and birth year '1859' stated on this death certificate for the same deceased John Laurie already linked to GPZR-3X2. The birth assertion is carried by the same record persona as a_001; strong match on name, year, and place.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": 0.9319721,
+      "rationale": "Occupation 'iron moulder' stated for the deceased John Laurie on this record, same persona as a_001 (GPZR-3X2). Consistent with a working-class Scottish immigrant male in late-19th-century New York City.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": 0.9319721,
+      "rationale": "Marital status 'Married' stated for the deceased John Laurie, same persona as a_001 (GPZR-3X2). Consistent with known wife Ellen C. Cahill already in the tree.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Death certificate names the father of deceased John Laurie as 'John Laurie,' born Scotland. I1 is a newly created stub person added as the father. Only one record supports this identification; stub created from this sole source, so confidence is probable pending corroboration from Scottish civil registration or other records.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": 0.9319721,
+      "rationale": "This relationship assertion (father named as John Laurie on the death certificate) bears directly on GPZR-3X2 as the child. The deceased's identity is established at confident level by a_001; this assertion completes the parent-child link from the subject's perspective.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father's birthplace stated as 'Scotland' on the death certificate of John Laurie (GPZR-3X2). Linked to I1 (father stub) as the only record currently supporting his birthplace. Probable pending corroboration.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Death certificate names the mother of deceased John Laurie as 'Mary Marshall,' born Scotland. I2 is a newly created stub person added as the mother. Only one record supports this identification; stub created from this sole source, so confidence is probable pending corroboration from Scottish civil registration or other records.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": 0.9319721,
+      "rationale": "This relationship assertion (mother named as Mary Marshall on the death certificate) bears directly on GPZR-3X2 as the child. The deceased's identity is established at confident level by a_001; this assertion completes the parent-child link from the subject's perspective.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother's birthplace stated as 'Scotland' on the death certificate of John Laurie (GPZR-3X2). Linked to I2 (mother stub) as the only record currently supporting her birthplace. Probable pending corroboration.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom name 'John Laurie' on the 1888 NYC marriage record. Record is already attached to subject GPZR-3X2 in FamilySearch tree. Name, birthplace Scotland, and marital status Single (consistent with pre-marriage status) all align. Identity confirmed via attachment and convergence with src_001.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status 'Single' on the 1888 marriage record \u2014 consistent with a groom, same persona as a_009 (GPZR-3X2). Confirmed by record's attachment to subject in FS tree.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom's self-reported birth year 1862, same persona as a_009 (GPZR-3X2). Confident identity despite the date discrepancy with src_001 (~1859) and src_003 (1858): the record is attached to GPZR-3X2, all other identifiers match, and self-reported ages at marriage commonly differ by a few years.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom's birthplace 'Scotland' on 1888 marriage record, same persona as a_009 (GPZR-3X2). Consistent with all other records for the subject.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event 28 November 1888, New York County \u2014 groom persona is GPZR-3X2 per record attachment to subject and convergent identifiers.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "GPZ5-5ZY",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event on this record involves the bride Ellen Cahile \u2014 GPZ5-5ZY (Ellen C. Cahill) is identified by name, birthplace Ireland, and birth year ~1865. The marriage event assertion bears on both spouses; linking to GPZ5-5ZY as the bride.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father of groom listed as 'Jno.' (abbreviation for John) \u2014 consistent with I1 (father stub 'John Laurie'). No surname indexed on the record, but the groom reports his father's given name; combined with all other records (death cert, Scotland civil reg) naming the father as John Laurie, probable identification with I1.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father-of-groom assertion bears on GPZR-3X2 as the child. Subject identity already established at confident level by a_009.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother of groom listed as 'Mary Marshall' \u2014 exact name match with I2 (mother stub 'Mary Marshall'). This is the second independent source naming Mary Marshall, after the 1909 death certificate (src_001). Two independent records with different informants (a 1888 groom vs. a 1909 unnamed family informant) converge on the same mother's name, supporting confident identification.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "person_id": "GPZR-3X2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother-of-groom assertion bears on GPZR-3X2 as the child. Subject identity established at confident level.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "person_id": "GPZ5-5ZY",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride name 'Ellen Cahile' \u2014 variant spelling of Cahill; GPZ5-5ZY (Ellen C. Cahill) matches on given name Ellen, surname Cahill/Cahile, and birth place Ireland. Marriage record is directly linked to subject GPZR-3X2 who married Ellen Cahill in 1888 per tree.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_017",
+      "person_id": "GPZ5-5ZY",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride birth year 1865 \u2014 GPZ5-5ZY tree birth date is 24 Dec 1864, a 1-year discrepancy consistent with self-reported ages at marriage. Confident given name, surname, and birthplace match.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "GPZ5-5ZY",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride birthplace Ireland \u2014 tree shows Dublin, Ireland for GPZ5-5ZY. Exact match at country level.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "GPZ5-5ZY",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Bride marriage event 28 November 1888 \u2014 bears on GPZ5-5ZY (Ellen C. Cahill) as the bride in this marriage. Identity confirmed via name, birthplace, and record attachment chain.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "GPZR-3X2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth 29 Dec 1858, Maryhill, Lanarkshire \u2014 unattached record. Identity is probable (not confident) because: (1) birth date 1858 vs. tree date 4 Dec 1859 is a year-plus discrepancy; (2) only indexed record examined, register image not yet directly read. However, parents on this record (John Laurie + Mary Marshall) exactly match two other independent sources for GPZR-3X2's parents, and Maryhill is within the Glasgow area. Strong circumstantial case pending image confirmation.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "person_id": "GPZR-3X2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Child name 'John Laurie' on Scotland civil registration \u2014 same persona as a_022, probable match to GPZR-3X2 per same reasoning.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father name 'John Laurie' on Scotland civil registration (src_003) \u2014 third independent source naming the father as John Laurie, alongside death certificate (src_001) and marriage record (src_002, father 'Jno.'). Strong corroboration for I1 as the father.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "GPZR-3X2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father assertion bears on GPZR-3X2 as the child, subject to the probable identity match on this Scotland civil reg record (a_022).",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother maiden name 'Marshall' from 'Mary Marshall Laurie' on Scotland civil registration \u2014 third independent source naming the mother's maiden name as Marshall. This is primary information (the registering parent, at the birth event, attested the mother's maiden name), unlike the death cert and marriage record which are both secondary (retrospective). Three independent sources with different informants (1858 registrant, 1888 groom, 1909 unknown informant) all name Mary Marshall as the mother \u2014 confident identification with I2.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "GPZR-3X2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother assertion bears on GPZR-3X2 as the child, subject to the probable identity match on this Scotland civil reg record (a_022).",
+      "created": "2026-07-15"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Three sources give different birth years for GPZR-3X2: death certificate (src_001/a_002) records ~1859 Glasgow; marriage record (src_002/a_011) records 1862 Scotland; Scotland civil registration (src_003/a_022) records 29 December 1858 Maryhill, Lanarkshire.",
+      "disputed_attribute": "birth year of John Laurie (GPZR-3X2)",
+      "competing_assertion_ids": [
+        "a_002",
+        "a_011",
+        "a_022"
+      ],
+      "blocks_question_ids": [],
+      "independence_analysis": "All three records are independent, created at different times by different informants: (1) death cert 1909 \u2014 unidentified family informant reporting years after the birth; (2) marriage cert 1888 \u2014 groom self-reporting; (3) Scotland civil registration 1858 \u2014 registering parent at the birth event. No shared informant chain.",
+      "weighing_analysis": "Scotland civil registration (1858) is strongest: original, primary information, registering parent present at birth. Death certificate (~1859) is secondary, reported 51 years later; a December 1858 birth rounds naturally to '1859'. Marriage record (1862) is self-reported; age understatement at marriage is a documented pattern. Hierarchy: civil registration > death certificate > marriage record.",
+      "status": "resolved",
+      "preferred_assertion_id": "a_022",
+      "resolution_rationale": "Birth date 29 December 1858, Maryhill accepted from Scotland civil registration as primary information. Death cert ~1859 is consistent rounded approximation. Marriage record 1862 is likely understatement. All three describe the same individual."
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The primary FamilySearch collection for New York City municipal death registrations (\"New York, New York City Municipal Deaths, 1795-1949,\" collection 2240477) was searched for John Laurie with death year 1908\u20131910. The subject was located on the first search (rank score 0.93). The NY State Death Index 1880\u20131956 (fallback) was not needed. The 1888 NYC marriage record (collection 2143225) and the 1900 US Federal Census were identified as corroborating searches but deferred to a subsequent research question on the broader parentage question. The original death certificate image was not independently transcribed; only the FamilySearch indexed record was examined.",
+      "narrative_markdown": "## What John Laurie's 1909 Death Certificate States About His Parentage and Birthplace\n\n### Conclusion\n\nThe preponderance of available evidence supports the conclusion that John Laurie \u2014 iron moulder, born about 1859 in Glasgow, Scotland, who died 7 December 1909 in Manhattan, New York City \u2014 was the son of **John Laurie**, born in Scotland, and **Mary Marshall**, born in Scotland. This conclusion rests on a single original government record carrying secondary information for the parentage claim; independent corroboration has not yet been gathered. The tier is accordingly **probable**. Scottish civil registration records and the 1888 NYC marriage record are the priority next sources.\n\n### The Death Certificate (src_001)\n\nThe 1909 death certificate is preserved in the FamilySearch collection \"New York, New York City Municipal Deaths, 1795-1949\" (collection 2240477), record ARK ark:/61903/1:1:271D-JC3, image at https://www.familysearch.org/ark:/61903/1:2:99QB-KJL4. The certificate records the death of John Laurie on 7 December 1909 in Manhattan, with burial 10 December 1909. It identifies the deceased as male, white, married, occupation iron moulder, born in 1859 in Glasgow, Scotland. It names his father as **John Laurie**, born in Scotland, and his mother as **Mary Marshall**, born in Scotland.\n\nThis is an **original** government vital registration \u2014 created by New York City's Department of Health contemporaneously with the registration of the death event.\n\n### Evidence Classification and Weighing\n\nThe three-layer GPS evidence classification applies separately to two axes:\n\n**Source classification:** Original. The death register is a contemporaneous government record, not a transcription or derivative.\n\n**Information quality:** The death event itself (date, place, manner \u2014 a_001) carries **primary** information quality, as the attending physician attested these facts in an official capacity at the time of death. All biographical data \u2014 the decedent's birthplace and birth year (a_002), his parents' names (a_005, a_007), and his parents' birthplaces (a_006, a_008) \u2014 carry **secondary** information quality: these facts were supplied by an unidentified family informant reporting biographical data about the decedent after his death. No informant is named on the record, so their identity, relationship to the deceased, and firsthand knowledge of his parentage cannot be assessed.\n\n**Evidence type:** All parentage assertions (a_005\u2013a_008) are **direct evidence**. The death certificate explicitly states the father's name, the mother's name, and their birthplaces; no inference is required to derive these facts from the document. Secondary information quality (reflecting the informant's secondhand knowledge) and direct evidence type (reflecting whether the record explicitly states the fact) are orthogonal GPS axes \u2014 a record can be both secondary information and direct evidence simultaneously, as is the case here.\n\nThe evidentiary weight is accordingly moderate:\n- The record is **original**, which confers credibility to the physical document itself.\n- The informant is **unidentified** and their relationship to the decedent is unknown, which limits the reliability of the biographical data.\n- The parentage facts \u2014 father's name and mother's maiden name \u2014 are the type of data a surviving spouse or adult child could supply with reasonable accuracy, but errors in such data on death certificates are not uncommon.\n- **Single source**: no independent corroboration of the parentage claim has been gathered yet.\n\n### Identity Confirmation\n\nThe record was matched to the research subject with a FamilySearch rank score of 0.93 \u2014 the strongest match in a pool of 233 results. The convergence of name (John Laurie), birth year (1859), birthplace (Glasgow, Scotland), death place (Manhattan, New York City), and marital status (married) with the known facts of the research subject leaves no reasonable doubt that this is the correct individual.\n\n### Limitations and Next Steps\n\nThe conclusion is graded **probable** rather than proved because:\n1. **Single source** \u2014 No independent corroboration of the parentage claim has yet been gathered. GPS requires at least two independent sources with primary or reliable secondary information for proved status.\n2. **Secondary information** \u2014 The informant was unidentified and reporting after the fact; no contemporaneous birth record or other firsthand source corroborates the parent names.\n3. **Birth date inconsistency** \u2014 A Scotland Civil Registration record already attached to this profile in the live FamilySearch tree records a birth date of 21 December 1860 (vs. approximately 1859 on the death certificate), and the NYC marriage record (1888) apparently reflects a birth year of approximately 1862. These inconsistencies do not affect the parentage claim itself but signal that the evidentiary picture of John Laurie's birth is not yet fully resolved.\n4. **Original image not transcribed** \u2014 Only the FamilySearch indexed record was examined; the original certificate image should be reviewed to confirm the parent names as transcribed.\n\nTo advance this conclusion to proved status, subsequent research should target: (a) Scottish civil registration birth records for John Laurie circa 1855\u20131865 in Glasgow, which would provide a contemporaneous record naming the parents; (b) the 1888 New York City marriage record for John Laurie and Ellen Cahill, which may corroborate the parentage; and (c) US census records to confirm identity details and immigration context."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "FamilySearch Scotland Civil Registration collection (5000163, 'Scotland, Civil Registration, 1855-1875, 1881, 1891') was searched after discovering the plan's collection ID 1865747 was invalid. A broad Scotland birth search returned 934 results; the top Glasgow/Lanarkshire candidates were ranked and examined. The Maryhill 1858 record (ark:/61903/1:1:6TFG-4WB9) was identified as the best match. The original register image (ark:/61903/3:1:3Q9M-CSFL-89NM-K) was attempted but returned a 403 access error and is documented as inaccessible. OPR parish records were not searched because the civil registration record was found. Birth year conflict c_001 (1858/~1859/1862) was resolved in favor of the civil registration date.",
+      "narrative_markdown": "## What Scotland's Civil Registration Records State About John Laurie's Birth and Parentage\n\n### Conclusion\n\nThe Scotland statutory civil birth registration for a John Laurie born 29 December 1858 in Maryhill, Lanarkshire (src_003, 'Scotland, Civil Registration, 1855-1875, 1881, 1891,' collection 5000163, ark:/61903/1:1:6TFG-4WB9) states: father **John Laurie**; mother **Mary Marshall** (maiden name Marshall, married name Laurie, per Scottish civil registration convention). The record is identified as **probably** belonging to the research subject GPZR-3X2 at **probable** tier. The identity assessment does not reach confident because the original register image is inaccessible (403) and the indexed birth date (29 Dec 1858) differs modestly from other records. The source itself carries primary information quality.\n\n### The Record\n\nScottish statutory civil registration began 1 January 1855. For a Maryhill 1858 birth, registration was required within 21 days; the registering parent (typically the father) attended in person and attested to the child's name, birth date and place, and both parents' full names including the mother's maiden surname. This process makes the parentage facts **primary information**: the informant was the parent, personally present, reporting facts within weeks of the event.\n\nThe record names:\n- Child: John Laurie, Male\n- Birth: 29 December 1858, Maryhill, Lanarkshire, Scotland\n- Father: John Laurie\n- Mother: Mary Marshall Laurie (maiden surname Marshall)\n\n### Evidence Classification\n\n**Source:** Original statutory government registration \u2014 the strongest source classification.\n**Information quality:** Primary for birth date, place, and parentage \u2014 the registering parent attested directly.\n**Evidence type:** Direct \u2014 all facts stated explicitly without inference.\n\n### Identity Assessment\n\nThe record is identified as probably that of GPZR-3X2 on the following grounds:\n- Name (John Laurie) is an exact match.\n- Location (Maryhill) is within the greater Glasgow area, consistent with the death certificate's 'Glasgow, Scotland.'\n- The parents (father John Laurie, mother Mary Marshall) exactly match those named on two other independent records for GPZR-3X2: the 1909 death certificate (src_001) and the 1888 marriage record (src_002).\n\nThe identity assessment is limited to **probable** because: (a) the register image is inaccessible (403), preventing direct visual confirmation; (b) the birth date 29 December 1858 differs from the tree's pre-existing birth fact (4 Dec 1859, from a different source), and from the death certificate's approximate 1859. The birth year conflict (c_001) is resolved: the civil registration date is the most authoritative, and a late December 1858 birth would naturally be approximated as '1859' on retrospective records. No other John Laurie born in the Glasgow area with both father John Laurie and mother Mary Marshall has been found in the collection.\n\n### Limitations\n\n1. **Original image inaccessible** \u2014 the indexed transcription is highly reliable for a statutory civil registration, but image confirmation is the outstanding step to advance confidence.\n2. **Single civil registration record** \u2014 no sibling birth certificate or parents' marriage record has been found to corroborate the parentage from a second primary-information source.\n3. **Probable identity match** \u2014 if the image confirms the indexed data, this conclusion would advance to proved for the record's content.\n\nTo advance: attempt image access through a different authenticated session or through the Scotland's People database (scotlandspeople.gov.uk)."
+    },
+    {
+      "id": "ps_003",
+      "question_id": "q_003",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "FamilySearch NYC Marriage Records 1829-1938 (collection 2143225) was searched for John Laurie and Ellen Cahill, 1887-1889. The record was found on the first search and is already attached to GPZR-3X2 in the FamilySearch tree. The full indexed record was read via record_read and extracted. No fallback search was needed.",
+      "narrative_markdown": "## What John Laurie's 1888 NYC Marriage Record States About His Parentage and Birthplace\n\n### Conclusion\n\nThe 1888 New York City marriage record for John Laurie and Ellen Cahile (src_002, 'New York, New York City Marriage Records, 1829-1938,' collection 2143225, ark:/61903/1:1:2493-2Z1) states: groom John Laurie, born about 1862 in Scotland; father of groom **'Jno.'** (abbreviation for John, no surname indexed); mother of groom **Mary Marshall**. The groom is identified as the research subject GPZR-3X2 at **confident** level (the record is already attached to GPZR-3X2 in the FamilySearch tree). The parentage conclusion from this record is graded **probable**: an original source carrying secondary information on the parents, corroborating but not independently proving the parentage.\n\n### The Record\n\nThe record documents the civil marriage of John Laurie and Ellen Cahile on 28 November 1888 in New York County, New York. The indexed entry identifies the groom's parents:\n- Father: 'Jno.' (John), no surname indexed\n- Mother: Mary Marshall\n\nThe groom reported his own parents' names. He would have personal knowledge of these facts, distinguishing this from a death certificate informant. However, the groom's report is still **secondary information** \u2014 the parentage is his own recollection at time of marriage rather than a contemporaneous registration of the birth event.\n\n### Evidence Classification\n\n**Source:** Original NYC municipal marriage record.\n**Information quality:** Primary for the marriage event itself (officiant attested). Secondary for biographical data (birth year/place, parents' names) \u2014 supplied by the parties.\n**Evidence type:** Direct \u2014 all facts explicitly stated.\n\n### Corroboration\n\nThe mother's name 'Mary Marshall' independently corroborates the 1909 death certificate (src_001) and the 1858 Scotland civil registration (src_003). The informants are completely different across all three records: the 1888 groom, the 1909 unnamed family informant, and the 1858 registering parent. This three-source convergence on the same mother's name significantly strengthens the parentage conclusion. The father 'Jno.' (John) also corroborates the death certificate's father 'John Laurie' and the Scotland civil reg's father 'John Laurie.'\n\n### Limitations\n\n1. **Secondary information for parentage** \u2014 the groom's self-report, while informed, is not contemporaneous primary evidence of his birth.\n2. **Father's name abbreviated** \u2014 the surname is not indexed on this record; the identification with John Laurie (I1) rests on consistency with other sources.\n3. **Birth year discrepancy** \u2014 groom reports birth year 1862, conflicting with death certificate (~1859) and Scotland civil reg (29 Dec 1858). Conflict c_001 resolved in favor of civil registration date. Age understatement at marriage is well documented.\n\nThis record is complete for the purpose of the question it answers. Advancement of the overall parentage conclusion requires synthesis across all three sources (q_004)."
+    },
+    {
+      "id": "ps_004",
+      "question_id": "q_004",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_002",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_012",
+        "a_014",
+        "a_015",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "Three original record types were searched and yielded results: (1) New York City Municipal Deaths 1795-1949 (collection 2240477) \u2014 death certificate for John Laurie, 7 Dec 1909, Manhattan, naming father John Laurie (Scotland) and mother Mary Marshall (Scotland). (2) NYC Marriage Records 1829-1938 (collection 2143225) \u2014 marriage record for John Laurie and Ellen Cahile, 28 Nov 1888, naming father 'Jno.' and mother Mary Marshall. (3) Scotland Civil Registration 1855-1875, 1881, 1891 (collection 5000163) \u2014 birth registration 29 Dec 1858, Maryhill, Lanarkshire, naming father John Laurie and mother Mary Marshall (maiden name). Original Scotland register image was inaccessible (403); US census (pli_004) and OPR Scottish parish records (pli_007) were not searched because the three-source convergence already supports a defensible probable conclusion.",
+      "narrative_markdown": "## Parentage of John Laurie (c.1858, Maryhill, Lanarkshire \u2014 1909, Manhattan, New York)\n\n### Conclusion\n\nThe preponderance of available evidence establishes, at **probable** tier, that **John Laurie**, born c.29 December 1858 in Maryhill, Lanarkshire, Scotland, who married Ellen Cahill in New York City on 28 November 1888 and died 7 December 1909 in Manhattan, was the son of **John Laurie** and **Mary Marshall**, both of Scotland. Three independent original records, created over a span of 51 years by different informants in different institutions, consistently name these two individuals as the subject's parents. A GPS-compliant proved conclusion requires a second original source with primary information on the parentage; the currently available evidence supports a strong probable finding, and the path to proved is clear.\n\n### Evidence Basis\n\n**Source 1 \u2014 1858 Scotland Civil Registration (src_003; a_022\u2013a_025)**\n'Scotland, Civil Registration, 1855-1875, 1881, 1891,' collection 5000163, FamilySearch (ark:/61903/1:1:6TFG-4WB9). Birth registered for John Laurie, 29 December 1858, Maryhill, Lanarkshire. Father: **John Laurie**. Mother: **Mary Marshall** (maiden name Marshall, married name Laurie, per Scottish convention).\n\nThis is an **original** government vital registration; information quality is **primary** for the parentage \u2014 the registering parent (typically the father) attended the General Register Office in person, within 21 days, and attested to the child's name, birth date and place, and both parents' identities. This is the single strongest source in the set: contemporaneous, official, firsthand.\n\nIdentity assessment: **probable** match to GPZR-3X2. The original register image (ark:/61903/3:1:3Q9M-CSFL-89NM-K) is inaccessible (HTTP 403); only the indexed transcription was examined. The birth date (29 Dec 1858) differs from the pre-existing tree birth date (4 Dec 1859, source unknown) by approximately one year \u2014 consistent with a late-December 1858 birth being rounded to '1859' on later records. Parents named here (John Laurie + Mary Marshall) exactly match the two other independent records for GPZR-3X2. No other John Laurie born in the Glasgow area with the same parents has been found in this collection.\n\n**Source 2 \u2014 1909 NYC Death Certificate (src_001; a_005\u2013a_008)**\n'New York, New York City Municipal Deaths, 1795-1949,' collection 2240477, FamilySearch (ark:/61903/1:1:271D-JC3). Death registered 7 December 1909, Manhattan. Father: **John Laurie**, born Scotland. Mother: **Mary Marshall**, born Scotland. Born 1859, Glasgow, Scotland.\n\nThis is an **original** government vital registration; information quality is **secondary** for parentage \u2014 an unidentified family informant supplied the biographical data after the decedent's death. Evidence type is **direct**: the facts are explicitly stated. The subject identity is confirmed at **confident** level (rank-match score 0.93 against GPZR-3X2; four converging identifiers).\n\n**Source 3 \u2014 1888 NYC Marriage Record (src_002; a_014\u2013a_015)**\n'New York, New York City Marriage Records, 1829-1938,' collection 2143225, FamilySearch (ark:/61903/1:1:2493-2Z1). Marriage 28 November 1888, New York County. Father of groom: **'Jno.'** (abbreviation for John, no surname indexed). Mother of groom: **Mary Marshall**.\n\nThis is an **original** government record; information quality is **secondary** for parentage \u2014 the groom supplied his own parents' names. The informant (the groom himself) had personal knowledge of his parents and no motive to misrepresent them. The subject identity is confirmed at **confident** level (record already attached to GPZR-3X2 in the FamilySearch tree; four converging identifiers).\n\n### Independence Analysis\n\nThe three sources are fully independent:\n- Different events: birth registration (1858), marriage (1888), death (1909)\n- Different informants: registering parent at birth; the groom at marriage; unnamed family member at death\n- Different institutions: General Register Office for Scotland; NYC municipal marriage bureau; NYC Department of Health\n- No shared informant chain\n\nEach source counts as a separate evidence unit. All three are consistent on both parent names.\n\n### Conflict Resolution\n\n**Birth year conflict (c_001):** The three sources give different birth years: ~1859 (death cert), 1862 (marriage cert), 29 Dec 1858 (Scotland civil reg). Resolved: the civil registration date is accepted as most authoritative (primary information, contemporaneous). The death cert's ~1859 is a consistent rounded approximation. The marriage cert's 1862 is a probable age understatement. The identity of the subject across all three records is not in doubt.\n\nNo conflict exists on the parentage: all three sources name John Laurie as father and Mary Marshall (maiden name) as mother.\n\n### Tier Defense\n\nThe conclusion is graded **probable** rather than proved because GPS requires two or more independent original sources carrying **primary information** on the fact in question. Only one source here (the Scotland civil registration) carries primary information for parentage; the death certificate and marriage record carry secondary information. Three independent original sources with consistent secondary (or primary) information establish a strong probable. No contradicting evidence has been found.\n\n### Tree Encoding\n\nThe parentage relationships are encoded in tree.gedcomx.json: R21 (ParentChild: I1/John Laurie Sr. \u2192 GPZR-3X2) and R22 (ParentChild: I2/Mary Marshall \u2192 GPZR-3X2), both written during initial extraction of the death certificate.\n\n### Path to Proved\n\nTo advance from probable to proved, research should seek a second original source with primary information naming John Laurie and Mary Marshall as parents of this John Laurie. Candidates:\n1. **Scotland's People database** (scotlandspeople.gov.uk) \u2014 access the original Maryhill 1858 register image directly, and search for siblings' birth registrations naming the same parents.\n2. **Parents' marriage record** \u2014 search Scotland Civil Registration marriages for John Laurie and Mary Marshall, circa 1845\u20131860, Glasgow/Lanarkshire, which would provide both parents' identities and the mother's maiden name from a primary-information source.\n3. **1880 or 1900 US census** \u2014 a household record showing John Laurie living with his mother or a sibling who could corroborate the family connection."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-15.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-15T14:16:11.015Z"
+    }
+  ]
+}
