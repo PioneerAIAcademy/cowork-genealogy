@@ -116,10 +116,14 @@ usable one is the worse mistake.
 
 Determine what records exist for the target jurisdiction and period.
 
-**Invoke locality-guide or do inline?** No guide yet → invoke
-`locality-guide` first, then return. Guide exists → read it and
-supplement with targeted MCP calls for gaps. Quick survey of a familiar
-jurisdiction → call MCP tools directly:
+**Invoke locality-guide or read the persisted one?** Check for a
+`localities` entry covering this jurisdiction (via `project_context`).
+No entry yet → invoke `locality-guide` first (it persists one `loc_`
+entry to `localities`, so the survey survives for later questions), then
+return and read it back. Entry exists → read it from `project_context`
+and supplement with targeted MCP calls only for gaps — don't re-survey a
+place the guide already covers. Quick survey of a familiar jurisdiction
+with no persisted entry → call MCP tools directly:
 
 ```
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
@@ -147,6 +151,18 @@ the question may need unindexed records.
 - Where records are held and how to access them (indexed, images-only,
   on-site only)
 - Boundary changes affecting which jurisdiction holds the records
+
+**Carry the locale facts into the plan items — search-records reads the
+plan, not the locality guide.** When a `localities` entry flags
+something that changes *how* a specific search must run — a boundary
+succession (records may sit under the event-era jurisdiction or the
+place's present-day one) or an indexing quirk (a parish indexed only at
+county level, a collection filed under the modern country) — write that
+applied decision into the affected plan item's `rationale`, and where a
+boundary changed, stage the successor jurisdiction as its own
+`fallback_for` item. `search-records` executes these; it does not look
+up place history itself, so a locale fact left only in the guide never
+reaches the search.
 
 ### 3. Identify relevant record sets
 
@@ -371,7 +387,7 @@ Ancestry (fallback), land records (fallback).
 
 | Situation | Action |
 |-----------|--------|
-| No locality guide exists for this jurisdiction | Invoke `locality-guide` skill first, then return here |
+| No `localities` entry exists for this jurisdiction | Invoke `locality-guide` first (it persists a `loc_` entry), then return and read it back |
 | Question is too vague to plan for | Return to `question-selection` to refine it |
 | All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `research-exhaustiveness` to evaluate the question against the GPS stop criteria. If it returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
