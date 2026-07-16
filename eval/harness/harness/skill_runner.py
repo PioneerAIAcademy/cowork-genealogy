@@ -233,16 +233,16 @@ async def run_skill(
         # Standalone use of run_skill (e.g., one-off scripts): permissive
         # baseline + every loaded mock tool.
         allowed_tools = list(BASELINE_ALLOWED) + [
-            f"mcp__genealogy__{name}" for name in tools_by_name
+            f"mcp__Genealogy_Research__{name}" for name in tools_by_name
         ]
 
     # Compute disallowed_tools as the fixed dangerous-tool backstop PLUS
-    # every mcp__genealogy__* mock tool the skill is NOT allowed to call.
+    # every mcp__Genealogy_Research__* mock tool the skill is NOT allowed to call.
     # Belt + suspenders against the spec §15 known risk: the explicit
     # disallow list rejects out-of-allowlist MCP calls at call time,
     # independent of the permission_mode setting.
     allowed_set = set(allowed_tools)
-    all_mock_mcp = {f"mcp__genealogy__{name}" for name in tools_by_name}
+    all_mock_mcp = {f"mcp__Genealogy_Research__{name}" for name in tools_by_name}
     extra_disallowed = sorted(all_mock_mcp - allowed_set)
     disallowed_tools = list(DISALLOWED_BACKSTOP) + extra_disallowed
 
