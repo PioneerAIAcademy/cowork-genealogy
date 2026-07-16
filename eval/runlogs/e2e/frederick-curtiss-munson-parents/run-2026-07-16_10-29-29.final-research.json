@@ -1,0 +1,157 @@
+{
+  "project": {
+    "id": "rp_frederick_curtiss_munson_parents",
+    "objective": "Who were the parents of Frederick Curtiss Munson, born 31 July 1887 in Brooklyn, New York?",
+    "subject_person_ids": [
+      "9WMW-SVC"
+    ],
+    "status": "active",
+    "created": "2026-07-15",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does Frederick Curtiss Munson's 31 July 1887 Brooklyn, New York birth record say about his parents?",
+      "rationale": "New York State had civil birth registration from 1880. A Brooklyn birth certificate for a child born 31 July 1887 is the most direct possible evidence of parentage \u2014 it would name both mother and father by full name. This is the gatekeeper record: if located, it resolves the objective in one step.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-16"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Brooklyn (Kings County), New York",
+          "date_range": "1887",
+          "repository": "FamilySearch",
+          "rationale": "New York State civil birth registration began in 1880. FamilySearch collection 2240282 'New York, New York City Births, 1846-1909' indexes 2.8 million NYC births including Brooklyn/Kings County. A birth certificate for Frederick Curtiss Munson born 31 July 1887 would name both parents by full name \u2014 direct evidence resolving the objective in one record. Highest-priority item.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Brooklyn (Kings County), New York",
+          "date_range": "1887",
+          "repository": "Ancestry",
+          "rationale": "Ancestry holds 'New York City, New York, Birth Certificates, 1866-1909' \u2014 a major parallel index to NYC civil birth registrations. Searching it independently may surface an entry missed or differently indexed in FamilySearch. Fallback for the FamilySearch birth record search.",
+          "fallback_for": "pli_001",
+          "status": "planned"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn (Kings County), New York",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "The 1900 US Federal Census was taken when Frederick would be 12-13 years old \u2014 almost certainly still living with his parents. A household record would name both parents and Frederick, providing indirect parentage evidence and corroborating any name found in the birth certificate. Also reveals parents' ages, birthplaces, and nativity for follow-up searches.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Brooklyn (Kings County), New York",
+          "date_range": "1892",
+          "repository": "FamilySearch",
+          "rationale": "New York State Census 1892 (FS collection 1529100, 3.7M records). Frederick would be 4-5 years old in 1892, living with parents. A household entry provides indirect parentage evidence five years closer to his birth than the 1900 federal census, and may include a street address useful for locating church records.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "New York City, New York",
+          "date_range": "1870-1895",
+          "repository": "FamilySearch",
+          "rationale": "Per the parentage-question planning standard, a dedicated search for the parents' marriage record is mandatory. FamilySearch collection 2143225 'New York, New York City Marriage Records, 1829-1938' (2.9M records). Their marriage record: (a) confirms the couple as a unit; (b) supplies the mother's maiden name, omitted from most census and death records; (c) corroborates a father named only by derivative or indirect evidence. Date range estimated 10-20 years before Frederick's 1887 birth.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "New York",
+          "date_range": "1900-1970",
+          "repository": "FamilySearch",
+          "rationale": "Search NY State Death Index 1880-1956 (FS collection 2803479) for Frederick Curtiss Munson. His death certificate would name his parents (with informant-dependent reliability). Also search for deaths of parents themselves, as parents' death certificates name their own parents and confirm their identities. Secondary information but important corroboration. Also check 'New York, New York City Municipal Deaths, 1795-1949' (FS collection 2240477).",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "probate",
+          "jurisdiction": "Kings County, New York",
+          "date_range": "1890-1940",
+          "repository": "FamilySearch",
+          "rationale": "FAN/indirect evidence: Kings County Estate Files 1866-1923 (FS collection 1466356, 168K records with images). If either parent left a will, it might name Frederick as a son or heir \u2014 direct parentage evidence. Also useful if the birth certificate is not found. Extended date range accounts for parents dying after the indexed collection ends; browse the images for later years.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-16T10:18:30.161Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Munson",
+        "givenName": "Frederick",
+        "birthYearFrom": 1882,
+        "birthYearTo": 1892,
+        "collectionId": "2240282",
+        "recordType": "birth",
+        "count": 50,
+        "collection": "New York, New York City Births, 1846-1909"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 46,
+      "notes": "Top match (rank 1, score 0.710, already attached to subject): male Munson born 31 July 1887 in Brooklyn, Kings, New York \u2014 exact date and place match for Frederick Curtiss Munson. Record names father Jared Howes Munson and mother Kathrine Seguine. Child's given name not indexed (common for this NYC birth register era). Record ark:/61903/1:1:2WQG-RYD; full record ark:/61903/1:2:997M-6DKQ."
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,932 @@
+{
+  "test_id": "frederick-curtiss-munson-parents",
+  "captured_at": "2026-07-16_10-29-29",
+  "verdict": "fail",
+  "stop_reason": "inactivity",
+  "judge_output": {
+    "per_finding": [
+      {
+        "finding_id": "f1",
+        "matched": "false",
+        "agent_evidence": "",
+        "notes": "The final tree contains no parent relationship for Frederick Curtiss Munson. No person record for Jared Howes Munson is present. The 1905 New York State Census source (7TK5-S5J) is cited and references 'Jared H Munson and Katherine S Munson' but these parent persons are not instantiated as separate records in the tree, and no parent-child relationships are defined."
+      },
+      {
+        "finding_id": "f2",
+        "matched": "false",
+        "agent_evidence": "",
+        "notes": "The final tree contains no parent relationship for Frederick Curtiss Munson. No person record for Katherine Saguine is present. Although the 1905 New York State Census source (7TK5-S5J) references 'Katherine S Munson', this person is not created as a separate record in the tree, and no parent-child relationships are defined."
+      }
+    ],
+    "recall_required": 0.0,
+    "recall_total": 0.0,
+    "verdict": "fail",
+    "rationale": "The agent's final tree fails to recover either required finding. Frederick Curtiss Munson's record (id: 9WMW-SVC) is present with his birth date and subsequent life events, but critically, no parent-child relationships are established and no person records for Jared Howes Munson or Katherine Saguine are instantiated. Although one of the agent's sources (7TK5-S5J, the 1905 New York State Census) explicitly references both parents' names alongside Frederick, the agent did not extract or model the parent relationships into the tree structure. Both required findings (f1: Jared Howes Munson as father; f2: Katherine Saguine as mother) are marked as false.",
+    "proof_quality": {
+      "score": null,
+      "exhaustiveness": "na",
+      "conflicts_addressed": "na",
+      "corroboration": "na",
+      "tier_appropriate": "na",
+      "rationale": "No proof summary exists for this research question in the provided research.json file. The proof_quality assessment defaults to null with all fields set to 'na' per instructions."
+    }
+  },
+  "usage": {
+    "continue_nudges": 0,
+    "session_id": "b1289871-adf4-456a-a13f-1c3d36bc4aa4",
+    "resumes": 0,
+    "resume_on_stall": true,
+    "timeline": [
+      [
+        1.2,
+        "system:init"
+      ],
+      [
+        6.1,
+        "assistant"
+      ],
+      [
+        6.4,
+        "assistant"
+      ],
+      [
+        6.5,
+        "tool_result"
+      ],
+      [
+        9.5,
+        "assistant"
+      ],
+      [
+        10.3,
+        "assistant"
+      ],
+      [
+        10.4,
+        "tool_result"
+      ],
+      [
+        14.2,
+        "assistant"
+      ],
+      [
+        14.6,
+        "assistant"
+      ],
+      [
+        14.7,
+        "tool_result"
+      ],
+      [
+        18.8,
+        "assistant"
+      ],
+      [
+        19.3,
+        "assistant"
+      ],
+      [
+        19.6,
+        "assistant"
+      ],
+      [
+        19.6,
+        "tool_result"
+      ],
+      [
+        19.6,
+        "tool_result"
+      ],
+      [
+        22.9,
+        "assistant"
+      ],
+      [
+        24.4,
+        "assistant"
+      ],
+      [
+        24.7,
+        "tool_result"
+      ],
+      [
+        24.8,
+        "assistant"
+      ],
+      [
+        24.9,
+        "tool_result"
+      ],
+      [
+        41.6,
+        "assistant"
+      ],
+      [
+        41.6,
+        "assistant"
+      ],
+      [
+        41.6,
+        "assistant"
+      ],
+      [
+        41.7,
+        "tool_result"
+      ],
+      [
+        52.6,
+        "assistant"
+      ],
+      [
+        57.1,
+        "assistant"
+      ],
+      [
+        57.2,
+        "tool_result"
+      ],
+      [
+        60.5,
+        "assistant"
+      ],
+      [
+        61.4,
+        "assistant"
+      ],
+      [
+        61.4,
+        "assistant"
+      ],
+      [
+        61.5,
+        "tool_result"
+      ],
+      [
+        61.5,
+        "tool_result"
+      ],
+      [
+        66.1,
+        "assistant"
+      ],
+      [
+        67.4,
+        "assistant"
+      ],
+      [
+        67.7,
+        "tool_result"
+      ],
+      [
+        67.7,
+        "assistant"
+      ],
+      [
+        67.7,
+        "tool_result"
+      ],
+      [
+        72.1,
+        "assistant"
+      ],
+      [
+        73.0,
+        "assistant"
+      ],
+      [
+        73.5,
+        "assistant"
+      ],
+      [
+        73.6,
+        "tool_result"
+      ],
+      [
+        78.3,
+        "assistant"
+      ],
+      [
+        79.3,
+        "assistant"
+      ],
+      [
+        80.1,
+        "assistant"
+      ],
+      [
+        80.3,
+        "assistant"
+      ],
+      [
+        89.9,
+        "tool_result"
+      ],
+      [
+        95.0,
+        "tool_result"
+      ],
+      [
+        100.6,
+        "tool_result"
+      ],
+      [
+        104.5,
+        "assistant"
+      ],
+      [
+        105.6,
+        "assistant"
+      ],
+      [
+        106.7,
+        "tool_result"
+      ],
+      [
+        110.9,
+        "assistant"
+      ],
+      [
+        112.0,
+        "tool_result"
+      ],
+      [
+        117.0,
+        "assistant"
+      ],
+      [
+        117.0,
+        "tool_result"
+      ],
+      [
+        122.0,
+        "assistant"
+      ],
+      [
+        123.8,
+        "assistant"
+      ],
+      [
+        123.9,
+        "tool_result"
+      ],
+      [
+        128.4,
+        "assistant"
+      ],
+      [
+        129.8,
+        "assistant"
+      ],
+      [
+        129.9,
+        "tool_result"
+      ],
+      [
+        135.8,
+        "assistant"
+      ],
+      [
+        137.5,
+        "assistant"
+      ],
+      [
+        137.6,
+        "tool_result"
+      ],
+      [
+        171.7,
+        "assistant"
+      ],
+      [
+        171.7,
+        "assistant"
+      ],
+      [
+        195.6,
+        "assistant"
+      ],
+      [
+        195.7,
+        "tool_result"
+      ],
+      [
+        201.9,
+        "assistant"
+      ],
+      [
+        202.9,
+        "assistant"
+      ],
+      [
+        203.0,
+        "assistant"
+      ],
+      [
+        203.0,
+        "tool_result"
+      ],
+      [
+        203.0,
+        "tool_result"
+      ],
+      [
+        209.3,
+        "assistant"
+      ],
+      [
+        210.0,
+        "assistant"
+      ],
+      [
+        210.1,
+        "tool_result"
+      ],
+      [
+        215.6,
+        "assistant"
+      ],
+      [
+        216.9,
+        "assistant"
+      ],
+      [
+        218.4,
+        "assistant"
+      ],
+      [
+        221.1,
+        "tool_result"
+      ],
+      [
+        234.2,
+        "assistant"
+      ],
+      [
+        234.4,
+        "assistant"
+      ],
+      [
+        236.5,
+        "assistant"
+      ],
+      [
+        239.7,
+        "tool_result"
+      ],
+      [
+        250.5,
+        "assistant"
+      ],
+      [
+        251.0,
+        "assistant"
+      ],
+      [
+        251.1,
+        "assistant"
+      ],
+      [
+        251.1,
+        "tool_result"
+      ],
+      [
+        255.1,
+        "assistant"
+      ],
+      [
+        257.3,
+        "assistant"
+      ],
+      [
+        257.3,
+        "tool_result"
+      ],
+      [
+        268.9,
+        "assistant"
+      ],
+      [
+        270.3,
+        "assistant"
+      ],
+      [
+        277.7,
+        "assistant"
+      ],
+      [
+        277.8,
+        "tool_result"
+      ],
+      [
+        282.9,
+        "assistant"
+      ],
+      [
+        283.3,
+        "tool_result"
+      ],
+      [
+        290.6,
+        "assistant"
+      ],
+      [
+        290.9,
+        "assistant"
+      ],
+      [
+        294.3,
+        "assistant"
+      ],
+      [
+        294.4,
+        "tool_result"
+      ],
+      [
+        294.4,
+        "tool_result"
+      ],
+      [
+        302.1,
+        "assistant"
+      ],
+      [
+        302.1,
+        "assistant"
+      ],
+      [
+        319.7,
+        "assistant"
+      ],
+      [
+        319.8,
+        "system:task_started"
+      ],
+      [
+        319.8,
+        "tool_result"
+      ],
+      [
+        323.6,
+        "system:task_progress"
+      ],
+      [
+        323.6,
+        "assistant"
+      ],
+      [
+        323.7,
+        "tool_result"
+      ]
+    ],
+    "caps": {
+      "wall_clock_seconds": 7200,
+      "inactivity_seconds": 600,
+      "progress_stall_seconds": 600,
+      "tool_calls": 300,
+      "max_turns": 250,
+      "max_cost_usd": 15.0
+    },
+    "wall_clock_seconds": 936.6682129759993,
+    "real_clock_seconds": 936.6682138442993,
+    "slept_seconds": 8.683000487508252e-07,
+    "judge_seconds": 7.220186223001292
+  },
+  "tool_calls": [
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__project_context",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__project_context",
+      "args": {
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"9WMW-SVC\\\",\\n      \\\"name\\\": \\\"Frederick Curtiss Munson\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"LJBS-KBF\\\",\\n      \\\"name\\\": \\\"Pearl Esther Scholl\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    }\\n  ],\\n  \\\"sources\\\": []\\n}\"}]"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_frederick_curtiss_munson_parents\",\n4\t    \"objective\": \"Who were the parents of Frederick Curtiss Munson, born 31 July 1887 in Brooklyn, New York?\",\n5\t    \"subject_person_ids\": [\n6\t      \"9WMW-SVC\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-15\",\n10\t    \"updated\": \"2026-07-15\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"quest..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection"
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf/.claude/skills/question-selection/references/question-formulation.md"
+      },
+      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf/.claude/skills/question-selection/references/pedigree-analysis.md"
+      },
+      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf",
+        "section": "questions",
+        "op": "append",
+        "entry": {
+          "question": "What does Frederick Curtiss Munson's 31 July 1887 Brooklyn, New York birth record say about his parents?",
+          "rationale": "New York State had civil birth registration from 1880. A Brooklyn birth certificate for a child born 31 July 1887 is the most direct possible evidence of parentage \u2014 it would name both mother and father by full name. This is the gatekeeper record: if located, it resolves the objective in one step.",
+          "selection_basis": "objective_decomposition",
+          "priority": "high",
+          "status": "open",
+          "depends_on": [],
+          "unblocks": [],
+          "resolved": null,
+          "resolution_assertion_ids": [],
+          "exhaustive_declaration": {
+            "declared": false,
+            "justification": null,
+            "log_entry_ids": [],
+            "stop_criteria": null
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-plan"
+      },
+      "response_summary": "Launching skill: research-plan"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf/.claude/skills/research-plan/references/planning-standards.md"
+      },
+      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf/.claude/skills/research-plan/references/record-type-guide.md"
+      },
+      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__place_search,mcp__genealogy__collections_search,mcp__genealogy__external_links_search",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__place_search",
+      "args": {
+        "placeName": "Kings County",
+        "contextName": "New York"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Kings, Greenfield, Saratoga, New York, United States\\\",\\n      \\\"type\\\": \\\"Hamlet\\\",\\n      \\\"latitude\\\": 43.1508,\\n      \\\"longitude\\\": -73.8547,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Kings&focusedId=4645072\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"Kings, New York, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1776/+1898\\\",\\n      \\\"lati..."
+    },
+    {
+      "tool": "mcp__genealogy__collections_search",
+      "args": {
+        "standardPlace": "Kings, New York, United States",
+        "startYear": 1880,
+        "endYear": 1910
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Kings, New York, United States\\\",\\n    \\\"startYear\\\": 1880,\\n    \\\"endYear\\\": 1910\\n  },\\n  \\\"scope\\\": \\\"New York\\\",\\n  \\\"totalForPlace\\\": 65,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"4460198\\\",\\n      \\\"title\\\": \\\"New York, Birth Indexes outside of New York City, 1881-1942\\\",\\n      \\\"dateRange\\\": \\\"1881-1942\\\",\\n      \\\"recordCount\\\": 59306,\\n      \\\"personCount\\\": 59306,\\n      \\\"imageCount\\\": 78929,\\n      \\\"url\\\": \\\"..."
+    },
+    {
+      "tool": "mcp__genealogy__external_links_search",
+      "args": {
+        "standardPlace": "Kings, New York, United States",
+        "startYear": 1880,
+        "endYear": 1910
+      },
+      "response_summary": "Error: result (98,933 characters) exceeds maximum allowed tokens. Output has been saved to /home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt.\nFormat: JSON array with schema: [{type: string, text: string}]\nUse offset and limit parameters to read specific portions of the file, search within it for specific content, and jq to make structured queries.\nREQUIRE..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt",
+        "limit": 100
+      },
+      "response_summary": "File content (35865 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt",
+        "limit": 60,
+        "offset": 0
+      },
+      "response_summary": "File content (35865 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file."
+    },
+    {
+      "tool": "Bash",
+      "args": {
+        "command": "jq -r '.[0].text' \"/home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt\" | python3 -c \"import sys,json; data=json.load(sys.stdin); [print(r.get('linkText',''), r.get('url','')) for r in data[:40]]\" 2>/dev/null || jq -r '.[0].text' \"/home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt\" | head -200",
+        "description": "Extract external links data from sidecar file"
+      },
+      "response_summary": "Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead of cat. But you *should not* attempt to work around this denial in malicious ways, e.g. do not use your ability to run tests to execute non-test actions. You should only try to work around this restriction in reasonable ways that do not attempt to bypass th..."
+    },
+    {
+      "tool": "Grep",
+      "args": {
+        "pattern": "linkText|url|ancestry|myheritage|findmypast|archives",
+        "path": "/home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt",
+        "output_mode": "content",
+        "head_limit": 80,
+        "-i": true
+      },
+      "response_summary": "4:[Omitted long matching line]"
+    },
+    {
+      "tool": "Grep",
+      "args": {
+        "pattern": "\"linkText\"",
+        "path": "/home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt",
+        "output_mode": "content",
+        "head_limit": 5
+      },
+      "response_summary": "No matches found"
+    },
+    {
+      "tool": "Grep",
+      "args": {
+        "pattern": "ancestry\\.com",
+        "path": "/home/christopher/.claude/projects/-tmp-e2e-frederick-curtiss-munson-parents-3dj4a5rf/b1289871-adf4-456a-a13f-1c3d36bc4aa4/tool-results/mcp-genealogy-external_links_search-1784196932911.txt",
+        "output_mode": "content",
+        "head_limit": 5
+      },
+      "response_summary": "4:[Omitted long matching line]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf",
+        "ops": [
+          {
+            "section": "plans",
+            "op": "append",
+            "entry": {
+              "question_id": "q_001",
+              "status": "active",
+              "created": "2026-07-16"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 1,
+              "record_type": "vital_record",
+              "jurisdiction": "Brooklyn (Kings County), New York",
+              "date_range": "1887",
+              "repository": "FamilySearch",
+              "rationale": "New York State civil birth registration began in 1880. FamilySearch collection 2240282 'New York, New York City Births, 1846-1909' indexes 2.8 million NYC births including Brooklyn/Kings County. A birth certificate for Frederick Curtiss Munson born 31 July 1887 would name both parents by full name \u2014 direct evidence resolving the objective in one record. Highest-priority item.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 2,
+              "record_type": "vital_record",
+              "jurisdiction": "Brooklyn (Kings County), New York",
+              "date_range": "1887",
+              "repository": "Ancestry",
+              "rationale": "Ancestry holds 'New York City, New York, Birth Certificates, 1866-1909' \u2014 a major parallel index to NYC civil birth registrations. Searching it independently may surface an entry missed or differently indexed in FamilySearch. Fallback for the FamilySearch birth record search.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 3,
+              "record_type": "census",
+              "jurisdiction": "Brooklyn (Kings County), New York",
+              "date_range": "1900",
+              "repository": "FamilySearch",
+              "rationale": "The 1900 US Federal Census was taken when Frederick would be 12-13 years old \u2014 almost certainly still living with his parents. A household record would name both parents and Frederick, providing indirect parentage evidence and corroborating any name found in the birth certificate. Also reveals parents' ages, birthplaces, and nativity for follow-up searches.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 4,
+              "record_type": "census",
+              "jurisdiction": "Brooklyn (Kings County), New York",
+              "date_range": "1892",
+              "repository": "FamilySearch",
+              "rationale": "New York State Census 1892 (FS collection 1529100, 3.7M records). Frederick would be 4-5 years old in 1892, living with parents. A household entry provides indirect parentage evidence five years closer to his birth than the 1900 federal census, and may include a street address useful for locating church records.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 5,
+              "record_type": "vital_record",
+              "jurisdiction": "New York City, New York",
+              "date_range": "1870-1895",
+              "repository": "FamilySearch",
+              "rationale": "Per the parentage-question planning standard, a dedicated search for the parents' marriage record is mandatory. FamilySearch collection 2143225 'New York, New York City Marriage Records, 1829-1938' (2.9M records). Their marriage record: (a) confirms the couple as a unit; (b) supplies the mother's maiden name, omitted from most census and death records; (c) corroborates a father named only by derivative or indirect evidence. Date range estimated 10-20 years before Frederick's 1887 birth.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 6,
+              "record_type": "vital_record",
+              "jurisdiction": "New York",
+              "date_range": "1900-1970",
+              "repository": "FamilySearch",
+              "rationale": "Search NY State Death Index 1880-1956 (FS collection 2803479) for Frederick Curtiss Munson. His death certificate would name his parents (with informant-dependent reliability). Also search for deaths of parents themselves, as parents' death certificates name their own parents and confirm their identities. Secondary information but important corroboration. Also check 'New York, New York City Municipal Deaths, 1795-1949' (FS collection 2240477).",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 7,
+              "record_type": "probate",
+              "jurisdiction": "Kings County, New York",
+              "date_range": "1890-1940",
+              "repository": "FamilySearch",
+              "rationale": "FAN/indirect evidence: Kings County Estate Files 1866-1923 (FS collection 1466356, 168K records with images). If either parent left a will, it might name Frederick as a son or heir \u2014 direct parentage evidence. Also useful if the birth certificate is not found. Extended date range accounts for parents dying after the indexed collection ends; browse the images for later years.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records"
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "surname": "Munson",
+        "givenName": "Frederick",
+        "birthYearFrom": 1882,
+        "birthYearTo": 1892,
+        "collectionId": "2240282",
+        "recordType": "birth",
+        "count": 50,
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"surname\\\": \\\"Munson\\\",\\n    \\\"givenName\\\": \\\"Frederick\\\",\\n    \\\"birthYearFrom\\\": 1882,\\n    \\\"birthYearTo\\\": 1892,\\n    \\\"collectionId\\\": \\\"2240282\\\",\\n    \\\"recordType\\\": \\\"birth\\\",\\n    \\\"count\\\": 50,\\n    \\\"projectPath\\\": \\\"/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf\\\"\\n  },\\n  \\\"totalMatches\\\": 46,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 46,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"reco..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf",
+        "stagedResultsRef": "results/.staging/ea95a875-2f15-45d3-98fb-2fedf47d0c2a.json",
+        "subjectId": "9WMW-SVC",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"9WMW-SVC\\\",\\n  \\\"scoredCount\\\": 46,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 11,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:2WQG-RYD\\\",\\n      \\\"matchScore\\\": 0.71039915,\\n      \\\"primaryId\\\": \\\"p_14729657322\\\",\\n      \\\"personName\\\": \\\"Munson\\\",\\n      \\\"sex\\\": \\\"Male\\\",\\n      \\\"birthDate\\\": \\\"31 July 1887\\\",\\n      \\\"birthPlace\\\": \\\"Broo..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_read",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:2WQG-RYD",
+        "resultsRef": "results/.staging/ea95a875-2f15-45d3-98fb-2fedf47d0c2a.json",
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_14729657322\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:2WQG-RYD\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"surname\\\": \\\"Munson\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Birth\\\",\\n          \\\"primary\\\": true,\\n          \\\"date\\\": \\\"31 Jul 1887\\\",\\n          \\\"standard_date\\\": \\\"31 Jul 1887\\\",\\n          \\\"place\\\": \\\"Brooklyn, ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "surname": "Munson",
+          "givenName": "Frederick",
+          "birthYearFrom": 1882,
+          "birthYearTo": 1892,
+          "collectionId": "2240282",
+          "recordType": "birth",
+          "count": 50,
+          "collection": "New York, New York City Births, 1846-1909"
+        },
+        "outcome": "positive",
+        "resultsExamined": 10,
+        "resultsAvailable": 46,
+        "stagedResultsRef": "results/.staging/ea95a875-2f15-45d3-98fb-2fedf47d0c2a.json",
+        "notes": "Top match (rank 1, score 0.710, already attached to subject): male Munson born 31 July 1887 in Brooklyn, Kings, New York \u2014 exact date and place match for Frederick Curtiss Munson. Record names father Jared Howes Munson and mother Kathrine Seguine. Child's given name not indexed (common for this NYC birth register era). Record ark:/61903/1:1:2WQG-RYD; full record ark:/61903/1:2:997M-6DKQ."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-16T10:18:30.161Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 46,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf",
+        "section": "plan_items",
+        "op": "update",
+        "planId": "pl_001",
+        "entryId": "pli_001",
+        "fields": {
+          "status": "in_progress"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"plan_items\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"pli_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "record-extraction",
+        "args": "Extract assertions from the NYC birth record for Frederick Curtiss Munson. Record: ark:/61903/1:1:2WQG-RYD (log_001, results/log_001.json). The record is from FamilySearch collection 2240282 \"New York, New York City Births, 1846-1909\". It documents a male child surnamed Munson born 31 July 1887 in Brooklyn, Kings, New York. Father: Jared Howes Munson (born NY). Mother: Kathrine Seguine (born NY). The child persona ARK is ark:/61903/1:1:2WQG-RYD; the record ARK is ark:/61903/1:2:997M-6DKQ. Project path: /tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf. Active question: q_001. Log entry: log_001."
+      },
+      "response_summary": "Launching skill: record-extraction"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "Extract birth record assertions for Frederick Curtiss Munson",
+        "subagent_type": "record-extractor",
+        "prompt": "Extract all assertions from this FamilySearch birth record into the research project. \n\n**Project path:** /tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf  \n**Log entry:** log_001  \n**Results sidecar:** results/log_001.json  \n**Open research question:** q_001 \u2014 \"What does Frederick Curtiss Munson's 31 July 1887 Brooklyn, New York birth record say about his parents?\"\n\n**Record details (already read via record_read):**\n\nrecordId: ark:/61903/1:1:2WQG-RYD  \nRecord ARK (image/source): ark:/61903/1:2:997M-6DKQ  \nCollection: \"New York, New York City Births, 1846-1909\" (FamilySearch collection 2240282)  \nCitation: \"New York, New York City Births, 1846-1909\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2WQG-RYD : Wed Mar 12 00:47:05 UTC 2025), Entry for Munson and Jared Howes Munson, 31 Jul 1887.\n\n**Persons on record:**\n\n1. Child (principal): p_14729657322 \u2014 Munson [no given name indexed], Male, born 31 July 1887, Brooklyn, Kings, New York, United States; Race: White\n2. Father: p_14729657320 (ark:/61903/1:1:2WQG-RYZ) \u2014 Jared Howes Munson, Male, born in New York\n3. Mother: p_14729657321 (ark:/61903/1:1:2WQG-RY8) \u2014 Kathrine Seguine, Female, born in New York\n\n**Relationships on record:**\n- Jared Howes Munson is parent of child Munson\n- Kathrine Seguine is parent of child Munson\n- Jared Howes Munson and Kathrine Seguine are a Couple\n\n**Tree subject:** Frederick Curtiss Munson (person id in tree.gedcomx.json: 9WMW-SVC) \u2014 already attached to this record per FamilySearch match data (attachedToSubject: true). The record's child persona maps to 9WMW-SVC.\n\n**Also in tree:** Pearl Esther Scholl (LJBS-KBF) \u2014 likely Frederick's wife, not directly relevant to this birth record.\n\n**Classification guidance:**\n- This is a civil birth registration (an original record created at the time of the event).\n- The child's birth fact: primary information (contemporaneous registration), direct evidence of the birth itself.\n- The parents' names as informants: the informant on a civil birth registration is typically the father or a hospital/attendant reporting at the time \u2014 treat as primary information for facts reported by a contemporary witness. The father's name is primary information for his identity; the mother's name and maiden name are primary information recorded at the time of the child's birth.\n- Evidence that the child named is Frederick Curtiss Munson: the given name is not indexed \u2014 record only the surname Munson and note that the given name was not indexed (the record image may show it). This is still direct evidence of the birth in Brooklyn on that date.\n- Extract parentage assertions for both father and mother relative to the child.\n\nDo NOT frame this as correcting any existing tree entries. Extract what the record says; the person-evidence and tree-edit skills handle identity linking afterward."
+      },
+      "response_summary": null
+    },
+    {
+      "tool": "mcp__genealogy__project_context",
+      "args": {
+        "projectPath": "/tmp/e2e-frederick-curtiss-munson-parents-3dj4a5rf"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"What does Frederick Curtiss Munson's 31 July 1887 Brooklyn, New York birth record say about his parents?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"9WMW-SVC\\\",\\n      \\\"name\\\": \\\"Frederick Curtiss Munson\\\",\\n      \\\"gender\\\": \\\"Male\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"LJBS-KBF\\\",\\n      \\\"name\\\": ..."
+    }
+  ],
+  "error": "no SDK message within 600s (inactivity)",
+  "tags": {
+    "question_type": "parents",
+    "era": "1880s",
+    "geography": "US-NY"
+  },
+  "blocked_tree_reads": []
+}
