@@ -132,12 +132,19 @@ already established in the existing tests for that skill:
     "user_message": "<user_prompt verbatim from feedback.json>",
     "scenario": "<slug>"
   },
+  "mcp_fixtures": ["<stem of every fixture you write in step 7 — filename without .json>"],
   "judge_context": [
     "<one bullet per concrete behavior the skill should exhibit, derived from agent_should_have>",
     "..."
   ]
 }
 ```
+
+**Wire in every fixture via `mcp_fixtures`** — list the stem (filename without
+`.json`) of each step-7 fixture. This is easy to forget and the failure is
+**silent**: the file schema-validates without it, but at run time every unmocked
+tool call returns `fixture_not_found` and the test aborts. (`validate_research_schema`
+and the other live tools need no fixture and no entry.)
 
 **Keep the test JSON schema-clean** — do NOT add a top-level `_draft` block.
 Nothing in the harness or CRUD UI reads it, and any unknown top-level key

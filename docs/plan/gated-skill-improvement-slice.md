@@ -144,8 +144,6 @@ skill**.
 - LR scheduler, warm-up, multi-epoch, rejected-edit buffer, cross-skill meta memory.
 - A machine-appliable diff format from the improver. The human applies the ≤3
   edits by hand (they're reviewing them anyway) — see §7 and the §6.2 seam.
-- A structured `skills_invoked` list on the e2e run-log (would mechanize E's
-  localization; §8.2). Deferred.
 - Wiring the gate's verdict into the CRUD-UI review/release trail (§6.3, §11).
 
 ## 5. The governing constraint: the reward is an LLM judge
@@ -403,10 +401,11 @@ nothing. (Also fixed in this PR: `draft-unit-test`'s stale `$REPO/plugin/skills/
 
 The readers converged on three places E cannot be fully mechanized:
 
-1. **Localization.** The e2e run-log has **no structured `skills_invoked` list**;
-   attributing a missed finding to *one* sub-skill means a human reading the
-   transcript's `Skill` blocks, guided by `interpret-e2e-result`. (A structured
-   field would mechanize this — deferred, §4.)
+1. **Localization.** The run-log's `tool_calls` already records the ordered
+   `Skill` invocations (filter `tool == "Skill"`, read `args.skill`), so listing
+   which sub-skills ran is mechanical — a one-liner, not a transcript scan.
+   Attributing a missed *finding* to the one sub-skill that owned it is still
+   judgment, guided by `interpret-e2e-result`.
 2. **Mid-flow state.** A unit test needs the state the sub-skill saw **mid-flow**;
    the e2e artifacts capture **end** state. Reconstructing the minimal scenario is
    the single hardest hand-authored step.
@@ -541,9 +540,11 @@ Most design questions are resolved above; these want a human call:
    explicit spec list (recommended — avoids the releasability/union pitfalls). Any
    reason to instead invest in a reusable `--holdout` selector on `run_tests.py`
    for other callers? (YAGNI says no until a second caller appears.)
-4. **`skills_invoked` on the e2e run-log.** Build the structured field now to
-   mechanize E's localization, or keep localization human-guided and defer?
-   (Recommendation: defer.)
+4. **`skills_invoked` — resolved.** No new field needed: the run-log's
+   `tool_calls` already records the ordered `Skill` invocations, so
+   `mine-unit-test` / `interpret-e2e-result` read the sub-skill list from there
+   (a one-liner). Localizing a missed *finding* to the owning sub-skill stays a
+   human judgment.
 
 ## Appendix — verified anchor points
 

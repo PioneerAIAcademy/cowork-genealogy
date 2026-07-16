@@ -91,6 +91,18 @@ Before touching a test, you need two things from the user and one decision.
 This is the single most important input — it becomes the test's
 `judge_context` (Step 7) and the human correction the improver needs later.
 
+**On the recorded e2e path there is no human to ask** — reconstruct the three
+parts yourself: **Should** = the fixture's `expected-findings.json` (its `details`
+— exact date/place — and `supporting_sources`); **Did** = what the final tree
+actually holds; **Gap** = the transcript turn where the sub-skill's reasoning went
+wrong. And **do not trust the `.ann.json` label as the miss signal**: a run's
+`.ann` may mark a finding `true` (recovered) while the tree holds only an
+*imprecise* version (a coarser date, fewer of the required sources). Re-derive the
+miss by diffing the final tree against the fixture's required `details` +
+`supporting_sources` — a finding that is **present but imprecise is a minable
+partial**, even when `.ann` says `true`. If the tree matches the fixture's required
+precision there is nothing to mine; say so and stop.
+
 **Then classify — is this even a skill-body problem?** Using the project's
 `results/` sidecars (Cowork) or the run's `tool_calls[]` / transcript
 (recorded), place the cause. This is `docs/skill-lifecycle.md` §5's lane
@@ -122,9 +134,18 @@ You need the ONE plugin sub-skill that owns the mistake — the test's
   on the run first; it names the most likely cause. Only two causes are
   body-testable here:
   - **sub-skill regression** or **agent-reasoning regression** → mine a
-    test for the implicated sub-skill (scan `run-<ts>.transcript.md` for
-    the `Skill` tool-use blocks — the e2e run log has no structured
-    `skills_invoked` list).
+    test for the implicated sub-skill. The run log already lists the
+    sub-skills the agent ran, in order — read them from `run-<ts>.json`'s
+    `tool_calls` (the `Skill` entries' `args.skill`), no transcript scan:
+    ```
+    uv run --directory eval/harness python -c "import json,sys; r=json.load(open(sys.argv[1])); print([tc['args'].get('skill') for tc in r.get('tool_calls',[]) if tc['tool']=='Skill'])" eval/runlogs/e2e/<slug>/run-<ts>.json
+    ```
+    That list is the *sequence*, not the culprit: the owner is the sub-skill
+    whose **handoff dropped the evidence**, which may not be the last one to run.
+    Read the assistant narration *between* the `Skill` blocks (where a decision
+    like "this date can't be verified — drop it" happens), and check what a
+    sub-skill was *handed* vs what it passed on, to find the turn it went wrong.
+    That last step is judgment.
   - **`/research` routing** — split by half. **"Picked the wrong sub-skill"**
     is a *triggering* miss → route to `make optimize-skill` (the description
     optimizer), not a body test. **"Skipped a GPS step"** is an
@@ -167,7 +188,12 @@ Write three files under `$REPO/eval/fixtures/scenarios/<slug>/`:
   (Example: for a bad citation, keep the source the skill was citing and
   the search log entry that found it; remove the flawed citation the skill
   wrote.) Best-effort PII scrub — names → `Person A`/`Person B`, dates →
-  decade, places → county/country. **Keep it schema-clean** — do NOT add a
+  decade, places → county/country. **Recorded-e2e exception:** when the source is
+  a committed e2e run, the subject is already deceased + public (committed under
+  `eval/tests/e2e/<slug>/`) and the exact name/date is often *the finding under
+  test* — scrubbing `29 Feb 1904` to `1900s` would defeat the test. Keep the real
+  identifiers there (note why in the README); scrub only genuinely incidental
+  third parties. **Keep it schema-clean** — do NOT add a
   top-level `_draft` (or any extra top-level key): the harness validates the
   scenario before running, and a stray top-level key makes the test abort as
   *not-runnable* with nothing to grade.
@@ -192,14 +218,15 @@ from a fixture at `$REPO/eval/fixtures/mcp/<name>.json`
   `payload` is the **verbatim tool response** — copy it into the fixture's
   `response`. (A nil search has `results_ref: null` — no payload; represent
   it as an empty-results response.)
-- **Recorded path.** The committed run's `tool_calls[]` gives tool + args +
-  a truncated `response_summary` — enough for a fixture's *shape* but not the
-  full `response` body. Full payloads live only in `run-<ts>.session.jsonl`,
-  which is **usually absent** from committed runs. So: if `session.jsonl` is
-  present, copy the verbatim payload and trim it; otherwise reconstruct the
-  `response` from `response_summary` as best you can, and where the real
-  payload can't be recovered, fall to the placeholder-fixture path (Decision
-  rules) and flag it.
+- **Recorded path.** Full payloads live only in `run-<ts>.session.jsonl`, which
+  is **usually absent** from committed runs. `tool_calls[].response_summary` is a
+  short *truncated* summary (it can cut off inside the first fact) — usually **not
+  enough even for the fixture's shape**. So: if `session.jsonl` is present, copy
+  the verbatim payload and trim it; otherwise rebuild the `response` from the
+  transcript's inline tool-result blocks + the assistant narration, mark such
+  fixtures `RECONSTRUCTED` in their `description`, and where you can't rebuild a
+  faithful payload, fall to the placeholder-fixture path (Decision rules) and flag
+  it.
 - **Args predicate:** use a distinctive substring with the `~` prefix for
   case-insensitive match (e.g. `"givenName": "~Patrick"`), matching the
   existing convention (see `eval/fixtures/mcp/record-search-*.json`).
@@ -217,6 +244,12 @@ from a fixture at `$REPO/eval/fixtures/mcp/<name>.json`
   isn't in `results/`, so don't hunt for a `payload` to copy for a
   `research_append`/`tree_edit` call. Every *other* (network) tool the
   sub-skill calls needs one.
+- **`image_read` can't be mocked** — the mock server can't emit image content
+  blocks (`image_read` is exempt; see `eval/CLAUDE.md`). If the failure hinges on
+  what an `image_read` returned (e.g. a mislinked image showing the wrong person),
+  you **cannot replay it with a fixture**: encode that condition in the test's
+  `input.user_message` (state what the image showed) and flag the limitation in
+  the scenario README.
 
 ### 7. Emit the test JSON
 
@@ -237,18 +270,22 @@ reference test you read in Step 3:
     "user_message": "<the request that triggered the sub-skill>",
     "scenario": "<slug>"
   },
+  "mcp_fixtures": ["<stem of every fixture you wrote in Step 6 — filename without .json>"],
   "judge_context": [
     "<one concrete, checkable bullet per behavior from the Should — grounded, not a preferred answer>"
   ]
 }
 ```
 
-- **Keep it schema-clean** — no top-level `_draft` block (nothing in the
-  harness or CRUD UI reads it, and any unknown top-level key makes
-  `make eval-skill` skip the test as schema-invalid). It's a *draft* because you
-  say so in the Step 8 printout, not because of a marker in the file. The
-  review reminders that would have gone in the Step 8 printout are printed to the
-  user in Step 8.
+- **Wire in every fixture via `mcp_fixtures`** — list the stem (filename without
+  `.json`) of each Step 6 fixture. This is easy to forget and the failure is
+  **silent**: the file still schema-validates without it, but at run time every
+  unmocked tool call returns `fixture_not_found` and the test aborts/degrades. The
+  six live tools (Step 6) need no fixture and no entry.
+- **Keep it schema-clean** — no top-level `_draft` block (nothing reads it, and
+  any unknown top-level key makes `make eval-skill` skip the test as
+  schema-invalid). It's a *draft* because you say so in the Step 8 printout, not
+  because of a marker in the file.
 - Use `"from-e2e"` instead of `"from-cowork"` on the recorded path.
 - **Leave `holdout` unset.** A mined test is *evidence* — the improver
   forms its edit from it, so it must NOT be a hold-out (`docs/plan/gated-skill-improvement-slice.md`
@@ -269,9 +306,11 @@ As the **last thing**, print to the session:
 1. The absolute path of every file written (test, scenario dir, each
    fixture) — copy-paste friendly.
 2. **The run + annotate step — this is not optional.** The test + scenario are
-   schema-clean, so they run as-is. A brand-new test does nothing for the
-   improver until it is run and its failing dimension is annotated with the
-   Did/Should/Gap comment. Print:
+   schema-clean and `mcp_fixtures` names every fixture, so they run as-is. (The
+   silent trap is a missing `mcp_fixtures` entry — the file validates but the tool
+   call hits `fixture_not_found` at run time; double-check it.) A brand-new test
+   does nothing for the improver until it is run and its failing dimension is
+   annotated with the Did/Should/Gap comment. Print:
    ```
    # 1. run the mined test (from the repo root)
    make eval-skill SKILL=<skill>
@@ -296,7 +335,7 @@ As the **last thing**, print to the session:
 |---|---|
 | The cause is a tool bug or a stale rubric/fixture (Step 1) | Stop. Say so and route it (MCP PR, or `rubric-critic`) — do not mine a unit test. |
 | Can't confidently name one sub-skill | Ask the user; on the recorded path, run `/interpret-e2e-result` first. |
-| Cause is `/research` routing, FS drift, or jitter | Not a body test. Split `/research`: "picked the wrong sub-skill" → `make optimize-skill` (description optimizer); "skipped a GPS step" → a `research`-body (orchestrator) `SKILL.md` edit (the optimizer can't fix it). Discard drift/jitter. |
+| Cause is `/research` routing, FS drift, or jitter | Not a body test. Split `/research`: "picked the wrong sub-skill" → `make optimize-skill` (description optimizer); "skipped a GPS step" → a `research`-body (orchestrator) `SKILL.md` edit (the optimizer can't fix it). Discard *jitter*. **FS drift needs a second look:** finding simply *unreachable* because FS data changed → discard; but skill **mishandled** a real FS data quirk (mislinked image, mis-transcription, wrong-collection filing) → **mine it** — the gap is the skill's *response*, not the data. |
 | Run inside a feedback-case dir (a `.feedback-repo-root` is present) | You're in the wrong skill — use `/draft-unit-test`. |
 | The `results/` folder / recorded payloads are absent | Emit fixture placeholders and flag them in the Step 8 printout for the user to fill in. |
 | A test or scenario for `<slug>` already exists | Don't overwrite — append `-2`/`-3` and let the user consolidate. |

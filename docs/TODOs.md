@@ -147,13 +147,6 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   composite-persist has made validation rejections rare and the suite's role
   shifts toward regression acceptance (post-alpha), consider full credit for
   a cleanly-recovered single retry — decide with post-composite data.
-- [ ] **Structured `skills_invoked` on the e2e run-log** — the e2e run log has no
-  ordered `skills_invoked` list, so `interpret-e2e-result` and `mine-unit-test`
-  localize a miss to a sub-skill by hand-scanning the transcript's `Skill`
-  tool-use blocks. Emit a structured `skills_invoked` field from the e2e
-  orchestrator (`eval/harness/e2e/result.py` + `orchestrator.py`) to mechanize
-  that localization. Deferred from the E/A/B mining slice
-  (`docs/plan/gated-skill-improvement-slice.md` §11, open decision 4).
 
 ## Done
 - ~~Generate the mock input-schema mirror from compiled schemas~~ —
