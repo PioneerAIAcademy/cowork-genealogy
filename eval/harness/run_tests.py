@@ -522,16 +522,18 @@ def main(argv: list[str] | None = None) -> int:
             "validators.",
             file=sys.stderr,
         )
-    # Large-suite variance warning: temperature=0 isn't exposed by the
-    # current claude-agent-sdk, so model nondeterminism leaks into single-
-    # run outcomes. Mostly fine for PR gates; matters for description-
-    # optimizer / golden-set work where pass-rate deltas drive decisions.
+    # Large-suite variance warning: the judge is temperature-pinned, but the
+    # *skill run* is not — claude-agent-sdk exposes no temperature field, so
+    # model nondeterminism still leaks into single-run outcomes. Mostly fine
+    # for PR gates; matters for description-optimizer / golden-set work where
+    # pass-rate deltas drive decisions.
     if len(specs) > 20:
         print(
-            "  NOTE: temperature=0 is not enforceable on the current SDK; "
-            "single-run variance is unavoidable. For description-optimizer "
-            "passes or golden-set calibration, bump runs_per_test on the "
-            "tests being scored (spec §7).",
+            "  NOTE: the judge is pinned to temperature=0, but the skill run "
+            "is not (the SDK exposes no temperature), so single-run variance "
+            "is unavoidable. For description-optimizer passes or golden-set "
+            "calibration, bump runs_per_test on the tests being scored "
+            "(spec §7).",
             file=sys.stderr,
         )
     mode, has_tag_filter = _classify_invocation(args)

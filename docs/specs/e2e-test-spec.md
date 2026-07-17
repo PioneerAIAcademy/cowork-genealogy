@@ -651,6 +651,43 @@ Single run per test. Pass rates will jitter run-to-run from LLM
 non-determinism; do not over-interpret small deltas in aggregate
 trends.
 
+Two variance sources hide behind that sentence. The **agent run** is the
+dominant one — long-horizon research against live FamilySearch, different
+every time. The **judge** contributes separately, and is the one we can
+actually measure, because `calibrate_judge` replays fixed recorded inputs
+(the committed `final-tree` / `final-research` siblings), so anything that
+moves between two sweeps is the judge alone.
+
+**Measured judge noise floor** — 2026-07-16, 41 annotations / 107 findings,
+`claude-opus-4-8`, two back-to-back sweeps over identical inputs:
+
+| | Sweep A | Sweep B |
+|---|---|---|
+| Per-finding agreement (gating) | 86% (92/107) | 85% (91/107) |
+| Proof-quality (advisory) | 62% (21/34) | 68% (23/34) |
+| Verdict | MEETS | MEETS |
+
+Two findings out of 107 changed judge label, both borderline `true`/`partial`
+calls. Practical reading: **treat per-finding agreement deltas of ≲2 points as
+noise**, and treat the advisory proof-quality axis as noisy enough (6 points
+across two sweeps at n=34, where one finding is worth ~3) that only large
+moves carry signal. The gate holds 5–6 points of margin over the ≥80% target,
+so this jitter does not threaten the verdict. Caveat: two sweeps give a point
+estimate of the noise, not a bound — re-measure before trusting a small delta
+to justify a decision.
+
+**The e2e judge is deliberately not temperature-pinned, and cannot be.**
+Sampling parameters are removed on the Opus 4.7/4.8 family: sending
+`temperature` returns a 400 (`` `temperature` is deprecated for this model ``).
+Pinning would mean freezing this judge on a 4.5/4.6-era model, and the
+measurement above is why that trade isn't worth taking — 1 point of judge
+self-inconsistency sits an order of magnitude below the ~20 points of human
+inter-rater disagreement the ≥80% target is itself set to approximate
+(`calibrate_judge.py::PER_FINDING_TARGET`), and it lands on exactly the
+borderline calls where humans disagree with each other too. The *unit* judge is
+pinned (`harness/judge.py::JUDGE_TEMPERATURE`); its model still accepts the
+parameter.
+
 Before the suite grows beyond the first fixture, sanity-check the
 judge prompt against the first run trace: if the judge's verdict
 diverges from what eyeballing the transcript would say, fix the
@@ -718,7 +755,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |

@@ -1,0 +1,606 @@
+{
+  "run_log": "v1_2026-07-15_13-37-42.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The name assertion for Patrick Flynn is marked evidence_type: direct when it should be indirect."
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": " The tools made a schema error: using name instead of names array, and the skill correctly recovered by resubmitting with the proper names structure. the recovery was well-executed but the initial error prevents a full pass."
+    },
+    {
+      "test_id": "ut_record_extraction_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The name assertion  is marked evidence type as direct when it should be indirect. "
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Two informant proximity values are incorrect; witness assertions (Thomas Flynn and James Gallagher as witnesses) are marked witness rather than the proper value."
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The witnessing is not suppose to be distinct from the providing biographical information."
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": " Their information quality fields are incorrectly marked secondary when the facts are explicitly stated on the record and should be 'primary' information quality."
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "classification is a bit problematic, the classification of age as indirect rather than direct is a single concrete error that would confuse downstream conflict resolution. corrction needed."
+    },
+    {
+      "test_id": "ut_record_extraction_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "There was a real validation error (schema error) followed by successful retry scores."
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The relationship assertion a_006 is mis-structured and the skill did not write record_person_id 'P1' to the assertions for Patrick Flynn as explicitly required in the test context, creating a mismatch between extraction and stated expectations."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The atomic fact child of Thomas Flynn should be the sole value with inference reasoning isolated to informant bias notes."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The error is in how the relationship is expressed in the value field (compound), not in the evidence_type classification itself. "
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Duplicate source citations (S1/S2) were created, flagged but not resolved."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "There was a validation error that was corrected, warranting partial credit , and the tree_edit call also initially failed (malformed source object) and was corrected."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The value '1845' appears to be a stated birth year in the record, not inferred from age arithmetic—making it direct evidence and not indirect."
+    }
+  ]
+}

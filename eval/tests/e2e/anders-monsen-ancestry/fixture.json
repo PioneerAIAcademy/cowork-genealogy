@@ -1,18 +1,18 @@
 {
   "id": "anders-monsen-ancestry",
-  "name": "Anders Monsen — parents and christening (1759)",
-  "source_pid": "PID-TODO",
-  "captured": "2026-06-19",
-  "researcher_question": "Who were the parents of Anders Monsen born in 1759 in Haatuft, Meland parish, Hordaland, Norway, and when and where was he christened?",
+  "name": "Anders Monsen & Unna Halsteinsdatter — marriage (1786, Norway)",
+  "source_pid": "LKFW-9XH",
+  "captured": "2026-07-07",
+  "researcher_question": "When and where did Anders Monsen marry Unna Halsteinsdatter, and what does the marriage record show?",
   "tags": {
-    "question_type": "parents",
-    "era": "1750s",
+    "question_type": "marriage",
+    "era": "1780s",
     "geography": "NO"
   },
   "model": {
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "difficulty": "hard",
-  "notes": "Norwegian 18th-century parish records with patronymic naming and farm name identifiers. Evidence draws on Digitalarkivet church books and the Mellands Slekter compiled genealogy (FHL), not FamilySearch indexed records; the agent must navigate Norwegian-language sources and patronymic conventions."
+  "difficulty": "moderate",
+  "notes": "The marriage is indexed on FamilySearch in \"Norway, Marriages, 1660-1926\" (ark 1:1:NW44-PM2), so the agent should find it via record_search rather than needing Digitalarkivet or other Norwegian-only archives. Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) makes both names extremely common, so disambiguation rests on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography."
 }

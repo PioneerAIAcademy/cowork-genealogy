@@ -194,7 +194,13 @@ tree_edit({
   as `add_fact`: a caller-supplied fact `id` is rejected ("add_person facts must not
   carry ids — the tool assigns them"), and each fact's `standard_place` is resolved
   from `place` when unset. Synthesized stubs omit `ark`
-  (`simplified-gedcomx-spec.md` §4.6).
+  (`simplified-gedcomx-spec.md` §4.6). **Name-shape tolerance:** a caller that
+  supplies a singular `name: { given, surname, preferred? }` object where the
+  schema expects a `names: [...]` array (a common model slip — observed on ~15% of
+  `add_person` calls) has it lifted into a single-element `names` array before
+  validation. This is pure shape normalization (the object already matches a
+  `names[]` element; no name content is parsed or invented). Supplying **both**
+  `name` and `names` is rejected as ambiguous.
 - **`add_relationship`** `{ relationship }` — append, assign next `R`. Facts
   supplied on a new **Couple** relationship (e.g. its Marriage) get the same
   treatment as `add_fact`: tool-assigned `F` ids (caller-supplied ids rejected),
