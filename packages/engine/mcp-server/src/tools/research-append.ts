@@ -1023,8 +1023,35 @@ async function prepareOps(
     if (logEntry) {
       const ref = logEntry.results_ref;
       if (!ref) {
-        // No sidecar (record_read, PDF, image, pasted records): the field must
-        // be absent or null — there is no persona document to point at.
+        // Staging gap (#699): a record/full-text search that RETURNED results
+        // but staged no sidecar. D2 auto-fill resolves record_persona_id from
+        // the log entry's sidecar, and it cannot fill what was never staged —
+        // proceeding would silently null out every persona id (identity
+        // unrecoverable). Reject loudly and point at the fix (re-run WITH
+        // projectPath so the host stages the results), rather than persisting
+        // the null. Scoped to the staging producers and to searches that
+        // actually found something, so legitimate sidecar-less entries below
+        // (record_read/PDF/image/pasted, and nil/negative searches) never trip.
+        const producerTools = new Set(["record_search", "fulltext_search"]);
+        const foundResults =
+          logEntry.outcome === "positive" ||
+          logEntry.outcome === "partial" ||
+          (typeof logEntry.results_examined === "number" &&
+            logEntry.results_examined > 0);
+        if (producerTools.has(logEntry.tool) && foundResults) {
+          errors.push(
+            fmt(
+              i,
+              `log entry '${logId}' (${logEntry.tool}) returned results but staged no sidecar ` +
+                "(results_ref is null) — record_persona_id cannot be resolved and would be lost. " +
+                "Re-run the search WITH projectPath so the results are staged, then re-append.",
+            ),
+          );
+          continue;
+        }
+        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // search): the field must be absent or null — there is no persona
+        // document to point at.
         if (entry.record_persona_id != null) {
           errors.push(
             fmt(
