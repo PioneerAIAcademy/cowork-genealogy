@@ -117,12 +117,42 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   listed `researcher` as invalid after it became a valid
   `informant_proximity`; record-extractor's negative-evidence section still
   said `unknown`).
-- [ ] **`image_read` callable by the main session** — prose failed 3x (rx_015):
-  the record-extraction skill tells the MAIN session not to call `image_read`
-  itself (delegate to image-reader), but no environment can currently deny a
-  main session a tool an agent needs — Cowork allowed-tools are per-skill, not
-  per-context. Wants a per-context tool-policy design (main-session denylist
-  while an agent holds the tool).
+- [ ] **`image_read` callable by the main session — PRODUCTION half only; the
+  harness is fixed.** The router must not call `image_read` itself: the inline
+  base64 overflows the transport's ~1 MiB per-turn buffer and crashes the run.
+  *Both harnesses now enforce this* — the PreToolUse hook denies the call when
+  `agent_id` is absent (main thread) and a universal validator hard-fails the
+  test (`harness/context_policy.py`; plan: `docs/plan/image-read-context-policy.md`).
+  **This item's original premise was wrong** and is kept here as a correction:
+  "no environment can currently deny a main session a tool an agent needs" is
+  true of the *allowlist* layer only — per-agent `tools:` is subtractive, so the
+  session set is always a superset — but false of the *hook* layer, which can
+  discriminate by context and always could. Do not re-derive a per-context policy
+  design; it exists.
+  **What remains is production.** Cowork has no eval hook, so the crash is still
+  reachable there, and because per-agent tools are subtractive production is in
+  one of two bug states that e2e cannot distinguish (its allowlist is a
+  `mcp__genealogy` wildcard): either Cowork's session set honors the skill's
+  `allowed-tools` and excludes `image_read` — in which case the image-reader
+  subagent cannot call it either and **image reading is silently broken in
+  production** — or Cowork grants a broader set and **the router can crash a real
+  user's run**. Settling it needs one live Cowork run against an image ARK, not a
+  repo read. See plan §5.
+- [ ] **Does `search-images` have the same base64 crash exposure?** Two shipped
+  claims contradict each other and both can't be right. `record-extraction/SKILL.md:70-73`
+  and `agents/image-reader.md:13-16` say accumulated `image_read` base64 overflows
+  the transport's ~1 MiB per-turn buffer and **crashes the whole run**, which is why
+  that skill delegates to a throwaway subagent. But `search-images` declares
+  `image_read` itself (`SKILL.md:20`) and browses a volume **page-by-page in its own
+  main-session context** (`§4 Browse with image_read`) — the accumulation pattern the
+  warning describes, only more so. Either search-images is exposed to the same crash
+  (and should delegate per-page, or the reader should), or the crash needs conditions
+  beyond "more than one image" and the record-extraction rationale is overstated.
+  Worth settling because the answer changes the per-context guard's scope: today it
+  exempts search-images purely because the skill declared the tool
+  (`harness/context_policy.py`, plan §4.1), which encodes "declared = intended", not
+  "declared = safe". Surfaced 2026-07-16 while implementing
+  `docs/plan/image-read-context-policy.md`; NOT investigated.
 
 ## Eval framework
 - [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
