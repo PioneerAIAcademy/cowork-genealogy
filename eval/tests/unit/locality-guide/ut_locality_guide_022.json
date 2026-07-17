@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_locality_guide_022",
+    "skill": "locality-guide",
+    "name": "wiki_read fetches a specific page via the wiki-query-api server and uses the returned content",
+    "type": "positive",
+    "description": "After the wiki tools migration off local disk onto the wiki-query-api server, this test verifies the end-to-end skill behaviour for wiki_read: the skill invokes wiki_read with a Pennsylvania coal-region wiki URL, the harness returns a fixture whose content carries a distinctive marker (the Lackawanna Valley Anthracite Index, 1855-1898), and the skill must surface that marker in its locality guide. Asserts both (a) the skill called wiki_read with a valid wiki URL and (b) the response content actually flowed through into the user-facing answer — i.e. the skill is reading the page from the server rather than reciting prior knowledge.",
+    "tags": [
+      "wiki-read",
+      "server-migration",
+      "uses-tool-response",
+      "pennsylvania"
+    ]
+  },
+  "input": {
+    "user_message": "I'm researching Irish ancestors who worked in the Pennsylvania anthracite coal region in the 1860s-1890s. Build me a locality research guide for the coal counties and read any FamilySearch wiki page that covers specialized coal-region indexes.",
+    "scenario": "empty-project-just-created",
+    "scenario_notes": null
+  },
+  "execution": {
+    "max_wall_clock_seconds": 720
+  },
+  "mcp_fixtures": [
+    "wiki-read-via-server-signature",
+    "wiki-read-any",
+    "wiki-place-page-any",
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-search-all-any",
+    "place-population-schuylkill",
+    "place-population-any",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "external-links-search-any",
+    "wiki-search-schuylkill-coal-mining",
+    "wiki-search-pennsylvania-records",
+    "wiki-search-any",
+    "wikipedia-search-any",
+    "volume-search-schuylkill",
+    "collection-read-by-id"
+  ],
+  "judge_context": [
+    "The skill MUST call wiki_read at least once (or wiki_place_page; both are acceptable) — the request explicitly asks the skill to read a coal-region wiki page. Returning a guide without invoking either reading tool is a failure regardless of how plausible the guide reads, because the migration target is the server-side fetch path.",
+    "The skill MUST reference the distinctive content the fixture returns — name the 'Lackawanna Valley Anthracite Index, 1855-1898' (or its approximate-41,000-name scope) somewhere in the locality guide. This proves the skill used the server's response rather than generating coal-region commentary from memory. A guide that talks about coal-region records in general terms without ever citing that specific index has not actually consumed the wiki_read response.",
+    "The skill MAY also cite the other parts of the response (Parish Survival, triennial state tax records) — those are bonus signals that the response was read in full, not just the heading."
+  ]
+}

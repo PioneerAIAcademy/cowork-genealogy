@@ -218,6 +218,45 @@ describe("research_log_append", () => {
     expect((await validateProject(dir)).valid).toBe(true);
   });
 
+  it("rejects a non-pli_ planItemId (e.g. a question id) with an actionable error", async () => {
+    // Models sometimes stuff a question id (q_...) or free text into planItemId.
+    // Persisted verbatim it silently fails the JSON-Schema validator downstream
+    // (hard fail). Reject it at the boundary so the caller can supply a pli_ or
+    // null — do NOT silently null it (that would discard the caller's intent).
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: 0,
+      planItemId: "q_001" as any,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/planItemId 'q_001'/);
+    expect(result.errors.join(" ")).toMatch(/pli_/);
+    // nothing persisted on rejection
+    const research = await readJson("research.json");
+    expect(research.log).toHaveLength(0);
+  });
+
+  it("accepts a null planItemId (opportunistic search) and a valid pli_ id", async () => {
+    await writeProject(baseResearch());
+    const optOut = await researchLogAppend({
+      projectPath: dir, tool: "record_search", query: { surname: "Flynn" },
+      outcome: "negative", resultsExamined: 0, planItemId: null,
+    });
+    expect(optOut.ok).toBe(true);
+    const withPli = await researchLogAppend({
+      projectPath: dir, tool: "record_search", query: { surname: "Flynn" },
+      outcome: "negative", resultsExamined: 0, planItemId: "pli_007",
+    });
+    expect(withPli.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log.map((e: any) => e.plan_item_id)).toEqual([null, "pli_007"]);
+  });
+
   it("assigns the next id as max + 1, not count + 1", async () => {
     // log_001..log_003 then a gap to log_009 → next is log_010.
     const log = [logEntry(1), logEntry(2), logEntry(3), logEntry(9)];

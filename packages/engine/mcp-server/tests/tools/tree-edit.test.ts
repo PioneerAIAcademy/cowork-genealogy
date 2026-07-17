@@ -133,6 +133,40 @@ describe("tree_edit", () => {
     expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);
   });
 
+  it("add_person: lifts a singular `name` object into a names[] array", async () => {
+    // Models slip and send `name: {given, surname}` (~15% of add_person calls)
+    // where the schema wants `names: [...]`; the tool should tolerate it.
+    await writeProject(onePerson());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: { gender: "Female", name: { given: "Mary", surname: "Flynn" } } as any,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const p2 = (await readTree()).persons.find((p: any) => p.id === "I2");
+    expect(p2.names).toHaveLength(1);
+    expect(p2.names[0]).toMatchObject({ given: "Mary", surname: "Flynn", preferred: true });
+    // the stray singular key is not persisted (tree-shape additionalProperties)
+    expect("name" in p2).toBe(false);
+  });
+
+  it("add_person: rejects when both `name` and `names` are supplied", async () => {
+    await writeProject(onePerson());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: {
+        gender: "Female",
+        name: { given: "Mary", surname: "Flynn" },
+        names: [{ given: "Mary", surname: "Flynn", preferred: true }],
+      } as any,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/not both/);
+  });
+
   it("add_person: normalizes to exactly one preferred name", async () => {
     await writeProject(onePerson());
     // two names both flagged preferred → only the first kept
