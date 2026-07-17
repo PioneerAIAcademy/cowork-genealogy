@@ -94,12 +94,16 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   `record_persona_id`s nulled because the search never staged a sidecar
   (spriggs). D2 can't auto-fill what was never staged; the fix is
   search-skill-side (always pass `projectPath` / surface the staging failure).
-- [ ] **Bare agent-tool names in gps-mentor.md / image-reader.md** — the
-  agent-mode spike proved bare tool names leave a subagent toolless in the
-  unit-harness SDK path (needs `mcp__genealogy__*`), yet these two agents use
-  bare names and work in Cowork/e2e paths. Reconcile once the PR-3
-  investigation lands: qualify (or dual-list) so all agents work identically
-  in Cowork, the e2e harness, the unit harness, and the hosted web SDK path.
+- [x] **Bare agent-tool names in gps-mentor.md / image-reader.md — DONE
+  (#698).** The agent-mode spike proved bare tool names leave a subagent
+  toolless in the unit-harness SDK path (needs `mcp__genealogy__*`), yet the
+  agents used bare names and worked in Cowork/e2e paths (e2e tolerated them
+  via its ToolSearch prefix allowlist). All three agents now qualify their
+  MCP tools (`image-reader` and `record-extractor` earlier; `gps-mentor` in
+  #698, which also updated `docs/specs/gps-mentor-agent-spec.md`), so they
+  behave identically in Cowork, the e2e harness, the unit harness, and the
+  hosted web SDK path. The convention is documented in CLAUDE.md's "Cowork
+  plugin agents" section (built-in `Read` stays bare).
 
 - [x] **Extractor write authority is too broad (op-level restriction)** —
   **superseded by the `tree_edit`/`tree_correct` split (this commit,
