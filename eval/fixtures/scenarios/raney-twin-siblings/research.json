@@ -1,0 +1,152 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Reconstruct the children of Mary L. Ruse and Albert Raney of Loudon Township, Seneca County, Ohio. Mary L. Raney (b. 11 Apr 1887) is already in the tree; a marriage-record persona, Bertha Belle Raney (also b. 11 Apr 1887), awaits identity resolution.",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-04",
+    "updated": "2026-05-04"
+  },
+
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the children of Mary L. Ruse and Albert Raney?",
+      "rationale": "Primary research objective. A marriage-record persona (Bertha Belle Raney) has been gathered; person-evidence must resolve whether it is the existing daughter Mary L. Raney (I3) or a distinct child.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-04",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-05-04",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "Seneca County, Ohio",
+          "date_range": "1900-1935",
+          "repository": "FamilySearch",
+          "rationale": "Marriage records of the couple's children name the parents, tying each child back to Mary L. Ruse and Albert Raney.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-04T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Raney", "given": "Bertha", "collection": "Ohio, County Marriages, 1789-2016" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "1906 marriage of David Fruth and Bertha Belle Raney; the bride is recorded born 11 April 1887 in Loudon Township, Seneca County, Ohio, daughter of Albert Raney. Same birth date as the existing daughter Mary L. Raney (I3).",
+      "external_site": null
+    }
+  ],
+
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Ohio, County Marriages, 1789-2016,\" entry for David Fruth and Bertha Belle Raney, 8 Feb 1906, Seneca County, Ohio; digital image, FamilySearch.org, accessed 4 May 2026.",
+      "citation_detail": {
+        "who": "Seneca County, Ohio, marriage clerk",
+        "what": "County marriage record",
+        "when_created": "1906",
+        "when_accessed": "2026-05-04",
+        "where": "FamilySearch.org",
+        "where_within": "Entry for David Fruth and Bertha Belle Raney"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-04",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:X8FG-JL9",
+      "url_archived": null,
+      "notes": "Names the bride's father as Albert Raney; birth recorded 11 April 1887, Loudon Township.",
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:X8FG-JL9",
+      "record_role": "principal",
+      "record_persona_id": "BP1",
+      "fact_type": "name",
+      "value": "Bertha Belle Raney",
+      "structured_value": { "given": "Bertha Belle", "surname": "Raney" },
+      "information_quality": "primary",
+      "informant": "The bride, reporting to the marriage clerk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:X8FG-JL9",
+      "record_role": "principal",
+      "record_persona_id": "BP1",
+      "fact_type": "birth",
+      "value": "11 April 1887, Loudon Township, Seneca County, Ohio",
+      "structured_value": { "date": "11 April 1887", "place": "Loudon Township, Seneca County, Ohio" },
+      "information_quality": "secondary",
+      "informant": "The bride, reporting to the marriage clerk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:X8FG-JL9",
+      "record_role": "principal",
+      "record_persona_id": "BP1",
+      "fact_type": "relationship",
+      "value": "Bertha Belle Raney named as daughter of Albert Raney on her 1906 marriage record",
+      "structured_value": { "relationship_type": "daughter", "related_person_role": "father" },
+      "information_quality": "primary",
+      "informant": "The bride, reporting to the marriage clerk",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

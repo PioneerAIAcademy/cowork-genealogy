@@ -1,0 +1,43 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Mary L.", "surname": "Ruse", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1855", "place": "Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Albert", "surname": "Raney", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "date": "29 June 1850", "place": "Seneca Township, Seneca, Ohio, United States" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Mary L.", "surname": "Raney", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F3", "type": "Birth", "date": "11 April 1887", "place": "Loudon Township, Seneca, Ohio, United States" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "Couple", "person1": "I2", "person2": "I1" },
+    { "id": "RT2", "type": "ParentChild", "parent": "I2", "child": "I3" },
+    { "id": "RT3", "type": "ParentChild", "parent": "I1", "child": "I3" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "Ohio, County Births, 1841-2003 — Mary L. Raney, born 11 April 1887, Loudon Township, Seneca County, Ohio (mother Mary L. Ruse)" },
+    { "id": "S2", "title": "Ohio, County Marriages, 1789-2016 — David Fruth and Bertha Belle Raney, 1906, Seneca County, Ohio" }
+  ]
+}

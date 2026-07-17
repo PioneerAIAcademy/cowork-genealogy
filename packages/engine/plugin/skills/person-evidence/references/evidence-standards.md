@@ -44,10 +44,16 @@ find supporting evidence.
 - A bride's surname is that of her birth parents (she may have been
   previously married, adopted, or using a stepfather's name)
 - Two people with the same name in the same area are the same person
+- Two records that share a birth date are the same person (children of
+  one couple are frequently born the same day — twins — so two *different*
+  given names on the same birth date point to siblings, not to one person
+  recorded under two names)
 
 **For identity resolution:** The assumption "this record refers to
 my person" is unsound until supported by corroborating evidence.
-Never treat a name match alone as sufficient identification.
+Never treat a name match alone as sufficient identification — and
+never treat a shared birth date as sufficient to merge two differently
+named personas.
 
 ## Evidence Independence (GPS Standard 46)
 

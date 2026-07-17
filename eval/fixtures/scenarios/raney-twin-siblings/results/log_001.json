@@ -1,0 +1,79 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-05-04T10:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Raney",
+      "givenName": "Bertha"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "X8FG-JL9",
+        "personName": "Bertha Belle Raney",
+        "score": 0.85,
+        "sex": "Female",
+        "birthDate": "1887",
+        "birthPlace": "Loudon Township, Seneca, Ohio, United States",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:X8FG-JL9",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:X8FG-JL9",
+        "collectionId": "1614804",
+        "collectionTitle": "Ohio, County Marriages, 1789-2016",
+        "recordTitle": "David Fruth and Bertha Belle Raney",
+        "treeMatches": [],
+        "primaryId": "BP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "BP1",
+              "gender": "Female",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Bertha Belle", "surname": "Raney", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1887", "place": "Loudon Township, Seneca, Ohio, United States" }
+              ]
+            },
+            {
+              "id": "GP1",
+              "gender": "Male",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "David", "surname": "Fruth", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F2", "type": "Birth", "date": "1879", "place": "Seneca, Ohio, United States" }
+              ]
+            },
+            {
+              "id": "FP1",
+              "gender": "Male",
+              "names": [
+                { "id": "N3", "preferred": true, "given": "Albert", "surname": "Raney", "type": "BirthName" }
+              ]
+            },
+            {
+              "id": "MP1",
+              "gender": "Female",
+              "names": [
+                { "id": "N4", "preferred": true, "given": "Lavina", "surname": "Riese", "type": "BirthName" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "GP1", "person2": "BP1" },
+            { "id": "R2", "type": "ParentChild", "parent": "FP1", "child": "BP1" },
+            { "id": "R3", "type": "ParentChild", "parent": "MP1", "child": "BP1" },
+            { "id": "R4", "type": "Couple", "person1": "FP1", "person2": "MP1" }
+          ]
+        }
+      }
+    ]
+  }
+}

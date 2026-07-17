@@ -307,6 +307,22 @@ score should pull a tentative Strong back to Moderate. But:
   reason past it to a link. Refuse the confident link and surface the
   mismatch; adjudicating a hard patronymic conflict is
   conflict-resolution's job, not something to smooth over in the match.
+- A **clearly different given name that no record reconciles is a
+  core-identifier conflict, and a shared birth date does not override
+  it.** Two record personas with different given names — "Mary L." vs
+  "Bertha Belle", "John" vs "James" — but the *same* birth date, place,
+  and parents are, by default, **two distinct people (most often siblings
+  or twins), not one person under two names.** Same-day births to the
+  same couple are common, so an identical birth date is corroborating for
+  a *sibling set* and is **never** proof of a single identity across a
+  name change. Do not fuse both personas onto one person on the strength
+  of the shared date: **keep (or create) a separate person for each given
+  name**, cap confidence at `speculative`, and name the given-name
+  conflict explicitly in each `pe_` rationale. The *only* thing that
+  reconciles the two names is a source that itself equates them (a record
+  reading "Bertha, also recorded as Mary", or an explicit alias) — absent
+  that record, they stay distinct, and merging them is proof-conclusion's
+  call to make on stated evidence, never an inference from the date alone.
 - When **no score is available** (FTS-, image-, PDF-sourced
   assertions, or a search with no sidecar), correlation analysis stands
   alone — the table above applies unchanged.
@@ -542,7 +558,12 @@ When multiple candidates share the same name in the same area:
   chart in Step 2; the score modulates within that tier but cannot
   by itself drop a match below what the non-name identifiers
   support. Reclassify as Moderate or Strong, create the link, and
-  document the variant explanation in `rationale`.
+  document the variant explanation in `rationale`. **This covers
+  *spelling* variants of the *same* name (Flynn/Flinn, Smith/Smyth) — it
+  does NOT license treating two *different* given names as variants of
+  each other.** "Mary" vs "Bertha", "John" vs "James" are distinct names,
+  not transcription noise; a shared birth date does not make them one
+  person (see the differing-given-name conflict rule in Step 3).
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination.
 - **Rationale is mandatory.** Every link must explain WHY. "Name

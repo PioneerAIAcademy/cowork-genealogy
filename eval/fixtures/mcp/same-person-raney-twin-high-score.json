@@ -1,0 +1,14 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the Bertha Belle Raney marriage persona vs. the existing daughter Mary L. Raney (I3). Birth date (11 Apr 1887), birthplace (Loudon Township), and parents all align, so the tool returns a HIGH score (0.85). The score must NOT auto-link Bertha onto Mary L.: the clearly different given names, with a shared birth date, mark them as distinct children (twins). person-evidence must create a separate person for Bertha, not merge on the score.",
+  "args": { "primaryId1": "~", "primaryId2": "~" },
+  "response": {
+    "matched": true,
+    "confidence": 8,
+    "score": 0.85,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:X8FG-JL9",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/1:1:VRM2-LTT",
+    "apiTitle": "Matches for ark:/61903/1:1:X8FG-JL9",
+    "updated": "2026-05-21T00:00:00Z"
+  }
+}

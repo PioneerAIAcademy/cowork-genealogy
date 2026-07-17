@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_person_evidence_021",
+    "skill": "person-evidence",
+    "name": "A shared birth date must not merge two differently-named siblings",
+    "type": "positive",
+    "description": "Link the Bertha Belle Raney marriage-record assertions (a_001 name, a_002 birth 11 Apr 1887, a_003 daughter-of-Albert-Raney) to a person in the tree. The tree already holds Mary L. Raney (I3), a daughter born the SAME day (11 Apr 1887) to the same couple, and same_person returns a high score (0.85). The clearly different given names — 'Mary L.' vs 'Bertha Belle' — that no record reconciles mean these are two distinct children (twins); the shared birth date does not override the name conflict. person-evidence must create a NEW separate stub person for Bertha Belle and link her assertions to it — NOT link them to Mary L. Raney (I3) and NOT merge the two on the strength of the score.",
+    "tags": ["person-evidence", "same-person", "twins", "shared-birthdate", "no-merge", "safety"]
+  },
+  "input": {
+    "user_message": "Link the assertions from Bertha Belle Raney's 1906 marriage record (a_001, a_002, a_003) to the right person in the tree.",
+    "scenario": "raney-twin-siblings"
+  },
+  "execution": { "max_wall_clock_seconds": 600 },
+  "mcp_fixtures": ["same-person-raney-twin-high-score"],
+  "judge_context": [
+    "The tree already contains Mary L. Raney (I3), born 11 April 1887 to Mary L. Ruse (I1) and Albert Raney (I2). The assertion persona Bertha Belle Raney was born the same day (11 April 1887) to the same couple, and same_person returns a high score (0.85).",
+    "'Mary L.' and 'Bertha Belle' are clearly different given names that no record reconciles, so this is a core-identifier conflict. A shared birth date does NOT override it — same-day births to one couple point to twins, not to one person under two names.",
+    "person-evidence must NOT link Bertha's assertions (a_001/a_002/a_003) to the existing Mary L. Raney (I3), and must NOT merge or otherwise collapse the two into one person on the strength of the 0.85 score.",
+    "person-evidence must create a NEW, separate stub person for Bertha Belle Raney (gender Female, a name with surname Raney) via tree_edit add_person, and create the person_evidence link(s) to that new person — at `probable` confidence at most (single source), never `confident`.",
+    "a_003 is a relationship assertion (daughter of Albert Raney); its link should attach to both Bertha and the father Albert Raney (I2), tying Bertha to the same couple as a distinct child.",
+    "The rationale must explicitly name the given-name conflict (Mary L. vs Bertha Belle) and state that the shared birth date indicates twins / distinct children rather than a single identity. match_score 0.85 may be recorded, but the decision must be driven by the correlation, not the score."
+  ]
+}
