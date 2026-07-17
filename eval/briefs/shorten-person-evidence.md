@@ -199,4 +199,4 @@ Step 2–3's correlation + threshold policy, stub confidence calibration, and th
 worked examples — that is the graded craft and the data-safety guardrail behind
 every tag-gated validator. The biggest line win is the JSON blocks plus stating
 the score rule once, not touching the judgment. Don't chase a brittle minimum —
-the corpus is LLM-judged with no `temperature=0`.
+the skill run is not `temperature=0`.
