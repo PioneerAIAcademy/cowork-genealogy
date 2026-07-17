@@ -151,6 +151,16 @@ orchestrator auto-delegates to the agent. Agents run in fresh context
 explicitly specced otherwise. The first such agent is `gps-mentor`
 (spec: `docs/specs/gps-mentor-agent-spec.md`).
 
+**Qualified tool names.** In the `tools:` frontmatter, MCP tools **must**
+be listed under their fully-qualified `mcp__genealogy__*` names, never the
+bare tool name. A bare name leaves the subagent toolless in the
+unit-harness SDK path (only the e2e harness tolerated bare names, via its
+ToolSearch prefix allowlist); qualifying makes an agent behave identically
+across Cowork, the e2e harness, the unit harness, and the hosted web SDK
+path. Built-in Cowork tools that are not MCP tools — `Read` — stay bare.
+All three current agents follow this (`gps-mentor`, `image-reader`,
+`record-extractor`).
+
 ## Handling user feedback submissions
 
 When a user submits a feedback zip via the Cowork viewer, the workflow
