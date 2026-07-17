@@ -208,18 +208,19 @@ the host stages the raw results and the response gains a
 `staged.resultsRef` handle you hand to `research_log_append` in step 8
 to retain them — you never serialize the payload yourself.
 
-**Staging is a hard gate — verify it before you do anything else with the
-results.** If a search returned ≥1 result but the response has **no
-`staged.resultsRef`** (you omitted `projectPath`) or carries a `stagingError`
-(the host tried to stage but failed), the results were **not** retained
-host-side. Downstream, `record_persona_id` is auto-filled from the staged
-sidecar — with no sidecar it cannot be resolved and every persona id is
-silently lost (`research_append` now rejects such an append). **Stop: do not
-log, rank, or hand off.** Re-run the identical query **with** `projectPath` and
-confirm a `staged.resultsRef` comes back. If a `stagingError` persists across
-one retry, surface it to the user rather than proceeding. (A nil search
-correctly has no `staged.resultsRef` — nothing was found to retain; that is
-expected.)
+**Always log the search (step 8) — that is unconditional; never skip it.**
+`projectPath` on the call is what earns the log entry its results sidecar: the
+response comes back with a `staged.resultsRef` you hand to `research_log_append`.
+If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`,
+re-run the identical query **with** `projectPath` and log **that** staged re-run,
+so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search
+entry can't feed extraction — `record_persona_id` is auto-filled from the
+sidecar, and `research_append` rejects an assertions append against a
+sidecar-less search — so **re-stage before any handoff to extraction**. A
+missing handle is a reason to re-run and re-log, never a reason to skip logging.
+If a `stagingError` persists across one retry, surface it to the user. (A nil
+search correctly has no `staged.resultsRef` — nothing was found to retain; that
+is expected.)
 
 **Decision rules by hit count:**
 - **0 results** → See step 10 (handle nil results)
