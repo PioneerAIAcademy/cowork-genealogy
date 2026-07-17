@@ -210,7 +210,7 @@ async def _run_one_test_async(
     # denied by the allowlist.
     if spec.type == "negative" and spec.mcp_fixtures:
         neg_fixtures = load_fixtures(spec.mcp_fixtures, paths.fixtures_dir)
-        fixture_tools = {f"mcp__Genealogy_Research__{f['tool']}" for f in neg_fixtures}
+        fixture_tools = {f"mcp__genealogy__{f['tool']}" for f in neg_fixtures}
         skill_baseline = list(set(skill_baseline) | fixture_tools)
 
     runs: list[SingleRun] = []
@@ -343,7 +343,7 @@ async def _execute_single_run(
             # If a tool doesn't exist in registered_mcp_tools, there's no
             # handler for it, so the call can't possibly have reached the mock.
             for call in result.attempted_mcp_calls:
-                tool_name = call["tool"].removeprefix("mcp__Genealogy_Research__")
+                tool_name = call["tool"].removeprefix("mcp__genealogy__")
                 if tool_name not in result.registered_mcp_tools:
                     # Type 1: tool doesn't exist at all — abort
                     result.aborted_reason = "unmatched_tool_call"
@@ -433,6 +433,7 @@ async def _execute_single_run(
                 scenario_readme=scenario_readme,
                 result=result,
                 file_changes=file_changes,
+                before_snapshot=before_snapshot,
                 auth=auth,
                 judge_model=judge_model,
             )
@@ -463,6 +464,16 @@ async def _execute_single_run(
         judge_result.duration_ms = (time.perf_counter() - _judge_start) * 1000.0
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
+
+    # Deterministic-validator deference: a passing expected_classifications
+    # check floors the classification judge-dimensions so a fuzzy re-grade can't
+    # override verified ground truth (the dominant flap source). Runs before the
+    # outcome is computed so the floored scores drive pass/partial/fail.
+    apply_deterministic_deference(
+        judge_result.dimensions,
+        validator_results,
+        has_expected_classifications=bool(spec.raw.get("expected_classifications")),
+    )
 
     outcome = _compute_outcome(
         spec=spec,
@@ -723,6 +734,51 @@ def _build_warnings(
     return warnings
 
 
+# Judge dimensions whose subject is checked deterministically by the
+# `test_expected_classifications` validator (it verifies evidence_type,
+# informant_proximity, and information_quality on the declared
+# (record_role, fact_type) pairs). When that validator PASSES, the LLM judge
+# must not FAIL these dimensions on the same classifications — a fail there is
+# the judge contradicting verified ground truth (the recurring census
+# direct/indirect inversion, and the death-cert evidence-type flip). This is the
+# single biggest source of run-to-run flap: the deterministic check is stable,
+# the fuzzy re-grade is not. See docs/plan/record-extraction-tool-boundary-plan.md.
+_CLASSIFICATION_DIMENSIONS = frozenset(
+    {"Evidence type accuracy", "Informant identification"}
+)
+
+
+def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):
+    """Floor the classification judge-dimensions at partial(2) when the
+    deterministic `test_expected_classifications` validator verified the declared
+    classifications as correct — a judge FAIL there contradicts verified ground
+    truth. Partial is still permitted (the judge may see a real issue on an
+    assertion the validator did not declare); only the false FAIL is removed.
+    Mutates + returns `dimensions`. No-op when the test declares no
+    expected_classifications, the validator did not pass, or the judge was
+    skipped (empty dimensions)."""
+    if not has_expected_classifications or not dimensions:
+        return dimensions
+    ec_passed = any(
+        getattr(r, "name", None) == "test_expected_classifications"
+        and getattr(r, "passed", False)
+        for r in validator_results
+    )
+    if not ec_passed:
+        return dimensions
+    for dd in dimensions:
+        if dd.get("name") in _CLASSIFICATION_DIMENSIONS and dd.get("score") == 1:
+            orig = dd.get("rationale") or ""
+            dd["score"] = 2
+            dd["rationale"] = (
+                "[deterministic-deference] the expected_classifications validator "
+                "verified the declared classifications as correct, so this dimension "
+                "cannot FAIL on them — floored from the judge's 1 to 2 (partial). "
+                "Original judge rationale: " + orig
+            )
+    return dimensions
+
+
 def _compute_outcome(
     *,
     spec: TestSpec,
@@ -858,6 +914,7 @@ def _run_judge(
     scenario_readme: str,
     result,
     file_changes,
+    before_snapshot: dict[str, Any] | None = None,
     auth: AuthConfig,
     judge_model: str,
 ) -> JudgeOutput:
@@ -888,6 +945,7 @@ def _run_judge(
         tool_calls=result.tool_calls,
         auth=auth,
         model=judge_model,
+        before_state=_summarize_before_state(before_snapshot),
     )
 
 
@@ -993,6 +1051,64 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
             f"full length {len(content_block)} chars]"
         )
     return "\n".join(lines) + "\n" + content_block
+
+
+# Caps for the before-state block. Per-field cap is generous enough to carry
+# a full citation/source note; the overall cap bounds the judge prompt against
+# a large pre-existing project.
+_BEFORE_STATE_STRING_MAX = 4_000
+_BEFORE_STATE_MAX_CHARS = 40_000
+
+
+def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
+    """Render the source entries that existed BEFORE the skill ran, so the
+    judge can mechanically check "not on file" / "fabricated" claims.
+
+    The judge has produced fabrication-class citation failures — asserting
+    that on-file source text was absent or invented — when it had no view of
+    the pre-existing state. Surfacing the before-run `sources` (research.json,
+    `src_` ids) and source descriptions (tree.gedcomx.json, `S` ids) makes
+    such claims checkable against what was actually on file.
+
+    Bounded per-field and overall so a large project can't blow the prompt.
+    Returns "(none)" when there was no prior state (e.g. an empty-project
+    scenario) — itself the correct signal: nothing was on file, so any
+    "altered/removed an existing source" claim is unfounded.
+    """
+    if not before_snapshot:
+        return "(none)"
+    research = before_snapshot.get("research_json")
+    tree = before_snapshot.get("tree_gedcomx_json")
+    research_sources = research.get("sources") if isinstance(research, dict) else None
+    tree_sources = tree.get("sources") if isinstance(tree, dict) else None
+
+    blocks: list[str] = []
+    if research_sources:
+        summarized = _summarize_response(
+            research_sources, string_max=_BEFORE_STATE_STRING_MAX
+        )
+        blocks.append(
+            "research.json sources on file before this run (src_ ids):\n"
+            + json.dumps(summarized, ensure_ascii=False, indent=2)
+        )
+    if tree_sources:
+        summarized = _summarize_response(
+            tree_sources, string_max=_BEFORE_STATE_STRING_MAX
+        )
+        blocks.append(
+            "tree.gedcomx.json source descriptions on file before this run "
+            "(S ids):\n" + json.dumps(summarized, ensure_ascii=False, indent=2)
+        )
+    if not blocks:
+        return "(none)"
+    rendered = "\n\n".join(blocks)
+    if len(rendered) > _BEFORE_STATE_MAX_CHARS:
+        rendered = (
+            rendered[:_BEFORE_STATE_MAX_CHARS]
+            + f"\n[before-state truncated by harness for prompt size; "
+            f"full length {len(rendered)} chars]"
+        )
+    return rendered
 
 
 def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
