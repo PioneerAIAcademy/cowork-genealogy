@@ -1535,11 +1535,25 @@ def compute_allowed_tools(skill_name: str, tmp_dir: Path) -> list[str]:
     # file" (see prose above). The universal ownership validator catches
     # research.json misuse and the disallowed-tools backstop blocks
     # dangerous host tools.
-    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
+    # Task is always in the baseline — plugin subagents are staged into
+    # every workspace and a skill delegates only when its SKILL.md says to.
+    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill", "Task"]
+    # Plus the frontmatter `tools:` of every plugin agent the skill
+    # delegates to via `@plugin:<name>`. A delegated agent's MCP calls run
+    # in the SAME session and go through the same allow/deny lists, so they
+    # must be in the union or the SDK denies them. Per-agent `tools:` is
+    # subtractive (it narrows a set inherited from the session), which is
+    # why this union is required rather than a leak to be fixed.
+    for agent in agent_refs_for_skill(skill_md):
+        declared.extend(parse_frontmatter(agents_dir / f"{agent}.md").get("tools", []))
     return baseline + declared
 ```
 
 A skill that calls a tool not in its derived list is rejected by the SDK at call time. The harness records the rejection as a tool_call with `matched.kind: "none"` and an error envelope, and the run typically fails the tool-allowlist validator.
+
+**The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
+
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — `search-images` declares `image_read` and browses volumes page-by-page itself, while `record-extraction` holds it only through `@plugin:image-reader` and must delegate. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked` via PreToolUse
 

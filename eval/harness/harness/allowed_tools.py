@@ -85,6 +85,30 @@ def compute_allowed_tools(
     return tools
 
 
+def declared_skill_tools(skill_name: str, skills_dir: Path) -> set[str]:
+    """The BARE tool names a skill declares in its own `allowed-tools`.
+
+    Deliberately excludes the agent-union that `compute_allowed_tools` adds —
+    that is the whole point. The two sets answer different questions:
+
+      compute_allowed_tools  → "what may reach the SDK in this session?"
+                               (superset: the skill's tools + its subagents')
+      declared_skill_tools   → "what did this skill claim for ITSELF?"
+
+    The gap between them is exactly the set a skill holds only because a
+    subagent needs it — which the skill itself must not call. The per-context
+    policy (harness/context_policy.py) uses this to tell a legitimate direct
+    call from a boundary violation: `search-images` declares `image_read` and
+    browses pages itself, while `record-extraction` does not declare it and
+    holds it only via `@plugin:image-reader`, so its router must delegate.
+    """
+    fm = load_skill_frontmatter(skills_dir / skill_name / "SKILL.md")
+    return {
+        entry.rsplit("__", 1)[-1] if "__" in entry else entry
+        for entry in (fm.get("allowed-tools", []) or [])
+    }
+
+
 def agent_refs_for_skill(skill_md: Path) -> list[str]:
     """Sorted unique plugin-agent names a SKILL.md references via
     `@plugin:<name>`. Empty for a missing file."""

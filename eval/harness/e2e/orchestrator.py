@@ -38,6 +38,9 @@ from claude_agent_sdk import (
 )
 
 from harness.auth import env_for_sdk, resolve_auth
+from harness.context_policy import (
+    bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+)
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
@@ -113,11 +116,6 @@ BLOCKED_TREE_TOOLS = frozenset(
         "person_person_matches",
     }
 )
-
-
-def _bare_tool_name(tool_name: str) -> str:
-    """Strip the `mcp__<server>__` prefix to get the advertised tool name."""
-    return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
 
 
 def is_turn_cap_error(detail: str | None) -> bool:
@@ -493,6 +491,15 @@ async def _run_agent(
         activity_count["n"] += 1
         if not tool_name.startswith("mcp__"):
             return {}
+
+        # NOTE: the per-context tool policy (harness/context_policy.py) is
+        # deliberately NOT enforced here — see docs/plan/image-read-context-policy.md
+        # §4.1. It is unit-only because the guard needs to know which SKILL is
+        # active, and e2e cannot know: sub-skills run in this same session via
+        # the Skill tool (no `agent_id` to attribute them), so a legitimate
+        # `search-images` browse — which declares `image_read` and pages through
+        # volumes itself — is indistinguishable from a record-extraction router
+        # violation. Denying on the bare tool name would break real browsing.
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
