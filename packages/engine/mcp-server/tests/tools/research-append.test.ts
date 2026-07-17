@@ -112,6 +112,27 @@ describe("research_append (Phase 1)", () => {
     expect(research.sources.map((s: any) => s.id)).toEqual(["src_001", "src_002"]);
   });
 
+  it("normalizes a human-format source access_date to ISO", async () => {
+    // Models routinely supply access_date as "12 July 2026" (or "July 12, 2026"),
+    // which the schema (ISO YYYY-MM-DD) rejects — a hard fail persisted verbatim.
+    // The tool should rewrite a parseable human date to ISO. An already-ISO value
+    // is untouched; an unparseable value is left for the validator to reject.
+    await writeProject();
+    for (const [supplied, expected] of [
+      ["12 July 2026", "2026-07-12"],
+      ["July 12, 2026", "2026-07-12"],
+      ["2026-07-12", "2026-07-12"],
+    ] as const) {
+      const { id: _omit, ...src } = { ...validSource("x"), access_date: supplied };
+      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: src });
+      expect(r.ok, `${supplied} should append`).toBe(true);
+      if (!r.ok) continue;
+      const research = await readResearch();
+      const persisted = research.sources.find((s: any) => s.id === r.entryId);
+      expect(persisted.access_date, `${supplied} → ISO`).toBe(expected);
+    }
+  });
+
   it("appends an assertion referencing an existing source", async () => {
     await writeProject();
     const { id: _omit, ...assertionNoId } = validAssertion("x", "src_001");
@@ -151,6 +172,95 @@ describe("research_append (Phase 1)", () => {
     if (!r.ok) return;
     const updated = (await readResearch()).assertions.find((a: any) => a.id === "a_001");
     expect(updated.date).toBe("+1850");
+  });
+
+  it("canonicalizes assertion fact_type casing + semantic aliases at the tool boundary", async () => {
+    // fact_type is an OPEN enum, so the model emits casing variants (`Name`,
+    // `CauseOfDeath`) and role-prefixed aliases (`father_name`) that make one
+    // logical fact read as several distinct labels downstream. The tool maps a
+    // recognized alias to its canonical spelling; an unrecognized value passes
+    // through unchanged (best-effort translator, not a closed allow-list).
+    await writeProject();
+    for (const [supplied, expected] of [
+      ["Name", "name"],
+      ["father_name", "name"],
+      ["mother_name", "name"],
+      ["CauseOfDeath", "cause_of_death"],
+      ["Cause of Death", "cause_of_death"],
+      ["Parentage", "relationship"],
+      ["Gender", "gender"],
+      // Event place/date are attributes of the event fact, so place variants
+      // fold into the event type (birthplace → birth, deathplace → death); the
+      // date-claim `Birth` also folds to `birth`. Field population (place vs
+      // date), not the type name, distinguishes the two.
+      ["Birth", "birth"],
+      ["deathplace", "death"],
+      // Unrecognized fact type → left untouched (open enum).
+      ["immigration_year", "immigration_year"],
+    ] as const) {
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: supplied };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, `${supplied} should append`).toBe(true);
+      if (!r.ok) continue;
+      const persisted = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      expect(persisted.fact_type, `${supplied} → ${expected}`).toBe(expected);
+    }
+  });
+
+  it("folds a birthplace fact_type into `birth` and lifts the place value into the `place` field", async () => {
+    // birthplace is a `birth` assertion with the place attribute set — so the
+    // fact_type folds to `birth` and, when the model left `place` empty, the
+    // place value is lifted from `value` so the folded assertion stays a
+    // machine-readable place-claim (place != null) distinct from a date-claim.
+    await writeProject();
+    // Case 1: model put the place only in `value` → tool lifts it into `place`.
+    {
+      const { id: _omit, ...a } = {
+        ...validAssertion("x", "src_001"),
+        fact_type: "BirthPlace",
+        value: "Ireland",
+        place: null as any,
+        standard_place: null as any,
+        date: null as any,
+      };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const p = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      expect(p.fact_type).toBe("birth");
+      expect(p.place).toBe("Ireland");
+    }
+    // Case 2: model already populated `place` → left as-is, no clobber.
+    {
+      const { id: _omit, ...a } = {
+        ...validAssertion("x", "src_001"),
+        fact_type: "birthplace",
+        value: "born in Ireland",
+        place: "Ireland",
+        date: null as any,
+      };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const p = (await readResearch()).assertions.find((x: any) => x.id === r.entryId);
+      expect(p.fact_type).toBe("birth");
+      expect(p.place).toBe("Ireland");
+    }
+  });
+
+  it("canonicalizes assertion fact_type on an update too", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { fact_type: "father_name" as any },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const updated = (await readResearch()).assertions.find((a: any) => a.id === "a_001");
+    expect(updated.fact_type).toBe("name");
   });
 
   it("appends a person_evidence link, stamps created, references an existing assertion + tree person", async () => {

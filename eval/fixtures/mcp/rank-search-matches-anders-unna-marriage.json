@@ -1,0 +1,28 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Ranks the single staged Norway-marriage result (groom Anders Monsen / bride 'Urna Halsteinsdr') against subject LKFW-9XH — a strong, already-tree-attached match. Used by the anders-unna-marriage-search test so the given-name-variant retry has a realistic post-search ranking step, independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "LKFW-9XH",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:NW44-PM2",
+        "primaryId": "p_groom_11820171332",
+        "personName": "Anders Monsen",
+        "sex": "Male",
+        "collectionTitle": "Norway, Marriages, 1660-1926",
+        "matchScore": 0.632,
+        "matchConfidence": 5,
+        "attachedToSubject": true,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

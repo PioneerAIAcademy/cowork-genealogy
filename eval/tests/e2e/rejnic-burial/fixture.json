@@ -1,0 +1,19 @@
+{
+  "id": "rejnic-burial",
+  "name": "Maria Rejnic — burial place",
+  "genre": "strip",
+  "source_pid": "L86H-T8G",
+  "captured": "2026-07-14",
+  "researcher_question": "Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967?",
+  "tags": {
+    "question_type": "other",
+    "era": "1960s",
+    "geography": "US-PA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Maria Rejnic (b. 15 Apr 1890, d. 18 Jun 1967 Pittsburgh, Allegheny Co., PA; married name Kraynak) was buried in Kennedy Township, Allegheny County, Pennsylvania. Stripped: her Burial fact, her Find a Grave record, and the Kennedy-Township burial facts of two children (Margaret and Martha Kraynak) that would otherwise leak the answer. Left as anchors: her death, christening, parents, spouse, seven children (with burials in OTHER cemeteries), the SSN/NUMIDENT records, PA marriage, and WWII draft. Burial place is recoverable from the indexed Find a Grave record for 'Mary Rejnic Kraynak' (top hit)."
+}

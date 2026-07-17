@@ -73,6 +73,15 @@ class E2eResult:
     # it's worth a reviewer's eye.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
 
+    # Compact per-subagent transcript summaries (agent_type, per-turn
+    # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
+    # Captured from the SDK's ephemeral subagent cache — which the runlog
+    # otherwise does not store — so a subagent that burned its whole output
+    # budget on thinking (stop_reason=max_tokens, no tool call), invisible from
+    # `tool_calls` alone, is diagnosable directly from the committed runlog.
+    # See subagent_capture.py.
+    subagents: list[dict[str, Any]] = field(default_factory=list)
+
 
 def timestamp_slug(now: datetime | None = None) -> str:
     """A filesystem-safe ISO-ish timestamp for filenames."""

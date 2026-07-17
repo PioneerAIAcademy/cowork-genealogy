@@ -326,9 +326,11 @@ def test_expected_classifications_fail_when_pair_missing_and_skip_when_absent():
 def test_expected_classifications_normalizes_pascalcase_fact_types():
     """record_role/fact_type are open, model-chosen strings — PascalCase
     GedcomX-style persisted values must satisfy snake_case matchers
-    (CauseOfDeath ≡ cause_of_death, BirthPlace ≡ birthplace). Observed on
+    (CauseOfDeath ≡ cause_of_death, Birth ≡ birth). Observed on
     ut_record_extraction_009: a doctrine-perfect run failed all 9 matchers
-    on spelling alone."""
+    on spelling alone. Event place is an attribute of the `birth` fact (not
+    its own type), so the birthplace-claim is a `birth` assertion with `place`
+    set, matched by `attribute: "place"`."""
     assertions = [
         {
             "id": "a_1",
@@ -340,7 +342,8 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
         {
             "id": "a_2",
             "record_role": "Deceased",
-            "fact_type": "BirthPlace",
+            "fact_type": "Birth",
+            "place": "Ireland",
             "evidence_type": "indirect",
             "informant_proximity": "family_not_present",
         },
@@ -356,10 +359,79 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
             },
             {
                 "record_role": "deceased",
-                "fact_type": "birthplace",
+                "fact_type": "birth",
+                "attribute": "place",
                 "evidence_type": "indirect",
                 "informant_proximity": "family_not_present",
             },
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_optional_skips_existence_but_checks_classification():
+    """`optional: true` drops the existence requirement (a flappy-completeness
+    fact isn't a hard fail when absent) but still verifies the classification
+    when the assertion IS present."""
+    # Absent + optional → passes (no existence requirement).
+    absent = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
+          "evidence_type": "direct"}],
+        [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
+          "evidence_type": "indirect"}],
+    )
+    assert absent.passed is True, f"unexpected failure: {absent.error}"
+
+    # Present + optional + WRONG classification → still fails (teeth on classification).
+    wrong = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "father_of_deceased", "fact_type": "name",
+          "evidence_type": "direct"}],  # doctrine says indirect
+        [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
+          "evidence_type": "indirect"}],
+    )
+    assert wrong.passed is False
+    assert "evidence_type" in (wrong.error or "")
+
+    # Absent WITHOUT optional → fails existence (the default, unchanged).
+    required = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
+          "evidence_type": "direct"}],
+        [{"record_role": "father_of_deceased", "fact_type": "name",
+          "evidence_type": "indirect"}],
+    )
+    assert required.passed is False
+    assert "expected at least one" in (required.error or "")
+
+
+def test_expected_classifications_attribute_facet_separates_birth_claims():
+    """A `birth` place-claim (place set, `direct`) and a `birth` date-claim
+    (date set, `indirect`) share the `birth` fact_type but are independently
+    checkable via `attribute`: the place matcher grades only the place-claim,
+    the date matcher only the date-claim — even though a naive fact_type-only
+    match would conflate them and fail the census direct/indirect split."""
+    assertions = [
+        {
+            "id": "a_place",
+            "record_role": "head_of_household",
+            "fact_type": "birth",
+            "place": "Ireland",
+            "evidence_type": "direct",
+        },
+        {
+            "id": "a_date",
+            "record_role": "head_of_household",
+            "fact_type": "birth",
+            "date": "~1818",
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {"record_role": "head_of_household", "fact_type": "birth",
+             "attribute": "place", "evidence_type": "direct"},
+            {"record_role": "head_of_household", "fact_type": "birth",
+             "attribute": "date", "evidence_type": "indirect"},
         ],
     )
     assert result.passed is True, f"unexpected failure: {result.error}"
@@ -394,10 +466,10 @@ def test_expected_classifications_role_prefix_matches_of_form():
 
 def test_expected_classifications_genuinely_wrong_values_still_fail():
     """Normalization must not become leniency: a role with no prefix-of
-    relation to the matcher's fails existence, a near-miss fact type
-    (Birth vs birthplace) fails existence, and a matched pair with the
-    wrong closed-enum classification value still fails — with the
-    ORIGINAL strings in the message."""
+    relation to the matcher fails existence, the facet filter has teeth (a
+    date-only `birth` must NOT satisfy an `attribute: "place"` matcher), and a
+    matched pair with the wrong closed-enum classification value still fails —
+    with the ORIGINAL strings in the message."""
     # Wrong role: `witness` has no prefix-of relation to father_of_deceased.
     wrong_role = _run_expected_classifications(
         [
@@ -415,37 +487,40 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
     assert wrong_role.passed is False
     assert "record_role='father_of_deceased'" in (wrong_role.error or "")
 
-    # Near-miss fact type: Birth must NOT satisfy birthplace.
-    wrong_fact = _run_expected_classifications(
+    # Facet filter: a `birth` assertion carrying only a DATE must NOT satisfy a
+    # place-claim matcher (attribute='place' requires place/standard_place set).
+    wrong_facet = _run_expected_classifications(
         [
             {
                 "id": "a_1",
                 "record_role": "deceased",
                 "fact_type": "Birth",
+                "date": "~1845",  # a date-claim, no place
                 "evidence_type": "indirect",
                 "informant_proximity": "family_not_present",
             }
         ],
-        [{"record_role": "deceased", "fact_type": "birthplace",
+        [{"record_role": "deceased", "fact_type": "birth", "attribute": "place",
           "evidence_type": "indirect"}],
     )
-    assert wrong_fact.passed is False
-    assert "fact_type='birthplace'" in (wrong_fact.error or "")
+    assert wrong_facet.passed is False
+    assert "attribute='place'" in (wrong_facet.error or "")
 
-    # Matched (normalized) pair, wrong classification value → value failure
-    # naming the assertion, with original (PascalCase) strings intact.
+    # Matched (normalized + place-facet) pair, wrong classification value →
+    # value failure naming the assertion, with original (PascalCase) strings.
     wrong_value = _run_expected_classifications(
         [
             {
                 "id": "a_1",
                 "record_role": "father",
-                "fact_type": "BirthPlace",
+                "fact_type": "Birth",
+                "place": "Ireland",
                 "evidence_type": "direct",  # doctrine says indirect
                 "informant_proximity": "family_not_present",
             }
         ],
-        [{"record_role": "father_of_deceased", "fact_type": "birthplace",
-          "evidence_type": "indirect"}],
+        [{"record_role": "father_of_deceased", "fact_type": "birth",
+          "attribute": "place", "evidence_type": "indirect"}],
     )
     assert wrong_value.passed is False
     for fragment in ("a_1", "evidence_type", "direct", "indirect"):

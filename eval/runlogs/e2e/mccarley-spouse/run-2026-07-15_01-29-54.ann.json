@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Spouse recovered as person I1 (Elizabeth Patt, the index abbreviation of Patton) and linked to Moses (L7P6-3TT) via a Couple relationship, from the 1792 Lincoln County KY marriage index (top hit), with the Salvina McCarley 1827 marriage (Moses Sr. as father) corroborating his identity.",
+    "f2": "Marriage recovered as 24 Jul 1792, Lincoln County, Kentucky — full date and county, an exact match, encoded as a Marriage fact on the Couple relationship. Proof honestly tiered 'probable' and graded thin (2) because the spouse's name rests on a single direct source; the agent made one blocked person_read attempt before recovering the answer from records."
+  },
+  "annotator": "ernest"
+}

@@ -1,0 +1,62 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-05-02T10:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "givenName": "Anders",
+      "recordCountry": "Norway",
+      "birthYearFrom": 1868,
+      "birthYearTo": 1868
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "NCR7-AND",
+        "personName": "Anders Pedersen",
+        "score": 0.82,
+        "sex": "Male",
+        "birthDate": "1868",
+        "birthPlace": "Ringsaker, Hedmark, Norway",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+        "collectionId": "3756102",
+        "collectionTitle": "Norway Census, 1875",
+        "recordTitle": "Anders Pedersen, age 7, Ringsaker",
+        "treeMatches": [],
+        "primaryId": "CP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "CP1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Anders",
+                  "surname": "Pedersen",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1868",
+                  "place": "Ringsaker, Hedmark, Norway"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

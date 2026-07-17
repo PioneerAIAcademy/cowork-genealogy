@@ -150,6 +150,24 @@ def _record_role_matches(got, want):
     return longer.startswith(shorter) and longer[len(shorter):].startswith("of")
 
 
+def _attribute_matches(assertion, attribute):
+    """Optional facet filter for event facts whose date and place are separate
+    attributes of ONE event type. A birthplace is a `birth` assertion with the
+    `place` set; a computed birth year is a `birth` assertion with the `date`
+    set. When a matcher declares `attribute: "place"` (or `"date"`), only
+    assertions with that attribute populated match — so a `birth` place-claim
+    (`direct`) and a `birth` date-claim (`indirect`) stay independently
+    checkable even though they now share the `birth` fact_type. No `attribute`
+    on the matcher → no facet constraint (matches regardless of population)."""
+    if not attribute:
+        return True
+    if attribute == "place":
+        return bool(assertion.get("place")) or bool(assertion.get("standard_place"))
+    if attribute == "date":
+        return bool(assertion.get("date"))
+    return True
+
+
 def test_expected_classifications(before_state, after_state, test):
     """Fixture-gated: deterministic per-fixture classification ground truth.
 
@@ -199,16 +217,28 @@ def test_expected_classifications(before_state, after_state, test):
     for m in matchers:
         role = m.get("record_role")
         fact = m.get("fact_type")
+        attribute = m.get("attribute")  # optional facet: "date" | "place"
+        # `optional`: do NOT hard-require the assertion to EXIST — only check its
+        # classification IF it is present. Use for a fact whose *existence* is
+        # completeness the skill produces unreliably (so gating on it flaps), but
+        # whose *classification* (when present) is still worth verifying. Grading
+        # unreliable existence as a hard fail is what makes a test flappy; the
+        # judge's soft Completeness dimension covers the omission instead.
+        optional = bool(m.get("optional", False))
+        attr_desc = f" attribute='{attribute}'" if attribute else ""
         matching = [
             a
             for a in new
             if _record_role_matches(a.get("record_role"), role)
             and _fact_type_matches(a.get("fact_type"), fact)
+            and _attribute_matches(a, attribute)
         ]
         if not matching:
+            if optional:
+                continue  # existence not required — nothing present to classify
             errors.append(
                 f"no new assertion with record_role='{role}' "
-                f"fact_type='{fact}' (expected at least one)"
+                f"fact_type='{fact}'{attr_desc} (expected at least one)"
             )
             continue
         for a in matching:
@@ -217,11 +247,24 @@ def test_expected_classifications(before_state, after_state, test):
                 if field not in m:
                     continue
                 got = a.get(field)
-                if got != m[field]:
+                # A matcher value may be a LIST of defensible alternatives for a
+                # genuinely-ambiguous classification (e.g. a death event's
+                # informant_proximity is defensibly `official_duty` OR `witness`).
+                # A list means "any of these is acceptable"; the check still has
+                # teeth — a third, clearly-wrong value (e.g. `self`) still fails.
+                # A plain string keeps the exact-match semantics.
+                expected = m[field]
+                allowed = expected if isinstance(expected, list) else [expected]
+                if got not in allowed:
+                    want = (
+                        "one of " + ", ".join(f"'{v}'" for v in allowed)
+                        if isinstance(expected, list)
+                        else f"'{expected}'"
+                    )
                     errors.append(
                         f"assertions[{aid}] (record_role='{role}', "
-                        f"fact_type='{fact}'): {field}='{got}' — "
-                        f"expected '{m[field]}'"
+                        f"fact_type='{fact}'{attr_desc}): {field}='{got}' — "
+                        f"expected {want}"
                     )
 
     assert not errors, (
