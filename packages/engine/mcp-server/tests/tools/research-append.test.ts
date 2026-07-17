@@ -1545,11 +1545,38 @@ describe("research_append (composite persist + enforcement)", () => {
     expect((await readResearch()).assertions[1].record_persona_id).toBeUndefined();
   });
 
-  it("hard-errors a supplied record_persona_id when the log entry has no sidecar (results_ref null)", async () => {
+  // ── #699 staging gap: a producer search that RETURNED results but staged no
+  // sidecar. D2 can't resolve record_persona_id from a sidecar that was never
+  // written, so the append is rejected (identity would be silently lost) rather
+  // than persisted with a null. The false-positive guards below confirm this
+  // fires ONLY on the anomaly, never on legitimate sidecar-less entries.
+
+  it("hard-errors an ABSENT record_persona_id when a producer search returned results but staged no sidecar (#699)", async () => {
+    const research = baseResearch();
+    research.log = [searchLogEntry(null)] as any; // record_search, positive, results_examined 1, results_ref null
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...noId(validAssertion("x", "src_001")), log_entry_id: "log_001" },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/Re-run the search WITH projectPath/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("hard-errors a SUPPLIED record_persona_id under the same staging gap (#699)", async () => {
     const research = baseResearch();
     research.log = [searchLogEntry(null)] as any;
     await writeProject(research);
-    const before = await readFile(join(dir, "research.json"), "utf-8");
     const r = await researchAppend({
       projectPath: dir,
       ops: [
@@ -1566,15 +1593,41 @@ describe("research_append (composite persist + enforcement)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toMatch(/^ops\[0\]: record_persona_id must be null/);
-    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
   });
 
-  it("accepts an absent record_persona_id when the log entry has no sidecar (no error for absence)", async () => {
+  it("does NOT fire for a nil/negative producer search with no sidecar (legit — no false positive)", async () => {
     const research = baseResearch();
-    research.log = [searchLogEntry(null)] as any;
+    research.log = [
+      { ...searchLogEntry(null), outcome: "negative", results_examined: 0 },
+    ] as any;
     await writeProject(research);
     const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            evidence_type: "negative",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("does NOT fire for a non-producer sidecar-less entry (record_read) — still enforces persona-id-must-be-null", async () => {
+    const research = baseResearch();
+    research.log = [
+      { ...searchLogEntry(null), tool: "record_read" },
+    ] as any;
+    await writeProject(research);
+
+    // absent persona id → accepted (legit no-sidecar source)
+    const ok = await researchAppend({
       projectPath: dir,
       ops: [
         {
@@ -1584,7 +1637,26 @@ describe("research_append (composite persist + enforcement)", () => {
         },
       ],
     });
-    expect(r.ok).toBe(true);
+    expect(ok.ok).toBe(true);
+
+    // supplied persona id → the original "must be null" guard still applies
+    const bad = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("y", "src_001")),
+            record_persona_id: "p_1",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(bad.ok).toBe(false);
+    if (bad.ok) return;
+    expect(bad.errors[0]).toMatch(/record_persona_id must be null/);
   });
 
   // ── Joint write: nothing written on failure ──

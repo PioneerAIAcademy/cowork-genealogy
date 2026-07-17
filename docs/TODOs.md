@@ -90,10 +90,17 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   written at `confident` from one uncorroborated record with `[?]` readings
   (clark-parents). The extractor agent got a tentative-cap line; person-evidence
   needs the equivalent gate + mandatory conflicts entry.
-- [ ] **Upstream sidecar-staging gap** — one e2e run had all 18
+- [x] **Upstream sidecar-staging gap — DONE (#699).** One e2e run had all 18
   `record_persona_id`s nulled because the search never staged a sidecar
-  (spriggs). D2 can't auto-fill what was never staged; the fix is
-  search-skill-side (always pass `projectPath` / surface the staging failure).
+  (spriggs). D2 can't auto-fill what was never staged, and — since
+  `research_log_append` sets `results_ref` only from a `stagedResultsRef` — a
+  search that omitted `projectPath` had **no** manual way to recover a sidecar.
+  Fixed on two sides: the `search-records` / `search-full-text` skills now treat
+  staging as a **hard gate** (results but no `staged.resultsRef`/a `stagingError`
+  → stop and re-run with `projectPath`, never proceed), and `research_append`
+  now **rejects** an assertions append whose log entry is a producer search
+  (`record_search`/`fulltext_search`) that returned results but has `results_ref:
+  null`, instead of silently nulling the persona ids.
 - [x] **Bare agent-tool names in gps-mentor.md / image-reader.md — DONE
   (#698).** The agent-mode spike proved bare tool names leave a subagent
   toolless in the unit-harness SDK path (needs `mcp__genealogy__*`), yet the
