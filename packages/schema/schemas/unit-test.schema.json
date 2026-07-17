@@ -115,6 +115,11 @@
             "enum": ["date", "place"],
             "description": "Optional facet for an event fact whose date and place are separate attributes of the one event type. When set, the matcher matches ONLY new assertions of the given fact_type that have that attribute populated (`place`/`standard_place` for \"place\", `date` for \"date\") — so a `birth` place-claim (`direct`) and a `birth` date-claim (`indirect`) stay independently checkable. Omit for facts that don't split date from place."
           },
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, the matcher does NOT require a matching assertion to EXIST — it only checks the classification IF one is present. Use for a fact whose existence is completeness the skill produces unreliably (gating on it flaps), while still verifying its classification when present. The judge's soft Completeness dimension covers the omission. Defaults to false (existence required)."
+          },
           "evidence_type": {
             "oneOf": [
               { "type": "string" },
