@@ -1,18 +1,18 @@
 name: Check e2e fixtures + grading
 
-# Two e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py):
+# One e2e discipline check on committed files (eval/harness/scripts/check_e2e_fixtures.py):
 #
-# 1. Grading gate (BLOCKING): every run log ADDED in this PR that produced a
-#    final tree must ship its run-<ts>.ann.json in the same PR. Grading is
-#    same-PR (the developer + genealogist teams grade every run they commit).
-#    Treeless runs (crashed/skipped before a tree) are exempt. Scoped to
-#    PR-added run logs via `git diff --diff-filter=A` (needs BASE_SHA/HEAD_SHA
-#    and full history).
+# Grading gate (BLOCKING): every run log ADDED in this PR that produced a
+# final tree must ship its run-<ts>.ann.json in the same PR. Grading is
+# same-PR (the developer + genealogist teams grade every run they commit).
+# Treeless runs (crashed/skipped before a tree) are exempt. Scoped to
+# PR-added run logs via `git diff --diff-filter=A` (needs BASE_SHA/HEAD_SHA
+# and full history).
 #
-# 2. Fixture-validity gate (ADVISORY, docs/specs/e2e-test-spec.md §14): every
-#    committed fixture under eval/tests/e2e/<slug>/ should have a committed
-#    run log with verdict=pass. Missing ones are warning annotations only, so a
-#    draft fixture (validity run still owed) can land.
+# Fixture *validity* (a fixture having a committed passing run log — spec §14)
+# is NOT gated here: it is a recommended authoring practice, not a CI check, so
+# a fixture can land without a passing run. It used to be an advisory warning;
+# that was removed (it flagged every un-run fixture repo-wide as noise).
 #
 # This check only reads committed files; it does NOT run a live e2e test
 # (those are too expensive to gate PRs — see spec §12).
@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Check e2e grading gate (blocking) + fixture validity (advisory)
+      - name: Check e2e grading gate (blocking)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
