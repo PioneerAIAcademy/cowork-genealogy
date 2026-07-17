@@ -218,6 +218,13 @@ def test_expected_classifications(before_state, after_state, test):
         role = m.get("record_role")
         fact = m.get("fact_type")
         attribute = m.get("attribute")  # optional facet: "date" | "place"
+        # `optional`: do NOT hard-require the assertion to EXIST — only check its
+        # classification IF it is present. Use for a fact whose *existence* is
+        # completeness the skill produces unreliably (so gating on it flaps), but
+        # whose *classification* (when present) is still worth verifying. Grading
+        # unreliable existence as a hard fail is what makes a test flappy; the
+        # judge's soft Completeness dimension covers the omission instead.
+        optional = bool(m.get("optional", False))
         attr_desc = f" attribute='{attribute}'" if attribute else ""
         matching = [
             a
@@ -227,6 +234,8 @@ def test_expected_classifications(before_state, after_state, test):
             and _attribute_matches(a, attribute)
         ]
         if not matching:
+            if optional:
+                continue  # existence not required — nothing present to classify
             errors.append(
                 f"no new assertion with record_role='{role}' "
                 f"fact_type='{fact}'{attr_desc} (expected at least one)"

@@ -10,6 +10,8 @@ Grading dimensions for record-extraction unit tests. Evaluated by the LLM judge 
 - **Grade the persisted assertion, not the chat narrative** — an inaccurate or loose *narrative* self-description is never a deduction when the persisted classification is correct.
 - **Do not read a `record_role` label** (e.g. `wife`, `child_1`, `deceased`) **as an `evidence_type`** — grade only the persisted `evidence_type` of an actual assertion.
 
+**The base `Correctness` dimension does not grade classification.** `evidence_type`, `informant_proximity`, and `information_quality` are owned by the **Evidence type accuracy** and **Informant identification** dimensions — and are settled ground truth wherever the deterministic `expected_classifications` check verified them. Do not fail or dock **Correctness** for a classification call (a direct-vs-indirect choice, a proximity choice); a debatable classification is never a Correctness defect — grade it only in its own dimension. Correctness grades the factual accuracy of the extracted *values* and whether required *actions* were performed.
+
 ## Assertion atomicity
 
 Is each assertion a single extractable fact, not a compound claim? "Patrick Flynn, age 5, born Ireland" should produce separate assertions for name, age/birth, and birthplace.

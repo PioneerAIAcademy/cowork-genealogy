@@ -369,6 +369,40 @@ def test_expected_classifications_normalizes_pascalcase_fact_types():
     assert result.passed is True, f"unexpected failure: {result.error}"
 
 
+def test_expected_classifications_optional_skips_existence_but_checks_classification():
+    """`optional: true` drops the existence requirement (a flappy-completeness
+    fact isn't a hard fail when absent) but still verifies the classification
+    when the assertion IS present."""
+    # Absent + optional → passes (no existence requirement).
+    absent = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
+          "evidence_type": "direct"}],
+        [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
+          "evidence_type": "indirect"}],
+    )
+    assert absent.passed is True, f"unexpected failure: {absent.error}"
+
+    # Present + optional + WRONG classification → still fails (teeth on classification).
+    wrong = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "father_of_deceased", "fact_type": "name",
+          "evidence_type": "direct"}],  # doctrine says indirect
+        [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
+          "evidence_type": "indirect"}],
+    )
+    assert wrong.passed is False
+    assert "evidence_type" in (wrong.error or "")
+
+    # Absent WITHOUT optional → fails existence (the default, unchanged).
+    required = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
+          "evidence_type": "direct"}],
+        [{"record_role": "father_of_deceased", "fact_type": "name",
+          "evidence_type": "indirect"}],
+    )
+    assert required.passed is False
+    assert "expected at least one" in (required.error or "")
+
+
 def test_expected_classifications_attribute_facet_separates_birth_claims():
     """A `birth` place-claim (place set, `direct`) and a `birth` date-claim
     (date set, `indirect`) share the `birth` fact_type but are independently

@@ -465,6 +465,16 @@ async def _execute_single_run(
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
 
+    # Deterministic-validator deference: a passing expected_classifications
+    # check floors the classification judge-dimensions so a fuzzy re-grade can't
+    # override verified ground truth (the dominant flap source). Runs before the
+    # outcome is computed so the floored scores drive pass/partial/fail.
+    apply_deterministic_deference(
+        judge_result.dimensions,
+        validator_results,
+        has_expected_classifications=bool(spec.raw.get("expected_classifications")),
+    )
+
     outcome = _compute_outcome(
         spec=spec,
         validators_passed=validators_passed,
@@ -722,6 +732,51 @@ def _build_warnings(
         })
 
     return warnings
+
+
+# Judge dimensions whose subject is checked deterministically by the
+# `test_expected_classifications` validator (it verifies evidence_type,
+# informant_proximity, and information_quality on the declared
+# (record_role, fact_type) pairs). When that validator PASSES, the LLM judge
+# must not FAIL these dimensions on the same classifications — a fail there is
+# the judge contradicting verified ground truth (the recurring census
+# direct/indirect inversion, and the death-cert evidence-type flip). This is the
+# single biggest source of run-to-run flap: the deterministic check is stable,
+# the fuzzy re-grade is not. See docs/plan/record-extraction-tool-boundary-plan.md.
+_CLASSIFICATION_DIMENSIONS = frozenset(
+    {"Evidence type accuracy", "Informant identification"}
+)
+
+
+def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):
+    """Floor the classification judge-dimensions at partial(2) when the
+    deterministic `test_expected_classifications` validator verified the declared
+    classifications as correct — a judge FAIL there contradicts verified ground
+    truth. Partial is still permitted (the judge may see a real issue on an
+    assertion the validator did not declare); only the false FAIL is removed.
+    Mutates + returns `dimensions`. No-op when the test declares no
+    expected_classifications, the validator did not pass, or the judge was
+    skipped (empty dimensions)."""
+    if not has_expected_classifications or not dimensions:
+        return dimensions
+    ec_passed = any(
+        getattr(r, "name", None) == "test_expected_classifications"
+        and getattr(r, "passed", False)
+        for r in validator_results
+    )
+    if not ec_passed:
+        return dimensions
+    for dd in dimensions:
+        if dd.get("name") in _CLASSIFICATION_DIMENSIONS and dd.get("score") == 1:
+            orig = dd.get("rationale") or ""
+            dd["score"] = 2
+            dd["rationale"] = (
+                "[deterministic-deference] the expected_classifications validator "
+                "verified the declared classifications as correct, so this dimension "
+                "cannot FAIL on them — floored from the judge's 1 to 2 (partial). "
+                "Original judge rationale: " + orig
+            )
+    return dimensions
 
 
 def _compute_outcome(
