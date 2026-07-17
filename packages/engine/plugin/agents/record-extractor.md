@@ -185,6 +185,19 @@ any open research question, plus identifying facts (name, age/birth,
 birthplace) for every person who might be the subject or a FAN associate.
 Skip facts about unrelated individuals unless a question targets them.
 
+**The `name` comes first — never drop it while recording a person's other
+facts.** When a record NAMES a person (the deceased's father "Thomas
+Flynn", the mother "Mary Brennan", a spouse, a witness), that person's
+**`name` assertion is mandatory** — it is the identifying fact everything
+else hangs on. A common, silent failure is recording a named parent's
+**birthplace** (a `birth`+`place` assertion) while forgetting their
+`name`: a parent with a birthplace but no name is an incomplete
+extraction. For each named party, create the `name` assertion first, then
+add whatever else the record states (birthplace → `birth`+`place`, etc.).
+On a death certificate specifically, the named father and named mother
+EACH get a `name` assertion and (if stated) a `birth`+`place` birthplace
+assertion — both, per parent.
+
 **Blank columns produce no assertions.** If a record's field is blank for
 a person (e.g., only the head has an occupation listed), do NOT create an
 assertion for that field for anyone else. Never fabricate assertions for
@@ -192,8 +205,10 @@ blank fields. Concretely: on a census where only the head's occupation
 cell holds a value, extract **one** occupation assertion (the head) — an
 occupation assertion for a household member whose cell is blank is a
 fabrication, not thoroughness. Extract a field only for the specific
-persons whose cell actually holds a value; a blank cell is silence, not a
-fact to record.
+persons whose cell actually holds a value; a blank cell is silence — not a
+fact to record, and **not negative evidence** (never a `"No X recorded"`
+assertion; negative evidence is a *person* expected-but-absent, see
+Negative evidence).
 
 ## Step 3 — Extract and classify assertions
 
@@ -333,9 +348,18 @@ relationships) — no record informant exists. `unknown` = a record
 informant exists but cannot be identified. The informant is whoever provided THIS
 specific fact — not who created the record; indexers and transcribers are
 never the informant (look through derivatives to the original provider).
-The recorder and informant are different people: on a census the
-enumerator is the recorder — a household member answered. Document bias
-in `informant_bias_notes`: motive to misreport, decades between event and
+The recorder and informant are different people — on **every** record
+type. The census **enumerator**, the marriage **clerk**, the parish
+**officiant**, the civil **registrar** all *write the record down*; that
+does NOT make them the informant for the parties' or witnesses'
+biographical facts. **Never name the clerk/recorder/officiant as the
+informant for a witness's or a party's own facts** — that fact's informant
+is the party who supplied it (a witness for their own identity; the
+groom/bride for theirs). The recorder is the informant only for what they
+attest in their official capacity — the clerk certifying the return was
+filed, the physician certifying the death — at `official_duty`/`witness`,
+never for the parties' biographies. Document bias in
+`informant_bias_notes`: motive to misreport, decades between event and
 reporting, secondhand relay, social pressure, duress.
 
 **Census informant table:**
@@ -354,6 +378,21 @@ This table describes facts a record STATES. A **negative** assertion
 `informant_proximity: "researcher"` — no record informant reported an
 absence, whatever the record type; the table's
 `witness`/`household_member` rows never apply to one.
+
+**On a census, a stated fact is `household_member`, not `self`.** A
+pre-1940 census does not record who answered, so even an adult's own
+name/age/birthplace is `household_member` — you do not KNOW the person
+spoke for themselves; a spouse, parent, or other household member may have
+answered for the whole dwelling. The table's "(likely self or spouse)" is
+a note about who *probably* answered, not a license to set proximity
+`self`. **This is census-specific — match the proximity to the record, not
+a blanket rule.** On a record where the person demonstrably supplied their
+own facts — a marriage license, an affidavit, a civil-registration
+application — the party's own facts AND the **parents' names they
+themselves stated** are `self` (see the marriage-record rule below), NOT
+the census `household_member` default and NOT the death-certificate
+`family_not_present`. `self` is fully correct there; only the census lacks
+the "who answered" record that would justify it.
 
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
@@ -384,6 +423,19 @@ absence, whatever the record type; the table's
   watched — for that attestation the informant is the witness at proximity
   `witness`, never `self` (`self` is only for a person's facts about
   themselves, and a witness did not marry).
+
+**Christening / baptism record informants:**
+- **Presenting parent(s)** (usually named): informant for the child's name
+  and the parents' own identities — proximity `household_member` (a parent
+  who presented the child at the font supplied the family facts firsthand).
+- **Officiant** (priest/minister): the **recorder**, not the informant for
+  the family's biographical facts. Informant only for the christening event
+  itself — date, place, rite — proximity `official_duty`.
+- **Godparents / sponsors:** note as FAN associates; extract identifying
+  facts only unless a question targets them.
+- The **child's** own name/birth facts on the register are
+  `household_member` (a parent supplied them) — never `self` (a christened
+  infant cannot report), and never the officiant.
 
 When the informant is named on the record, use their name.
 
@@ -628,6 +680,17 @@ assertion in the same Step-4 batch (or standalone with explicit
 Only when the absence is analytically significant — the person was
 expected there on the timeline and known facts — not for every nil
 result.
+
+**Negative evidence is about a PERSON expected-but-absent, never a blank
+FIELD on a person who is present.** A cell the record simply left blank —
+no middle name, no occupation listed, no cause given — is **silence, not
+negative evidence**: it produces NO assertion at all, neither positive nor
+negative (the "Blank columns produce no assertions" rule in Step 2).
+**Never** manufacture a `"No middle name recorded"` / `"No X on this
+certificate"` negative assertion for an unrecorded optional field — that
+is over-extraction, not thoroughness, and it is not the meaningful absence
+this section is for. A negative assertion always concerns a *person*
+(`record_role: "absent"`), never an absent attribute of a present person.
 
 ## Match checking (only when asked)
 

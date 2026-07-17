@@ -111,6 +111,12 @@ persisted value, a factually false claim, a missed required action.
 Stylistic "imprecision" or a hypothetically-better alternative is not a
 deduction when the persisted state is correct.
 
+Correctness does not re-grade an aspect a dedicated rubric dimension
+already owns — grade that aspect only in its own dimension, never twice.
+Grade the factual accuracy of the extracted *values* and whether required
+*actions* were performed. (Skills whose rubric owns a specific axis — e.g.
+a classification dimension — say so in their `rubric.md`; defer to it.)
+
 ## Completeness
 - **pass:** The skill addressed everything the user message and input
   state required. No silent omissions of items it should have covered.
