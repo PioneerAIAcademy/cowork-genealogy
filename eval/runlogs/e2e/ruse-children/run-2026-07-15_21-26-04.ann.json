@@ -3,14 +3,16 @@
     "f1": "true",
     "f2": "true",
     "f3": "true",
-    "f4": "true"
+    "f4": "false",
+    "f5": "true"
   },
-  "proof_quality_score": 3,
+  "proof_quality_score": 2,
   "notes": {
-    "f1": "Ora S. Raney (I1, Orie S. Rainey, b. 20 Aug 1879) recovered and linked, from the Ohio birth record naming mother Mary L. Ruse and corroborated by the 1880/1900 censuses.",
-    "f2": "The 1887 daughter recovered and linked as I3 'Bertha Belle Raney' (b. 11 Apr 1887) — the single 1887 child this finding covers (recorded as Mary L. on the birth record, Bertha Belle on marriage records). Satisfies f2.",
-    "f3": "Robert M. Raney (I4, b. 25 Feb 1891, also Milan/Milen) recovered and linked, from the Ohio birth record and 1945 death record naming his parents.",
-    "f4": "Armeda L. Raney (I2, b. 1882) recovered and linked — found via a father-name birth search (indexed under the mother variant 'Levina Ruze'), corroborated by the 1900 census. Proof tier 'proved' on four original birth records each naming the mother, corroborated by censuses; name-variant conflicts resolved."
+    "f1": "Ora S. Raney (I1, also 'Orie S. Rainey', b. 20 Aug 1879) recovered and linked to both parents, from the Ohio birth record naming mother Mary L. Ruse and corroborated by the 1880/1900 censuses.",
+    "f2": "An 1887 daughter of Mary L. Ruse, grounded in the Ohio birth record indexed as 'Mary L. Raney' (11 Apr 1887, mother Mary L. Ruse; source S9), is recovered and parent-linked as person I3. Counts for f2 (the required birth-record 1887 child).",
+    "f3": "Robert M. Raney (I4, b. 25 Feb 1891, also Milan/Milen) recovered and linked, from the Ohio birth record naming his parents.",
+    "f4": "FALSE — the distinct second 1887 twin was not recovered. The agent merged the two 11-Apr-1887 daughters into a single person (I3, named 'Bertha Belle Raney' but built on the 'Mary L. Raney' birth record, source S9 titled 'Mary L. Raney [Bertha Belle Raney]'). It never did the both-parent extraction that separates the twins — Bertha's 1906/1932 marriage records name father Albert Raney + mother Lavina/Louisa Ruse, which distinguishes her from Mary L. — so only one of the two 1887 children is in the tree. This is the exact merge error the reviewer flagged, and it is also why proof_quality is 2 not 3: the agent asserted the two daughters are one person under two names and claimed a 'proved' tier, an identity claim the records do not support.",
+    "f5": "Armeda L. Raney (I2, b. 16 Nov 1882) recovered and linked — found via a father-name birth search (indexed under the mother variant 'Levina Ruze'), corroborated by the 1900 census."
   },
   "annotator": "ernest"
 }

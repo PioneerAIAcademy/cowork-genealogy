@@ -17,14 +17,14 @@
     {
       "id": "f2",
       "type": "relationship",
-      "description": "A daughter born 11 April 1887 in Loudon Township, Seneca County, Ohio, was a child of Mary L. Ruse and Albert Raney. She is recorded under two names in the records — 'Mary L. Raney' on her birth record and 'Bertha Belle Raney' on her later marriage records (b. 11 Apr 1887 in both) — and is a single person; recovering the 1887 daughter under either name satisfies this finding.",
+      "description": "Mary L. Raney was a child of Mary L. Ruse and Albert Raney, born 11 April 1887 in Loudon Township, Seneca County, Ohio. Her birth record names the mother 'Mary L. Ruse'. She and Bertha Belle Raney (f4) share the exact birth date 11 April 1887 and are most likely twins — see the identity note in the README.",
       "details": {
         "subject_person": { "name": "Mary L. Ruse" },
         "relation": "child",
-        "target_person": { "name": "Mary L. (Bertha Belle) Raney", "birth": "11 April 1887, Loudon Township, Seneca, Ohio" }
+        "target_person": { "name": "Mary L. Raney", "birth": "11 April 1887, Loudon Township, Seneca, Ohio" }
       },
       "supporting_sources": [
-        "Ohio, Births and Christenings / County Births — entry for Mary L. Raney (11 Apr 1887) naming mother Mary L. Ruse; Ohio Marriages — Bertha Belle Raney (Fruth) naming mother Lavina Ruse."
+        "Ohio, Births and Christenings, 1821-1962 / Ohio, County Births, 1841-2003 — entry for Mary L. Raney (11 Apr 1887) naming mother Mary L. Ruse."
       ],
       "required": true
     },
@@ -44,6 +44,22 @@
     },
     {
       "id": "f4",
+      "type": "relationship",
+      "description": "Bertha Belle Raney was a child of Mary L. Ruse and Albert Raney, born 11 April 1887 in Loudon Township, Seneca County, Ohio — most likely a twin of Mary L. Raney (f2), not the same person. She lived a full documented life (married David Fruth in 1906, remarried Albert E. Whitney in 1932, died 12 March 1973 in Fostoria, Hancock County, Ohio). To recover her as a distinct child, the researcher must extract BOTH parents from her own records: her marriage records name father Albert Raney and mother Lavina/Louisa Ruse (indexed 'Riese'/'Ruth'), matching the couple — the mother alone does not distinguish her from f2. Bonus because distinguishing the twins requires the both-parent extraction described here.",
+      "details": {
+        "subject_person": { "name": "Mary L. Ruse" },
+        "relation": "child",
+        "target_person": { "name": "Bertha Belle Raney", "birth": "11 April 1887, Loudon Township, Seneca, Ohio" }
+      },
+      "supporting_sources": [
+        "Ohio, County Marriages, 1789-2016 — David Fruth & Bertha Belle Raney (1906), naming father Albert Raney, mother 'Louisa Ruth'.",
+        "Ohio, County Marriages, 1789-2016 — Albert E. Whitney & Bertha B. Raney Fruth (1932), naming father Albert Raney, mother 'Lavina Riese'.",
+        "Find A Grave Index — Bertha B Raney Whitney, b. 11 Apr 1887, d. 12 Mar 1973, buried Fostoria, Hancock, Ohio."
+      ],
+      "required": false
+    },
+    {
+      "id": "f5",
       "type": "relationship",
       "description": "Armedia Elvina (Armeda L.) Raney was a child of Mary L. Ruse and Albert Raney, born about 1882 in Loudon Township, Seneca County, Ohio. (Bonus — indexed under the mother-name variant 'Levina Ruze', so more often found via the father.)",
       "details": {
