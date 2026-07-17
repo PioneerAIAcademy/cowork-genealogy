@@ -205,17 +205,19 @@ def _skills_dir():
     return Path(__file__).resolve().parents[4] / "packages/engine/plugin/skills"
 
 
-def test_real_search_images_declares_image_read():
+def test_real_search_images_does_not_declare_image_read():
     from harness.allowed_tools import declared_skill_tools
 
     declared = declared_skill_tools("search-images", _skills_dir())
-    assert "image_read" in declared, (
-        "search-images must declare image_read — it browses volumes page-by-page "
-        "itself. If this declaration is dropped, the per-context guard will start "
-        "denying its calls and the skill breaks."
+    assert "image_read" not in declared, (
+        "search-images must NOT declare image_read — it browses volumes page-by-page "
+        "by delegating each page to @plugin:image-reader, so the base64 never enters "
+        "the skill's context. Declaring it here would exempt the browse loop from the "
+        "guard and reopen the accumulation crash."
     )
     assert (
-        subagent_only_violation(_main("mcp__genealogy__image_read"), declared) is None
+        subagent_only_violation(_main("mcp__genealogy__image_read"), declared)
+        == "image_read"
     )
 
 

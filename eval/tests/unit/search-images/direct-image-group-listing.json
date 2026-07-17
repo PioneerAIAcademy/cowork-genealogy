@@ -18,7 +18,7 @@
   },
   "judge_context": [
     "The user supplied the imageGroupNumber directly. Calling image_search without volume_search is CORRECT here, not a gap — judges must not score partial for skipping volume_search when the group is already known.",
-    "CRITICAL HARNESS LIMITATION: image_read returns no image content in the harness, so the complete browse is: list the images and log the browse. Judges MUST NOT penalize the skill for not viewing pages or not finding a record.",
+    "CRITICAL HARNESS LIMITATION: page viewing is delegated to the image-reader subagent (@plugin:image-reader); the skill must NOT call image_read directly (it has no such tool). The subagent returns no image content in the harness (NOT READ), so the complete browse is: list the images and log the browse. Judges MUST NOT penalize the skill for not viewing pages or not finding a record.",
     "image_search returns the whole volume in one call — the skill must not retry it with offset/limit/imageId parameters.",
     "Should append a research_log_append entry recording the browse of image group 007936749."
   ]
