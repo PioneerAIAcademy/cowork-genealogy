@@ -383,6 +383,53 @@ append op (deliberately simple):
   verify-this warning (supplied and sidecar-copied values stay silent — the echo
   is their audit surface).
 
+### 3.7 Boundary shape normalization (dates + labels)
+
+Applied to every appended/updated entry before validation — lossless shape
+normalization that keeps a well-formed extraction from being rejected, or from
+splintering into inconsistent labels, over a form the model added:
+
+- **`date` / `standard_date` object-unwrap.** The model routinely emits a
+  GedcomX-style `{ original, formal }` object where the schema requires a plain
+  string; the tool unwraps it to `original` (else `formal`). A string/null value,
+  or an object without a usable string, passes through untouched.
+- **`access_date` → ISO.** A source's `access_date` must be ISO `YYYY-MM-DD`, but
+  the model routinely supplies a human form (`"12 July 2026"`, `"July 12, 2026"`).
+  The tool rewrites a parseable human date to ISO, reusing the genealogical
+  `stdDate` standardizer (i18n month names, comma forms, dashed forms) plus a
+  month-name→number map; the parse only accepts an unambiguous `DD Mon YYYY` /
+  `Month DD, YYYY` (a form without a day, or an ambiguous numeric form, does
+  **not** normalize). An already-ISO value is untouched; an unparseable value is
+  left in place so the joint validator reports the real problem rather than the
+  tool inventing a date. (Sources are the only section carrying `access_date`.)
+- **`fact_type` canonicalization (assertions).** `fact_type` is an OPEN enum
+  (`fact_type_recommended`), so the model freely varies casing (`Name`,
+  `CauseOfDeath`) and reaches for role-prefixed or bare-structure aliases
+  (`father_name`, `parentage`) — the same logical fact then reads as several
+  distinct labels downstream. The tool reduces the value to a normalized key
+  (lowercase, non-alphanumerics stripped, so `Cause of Death`/`cause_of_death`/
+  `CauseOfDeath` all collapse to one key) and maps a **recognized** alias to its
+  canonical spelling (`father_name`/`mother_name` → `name`, `parentage` →
+  `relationship`, `CauseOfDeath` → `cause_of_death`, …). This is a best-effort
+  **translator, not a closed allow-list**: a value whose normalized key is
+  unrecognized passes through **unchanged** (an unrecognized fact type stays
+  legal, just un-normalized). `sex`/`gender` stay distinct — a genuine content
+  mislabel is surfaced, not silently "corrected". (Only assertions carry
+  `fact_type`, so this is a no-op for every other section.)
+- **Event place/date fold into the event fact (assertions).** An event's place
+  and date are **attributes** of the one event fact, not their own types
+  (matching the tree + GedcomX, which have no `Birthplace`/`Deathplace` type —
+  birthplace is the `place` of a `Birth` fact). So a place-of-event variant
+  (`birthplace`, `place_of_birth`, `deathplace`, `burialplace`, …) is folded to
+  the event type (`birthplace` → `birth`, `deathplace` → `death`), **and** the
+  tool lifts the place value into the machine-readable `place` field when neither
+  `place` nor `standard_place` is already set (the human `value` of a place-claim
+  *is* the place string, e.g. `"Ireland"`). This keeps a birthplace-claim and a
+  birth-date claim independently classifiable as two `birth` assertions — the
+  census case where a stated birthplace is `direct` while the computed birth year
+  is `indirect` — distinguished by field population (`place` set = the
+  place-claim, `date` set = the date-claim) rather than by the type name.
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic

@@ -52,12 +52,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from e2e import judge as judge_module
+from e2e.env import ENV_FILE, load_env_file
 from e2e.judge import derive_verdict  # shared with apply_avoid_guard; re-exported for our callers
 
 
@@ -145,6 +147,7 @@ def grade_case(
             judge_output,
             expected_findings=case["expected_findings"],
             final_tree=case["final_tree"],
+            subject_person_ids=case.get("subject_person_ids"),
         )
     except Exception as e:  # noqa: BLE001 — record, don't abort the sweep
         result.error = f"{type(e).__name__}: {e}"
@@ -377,12 +380,22 @@ def load_annotated_runs(
             human["notes"] = notes
         if "proof_quality_score" in ann:
             human["proof_quality_score"] = ann["proof_quality_score"]
+        # Subject id(s) for the avoid-guard's subject exemption — a real
+        # source_pid plus final_research's project.subject_person_ids.
+        subject_ids: set[str] = set()
+        src = fixture.get("source_pid")
+        if src and "TODO" not in str(src):
+            subject_ids.add(str(src))
+        if final_research:
+            for sid in (final_research.get("project") or {}).get("subject_person_ids") or []:
+                subject_ids.add(str(sid))
         cases.append({
             "id": f"{slug}/{stem}",
             "research_question": fixture.get("researcher_question", ""),
             "expected_findings": expected,
             "final_tree": final_tree,
             "final_research": final_research,
+            "subject_person_ids": sorted(subject_ids),
             "human": human,
         })
 
@@ -489,6 +502,23 @@ def main(argv: list[str] | None = None) -> int:
     if not cases:
         print(
             "\nNothing graded yet — no complete annotations to calibrate against.",
+            file=sys.stderr,
+        )
+        return 2
+
+    # The judge reads ANTHROPIC_API_KEY from the process env; the key normally
+    # lives in eval/.env (Setup.bat writes it there), so load it the way every
+    # other e2e entry point does. Check up front and abort: without a key every
+    # case fails with an auth error, and because case errors block the target
+    # the sweep would report "BELOW target" — an auth problem indistinguishable
+    # from a judge that genuinely missed the gate, on the one number this script
+    # exists to produce. Fail loudly instead of reporting a grade nobody earned.
+    load_env_file()
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print(
+            f"\nNo ANTHROPIC_API_KEY. Set it in the environment or in {ENV_FILE} "
+            "(Setup.bat prompts for it). The judge needs it — nothing was "
+            "graded, so this is not a calibration result.",
             file=sys.stderr,
         )
         return 2

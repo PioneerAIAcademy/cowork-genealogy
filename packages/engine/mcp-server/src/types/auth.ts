@@ -28,7 +28,6 @@ export interface FSTokenResponse {
 export interface AppConfig {
   wikiApiUrl?: string;
   popStatsUrl?: string;
-  wikiMarkdownDir?: string;
   learningCenterDir?: string;
   libraryDir?: string;
 }

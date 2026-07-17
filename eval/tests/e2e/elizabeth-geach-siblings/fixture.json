@@ -1,0 +1,18 @@
+{
+  "id": "elizabeth-geach-siblings",
+  "name": "Elizabeth Geach — siblings (1820s-1830s Licking County, Ohio)",
+  "source_pid": "273D-F9Z",
+  "captured": "2026-07-10",
+  "researcher_question": "Who were the siblings of Elizabeth Geach, daughter of Peter Geach and Rebecca (Benjamin) Geach of Licking County, Ohio?",
+  "tags": {
+    "question_type": "siblings",
+    "era": "1820s-1830s",
+    "geography": "US-OH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Peter Geach's five other children (Jacob, Mary, Thomas, William, Nancy) are removed from the starting tree along with their ParentChild links to Peter and Rebecca. All five are named as minor heirs, alongside Elizabeth, in the same 1836 Licking County Court of Common Pleas probate petition (Estate of Peter Geach) already proven reachable via FamilySearch full-text search in the elizabeth-geach-parents fixture. Verified recoverable 2026-07-10 via live record_search/fulltext_search: the probate record surfaces on an untargeted +Geach +Elizabeth +Rebecca full-text query (place/date filters caused false nils, same pattern as elizabeth-geach-parents)."
+}

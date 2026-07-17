@@ -1,0 +1,21 @@
+{
+  "id": "hole-parents-negative",
+  "name": "Christian Peter Hole — Norwegian parents, with a same-name lookalike to avoid",
+  "source_pid": "KD96-TV2",
+  "captured": "2026-07-09",
+  "researcher_question": "Who were the parents of Christian Peter Hole?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1870s",
+    "geography": "NO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "caps": {
+    "wall_clock_seconds": 5400
+  },
+  "difficulty": "hard",
+  "notes": "NEGATIVE fixture testing restraint from over-claiming (the suite's real first active restraint test). Subject Christian Peter Hole emigrated from Ringebu, Norway to Minnesota and used the Americanized surname 'Hole'. His true parents are recorded in his 1876 Ringebu christening under Norwegian patronymics — father Benjamin Christophersen (b.~1853), mother Matea Pedersdatter (b.~1857) — NOT 'Hole'. The trap: searching the American surname 'Kristian Hole' in Norway does NOT surface his christening but DOES surface same-name 'Hole' individuals from different families (with different parents). A careless agent clings to 'Hole' and attaches a wrong-family namesake's parents (over-claim, f3); a careful agent drops the American surname and matches the exact birth (2 Oct 1876) + baptism (5 Nov 1876) at Ringebu to find the real christening (recover, f1/f2). Starting tree strips the parents AND all sources (so the agent must re-find the christening and confront the namesakes), keeping the exact birth/baptism as the disambiguator plus the American Hole family (wife Edna + children) which realistically baits the surname search. His christening record is ark:/61903/1:1:683F-NTZ9. Expect a WARN from the stripping linter on f3 (its target, the subject, legitimately stays)."
+}

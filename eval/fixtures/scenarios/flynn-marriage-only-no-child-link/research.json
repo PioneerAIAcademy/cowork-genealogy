@@ -1,0 +1,203 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Ireland, immigrated to Schuylkill County, Pennsylvania, died 1908",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-05-01",
+    "updated": "2026-05-06"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Patrick Flynn (b. ~1845, Ireland, d. 1908 PA)?",
+      "rationale": "This is the primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-05-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "marriage",
+          "jurisdiction": "County Mayo, Ireland",
+          "date_range": "1840-1846",
+          "repository": "FamilySearch",
+          "rationale": "A Flynn marriage shortly before Patrick's ~1845 birth identifies the couple and supplies the mother's maiden name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "County Mayo, Ireland",
+          "date_range": "1844-1847",
+          "repository": "FamilySearch",
+          "rationale": "Patrick's own Catholic baptism would name his parents directly — the decisive child-linking record.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1850-1860",
+          "repository": "FamilySearch",
+          "rationale": "A US census placing Patrick as a child in a parents' household would link him to them.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-02T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Flynn",
+        "spouse_surname": "Doyle",
+        "date_range": "1840-1846",
+        "collection": "Ireland Marriages"
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "notes": "Found the marriage of Thomas Flynn and Mary Doyle, 12 Feb 1843, County Mayo — both fathers named. Predates Patrick's ~1845 birth, so the couple existed as a unit before he was born.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-05-03T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Flynn",
+        "given": "Patrick",
+        "birth_year": 1845,
+        "collection": "Ireland Catholic Baptisms"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "No baptism for a Patrick Flynn ca. 1845 in the Mayo parishes searched. The register for the relevant years is patchy; nothing naming Patrick's parents was found. This is the decisive child-linking record and it was not recovered.",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-05-04T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Flynn",
+        "given": "Patrick",
+        "birth_year": 1845,
+        "collection": "1850/1860 US Census"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "notes": "Patrick does not appear as a child in any US household enumeration — his earliest US record is as an adult householder (1870). He immigrated after childhood, so no census places him in his parents' household.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "Marriage of Thomas Flynn and Mary Doyle, 12 February 1843, Roman Catholic parish, County Mayo, Ireland; National Library of Ireland Catholic Parish Registers, indexed on FamilySearch, accessed 2 May 2026.",
+      "citation_detail": {
+        "who": "Officiating priest",
+        "what": "Catholic parish marriage register entry",
+        "when_created": "1843",
+        "when_accessed": "2026-05-02",
+        "where": "National Library of Ireland / FamilySearch",
+        "where_within": "County Mayo parish, 12 Feb 1843"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-02",
+      "url": null,
+      "url_archived": null,
+      "notes": "Index entry; original register image not examined.",
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ireland:marriage:flynn-doyle-1843",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Thomas Flynn married Mary Doyle, 12 Feb 1843, County Mayo",
+      "structured_value": {
+        "spouse_given": "Mary",
+        "spouse_surname": "Doyle",
+        "groom_father": "John Flynn",
+        "bride_father": "Michael Doyle"
+      },
+      "date": "1843-02-12",
+      "date_certainty": "exact",
+      "place": "County Mayo, Ireland",
+      "information_quality": "primary",
+      "informant": "Officiating priest recording the marriage at the time of the event",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Parish priest recorded the marriage contemporaneously; direct evidence of the marriage event itself.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The groom Thomas Flynn in the 1843 marriage matches the candidate father stub I2 by name and Mayo origin. This establishes that Thomas married Mary Doyle before Patrick's birth — it does NOT by itself place Patrick as their child.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_001",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "The bride Mary Doyle in the same marriage matches the candidate mother stub I3 and supplies the maiden name. Like pe_001, it links the couple to each other, not Patrick to the couple.",
+      "match_score": null,
+      "created": "2026-05-02",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
