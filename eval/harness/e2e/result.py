@@ -111,7 +111,7 @@ def is_committable_run(verdict: str) -> bool:
 
     Fixture *validity* is a separate axis (e2e-test-spec.md §14): only a `pass`
     proves the fixture solvable. A committed `fail` does NOT validate the
-    fixture — check_e2e_fixtures.py looks specifically for verdict==pass.
+    fixture (validity is a recommended authoring practice, not a CI check).
     """
     return verdict in _GRADED_VERDICTS
 
