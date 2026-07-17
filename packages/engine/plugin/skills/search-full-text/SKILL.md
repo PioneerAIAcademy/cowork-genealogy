@@ -208,11 +208,18 @@ the host stages the raw results and the response gains a
 `staged.resultsRef` handle you hand to `research_log_append` in step 8
 to retain them — you never serialize the payload yourself.
 
-**Verify staging before you log.** If a search returned ≥1 result but
-the response has no `staged.resultsRef`, you omitted `projectPath` —
-re-run the identical query **with** `projectPath` before step 8, or the
-results are not retained and the log entry will have no sidecar. (A nil
-search correctly has no `staged.resultsRef`; that is expected.)
+**Staging is a hard gate — verify it before you do anything else with the
+results.** If a search returned ≥1 result but the response has **no
+`staged.resultsRef`** (you omitted `projectPath`) or carries a `stagingError`
+(the host tried to stage but failed), the results were **not** retained
+host-side. Downstream, `record_persona_id` is auto-filled from the staged
+sidecar — with no sidecar it cannot be resolved and every persona id is
+silently lost (`research_append` now rejects such an append). **Stop: do not
+log, rank, or hand off.** Re-run the identical query **with** `projectPath` and
+confirm a `staged.resultsRef` comes back. If a `stagingError` persists across
+one retry, surface it to the user rather than proceeding. (A nil search
+correctly has no `staged.resultsRef` — nothing was found to retain; that is
+expected.)
 
 **Decision rules by hit count:**
 - **0 results** → See step 10 (handle nil results)
