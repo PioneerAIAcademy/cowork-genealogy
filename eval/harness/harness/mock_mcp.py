@@ -162,7 +162,7 @@ def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
 # a canned payload, so we materialize the staged file here (via the compiled
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
-STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search"}
+STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
 
 
 def _stage_search_results(

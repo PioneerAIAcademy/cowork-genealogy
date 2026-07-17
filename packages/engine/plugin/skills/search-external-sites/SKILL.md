@@ -161,29 +161,29 @@ external_links_search({
 })
 ```
 
-`host` filters the results to your target site **server-side**, so `results[]`
-comes back as just that site's `{ url, linkText }` links — not every curated
-site for the place. `projectPath` stages the **full** year-filtered set (all
-sites) to disk and returns a `staged.resultsRef`; hold it for the step-4 log.
-Then consume `results[]`:
-1. **Dedupe by URL** — FS repeats the same URL once per record-type
+`host` narrows the returned `results[]` toward your target site (so a
+link-dense place can't overflow the response); `projectPath` stages the **full**
+year-filtered set (all sites) to disk and returns a `staged.resultsRef` — hold
+it for the step-4 log. `results[]` is a flat list of `{ url, linkText }`. Consume
+it:
+1. **Filter to your target site** — keep only links whose URL is for your site,
+   e.g. `result.url.includes("ancestry.com")`. `host` already narrows this
+   server-side, but filter here too so you stay correct if any off-site links
+   come through.
+2. **Dedupe by URL** — FS repeats the same URL once per record-type
    category. Collapse duplicates, and say so in one line when it happens
    ("collection 8800 appeared 3× under different labels — collapsed to one")
    so the dedup is visible, not silent.
-2. **Match `linkText` to the plan item's record type.** `linkText` names
+3. **Match `linkText` to the plan item's record type.** `linkText` names
    the collection in plain English ("Pennsylvania Wills and Probate
    Records"); the collection ID is embedded in the URL path. This match is
    what step 3 acts on.
 
-**`totalForPlace` vs `returned`:**
-- `returned > 0` → a curated URL for your site exists; go to Case A.
-- `returned === 0` but `totalForPlace > 0` → FS curates this place but nothing
-  matches your `host` + year window. Drop `host` to see which other sites are
-  curated, widen the window, or fall back (Case B).
+**How many links survived the site filter (call it `matched`):**
+- `matched > 0` → a curated URL for your site exists; go to Case A.
+- `matched === 0` but `totalForPlace > 0` → FS curates this place but nothing
+  matches your site + year window; widen the window or fall back (Case B).
 - `totalForPlace === 0` → no curated links here at all; fall back (Case B).
-
-`returned` is the count after the `host` filter and a safety cap; the full,
-uncapped set is what got staged, so nothing is lost.
 
 ### 3. Build the URL
 
@@ -270,7 +270,7 @@ below:
 research_log_append({
   projectPath: <absolute path of the current working directory>,
   planItemId: "<pli_XXX or null>",
-  tool: "external_links",
+  tool: "external_links_search",
   query: { standardPlace: "<standardPlace>", host: "<host>", startYear: <year>, endYear: <year> },
   outcome: "<positive if returned > 0, else negative>",
   resultsExamined: <returned>,
@@ -315,7 +315,7 @@ research_log_append({
 directory that contains `research.json`). Pass its absolute path.
 This **external-site** entry has no result sidecar (the capture hasn't
 arrived yet), so do **not** pass `stagedResultsRef` here — that handle
-belongs on the `external_links` entry above.
+belongs on the `external_links_search` entry above.
 
 `outcome: "partial"` + `captureReceived: false` mark it in-flight. When a
 capture comes back you append a **new** entry (step 6) — never edit this

@@ -196,7 +196,7 @@ export async function externalLinksSearchTool(
     try {
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
-        tool: "external_links",
+        tool: "external_links_search",
         response: { results: allLinks },
       });
     } catch (error) {

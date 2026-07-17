@@ -86,7 +86,7 @@ schema `:178`) and `types/external-links-search.ts` (`ExternalLinksSearchResult`
 `:30-42`), not `tool-schemas.ts` (which only re-exports).
 
 - Add optional **`projectPath`** (camelCase) — when present, stage the full,
-  pre-filter set via `stageSearchResults({ tool: "external_links", response })`
+  pre-filter set via `stageSearchResults({ tool: "external_links_search", response })`
   and return `staged: { resultsRef, returnedCount }`. Additive, best-effort,
   never fails the search (same try/catch as fulltext/record). **Stage the full
   set BEFORE any inline filtering/slicing** — staging serializes `response`
@@ -117,7 +117,7 @@ entry's `tool` (`results-staging.ts:127`; `research-log-append.ts:241` passes
 `expectedTool: input.tool`). Attaching an `external_links` staged ref to the
 existing `tool: "external_site"` entry (option A) would throw a tool-mismatch
 and write nothing. So the `external_links` fetch gets its **own** log entry
-(`tool: "external_links"`, its own `results_ref` sidecar), consistent with how
+(`tool: "external_links_search"`, its own `results_ref` sidecar), consistent with how
 `record_search`/`fulltext_search` log. This validates cleanly with no schema
 change: log `tool` is a free string in both the hand validator (`validator.ts:646-682`,
 no enum on `tool`) and `research.schema.json:307`; `external_site` is

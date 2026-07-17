@@ -35,7 +35,7 @@ than taking it as an argument.
 ## 2. Scope
 
 The sidecar-producing search tools: **`record_search`**, **`fulltext_search`**,
-and **`external_links_search`** (`tool: "external_links"`) — the tools whose
+and **`external_links_search`** (`tool: "external_links_search"`) — the tools whose
 payloads become `results/` sidecars per `research-log-protocol.md`. The staging
 logic is a shared util so adding a producer is a one-line opt-in
 (`external_links_search` was added as the third, 2026-07 — GitHub #696).

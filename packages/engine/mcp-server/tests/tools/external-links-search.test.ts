@@ -346,7 +346,7 @@ describe("externalLinksSearchTool — staging, host filter, and inline cap", () 
     { url: "https://www.ancestry.com/search/collections/2/", linkText: "PA Census" },
   ];
 
-  it("stages the full pre-filter set with tool 'external_links' when projectPath is supplied", async () => {
+  it("stages the full pre-filter set with tool 'external_links_search' when projectPath is supplied", async () => {
     mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
     mockedStage.mockResolvedValueOnce({
       resultsRef: "results/.staging/abc.json",
@@ -362,7 +362,7 @@ describe("externalLinksSearchTool — staging, host filter, and inline cap", () 
     const stageArg = mockedStage.mock.calls[0][0];
     expect(stageArg).toMatchObject({
       projectPath: "/tmp/project",
-      tool: "external_links",
+      tool: "external_links_search",
     });
     // The staged payload is the FULL set (all hosts), before any host filter.
     expect(stageArg.response.results).toHaveLength(3);
