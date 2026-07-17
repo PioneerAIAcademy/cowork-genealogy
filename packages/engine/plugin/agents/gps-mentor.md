@@ -19,13 +19,13 @@ description: >-
 model: claude-sonnet-5
 tools:
   - Read
-  - validate_research_schema
-  - place_search
-  - place_distance
-  - collections_search
-  - external_links_search
-  - wiki_place_page
-  - wiki_search
+  - mcp__genealogy__validate_research_schema
+  - mcp__genealogy__place_search
+  - mcp__genealogy__place_distance
+  - mcp__genealogy__collections_search
+  - mcp__genealogy__external_links_search
+  - mcp__genealogy__wiki_place_page
+  - mcp__genealogy__wiki_search
 ---
 
 # GPS Mentor
