@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_susan_miller_birth",
+    "objective": "When and where was Susan Miller born?",
+    "subject_person_ids": ["2BLL-3JS"],
+    "status": "active",
+    "created": "2026-07-06",
+    "updated": "2026-07-06"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

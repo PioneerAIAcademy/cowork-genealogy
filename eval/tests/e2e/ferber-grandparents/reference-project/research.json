@@ -1,0 +1,754 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine the circumstances surrounding the death of William Hubert Ferber (father of Charles Hubert Ferber, b. 22 June 1891, Cincinnati, Ohio), and extend Charles Hubert Ferber's ancestry beyond his parents.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-07-06",
+    "updated": "2026-07-06",
+    "title": "Ferber death & ancestry"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
+  },
+  "known_holdings": [
+    {
+      "id": "kh_001",
+      "holding_type": "document",
+      "description": "Obituary of Charles Ferber, Fort Lauderdale News (Fort Lauderdale, FL), 13 Dec 1967 — client-provided clipping",
+      "relevant_facts": "States Charles died at age 76 (implying birth ~1891); died 1967; had moved from Cincinnati, Ohio approximately 13 years earlier; possibly moved to that Florida residence in 1953",
+      "relates_to_person_ids": [
+        "I1"
+      ],
+      "confidence": "confident",
+      "promoted": false,
+      "created": "2026-07-06"
+    },
+    {
+      "id": "kh_002",
+      "holding_type": "document",
+      "description": "1900 U.S. Census clipping for the Ferber family household, Cincinnati, Ohio — client-provided",
+      "relevant_facts": "William Ferber listed age 31, stated born 1869 in Germany (per client's reading of the clipping); Emma Ferber listed age 29, stated born in Kentucky; couple married 10 years as of 1900; Charles Ferber listed as son, age 9",
+      "relates_to_person_ids": [
+        "I1",
+        "I2",
+        "I3"
+      ],
+      "confidence": "confident",
+      "promoted": false,
+      "created": "2026-07-06"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What were the circumstances surrounding the death of William Hubert Ferber (b. ~Dec 1869, Ohio; d. 11 Mar 1903, Cincinnati, Hamilton, Ohio)?",
+      "rationale": "This is the primary client research objective. FamilySearch's compiled tree already records the date and place of death, but not the cause or circumstances the client is asking about.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    },
+    {
+      "id": "q_002",
+      "question": "Who were the ancestors of Charles Hubert Ferber beyond his parents William Hubert Ferber and Emma Becker — extending the pedigree as far back and as fully as records allow?",
+      "rationale": "Second half of the client's research objective. FamilySearch's compiled tree already suggests two more generations (grandparents on both sides); these need independent verification against original records before being treated as established.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-06",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1903",
+          "repository": "FamilySearch",
+          "rationale": "Check FamilySearch's Ohio County Death Records index for William Ferber's death entry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "newspaper",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "Mar 1903",
+          "repository": "FamilySearch",
+          "rationale": "Search FamilySearch's full-text AI-transcribed document index for a contemporary death notice naming Ferber.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "newspaper",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "Mar 1903",
+          "repository": "other",
+          "rationale": "FamilySearch has no indexed Hamilton County newspaper collection for 1903. Chronicling America (Library of Congress, free) is the next resource to check manually for a Cincinnati Enquirer or Cincinnati Post death notice.",
+          "fallback_for": "pli_002",
+          "status": "planned"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "probate",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1903",
+          "repository": "other",
+          "rationale": "FamilySearch's 'Ohio, Hamilton County Records, 1791-1994' (collection 2141016) holds 1.5M digitized but un-indexed images; a probate or coroner's file could reveal cause of death but would require manual browsing by date/name, which is outside the tools available in this session.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-06",
+      "items": [
+        {
+          "id": "pli_005",
+          "sequence": 1,
+          "record_type": "other",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1856-1917",
+          "repository": "FamilySearch",
+          "rationale": "Read FamilySearch's compiled Family Tree two generations beyond Charles's parents (paternal: Gerhard Ferber & Eva Engermann; maternal: John Becker & Mary Kramer).",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1903",
+          "repository": "FamilySearch",
+          "rationale": "Cross-check the paternal grandparent link (Gerhard & Eva Ferber) against William's own 1903 death record, independent of the compiled tree.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Ohio / Kentucky",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "Resolve the birthplace conflicts (c_001 William, c_002 Emma) by checking the original 1900 census image directly rather than the index alone.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 4,
+          "record_type": "immigration",
+          "jurisdiction": "Germany / Ohio",
+          "date_range": "1849-1853",
+          "repository": "FamilySearch",
+          "rationale": "Searched FamilySearch for Gerhard Ferber's naturalization/immigration (1849-1856, Ohio). No match found — 9 results returned, all unrelated Farber/Faerber individuals in other Ohio counties. The compiled tree's naturalization/immigration facts for Gerhard Ferber remain uncorroborated (quality:1). A more targeted search of the Ohio Southern District Naturalization Index was not attempted.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Kentucky / Ohio",
+          "date_range": "1840s",
+          "repository": "FamilySearch",
+          "rationale": "John Becker and Mary Kramer's own parents are not yet identified. Deferred until the birthplace conflict for their daughter Emma (c_002) is resolved, since it determines whether to search Kentucky or Ohio records.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-07-06T07:39:30.184Z",
+      "tool": "person_search",
+      "query": {
+        "surname": "Ferber",
+        "givenName": "Charles Hubert",
+        "birthYearFrom": 1891,
+        "birthYearTo": 1891,
+        "birthPlace": "Cincinnati, Ohio, United States",
+        "fatherGivenName": "William Hubert",
+        "motherGivenName": "Emma"
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 9,
+      "notes": "Top match G7JB-Y46 (score 10.7, confidence 3) matches the client's obituary exactly: b. 22 Jun 1891 Cincinnati, d. 12 Dec 1967 Fort Lauderdale FL. Selected as the research subject (local I1)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-07-06T07:39:32.838Z",
+      "tool": "person_read",
+      "query": {
+        "personId": "G7JB-Y46",
+        "relatives": true,
+        "sourceDescriptions": true
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Retrieved Charles Hubert Ferber's FamilySearch Family Tree profile: parents William H Ferber and Emma Becker; two spouses (Lydian Inez Hall m. 1918, divorced 1920; Harriet Helen Bailey m. 1934); FamilySearch's own tree already records William H Ferber's death as 11 Mar 1903, Cincinnati — new information beyond what the client provided."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": null,
+      "performed": "2026-07-06T07:39:34.618Z",
+      "tool": "person_read",
+      "query": {
+        "personIds": [
+          "GCD9-9X1",
+          "G7J1-QF2",
+          "G69T-T55",
+          "GNJH-SLL"
+        ],
+        "relatives": true
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Expanded ancestry two generations beyond Charles's parents via FamilySearch's compiled tree: paternal grandparents Gerhard Ferber (b. 1820 Germany, immigrated ~1850, d. 1917 Cincinnati) and Eva Engermann (b. 1834 Bavaria, d. 1872 Cincinnati); maternal grandparents John Becker (b. ~1845 Kentucky) and Mary Kramer (b. Ohio). All quality:1 (compiled tree, not yet independently verified against original records)."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": null,
+      "performed": "2026-07-06T07:40:04.527Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:F66M-8JZ",
+        "collection": "Ohio, County Death Records, 1840-2001"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Confirms William H Ferber's death on 11 Mar 1903, Cincinnati, Hamilton, Ohio, and names his parents as Gerhard Ferber and Eva Ferber — corroborates the tree's grandparent link independently. This is an index-only entry (no cause of death field). Does not answer q_001; a death certificate image or newspaper notice is still needed for circumstances."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-07-06T07:40:07.354Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MM88-DGG",
+        "collection": "United States, Census, 1900"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "FamilySearch's own index of this 1900 census entry gives William Ferber's birthplace as Ohio (not Germany) and Emma Ferber's birth as March 1871 in Ohio (not Kentucky, and not age 29/b.~1870-71 exactly matching the client's clipping). This conflicts with the client's own reading of the census clipping (William b. 1869 Germany; Emma b. Kentucky). Logged as an open conflict (see conflicts) pending review of the original census image."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": null,
+      "performed": "2026-07-06T07:46:35.002Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Ferber +died",
+        "recordPlace1": "Ohio",
+        "recordPlace2": "Hamilton",
+        "yearFrom": 1903,
+        "yearTo": 1903
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No hits for Ferber + died in Hamilton County, Ohio, 1903 in FamilySearch's AI-transcribed full-text index. Retried with broader keyword combinations (+Ferber alone; +Ferber +Cincinnati) — all nil. FamilySearch has no dedicated Hamilton County, Ohio newspaper/obituary collection indexed for this period (confirmed via collections_search). Cause of death for William H Ferber is not findable through FamilySearch's tools alone; a free option (Library of Congress Chronicling America) and paid options (Newspapers.com, GenealogyBank — client holds no subscriptions) remain as manual next steps."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-07-06T07:47:49.540Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferber",
+        "givenName": "Gerhard",
+        "recordType": "other",
+        "recordCountry": "United States",
+        "recordSubdivision": "Ohio",
+        "anyYearFrom": 1849,
+        "anyYearTo": 1856
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 9,
+      "notes": "No match for Gerhard Ferber's 1853 Ohio naturalization or 1849-1850 immigration. All 9 results are unrelated Farber/Faerber/Ferber individuals in Cleveland (Cuyahoga Co.) or Xenia (Greene Co.), not Cincinnati (Hamilton Co.). The Ohio Southern District Naturalization Index (collection 2110749) is untried and may be worth a more targeted search, but that is outside this session's scope."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "FamilySearch Family Tree, compiled profile for Charles Hubert Ferber (G7JB-Y46) and connected relatives, accessed 6 Jul 2026.",
+      "citation_detail": {
+        "who": "FamilySearch contributors",
+        "what": "Compiled Family Tree profile",
+        "when_created": "unknown (continuously updated compiled tree)",
+        "when_accessed": "2026-07-06",
+        "where": "FamilySearch.org",
+        "where_within": "Person profiles G7JB-Y46, G7JB-YH6, G7JB-2T6, GCD9-9X1, G7J1-QF2, G69T-T55, GNJH-SLL"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-06",
+      "url": "https://www.familysearch.org/tree/person/details/G7JB-Y46",
+      "notes": "Crowd-compiled tree data; uncorroborated facts kept at quality:1 in tree.gedcomx.json until independently verified.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "1900 U.S. Federal Census, Cincinnati, Hamilton County, Ohio, household of William Ferber; FamilySearch index, ark:/61903/1:1:MM88-DGG, accessed 6 Jul 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1900 U.S. Federal Census, population schedule (FamilySearch index)",
+        "when_created": "1900",
+        "when_accessed": "2026-07-06",
+        "where": "FamilySearch.org",
+        "where_within": "Cincinnati, Hamilton, Ohio — household of William Ferber"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MM88-DGG",
+      "notes": "Only the FamilySearch index was consulted via the record_read tool — no digitized census image was available to check directly. The client separately holds a clipping of this same record (known_holding kh_002) with different birthplace readings; see conflict c_001.",
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "Ohio, County Death Records, 1840-2001, entry for Wm. Ferber, d. 11 Mar 1903, Cincinnati, Hamilton County, Ohio; FamilySearch index, ark:/61903/1:1:F66M-8JZ, accessed 6 Jul 2026.",
+      "citation_detail": {
+        "who": "Hamilton County, Ohio (recording authority)",
+        "what": "County death record (index)",
+        "when_created": "1903-03-11",
+        "when_accessed": "2026-07-06",
+        "where": "FamilySearch.org",
+        "where_within": "Hamilton County, Ohio death records, entry for Wm. Ferber"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ",
+      "notes": "Index-only entry — confirms date/place of death and names both parents (Gerhard Ferber, Eva Ferber), but has no cause-of-death field. Does not resolve q_001; the underlying certificate image or a contemporary newspaper notice is still needed.",
+      "log_entry_id": "log_004"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S4",
+      "citation": "\"Charles Ferber\" (obituary), Fort Lauderdale News, Fort Lauderdale, FL, 13 Dec 1967 (client-provided clipping).",
+      "citation_detail": {
+        "who": "Fort Lauderdale News",
+        "what": "Newspaper obituary",
+        "when_created": "1967-12-13",
+        "when_accessed": "2026-07-06",
+        "where": "Client's personal clipping",
+        "where_within": "Not yet located in a digitized newspaper database"
+      },
+      "source_classification": "original",
+      "repository": "other",
+      "access_date": "2026-07-06",
+      "notes": "Provided by the client as known_holding kh_001. Not yet cross-located in an online newspaper archive.",
+      "log_entry_id": null
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MM88-DGG",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Ohio",
+      "structured_value": {
+        "place": "Ohio, United States"
+      },
+      "date": "Dec 1869",
+      "date_certainty": "approximate",
+      "place": "Ohio, United States",
+      "information_quality": "secondary",
+      "informant": "Unknown household member reporting to census enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace requires active reporting by a household member; the census does not name the informant.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MM88-DGG",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "March 1871, Ohio",
+      "structured_value": {
+        "date": "1871-03",
+        "place": "Ohio, United States"
+      },
+      "date": "Mar 1871",
+      "date_certainty": "approximate",
+      "place": "Ohio, United States",
+      "information_quality": "secondary",
+      "informant": "Unknown household member reporting to census enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birthplace requires active reporting by a household member; the census does not name the informant.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MM88-DGG",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Charles Ferber listed as son in the household of William and Emma Ferber, age 9, single",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "date": "1900",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "Census enumerator, witness to household composition",
+      "informant_proximity": "witness",
+      "informant_bias_notes": "Enumerator directly recorded household membership by visiting the dwelling.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "11 Mar 1903, Cincinnati, Hamilton, Ohio",
+      "structured_value": {
+        "date": "1903-03-11",
+        "place": "Cincinnati, Hamilton, Ohio, United States"
+      },
+      "date": "11 Mar 1903",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "primary",
+      "informant": "Unknown (likely a family member or undertaker reporting to the county recorder)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "County death record; the specific informant is not named in the index. No cause-of-death field is present in this index-level source.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_003",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "William Ferber's parents recorded as Gerhard Ferber and Eva Ferber",
+      "structured_value": {
+        "father": "Gerhard Ferber",
+        "mother": "Eva Ferber"
+      },
+      "date": "1903",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "information_quality": "secondary",
+      "informant": "Unknown informant reporting on the decedent's parentage",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Death-record informants are typically family and are secondary (not eyewitness) informants for the decedent's own parentage.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_004",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_004",
+      "record_id": "n/a (newspaper clipping, no FamilySearch record)",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Died at age 76 in Dec 1967",
+      "structured_value": {
+        "age_at_death": 76
+      },
+      "date": "12 Dec 1967",
+      "date_certainty": "exact",
+      "place": "Fort Lauderdale, Broward, Florida, United States",
+      "information_quality": "secondary",
+      "informant": "Unknown (family-supplied obituary information, typical for newspaper obituaries)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Newspaper obituaries are usually compiled from family-supplied information after death; treated as secondary for facts about the deceased's early life (e.g. birth year implied by age).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MM88-DGG",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Germany",
+      "structured_value": {
+        "place": "Germany"
+      },
+      "date": "1869",
+      "date_certainty": "approximate",
+      "place": "Germany",
+      "information_quality": "indeterminate",
+      "informant": "Client's own transcription of the same 1900 census clipping (known_holding kh_002)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "This is a conflicting reading of the identical 1900 census record already captured as a_001 (FamilySearch index says Ohio). The client's clipping is a firsthand image of the same document, but neither reading has been checked against the actual census image via the tools available here — this is a transcription discrepancy on ONE record, not corroboration between independent sources.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:MM88-DGG",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Kentucky, age 29",
+      "structured_value": {
+        "place": "Kentucky, United States",
+        "age": 29
+      },
+      "date": "~1871",
+      "date_certainty": "estimated",
+      "place": "Kentucky, United States",
+      "information_quality": "indeterminate",
+      "informant": "Client's own transcription of the same 1900 census clipping (known_holding kh_002)",
+      "informant_proximity": "self",
+      "informant_bias_notes": "Conflicting reading of the identical record already captured as a_002 (FamilySearch index says Ohio). Same caveat as a_007 — an image-level check is needed to adjudicate.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "William Ferber, head of household, matches William Hubert Ferber (I2) by name, household composition (wife Emma, son Charles), and place.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Emma Ferber, wife, matches Emma Becker (I3) by name, household composition, and place.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Charles Ferber, son, age 9 in 1900, matches Charles Hubert Ferber (I1, b. 22 Jun 1891) by name, age, and household position.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Death record for Wm. Ferber, d. 11 Mar 1903 Cincinnati, matches William Hubert Ferber (I2) by name, place, and the FamilySearch tree's existing death fact.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Death record names the decedent's parents as Gerhard Ferber and Eva Ferber, matching I4 (Gerhard Ferber) and I5 (Eva Engermann/Ferber) — independent corroboration of the tree's grandparent link.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Obituary age-at-death (76 in Dec 1967) is consistent with Charles Hubert Ferber's (I1) established birth date of 22 Jun 1891.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "speculative",
+      "rationale": "Client's transcription attributes this birthplace to William Ferber (I2); conflicts with a_001 — see conflict c_001. Not confidently resolved.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "I3",
+      "confidence": "speculative",
+      "rationale": "Client's transcription attributes this birthplace to Emma Ferber (I3); conflicts with a_002 — see conflict c_002. Not confidently resolved.",
+      "match_score": null,
+      "created": "2026-07-06",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "William Hubert Ferber's birthplace: Ohio (FamilySearch's index of the 1900 census, and the compiled Family Tree) vs. Germany (client's own reading of the same 1900 census clipping)",
+      "disputed_attribute": "birthplace",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_001",
+        "a_007"
+      ],
+      "independence_analysis": "These are NOT independent sources — both readings come from the same original 1900 census entry (ark:/61903/1:1:MM88-DGG), just transcribed differently (FamilySearch's index vs. the client's own reading of a clipping). This is a transcription-accuracy question, not corroboration between separate records. Note also that William's father Gerhard Ferber is independently documented as a German immigrant (b. 1820 Germany, immigrated ~1850) — so a Germany birthplace for William (b. ~1869) would be inconsistent with Gerhard's already-established immigration date, unless Gerhard made a return trip. This makes the Ohio reading more plausible on genealogical grounds, but is not conclusive without checking the original image.",
+      "weighing_analysis": "No image-level verification was possible with the tools available in this session. The Ohio reading is corroborated by the FamilySearch index AND is more consistent with the independently-documented immigration timeline of William's father. The Germany reading rests solely on the client's own transcription.",
+      "preferred_assertion_id": "a_001",
+      "resolution_rationale": "Tentatively prefer 'Ohio' given the corroborating immigration-timeline evidence, but this is not a confident resolution — recommend the client or a researcher with access to the digitized 1900 census image (Ancestry or FamilySearch image viewer) re-check the actual entry before treating this as settled.",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_002"
+      ]
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "description": "Emma (Becker) Ferber's birthplace and birth date: Cincinnati, Ohio, 25 Mar 1870 (compiled Family Tree) / March 1871, Ohio (FamilySearch's index of the 1900 census) vs. Kentucky, age 29 in 1900 (client's own reading of the same census clipping)",
+      "disputed_attribute": "birthplace",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_002",
+        "a_008"
+      ],
+      "independence_analysis": "Same underlying record as c_001 — the FamilySearch index and the client's clipping are two transcriptions of the same 1900 census entry, not independent sources. The compiled Family Tree's 'Cincinnati, Ohio, 25 Mar 1870' birth fact for Emma is itself uncorroborated (quality:1) and does not by itself resolve which census reading is correct.",
+      "weighing_analysis": "No image-level verification was possible in this session. Unlike William's case, there is no independent corroborating fact (like an immigrant father's timeline) to favor either reading here.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": "Left unresolved. Recommend checking the original 1900 census image directly — the discrepancy affects whether Emma's own ancestry (her parents John Becker and Mary Kramer) should be researched in Ohio or Kentucky records.",
+      "status": "unresolved",
+      "blocks_question_ids": [
+        "q_002"
+      ]
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "not_proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_005"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Checked FamilySearch's Ohio County Death Records index (log_004) — confirms date/place and parents, no cause field. Searched FamilySearch's full-text AI-transcribed document index for a contemporary death notice (log_006) — nil. Confirmed via collections_search that FamilySearch has no dedicated, indexed Hamilton County, Ohio newspaper/obituary collection for 1903. An un-indexed image-only collection (Ohio, Hamilton County Records, 1791-1994) may hold a probate or coroner's file but requires manual browsing outside this session's tools. Not exhausted: Library of Congress Chronicling America (free), Newspapers.com/GenealogyBank (subscription, client has none), and manual browsing of the Hamilton County image collection remain untried.",
+      "narrative_markdown": "## Circumstances of William Hubert Ferber's Death (d. 11 Mar 1903)\n\n**Not Proved.** The date and place of William Hubert Ferber's death — 11 March 1903, Cincinnati, Hamilton County, Ohio — are well established, independently corroborated by both FamilySearch's compiled Family Tree and the Ohio County Death Records index (which also names his parents, Gerhard and Eva Ferber, matching the tree). However, **the cause or circumstances of death could not be determined** with the tools available in this session.\n\n### What is established\n\n- William Hubert Ferber died 11 March 1903 in Cincinnati, Hamilton County, Ohio, at about age 33 (b. ~Dec 1869) — confirmed by an independent county death record (a_005), not just the compiled tree.\n- He was survived by his wife Emma (Becker) Ferber and at least one son, Charles Hubert Ferber, then about 11 years old.\n\n### What is not established\n\n- No cause-of-death field exists in the FamilySearch death-record index consulted.\n- No contemporary newspaper death notice was found in FamilySearch's full-text index, and FamilySearch has no dedicated indexed newspaper collection for Hamilton County, Ohio covering 1903.\n- The underlying death certificate image, a probate/coroner file, or a period newspaper (e.g. via the free Library of Congress Chronicling America archive, or a paid service like Newspapers.com/GenealogyBank) were not checked — these are the most promising next steps and are outside what this session's tools could reach.\n\n### Recommendation\n\nThis question remains open. Recommended next steps, in order of ease: (1) search Chronicling America (loc.gov, free) for a Cincinnati Enquirer or Cincinnati Post notice in mid-March 1903; (2) if the client has or can obtain Newspapers.com/GenealogyBank access, repeat the search there; (3) request the original Hamilton County death certificate image, which may include a cause-of-death field the index does not capture."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_005",
+        "a_006"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Extended the pedigree two generations beyond Charles Hubert Ferber's parents via FamilySearch's compiled Family Tree (log_003), then independently cross-checked the paternal grandparent link against William Ferber's own 1903 death record (log_004), which names Gerhard and Eva Ferber as his parents — consistent with the tree. Attempted to verify Gerhard Ferber's naturalization/immigration record (log_007) — no match found. Two birthplace conflicts (c_001, c_002) remain unresolved pending an original 1900 census image check. Maternal-line ancestry beyond John Becker and Mary Kramer was not pursued, pending resolution of Emma's birthplace conflict.",
+      "narrative_markdown": "## Extended Ancestry of Charles Hubert Ferber (b. 22 Jun 1891)\n\n**Probable**, for two generations beyond his parents.\n\n### Pedigree established\n\n- **Parents:** William Hubert Ferber (b. ~Dec 1869, Ohio; d. 11 Mar 1903, Cincinnati) and Emma Becker (b. ~1870/71, Ohio).\n- **Paternal grandparents:** Gerhard Ferber (b. 29 Sep 1820, Germany; immigrated ~1850; naturalized 1853, Ohio; d. 31 May 1917, Cincinnati) and Eva Engermann (b. 1834, Bavaria; d. 1 Jan 1872, Cincinnati). This link is corroborated by two independent FamilySearch sources: the compiled Family Tree and William's own 1903 death record, which separately names Gerhard and Eva as his parents (a_005) — the strongest evidence in this project.\n- **Maternal grandparents:** John Becker (b. ~Jan 1845, Kentucky) and Mary Kramer (b. Ohio, date unknown). This link currently rests only on the compiled Family Tree (quality:1, uncorroborated).\n\n### Why \"Probable\" and not \"Proved\"\n\n1. The paternal line (Gerhard & Eva Ferber) has independent corroboration from two sources agreeing on the same parent-child link, but both ultimately trace to FamilySearch as the repository, and Gerhard's own immigration/naturalization facts could not be independently verified (a targeted record search returned no match).\n2. The maternal line (Becker/Kramer) rests solely on the uncorroborated compiled tree.\n3. Two open conflicts (c_001, c_002) affect William's and Emma's birthplaces — if either resolves to Germany or Kentucky respectively (rather than Ohio), it would change which country/state's records the next generation search should target, so it is deferred rather than guessed.\n\n### Recommendation\n\nBefore treating this pedigree as settled: (1) check the original 1900 census image to resolve c_001/c_002; (2) attempt a more targeted naturalization search for Gerhard Ferber (Ohio Southern District Naturalization Index, collection 2110749); (3) once Emma's birthplace is resolved, search for John Becker's and Mary Kramer's own parents in the appropriate state's records."
+    }
+  ],
+  "evaluations": []
+}

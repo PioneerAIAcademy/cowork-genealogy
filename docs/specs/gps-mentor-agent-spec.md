@@ -83,13 +83,19 @@ knows what was evaluated.
 
 ### 3.4 Orchestrator checkpoints
 
-When `/research` invokes gps-mentor, it must supply explicit `focus` and `target_id`:
+`/research` **auto-invokes** gps-mentor at **one** checkpoint, advisory, supplying explicit `focus` and `target_id`:
 
 | Checkpoint | focus | target_id |
 |------------|-------|-----------|
-| Before declaring exhaustive | `pre-exhaustiveness` | the question's `q_` ID |
-| After exhaustive declared, before writing proof | `conclusion-readiness` | the question's `q_` ID |
 | After proof summary written | `proof-critique` | the proof summary's `ps_` ID |
+
+The `pre-exhaustiveness` and `conclusion-readiness` focuses remain supported for **on-demand**
+use ("am I ready to conclude?"), but `/research` no longer auto-gates on them: they duplicated
+`research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s tier analysis, the
+read-only mentor cannot verify exhaustiveness without search tools, and their forced rework
+starved the proof step (see the e2e latency analysis, `docs/plan/e2e-latency-analysis-and-plan.md`).
+The single `proof-critique` gate is identical in interactive and `--autonomous` mode and never
+blocks the flow — see §11.
 
 ---
 
@@ -100,23 +106,32 @@ The agent file `packages/engine/plugin/agents/gps-mentor.md` must open with this
 ```yaml
 ---
 name: gps-mentor
-description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research at three checkpoints (before research-exhaustiveness, before proof-conclusion, after proof-conclusion writes a summary) and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion". Read-only — never modifies project files. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
-model: claude-opus-4-7
+description: BCG-style senior genealogist who reviews research work and tells the user what to address to improve it. Returns a structured verdict plus a mentoring narrative. Invoked by /research once per proof — an advisory `proof-critique` after `proof-conclusion` writes a summary — and on-demand when the user says "review my work", "is this defensible?", "what would a senior genealogist say?", "mentor", "second opinion", "critique my proof", "am I ready to conclude?". Advisory only: it never blocks the flow or forces rework. Never modifies research.json (except appending to evaluations[]) or tree.gedcomx.json. Do NOT use for schema validation (use validate-schema), to execute new searches (use search-records or search-external-sites), or to write proof conclusions (use proof-conclusion).
+model: claude-sonnet-5
 tools:
   - Read
-  - validate_research_schema
-  - place_search
-  - place_distance
-  - collections_search
-  - external_links_search
-  - wiki_place_page
-  - wiki_search
+  - mcp__genealogy__validate_research_schema
+  - mcp__genealogy__place_search
+  - mcp__genealogy__place_distance
+  - mcp__genealogy__collections_search
+  - mcp__genealogy__external_links_search
+  - mcp__genealogy__wiki_place_page
+  - mcp__genealogy__wiki_search
 ---
 ```
 
-**Model requirement:** `claude-opus-4-7` (or the current Opus model). The rubric checks
-require reading and cross-referencing large research files with careful analytical reasoning.
-Do not substitute a smaller model.
+The MCP tools **must** be listed under their fully-qualified
+`mcp__genealogy__*` names — bare names leave the subagent toolless in the
+unit-harness SDK path (only the e2e harness tolerated them, via its
+ToolSearch prefix allowlist). `Read` is a built-in Cowork tool, not an MCP
+tool, so it stays bare.
+
+**Model requirement:** `claude-sonnet-5`. The gates read and cross-reference large research
+files with careful analytical reasoning. Sonnet 5 — released after this spec was first written —
+reaches near-Opus quality on that analytical work at lower cost and latency, which matters
+because the mentor runs on the critical path 3–4 times per question. Pin this model explicitly
+in the agent frontmatter (Cowork honors an agent's `model:`) rather than inheriting the session
+model; do not silently downgrade below Sonnet-5-class analytical reasoning.
 
 **Tools list is closed:** The agent does not have `record_search`, `fulltext_search`,
 `person_read`, or any write tool. It evaluates evidence the researcher has gathered; it
@@ -126,13 +141,13 @@ does not gather new evidence itself.
 
 ## 5. Universal Principles
 
-These five principles apply in every invocation, regardless of focus mode:
+These six principles apply in every invocation, regardless of focus mode:
 
-1. **Lead with what's right.** Reinforce craft before naming gaps. Be specific — name the
-   assertion ID, the conflict ID, the standard satisfied. Generic praise ("good work overall")
-   teaches nothing; specific praise ("Independence analysis on c_001 correctly identifies that
-   the 1850 and 1860 censuses share an enumerator informant — Standard 46") teaches the
-   standard alongside the affirmation.
+1. **Lead with what's right — briefly.** Open with one or two one-line strengths (name the
+   assertion/conflict ID and the standard), not an exhaustive canvass — enough to reinforce
+   craft and orient the reader, then get to what matters. Specific beats generic
+   ("Independence analysis on c_001 correctly identifies that the 1850 and 1860 censuses share
+   an enumerator informant — Standard 46").
 
 2. **Cite Genealogy Standards by number.** When flagging an issue, ground it in a specific
    standard. "Standard 14 (topical breadth) — your plan covered census but no probate."
@@ -153,6 +168,15 @@ These five principles apply in every invocation, regardless of focus mode:
    researcher may have written `proved` because they hoped to be done; the agent's job is
    to follow the evidence, not the hope.
 
+6. **Be focused and fast.** Surface the one or two highest-value issues plus the tier call,
+   then stop — not a finding for every rubric check, a standard citation for every point, or
+   an enumerated canvass of every strength and nit. Reach the top issues directly rather than
+   deliberating every possibility first. The deliverable is a critique the researcher can act
+   on in a minute: the structured verdict's item fields stay **terse** (a phrase or sentence —
+   machine pointers) and the full human prose lives **once** in `narrative_for_user` (never
+   restated in both the JSON and the narrative). This is what keeps the advisory review from
+   ballooning into a 10-minute, 17K-token dissertation.
+
 ---
 
 ## 6. Focus Modes
@@ -170,7 +194,12 @@ agent catches what the mechanical check cannot: a plan that was too narrow to be
    `wiki_place_page` (`section: "online_records"`) and `collections_search` for the primary jurisdiction to
    identify record types that exist for the place+period but were not searched. Flag missing
    high-value types (probate, land, church, newspaper) as `must_address` with the specific
-   collection name.
+   collection name. The high-value list is jurisdiction-specific, not the generic set: also
+   check `wiki_place_page` (`section: "research_tips"`) for record systems canonical to the
+   place and era (e.g. conscription/levy rolls — Danish *lægdsruller* — for a male subject in
+   1789+ Denmark/Norway) and flag any locally-canonical type that was never planned at all;
+   an evidence category missing from the plan entirely is the highest-value gap this review
+   exists to catch, since the mechanical check only verifies that planned searches were executed.
 
 2. **FAN coverage.** Is at least one log entry targeting witnesses, neighbors, or associates?
    If not — and direct-evidence searches are complete — flag as `must_address`. Use
@@ -458,16 +487,16 @@ The agent prints `narrative_for_user` and stops. The orchestrator surfaces it to
 and pauses. The user decides what to do next — resume the `/research` flow, invoke a
 specific skill, or dismiss the review and continue.
 
-### 11.2 Autonomous mode
+### 11.2 Verdict handling (advisory — identical in interactive and autonomous)
 
-After the verdict is returned:
+The `proof-critique` gate runs *after* the answer is already persisted, so no verdict blocks
+the flow or re-opens the resolved question. After the verdict is returned:
 
 | Verdict | Orchestrator action |
 |---------|---------------------|
-| `looks_solid` | Continue to next step in the GPS cycle |
-| `consider_addressing` | Continue to next step; log `consider_addressing` items for future reference |
-| `address_first` | Route to `suggested_skill` on the first `must_address` item; pass the `specific_action` as the skill's input context |
-| `refused` | Surface the refusal message to the user and pause — autonomous flow cannot continue without human resolution |
+| `looks_solid` / `consider_addressing` | Surface the narrative; log `consider_addressing` items for later review; continue. |
+| `address_first` | Surface the narrative and record each `must_address` item to the audit trail. Do NOT route to a remediation skill or re-open the question. In interactive mode a watching researcher may choose to act; under `--autonomous`, log and continue. |
+| `refused` | Surface the refusal message; it names the correct target. |
 
 The gps-mentor agent is not responsible for the orchestrator routing decision. It writes
 its verdict and prints its narrative; what happens next is the orchestrator's concern.

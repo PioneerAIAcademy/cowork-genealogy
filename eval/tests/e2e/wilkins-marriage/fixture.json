@@ -1,0 +1,19 @@
+{
+  "id": "wilkins-marriage",
+  "name": "Elijah Wilkins — spouse",
+  "genre": "strip",
+  "source_pid": "97YZ-J3D",
+  "captured": "2026-07-10",
+  "researcher_question": "Who did Elijah Wilkins marry?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1830s",
+    "geography": "US-KY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Elijah Wilkins (Muhlenberg County, Kentucky) married Sarah 'Sally' Millard in December 1834. The spouse, the couple/marriage relationship, her mother-child links, and the two indexed marriage records were stripped; the parents, ten children, censuses (1840-1870), Elijah's death record, Find a Grave, and deeds were left as anchors. The 1850/1860/1870 census citations were trimmed to name only Elijah so they anchor him without revealing the wife. The spouse is recoverable from the 1834 Muhlenberg County marriage record and from children's death certificates naming their mother."
+}

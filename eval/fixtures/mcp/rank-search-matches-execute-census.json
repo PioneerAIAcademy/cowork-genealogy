@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the single staged 1850-census Flynn result against tree subject I1 (Patrick Flynn, b.~1845 Ireland). The lone record_search hit — Patrick Flynn, ark MXHY-TP4, in the Thomas Flynn household — scores as a strong match and is unattached (new evidence to hand off for extraction downstream). With one staged candidate, searchRank == matchRank == 1. Used by the execute-census-search triage test to exercise the match-ranked review surface + attachment flags without a live match API. Matched on subjectId; independent of the stagedResultsRef handle (a per-run uuid).",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:MXHY-TP4",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Ireland",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.9481,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

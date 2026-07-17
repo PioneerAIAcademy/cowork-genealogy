@@ -1,0 +1,18 @@
+{
+  "id": "angelina-aiello-parents",
+  "name": "Angelina M Aiello — parents (Pittsburgh, PA; Italian immigrants)",
+  "source_pid": "L4HQ-CBN",
+  "captured": "2026-07-08",
+  "researcher_question": "Who were the parents of Angelina M Aiello, born 1910, who married Anthony Sunseri and lived in Pittsburgh, Allegheny County, Pennsylvania?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1910s",
+    "geography": "US-PA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "moderate",
+  "notes": "Parents Pietro Aiello (K2YJ-YW8, b. 25 Aug 1881 Serrastretta, Calabria, Italy; d. 25 Dec 1975 Pittsburgh) and Felicia Scalese (K2YJ-YCX, b. 15 Feb 1894 Serrastretta; d. 3 Jun 1951 Pittsburgh) were stripped, along with both parent-child relationships and the 1940 U.S. census source that puts Angelina in their household. REQUIRED findings are the two parent IDENTITIES. Recovery path: the indexed 1940 U.S. Census (collection lists Angelina Aiello, age ~29 and single, in the Pittsburgh Ward 3 household of Pete/Pietro Aiello and Felicia Aiello) and the Find A Grave entry 'Angelina M Aiello Sunseri' (parents buried at Saint Michaels Cemetery, Mount Oliver). Angelina keeps her maiden surname 'Aiello' (as with the spriggs/wardell parents fixtures), so recovering the father = identifying the specific Pietro Aiello. NOTE: the mother is named 'Felicia Aiello' (married name) in the 1940 census; her maiden name 'Scalese' is corroborating and may need an Italian/vital record — grade f2 on identifying the mother (Felicia), not strictly on the maiden surname. Italian-immigrant family from Serrastretta, Calabria; birth recorded as 'South America' adds mild noise."
+}

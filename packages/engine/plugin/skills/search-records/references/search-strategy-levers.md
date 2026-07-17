@@ -31,7 +31,7 @@ and expect a specific record.
 | Drop given name | Clear `q.givenName`; keep `q.surname` + place + date | Given name indexed as initials, nickname, "Infant," or in another language |
 | Drop both names | Use only place + date + `q.sex` + relationship params | Both names corrupted; only structural clues stable |
 | Search by spouse | Swap principal and spouse: put spouse in `q.givenName/surname`, subject in `q.spouseGivenName/spouseSurname` | Subject's name is common; spouse's is unique |
-| Search by parent | Clear principal name; fill `q.fatherGivenName/Surname` and/or `q.motherGivenName/Surname` | Looking for sibling sets; principal may have been "Baby" or stillborn |
+| Search by parent | Clear principal name; fill `q.fatherGivenName/Surname` and/or `q.motherGivenName/Surname` | Looking for sibling sets; principal may have been "Baby" or stillborn; **or the subject's own vital record nils by name — re-anchor on the parent's given name + exact dates before pivoting to indirect evidence** |
 | Search by child | Search child as principal with parent name set to subject | Subject's own records scarce; child's are abundant |
 | Wildcard surname | `q.surname=Sm*th` or `q.surname=*tnam` | Foreign transliteration, indexing errors, married-name variants |
 | Wildcard given name | `q.givenName=Joh*` or `q.givenName=Eli?abeth` | Diminutives, abbreviations, ambiguous handwriting |
@@ -43,9 +43,12 @@ and expect a specific record.
 | Lever | API change | When to try |
 |---|---|---|
 | Broaden place (county→state→country) | Drop smaller jurisdiction levels from place string | No hits in expected county; boundary changes; ancestor crossed county lines |
+| **Boundary changed since the event** | Search the jurisdiction that existed **at the event date** first (the historical boundary); if that returns nil, retry under the place's **present-day** jurisdiction (`recordCountry` + place string). `place_search_all` lists every jurisdiction the place has belonged to over time — try the historical one first, the most-recent one next. | Any place whose city / county / state / country / parish was renamed, split, merged, or reassigned since the event — a county that split, a parish reorganized, or an empire that dissolved into successor states (Austria-Hungary → Slovakia / Czechia / Hungary / Croatia / Poland / Ukraine…, Prussia → Poland, Ottoman → Balkan states). See the note below. |
 | Narrow place (state→county→town) | Add smaller levels to place string | Too many hits; subject's town is known |
 | Drop place | Clear all place parameters | Subject migrated unexpectedly |
 | Switch event-place | Move place from `birthLikePlace` → `residencePlace` → `marriageLikePlace` → `anyPlace` | Each event occurred in a different place |
+
+**Boundary changes: search the historical jurisdiction first — but watch for the modern-country exception.** The general rule when a place's boundaries have changed (city, county, state, country, or parish renamed, split, merged, or reassigned) is to search the boundary that governed it *at the time of the event*: the record was created under the jurisdiction then in force, so that historical boundary is usually where it is filed. **The exception is FamilySearch's own indexing:** it sometimes files a collection under the place's **present-day** country instead of the historical one. The worked example — a birth in 1893 Šútovo, then Suttó, Turócz County, Kingdom of Hungary — is indexed under **Slovakia** ("Slovakia, Church and Synagogue Books"), because Šútovo is in modern Slovakia. Searching `recordCountry: "Hungary"` (or the historical county "Turócz") returns nil no matter how many name variants you try, because the record isn't filed under Hungary. So search the historical jurisdiction first; when it returns nil, switch `recordCountry` to the present-day country and retry — that is where FamilySearch put the collection. And don't assume the historical empire's religion either (a 1893 Turócz parish is Slovak **Lutheran**, not Catholic) — let the collection, not the assumption, decide.
 
 ## Date levers
 
@@ -76,15 +79,16 @@ and expect a specific record.
 When a search returns 0 hits with reasonable inputs, try in this order:
 
 1. Broaden year range to ±10
-2. Drop given name (surname + place + date)
-3. Drop surname (given name + place + date + relationships)
-4. Wildcard the surname
-5. Wildcard the given name
-6. Switch event type to Any
-7. Broaden place by one jurisdiction level
-8. Drop place entirely
-9. Switch from principal to spouse / parent / child
-10. Search by neighbor or FAN-club member
+2. **If the place's boundaries changed since the event, search the historical jurisdiction first, then the present-day one.** Records are usually filed under the boundary that governed the place at the event date — but FamilySearch sometimes indexes the collection under the modern country instead (e.g. Hungary→Slovakia), so retry `recordCountry` as the present-day country when the historical one returns nil. Try both early; it is a common, silent cause of nil on Central/Eastern-European searches.
+3. **Broaden the place by one jurisdiction level (parish → county → state) — early, before touching names.** Many parishes are indexed only at the county level (especially Scandinavian parishes: e.g. Ringebu is indexed under its county "Oppland"), so an exact-parish search returns nil even when the record exists. Broadening the place is cheaper and higher-yield than burning name variants.
+4. **Re-anchor on a known relative (spouse / parent / child) — before dropping or wildcarding the subject's name.** If the subject's own record nils but you have a relative's name plus exact dates from another record, search by the relative: fill `q.fatherGivenName`/`q.motherGivenName` (or `q.spouseGivenName`), or search a child as principal with the subject as parent. This is often the *primary* recovery move for emigrant-origin cases, where the subject's own record is indexed under names you can't guess.
+5. Drop given name (surname + place + date)
+6. Drop surname (given name + place + date + relationships)
+7. Wildcard the surname
+8. Wildcard the given name
+9. Switch event type to Any
+10. Drop place entirely
+11. Search by neighbor or FAN-club member
 
 **Still 0 hits across all variations:** the records may be unindexed.
 Switch to image browsing, Catalog search, Full-Text Search, or

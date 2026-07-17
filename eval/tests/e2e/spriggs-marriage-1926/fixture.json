@@ -1,0 +1,18 @@
+{
+  "id": "spriggs-marriage-1926",
+  "name": "Reuben Spencer Spriggs",
+  "source_pid": "L64C-QQX",
+  "captured": "2026-07-10",
+  "researcher_question": "Who did Reuben Spencer Spriggs marry, and when and where did the marriage take place?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1920s",
+    "geography": "US-MN"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Family lived in Beadle County, South Dakota; the 1926 marriage took place out-of-state in Minneapolis, Minnesota, so a South Dakota-scoped search misses the marriage record. Spouse identity is recoverable from the 1930/1935/1940 census households and the children's records."
+}

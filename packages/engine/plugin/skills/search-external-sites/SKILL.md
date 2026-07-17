@@ -64,6 +64,37 @@ References to load when the moment arrives:
 
 Repeat for each external-site plan item.
 
+## Autonomous mode — no user to capture
+
+Under `--autonomous` (the research objective was launched with that flag)
+there is **no user** to click a link, capture a PDF, or upload it — so the
+click-capture-analyze loop above **cannot complete**. Do **not** present a
+URL and wait for a capture, and do **not** end your turn to ask the user to
+capture it: that stalls an autonomous run (the orchestrator's rule is that
+only `project.status == "completed"` or a logged blocker ends the run).
+
+Instead, for each capture-required external-site plan item:
+
+1. **Prefer a FamilySearch equivalent first.** Many records these sites
+   hold — UK/Scottish civil registration, censuses, parish registers — are
+   also indexed on FamilySearch. If `search-records` can reach the record,
+   route there and capture the real thing rather than deferring.
+2. Otherwise, still resolve the place and build the search URL (steps 2–3)
+   — it is a genuine lead worth recording.
+3. **Log it as deferred** in one `research_log_append` call: `outcome:
+   "negative"`, `resultsExamined: 0`, `externalSite.captureReceived: false`,
+   and `notes` stating the search was **deferred — requires an interactive
+   user capture and is not obtainable in an autonomous run**, with the
+   generated URL recorded so a later interactive session can capture it.
+4. Mark the plan item terminal (step 7).
+5. **Return to the orchestrator and keep going** — do not wait.
+
+This keeps the audit trail honest — the external avenue is logged as a
+deferred lead, not silently dropped, so `research-exhaustiveness` can weigh
+it and proceed on the evidence that *is* obtainable (FamilySearch records,
+provided documents). It does not lower the bar: in an interactive session
+the same search would be captured normally.
+
 ## Before you search
 
 **Check subscriptions.** Read `researcher_profile.subscriptions` in

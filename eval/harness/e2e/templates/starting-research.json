@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_{{slug_underscored}}",
+    "objective": "{{researcher_question}}",
+    "subject_person_ids": ["{{subject_person_id}}"],
+    "status": "active",
+    "created": "{{captured_date}}",
+    "updated": "{{captured_date}}"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

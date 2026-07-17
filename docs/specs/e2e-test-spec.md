@@ -40,15 +40,15 @@ certification that the agent does fully sound, verifiable GPS research.
 - An `expected-findings.json` enumerating what the agent should
   recover, derived from the diff between the original (well-
   researched) tree and the stripped starting state
+- On the FamilySearch-sourced path (from a PID), the full original (pre-stripping)
+  `unstripped-tree.gedcomx.json`, from which the starting tree is
+  derived. It is **never** copied into the run workspace — see below.
 - Fixture metadata: id, source PID, tags, model pins (caps are harness
   defaults, not fixture metadata — see §3.1)
 - A README with human notes (PID, what was removed, why)
 
 ### What the test fixture does not contain
 
-- The full original (pre-stripping) tree. The diff that defines the
-  answer is computed once at fixture-creation time and persisted as
-  `expected-findings.json`; the unstripped tree is not retained.
 - Mocked MCP responses. Other than the snapshotted starting tree,
   all the agent's tool calls hit live FamilySearch APIs during the
   test run.
@@ -69,10 +69,31 @@ eval/tests/e2e/smith-parents-1850/
   starting-tree.gedcomx.json
   expected-findings.json
   README.md
+  unstripped-tree.gedcomx.json   (optional; see below)
 ```
 
 Slug convention: `<surname>-<topic>-<year>` where helpful, but any
 short descriptive kebab-case is fine. Slugs are also the test ID.
+
+`unstripped-tree.gedcomx.json` is the committed snapshot of the
+well-researched tree, taken **once** at authoring time. It exists on
+the FamilySearch-sourced authoring path (from a PID) and lets
+`starting-tree.gedcomx.json` be *derived*
+rather than hand-transcribed: re-strip a different subset and the
+starting tree is rebuilt deterministically. It is absent on the
+PID-less path (§6.1), where the starting tree is constructed from a
+research document and there is nothing to strip.
+
+**It is the answer key.** `build_workspace` copies by explicit
+filename, so neither it nor `expected-findings.json` ever reaches the
+agent's workspace. A `copytree`-style "simplification" of that copy
+step would hand every run its own answer and silently pass the whole
+suite; `test_build_workspace_never_copies_the_answer_into_the_workspace`
+guards it.
+
+The snapshot is never refreshed in place — FamilySearch is a mutable
+upstream, and re-fetching would rewrite the test underneath its own
+history, making this month's score incomparable with last month's.
 
 ---
 
@@ -107,6 +128,7 @@ Test metadata.
 |-------|------|----------|-------------|
 | `id` | string | yes | Unique slug matching the directory name |
 | `name` | string | yes | Short human-readable name |
+| `genre` | enum | no | `strip` (default) or `record-hint` — see §3.6 |
 | `source_pid` | string | yes | FamilySearch PID the fixture was captured from |
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
@@ -115,6 +137,7 @@ Test metadata.
 | `model.judge` | string | yes | Pinned judge model |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
+| `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
 
 **Stop-condition limits (`caps`) are NOT a fixture field.** They're a
 harness safety concern (don't run forever, don't burn the budget), so
@@ -220,6 +243,29 @@ corrupts an entire upstream tree).
 A fixture may mix `recover` and `avoid` findings. At least one negative
 fixture should exist in the suite so over-claiming is sampled (§1).
 
+The judge's grade on an `avoid` finding is backstopped by a
+deterministic harness check (`apply_avoid_guard` in `e2e/judge.py`,
+applied by the orchestrator and by judge calibration): if the avoided
+claim's target is present in the agent's final tree — the stripping
+linter's own matcher, given+surname token overlap plus fact type for
+`fact` findings — the finding is forced to `matched: "false"`, the
+recall fractions are recomputed, and the verdict is recomputed
+**downgrade-only**. What was forced is recorded under the result's
+`judge_output.avoid_guard.forced_false` and in the finding's `notes`.
+The judge still grades the subjective half (is the claim present "only
+as an explicitly rejected hypothesis"?); the guard only prevents a
+model grader from excusing the objective half. Authoring gates treat
+`avoid` findings accordingly: the presence mirror skips them (the
+claim was never in the tree), while the stripping linter still warns
+when an avoided claim is already present in the *starting* tree — a
+fixture must not pre-assert the thing it forbids.
+
+An `avoid` finding may be `required: true`; it then gates the verdict
+exactly like a recover finding (`matched: "true"` = correctly
+avoided). Pair a required `avoid` guard with a required positive
+finding that the agent *documented* the negative conclusion, so a run
+that does nothing at all does not pass by default.
+
 ### 3.5 `README.md`
 
 Human notes. Required content:
@@ -229,6 +275,31 @@ Human notes. Required content:
 - What was removed from the starting tree and why
 - The author's expected difficulty and any notes that would help
   someone reviewing a failed run
+
+### 3.6 Record-hint fixtures (`genre: "record-hint"`)
+
+A `strip` fixture (the default genre) hides an answer the tree already
+had. A **record-hint** fixture inverts that: the answer was never in
+the tree — it lives in a historical record that FamilySearch's hinting
+matched to the tree person with unverified confidence. Nothing is
+stripped:
+
+- `starting-tree.gedcomx.json` is the snapshot **as-is** — written by
+  `strip --none` — and `unstripped-tree.gedcomx.json` is committed
+  **identical** to it, so `snapshot --check` can still audit upstream
+  drift. `e2e.author validate` enforces the equality and skips the
+  presence mirror (expected findings are extra-tree by definition).
+- Findings drafted from an unverified hint record are a **draft
+  pending adjudication**: a genealogist must confirm the hint record
+  concerns the tree person before the fixture's grades are trusted.
+  The three outcomes: **(a)** true match — keep the findings;
+  **(b)** the objective is answerable from other records — edit
+  `expected-findings.json` to the correct answer; **(c)** false match
+  with no findable substitute — replace the findings with a
+  `polarity: "avoid"` guard naming the claim the agent must not
+  assert, plus a `required` recover finding that the agent documented
+  the negative conclusion (§3.4.1). Say in the fixture README which
+  state the fixture is in.
 
 ---
 
@@ -416,15 +487,32 @@ each call with its arguments and denies by tool name. **A denied call
 does not run, does not count toward the tool-call cap, and does not stop
 the run** — the agent is told to use records instead and continues. Every
 denied attempt is recorded in the run log's `blocked_tree_reads` array
-(`{tool, args}` per entry), so a reviewer can see whether the agent
-*tried* to shortcut research. A non-empty `blocked_tree_reads` doesn't
-invalidate a `pass` (the answer was still earned from records, since the
-read was blocked), but it's worth a look.
+(`{tool, args, blocked_by}` per entry, `blocked_by` ∈ `"tree"` |
+`"fixture"`), so a reviewer can see whether the agent *tried* to
+shortcut research and which block source denied it. A non-empty
+`blocked_tree_reads` doesn't invalidate a `pass` (the answer was still
+earned from records, since the read was blocked), but it's worth a look.
+
+**Per-fixture blocked tools.** A fixture may extend the universal block
+with a `blocked_tools` array in its `fixture.json` (§3.1) — bare
+advertised tool names denied for that fixture's runs by the same
+`PreToolUse` hook, with the same semantics (denied call doesn't run,
+doesn't count toward the cap, doesn't stop the run). Use it when the
+fixture's *ground truth itself* is reachable through a legitimate
+research tool — the canonical case is a fixture derived from a public
+FamilySearch Wiki case-study article that names the answer, where
+`wiki_search` would surface the article during ordinary planning.
+Denials are recorded in the same `blocked_tree_reads` array with
+`"blocked_by": "fixture"` (universal tree-block denials carry
+`"blocked_by": "tree"`) so a reviewer can tell the two block sources
+apart. Note the asymmetry this creates with production (`/research`
+normally has the tool) and keep the list minimal — blocking a tool the
+answer does NOT leak through just handicaps the benchmark.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
-recoverable *from records alone*. The fixture-validity gate (§14) proves
-this — a real run can only pass with these tools blocked, so an
-answer reachable only via the tree will fail and the fixture can't land.
+recoverable *from records alone*. A real validity run (§14) proves
+this — a run can only pass with these tools blocked, so an
+answer reachable only via the tree will fail and the fixture won't validate.
 
 ### 6.2 Provided documents (bundled external evidence)
 
@@ -551,11 +639,54 @@ as an *agent* failure to act on, not a judge bug to ignore.
 | `verdict` | `pass` if all required matched; `partial` if some required matched (or matched/partial); `fail` if none |
 | `rationale` | Free-text summary |
 
+When the §3.4.1 avoid-guard fires, the persisted `judge_output`
+additionally carries `avoid_guard.forced_false` (which findings the
+harness overrode, and the matching final-tree person ids), the affected
+findings' `notes` gain an `[avoid-guard]` annotation, and
+`recall_*`/`verdict` reflect the recompute.
+
 ### 7.3 Variance and Calibration
 
 Single run per test. Pass rates will jitter run-to-run from LLM
 non-determinism; do not over-interpret small deltas in aggregate
 trends.
+
+Two variance sources hide behind that sentence. The **agent run** is the
+dominant one — long-horizon research against live FamilySearch, different
+every time. The **judge** contributes separately, and is the one we can
+actually measure, because `calibrate_judge` replays fixed recorded inputs
+(the committed `final-tree` / `final-research` siblings), so anything that
+moves between two sweeps is the judge alone.
+
+**Measured judge noise floor** — 2026-07-16, 41 annotations / 107 findings,
+`claude-opus-4-8`, two back-to-back sweeps over identical inputs:
+
+| | Sweep A | Sweep B |
+|---|---|---|
+| Per-finding agreement (gating) | 86% (92/107) | 85% (91/107) |
+| Proof-quality (advisory) | 62% (21/34) | 68% (23/34) |
+| Verdict | MEETS | MEETS |
+
+Two findings out of 107 changed judge label, both borderline `true`/`partial`
+calls. Practical reading: **treat per-finding agreement deltas of ≲2 points as
+noise**, and treat the advisory proof-quality axis as noisy enough (6 points
+across two sweeps at n=34, where one finding is worth ~3) that only large
+moves carry signal. The gate holds 5–6 points of margin over the ≥80% target,
+so this jitter does not threaten the verdict. Caveat: two sweeps give a point
+estimate of the noise, not a bound — re-measure before trusting a small delta
+to justify a decision.
+
+**The e2e judge is deliberately not temperature-pinned, and cannot be.**
+Sampling parameters are removed on the Opus 4.7/4.8 family: sending
+`temperature` returns a 400 (`` `temperature` is deprecated for this model ``).
+Pinning would mean freezing this judge on a 4.5/4.6-era model, and the
+measurement above is why that trade isn't worth taking — 1 point of judge
+self-inconsistency sits an order of magnitude below the ~20 points of human
+inter-rater disagreement the ≥80% target is itself set to approximate
+(`calibrate_judge.py::PER_FINDING_TARGET`), and it lands on exactly the
+borderline calls where humans disagree with each other too. The *unit* judge is
+pinned (`harness/judge.py::JUDGE_TEMPERATURE`); its model still accepts the
+parameter.
 
 Before the suite grows beyond the first fixture, sanity-check the
 judge prompt against the first run trace: if the judge's verdict
@@ -624,7 +755,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
@@ -698,8 +829,8 @@ acting.
   axis (§7) is a single rubric-graded score, not the multi-layer
   human-verified grading of `gps-test-spec.md`
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (Cheap artifact checks do run in CI — a blocking grading gate plus an
-  advisory fixture-validity report; see §14.)
+  PRs. (One cheap artifact check runs in CI — a blocking grading gate;
+  fixture validity is a non-CI authoring practice, see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -725,7 +856,7 @@ acting.
 
 ---
 
-## 14. Fixture Validity Gate
+## 14. Fixture Validity (recommended, not CI-gated)
 
 A fixture that the agent can never solve is worthless: every failure is
 a false negative on agent capability. Stripping completeness (the
@@ -739,23 +870,21 @@ log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
 fixture that is *entirely* negative findings (`polarity: "avoid"`),
 "pass" still means the agent behaved correctly — it declined the wrong
 candidates — so the same standard holds. This is the bar for a fixture to
-count as solvable; it is **not** a CI merge blocker (see below), so a
-draft fixture can land with its validity run still owed.
+count as solvable; it is a **recommended authoring practice, not a CI
+merge blocker**, so a draft fixture can land with its validity run still
+owed.
 
-This is surfaced two ways:
+It is a **documentation requirement**, not a CI check: the author runs the
+fixture for real and commits the passing run log alongside it (testing guide
+§5, first-time-setup step 6). PID-less fixtures authored without FamilySearch
+access (`author-e2e-fixture`'s PID-less path) can only be validated later on
+an FS-enabled host, and land unvalidated in the meantime. CI does **not**
+flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
+warning was removed because it re-flagged every un-run fixture in the repo on
+every e2e PR (pure noise).
 
-- **Documentation requirement** — the author runs the fixture for real
-  and commits the passing run log alongside it (testing guide §5,
-  first-time-setup step 6).
-- **CI artifact report** (cheap, no live run) — the `check-e2e-fixtures`
-  workflow runs two checks. Its **fixture-validity** check is **advisory /
-  non-blocking**: it flags any committed `eval/tests/e2e/<slug>/` lacking a
-  committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
-  warning annotation, so a draft fixture can land with its validity run still
-  owed — notably PID-less fixtures authored without FamilySearch access
-  (`author-e2e-fixture` Path 3) whose validity run can only happen on an
-  FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
-  workflow also runs a blocking grading gate** (§7.4): a run log *added in the
-  PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same
-  PR (a treeless crash/skip run is exempt). Both checks read only committed
-  files and do **not** trigger a live e2e run (those stay out of CI per §12).
+The `check-e2e-fixtures` workflow instead runs only the **blocking grading
+gate** (§7.4): a run log *added in the PR* that produced a final tree must
+ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
+exempt). It reads only committed files and does **not** trigger a live e2e
+run (those stay out of CI per §12).

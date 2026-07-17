@@ -67,6 +67,7 @@
         "witness",
         "household_member",
         "family_not_present",
+        "researcher",
         "official_duty",
         "unknown"
       ]
@@ -90,14 +91,20 @@
       "enum": ["high", "medium", "low"]
     },
     "fact_type_recommended": {
-      "description": "Open enum. Skills should prefer these values; new values may be added when existing values don't fit. Document new values in the assertion's notes.",
+      "description": "Open enum. Skills should prefer these values; new values may be added when existing values don't fit. Document new values in the assertion's notes. An event's place and date are ATTRIBUTES of the event fact (the `place`/`date` fields), not their own types: a birthplace is `birth` with `place` set, a place of death is `death` with `place` set — there is no `birthplace`/`deathplace` fact_type (matching the tree + GedcomX).",
       "type": "string",
       "examples": [
         "name",
+        "sex",
+        "race",
+        "age",
         "birth",
-        "death",
-        "burial",
+        "christening",
         "marriage",
+        "death",
+        "cause_of_death",
+        "duration_of_illness",
+        "burial",
         "residence",
         "occupation",
         "immigration",
@@ -177,8 +184,9 @@
       "enum": ["ParentChild", "Couple"]
     },
     "gedcomx_fact_type_recommended": {
-      "description": "Open enum for tree.gedcomx.json facts. PascalCase preserved from GedcomX URI suffixes.",
+      "description": "Open enum for tree.gedcomx.json facts. PascalCase preserved from GedcomX URI suffixes. The pattern enforces only the upper-initial (the part the runtime validator hard-fails on — a lowercase `birth` copied from research.json would lint clean and then fail tree_edit mid-run); the value list stays open.",
       "type": "string",
+      "pattern": "^[A-Z]",
       "examples": [
         "Birth",
         "Death",

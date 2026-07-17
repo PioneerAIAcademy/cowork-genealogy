@@ -79,10 +79,17 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
+import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
 import {
   researchAppend,
   type ResearchAppendInput,
 } from "./tools/research-append.js";
+import { rankSearchMatches } from "./tools/rank-search-matches.js";
+import type { RankSearchMatchesInput } from "./types/rank-search-matches.js";
+import {
+  projectContext,
+  type ProjectContextInput,
+} from "./tools/project-context.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -603,10 +610,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
+  if (request.params.name === "tree_correct") {
+    try {
+      const args = request.params.arguments as unknown as TreeCorrectInput;
+      const result = await treeCorrect(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
   if (request.params.name === "research_append") {
     try {
       const args = request.params.arguments as unknown as ResearchAppendInput;
       const result = await researchAppend(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "rank_search_matches") {
+    try {
+      const args = request.params.arguments as unknown as RankSearchMatchesInput;
+      const result = await rankSearchMatches(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "project_context") {
+    try {
+      const args = request.params.arguments as unknown as ProjectContextInput;
+      const result = await projectContext(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

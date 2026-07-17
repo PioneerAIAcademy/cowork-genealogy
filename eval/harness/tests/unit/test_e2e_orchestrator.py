@@ -111,6 +111,38 @@ def test_build_workspace_copies_starting_state(tmp_path: Path):
     assert (workspace / ".claude" / "skills" / "fake-skill" / "SKILL.md").exists()
 
 
+def test_build_workspace_never_copies_the_answer_into_the_workspace(tmp_path: Path):
+    """`build_workspace` must keep copying by explicit filename.
+
+    A fixture directory holds two files that ARE the answer:
+    `expected-findings.json`, and — on Path 1/2 — the committed
+    `unstripped-tree.gedcomx.json` that `strip` derives the starting tree
+    from. Neither may reach the agent. Today that holds because the copy
+    list is two `shutil.copy` calls naming their targets; the moment someone
+    "simplifies" it into a `copytree`, every e2e fixture silently starts
+    handing the agent its own answer key and every run passes.
+    """
+    fixture_dir = _make_fixture_dir(tmp_path)
+    (fixture_dir / "unstripped-tree.gedcomx.json").write_text(
+        json.dumps({"persons": [{"id": "ABCD-123"}]}), encoding="utf-8"
+    )
+    fixture = load_fixture(fixture_dir)
+
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir)
+
+    leaked = {p.name for p in workspace.rglob("*")} & {
+        "expected-findings.json",
+        "unstripped-tree.gedcomx.json",
+        "fixture.json",
+    }
+    assert leaked == set()
+
+
 def test_build_workspace_stages_plugin_agents(tmp_path: Path):
     """Plugin subagents are staged into .claude/agents/ so /research can
     delegate to the real gps-mentor instead of an improvised subagent."""
@@ -132,6 +164,82 @@ def test_build_workspace_stages_plugin_agents(tmp_path: Path):
     staged = workspace / ".claude" / "agents" / "gps-mentor.md"
     assert staged.exists()
     assert "name: gps-mentor" in staged.read_text(encoding="utf-8")
+
+
+def test_build_workspace_writes_project_effort_level(tmp_path: Path):
+    """effort_level writes a project-level setting the CLI honors (env var doesn't)."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir, effort_level="medium")
+
+    settings = workspace / ".claude" / "settings.json"
+    assert settings.exists()
+    assert json.loads(settings.read_text(encoding="utf-8")) == {"effortLevel": "medium"}
+
+
+def test_build_workspace_no_settings_when_effort_level_unset(tmp_path: Path):
+    """Default (None) writes no settings.json — preserves the CLI default effort."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir)
+
+    assert not (workspace / ".claude" / "settings.json").exists()
+
+
+def test_agent_model_override_rewrites_staged_subagent_pin(tmp_path: Path):
+    """--agent-model rewrites each staged subagent's `model:` frontmatter."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "record-extractor.md").write_text(
+        "---\nname: record-extractor\nmodel: claude-sonnet-5\ntools: []\n---\nbody",
+        encoding="utf-8",
+    )
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(
+        fixture, workspace, skills_dir, agents_dir=agents_dir,
+        agent_model="claude-sonnet-4-6",
+    )
+
+    staged = (workspace / ".claude" / "agents" / "record-extractor.md").read_text(encoding="utf-8")
+    assert "model: claude-sonnet-4-6" in staged
+    assert "claude-sonnet-5" not in staged
+
+
+def test_agent_model_none_leaves_subagent_pin_intact(tmp_path: Path):
+    """Default (None) copies the agent verbatim — its own pin is kept."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "record-extractor.md").write_text(
+        "---\nname: record-extractor\nmodel: claude-sonnet-5\n---\nbody", encoding="utf-8"
+    )
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir, agents_dir=agents_dir)
+
+    staged = (workspace / ".claude" / "agents" / "record-extractor.md").read_text(encoding="utf-8")
+    assert "model: claude-sonnet-5" in staged
+
+
+def test_override_agent_model_inserts_pin_when_absent():
+    from e2e.orchestrator import _override_agent_model
+
+    out = _override_agent_model("---\nname: x\n---\nbody", "claude-sonnet-4-6")
+    assert "model: claude-sonnet-4-6" in out
+    # unchanged when there is no frontmatter to pin into
+    assert _override_agent_model("no frontmatter", "claude-sonnet-4-6") == "no frontmatter"
 
 
 def test_build_workspace_default_agents_dir_includes_gps_mentor(tmp_path: Path):

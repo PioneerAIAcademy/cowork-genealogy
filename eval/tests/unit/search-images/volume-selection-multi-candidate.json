@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_images_010",
+    "skill": "search-images",
+    "name": "Select the right volume among multiple browse-only candidates",
+    "type": "positive",
+    "description": "volume_search returns four digitized volumes that are ALL browse-eligible (recordSearchablePercent 0, fulltextSearchable false), so searchability cannot pick a winner — the skill must select by matching place AND record type AND era. The target is a Schuylkill County will, so the correct choice is the Schuylkill Probate volume (007936749), NOT the Berks probate volume (right type, wrong county) and NOT the Schuylkill church/tax volumes (right place, wrong type). No other test exercises selection among multiple browse-eligible candidates — boundary-indexed-volume tests the searchability judgment with a single indexed volume; this tests the scoping judgment the Volume selection rubric dimension is meant to grade. (Page reads are delegated to the image-reader subagent, which returns no content in the harness, so the gradeable browse is: pick the right volume, list its images, log the browse.)",
+    "tags": ["browse", "volume-selection", "multi-candidate", "scoping"]
+  },
+  "input": {
+    "user_message": "Several Schuylkill County, Pennsylvania record sets are digitized but not indexed. Find the right unindexed volume to browse for Thomas Flynn's will and list its images so I can see what's covered.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-schuylkill-multi-browse", "image-search-schuylkill-probate"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "volume_search returns FOUR browse-eligible volumes (all recordSearchablePercent 0, fulltextSearchable false). Because none is record- or full-text-searchable, the browse-vs-index decision does NOT discriminate here — the skill must choose by matching the target (a Schuylkill County will). The correct selection is image group 007936749 (Probate Records, Schuylkill, Pennsylvania, 1851–1930), which it should then pass to image_search.",
+    "The other three are scoping traps and browsing any of them instead of 007936749 is a Volume selection miss: 005440021 is Probate Records but for Berks County (a different, adjacent county — wrong place); 004288771 (Lutheran Church Records) and 007512883 (Tax Assessment Records) are in Schuylkill but the wrong record type for a will. Picking the Berks probate volume (right type, wrong county) is a partial; browsing a church/tax volume is a clearer miss.",
+    "CRITICAL HARNESS LIMITATION: page viewing is delegated to the image-reader subagent (@plugin:image-reader) — the skill must NOT call image_read directly (it has no such tool) — and the subagent returns no image content in the eval harness (NOT READ), so the skill CANNOT view pages or recover the will's text. The complete, gradeable browse here is: select the correct volume, call image_search to list its image IDs, and log the browse. Judges MUST NOT score partial or fail on the grounds that the skill did not view images, did not page through all 15 images, or did not find the will — none of that is possible in the mock.",
+    "image_search returns the whole 15-image volume in one call. The skill should NOT retry image_search with offset/limit/imageId/index parameters (those do not exist) — doing so is a Tool Arguments fault, not thoroughness.",
+    "Should append a research_log_append entry naming the chosen image group (007936749), place, and record type; no results/ sidecar is expected because image_search does not stage results."
+  ]
+}

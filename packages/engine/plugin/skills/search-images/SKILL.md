@@ -1,0 +1,291 @@
+---
+name: search-images
+model: claude-sonnet-4-6
+description: Invoke for browsing FamilySearch digitized image volumes
+  page-by-page — immediately when the user says "browse the images", "browse
+  a volume", "page through", "look through the film/roll", "go through the
+  unindexed records", or gives an image group number. Use this skill when a
+  record set is digitized but NOT indexed and NOT full-text searchable, so the
+  only way in is to open the volume and read images one at a time.
+  volume_search finds which image groups cover a place and date range,
+  image_search lists the image IDs inside one group, and each page is read by
+  delegating to the image-reader subagent. FamilySearch digitized images only.
+  Exclude indexed name/date/place
+  search (use search-records), full-text transcript search (use
+  search-full-text), external repositories like Ancestry (use
+  search-external-sites), planning what to browse (use research-plan), and
+  extracting facts from an image you have already found (use record-extraction).
+allowed-tools:
+  - volume_search
+  - image_search
+  - research_log_append
+  - research_append
+---
+
+# Search Images
+
+## ROUTING — do this FIRST, before anything else
+
+Before reading `research.json`, before reading narration guidance, before any
+tool call: read the user's message and check the cases below. If one matches,
+say the single-sentence redirect and **return immediately** — do NOT read any
+files, do NOT call any tool (not `volume_search`, not `research_log_append`,
+nothing), do NOT look for a matching plan item to execute. Just redirect and stop.
+
+- **Names an external site** (Ancestry, MyHeritage, FindMyPast, FindAGrave,
+  Newspapers.com, or any non-FamilySearch repository): say "Those images live
+  on an external site — please use search-external-sites," and stop. This skill
+  covers FamilySearch images only. Browsing or logging an external-site search
+  is search-external-sites' job — even if a plan item targets that site, you do
+  not execute it here.
+- **Indexed name/date/place search** ("search the census index for…"): say
+  "That's an indexed search — please use search-records," and stop.
+- **Full-text / transcript search** ("find X mentioned as a witness…"): say
+  "That's a full-text search — please use search-full-text," and stop.
+- **Planning what to browse** ("which volumes/records should I browse next?",
+  "help me plan"): say "That's planning — please use research-plan," and stop.
+  Deciding what to browse is planning, not browsing — do not start pulling
+  volume or collection data to answer it, and do not produce the browsing
+  strategy, tier list, or prioritized research plan yourself; that is
+  research-plan's job. (This bars *authoring a plan in place of a browse*; it
+  does not bar the brief "suggest next steps" close-out after a real browse in
+  step 9.)
+- **Already has an image and only wants it processed** ("I found X on image
+  007936749_00058 — add it as a source / extract the assertions / pull out the
+  facts"): say "You already have the image — please use record-extraction to add
+  it as a source and pull out the facts," and stop. The user is past browsing; do
+  NOT browse, do NOT hunt for the page, do NOT look for workarounds if a tool
+  seems unavailable. Extraction is record-extraction's job — hand it off
+  and stop. **Scope check:** this fires only when extraction is the *whole*
+  request. If the user also asks to browse, page through, or find images — even
+  while naming an image ID or a range, and even if they say "transcribe what you
+  find" — that is an in-scope browse: proceed to the steps below, and hand any
+  found image to record-extraction at step 8. The word "transcribe" alone does
+  not route away; "I already have this one image, just extract it" does.
+
+Otherwise (browse a specific FamilySearch digitized volume image-by-image) →
+proceed to the steps below.
+
+---
+
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+
+Browses FamilySearch's digitized document images when a record set has no
+usable index. Many collections are scanned but never indexed and never
+full-text transcribed — the only way to find a record is to open the
+volume and page through the images. This skill is the image-browse
+counterpart to search-records (indexed search) and search-full-text
+(transcript search).
+
+## MCP tools
+
+Browse only when the volume is **digitized but not searchable** —
+`volume_search` reports `recordSearchablePercent: 0` (or very low) and
+`fulltextSearchable: false`. If it's indexed use search-records; if full-text
+transcribed use search-full-text (both are faster than reading pages).
+
+| MCP tool | Input | Purpose |
+|----------|-------|---------|
+| `volume_search` | `standardPlace`, year range | Find image groups covering a place/period; returns `imageGroupNumber`, `imageCount`, `recordSearchablePercent`, `fulltextSearchable`, `coverages[]` |
+| `image_search` | `imageGroupNumber` (a volume id) | List every image ID inside ONE group |
+
+Viewing a page is **not** a tool call you make — it is delegated to the
+`image-reader` subagent (step 4). You have exactly two image tools:
+`volume_search` (find the volume) and `image_search` (list its pages).
+
+**`image_search` takes an `imageGroupNumber`, never an `imageId`.** Passing an
+`imageId` (e.g. `007936749_00058`) to `image_search` is the single most common
+mistake — an `imageId` names one page and goes to the image-reader subagent, not
+to `image_search`. `image_search` lists the **whole** group in one call — it has
+no `offset`, `limit`, `imageIndex`, or `imageId` parameter, so never re-query to
+"get more."
+
+## Steps
+
+### 1. Identify the browse target
+
+Read `research.json` `plans[]` for the next `status: "planned"` item that
+targets an unindexed/browse-only collection, or take the user's ad-hoc
+request. Note the place and date range that scope the search.
+
+### 2. Find the volume with `volume_search`
+
+Call `volume_search({ standardPlace, ... })` to discover which image groups
+cover the place and period. Pick the group whose coverage (place, date
+range, record type) matches the target, preferring the one that is
+**not** already record- or full-text-searchable (browsing a searchable
+volume wastes effort — route those to search-records / search-full-text).
+
+```
+volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
+```
+
+**"The right volume" is not always a single volume.** Match every candidate on
+all three axes — place, record type, *and* era — then, instead of stopping at
+the first match:
+
+- **If the target spans several films** — a record set split across films, or
+  a date window crossing a film boundary (e.g. probate filmed as 1851–1890 and
+  1891–1930 with a death around 1890) — the films **jointly** cover it. Browse
+  (or queue) **all** of them and `image_search` each; picking one risks missing
+  the record on the film you skipped. Name the films you're covering and why.
+- **If one film bundles several record sets** — `coverages[]` is an array, and
+  a single group can carry several record types filmed together (a will book,
+  land/deed records, loose probate papers as separate item sections). When the
+  chosen group's `coverages[]` lists more than the record type you want, say so:
+  the target is **one item-section within a mixed film**, not the whole volume.
+  Orient the browse toward that section (read a register/table of contents
+  first; within-film navigation is manual). Don't treat the film as the will
+  book alone, or dismiss the other sections if they bear on the question.
+
+If `volume_search` returns no volumes, that is normal — the set simply isn't
+digitized for that place/period (data, not a tool error). It's a completed nil
+browse. **Log it before anything else:** call `research_log_append` for the
+negative browse (step 6 — `outcome: "negative"`, place/date/record type, "no
+digitized volume exists") *then* suggest an alternative repository. Offering the
+alternative without first logging is the most common way this skill fails.
+
+### 3. List the images with `image_search`
+
+Pass the chosen group's `imageGroupNumber` (a split natural-group name like
+`007621224_005_M99P-2TQ` or a bare number like `007936749`) to
+`image_search`:
+
+```
+image_search({ imageGroupNumber: "007936749" })
+// → { imageIds: ["007936749_00001", "007936749_00002", ...] }
+```
+
+An empty `imageIds` array means the group has no images yet — treat it as a
+nil result (step 6). A large volume returns hundreds of IDs; do not dump the
+full list to the user.
+
+### 4. Browse via the `image-reader` subagent
+
+**Do not call `image_read` yourself** — you don't have it. To view a page,
+delegate its `imageId` to the **`image-reader` subagent** (`@plugin:image-reader`),
+once per page. It reads the scan in an isolated context and returns a **full text
+transcription** plus an extracted-facts list; the raw image never enters your
+context. This matters: `image_read` returns the page as inline base64, and a
+volume browse means many pages — read them yourself and the accumulated base64
+overflows the transport's ~1 MiB buffer and **crashes the run** (two scans already
+risk it). Delegating keeps the base64 in the subagent's throwaway context.
+
+Browsing is manual: delegate a likely page, triage the returned transcription,
+and step forward or back by delegating the next page (the trailing 5-digit number
+is page order). For a volume with a register or table of contents, delegate that
+first to jump to the right range. Hand the subagent only the `imageId` (optionally
+a short `looking_for` pointer for *who/what* to locate — never an assertion of
+what the page says). If it returns `NOT READ`, do not fabricate the page — note it
+and move on.
+
+**Listing a volume's images IS a completed browse — log it (step 6) before you
+present anything or defer reading.** The `image_search` call is the browse event
+this skill exists to record; log it once you have the image list, whether you go
+on to delegate pages now, hand the list to the user to page through, or the pages
+come back `NOT READ`. Deferring the read to the user **never** defers the log — an
+unlogged browse is an incomplete browse, even when the images were listed
+perfectly.
+
+### 5. Triage what you find
+
+For each page's returned transcription, judge whether the target record appears
+and whether the place and approximate date are consistent. Present the promising
+images to the user with the image ID and what each shows; let the user confirm
+which to examine in detail. Never fabricate the contents of a page — report only
+what the image-reader transcription actually returned.
+
+### 6. Log the browse
+
+**Every browse gets a log entry — no exceptions.** Call
+`research_log_append` once per browse. The tool assigns the log id and
+`performed` timestamp and validates-before-persist; you supply the judgment.
+`image_search` does not stage results, so **omit `stagedResultsRef`** (no
+sidecar is written, exactly like a nil full-text search):
+
+```
+research_log_append({
+  projectPath,
+  planItemId: "pli_012",          // null for an ad-hoc browse
+  tool: "image_search",
+  query: {
+    imageGroupNumber: "007936749",
+    standardPlace: "Schuylkill, Pennsylvania, United States",
+    recordType: "Probate Records",
+    imagesExamined: "00040-00075"
+  },
+  outcome: "positive",            // positive / negative / partial / error
+  resultsExamined: 36,
+  resultsAvailable: 412,          // imageCount for the volume, or null
+  notes: "Browsed Schuylkill probate image group 007936749 (412 images, not indexed); read images 40–75; found Thomas Flynn's will on image 00058."
+})
+```
+
+For a **nil** browse (no volume, empty group, or target not found), set
+`outcome: "negative"` and `resultsExamined: 0`. The `notes` field on a
+negative entry must record the scope that *was* available so a future
+exhaustive-search audit can read it without re-deriving it, and why the search
+is being declared negative — a bare "not found" is insufficient. Which scope
+fields apply depends on how far the browse got:
+- **No volume found** (`volume_search` returned nothing): state the place, date
+  range, and record type searched, and that no digitized volume exists for them.
+  There is no volume id or image range to cite — do **not** invent one.
+- **Empty group or target not found** (a volume was opened): also state the
+  volume/image-group id and the image range examined.
+
+**Recovery.** If `research_log_append` returns `{ ok: false, errors }`,
+surface the errors to the user and stop — do **not** call it again with the
+same arguments. Retrying a rejected write in a loop wastes the turn without
+changing the result.
+
+### 7. Update plan item status
+
+If the browse executed a plan item, route the status change through
+`research_append` (it validates-before-persist):
+
+```
+research_append({
+  projectPath, section: "plan_items", op: "update",
+  planId: "pl_003", entryId: "pli_012",
+  fields: { status: "completed" }   // or "skipped"
+})
+```
+
+### 8. Pass found records to extraction
+
+**Log the browse (step 6) before you hand anything off.** The extraction
+handoff is tempting to jump to the moment you spot the record, but a browse
+that ends without a `research_log_append` entry is an incomplete browse — the
+audit trail is the point of this skill. The step-6 append must have returned
+`ok` before you hand off — rely on that return value; you do not need to
+re-read `research.json` to confirm.
+
+For each promising image, invoke record-extraction to add it as a source and
+extract assertions — pass the image ID and what you observed. This skill
+never writes to `sources` or `assertions`.
+
+### 9. Present results
+
+Summarize the volume browsed, the image range examined, what was found
+(with image IDs), the log entry created, and plan progress. Suggest next
+steps: more plan items, hand a found image to record-extraction, or — if the
+browse was nil — try search-records, search-full-text, or another repository.
+
+## Important rules
+
+- **`imageGroupNumber` comes from `volume_search`** (or the user) — pass it
+  through verbatim, split natural-group name or bare number.
+- **No image reading in this context — `@plugin:image-reader` only.** Never call
+  `image_read` yourself; delegating is what keeps the base64 out of your context
+  (step 4). You do not have `image_read` in your tools.
+- **Never fabricate image contents.** Report only what the image-reader
+  subagent's transcription actually returned.
+- **Stay in your lane.** Don't write to `sources` or `assertions` (hand found
+  images to record-extraction), and don't add fields to plan items beyond
+  `status`.
+
+## Re-invocation behavior
+
+Append-only: one new `log` entry per browse (no sidecar — `image_search`
+doesn't stage), plus the executed plan item's `status` via `research_append`.
+Two browses of one volume produce two log entries — that is correct.

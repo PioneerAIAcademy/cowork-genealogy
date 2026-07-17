@@ -275,6 +275,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `input` | required | required |
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
+| `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `negative` | omit | required |
 
 ### JSON Schema
@@ -376,6 +377,22 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "type": "array",
       "items": { "type": "string" },
       "description": "Per-test background notes the LLM judge reads to ground its rationales for the base + rubric dimensions. NOT a separate scored source — the judge does not emit a `criteria` dimension. Deterministic checks belong in validators. May be empty."
+    },
+    "expected_classifications": {
+      "type": "array",
+      "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications). Per matcher: at least one NEW assertion with the matcher's record_role + fact_type must exist, and every new assertion with that pair must carry each declared classification value. See Section 5.10.",
+      "items": {
+        "type": "object",
+        "required": ["record_role", "fact_type"],
+        "properties": {
+          "record_role": { "type": "string" },
+          "fact_type": { "type": "string" },
+          "evidence_type": { "type": "string" },
+          "informant_proximity": { "type": "string" },
+          "information_quality": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
     },
     "negative": {
       "type": "object",
@@ -556,6 +573,17 @@ Enable it for skills whose graded deliverable is **written to a file rather than
 
 Default `false` reproduces the legacy counts-only judge input **byte-for-byte for every other test and skill**, so enabling it for one skill changes grading nowhere else and does not affect `judge_prompt_hash`. It is a real (non-cosmetic) field, so it is snapshot-tracked: toggling it invalidates the content hash and forces a re-run, like `test.holdout`.
 
+### 5.10 `expected_classifications`
+
+Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `evidence_type`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
+
+Two matcher modifiers keep the check both precise and non-flappy:
+
+- **`attribute: "date" | "place"`** — for an event fact whose date and place are separate attributes of the one type (a birthplace is `birth` with `place` set; a computed year is `birth` with `date` set), matches only assertions of the given `fact_type` that have that attribute populated. Lets a `birth` place-claim (`direct`) and date-claim (`indirect`) be checked independently.
+- **`optional: true`** — drops the *existence* requirement: the matcher checks the classification only IF a matching assertion is present, and passes silently when absent. Use for a fact whose *existence* is completeness the skill produces **unreliably** (e.g. a death cert's named-parent `name` assertions) — hard-gating on unreliable existence is what makes a test flap. The judge's soft `Completeness` dimension covers the omission instead. Do **not** use `optional` to paper over a *classification* that flaps; use it only for unreliable *existence*.
+
+**Deterministic-validator deference (grading).** When `test_expected_classifications` **passes**, the LLM judge's `Evidence type accuracy` and `Informant identification` dimensions cannot **FAIL** on the verified classifications — the harness floors a judge `1` to `2` (`orchestrator.apply_deterministic_deference`). A fuzzy re-grade must not override a deterministic check that already confirmed the classification (this retired the recurring census direct/indirect judge-inversion flap). Partial (`2`) is still permitted for a real issue on an *undeclared* assertion. Correctness likewise does not grade classification at all (base judge prompt) — evidence_type/proximity/quality are the classification dimensions' scope.
+
 ---
 
 ## 6. Negative Tests
@@ -571,7 +599,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | record-extraction | search-records | "search for" vs "analyze this record" |
 | search-records | record-extraction | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
-| conflict-resolution | assertion-classification | conflicting facts vs classifying evidence type |
+| conflict-resolution | record-extraction | conflicting facts vs classifying evidence type (classification is owned by record-extraction since the assertion-classification merge, 2026-07-11) |
 | proof-conclusion | project-status | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
@@ -1507,11 +1535,25 @@ def compute_allowed_tools(skill_name: str, tmp_dir: Path) -> list[str]:
     # file" (see prose above). The universal ownership validator catches
     # research.json misuse and the disallowed-tools backstop blocks
     # dangerous host tools.
-    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
+    # Task is always in the baseline — plugin subagents are staged into
+    # every workspace and a skill delegates only when its SKILL.md says to.
+    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill", "Task"]
+    # Plus the frontmatter `tools:` of every plugin agent the skill
+    # delegates to via `@plugin:<name>`. A delegated agent's MCP calls run
+    # in the SAME session and go through the same allow/deny lists, so they
+    # must be in the union or the SDK denies them. Per-agent `tools:` is
+    # subtractive (it narrows a set inherited from the session), which is
+    # why this union is required rather than a leak to be fixed.
+    for agent in agent_refs_for_skill(skill_md):
+        declared.extend(parse_frontmatter(agents_dir / f"{agent}.md").get("tools", []))
     return baseline + declared
 ```
 
 A skill that calls a tool not in its derived list is rejected by the SDK at call time. The harness records the rejection as a tool_call with `matched.kind: "none"` and an error envelope, and the run typically fails the tool-allowlist validator.
+
+**The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
+
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — `search-images` declares `image_read` and browses volumes page-by-page itself, while `record-extraction` holds it only through `@plugin:image-reader` and must delegate. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked` via PreToolUse
 

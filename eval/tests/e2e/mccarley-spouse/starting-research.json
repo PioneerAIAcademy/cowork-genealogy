@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_mccarley_spouse",
+    "objective": "Who was the spouse of Moses J McCarley Sr, who was born 17 January 1767 and died 9 April 1844?",
+    "subject_person_ids": [
+      "L7P6-3TT"
+    ],
+    "status": "active",
+    "created": "2026-07-14",
+    "updated": "2026-07-14"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

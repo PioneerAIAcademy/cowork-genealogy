@@ -1,0 +1,18 @@
+{
+  "id": "pauline-shaver-death-burial",
+  "name": "Pauline 'Polly' Wilkins Shaver — death and burial (1935)",
+  "source_pid": "27HB-Z94",
+  "captured": "2026-07-08",
+  "researcher_question": "When did Pauline 'Polly' Wilkins Shaver die, and where is she buried?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1930s",
+    "geography": "US-KY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Death and burial stripped from the starting tree; the agent must find the death date (30 November 1935, Muhlenberg, Kentucky) and burial place (Shavers Cemetery, Lynn City, Muhlenberg, Kentucky) from Kentucky death records and the Find a Grave index. The subject is well-anchored by birth, multiple census residences spanning 1850–1920, parents (Elijah Wilkins 97YZ-J3D and Sally Wilkins K2BS-YMD), and husband (Williams Timmons Shaver 27HB-Z7R)."
+}

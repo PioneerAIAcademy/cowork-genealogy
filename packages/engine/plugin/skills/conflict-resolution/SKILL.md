@@ -20,8 +20,8 @@ description: >-
   impossibilities suggest an identity conflict. Do NOT use for
   confidence-calibration review or auditing existing person_evidence links
   (that's person-evidence's territory). Do NOT use to classify evidence (use
-  assertion-classification), build a timeline (use timeline), or write a
-  conclusion (use proof-conclusion).
+  record-extraction, which owns classification), build a timeline (use
+  timeline), or write a conclusion (use proof-conclusion).
 ---
 
 # Conflict Resolution
@@ -78,18 +78,25 @@ fact conflicts which require at least two).
 Read `research.json` assertions, person_evidence, and timelines.
 **Trust the existing assertion classifications** (evidence_type,
 directness, informant) as recorded — do NOT re-classify inline, and do
-NOT invoke the assertion-classification or check-warnings skills from
-here. If a classification looks wrong and would change the weighing,
-note it and recommend running `assertion-classification` as a next
-step, then proceed with what is recorded.
+NOT invoke the record-extraction or check-warnings skills from here.
+If a classification looks wrong and would change the weighing, note it
+and recommend running `record-extraction` (which owns classification
+refinement) as a next step, then proceed with what is recorded.
 
 Look for:
 
 **Fact conflicts:**
-- Same person, same fact_type, different values. Compare assertions
-  linked to the same person_id via person_evidence.
-- Use `structured_value` for programmatic comparison where available
-  (birth year as number, place as string).
+- Same person, same fact_type **and same attribute**, different values.
+  Compare assertions linked to the same person_id via person_evidence.
+  Event place/date are attributes of the one event fact, so a `birth`
+  place-claim (`place` set) and a `birth` date-claim (`date` set) share
+  the `birth` fact_type but are **not** a conflict — compare place with
+  place and date with date. A real birthplace conflict is two `birth`
+  assertions with different `place` values; a birth-year conflict is two
+  with different `date` values.
+- Use `place`/`standard_place`, `date`, and `structured_value` for
+  programmatic comparison (birth year as date/number, place as string) —
+  not the free-text `value`.
 
 **Identity conflicts:**
 - Timeline impossibilities (from the timeline skill) — two events
@@ -267,7 +274,13 @@ preferred answer, the resolution must follow the evidence.
 **If more evidence is needed (Standard 49):** Deferral is a
 documented finding, not a stopping point — persist it to the
 conflict record (a `research_append` `op: "update"` call as above),
-not only to your reply. On the same write, fill
+not only to your reply. **Gate before any `status: "resolved"`
+write:** can independent evidence actually break the tie? When every
+competing assertion traces to a single source or a single informant,
+weighing cannot resolve the conflict — no matter how thorough your
+analysis reads — so keep `status: "unresolved"` /
+`preferred_assertion_id: null` and name the decisive record types.
+Completing a strong analysis is not, by itself, grounds to resolve. On the same write, fill
 `independence_analysis` and `weighing_analysis` with the work you
 did (these are required regardless of outcome — you analyzed the
 conflict even if you could not resolve it), keep `status:
@@ -301,6 +314,14 @@ resolution patterns:
    whether events cohere into one life
 4. Check: do the ages fit? Do the locations make sense? Are there
    impossibilities?
+5. A **patronymic mismatch is a different-person signal, never a
+   spelling variant.** In patronymic naming (Scandinavian -sen/-datter,
+   -son/-dotter, and similar) the surname encodes the *father's* given
+   name, so two records giving the "same" person different patronymics
+   name different fathers — treat that as evidence of distinct people,
+   not a surname variant to smooth over. (The Americanized/farm surname
+   an emigrant later adopts is separate from, and does not resolve,
+   the patronymic.)
 
 **Do not confirm identity by the absence of an alternative.** Not
 finding a competing same-name candidate in a later record is not

@@ -8,9 +8,35 @@
     "tags": ["extraction", "1850-census", "census-household"]
   },
   "input": {
-    "user_message": "search-records found this 1850 U.S. Census record for the Flynn household. Extract all the assertions you can.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXHY-TP4 · Dwelling 214, Family 218\n\n| Name | Age | Sex | Occupation | Birthplace |\n| --- | --- | --- | --- | --- |\n| Patrick Flynn | 32 | M | Laborer | Ireland |\n| Mary Flynn | 30 | F |  | Ireland |\n| Thomas Flynn | 9 | M |  | Pennsylvania |\n| Bridget Flynn | 6 | F |  | Pennsylvania |\n| John Flynn | 3 | M |  | Pennsylvania |",
+    "user_message": "search-records found this 1850 U.S. Census record for the Flynn household. Extract all the assertions you can.\n\n1850 United States Census — Schuylkill County, Pennsylvania\nFamilySearch ark:/61903/1:1:MXHY-TP4 · Dwelling 214, Family 218\n\n| Name | Age | Sex | Occupation | Birthplace | Residence |\n| --- | --- | --- | --- | --- | --- |\n| Patrick Flynn | 32 | M | Laborer | Ireland | Schuylkill County, Pennsylvania |\n| Mary Flynn | 30 | F |  | Ireland | Schuylkill County, Pennsylvania |\n| Thomas Flynn | 9 | M |  | Pennsylvania | Schuylkill County, Pennsylvania |\n| Bridget Flynn | 6 | F |  | Pennsylvania | Schuylkill County, Pennsylvania |\n| John Flynn | 3 | M |  | Pennsylvania | Schuylkill County, Pennsylvania |",
     "scenario": "empty-project-just-created"
   },
+  "expected_classifications": [
+    { "record_role": "head_of_household", "fact_type": "name", "evidence_type": "direct" },
+    { "record_role": "head_of_household", "fact_type": "age", "evidence_type": "direct" },
+    { "record_role": "head_of_household", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
+    { "record_role": "head_of_household", "fact_type": "occupation", "evidence_type": "direct" },
+    { "record_role": "head_of_household", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
+    { "record_role": "wife", "fact_type": "name", "evidence_type": "direct" },
+    { "record_role": "wife", "fact_type": "age", "evidence_type": "direct" },
+    { "record_role": "wife", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
+    { "record_role": "wife", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
+    { "record_role": "child_1", "fact_type": "name", "evidence_type": "direct" },
+    { "record_role": "child_1", "fact_type": "age", "evidence_type": "direct" },
+    { "record_role": "child_1", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
+    { "record_role": "child_1", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
+    { "record_role": "child_1", "fact_type": "relationship", "evidence_type": "indirect", "informant_proximity": "researcher" },
+    { "record_role": "child_2", "fact_type": "name", "evidence_type": "direct" },
+    { "record_role": "child_2", "fact_type": "age", "evidence_type": "direct" },
+    { "record_role": "child_2", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
+    { "record_role": "child_2", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
+    { "record_role": "child_2", "fact_type": "relationship", "evidence_type": "indirect", "informant_proximity": "researcher" },
+    { "record_role": "child_3", "fact_type": "name", "evidence_type": "direct" },
+    { "record_role": "child_3", "fact_type": "age", "evidence_type": "direct" },
+    { "record_role": "child_3", "fact_type": "birth", "attribute": "place", "evidence_type": "direct" },
+    { "record_role": "child_3", "fact_type": "residence", "evidence_type": "direct", "informant_proximity": "witness" },
+    { "record_role": "child_3", "fact_type": "relationship", "evidence_type": "indirect", "informant_proximity": "researcher" }
+  ],
   "judge_context": [
     "Should extract assertions for every named person in the household, not just Patrick — the other household members are part of his FAN network and relevant to future research questions",
     "Relationship assertions should be marked `evidence_type: \"indirect\"` because the 1850 census does not state relationships explicitly (the 1860 census is similarly structured — explicit relationship columns were not introduced until 1880)",

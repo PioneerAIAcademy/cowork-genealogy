@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Mary (McAndrew) Mogan and her husband John Mogan had a son who is not yet in the tree: John A Morgan (Morgan/Mogan spellings vary for this family), born 6 March 1873 in Detroit, Wayne County, Michigan — three years before Thomas Frank Mogan (b. 1876), previously the couple's eldest known child.",
+      "details": {
+        "subject_person": "Mary E McAndrew (G13G-P68)",
+        "relation": "child",
+        "target_person": {
+          "name": "John A Morgan",
+          "birth": "6 March 1873, Detroit, Wayne, Michigan, United States"
+        }
+      },
+      "supporting_sources": [
+        "Michigan, Births and Christenings, 1775-1995 — entry for John A Morgan, born 6 Mar 1873, Detroit; parents John Morgan and Mary Morgan"
+      ],
+      "required": true
+    }
+  ]
+}

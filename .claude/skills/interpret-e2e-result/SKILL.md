@@ -203,11 +203,11 @@ These are the regression causes:
   on the same evidence than a prior passing run. Pointer: diff
   `tool_calls[]` against the last passing run for the same fixture.
 - **`/research` skill regression** — the agent skipped a GPS step or
-  picked the wrong sub-skill. The e2e run log does not record an
-  ordered `skills_invoked` list; scan `run-<ts>.transcript.md` for the
-  `Skill` tool-use blocks instead. If `proof-conclusion` never fires,
-  that's the smoking gun; if `question-selection` skips a gap, that's
-  another.
+  picked the wrong sub-skill. Read the ordered sub-skills the agent ran
+  from `run-<ts>.json`'s `tool_calls` — the `Skill` entries' `args.skill`,
+  in order (`[tc['args'].get('skill') for tc in tool_calls if tc['tool']=='Skill']`).
+  If `proof-conclusion` never appears, that's the smoking gun; if
+  `question-selection` is missing where a gap needed one, that's another.
 - **Sub-skill regression** — the right sub-skill ran but produced
   worse output than before. Pointer: the relevant `tool_calls` block
   compared to the prior run.

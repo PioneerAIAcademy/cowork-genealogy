@@ -1,0 +1,438 @@
+{
+  "project": {
+    "id": "rp_recent_birth_sealed",
+    "objective": "Who were the parents of Alan Glen Applegarth, born 29 April 1936 in Ogden, Weber County, Utah?",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-07-15",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Alan Glen Applegarth (b. 29 Apr 1936, Ogden, Weber County, Utah)?",
+      "rationale": "Primary research objective.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-14",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-14",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Ada County, Idaho",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "1940 census should show Alan as a child in his parents' household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Weber County, Utah",
+          "date_range": "1950",
+          "repository": "FamilySearch",
+          "rationale": "1950 census cross-check of the same household.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital",
+          "jurisdiction": "Weber County, Utah",
+          "date_range": "1926",
+          "repository": "FamilySearch",
+          "rationale": "Marriage of the parents establishes them as a couple and confirms the mother's maiden name.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 4,
+          "record_type": "obituary",
+          "jurisdiction": "Cache County, Utah",
+          "date_range": "2023",
+          "repository": "GenealogyBank",
+          "rationale": "Alan's 2023 obituary — a death-era record that names his parents. Corroborates the census/marriage parentage.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Weber County, Utah",
+          "date_range": "1936-1940",
+          "repository": "FamilySearch / LDS records",
+          "rationale": "Church christening / LDS baptism record for Alan would name parents. Searched; none located for this family.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Weber County, Utah",
+          "date_range": "1970-1998",
+          "repository": "FamilySearch",
+          "rationale": "Probate of the parents (Olive d. 1970, John d. 1998) could enumerate children including Alan. Searched; no probate located.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 7,
+          "record_type": "vital",
+          "jurisdiction": "Utah",
+          "date_range": "1936",
+          "repository": "Utah Dept. of Health / Ancestry",
+          "rationale": "Alan's own 1936 Utah birth certificate would name his parents directly. NOT obtainable: Utah birth records are sealed by privacy law for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. Not a reasonably available record for this project.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-14T10:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Applegarth", "given": "Alan", "birth_year": 1936, "collection": "1940 Census" },
+      "outcome": "positive",
+      "results_examined": 4,
+      "notes": "1940 U.S. Census, South Boise Election Precinct, Ada County, Idaho — household of John O. and Olive Applegarth with son Alan (age 4).",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-14T10:30:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Applegarth", "given": "John", "collection": "1950 Census" },
+      "outcome": "positive",
+      "results_examined": 3,
+      "notes": "1950 U.S. Census, Ogden, Weber County, Utah — household of John O and Olive H Applegarth with Alan. Corroborates the 1940 household.",
+      "external_site": null
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-14T11:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Applegarth", "given": "John", "spouse_surname": "Harvey", "collection": "Weber County Marriages" },
+      "outcome": "positive",
+      "results_examined": 2,
+      "notes": "Marriage of John Obrien Applegarth and Olive Annie Harvey, 20 Oct 1926, Weber County, Utah. Establishes the parental couple and the mother's maiden name (Harvey).",
+      "external_site": null
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-14T11:15:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Applegarth", "given": "Alan", "death_year": 2023, "collection": "Obituaries" },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "2023 obituary for Alan Glen Applegarth (GenealogyBank) names his parents (preceded in death by John O. and Olive Harvey Applegarth). Independent corroboration of the parentage.",
+      "external_site": null
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-14T11:30:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Applegarth", "given": "Alan", "collection": "Utah church / LDS records" },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "No christening or LDS baptism record located for Alan; the family does not appear in the searched parish/LDS registers.",
+      "external_site": null
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-14T11:45:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Applegarth", "collection": "Weber County probate 1970-1998" },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "No probate located for either parent (Olive d. 1970, John d. 1998) that enumerates children.",
+      "external_site": null
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-14T12:00:00Z",
+      "tool": "record_search",
+      "query": { "surname": "Applegarth", "given": "Alan", "birth_year": 1936, "collection": "Utah Birth Certificates" },
+      "outcome": "negative",
+      "results_examined": 0,
+      "notes": "Alan's 1936 Utah birth certificate is NOT publicly accessible: Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir on request. The record exists but is not reasonably obtainable for this project. Not an exhaustiveness gap; do not recommend obtaining it as a routine next step.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1940 U.S. Census, South Boise Election Precinct, Ada County, Idaho, John O. Applegarth household; digital image, FamilySearch.org, accessed 14 July 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1940 U.S. Federal Census, population schedule",
+        "when_created": "1940",
+        "when_accessed": "2026-07-14",
+        "where": "FamilySearch.org",
+        "where_within": "Ada County, Idaho, John O. Applegarth household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-14",
+      "url": null,
+      "url_archived": null,
+      "notes": "Alan listed as son, age 4.",
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "1950 U.S. Census, Ogden, Weber County, Utah, John O Applegarth household; digital image, FamilySearch.org, accessed 14 July 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1950 U.S. Federal Census, population schedule",
+        "when_created": "1950",
+        "when_accessed": "2026-07-14",
+        "where": "FamilySearch.org",
+        "where_within": "Weber County, Utah, John O Applegarth household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-14",
+      "url": null,
+      "url_archived": null,
+      "notes": "Corroborates the 1940 household.",
+      "log_entry_id": "log_002"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "Weber County, Utah, marriage record, John Obrien Applegarth and Olive Annie Harvey, 20 October 1926; FamilySearch.org, accessed 14 July 2026.",
+      "citation_detail": {
+        "who": "Weber County Clerk",
+        "what": "County marriage record",
+        "when_created": "1926",
+        "when_accessed": "2026-07-14",
+        "where": "FamilySearch.org",
+        "where_within": "Weber County, Utah, 1926 marriages"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-14",
+      "url": null,
+      "url_archived": null,
+      "notes": "Names both parents; confirms the mother's maiden name Harvey.",
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "src_004",
+      "gedcomx_source_description_id": "S4",
+      "citation": "Obituary of Alan Glen Applegarth, 2023, Cache County, Utah; GenealogyBank, accessed 14 July 2026.",
+      "citation_detail": {
+        "who": "Family / funeral home (via newspaper)",
+        "what": "Published obituary",
+        "when_created": "2023",
+        "when_accessed": "2026-07-14",
+        "where": "GenealogyBank",
+        "where_within": "2023 obituary for Alan Glen Applegarth"
+      },
+      "source_classification": "derivative",
+      "repository": "GenealogyBank",
+      "access_date": "2026-07-14",
+      "url": null,
+      "url_archived": null,
+      "notes": "Names Alan's parents; independent of the census/marriage records.",
+      "log_entry_id": "log_005"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_003",
+      "record_id": "ancestry:weber-marriages:1926-applegarth-harvey",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "John Obrien Applegarth",
+      "structured_value": { "given": "John Obrien", "surname": "Applegarth" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "primary",
+      "informant": "Marriage record — the marrying parties named on a county marriage record.",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "County clerk recorded the parties at the 1926 marriage.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_003",
+      "record_id": "ancestry:weber-marriages:1926-applegarth-harvey",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Olive Annie Harvey",
+      "structured_value": { "given": "Olive Annie", "surname": "Harvey" },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "primary",
+      "informant": "Marriage record — the marrying parties named on a county marriage record.",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Confirms the mother's maiden name (Harvey).",
+      "evidence_type": "direct",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:APPLEGARTH-1940",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Alan listed as son in the household of John O. and Olive Applegarth, 1940.",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "Ada County, Idaho",
+      "information_quality": "primary",
+      "informant": "1940 census — a household member reported the relationship to head.",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Household relationship-to-head stated to the enumerator.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_002",
+      "record_id": "ark:/61903/1:1:APPLEGARTH-1950",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Alan listed with John O and Olive H Applegarth, 1950 — corroborates the 1940 household.",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1950",
+      "date_certainty": "exact",
+      "place": "Weber County, Utah",
+      "information_quality": "primary",
+      "informant": "1950 census — a household member reported the relationship to head.",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Independent enumeration ten years after 1940.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_004",
+      "record_id": "capture:applegarth-obituary-2023",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "Alan's 2023 obituary: preceded in death by his parents, John O. and Olive Harvey Applegarth.",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "parents" },
+      "date": "2023",
+      "date_certainty": "exact",
+      "place": "Cache County, Utah",
+      "information_quality": "secondary",
+      "informant": "Obituary — family-supplied notice naming the deceased's parents.",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Family knowledge recorded long after the parents' deaths; independent of the census/marriage line of evidence.",
+      "evidence_type": "direct",
+      "log_entry_id": "log_005",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Groom on the 1926 marriage = the father, John Obrien Applegarth.",
+      "match_score": null,
+      "created": "2026-07-14",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Bride on the 1926 marriage = the mother, Olive Annie Harvey.",
+      "match_score": null,
+      "created": "2026-07-14",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Alan as son in the 1940 household of John O. and Olive.",
+      "match_score": null,
+      "created": "2026-07-14",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Corroborating 1950 household enumeration.",
+      "match_score": null,
+      "created": "2026-07-14",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "2023 obituary independently names Alan's parents.",
+      "match_score": null,
+      "created": "2026-07-14",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_search_images_011",
+    "skill": "search-images",
+    "name": "Browse every film when the target spans multiple matching volumes",
+    "type": "positive",
+    "description": "volume_search returns three browse-only probate volumes; TWO are BOTH correct on place AND record type AND era — the Schuylkill probate run is split across two films (007936749 = 1851–1890, 007936752 = 1891–1930). The user's probate window (~1885–1895) straddles the film boundary, so the will could be in either film: both must be browsed, not just one. The third volume (005440021) is Berks probate — right type, wrong county — a scoping decoy that must not be browsed. This covers the reviewer's case that volume-selection-multi-candidate (ut_search_images_010) does not: there, exactly one candidate matched all three axes; here several do, because records get split across films / an era spans multiple films. The gradeable browse (page reads are delegated to the image-reader subagent, which returns no content in the harness) is: select BOTH Schuylkill films, call image_search on each, and log the browse.",
+    "tags": ["browse", "volume-selection", "multi-candidate", "multi-film-span", "scoping"]
+  },
+  "input": {
+    "user_message": "Thomas Flynn's will is in the unindexed Schuylkill County, Pennsylvania probate films, but I don't have an exact date — he likely died somewhere between 1885 and 1895. Which films do I need to browse, and list the images in each so I can see what's covered?",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-schuylkill-probate-split", "image-search-schuylkill-probate", "image-search-schuylkill-probate-1891"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "volume_search returns THREE browse-only probate volumes (all recordSearchablePercent 0, fulltextSearchable false). TWO are correct: 007936749 (Schuylkill Probate, 1851–1890) and 007936752 (Schuylkill Probate, 1891–1930). The Schuylkill probate run is split across these two films, and the user's probate window (~1885–1895) straddles the 1890/1891 film boundary — so the will could be on either film and BOTH jointly cover the target.",
+    "The correct behavior is to browse BOTH covering films: call image_search on 007936749 AND on 007936752. Selecting only one of the two is a Volume selection miss (partial) — it risks missing the will if it sits on the other film. Recognizing that the two films jointly cover the period and queueing/browsing both is the pass.",
+    "The third volume, 005440021, is Probate Records but for Berks County (a different, adjacent county — wrong place). Browsing it instead of, or in addition to, the Schuylkill films is a scoping error.",
+    "CRITICAL HARNESS LIMITATION: page viewing is delegated to the image-reader subagent (@plugin:image-reader) — the skill must NOT call image_read directly (it has no such tool) — and the subagent returns no image content in the eval harness (NOT READ), so the skill CANNOT view pages or find the will. The complete, gradeable browse here is: select both correct films, call image_search to list each film's image IDs, and log the browse. Judges MUST NOT score partial or fail on the grounds that the skill did not view images, did not page through all images, or did not find the will — none of that is possible in the mock.",
+    "image_search returns each film's whole image list in one call. The skill should NOT retry image_search with offset/limit/imageId/index parameters (those do not exist) — doing so is a Tool Arguments fault, not thoroughness.",
+    "Should append a research_log_append entry recording the browse — naming the films browsed (007936749 and 007936752), the place, and the record type; no results/ sidecar is expected because image_search does not stage results. A single log entry that names both films, or one entry per film, are both acceptable."
+  ]
+}

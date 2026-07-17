@@ -27,9 +27,41 @@ Evaluates whether research on a single question qualifies as
 the framework (five threshold questions, overturn risk test,
 termination criteria).
 
+**First, confirm this is an exhaustiveness evaluation.** This skill judges
+whether an *already-planned, already-searched* question is reasonably
+exhaustive. If the request is really to pick the **next question** (→
+`question-selection`), to **plan more searches** for an open question (→
+`research-plan`), or to **write the conclusion** (→ `proof-conclusion`),
+**decline and route there — do not run the evaluation below.** The
+declare/proof guidance in this skill applies only *after* you have decided
+this genuinely is an exhaustiveness check.
+
 Only evaluate a question whose plan items are all `completed` or
 `skipped`. If any is `in_progress`, refuse to declare and recommend
 finishing the in-flight work first.
+
+## 0. Precondition check (run first)
+
+The `evidence_class` and `independent_verification` criteria in Step 3 are
+meaningless against unclassified assertions, or when the persons the judgment
+depends on have not been identified in the tree. Before applying the five
+threshold questions, run two checks over the assertions tied to this question
+(via `extracted_for_question_ids`):
+
+- **Classification (hard block, all assertions).** Every assertion must have
+  a real `information_quality` and `evidence_type` from
+  `assertion-classification` (not a leftover record-extraction default). If
+  any assertion fails, stop here, name the specific assertion IDs, and
+  recommend `assertion-classification`.
+- **person_evidence (hard block scoped to person identity).** `person_evidence`
+  is identity resolution. Confirm **each person the judgment depends on** — the
+  subject and any candidate parent/relative — is identified by **at least one**
+  linked assertion. If any such person has no linked identity assertion, stop
+  and recommend `person-evidence`. Unlinked *fact* and *negative* assertions
+  about an already-identified person are advisory, not blockers — note them and
+  continue.
+
+Do not declare exhaustive while a blocking check fails.
 
 ## 1. Gather evidence
 
@@ -68,9 +100,24 @@ Write a 1-2 sentence assessment for each:
 
 - **Declare exhaustive** — all criteria met. Persist the declaration
   and set `status: "exhaustive_declared"` in one call (Step 5).
-- **Do not declare** — criteria unmet. Explain what is missing and
-  recommend expanding the plan (`research-plan`) or, if no further
-  sources are available, an honest early termination.
+- **Do not declare** — criteria unmet because a genuinely **unsearched**
+  source remains. Explain what is missing and recommend expanding the plan
+  (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
+  default to `research-plan`.**
+  - *Narrow exception — a source verified **inaccessible*** (a browse-only
+    image over the MCP transport cap; a record **sealed by privacy law** —
+    e.g. a recent U.S. vital record embargoed ~100 years and released before
+    then only to the registrant or a direct heir; or nil across
+    `record_search` / `fulltext_search` / `image_search` / external sites
+    after the bounded search-records attempts) is *pursued-and-unavailable*,
+    not an unsearched gap. A privacy-sealed record must **not** be counted as
+    an outstanding gap in the threshold questions, nor recommended as a next
+    step to obtain. **Only** when the **accessible** evidence already supports a
+    defensible conclusion, do not loop `research-plan` to re-attempt it: set
+    `status: "exhaustive_declared"` (note the limitation in a `stop_criteria`
+    note + `overturn_risk`) and route to `proof-conclusion`, which sets the
+    honest tier the available (often indirect) evidence supports. Documenting
+    an unobtainable source is exhaustive research; re-searching it is not.
 - **Early termination** — valid for resource limits or no further known
   sources, but the declaration must honestly state `declared: false`.
   **Do not change `status`** — leave it `"in_progress"`.
@@ -155,6 +202,17 @@ the offending field — do not blindly retry the same payload.
 - **Exhaustive does not mean exhausting.** Overturn risk is the
   ultimate test: could a real, unsearched source plausibly change the
   conclusion?
+- **Named decisive records gate the declaration.** If a record type
+  directly answers this question type (parentage: the subject's death
+  record, baptism, or a parent's probate; marriage: the marriage
+  record) — or the draft conclusion itself names a record as
+  tier-advancing — do not declare until that record has been searched
+  or the declaration explicitly justifies why it is inaccessible. A
+  known, decisive, accessible record left unsearched fails the
+  overturn-risk test by definition — but a decisive record that is
+  **sealed by privacy law** (e.g. a recent birth certificate embargoed
+  ~100 years, heir-request only) counts as inaccessible: note the
+  limitation and declare on the accessible evidence; do not gate on it.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
 - **Historical context matters.** Factor in jurisdictional boundary

@@ -4,8 +4,8 @@
     "skill": "conflict-resolution",
     "name": "Evidence classification request should not trigger conflict-resolution",
     "type": "negative",
-    "description": "User asks to classify Patrick Flynn's assertions by information quality and source type — primary vs. secondary, original vs. derivative. That is assertion-classification's job. Conflict-resolution analyzes disagreements between assertions; classifying individual assertions in isolation is a distinct, prior step.",
-    "tags": ["near-miss", "assertion-classification-vs-conflict-resolution", "routing"]
+    "description": "User asks to classify Patrick Flynn's assertions by information quality and source type — primary vs. secondary, original vs. derivative. Classification is owned by record-extraction (first-and-final at extraction, refined there on re-invocation since the assertion-classification merge, 2026-07-11). Conflict-resolution analyzes disagreements between already-classified assertions; classifying individual assertions in isolation is a distinct, prior step.",
+    "tags": ["near-miss", "classification-vs-conflict-resolution", "routing"]
   },
 
   "input": {
@@ -14,12 +14,12 @@
   },
 
   "negative": {
-    "correct_skill": ["assertion-classification"],
-    "explanation": "The user wants individual quality ratings for each assertion — information_quality and source_classification fields. The SKILL.md says explicitly: 'Do NOT use when the user wants to classify evidence (use assertion-classification).' Conflict-resolution enters when two or more classified assertions disagree on a value; the classification work comes first, performed by assertion-classification."
+    "correct_skill": ["record-extraction"],
+    "explanation": "The user wants individual quality ratings for each assertion — information_quality and source_classification fields. Those classifications are owned by record-extraction, which writes them at extraction and refines them on request (the former assertion-classification skill was merged into it). Conflict-resolution enters when two or more classified assertions disagree on a value; the classification work comes first."
   },
 
   "judge_context": [
-    "Should route to assertion-classification rather than starting a conflict analysis",
+    "Should route to record-extraction (which owns evidence classification since the assertion-classification merge) rather than starting a conflict analysis",
     "The tell: the user is asking for individual quality labels (primary/secondary, original/derivative), not asking which source wins a disagreement"
   ],
   "execution": {

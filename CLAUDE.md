@@ -37,15 +37,18 @@ it can be a skill script.
 
 ### External service dependencies
 
-Two MCP tools call hosted sidecar services rather than public APIs:
+Several MCP tools call hosted sidecar services rather than public APIs:
 
-- `wiki_search` calls the hosted `wiki-query-api` (a FastAPI server in
-  a sibling repo) for RAG retrieval over the FamilySearch Wiki.
+- `wiki_search`, `wiki_read`, and `wiki_place_page` all call the hosted
+  `wiki-query-api` (a FastAPI server in a sibling repo). `wiki_search`
+  hits `POST /search` for RAG retrieval; `wiki_read` and `wiki_place_page`
+  hit `GET /page/{title}` for a specific wiki page. The pre-crawled
+  markdown corpus lives on the server, not on each developer's laptop.
 - `place_population` calls the hosted Pop Stats API.
 
-The MCP code is HTTP-only for both — it does not import or depend on
-any Python code from either service. The base URL for `wiki_search`
-can be overridden per-user via `wikiApiUrl` in
+The MCP code is HTTP-only for all of these — it does not import or
+depend on any Python code from those services. The base URL for the
+wiki tools can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
 instance); end users do not need to set this for normal operation.
 
@@ -148,6 +151,16 @@ orchestrator auto-delegates to the agent. Agents run in fresh context
 explicitly specced otherwise. The first such agent is `gps-mentor`
 (spec: `docs/specs/gps-mentor-agent-spec.md`).
 
+**Qualified tool names.** In the `tools:` frontmatter, MCP tools **must**
+be listed under their fully-qualified `mcp__genealogy__*` names, never the
+bare tool name. A bare name leaves the subagent toolless in the
+unit-harness SDK path (only the e2e harness tolerated bare names, via its
+ToolSearch prefix allowlist); qualifying makes an agent behave identically
+across Cowork, the e2e harness, the unit harness, and the hosted web SDK
+path. Built-in Cowork tools that are not MCP tools — `Read` — stay bare.
+All three current agents follow this (`gps-mentor`, `image-reader`,
+`record-extractor`).
+
 ## Handling user feedback submissions
 
 When a user submits a feedback zip via the Cowork viewer, the workflow
@@ -190,8 +203,8 @@ specified as JSON Schema under `docs/specs/schemas/` and mirrored independently
 in `packages/schema/` (JSON Schema + hand-maintained TypeScript types in
 `src/index.ts`, consumed by viewer-ui/web/server). The engine's runtime check is
 the hand-maintained `validate_research_schema` (`validator.ts`) — it does **not**
-load the JSON Schema, so it must be edited too. There are two kinds of schema
-change, with two different (and easy-to-undercount) site lists:
+load the JSON Schema, so it must be edited too. There are three kinds of schema
+change, with different (and easy-to-undercount) site lists:
 
 - **New field or section:** `docs/specs/schemas/research.schema.json`, the prose
   table in `docs/specs/research-schema-spec.md`, the validator
@@ -207,6 +220,16 @@ change, with two different (and easy-to-undercount) site lists:
   `packages/schema/src/index.ts`, the `CLOSED_ENUMS` set in `validator.ts`, and the
   prose tables/discussion in `research-schema-spec.md`. Worked blast-radius and
   rationale: `docs/plan/no-evidence-evidence-type-decision.md`.
+- **Tree-schema (simplified-GedcomX) change** — a new/renamed field on tree
+  persons, names, facts, relationships, or sources: in addition to the spec
+  (`docs/specs/simplified-gedcomx-spec.md`) and the schema mirrors above, the
+  **closed per-object field allow-lists** in
+  `packages/engine/mcp-server/src/validation/tree-shape.ts` must be edited —
+  the validator enforces `additionalProperties: false` from those sets, so an
+  unlisted field makes every writer tool (`tree_edit`, `tree_correct`, the
+  merge tools, `research_append`'s tree write) reject the write. The legacy
+  healer (`tree-sanitize.ts`) reads the same sets; check whether the change
+  needs a heal rule for pre-change trees.
 
 The interview lives in `init-project/SKILL.md`.
 
@@ -251,18 +274,17 @@ Two distinct config sources:
 
 2. **Per-user, on the user's machine:** `~/.familysearch-mcp/`
    directory, `mode: 0o600`. Holds `tokens.json` (OAuth tokens from
-   `login`) and `config.json` (per-user tunables like `wikiApiUrl`,
-   `wikiMarkdownDir`). `loadConfig` / `saveConfig` read and write
-   the per-user JSON. **Do not** introduce env-var fallbacks — the
-   files are the sole sources. New per-user keys go on `AppConfig`
-   in `src/types/auth.ts` and are read via `loadConfig()`.
+   `login`) and `config.json` (per-user tunables like `wikiApiUrl`).
+   `loadConfig` / `saveConfig` read and write the per-user JSON.
+   **Do not** introduce env-var fallbacks — the files are the sole
+   sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
+   and are read via `loadConfig()`.
 
 Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `wiki_search` | When using `wiki_search` | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
-| `wikiMarkdownDir` | `wiki_read`, `wiki_place_page` | When using any wiki page tool | Path to the pre-crawled wiki markdown files (e.g. `.../wiki/02_markdown/20260416_160227/`). Read by `getWikiMarkdownDir()` in `src/auth/config.ts`. |
+| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 | `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 
@@ -279,7 +301,7 @@ line — not an inconsistency to "fix":
 
 - **API/wire surfaces use camelCase.** MCP tool parameters
   (`birthPlace`, `personId`, `collectionId`), `~/.familysearch-mcp/config.json`
-  keys (`wikiApiUrl`, `wikiMarkdownDir`), and the upstream **full**
+  keys (`wikiApiUrl`, `popStatsUrl`), and the upstream **full**
   GedcomX returned by FamilySearch (`sourceDescriptions`, `resourceId`)
   are all camelCase.
 - **Persisted project documents use snake_case.** `research.json` and
@@ -335,6 +357,15 @@ Skills live in `packages/engine/plugin/skills/<skill-name>/`. Each skill has:
 The `description` in SKILL.md frontmatter is critical — it determines
 when Claude triggers the skill. Be specific about what kinds of user
 requests should activate it.
+
+**Lane rule for skill findings.** Before editing any SKILL.md (or plugin
+agent body) to fix an e2e/eval/user finding, classify the finding:
+(1) tooling defect → MCP tool PR; (2) eval defect (judge/rubric/fixture
+wrong) → eval PR; (3) record-type craft gap → that type's
+playbook/table; (4) core doctrine → the stewarded prose edit, gated by
+the unit suite. Most findings are lanes 1–2; prose edits never
+compensate for a tool or eval bug. Full version:
+`docs/skill-lifecycle.md` §5.
 
 ### Python file I/O: always pass `encoding="utf-8"`
 

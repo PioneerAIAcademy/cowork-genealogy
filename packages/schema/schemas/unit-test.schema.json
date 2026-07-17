@@ -19,7 +19,7 @@
         },
         "skill": {
           "type": "string",
-          "description": "Directory name under plugin/skills/. Must match an existing skill."
+          "description": "Directory name under packages/engine/plugin/skills/. Must match an existing skill."
         },
         "name": {
           "type": "string",
@@ -38,6 +38,11 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Freeform tags for filtering and grouping. May be empty."
+        },
+        "holdout": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reserves this test as a generalization check for the skill-improvement loop. When true, the body-optimizer must not read or tune against this test when proposing SKILL.md edits — it consults holdout tests only to measure whether an edit generalized beyond the cases it was written from. The harness runs holdout tests like any other (they are still graded, annotated, and released); the flag governs only the improver's behavior. See docs/skill-lifecycle.md."
         },
         "expected_outcome": {
           "type": "string",
@@ -89,6 +94,56 @@
       "items": { "type": "string" },
       "description": "Per-test background notes the LLM judge reads to ground its rationales for the base + rubric dimensions. NOT a separate scored source — the judge does not emit a `criteria` dimension. Deterministic checks belong in validators (eval/harness/validators/test_<skill>.py), gated on tags. May be empty."
     },
+    "expected_classifications": {
+      "type": "array",
+      "description": "Optional deterministic classification ground truth, checked mechanically by the skill's validator (test_expected_classifications in eval/harness/validators/). Semantics per matcher: at least one NEW assertion (created by the run) with the matcher's record_role + fact_type must exist, and EVERY new assertion with that record_role + fact_type must carry each classification value the matcher declares. The LLM judge still grades the classification dimensions; validator results are the mechanical reference during annotation. Only declare pairs and values the doctrine fixes deterministically.",
+      "items": {
+        "type": "object",
+        "required": ["record_role", "fact_type"],
+        "additionalProperties": false,
+        "properties": {
+          "record_role": {
+            "type": "string",
+            "description": "The assertion's record_role, exactly as the skill persists it (e.g. head_of_household, wife, child_1, deceased)."
+          },
+          "fact_type": {
+            "type": "string",
+            "description": "The assertion's fact_type, exactly as the skill persists it (e.g. name, age, birth, residence, relationship, death, cause_of_death). Event place/date are attributes of the event fact, not their own types: a birthplace is fact_type `birth` with the `place` set — pair it with `attribute: \"place\"` (below)."
+          },
+          "attribute": {
+            "type": "string",
+            "enum": ["date", "place"],
+            "description": "Optional facet for an event fact whose date and place are separate attributes of the one event type. When set, the matcher matches ONLY new assertions of the given fact_type that have that attribute populated (`place`/`standard_place` for \"place\", `date` for \"date\") — so a `birth` place-claim (`direct`) and a `birth` date-claim (`indirect`) stay independently checkable. Omit for facts that don't split date from place."
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, the matcher does NOT require a matching assertion to EXIST — it only checks the classification IF one is present. Use for a fact whose existence is completeness the skill produces unreliably (gating on it flaps), while still verifying its classification when present. The judge's soft Completeness dimension covers the omission. Defaults to false (existence required)."
+          },
+          "evidence_type": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ],
+            "description": "Expected evidence_type on every matching new assertion (direct | indirect | negative). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
+          },
+          "informant_proximity": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ],
+            "description": "Expected informant_proximity on every matching new assertion (self | witness | household_member | family_not_present | researcher | official_duty | unknown). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
+          },
+          "information_quality": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ],
+            "description": "Expected information_quality on every matching new assertion (primary | secondary | indeterminate). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
+          }
+        }
+      }
+    },
     "negative": {
       "type": "object",
       "required": ["correct_skill", "explanation"],
@@ -102,6 +157,11 @@
         "explanation": {
           "type": "string",
           "description": "Why the tested skill should not activate. Documents the boundary between the two skills."
+        },
+        "grade_on_invariant": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe (e.g. citation refuse-new-source: the skill may or may not fire, but no run may fabricate a source). REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/plan/invariant-grading.md."
         }
       }
     },
@@ -110,6 +170,16 @@
       "minimum": 1,
       "maximum": 1,
       "description": "POLICY (current stage): ALWAYS 1. Do not set this above 1 when creating or updating a test. We are not addressing single-run variance yet, and multi-run tests make the suite painfully slow (each run is a full skill execution + judge call). The multi-run aggregation machinery (unit-test-spec.md Section 7) exists for future description-optimizer / golden-set work only; until that stage, omit this field (it defaults to 1) or set it to 1."
+    },
+    "intentionally_invalid": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the test's scenario files are broken on purpose — e.g. for a validator/guardrail skill (validate-schema) whose job is to detect invalid input. The runnability gate then skips schema validation of the scenario, the post-run file-validity validators are not counted against the test, and the scenario-fixture lint exempts the referenced scenario. Defaults to false; only set it on tests that genuinely need an invalid starting state. See unit-test-spec.md Section 9."
+    },
+    "judge_reads_files": {
+      "type": "boolean",
+      "default": false,
+      "description": "Opt-in. When true, the harness includes the actual content of the entries this run wrote to research.json / tree.gedcomx.json (truncated) in what the LLM judge sees, instead of only change counts. Use for skills whose graded deliverable is written to a file rather than echoed in the chat reply (e.g. proof-conclusion's narrative_markdown). Defaults to false, which preserves the legacy counts-only judge input for every other test/skill, so enabling it for one skill does not affect any other. See unit-test-spec.md Section 5.9."
     },
     "execution": {
       "type": "object",

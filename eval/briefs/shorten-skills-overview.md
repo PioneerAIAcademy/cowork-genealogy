@@ -69,7 +69,7 @@ cases." State each load-bearing rule **once**.
 ## 3. The one real tradeoff (read before you start cutting)
 
 Do **not** binary-search "minimum text until a test flips red." The corpus is
-small (most skills have 8–13 tests) and LLM-judged with **no `temperature=0`**
+small (most skills have 8–13 tests) and the skill run is **not `temperature=0`**
 (see `eval/CLAUDE.md` → "Eval vs production parity"), so the true minimum
 overfits to *both* the current tests and single-run jitter. Instead:
 

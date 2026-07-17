@@ -21,12 +21,18 @@ before_state/after_state.**
       {"tool": "mcp__server__tool", "args": dict, "matched": {...},
        "response_fixture": str|None, "response": dict}
   - `skill_frontmatter` (dict): convenience copy of before_state's value
+  - `blocked_context_calls` (list): main-thread calls to subagent-only
+      tools that the PreToolUse hook denied, with shape
+      {"tool": "image_read", "args": dict}. Empty = healthy. These calls
+      were blocked, so they never appear in `tool_calls`.
 
 A validator can take any subset of these. Functions are plain pytest
 test functions (raise AssertionError on failure). pytest.skip("...") is
 treated as "not applicable to this state" — recorded as passed with a
 skip marker, not as a failure.
 """
+
+from pathlib import Path
 
 import pytest
 
@@ -336,12 +342,11 @@ OWNERSHIP_TABLE: dict[str, set[str]] = {
     # co-own plans only to update items[].status after executing or
     # extracting from an item (see spec §4).
     "plans": {"research-plan", "search-records", "search-external-sites",
-              "search-full-text", "record-extraction"},
+              "search-full-text", "search-images", "record-extraction"},
     "log": {"search-records", "search-external-sites", "record-extraction",
-            "search-full-text"},
+            "search-full-text", "search-images"},
     "sources": {"record-extraction", "citation"},
-    "assertions": {"record-extraction", "assertion-classification",
-                    "convert-dates"},
+    "assertions": {"record-extraction", "convert-dates"},
     "person_evidence": {"person-evidence"},
     "conflicts": {"conflict-resolution"},
     "hypotheses": {"hypothesis-tracking"},
@@ -483,6 +488,12 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     drift between the frontmatter and what the skill actually called (e.g.,
     a fixture was loaded for a tool the skill shouldn't be using).
 
+    The declared set is widened with the frontmatter `tools:` of every
+    plugin agent the skill's SKILL.md references via `@plugin:<name>` —
+    a delegated agent's MCP calls land in the same session tool_calls log,
+    and they are legitimate exactly when the skill body instructs the
+    delegation. Mirrors harness.allowed_tools.compute_allowed_tools.
+
     Skipped on negative tests: tool calls come from the routed-to skill,
     not the skill under test, so checking against the skill under test's
     allowed-tools would be a false positive.
@@ -495,6 +506,27 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
     if not tool_calls:
         return
     declared = set((skill_frontmatter or {}).get("allowed-tools", []) or [])
+
+    # Widen with referenced plugin agents' tools (bare MCP names only —
+    # built-in tools like Read never appear in tool_calls).
+    from harness.allowed_tools import agent_refs_for_skill, load_skill_frontmatter
+    from harness.workspace import DEFAULT_PLUGIN_AGENTS
+
+    _repo_root = Path(__file__).resolve().parents[3]
+    _skill_md = (
+        _repo_root / "packages" / "engine" / "plugin" / "skills"
+        / str(test.get("skill", "")) / "SKILL.md"
+    )
+    for _agent in agent_refs_for_skill(_skill_md):
+        _agent_fm = load_skill_frontmatter(DEFAULT_PLUGIN_AGENTS / f"{_agent}.md")
+        for _t in _agent_fm.get("tools", []) or []:
+            # Agent frontmatter lists MCP tools in qualified form
+            # (mcp__genealogy__wikipedia_search — the SDK resolves subagent
+            # tools by exposed name); this validator compares bare names, so
+            # normalize. Built-ins (capitalized) never appear in tool_calls.
+            _bare = _t.split("__")[-1] if "__" in _t else _t
+            if not _bare[:1].isupper():
+                declared.add(_bare)
     if not declared:
         # Skill declared no MCP tools but called some — that's a violation.
         bare = [c["tool"].split("__")[-1] for c in tool_calls]
@@ -509,4 +541,108 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
             bad.append(bare)
     assert not bad, (
         f"skill called MCP tools not in allowed-tools frontmatter: {sorted(set(bad))}"
+    )
+
+
+# --- Hand-edit detection (project files must go through writer tools) ---
+#
+# The full set of MCP tools that legitimately write research.json /
+# tree.gedcomx.json. Matched on the tool-name tail after the mcp prefix
+# (mcp__genealogy__research_append → research_append).
+PROJECT_WRITER_TOOLS = {
+    "research_append",
+    "research_log_append",
+    "tree_edit",
+    "tree_correct",
+    "merge_record_into_tree",
+    "merge_tree_persons",
+}
+
+
+def test_project_file_changes_route_through_writer_tools(
+    before_state, after_state, tool_calls
+):
+    """Universal: a modified research.json / tree.gedcomx.json requires at
+    least one writer-tool call in the session.
+
+    The writer tools validate-before-persist, allocate ids, and keep the
+    `.bak` safety copy; a direct file write (Write/Edit/python) bypasses
+    all three. Evidence this happens: tree-edit ut_012 (2026-07-12) made
+    ZERO tool calls yet research.json grew a person_evidence entry with a
+    fabricated `created` date — and every validator passed, because
+    nothing checked the write PATH, only the resulting state.
+
+    This is deliberately coarse: any writer-tool call legitimizes the
+    session's project-file changes (research_append can touch both files
+    via composite persist, so per-file attribution would false-positive).
+    The zero-calls case is the unambiguous hand-edit signal.
+    """
+    changed = []
+    diffable = []
+
+    before_research = before_state.get("research_json")
+    after_research = after_state.get("research_json")
+    if before_research is not None and after_research is not None:
+        diffable.append("research.json")
+        if before_research != after_research:
+            changed.append("research.json")
+
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
+        "tree_gedcomx"
+    )
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get(
+        "tree_gedcomx"
+    )
+    if before_tree is not None and after_tree is not None:
+        diffable.append("tree.gedcomx.json")
+        if before_tree != after_tree:
+            changed.append("tree.gedcomx.json")
+
+    if not diffable:
+        pytest.skip("Missing research.json/tree.gedcomx.json for diff")
+    if not changed:
+        return
+
+    writer_calls = [
+        c
+        for c in (tool_calls or [])
+        if (c.get("tool") or "").rsplit("__", 1)[-1] in PROJECT_WRITER_TOOLS
+    ]
+    assert writer_calls, (
+        f"project file {' and '.join(changed)} modified with no writer-tool "
+        f"call — direct file writes bypass validation/id-allocation/.bak; "
+        f"route through the writer tools "
+        f"({', '.join(sorted(PROJECT_WRITER_TOOLS))})"
+    )
+
+
+def test_no_main_thread_subagent_only_calls(blocked_context_calls):
+    """No subagent-only tool was called from the main session.
+
+    `image_read` returns inline base64; in the router's context the bytes
+    accumulate and overflow the transport's ~1 MiB per-turn buffer, crashing
+    the run. Image reads must be delegated to the image-reader subagent, which
+    absorbs the base64 in a throwaway context and returns text.
+
+    This is the deterministic half of what the LLM judge used to grade by
+    transcript inference — badly: across the 2026-07-16 runs it caught the
+    violation roughly 1-in-8, and a run could pass while violating. The
+    PreToolUse hook denies the call and records it here, so the check is
+    mechanical. Same spirit as `expected_classifications`
+    (unit-test-spec.md §5.10): grade deterministically what is unambiguous,
+    leave the judge the genuinely fuzzy parts.
+
+    Rationale + probe evidence: docs/plan/image-read-context-policy.md.
+    """
+    if not blocked_context_calls:
+        return
+
+    offenders = ", ".join(
+        sorted({c.get("tool", "?") for c in blocked_context_calls})
+    )
+    raise AssertionError(
+        f"subagent-only tool(s) called from the main session: {offenders} "
+        f"({len(blocked_context_calls)} call(s), denied by the hook). "
+        f"Delegate to the owning subagent (image reads → @plugin:image-reader) "
+        f"so the base64 never enters the router's context."
     )

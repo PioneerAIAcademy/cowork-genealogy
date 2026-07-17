@@ -8,8 +8,8 @@ description: Generate a first-cut unit test, scenario, and MCP fixtures
   transcript's tool calls) or `/draft-unit-test --skill <name>` to
   pick explicitly. Writes test JSON, scenario directory, and MCP
   fixtures into the main repo (via the `.feedback-repo-root` marker
-  in the case directory). All outputs are marked DRAFT; the user
-  edits via the existing CRUD UI before committing.
+  in the case directory). All outputs are first cuts the user refines
+  via the CRUD UI before committing.
 allowed-tools:
   - Read
   - Write
@@ -61,7 +61,7 @@ root.
 If `--skill <name>` was passed, use that. Otherwise, inspect the
 recent Claude Code transcript turns and pick the plugin skill whose
 `allowed-tools` overlap most with the tools the agent actually
-called. Plugin skills live at `$REPO/plugin/skills/<name>/SKILL.md`;
+called. Plugin skills live at `$REPO/packages/engine/plugin/skills/<name>/SKILL.md`;
 read the `allowed-tools` frontmatter to compare.
 
 If you cannot confidently identify the skill, abort and ask the user
@@ -103,13 +103,12 @@ test id):
   rounded to the decade, place names generalized to county or
   country. The scrub is heuristic and unreliable for genealogy
   data specifically — historical ancestor names look
-  indistinguishable from living-person names. Mark the scenario's
-  `research.json` with a top-level `_draft` block:
-  ```json
-  "_draft": { "pii_review_required": true }
-  ```
-  This flag tells the CRUD UI to refuse a commit until the user
-  reviews and clears it.
+  indistinguishable from living-person names, so **review the scrub by
+  hand before committing** and record that reminder in the scenario
+  README. Keep `research.json` **schema-clean** — do NOT add a top-level
+  `_draft` block (or any extra top-level key): the harness validates the
+  scenario before running, and a stray key makes the test abort as
+  *not-runnable* with nothing to grade.
 - `tree.gedcomx.json` — minimal GedcomX with the same scrub rules.
   Include only persons/relationships/sources the failure actually
   used; drop the rest.
@@ -133,20 +132,26 @@ already established in the existing tests for that skill:
     "user_message": "<user_prompt verbatim from feedback.json>",
     "scenario": "<slug>"
   },
+  "mcp_fixtures": ["<stem of every fixture you write in step 7 — filename without .json>"],
   "judge_context": [
     "<one bullet per concrete behavior the skill should exhibit, derived from agent_should_have>",
     "..."
-  ],
-  "_draft": {
-    "pii_review_required": true,
-    "todo": [
-      "Tighten judge_context bullets to specific assertions",
-      "Confirm scenario captures the failure mode",
-      "Review fixture args predicates"
-    ]
-  }
+  ]
 }
 ```
+
+**Wire in every fixture via `mcp_fixtures`** — list the stem (filename without
+`.json`) of each step-7 fixture. This is easy to forget and the failure is
+**silent**: the file schema-validates without it, but at run time every unmocked
+tool call returns `fixture_not_found` and the test aborts. (`validate_research_schema`
+and the other live tools need no fixture and no entry.)
+
+**Keep the test JSON schema-clean** — do NOT add a top-level `_draft` block.
+Nothing in the harness or CRUD UI reads it, and any unknown top-level key
+makes the harness skip the test as schema-invalid. It's a *draft* because you
+tell the user so in step 10's printout (with the "tighten judge_context /
+confirm the scenario / review fixture predicates / review PII" reminders),
+not because of a marker in the file.
 
 `<NNN>` is the next unused integer for that skill. Scan existing
 test ids under `$REPO/eval/tests/unit/<skill>/*.json`, find the
@@ -170,7 +175,6 @@ write or reuse a fixture file at
   "tool": "<tool name from session-log>",
   "description": "<short — include the case slug for traceability>",
   "args": { "<arg>": "<predicate, e.g. ~Schuylkill>" },
-  "input_schema": { ... },
   "response": { ... }
 }
 ```
@@ -208,8 +212,8 @@ The per-skill rubric at
 `$REPO/eval/tests/unit/<skill>/rubric.md` is the grading contract
 for all tests of that skill; it's authored by hand by senior
 genealogists. This skill never writes to it. If the new test
-requires a new rubric dimension, leave a note in the test's
-`_draft.todo` list and let a human add it.
+requires a new rubric dimension, flag it in step 10's printout
+and let a human add it.
 
 ### 9. Re-invoke assertion (tag only)
 
@@ -218,7 +222,7 @@ tag. That's it — do **not** generate a Python validator file.
 The re-invocation contract is enforced by:
 
 - the `## Re-invocation behavior` section in each
-  `plugin/skills/<skill>/SKILL.md` (per spec §5), and
+  `packages/engine/plugin/skills/<skill>/SKILL.md` (per spec §5), and
 - the lint pytest that confirms every SKILL.md carries that
   section (per spec §9 step 7).
 
@@ -241,8 +245,15 @@ session:
   cd $REPO/eval/harness
   uv run python run_tests.py --test ut_<skill>_<NNN>
   ```
+  (The test + scenario are schema-clean, so this runs as-is — no `_draft`
+  markers to strip first.)
+- **This is a first cut — tell the user to verify before committing** (these
+  reminders live here, not as a `_draft` block in the file): tighten
+  `judge_context` to specific assertions; confirm the scenario captures the
+  failure mode; review each fixture's args predicate; and **review the PII
+  scrub** in the scenario (the heuristic is unreliable for genealogy names).
 
-Both are one-line printouts. Make them copy-paste-friendly.
+Make the paths + command copy-paste-friendly.
 
 ## Decision rules
 
@@ -252,7 +263,7 @@ Both are one-line printouts. Make them copy-paste-friendly.
 | Can't identify the failing skill | Ask the user to pass `--skill <name>` explicitly. |
 | Existing test for this slug already present | Don't overwrite. Append `-2`/`-3` to the filename and let the user consolidate. |
 | Scenario directory `<slug>/` exists | Same — append `-2`/`-3`. |
-| Skill has no `eval/tests/unit/<skill>/` directory | Create the directory, but flag in the `_draft.todo` list that this is the first test for this skill and the rubric needs authoring. |
-| Skill is missing `rubric.md` entirely | Continue — the test will be graded on base dimensions only. Note in `_draft.todo`. |
+| Skill has no `eval/tests/unit/<skill>/` directory | Create the directory, but flag in step 10's printout that this is the first test for this skill and the rubric needs authoring. |
+| Skill is missing `rubric.md` entirely | Continue — the test will be graded on base dimensions only. Note it in step 10's printout. |
 | MCP fixture would be a duplicate | Reuse the existing fixture; do not write a new file. Reference the existing filename in the test's `judge_context` for clarity. |
-| `session-log.jsonl` is absent from the case | Use the current Claude Code session's transcript as your tool-call source instead. If neither is available, emit fixture placeholders and flag them in `_draft.todo`. |
+| `session-log.jsonl` is absent from the case | Use the current Claude Code session's transcript as your tool-call source instead. If neither is available, emit fixture placeholders and flag them in step 10's printout. |

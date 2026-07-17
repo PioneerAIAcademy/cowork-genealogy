@@ -1,0 +1,2381 @@
+{
+  "test_id": "rejnic-burial",
+  "captured_at": "2026-07-15_03-18-45",
+  "verdict": "pass",
+  "stop_reason": "completed",
+  "judge_output": {
+    "per_finding": [
+      {
+        "finding_id": "f1",
+        "matched": "true",
+        "agent_evidence": "Person L86H-T8G (Maria Rejnic) in final_tree contains a Burial fact with place 'Kennedy Township, Allegheny, Pennsylvania, United States' and standard_place 'Kennedy, Bogot\u00e1, Colombia' (with source ref S1 pointing to Find a Grave Index). The burial place matches the expected finding despite the malformed standard_place field.",
+        "notes": "The agent recovered the burial location (Kennedy Township, Allegheny, Pennsylvania) for Maria Rejnic (born 15 April 1890, died 18 June 1967) from the Find a Grave Index. The core fact is present in the tree with the correct place name, though the standard_place field contains an apparent data corruption (Bogot\u00e1, Colombia). The supporting_sources reference (S1: Find a Grave Index memorial for Mary Rejnic Kraynak) matches the expected source. This is a successful recovery of the required finding despite the data quality issue in the standardized place field."
+      }
+    ],
+    "recall_required": 1.0,
+    "recall_total": 1.0,
+    "verdict": "pass",
+    "rationale": "The agent successfully recovered the required finding: Maria Rejnic's burial location in Kennedy Township, Allegheny County, Pennsylvania. The fact appears in the final tree as a Burial event for person L86H-T8G (Maria Rejnic, born 15 April 1890, died 18 June 1967) with the correct place name and source attribution to the Find a Grave Index. Although the standard_place field contains corrupted data, the primary place field is accurate and the fact is properly sourced. The research question is fully answered.",
+    "proof_quality": {
+      "score": 2,
+      "exhaustiveness": "partial",
+      "conflicts_addressed": "na",
+      "corroboration": "single_source",
+      "tier_appropriate": "yes",
+      "rationale": "The proof summary is competent but limited. The exhaustive_search_summary demonstrates reasonable effort (searches of multiple FamilySearch collections, cross-collection searches, FAN search on the husband) but acknowledges that two high-priority sources (Pennsylvania death certificates and Pittsburgh obituaries) remain unconsulted due to autonomous-mode limitations. The narrative correctly identifies the Find a Grave Index as a secondary derivative source and appropriately assigns the conclusion to 'probable' tier rather than 'proved,' showing sound epistemic restraint. However, the evidence rests entirely on a single source (the Find a Grave Index entry), with no independent corroboration or original primary sources. The tier assignment ('probable') is justified by the single-source limitation, but the proof would require the PA death certificate or newspaper obituary to reach 'proved'. The proof is thorough in scope and appropriately cautious in tier, but fails to achieve independent corroboration\u2014hence score 2 (partial) rather than 3."
+    }
+  },
+  "usage": {
+    "duration_ms": 1242077,
+    "duration_api_ms": 1216242,
+    "num_turns": 83,
+    "is_error": false,
+    "stop_reason": "end_turn",
+    "total_cost_usd": 3.58823745,
+    "usage": {
+      "input_tokens": 110,
+      "cache_creation_input_tokens": 222508,
+      "cache_read_input_tokens": 4428545,
+      "output_tokens": 47393,
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 222508,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "inference_geo": "",
+      "iterations": [
+        {
+          "input_tokens": 1,
+          "output_tokens": 441,
+          "cache_read_input_tokens": 67720,
+          "cache_creation_input_tokens": 424,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 424
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    },
+    "continue_nudges": 1,
+    "session_id": "9d8cbd27-da42-4928-b87f-3fd88b24cb50",
+    "resumes": 0,
+    "resume_on_stall": true,
+    "timeline": [
+      [
+        2.8,
+        "system:init"
+      ],
+      [
+        6.9,
+        "assistant"
+      ],
+      [
+        7.1,
+        "assistant"
+      ],
+      [
+        7.1,
+        "tool_result"
+      ],
+      [
+        13.8,
+        "assistant"
+      ],
+      [
+        15.5,
+        "assistant"
+      ],
+      [
+        15.6,
+        "tool_result"
+      ],
+      [
+        19.5,
+        "assistant"
+      ],
+      [
+        19.8,
+        "assistant"
+      ],
+      [
+        19.8,
+        "tool_result"
+      ],
+      [
+        23.1,
+        "assistant"
+      ],
+      [
+        23.1,
+        "assistant"
+      ],
+      [
+        25.2,
+        "assistant"
+      ],
+      [
+        25.3,
+        "tool_result"
+      ],
+      [
+        25.3,
+        "tool_result"
+      ],
+      [
+        30.2,
+        "assistant"
+      ],
+      [
+        31.0,
+        "assistant"
+      ],
+      [
+        31.6,
+        "tool_result"
+      ],
+      [
+        31.9,
+        "assistant"
+      ],
+      [
+        32.0,
+        "tool_result"
+      ],
+      [
+        40.7,
+        "assistant"
+      ],
+      [
+        41.3,
+        "assistant"
+      ],
+      [
+        41.5,
+        "assistant"
+      ],
+      [
+        41.5,
+        "tool_result"
+      ],
+      [
+        44.4,
+        "assistant"
+      ],
+      [
+        51.4,
+        "assistant"
+      ],
+      [
+        51.5,
+        "tool_result"
+      ],
+      [
+        55.6,
+        "assistant"
+      ],
+      [
+        55.9,
+        "assistant"
+      ],
+      [
+        58.8,
+        "assistant"
+      ],
+      [
+        58.8,
+        "tool_result"
+      ],
+      [
+        58.8,
+        "tool_result"
+      ],
+      [
+        64.2,
+        "assistant"
+      ],
+      [
+        65.2,
+        "assistant"
+      ],
+      [
+        65.7,
+        "tool_result"
+      ],
+      [
+        65.9,
+        "assistant"
+      ],
+      [
+        65.9,
+        "tool_result"
+      ],
+      [
+        75.2,
+        "assistant"
+      ],
+      [
+        76.7,
+        "assistant"
+      ],
+      [
+        77.4,
+        "tool_result"
+      ],
+      [
+        95.4,
+        "assistant"
+      ],
+      [
+        95.4,
+        "assistant"
+      ],
+      [
+        95.9,
+        "assistant"
+      ],
+      [
+        95.9,
+        "tool_result"
+      ],
+      [
+        99.2,
+        "assistant"
+      ],
+      [
+        99.6,
+        "assistant"
+      ],
+      [
+        100.6,
+        "assistant"
+      ],
+      [
+        101.0,
+        "assistant"
+      ],
+      [
+        105.4,
+        "tool_result"
+      ],
+      [
+        111.7,
+        "tool_result"
+      ],
+      [
+        115.4,
+        "tool_result"
+      ],
+      [
+        142.3,
+        "assistant"
+      ],
+      [
+        142.9,
+        "assistant"
+      ],
+      [
+        163.7,
+        "assistant"
+      ],
+      [
+        163.7,
+        "tool_result"
+      ],
+      [
+        167.1,
+        "assistant"
+      ],
+      [
+        168.1,
+        "assistant"
+      ],
+      [
+        174.4,
+        "assistant"
+      ],
+      [
+        174.5,
+        "tool_result"
+      ],
+      [
+        174.5,
+        "tool_result"
+      ],
+      [
+        180.1,
+        "assistant"
+      ],
+      [
+        180.8,
+        "assistant"
+      ],
+      [
+        180.9,
+        "tool_result"
+      ],
+      [
+        186.5,
+        "assistant"
+      ],
+      [
+        187.5,
+        "assistant"
+      ],
+      [
+        191.1,
+        "assistant"
+      ],
+      [
+        192.9,
+        "tool_result"
+      ],
+      [
+        199.6,
+        "assistant"
+      ],
+      [
+        199.9,
+        "assistant"
+      ],
+      [
+        202.3,
+        "assistant"
+      ],
+      [
+        203.6,
+        "tool_result"
+      ],
+      [
+        203.9,
+        "assistant"
+      ],
+      [
+        204.2,
+        "tool_result"
+      ],
+      [
+        213.1,
+        "assistant"
+      ],
+      [
+        213.7,
+        "assistant"
+      ],
+      [
+        218.6,
+        "assistant"
+      ],
+      [
+        219.2,
+        "tool_result"
+      ],
+      [
+        220.4,
+        "assistant"
+      ],
+      [
+        221.4,
+        "tool_result"
+      ],
+      [
+        222.2,
+        "assistant"
+      ],
+      [
+        222.5,
+        "tool_result"
+      ],
+      [
+        234.6,
+        "assistant"
+      ],
+      [
+        235.1,
+        "assistant"
+      ],
+      [
+        239.7,
+        "assistant"
+      ],
+      [
+        240.2,
+        "tool_result"
+      ],
+      [
+        242.6,
+        "assistant"
+      ],
+      [
+        242.7,
+        "tool_result"
+      ],
+      [
+        247.5,
+        "assistant"
+      ],
+      [
+        248.4,
+        "assistant"
+      ],
+      [
+        250.4,
+        "assistant"
+      ],
+      [
+        252.2,
+        "tool_result"
+      ],
+      [
+        252.2,
+        "assistant"
+      ],
+      [
+        252.6,
+        "tool_result"
+      ],
+      [
+        254.5,
+        "assistant"
+      ],
+      [
+        257.1,
+        "tool_result"
+      ],
+      [
+        273.9,
+        "assistant"
+      ],
+      [
+        274.3,
+        "assistant"
+      ],
+      [
+        277.6,
+        "assistant"
+      ],
+      [
+        278.3,
+        "assistant"
+      ],
+      [
+        280.5,
+        "tool_result"
+      ],
+      [
+        280.5,
+        "tool_result"
+      ],
+      [
+        297.2,
+        "assistant"
+      ],
+      [
+        297.5,
+        "assistant"
+      ],
+      [
+        301.7,
+        "assistant"
+      ],
+      [
+        302.2,
+        "tool_result"
+      ],
+      [
+        307.2,
+        "assistant"
+      ],
+      [
+        307.7,
+        "tool_result"
+      ],
+      [
+        311.6,
+        "assistant"
+      ],
+      [
+        312.1,
+        "tool_result"
+      ],
+      [
+        315.8,
+        "assistant"
+      ],
+      [
+        316.0,
+        "tool_result"
+      ],
+      [
+        335.0,
+        "assistant"
+      ],
+      [
+        335.7,
+        "assistant"
+      ],
+      [
+        339.8,
+        "assistant"
+      ],
+      [
+        339.8,
+        "tool_result"
+      ],
+      [
+        348.7,
+        "assistant"
+      ],
+      [
+        348.7,
+        "assistant"
+      ],
+      [
+        354.2,
+        "assistant"
+      ],
+      [
+        354.3,
+        "tool_result"
+      ],
+      [
+        354.3,
+        "tool_result"
+      ],
+      [
+        358.0,
+        "assistant"
+      ],
+      [
+        359.0,
+        "assistant"
+      ],
+      [
+        369.0,
+        "assistant"
+      ],
+      [
+        369.1,
+        "system:task_started"
+      ],
+      [
+        369.1,
+        "tool_result"
+      ],
+      [
+        371.5,
+        "system:task_progress"
+      ],
+      [
+        371.5,
+        "assistant"
+      ],
+      [
+        371.5,
+        "tool_result"
+      ],
+      [
+        375.9,
+        "system:task_progress"
+      ],
+      [
+        375.9,
+        "assistant"
+      ],
+      [
+        375.9,
+        "tool_result"
+      ],
+      [
+        390.2,
+        "system:task_progress"
+      ],
+      [
+        390.2,
+        "assistant"
+      ],
+      [
+        390.2,
+        "tool_result"
+      ],
+      [
+        401.5,
+        "system:task_notification"
+      ],
+      [
+        401.5,
+        "tool_result"
+      ],
+      [
+        414.9,
+        "assistant"
+      ],
+      [
+        414.9,
+        "assistant"
+      ],
+      [
+        416.3,
+        "assistant"
+      ],
+      [
+        416.4,
+        "tool_result"
+      ],
+      [
+        416.4,
+        "tool_result"
+      ],
+      [
+        424.7,
+        "assistant"
+      ],
+      [
+        425.4,
+        "assistant"
+      ],
+      [
+        425.4,
+        "tool_result"
+      ],
+      [
+        448.6,
+        "assistant"
+      ],
+      [
+        449.0,
+        "assistant"
+      ],
+      [
+        457.2,
+        "assistant"
+      ],
+      [
+        457.3,
+        "tool_result"
+      ],
+      [
+        460.2,
+        "tool_result"
+      ],
+      [
+        466.5,
+        "system:notification"
+      ],
+      [
+        466.5,
+        "assistant"
+      ],
+      [
+        466.5,
+        "assistant"
+      ],
+      [
+        471.9,
+        "assistant"
+      ],
+      [
+        471.9,
+        "tool_result"
+      ],
+      [
+        471.9,
+        "tool_result"
+      ],
+      [
+        510.8,
+        "assistant"
+      ],
+      [
+        510.9,
+        "assistant"
+      ],
+      [
+        511.2,
+        "tool_result"
+      ],
+      [
+        511.2,
+        "assistant"
+      ],
+      [
+        511.7,
+        "tool_result"
+      ],
+      [
+        549.7,
+        "assistant"
+      ],
+      [
+        553.7,
+        "assistant"
+      ],
+      [
+        557.2,
+        "assistant"
+      ],
+      [
+        557.2,
+        "tool_result"
+      ],
+      [
+        566.0,
+        "assistant"
+      ],
+      [
+        566.9,
+        "assistant"
+      ],
+      [
+        573.1,
+        "assistant"
+      ],
+      [
+        573.2,
+        "tool_result"
+      ],
+      [
+        573.2,
+        "tool_result"
+      ],
+      [
+        593.5,
+        "assistant"
+      ],
+      [
+        594.1,
+        "assistant"
+      ],
+      [
+        600.7,
+        "assistant"
+      ],
+      [
+        601.2,
+        "tool_result"
+      ],
+      [
+        605.7,
+        "assistant"
+      ],
+      [
+        605.7,
+        "tool_result"
+      ],
+      [
+        648.2,
+        "assistant"
+      ],
+      [
+        648.3,
+        "assistant"
+      ],
+      [
+        650.6,
+        "assistant"
+      ],
+      [
+        650.6,
+        "tool_result"
+      ],
+      [
+        660.0,
+        "assistant"
+      ],
+      [
+        660.9,
+        "assistant"
+      ],
+      [
+        662.3,
+        "assistant"
+      ],
+      [
+        662.4,
+        "tool_result"
+      ],
+      [
+        671.2,
+        "assistant"
+      ],
+      [
+        671.9,
+        "assistant"
+      ],
+      [
+        680.5,
+        "assistant"
+      ],
+      [
+        680.5,
+        "tool_result"
+      ],
+      [
+        680.5,
+        "tool_result"
+      ],
+      [
+        722.7,
+        "assistant"
+      ],
+      [
+        731.0,
+        "assistant"
+      ],
+      [
+        746.5,
+        "assistant"
+      ],
+      [
+        746.5,
+        "tool_result"
+      ],
+      [
+        755.1,
+        "assistant"
+      ],
+      [
+        755.1,
+        "assistant"
+      ],
+      [
+        761.8,
+        "assistant"
+      ],
+      [
+        761.9,
+        "tool_result"
+      ],
+      [
+        761.9,
+        "tool_result"
+      ],
+      [
+        764.7,
+        "assistant"
+      ],
+      [
+        765.4,
+        "assistant"
+      ],
+      [
+        765.5,
+        "tool_result"
+      ],
+      [
+        843.8,
+        "assistant"
+      ],
+      [
+        843.9,
+        "assistant"
+      ],
+      [
+        864.5,
+        "assistant"
+      ],
+      [
+        864.6,
+        "tool_result"
+      ],
+      [
+        864.7,
+        "system:status"
+      ],
+      [
+        970.8,
+        "system:status"
+      ],
+      [
+        970.8,
+        "system:compact_boundary"
+      ],
+      [
+        970.8,
+        "tool_result"
+      ],
+      [
+        974.9,
+        "assistant"
+      ],
+      [
+        975.1,
+        "assistant"
+      ],
+      [
+        975.1,
+        "tool_result"
+      ],
+      [
+        980.4,
+        "assistant"
+      ],
+      [
+        983.3,
+        "assistant"
+      ],
+      [
+        985.4,
+        "tool_result"
+      ],
+      [
+        988.6,
+        "assistant"
+      ],
+      [
+        990.0,
+        "assistant"
+      ],
+      [
+        990.1,
+        "tool_result"
+      ],
+      [
+        1007.3,
+        "assistant"
+      ],
+      [
+        1007.3,
+        "assistant"
+      ],
+      [
+        1008.2,
+        "assistant"
+      ],
+      [
+        1008.3,
+        "tool_result"
+      ],
+      [
+        1011.1,
+        "assistant"
+      ],
+      [
+        1016.9,
+        "assistant"
+      ],
+      [
+        1016.9,
+        "system:task_started"
+      ],
+      [
+        1016.9,
+        "tool_result"
+      ],
+      [
+        1019.4,
+        "system:task_progress"
+      ],
+      [
+        1019.4,
+        "assistant"
+      ],
+      [
+        1019.8,
+        "tool_result"
+      ],
+      [
+        1097.5,
+        "system:task_notification"
+      ],
+      [
+        1097.5,
+        "tool_result"
+      ],
+      [
+        1111.0,
+        "assistant"
+      ],
+      [
+        1111.4,
+        "assistant"
+      ],
+      [
+        1117.3,
+        "assistant"
+      ],
+      [
+        1117.3,
+        "tool_result"
+      ],
+      [
+        1121.5,
+        "assistant"
+      ],
+      [
+        1121.9,
+        "assistant"
+      ],
+      [
+        1126.1,
+        "assistant"
+      ],
+      [
+        1126.1,
+        "tool_result"
+      ],
+      [
+        1129.8,
+        "assistant"
+      ],
+      [
+        1129.8,
+        "tool_result"
+      ],
+      [
+        1168.3,
+        "assistant"
+      ],
+      [
+        1168.4,
+        "assistant"
+      ],
+      [
+        1168.6,
+        "assistant"
+      ],
+      [
+        1168.8,
+        "tool_result"
+      ],
+      [
+        1168.8,
+        "tool_result"
+      ],
+      [
+        1184.5,
+        "assistant"
+      ],
+      [
+        1184.8,
+        "assistant"
+      ],
+      [
+        1185.5,
+        "assistant"
+      ],
+      [
+        1185.7,
+        "tool_result"
+      ],
+      [
+        1203.9,
+        "assistant"
+      ],
+      [
+        1204.0,
+        "assistant"
+      ],
+      [
+        1204.3,
+        "assistant"
+      ],
+      [
+        1204.5,
+        "tool_result"
+      ],
+      [
+        1216.3,
+        "assistant"
+      ],
+      [
+        1216.4,
+        "assistant"
+      ],
+      [
+        1219.2,
+        "assistant"
+      ],
+      [
+        1219.2,
+        "tool_result"
+      ],
+      [
+        1223.1,
+        "assistant"
+      ],
+      [
+        1223.2,
+        "tool_result"
+      ],
+      [
+        1228.9,
+        "assistant"
+      ],
+      [
+        1229.8,
+        "assistant"
+      ],
+      [
+        1231.0,
+        "assistant"
+      ],
+      [
+        1231.1,
+        "tool_result"
+      ],
+      [
+        1244.8,
+        "assistant"
+      ],
+      [
+        1244.8,
+        "result"
+      ]
+    ],
+    "caps": {
+      "wall_clock_seconds": 7200,
+      "inactivity_seconds": 600,
+      "progress_stall_seconds": 600,
+      "tool_calls": 300,
+      "max_turns": 250,
+      "max_cost_usd": 15.0
+    },
+    "wall_clock_seconds": 1256.699433051981,
+    "real_clock_seconds": 1256.7112600803375,
+    "slept_seconds": 0.01182702835649252,
+    "judge_seconds": 10.838024265947752
+  },
+  "tool_calls": [
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__project_context",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__project_context",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"L86H-T8G\\\",\\n      \\\"name\\\": \\\"Maria Rejnic\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"LK11-1ZH\\\",\\n      \\\"name\\\": \\\"Kathryn Lackovic\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"GZ4C-S4R\\\",\\n      \\\"name\\\": \\\"Stephen Kraynak\\\",\\n      \\\"gender\\\": \\\"Ma..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_rejnic_burial\",\n4\t    \"objective\": \"Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L86H-T8G\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [],\n18\t  \"plans\": [],\n..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Objective: Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967? Subject: Maria Rejnic (L86H-T8G), born 15 April 1890, died 18 June 1967. No questions, plans, or evidence exist yet. Derive the first research question."
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/.claude/skills/question-selection/references/question-formulation.md"
+      },
+      "response_summary": "1\t# Research Question Formulation\n2\t\n3\tGuidance for formulating effective genealogical research questions\n4\tthat satisfy the GPS standard for planned, purposeful research.\n5\t\n6\t## Research Objectives vs. Research Questions\n7\t\n8\tThese are distinct concepts that must not be conflated:\n9\t\n10\t- **Research objective**: The overarching goal of the research effort.\n11\t  It describes what you ultimately want to know (e.g., \"Identify the\n12\t  parents of John Smith born circa 1820 in Greene County, Ohi..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/.claude/skills/question-selection/references/pedigree-analysis.md"
+      },
+      "response_summary": "1\t# Pedigree Analysis for Gap Detection\n2\t\n3\tGuidance for evaluating pedigree data to identify research gaps,\n4\terrors, and candidates for new research questions.\n5\t\n6\t## Purpose\n7\t\n8\tPedigree analysis is the process of systematically reviewing the\n9\tindividuals in a family tree to detect missing information, logical\n10\terrors, and inconsistencies. It is a critical first step before\n11\tselecting new research questions \u2014 it reveals where the gaps are\n12\tand which gaps are most significant.\n13\t..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "questions",
+        "op": "append",
+        "entry": {
+          "question": "Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?",
+          "rationale": "This is the direct expression of the project objective. Death records, obituaries, and cemetery records from 1967 are the primary record types to consult. Maria's death date is known precisely, making death certificates and burial records highly targetable.",
+          "selection_basis": "objective_decomposition",
+          "priority": "high",
+          "status": "open",
+          "depends_on": [],
+          "unblocks": [],
+          "resolved": null,
+          "resolution_assertion_ids": [],
+          "exhaustive_declaration": {
+            "declared": false,
+            "justification": null,
+            "log_entry_ids": [],
+            "stop_criteria": null
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-plan",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Question q_001: \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\" Subject: Maria Rejnic (L86H-T8G), born 15 April 1890, died 18 June 1967. No sources or assertions yet. Create a prioritized research plan targeting burial location evidence \u2014 death certificates, obituaries, cemetery records, funeral home records."
+      },
+      "response_summary": "Launching skill: research-plan"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/.claude/skills/research-plan/references/planning-standards.md"
+      },
+      "response_summary": "1\t# BCG Standards for Research Planning (Standards 9-18)\n2\t\n3\tThese ten standards from the Board for Certification of Genealogists\n4\tgovern how genealogists plan and scope their research. Every research\n5\tplan created by this skill should satisfy all applicable standards.\n6\t\n7\t---\n8\t\n9\t## Standard 9: Planned Research\n10\t\n11\tResearch begins with and follows a dynamic plan for gathering\n12\tinformation. The plan's purpose is to meet stated objectives, usually\n13\tframed as research questions. Hap..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/.claude/skills/research-plan/references/record-type-guide.md"
+      },
+      "response_summary": "1\t# Record Type Selection Guide\n2\t\n3\tUse this reference when identifying which record sets to include in a\n4\tresearch plan. Match the research goal to record types, then check the\n5\tcontextual factors that affect availability.\n6\t\n7\t---\n8\t\n9\t## Record types by research goal\n10\t\n11\t| Goal | Primary record types | Secondary/fallback |\n12\t|------|---------------------|-------------------|\n13\t| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth c..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/tree.gedcomx.json"
+      },
+      "response_summary": "1\t{\n2\t  \"persons\": [\n3\t    {\n4\t      \"id\": \"L86H-T8G\",\n5\t      \"gender\": \"Female\",\n6\t      \"living\": false,\n7\t      \"names\": [\n8\t        {\n9\t          \"id\": \"N1\",\n10\t          \"given\": \"Maria\",\n11\t          \"surname\": \"Rejnic\"\n12\t        }\n13\t      ],\n14\t      \"facts\": [\n15\t        {\n16\t          \"id\": \"89ab978b-0e9e-4b5b-8568-bb6d7645a76c\",\n17\t          \"type\": \"Birth\",\n18\t          \"date\": \"15 April 1890\",\n19\t          \"standard_date\": \"15 Apr 1890\",\n20\t          \"place\": \"United States\",\n2..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__collections_search,mcp__genealogy__place_search,mcp__genealogy__external_links_search",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__collections_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__place_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__external_links_search\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__place_search",
+      "args": {
+        "placeName": "Allegheny County",
+        "contextName": "Pennsylvania"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"results\\\": [\\n    {\\n      \\\"standardPlace\\\": \\\"Allegheny, Pennsylvania, United States\\\",\\n      \\\"type\\\": \\\"County\\\",\\n      \\\"dateRange\\\": \\\"+1788/\\\",\\n      \\\"latitude\\\": 40.468,\\n      \\\"longitude\\\": -80.008,\\n      \\\"familysearchUrl\\\": \\\"https://www.familysearch.org/en/research/places/?text=Allegheny&focusedId=395699\\\",\\n      \\\"wikipediaUrl\\\": \\\"https://en.wikipedia.org/wiki/Allegheny_County,_Pennsylvania\\\"\\n    },\\n    {\\n      \\\"standardPlace\\\": \\\"All..."
+    },
+    {
+      "tool": "mcp__genealogy__collections_search",
+      "args": {
+        "standardPlace": "Allegheny, Pennsylvania, United States",
+        "startYear": 1960,
+        "endYear": 1970
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Allegheny, Pennsylvania, United States\\\",\\n    \\\"startYear\\\": 1960,\\n    \\\"endYear\\\": 1970\\n  },\\n  \\\"scope\\\": \\\"Pennsylvania\\\",\\n  \\\"totalForPlace\\\": 48,\\n  \\\"results\\\": [\\n    {\\n      \\\"id\\\": \\\"3037614\\\",\\n      \\\"title\\\": \\\"Pennsylvania, Allegheny, Pittsburgh, Naturalization Card File Index, 1906-1990\\\",\\n      \\\"dateRange\\\": \\\"1906-1990\\\",\\n      \\\"recordCount\\\": 117185,\\n      \\\"personCount\\\": 117185,\\n      \\\"imageC..."
+    },
+    {
+      "tool": "mcp__genealogy__external_links_search",
+      "args": {
+        "standardPlace": "Allegheny, Pennsylvania, United States",
+        "startYear": 1960,
+        "endYear": 1970
+      },
+      "response_summary": "<persisted-output>\nOutput too large (67.9KB). Full output saved to: /Users/ernest/.claude/projects/-private-var-folders-g7-zn65fvrn5g9-g71-sp0lk82h0000gn-T-e2e-rejnic-burial-9dyxld3i/9d8cbd27-da42-4928-b87f-3fd88b24cb50/tool-results/toolu_01AeSaccMqjeZ4MZZ1r7VcWL.json\n\nPreview (first 2KB):\n[\n  {\n    \"type\": \"text\",\n    \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"standardPlace\\\": \\\"Allegheny, Pennsylvania, United States\\\",\\n    \\\"startYear\\\": 1960,\\n    \\\"endYear\\\": 1970\\n  },\\n  \\\"totalForPlace\\\": 530,..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "section": "plans",
+            "op": "append",
+            "entry": {
+              "question_id": "q_001",
+              "status": "active",
+              "created": "2026-07-14"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 1,
+              "record_type": "vital_record",
+              "jurisdiction": "Allegheny County, Pennsylvania",
+              "date_range": "1967",
+              "repository": "FamilySearch",
+              "rationale": "Pennsylvania death certificates from 1967 routinely record the place of burial. Maria died 18 June 1967 in Pittsburgh, Allegheny County. A death certificate in the FamilySearch collection 'Pennsylvania, Deaths and Burials, 1720-1999' (col. 3535178) would be direct evidence naming the cemetery and location. She likely appears under 'Mary Kraynak' (married name) or 'Maria Rejnic'. This is the highest-yield source for burial place.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 2,
+              "record_type": "cemetery",
+              "jurisdiction": "Pittsburgh, Allegheny County, Pennsylvania",
+              "date_range": "1967",
+              "repository": "FamilySearch",
+              "rationale": "FamilySearch collection 'Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970' (col. 3155912) indexes 203,000 burials through 1970 in Allegheny County. The FAN cluster in the tree shows son George Charles Kraynak buried at Saint Joseph Cemetery, Coraopolis, and daughters Kathryn and Helen also buried in Coraopolis \u2014 suggesting Maria was buried in the same area. A direct cemetery record would be original evidence of the burial.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 3,
+              "record_type": "cemetery",
+              "jurisdiction": "Allegheny County, Pennsylvania",
+              "date_range": "1967",
+              "repository": "other",
+              "rationale": "FindAGrave and BillionGraves hold cemetery memorial records for Allegheny County cemeteries. A memorial for Maria Rejnic or Mary Kraynak in Allegheny County would identify the cemetery and grave location. FAN evidence points to Coraopolis (Saint Joseph Cemetery) as the likely burial site \u2014 searching that cemetery directly on FindAGrave is high priority.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 4,
+              "record_type": "newspaper",
+              "jurisdiction": "Pittsburgh, Allegheny County, Pennsylvania",
+              "date_range": "1967",
+              "repository": "other",
+              "rationale": "Pittsburgh newspaper obituaries (Pittsburgh Post-Gazette, Pittsburgh Press) from June 1967 would name the funeral home, church service, and cemetery. Genealogybank and Newspapers.com both hold Pittsburgh-area papers for this period. An obituary is also a primary source for burial place from a person with direct knowledge.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 5,
+              "record_type": "vital_record",
+              "jurisdiction": "Pennsylvania",
+              "date_range": "1967",
+              "repository": "Ancestry",
+              "rationale": "Ancestry holds Pennsylvania death records that may not overlap completely with FamilySearch's index. If pli_001 (FamilySearch death record) yields no result \u2014 possible if the index uses a variant spelling \u2014 Ancestry's Pennsylvania death collection is the next repository to check. Search variants: Rejnic, Rejnich, Renick, Kraynak.",
+              "fallback_for": "pli_001",
+              "status": "planned"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "append",
+            "planId": "pl_001",
+            "entry": {
+              "sequence": 6,
+              "record_type": "vital_record",
+              "jurisdiction": "Allegheny County, Pennsylvania",
+              "date_range": "1955-1967",
+              "repository": "FamilySearch",
+              "rationale": "FAN item: Joannes Kraynak (husband, died 20 December 1955, Pittsburgh) likely has a death certificate or cemetery record naming the family burial site. If Joannes and Maria were buried together in a family plot, his burial record identifies the cemetery. Search FamilySearch 'Pennsylvania, Deaths and Burials, 1720-1999' for Joannes Kraynak (also Johannes / John Kraynak) died 1955.",
+              "fallback_for": null,
+              "status": "planned"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plans\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pl_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-records",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Question q_001: \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\" Plan pl_001 active. Execute in order: pli_001 \u2014 FamilySearch \"Pennsylvania, Deaths and Burials, 1720-1999\" (collection 3535178) for Maria Rejnic/Mary Kraynak, death 18 June 1967, Allegheny County PA. pli_002 \u2014 FamilySearch \"Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970\" (collection 3155912) for Maria Rejnic or Mary Kraynak, Allegheny County PA. pli_006 \u2014 FamilySearch \"Pennsylvania, Deaths and Burials, 1720-1999\" for Joannes/John Kraynak, death 1955, Pittsburgh/Allegheny County PA. Name variants for Maria: Rejnic, Rejnich, Renick, Rejnicz, Kraynak (married name). Subject L86H-T8G."
+      },
+      "response_summary": "Launching skill: search-records"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_search,mcp__genealogy__rank_search_matches,mcp__genealogy__research_log_append",
+        "max_results": 3
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_search\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__rank_search_matches\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_log_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "deathYearFrom": 1966,
+        "deathYearTo": 1968,
+        "deathPlace": "Allegheny, Pennsylvania",
+        "collectionId": "3535178",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\\\",\\n    \\\"surname\\\": \\\"Kraynak\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"deathYearFrom\\\": 1966,\\n    \\\"deathYearTo\\\": 1968,\\n    \\\"deathPlace\\\": \\\"Allegheny, Pennsylvania\\\",\\n    \\\"collectionId\\\": \\\"3535178\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": ..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "stagedResultsRef": "results/.staging/b132e66b-6059-4540-876e-21bd4677b82e.json",
+        "subjectId": "L86H-T8G",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"L86H-T8G\\\",\\n  \\\"scoredCount\\\": 1,\\n  \\\"returnedCount\\\": 1,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:HNCD-ZHZM\\\",\\n      \\\"matchScore\\\": 0.00043935643,\\n      \\\"primaryId\\\": \\\"p_186852697500\\\",\\n      \\\"personName\\\": \\\"Mary Crynick\\\",\\n      \\\"sex\\\": \\\"Female\\\",\\n      \\\"collectionTitle\\\": \\\"Pennsylvania, Deaths and Buri..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "surname": "Rejnic",
+        "givenName": "Maria",
+        "deathYearFrom": 1965,
+        "deathYearTo": 1969,
+        "recordCountry": "United States",
+        "collectionId": "3535178",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\\\",\\n    \\\"surname\\\": \\\"Rejnic\\\",\\n    \\\"givenName\\\": \\\"Maria\\\",\\n    \\\"deathYearFrom\\\": 1965,\\n    \\\"deathYearTo\\\": 1969,\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"collectionId\\\": \\\"3535178\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "Pennsylvania, Deaths and Burials, 1720-1999 (3535178)",
+          "surname": "Kraynak",
+          "givenName": "Mary",
+          "deathYearFrom": 1966,
+          "deathYearTo": 1968,
+          "deathPlace": "Allegheny, Pennsylvania"
+        },
+        "outcome": "negative",
+        "resultsExamined": 1,
+        "resultsAvailable": 1,
+        "stagedResultsRef": "results/.staging/b132e66b-6059-4540-876e-21bd4677b82e.json",
+        "notes": "Only result was 'Mary Crynick / Verona May Crynick' \u2014 match score 0.0004, clearly not the subject. subjectResolvable: false (subject sparse in tree). No Mary Kraynak death record found in this collection for Allegheny County 1966-1968."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_001\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:01:27.327Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_001.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_001.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "deathYearFrom": 1965,
+        "deathYearTo": 1969,
+        "collectionId": "3535178",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\\\",\\n    \\\"surname\\\": \\\"Kraynak\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"deathYearFrom\\\": 1965,\\n    \\\"deathYearTo\\\": 1969,\\n    \\\"collectionId\\\": \\\"3535178\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 1,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 1,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [\\n    {\\n      \\\"recordId\\..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "deathYearFrom": 1965,
+        "deathYearTo": 1969,
+        "collectionId": "3155912",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\\\",\\n    \\\"surname\\\": \\\"Kraynak\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"deathYearFrom\\\": 1965,\\n    \\\"deathYearTo\\\": 1969,\\n    \\\"collectionId\\\": \\\"3155912\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "record_search",
+        "planItemId": "pli_001",
+        "query": {
+          "collection": "Pennsylvania, Deaths and Burials, 1720-1999 (3535178)",
+          "surname": "Kraynak",
+          "givenName": "Mary",
+          "deathYearFrom": 1965,
+          "deathYearTo": 1969,
+          "noPlaceFilter": true
+        },
+        "outcome": "negative",
+        "resultsExamined": 1,
+        "resultsAvailable": 1,
+        "stagedResultsRef": "results/.staging/571b6787-fc4f-438f-961a-564fa6ca696c.json",
+        "notes": "Same non-matching result (Mary Crynick). Collection 3535178 does not appear to index Mary Kraynak's 1967 death in Allegheny County under any search shape tried so far."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_002\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:01:48.432Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_002.json\\\",\\n  \\\"returnedCount\\\": 1,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_002.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "collection": "Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970 (3155912)",
+          "surname": "Kraynak",
+          "givenName": "Mary",
+          "deathYearFrom": 1965,
+          "deathYearTo": 1969
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "resultsAvailable": 0,
+        "notes": "Zero results for Mary Kraynak in Allegheny Cemetery Records 1845-1970. Will try maiden name variant."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_003\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:01:51.389Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "collectionId": "3155912",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\\\",\\n    \\\"surname\\\": \\\"Kraynak\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"collectionId\\\": \\\"3155912\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\": false,\\n  \\\"results\\\": [],\\n  \\\"staged\\\": null\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "surname": "Kraynak",
+        "givenName": "John",
+        "deathYearFrom": 1953,
+        "deathYearTo": 1957,
+        "deathPlace": "Pittsburgh, Pennsylvania",
+        "collectionId": "3535178",
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\\\",\\n    \\\"surname\\\": \\\"Kraynak\\\",\\n    \\\"givenName\\\": \\\"John\\\",\\n    \\\"deathYearFrom\\\": 1953,\\n    \\\"deathYearTo\\\": 1957,\\n    \\\"deathPlace\\\": \\\"Pittsburgh, Pennsylvania\\\",\\n    \\\"collectionId\\\": \\\"3535178\\\",\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 0,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": 0,\\n  \\\"offset\\\": 0,\\n  \\\"hasMore\\\":..."
+    },
+    {
+      "tool": "mcp__genealogy__record_search",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "surname": "Kraynak",
+        "givenName": "Mary",
+        "recordType": "death",
+        "recordSubdivision": "Pennsylvania",
+        "recordCountry": "United States",
+        "birthYearFrom": 1885,
+        "birthYearTo": 1895,
+        "count": 50
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"query\\\": {\\n    \\\"projectPath\\\": \\\"/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\\\",\\n    \\\"surname\\\": \\\"Kraynak\\\",\\n    \\\"givenName\\\": \\\"Mary\\\",\\n    \\\"recordType\\\": \\\"death\\\",\\n    \\\"recordSubdivision\\\": \\\"Pennsylvania\\\",\\n    \\\"recordCountry\\\": \\\"United States\\\",\\n    \\\"birthYearFrom\\\": 1885,\\n    \\\"birthYearTo\\\": 1895,\\n    \\\"count\\\": 50\\n  },\\n  \\\"totalMatches\\\": 116,\\n  \\\"paginationCappedAt\\\": 4999,\\n  \\\"returned\\\": ..."
+    },
+    {
+      "tool": "mcp__genealogy__rank_search_matches",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "stagedResultsRef": "results/.staging/b8409e56-7e23-4627-9a76-fc17802cdd09.json",
+        "subjectId": "L86H-T8G",
+        "checkAttachments": true
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"subjectId\\\": \\\"L86H-T8G\\\",\\n  \\\"scoredCount\\\": 50,\\n  \\\"returnedCount\\\": 10,\\n  \\\"scoringErrors\\\": 0,\\n  \\\"scoreLogError\\\": null,\\n  \\\"matches\\\": [\\n    {\\n      \\\"matchRank\\\": 1,\\n      \\\"searchRank\\\": 1,\\n      \\\"recordId\\\": \\\"ark:/61903/1:1:QVL2-HZFG\\\",\\n      \\\"matchScore\\\": 0.47614163,\\n      \\\"primaryId\\\": \\\"p_101128725472\\\",\\n      \\\"personName\\\": \\\"Mary Rejnic Kraynak\\\",\\n      \\\"birthDate\\\": \\\"15 April 1890\\\",\\n      \\\"deathDate\\\": \\\"18 June 1967\\\",\\..."
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__record_read",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__record_read\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:QVL2-HZFG",
+        "resultsRef": "results/.staging/b8409e56-7e23-4627-9a76-fc17802cdd09.json",
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101128725472\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVL2-HZFG\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Mary\\\",\\n          \\\"surname\\\": \\\"Rejnic Kraynak\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Burial\\\",\\n          \\\"primary\\\": true,\\n          \\\"place\\\": \\\"Kennedy Township, Allegheny, Pennsylvania, United States of America\\\",\\n         ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "record_search",
+        "planItemId": "pli_003",
+        "query": {
+          "surname": "Kraynak",
+          "givenName": "Mary",
+          "recordType": "death",
+          "recordSubdivision": "Pennsylvania",
+          "recordCountry": "United States",
+          "birthYearFrom": 1885,
+          "birthYearTo": 1895,
+          "notes": "Broad cross-collection search; recovered Find a Grave Index record"
+        },
+        "outcome": "positive",
+        "resultsExamined": 10,
+        "resultsAvailable": 116,
+        "stagedResultsRef": "results/.staging/b8409e56-7e23-4627-9a76-fc17802cdd09.json",
+        "notes": "Rank-1 match: 'Mary Rejnic Kraynak', born 15 April 1890, died 18 June 1967, burial Kennedy Township, Allegheny, Pennsylvania \u2014 Find a Grave Index (ark:/61903/1:1:QVL2-HZFG). Exact birth and death dates match subject. matchScore 0.476, already attached to subject L86H-T8G. All other candidates score 0.0006 or less \u2014 clear separation."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_004\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:02:55.983Z\\\",\\n  \\\"resultsRef\\\": \\\"results/log_004.json\\\",\\n  \\\"returnedCount\\\": 50,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\",\\n    \\\"results/log_004.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "record_search",
+        "planItemId": "pli_002",
+        "query": {
+          "collection": "Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970 (3155912)",
+          "surname": "Kraynak",
+          "givenName": "Mary",
+          "noYearFilter": true
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "resultsAvailable": 0,
+        "notes": "Zero results for Mary Kraynak in Allegheny Cemetery Records (3155912). Burial was in Kennedy Township (confirmed by Find a Grave), which may fall under a different collection scope. pli_003 (Find a Grave) answered the burial location."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_005\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:03:00.345Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "record_search",
+        "planItemId": "pli_006",
+        "query": {
+          "collection": "Pennsylvania, Deaths and Burials, 1720-1999 (3535178)",
+          "surname": "Kraynak",
+          "givenName": "John",
+          "deathYearFrom": 1953,
+          "deathYearTo": 1957,
+          "deathPlace": "Pittsburgh, Pennsylvania"
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "resultsAvailable": 0,
+        "notes": "Zero results for John/Joannes Kraynak death 1955 Pittsburgh in PA Deaths collection. FAN item superseded by direct evidence from Find a Grave (pli_003 positive). Burial location for Maria is now established."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_006\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:03:04.627Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_001",
+            "fields": {
+              "status": "in_progress"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_002",
+            "fields": {
+              "status": "in_progress"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "in_progress"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_006",
+            "fields": {
+              "status": "in_progress"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "record-extraction",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Extract assertions from log_004 (positive result). Record: Find a Grave Index entry for Mary Rejnic Kraynak. recordId: ark:/61903/1:1:QVL2-HZFG. resultsRef: results/log_004.json. Record content: Name: Mary Rejnic Kraynak; Birth: 15 Apr 1890; Death: 18 Jun 1967; Burial: Kennedy Township, Allegheny, Pennsylvania, United States. Source citation: \"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG : Mon Jul 06 05:08:25 UTC 2026), Entry for Mary Rejnic Kraynak. URL: https://www.familysearch.org/ark:/61903/1:2:Q23T-4T7G. FindAGrave memorial: http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=97565146. Subject: Maria Rejnic (L86H-T8G), born 15 April 1890, died 18 June 1967, Pittsburgh, Allegheny County PA. Question q_001: burial location. Plan item pli_003."
+      },
+      "response_summary": "Launching skill: record-extraction"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "Extract burial assertion from Find a Grave record for Maria Rejnic Kraynak",
+        "subagent_type": "record-extractor",
+        "prompt": "Extract all assertions from this Find a Grave Index record into research.json and tree.gedcomx.json.\n\n**projectPath:** /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\n\n**recordId:** ark:/61903/1:1:QVL2-HZFG\n\n**resultsRef:** results/log_004.json\n\n**logId:** log_004\n\n**Open question this record bears on:** q_001 \u2014 \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\"\n\n**Record content (from record_read):**\n- Person: Mary Rejnic Kraynak\n- Birth: 15 Apr 1890\n- Death: 18 Jun 1967\n- Burial: Kennedy Township, Allegheny, Pennsylvania, United States (primary fact)\n- Source: \"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG : Mon Jul 06 05:08:25 UTC 2026), Entry for Mary Rejnic Kraynak\n- Record URL: https://www.familysearch.org/ark:/61903/1:2:Q23T-4T7G\n- Underlying Find A Grave memorial: http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=97565146\n\n**Subject in tree:** Maria Rejnic, id L86H-T8G, born 15 April 1890, died 18 June 1967, Pittsburgh, Allegheny County, Pennsylvania.\n\n**Classification guidance:**\n- This is a Find a Grave Index entry \u2014 a derivative source (the index is derived from the memorial, which itself may rest on contributed data).\n- The burial fact is the primary assertion. The informant is unknown (Find a Grave contributor). Evidence type for the burial fact is direct (the record directly states the burial place). Information quality is secondary (the informant is not the deceased and proximity is unknown \u2014 treat as indeterminate/unknown).\n- Birth and death dates on this record corroborate the tree but are secondary information (derived from Find a Grave contributor).\n\n**Instruction:** Write one source entry and one assertion per distinct fact. The burial at Kennedy Township, Allegheny, Pennsylvania is the key finding for q_001. Do not create duplicate sources if one already exists for this record."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"Persisted successfully. Subject (Maria Rejnic, I: L86H-T8G) is a burial-only record \\u2014 no household/children present, so Step 5 (sibling stubs) does not apply.\\n\\n**Source:** src_001 / S1 \\u2014 created (sourceReuse: created, no prior source for this record)\\n\\n**Assertions (3), all record_role \\\"deceased\\\":**\\n- a_001 \\u2014 Burial: Kennedy Township, Allegheny, Pennsylvania, United States (direct evidence, secondary information) \\u2014 **answers q_001**\\n- a_00..."
+    },
+    {
+      "tool": "mcp__genealogy__project_context",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"L86H-T8G\\\",\\n      \\\"name\\\": \\\"Maria Rejnic\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": []\\n    },\\n    {\\n      \\\"id\\\": \\\"LK11-1ZH\\\",\\n      \\\"name\\\": \\\"Kathryn Lackovic\\\",\\n      \\\"gender\\\": \\\"F..."
+    },
+    {
+      "tool": "mcp__genealogy__record_read",
+      "args": {
+        "recordId": "ark:/61903/1:1:QVL2-HZFG",
+        "resultsRef": "results/log_004.json",
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"p_101128725472\\\",\\n      \\\"ark\\\": \\\"ark:/61903/1:1:QVL2-HZFG\\\",\\n      \\\"names\\\": [\\n        {\\n          \\\"type\\\": \\\"BirthName\\\",\\n          \\\"given\\\": \\\"Mary\\\",\\n          \\\"surname\\\": \\\"Rejnic Kraynak\\\"\\n        }\\n      ],\\n      \\\"facts\\\": [\\n        {\\n          \\\"type\\\": \\\"Burial\\\",\\n          \\\"primary\\\": true,\\n          \\\"place\\\": \\\"Kennedy Township, Allegheny, Pennsylvania, United States of America\\\",\\n         ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "sourceDescription": {
+          "title": "Entry for Mary Rejnic Kraynak, \"Find a Grave Index\"",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:Q23T-4T7G"
+        },
+        "ops": [
+          {
+            "section": "sources",
+            "op": "append",
+            "entry": {
+              "citation": "\"Find a Grave Index\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG : Mon Jul 06 05:08:25 UTC 2026), Entry for Mary Rejnic Kraynak, Burial, Kennedy Township, Allegheny, Pennsylvania, United States; citing Find A Grave memorial, http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=97565146.",
+              "citation_detail": {
+                "who": "Find A Grave contributor (unidentified)",
+                "what": "Find a Grave Index entry for Mary Rejnic Kraynak (memorial #97565146)",
+                "when_created": "Find A Grave memorial creation date not stated on index entry",
+                "when_accessed": "2026-07-14",
+                "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG",
+                "where_within": "Find a Grave Index collection, entry for Mary Rejnic Kraynak"
+              },
+              "source_classification": "derivative",
+              "repository": "FamilySearch (Find A Grave Index, derived from findagrave.com memorial 97565146)",
+              "access_date": "2026-07-14",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q23T-4T7G",
+              "notes": "Index entry derived from Find A Grave memorial; original memorial (contributor-submitted, possibly photographed headstone) not separately examined in this pass. Original not examined \u2014 index/derivative only.",
+              "log_entry_id": "log_004"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QVL2-HZFG",
+              "record_role": "deceased",
+              "record_persona_id": "p_101128725472",
+              "fact_type": "Burial",
+              "value": "Burial, Kennedy Township, Allegheny, Pennsylvania, United States of America",
+              "date": null,
+              "place": "Kennedy Township, Allegheny, Pennsylvania, United States of America",
+              "information_quality": "secondary",
+              "informant": "unknown Find A Grave contributor",
+              "informant_proximity": "unknown",
+              "informant_bias_notes": "Find A Grave memorial data is contributor-submitted; the contributor's relationship to the deceased and their proximity to the burial event are unknown. Contributed cemetery data can also contain transcription or research errors.",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_004"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QVL2-HZFG",
+              "record_role": "deceased",
+              "record_persona_id": "p_101128725472",
+              "fact_type": "Birth",
+              "value": "15 Apr 1890",
+              "date": "15 Apr 1890",
+              "date_certainty": "exact",
+              "information_quality": "secondary",
+              "informant": "unknown Find A Grave contributor",
+              "informant_proximity": "unknown",
+              "informant_bias_notes": "Corroborates tree birth date; contributor is not the deceased and proximity to the original source of this date is unknown.",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_004"
+            }
+          },
+          {
+            "section": "assertions",
+            "op": "append",
+            "entry": {
+              "record_id": "ark:/61903/1:1:QVL2-HZFG",
+              "record_role": "deceased",
+              "record_persona_id": "p_101128725472",
+              "fact_type": "Death",
+              "value": "18 Jun 1967",
+              "date": "18 Jun 1967",
+              "date_certainty": "exact",
+              "information_quality": "secondary",
+              "informant": "unknown Find A Grave contributor",
+              "informant_proximity": "unknown",
+              "informant_bias_notes": "Corroborates tree death date; contributor is not the deceased and proximity to the original source of this date is unknown.",
+              "evidence_type": "direct",
+              "extracted_for_question_ids": [
+                "q_001"
+              ],
+              "log_entry_id": "log_004"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"sources\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"src_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"assertions\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"a_003\\\"\\n    }\\n  ..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "person-evidence",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Link assertions a_001, a_002, a_003 (from src_001, Find a Grave Index) to subject Maria Rejnic, tree person L86H-T8G. These are the only assertions in the project. Question q_001."
+      },
+      "response_summary": "Launching skill: person-evidence"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__research_append",
+        "max_results": 1
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_001",
+              "person_id": "L86H-T8G",
+              "confidence": "confident",
+              "rationale": "Record names 'Mary Rejnic Kraynak' \u2014 maiden surname Rejnic is an exact match; Kraynak is her confirmed married name (husband Joannes Kraynak, R1 in tree). Birth date 15 Apr 1890 and death date 18 Jun 1967 both match the tree person exactly. Death in Allegheny County is consistent with tree death place Pittsburgh, Allegheny, PA. Record was already FamilySearch-attached to this subject. The burial fact (Kennedy Township, Allegheny, PA) is the primary finding for q_001.",
+              "match_score": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_002",
+              "person_id": "L86H-T8G",
+              "confidence": "confident",
+              "rationale": "Same record and persona as a_001 (Mary Rejnic Kraynak, Find a Grave Index). Birth date 15 Apr 1890 is an exact match to the tree person's birth fact. Name, death date, and location all corroborate L86H-T8G identity.",
+              "match_score": null
+            }
+          },
+          {
+            "section": "person_evidence",
+            "op": "append",
+            "entry": {
+              "assertion_id": "a_003",
+              "person_id": "L86H-T8G",
+              "confidence": "confident",
+              "rationale": "Same record and persona as a_001 (Mary Rejnic Kraynak, Find a Grave Index). Death date 18 Jun 1967 is an exact match to the tree person's death fact. Name, birth date, and Allegheny County location all corroborate L86H-T8G identity.",
+              "match_score": null
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"person_evidence\\\",\\n      \\\"op\\\": \\\"append\\\",\\n      \\\"entryId\\\": \\\"pe_003\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-exhaustiveness",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Question q_001: \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\" One source found: Find a Grave Index (src_001), derivative, burial at Kennedy Township, Allegheny, Pennsylvania. Assertions a_001 (burial, direct/secondary), a_002 (birth corroboration), a_003 (death corroboration) all linked to L86H-T8G with confident person-evidence. Plan pl_001 executed: pli_001 (PA Deaths FamilySearch) negative, pli_002 (Allegheny Cemetery Records) negative, pli_003 (Find a Grave) positive, pli_006 (husband death) negative. pli_004 (obituaries/newspapers) and pli_005 (Ancestry PA deaths fallback) still planned. Evaluate whether research is reasonably exhaustive for this burial question."
+      },
+      "response_summary": "Launching skill: research-exhaustiveness"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/.claude/skills/research-exhaustiveness/references/research-exhaustiveness.md"
+      },
+      "response_summary": "1\t# Exhaustiveness Evaluation\n2\t\n3\tGuidance for determining when research on a question qualifies as\n4\t\"reasonably exhaustive\" under GPS Component 1.\n5\t\n6\t## What \"Reasonably Exhaustive\" Means\n7\t\n8\tReasonably exhaustive research is systematic investigation that\n9\tsearches all available and relevant sources \u2014 not just the ones\n10\tthat are easiest to access or most popular. The standard requires\n11\tlooking broadly across record types, repositories, and time periods\n12\tto ensure no significant s..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_rejnic_burial\",\n4\t    \"objective\": \"Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L86H-T8G\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-14\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"i..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_003",
+            "fields": {
+              "status": "completed"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_002",
+            "fields": {
+              "status": "skipped"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_006",
+            "fields": {
+              "status": "skipped"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_003\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_002\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_006\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "search-external-sites",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Question q_001: \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\" Execute two remaining plan items: pli_005 \u2014 Ancestry Pennsylvania death records 1967 for Mary/Maria Kraynak or Rejnic (fallback for FamilySearch pli_001 which returned nil). pli_004 \u2014 Pittsburgh newspaper obituaries June 1967 for Mary Kraynak / Maria Rejnic (GenealogyBank, Newspapers.com). Subject: Maria Rejnic (L86H-T8G), born 15 April 1890, died 18 June 1967, Pittsburgh, Allegheny County PA. Married name: Mary Kraynak. Name variants: Rejnic, Rejnich, Renick, Rejnicz. Known finding: burial at Kennedy Township, Allegheny County (Find a Grave Index, derivative). Goal: find an original record (death certificate or obituary) confirming burial location and ideally naming the specific cemetery."
+      },
+      "response_summary": "Launching skill: search-external-sites"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "external_site",
+        "planItemId": "pli_005",
+        "query": {
+          "site": "ancestry",
+          "collection": "Pennsylvania, Death Certificates, 1906-1967 (collection 7115)",
+          "name": "Mary Kraynak",
+          "birth": 1890,
+          "death": 1967,
+          "deathplace": "Pennsylvania",
+          "variants": [
+            "Maria Kraynak",
+            "Mary Rejnic",
+            "Maria Rejnic"
+          ]
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "notes": "DEFERRED \u2014 autonomous run, requires interactive user capture. Ancestry Pennsylvania Death Certificates 1906-1967 (collection 7115) would be the primary original-record source for Maria's 1967 death in Allegheny County, directly naming the cemetery and undertaker. URL generated for later interactive session: https://www.ancestry.com/search/collections/7115/?name=Mary_Kraynak&birth=1890&death=1967&deathplace=Pennsylvania. Try also: Maria Kraynak, Mary Rejnic, Maria Rejnic.",
+        "externalSite": {
+          "site": "ancestry",
+          "urlGenerated": "https://www.ancestry.com/search/collections/7115/?name=Mary_Kraynak&birth=1890&death=1967&deathplace=Pennsylvania",
+          "captureReceived": false,
+          "captureFilename": null
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_007\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:07:49.505Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_log_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "tool": "external_site",
+        "planItemId": "pli_004",
+        "query": {
+          "site": "newspapers",
+          "query": "Mary Kraynak",
+          "year": 1967,
+          "month": "June",
+          "place": "Pittsburgh, Pennsylvania",
+          "notes": "Obituary expected June 1967, Pittsburgh Post-Gazette or Pittsburgh Press"
+        },
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "notes": "DEFERRED \u2014 autonomous run, requires interactive user capture. Pittsburgh newspapers (Post-Gazette, Pittsburgh Press) June 1967 obituaries would name funeral home, church service, and cemetery for Mary Kraynak / Maria Rejnic Kraynak. URL generated for Newspapers.com: https://www.newspapers.com/search/?query=Mary+Kraynak&dr_year=1967&dr_place=Pittsburgh%2C+Pennsylvania. Also try GenealogyBank: https://www.genealogybank.com/search/obituaries/results?fname=Mary&lname=Kraynak&daterange=custom&dr_year=1967&dr_yearTo=1967&place=Pennsylvania.",
+        "externalSite": {
+          "site": "newspapers",
+          "urlGenerated": "https://www.newspapers.com/search/?query=Mary+Kraynak&dr_year=1967&dr_place=Pittsburgh%2C+Pennsylvania",
+          "captureReceived": false,
+          "captureFilename": null
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"logId\\\": \\\"log_008\\\",\\n  \\\"performed\\\": \\\"2026-07-15T03:07:54.426Z\\\",\\n  \\\"resultsRef\\\": null,\\n  \\\"returnedCount\\\": null,\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_001",
+            "fields": {
+              "status": "skipped"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_004",
+            "fields": {
+              "status": "in_progress"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_005",
+            "fields": {
+              "status": "in_progress"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_001\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n  ..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_004",
+            "fields": {
+              "status": "skipped"
+            }
+          },
+          {
+            "section": "plan_items",
+            "op": "update",
+            "planId": "pl_001",
+            "entryId": "pli_005",
+            "fields": {
+              "status": "skipped"
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_004\\\"\\n    },\\n    {\\n      \\\"section\\\": \\\"plan_items\\\",\\n      \\\"op\\\": \\\"update\\\",\\n      \\\"entryId\\\": \\\"pli_005\\\"\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "research-exhaustiveness",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Question q_001: \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\" All plan items now completed or skipped. Evidence: one source (src_001 Find a Grave Index, derivative/secondary), burial at Kennedy Township, Allegheny, Pennsylvania, United States. FamilySearch PA Deaths (pli_001) and Allegheny Cemetery Records (pli_002) both searched and returned nil. Allegheny Cemetery Records scope does not cover Kennedy Township \u2014 structural nil, not a coverage gap. Pennsylvania death certificate not found on FamilySearch; Ancestry search (pli_005) and newspaper obituaries (pli_004) deferred due to autonomous mode \u2014 logged as leads in log_007 and log_008 with generated URLs. FAN husband search (pli_006) nil. Assertions a_001\u2013a_003 classified and linked to L86H-T8G with confident person-evidence. No conflicts. Evaluate exhaustiveness and declare if defensible; note deferred external sources honestly in stop_criteria. Subject died 18 June 1967 in Pittsburgh. Kennedy Township is a specific geographic unit within Allegheny County \u2014 the burial location is meaningfully specific at the township level even without a cemetery name."
+      },
+      "response_summary": "Launching skill: research-exhaustiveness"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "exhaustive_declared",
+          "exhaustive_declaration": {
+            "declared": true,
+            "justification": "FamilySearch PA Deaths (2 searches, nil), FamilySearch Allegheny Cemetery Records (2 searches, nil \u2014 Kennedy Township falls outside collection scope), Find a Grave Index (positive \u2014 burial Kennedy Township, Allegheny County, PA), FAN husband search (nil). Ancestry PA death certificate (pli_005) and Pittsburgh newspaper obituaries (pli_004) deferred due to autonomous-mode browser limitation \u2014 logged as leads with generated URLs in log_007 and log_008. The available evidence, a single derivative Find a Grave Index entry with exact name 'Mary Rejnic Kraynak', birth 15 Apr 1890, death 18 Jun 1967, supports a 'probable' tier conclusion. No contradicting evidence. Proof-conclusion should note the deferred sources and set tier accordingly.",
+            "log_entry_ids": [
+              "log_001",
+              "log_002",
+              "log_003",
+              "log_004",
+              "log_005",
+              "log_006",
+              "log_007",
+              "log_008"
+            ],
+            "stop_criteria": {
+              "goal_alignment": "Partial-to-yes: burial at Kennedy Township, Allegheny County, Pennsylvania is identified. The cemetery name is not established from available evidence, but the township is a meaningful geographic answer to the burial location question.",
+              "repository_breadth": "FamilySearch (PA Deaths, Allegheny Cemetery Records, broad cross-collection) and Find a Grave Index searched. Ancestry PA death certificate (collection 7115) and Pittsburgh newspapers deferred \u2014 logged with URLs (log_007, log_008) for interactive follow-up. These deferred repositories represent the primary remaining gap.",
+              "original_substitution": "Not fully met. Only a derivative source (Find a Grave Index) was found. The underlying PA death certificate \u2014 the authoritative original naming the undertaker and place of interment \u2014 was searched on FamilySearch (nil) and is deferred on Ancestry. The actual Find a Grave memorial (#97565146) was not separately examined. Deferred URL: https://www.ancestry.com/search/collections/7115/?name=Mary_Kraynak&birth=1890&death=1967&deathplace=Pennsylvania.",
+              "independent_verification": "Not met. One source only (Find a Grave Index). The FAN evidence (children George, Kathryn, Helen buried in Coraopolis/Allegheny County) corroborates the county-level location but does not independently verify Maria's specific burial place. A second independent source is needed to upgrade to 'proved'.",
+              "evidence_class": "Not met by GPS standard. No original record with primary information was found for the burial fact. The Find a Grave Index is a derivative source citing an unexamined contributor-submitted memorial. The PA death certificate (original, with primary burial information from the funeral director) is the decisive missing record.",
+              "conflict_resolution": "No conflicts identified. The single source is internally consistent and externally consistent with tree facts (birth date, death date, Allegheny County location).",
+              "overturn_risk": "Low-to-moderate. The Find a Grave entry has exact name, birth date, and death date matching the subject \u2014 identity is highly secure. The burial location (Kennedy Township) could theoretically be refined by the PA death certificate, but no contradicting evidence exists. The main risk is precision (cemetery name), not correctness of the township-level location. Deferred Ancestry search (log_007) should be the first follow-up in an interactive session."
+            }
+          }
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "proof-conclusion",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Question q_001 (exhaustive_declared): \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\" Subject: Maria Rejnic (L86H-T8G). Evidence: src_001 (Find a Grave Index, derivative/secondary), assertion a_001 (Burial, Kennedy Township, Allegheny, Pennsylvania, direct/secondary, informant unknown). No conflicts. No independent corroboration \u2014 single source. Tier expected: probable. Deferred leads: Ancestry PA death certificate (log_007), Pittsburgh newspaper obituaries (log_008). Note these as tier-upgrade paths in the narrative. Write a proof summary and encode the burial relationship in tree.gedcomx.json if tier is probable or better."
+      },
+      "response_summary": "Launching skill: proof-conclusion"
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/.claude/skills/proof-conclusion/references/gps-proof-writing.md"
+      },
+      "response_summary": "1\t# GPS Proof Writing Reference\n2\t\n3\tThis reference provides detailed guidance for writing genealogical\n4\tproof conclusions that conform to the Genealogical Proof Standard.\n5\t\n6\t## The Five GPS Components (All Required for Proof)\n7\t\n8\tA conclusion qualifies as \"proved\" ONLY when all five are satisfied:\n9\t\n10\t1. **Reasonably exhaustive research** \u2014 Every record type and\n11\t   repository that could plausibly contain relevant information has\n12\t   been searched. Not every record ever created, bu..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "proof_summaries",
+        "op": "append",
+        "entry": {
+          "question_id": "q_001",
+          "tier": "probable",
+          "vehicle": "summary",
+          "supporting_assertion_ids": [
+            "a_001",
+            "a_002",
+            "a_003"
+          ],
+          "resolved_conflict_ids": [],
+          "exhaustive_search_summary": "FamilySearch 'Pennsylvania, Deaths and Burials, 1720-1999' (col. 3535178) searched twice under Mary/Maria Kraynak and Maria Rejnic \u2014 nil. FamilySearch 'Pennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970' (col. 3155912) searched twice \u2014 nil (Kennedy Township falls outside that collection's scope). Broad cross-collection FamilySearch death search recovered the Find a Grave Index entry (log_004). Husband Joannes Kraynak FAN search (1955 PA deaths, FamilySearch) \u2014 nil. Ancestry Pennsylvania Death Certificates 1906-1967 (collection 7115) and Pittsburgh newspaper obituaries (Newspapers.com / GenealogyBank, June 1967) deferred due to autonomous-mode browser limitation; search URLs logged in log_007 and log_008 for interactive follow-up.",
+          "narrative_markdown": "## Burial Place of Maria Rejnic (1890\u20131967)\n\n**Research Question:** Where was Maria Rejnic, born 15 April 1890 and died 18 June 1967, buried?\n\n**Conclusion:** The preponderance of available evidence indicates that Maria Rejnic Kraynak was buried in Kennedy Township, Allegheny County, Pennsylvania.\n\n### Evidence\n\nThe sole source identified in this investigation is a Find a Grave Index entry, accessed through FamilySearch, for \u201cMary Rejnic Kraynak,\u201d recording a burial in Kennedy Township, Allegheny County, Pennsylvania, United States.\u00b9 The entry carries a birth date of 15 April 1890 and a death date of 18 June 1967, both of which match the subject precisely.\n\n**Source classification:** The Find a Grave Index is a **derivative** source \u2014 a searchable index of contributor-submitted memorials on FindAGrave.com. The underlying memorial (#97565146) was not separately examined in this investigation. The informant is an unidentified Find a Grave contributor whose relationship to the deceased and proximity to the original burial event are unknown, rendering the information **secondary** in quality. The burial fact is **direct** evidence of the burial location, as the record explicitly states the place of interment.\n\n**Identity:** The record\u2019s full name (\u201cMary Rejnic Kraynak\u201d) \u2014 combining the subject\u2019s maiden surname Rejnic with her married surname Kraynak \u2014 together with the exact birth date (15 April 1890) and exact death date (18 June 1967), provides high confidence that this entry pertains to Maria Rejnic. The record was already attached to the subject\u2019s FamilySearch profile at the time of this search.\n\n**Corroborating context:** The Allegheny County burial location is consistent with the subject\u2019s known death place (Pittsburgh, Allegheny County, Pennsylvania, 18 June 1967) and with the burial patterns of her children: son George Charles Kraynak was buried at Saint Joseph Cemetery, Coraopolis, Allegheny County; daughters Kathryn Lackovic and Helen Elaine Kraynak were also buried in Coraopolis, Allegheny County. This family cluster does not independently establish Kennedy Township as Maria\u2019s burial place, but it is fully consistent with an Allegheny County burial.\n\n### Research Scope\n\nFamilySearch\u2019s \u201cPennsylvania, Deaths and Burials, 1720-1999\u201d (collection 3535178) was searched twice under Mary/Maria Kraynak without finding a death record for the subject. FamilySearch\u2019s \u201cPennsylvania, Pittsburgh, Allegheny Cemetery Records, 1845-1970\u201d (collection 3155912) was searched twice and returned no results, likely because Kennedy Township falls outside that collection\u2019s geographic scope. A husband FAN search (Joannes Kraynak, died December 1955, Pittsburgh) also returned nil.\n\nTwo accessible sources remain to be consulted in an interactive session:\n\n1. **Pennsylvania death certificate on Ancestry.com** (collection 7115, \u201cPennsylvania Death Certificates 1906\u20131967\u201d): A 1967 death certificate for Maria Rejnic Kraynak would be an original record containing primary information supplied by the funeral director, likely naming the specific cemetery and undertaker. This is the highest-priority follow-up and could advance the conclusion to \u201cproved.\u201d Search URL logged in log_007.\n2. **Pittsburgh newspaper obituaries** (June 1967, Newspapers.com / GenealogyBank): An obituary would name the funeral home, church, and cemetery. Search URL logged in log_008.\n\n### Tier Assessment\n\nThis conclusion rests on a single derivative source with secondary information. Independent verification and an original record containing primary information \u2014 both required for a \u201cproved\u201d conclusion under the Genealogical Proof Standard \u2014 are lacking. Accordingly, the conclusion is assessed at **probable**: the evidence strongly suggests that Maria Rejnic Kraynak was buried in Kennedy Township, Allegheny County, Pennsylvania. Locating the Pennsylvania death certificate (Ancestry, collection 7115) or a contemporary Pittsburgh newspaper obituary would provide the independent original-source corroboration needed to advance this conclusion to \u201cproved.\u201d\n\n---\n\u00b9 \u201cFind a Grave Index,\u201d database, *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QVL2-HZFG : Mon Jul 06 05:08:25 UTC 2026), Entry for Mary Rejnic Kraynak, Burial, Kennedy Township, Allegheny, Pennsylvania, United States; citing Find A Grave memorial, http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=97565146."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"proof_summaries\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ps_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "ToolSearch",
+      "args": {
+        "query": "select:mcp__genealogy__tree_edit,mcp__genealogy__research_append,mcp__genealogy__project_context",
+        "max_results": 5
+      },
+      "response_summary": "[{\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__tree_edit\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__research_append\"}, {\"type\": \"tool_reference\", \"tool_name\": \"mcp__genealogy__project_context\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "operation": "add_fact",
+            "personId": "L86H-T8G",
+            "fact": {
+              "type": "Burial",
+              "place": "Kennedy Township, Allegheny, Pennsylvania, United States",
+              "primary": true,
+              "sources": [
+                {
+                  "sourceId": "S1",
+                  "quality": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"tree.gedcomx.json/persons[0]/facts[3]/sources[0]: unexpected property 'sourceId' (source references allow only ref, page, quality)\\\",\\n    \\\"tree.gedcomx.json/persons[0]/facts[3]/sources[0]: source reference missing 'ref'\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__tree_edit",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "ops": [
+          {
+            "operation": "add_fact",
+            "personId": "L86H-T8G",
+            "fact": {
+              "type": "Burial",
+              "place": "Kennedy Township, Allegheny, Pennsylvania, United States",
+              "primary": true,
+              "sources": [
+                {
+                  "ref": "S1",
+                  "quality": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"results\\\": [\\n    {\\n      \\\"operation\\\": \\\"add_fact\\\",\\n      \\\"assignedIds\\\": {\\n        \\\"fact\\\": \\\"F2\\\"\\n      }\\n    }\\n  ],\\n  \\\"filesWritten\\\": [\\n    \\\"tree.gedcomx.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "project",
+        "op": "update",
+        "fields": {}
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Agent",
+      "args": {
+        "description": "GPS mentor proof-critique of ps_001",
+        "subagent_type": "gps-mentor",
+        "prompt": "Please review proof summary ps_001 in the project at /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i\n\nThis is an advisory proof-critique after proof-conclusion wrote the summary. The question is q_001: \"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\" Tier: probable. Vehicle: summary. Single source: Find a Grave Index (derivative, secondary), burial at Kennedy Township, Allegheny, Pennsylvania. No conflicts. Deferred leads: Ancestry PA death certificate and Pittsburgh newspaper obituaries (autonomous mode \u2014 could not capture). Exhaustive declared with honest notation of deferred sources.\n\nPlease assess whether ps_001 meets GPS standards and provide your mentor verdict. This is advisory only \u2014 do not block or require rework."
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"I read the full project state at `/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/research.json` \\u2014 question q_001, plan pl_001, logs log_001 through log_008, source src_001, assertions a_001\\u2013a_003, person_evidence pe_001\\u2013pe_003, and proof summary ps_001.\\n\\n**Tooling note before the verdict:** My toolkit in this session contains only `Read` \\u2014 no file-write capability. I cannot complete steps 1\\u20133 of the out..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/research.json"
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_rejnic_burial\",\n4\t    \"objective\": \"Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L86H-T8G\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-15\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"i..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "evaluations",
+        "op": "append",
+        "entry": {
+          "focus": "proof-critique",
+          "target_id": "ps_001",
+          "target_type": "proof_summary",
+          "verdict": "consider_addressing",
+          "must_address": [],
+          "strengths": [
+            "Nil and deferred searches kept honestly separate in log and exhaustive declaration \u2014 Standard 13 audit-trail discipline maintained.",
+            "Tier call of 'probable' resists overreach: single derivative/secondary source correctly blocks 'proved'; hedging language throughout the narrative matches the tier."
+          ],
+          "consider_addressing": [
+            "The Find A Grave memorial #97565146 (public, no subscription required) was not directly examined \u2014 only the FamilySearch index of it. The memorial page may carry the specific cemetery name, a headstone photo, or family links that would sharpen 'Kennedy Township' into a named cemetery or provide a second quasi-independent data point. This is accessible before the deferred Ancestry death certificate (log_007) and does not require a subscription."
+          ],
+          "tier_affirmed": "probable",
+          "notes": "To advance to 'proved': Ancestry PA death certificate (log_007) naming undertaker and place of interment is the decisive missing piece. Interactive session should attempt Find A Grave memorial first (free), then Ancestry."
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/evaluations[0]: missing required field 'file_path'\\\",\\n    \\\"research.json/evaluations[0]: missing required field 'superseded_by'\\\",\\n    \\\"research.json/evaluations[0]: unexpected property 'must_address' (evaluations allow only id, focus, target_id, target_type, verdict, file_path, timestamp, superseded_by)\\\",\\n    \\\"research.json/evaluations[0]: unexpected property 'strengths' (evaluations allow only id, fo..."
+    },
+    {
+      "tool": "Write",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/evaluations/proof-critique-ps_001-2026-07-14.json",
+        "content": "{\n  \"focus\": \"proof-critique\",\n  \"target_id\": \"ps_001\",\n  \"target_type\": \"proof_summary\",\n  \"verdict\": \"consider_addressing\",\n  \"must_address\": [],\n  \"strengths\": [\n    \"Nil and deferred searches kept honestly separate in log and exhaustive declaration \u2014 Standard 13 audit-trail discipline maintained.\",\n    \"Tier call of 'probable' resists overreach: single derivative/secondary source correctly blocks 'proved'; hedging language throughout the narrative matches the tier.\"\n  ],\n  \"consider_addressing\": [\n    \"The Find A Grave memorial #97565146 (public, no subscription required) was not directly examined \u2014 only the FamilySearch index of it. The memorial page may carry the specific cemetery name, a headstone photo, or family links that would sharpen 'Kennedy Township' into a named cemetery or provide a second quasi-independent data point. This is accessible before the deferred Ancestry death certificate (log_007) and does not require a subscription.\"\n  ],\n  \"tier_affirmed\": \"probable\",\n  \"notes\": \"To advance to 'proved': Ancestry PA death certificate (log_007) naming undertaker and place of interment is the decisive missing piece. Interactive session should attempt Find A Grave memorial #97565146 first (free), then Ancestry collection 7115.\"\n}\n"
+      },
+      "response_summary": "File created successfully at: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/evaluations/proof-critique-ps_001-2026-07-14.json (file state is current in your context \u2014 no need to Read it back)"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "evaluations",
+        "op": "append",
+        "entry": {
+          "focus": "proof-critique",
+          "target_id": "ps_001",
+          "target_type": "proof_summary",
+          "verdict": "consider_addressing",
+          "file_path": "evaluations/proof-critique-ps_001-2026-07-14.json",
+          "superseded_by": null
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"evaluations\\\",\\n  \\\"op\\\": \\\"append\\\",\\n  \\\"entryId\\\": \\\"ev_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "Skill",
+      "args": {
+        "skill": "question-selection",
+        "args": "--autonomous Project path: /private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i Mark q_001 resolved. Proof ps_001 written at tier probable. Resolution assertion ids: a_001 (burial assertion). All plan items completed or skipped. No remaining open questions. After resolving, set project.status = \"completed\"."
+      },
+      "response_summary": "Launching skill: question-selection"
+    },
+    {
+      "tool": "mcp__genealogy__project_context",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i"
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"projectStatus\\\": \\\"active\\\",\\n  \\\"openQuestions\\\": [\\n    {\\n      \\\"id\\\": \\\"q_001\\\",\\n      \\\"question\\\": \\\"Where was Maria Rejnic (born 15 April 1890, died 18 June 1967) buried?\\\"\\n    }\\n  ],\\n  \\\"persons\\\": [\\n    {\\n      \\\"id\\\": \\\"L86H-T8G\\\",\\n      \\\"name\\\": \\\"Maria Rejnic\\\",\\n      \\\"gender\\\": \\\"Female\\\",\\n      \\\"sourceRefs\\\": [\\n        \\\"S1\\\"\\n      ]\\n    },\\n    {\\n      \\\"id\\\": \\\"LK11-1ZH\\\",\\n      \\\"name\\\": \\\"Kathryn Lackovic\\\"..."
+    },
+    {
+      "tool": "Read",
+      "args": {
+        "file_path": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i/research.json",
+        "limit": 50
+      },
+      "response_summary": "1\t{\n2\t  \"project\": {\n3\t    \"id\": \"rp_rejnic_burial\",\n4\t    \"objective\": \"Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967?\",\n5\t    \"subject_person_ids\": [\n6\t      \"L86H-T8G\"\n7\t    ],\n8\t    \"status\": \"active\",\n9\t    \"created\": \"2026-07-14\",\n10\t    \"updated\": \"2026-07-15\"\n11\t  },\n12\t  \"researcher_profile\": {\n13\t    \"experience_level\": \"intermediate\",\n14\t    \"subscriptions\": [],\n15\t    \"narration_guidance\": \"concise\"\n16\t  },\n17\t  \"questions\": [\n18\t    {\n19\t      \"i..."
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "resolved",
+          "resolved": true,
+          "resolution_assertion_ids": [
+            "a_001"
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": false,\\n  \\\"errors\\\": [\\n    \\\"research.json/questions[0]: 'resolved' must be an ISO date (YYYY-MM-DD), got 'true'\\\"\\n  ]\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "questions",
+        "op": "update",
+        "entryId": "q_001",
+        "fields": {
+          "status": "resolved",
+          "resolved": "2026-07-14",
+          "resolution_assertion_ids": [
+            "a_001"
+          ]
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"questions\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"q_001\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    },
+    {
+      "tool": "mcp__genealogy__research_append",
+      "args": {
+        "projectPath": "/private/var/folders/g7/zn65fvrn5g9_g71_sp0lk82h0000gn/T/e2e-rejnic-burial-9dyxld3i",
+        "section": "project",
+        "op": "update",
+        "fields": {
+          "status": "completed"
+        }
+      },
+      "response_summary": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"section\\\": \\\"project\\\",\\n  \\\"op\\\": \\\"update\\\",\\n  \\\"entryId\\\": \\\"project\\\",\\n  \\\"filesWritten\\\": [\\n    \\\"research.json\\\"\\n  ],\\n  \\\"validation\\\": {\\n    \\\"valid\\\": true,\\n    \\\"warnings\\\": []\\n  }\\n}\"}]"
+    }
+  ],
+  "error": null,
+  "tags": {
+    "question_type": "other",
+    "era": "1960s",
+    "geography": "US-PA"
+  },
+  "blocked_tree_reads": []
+}

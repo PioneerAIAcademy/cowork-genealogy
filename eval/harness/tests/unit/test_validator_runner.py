@@ -203,6 +203,531 @@ def test_ownership_table_allows_owned_writes():
     assert ownership.passed is True, f"unexpected failure: {ownership.error}"
 
 
+def _classification_state(assertions):
+    """State pair for expected_classifications tests: empty before,
+    `assertions` appended after."""
+    before = _empty_research_state()
+    before["files"] = {}
+    after = _empty_research_state()
+    after["files"] = {}
+    after["research_json"] = {
+        **after["research_json"],
+        "assertions": assertions,
+    }
+    return before, after
+
+
+def _run_expected_classifications(assertions, matchers):
+    before, after = _classification_state(assertions)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": [], "expected_classifications": matchers},
+    )
+    result = next(
+        (r for r in results if r.name == "test_expected_classifications"), None
+    )
+    assert result is not None, "test_expected_classifications did not run"
+    return result
+
+
+def test_expected_classifications_pass_when_matchers_satisfied():
+    """Existence + declared-value conformity on every matching new
+    assertion → pass. A second assertion with a different pair is
+    untouched by the matcher."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "evidence_type": "indirect",
+            "informant_proximity": "family_not_present",
+            "information_quality": "secondary",
+        },
+        {
+            "id": "a_2",
+            "record_role": "deceased",
+            "fact_type": "death",
+            "evidence_type": "direct",
+            "informant_proximity": "official_duty",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "deceased",
+                "fact_type": "age",
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            },
+            {
+                "record_role": "deceased",
+                "fact_type": "death",
+                "evidence_type": "direct",
+                "informant_proximity": "official_duty",
+            },
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+    assert not (result.error or "").startswith("skipped")
+
+
+def test_expected_classifications_fail_names_assertion_field_got_expected():
+    """EVERY new assertion matching the pair must conform — a violation
+    is reported with the assertion id, field, got, and expected."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "evidence_type": "direct",  # doctrine says indirect
+            "informant_proximity": "family_not_present",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "deceased",
+                "fact_type": "age",
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            }
+        ],
+    )
+    assert result.passed is False
+    for fragment in ("a_1", "evidence_type", "direct", "indirect"):
+        assert fragment in (result.error or ""), (
+            f"failure message missing {fragment!r}: {result.error}"
+        )
+
+
+def test_expected_classifications_fail_when_pair_missing_and_skip_when_absent():
+    """A matcher whose (record_role, fact_type) pair no new assertion
+    carries fails the existence half; a test without the block skips."""
+    result = _run_expected_classifications(
+        [],
+        [{"record_role": "deceased", "fact_type": "age", "evidence_type": "indirect"}],
+    )
+    assert result.passed is False
+    assert "no new assertion" in (result.error or "")
+    assert "record_role='deceased'" in (result.error or "")
+
+    skipped = _run_expected_classifications([], [])
+    assert skipped.passed is True
+    assert "skipped" in (skipped.error or "").lower()
+
+
+def test_expected_classifications_normalizes_pascalcase_fact_types():
+    """record_role/fact_type are open, model-chosen strings — PascalCase
+    GedcomX-style persisted values must satisfy snake_case matchers
+    (CauseOfDeath ≡ cause_of_death, Birth ≡ birth). Observed on
+    ut_record_extraction_009: a doctrine-perfect run failed all 9 matchers
+    on spelling alone. Event place is an attribute of the `birth` fact (not
+    its own type), so the birthplace-claim is a `birth` assertion with `place`
+    set, matched by `attribute: "place"`."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "CauseOfDeath",
+            "evidence_type": "direct",
+            "informant_proximity": "official_duty",
+        },
+        {
+            "id": "a_2",
+            "record_role": "Deceased",
+            "fact_type": "Birth",
+            "place": "Ireland",
+            "evidence_type": "indirect",
+            "informant_proximity": "family_not_present",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "deceased",
+                "fact_type": "cause_of_death",
+                "evidence_type": "direct",
+                "informant_proximity": "official_duty",
+            },
+            {
+                "record_role": "deceased",
+                "fact_type": "birth",
+                "attribute": "place",
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            },
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_optional_skips_existence_but_checks_classification():
+    """`optional: true` drops the existence requirement (a flappy-completeness
+    fact isn't a hard fail when absent) but still verifies the classification
+    when the assertion IS present."""
+    # Absent + optional → passes (no existence requirement).
+    absent = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
+          "evidence_type": "direct"}],
+        [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
+          "evidence_type": "indirect"}],
+    )
+    assert absent.passed is True, f"unexpected failure: {absent.error}"
+
+    # Present + optional + WRONG classification → still fails (teeth on classification).
+    wrong = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "father_of_deceased", "fact_type": "name",
+          "evidence_type": "direct"}],  # doctrine says indirect
+        [{"record_role": "father_of_deceased", "fact_type": "name", "optional": True,
+          "evidence_type": "indirect"}],
+    )
+    assert wrong.passed is False
+    assert "evidence_type" in (wrong.error or "")
+
+    # Absent WITHOUT optional → fails existence (the default, unchanged).
+    required = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "death",
+          "evidence_type": "direct"}],
+        [{"record_role": "father_of_deceased", "fact_type": "name",
+          "evidence_type": "indirect"}],
+    )
+    assert required.passed is False
+    assert "expected at least one" in (required.error or "")
+
+
+def test_expected_classifications_attribute_facet_separates_birth_claims():
+    """A `birth` place-claim (place set, `direct`) and a `birth` date-claim
+    (date set, `indirect`) share the `birth` fact_type but are independently
+    checkable via `attribute`: the place matcher grades only the place-claim,
+    the date matcher only the date-claim — even though a naive fact_type-only
+    match would conflate them and fail the census direct/indirect split."""
+    assertions = [
+        {
+            "id": "a_place",
+            "record_role": "head_of_household",
+            "fact_type": "birth",
+            "place": "Ireland",
+            "evidence_type": "direct",
+        },
+        {
+            "id": "a_date",
+            "record_role": "head_of_household",
+            "fact_type": "birth",
+            "date": "~1818",
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {"record_role": "head_of_household", "fact_type": "birth",
+             "attribute": "place", "evidence_type": "direct"},
+            {"record_role": "head_of_household", "fact_type": "birth",
+             "attribute": "date", "evidence_type": "indirect"},
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_role_prefix_matches_of_form():
+    """A short role satisfies the long form when the long form continues
+    with 'of' after the prefix: persisted `father` matches matcher
+    `father_of_deceased` (either direction)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "father",
+            "fact_type": "Name",
+            "evidence_type": "indirect",
+            "informant_proximity": "family_not_present",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [
+            {
+                "record_role": "father_of_deceased",
+                "fact_type": "name",
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            }
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_genuinely_wrong_values_still_fail():
+    """Normalization must not become leniency: a role with no prefix-of
+    relation to the matcher fails existence, the facet filter has teeth (a
+    date-only `birth` must NOT satisfy an `attribute: "place"` matcher), and a
+    matched pair with the wrong closed-enum classification value still fails —
+    with the ORIGINAL strings in the message."""
+    # Wrong role: `witness` has no prefix-of relation to father_of_deceased.
+    wrong_role = _run_expected_classifications(
+        [
+            {
+                "id": "a_1",
+                "record_role": "witness",
+                "fact_type": "name",
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            }
+        ],
+        [{"record_role": "father_of_deceased", "fact_type": "name",
+          "evidence_type": "indirect"}],
+    )
+    assert wrong_role.passed is False
+    assert "record_role='father_of_deceased'" in (wrong_role.error or "")
+
+    # Facet filter: a `birth` assertion carrying only a DATE must NOT satisfy a
+    # place-claim matcher (attribute='place' requires place/standard_place set).
+    wrong_facet = _run_expected_classifications(
+        [
+            {
+                "id": "a_1",
+                "record_role": "deceased",
+                "fact_type": "Birth",
+                "date": "~1845",  # a date-claim, no place
+                "evidence_type": "indirect",
+                "informant_proximity": "family_not_present",
+            }
+        ],
+        [{"record_role": "deceased", "fact_type": "birth", "attribute": "place",
+          "evidence_type": "indirect"}],
+    )
+    assert wrong_facet.passed is False
+    assert "attribute='place'" in (wrong_facet.error or "")
+
+    # Matched (normalized + place-facet) pair, wrong classification value →
+    # value failure naming the assertion, with original (PascalCase) strings.
+    wrong_value = _run_expected_classifications(
+        [
+            {
+                "id": "a_1",
+                "record_role": "father",
+                "fact_type": "Birth",
+                "place": "Ireland",
+                "evidence_type": "direct",  # doctrine says indirect
+                "informant_proximity": "family_not_present",
+            }
+        ],
+        [{"record_role": "father_of_deceased", "fact_type": "birth",
+          "attribute": "place", "evidence_type": "indirect"}],
+    )
+    assert wrong_value.passed is False
+    for fragment in ("a_1", "evidence_type", "direct", "indirect"):
+        assert fragment in (wrong_value.error or ""), (
+            f"failure message missing {fragment!r}: {wrong_value.error}"
+        )
+
+
+# --- record_persona_id corruption signature (shared persona across roles) ---
+
+_PERSONA_ARK = "https://www.familysearch.org/ark:/61903/1:1:ABCD-123"
+
+
+def _persona_sidecar_files(persona_ids):
+    """A staged search sidecar (results/log_001.json) holding ONE record
+    with the given gedcomx persona ids (first id = the result's primaryId)."""
+    import json
+
+    sidecar = {
+        "log_id": "log_001",
+        "tool": "record_search",
+        "retrieved": "2026-01-01T00:00:00Z",
+        "returned_count": 1,
+        "payload": {
+            "results": [
+                {
+                    "recordId": _PERSONA_ARK,
+                    "primaryId": persona_ids[0],
+                    "gedcomx": {"persons": [{"id": p} for p in persona_ids]},
+                }
+            ]
+        },
+    }
+    return {"results/log_001.json": json.dumps(sidecar)}
+
+
+def _run_persona_id_set(assertions, persona_ids=("p_1", "p_2", "p_3")):
+    before = _empty_research_state()
+    before["files"] = _persona_sidecar_files(list(persona_ids))
+    after = _empty_research_state()
+    after["files"] = dict(before["files"])
+    after["research_json"] = {**after["research_json"], "assertions": assertions}
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "record-extraction"},
+        test={"tags": []},
+    )
+    result = next(
+        (r for r in results if r.name == "test_record_persona_id_set"), None
+    )
+    assert result is not None, "test_record_persona_id_set did not run"
+    return result
+
+
+def test_record_persona_id_distinct_personas_pass():
+    """Correct multi-persona extraction: each record_role carries its own
+    persona id — no corruption signature."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "deceased", "record_persona_id": "p_1"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "father_of_deceased", "record_persona_id": "p_2"},
+        ]
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_record_persona_id_shared_across_roles_fails():
+    """ut_006 corruption signature: the focus persona's id (p_1) stamped
+    onto a DIFFERENT record_role's assertion on a multi-persona record."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "deceased", "record_persona_id": "p_1"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "father_of_deceased", "record_persona_id": "p_1"},
+        ]
+    )
+    assert result.passed is False
+    for fragment in ("p_1", "a_1", "a_2", "different record_roles"):
+        assert fragment in (result.error or ""), (
+            f"failure message missing {fragment!r}: {result.error}"
+        )
+
+
+def test_record_persona_id_role_spelling_variants_not_flagged():
+    """`father` vs `father_of_deceased` are ONE role in two spellings
+    (the normalized prefix-of matcher) — sharing a persona id across them
+    is not the corruption signature."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "father", "record_persona_id": "p_2"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "father_of_deceased", "record_persona_id": "p_2"},
+        ]
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_record_persona_id_single_persona_record_exempt():
+    """A single-persona record cannot cross-contaminate — the shared-id
+    check gates on 2+ personas in the sidecar's gedcomx."""
+    result = _run_persona_id_set(
+        [
+            {"id": "a_1", "record_id": _PERSONA_ARK,
+             "record_role": "deceased", "record_persona_id": "p_1"},
+            {"id": "a_2", "record_id": _PERSONA_ARK,
+             "record_role": "informant", "record_persona_id": "p_1"},
+        ],
+        persona_ids=("p_1",),
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+# --- Hand-edit detector (project files must go through writer tools) ---
+
+def _hand_edit_states(research_changed):
+    """Before/after state pair; when research_changed, after grows a
+    person_evidence entry (the ut_012 hand-edit shape)."""
+    before = _empty_research_state()
+    before["files"] = {}
+    after = _empty_research_state()
+    after["files"] = {}
+    if research_changed:
+        after["research_json"] = {
+            **after["research_json"],
+            "person_evidence": [
+                {
+                    "id": "pe_001",
+                    "assertion_id": "a_001",
+                    "person_id": "I1",
+                    "confidence": "confident",
+                    "rationale": "hand-added",
+                    "created": "2026-07-12",
+                    "superseded_by": None,
+                }
+            ],
+        }
+    return before, after
+
+
+def _run_hand_edit_detector(research_changed, tool_calls):
+    before, after = _hand_edit_states(research_changed)
+    results = run_validators(
+        skill="person-evidence",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=tool_calls,
+        skill_frontmatter={"name": "person-evidence"},
+    )
+    result = next(
+        (
+            r
+            for r in results
+            if r.name == "test_project_file_changes_route_through_writer_tools"
+        ),
+        None,
+    )
+    assert result is not None, "hand-edit detector did not run"
+    return result
+
+
+def test_hand_edit_detector_passes_when_writer_tool_called():
+    """(a) research.json changed + a writer-tool call present → pass."""
+    result = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            {
+                "tool": "mcp__genealogy__research_append",
+                "args": {"section": "person_evidence", "op": "append"},
+            }
+        ],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_hand_edit_detector_fails_on_change_with_zero_writer_calls():
+    """(b) research.json changed + ZERO writer-tool calls → fail, naming
+    the file and pointing at the writer tools (the ut_012 incident: empty
+    tool_calls yet a person_evidence entry appeared with a fabricated
+    created date, and every validator passed)."""
+    result = _run_hand_edit_detector(
+        research_changed=True,
+        tool_calls=[
+            # A read-only call must not legitimize the write.
+            {"tool": "mcp__genealogy__person_read", "args": {"personId": "I1"}},
+        ],
+    )
+    assert result.passed is False
+    assert "research.json" in (result.error or "")
+    assert "no writer-tool call" in (result.error or "")
+    assert "research_append" in (result.error or "")
+
+
+def test_hand_edit_detector_passes_when_nothing_changed():
+    """(c) no project-file changes + no tool calls → pass."""
+    result = _run_hand_edit_detector(research_changed=False, tool_calls=[])
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
 def test_pytest_skip_is_treated_as_pass_with_skipped_marker(tmp_path):
     """Validators using `pytest.skip()` should not abort the run."""
     bad = tmp_path / "test_universal.py"

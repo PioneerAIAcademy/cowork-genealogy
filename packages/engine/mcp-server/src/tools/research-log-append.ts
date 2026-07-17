@@ -11,6 +11,7 @@
 import { join } from "path";
 import { readFile, unlink } from "fs/promises";
 import { validateParsed } from "../validation/validator.js";
+import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson } from "../utils/project-io.js";
 import { finalizeStagedResults } from "../utils/results-staging.js";
@@ -139,6 +140,30 @@ export async function researchLogAppend(
     //     valid pli_ id, so this coercion is safe.
     if ((input.planItemId as unknown) === "null") input.planItemId = null;
 
+    // 0c. planItemId must be a plan-item id (^pli_) from the active plan, or
+    //     null for an opportunistic/ad-hoc search. Models sometimes stuff a
+    //     question id (q_...) or free text into this slot — which persists
+    //     silently (validate_research_schema historically didn't check it) and
+    //     then hard-fails the JSON-Schema validator downstream. Reject it here
+    //     with an actionable error so the caller can correct it, rather than
+    //     silently nulling it (which would discard the caller's expressed
+    //     intent) or persisting an invalid reference.
+    if (
+      input.planItemId != null &&
+      !(typeof input.planItemId === "string" && input.planItemId.startsWith("pli_"))
+    ) {
+      return {
+        ok: false,
+        errors: [
+          `planItemId '${input.planItemId}' is not a plan-item id. It must start ` +
+            `with 'pli_' (a plan item from the active research plan) or be null ` +
+            `for an opportunistic search with no plan item. A question id ` +
+            `(q_...) is not a plan-item id — supply the pli_ item under that ` +
+            `question, or null.`,
+        ],
+      };
+    }
+
     // 1. Input-consistency checks (external_site ↔ tool, enums).
     const isExternal = input.tool === "external_site";
     if (isExternal && (input.externalSite === undefined || input.externalSite === null)) {
@@ -165,7 +190,9 @@ export async function researchLogAppend(
     // 2. Read project files (research mutated in memory only; tree read for
     //    cross-file checks during validation).
     const research = await readProjectJson(projectPath, "research.json");
-    const tree = await readProjectJson(projectPath, "tree.gedcomx.json");
+    const { tree } = sanitizeTree(
+      await readProjectJson(projectPath, "tree.gedcomx.json"),
+    );
     if (!Array.isArray(research.log)) {
       return { ok: false, errors: ["research.json `log` is missing or not an array"] };
     }

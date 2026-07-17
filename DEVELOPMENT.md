@@ -25,6 +25,36 @@ After building, both artifacts land in `releases/`:
 ls releases/
 ```
 
+## Git hooks
+
+Once per clone (opt-in, per-clone), run `make install-hooks` — or on Windows,
+double-click **`InstallHooks.bat`**. Both install the same two hooks:
+`post-checkout` auto-links shared files into new worktrees, and `commit-msg`
+warns (never blocks) when a commit lacks a **human** `Co-authored-by:` trailer.
+
+What gets installed into `.git/hooks/` is a stub (`scripts/git-hooks/shim.sh`)
+that re-runs the tracked hook, so editing anything under `scripts/git-hooks/`
+takes effect immediately — there's nothing to reinstall after a pull. Rerun the
+installer only when a *new* hook is added to the list.
+
+### Crediting a co-author
+
+Nearly every PR here is paired work, but the co-author usually goes unrecorded —
+that's what the `commit-msg` hook is there to catch. We squash-merge, and GitHub
+folds the `Co-authored-by:` trailers from a PR's commits into the squash commit,
+so your local commits are the only place that credit can come from. When you
+pair, add the other contributor's **GitHub username** as the last line of the
+commit message:
+
+```
+Co-authored-by: their-github-username
+```
+
+The bare username is deliberate: it's the key our contribution-evaluation agents
+read out of `git log`, and it keeps personal email addresses out of the repo.
+Don't "fix" it by adding an address. Claude/AI co-authors don't satisfy the
+check — the whole point is recording the human you worked with.
+
 ## Smoke-test tools against live APIs
 
 Bypass the MCP harness to debug a tool in isolation:
@@ -449,11 +479,15 @@ restart. Order matters:
    ```
 5. **Re-install via the Cowork UI** (same path end users follow — see
    `README.md` § "Installation"):
-   - **MCP:** Claude Desktop → Settings → Extensions → "Install
-     Extension..." → pick the rebuilt `releases/genealogy-mcp.mcpb`.
-   - **Plugin:** Claude Desktop → Cowork tab → Customize → Browse
-     plugins → Upload custom plugin → pick the rebuilt
-     `releases/genealogy-plugin.zip`.
+   - **MCP:** Claude Desktop → Settings → Extensions → Advanced Settings
+     → "Install extension" → pick the rebuilt
+     `releases/genealogy-mcp.mcpb`. Installs over the old copy; no
+     uninstall needed.
+   - **Plugin:** Claude Desktop → Cowork tab → Customize → **remove the
+     existing Genealogy Research plugin first**, then Add → Upload
+     Plugin → pick the rebuilt `releases/genealogy-plugin.zip`.
+     Uploading on top of the old plugin can leave the old skills in
+     place.
 6. **Fully quit Claude Desktop.** The MCP server is only re-read on a
    real restart — closing the window is not enough:
    - **macOS:** ⌘Q, or right-click the Dock icon → Quit. From a terminal,

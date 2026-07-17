@@ -1,11 +1,75 @@
 """Unit tests for orchestrator's pure helpers — outcome computation."""
 
+from types import SimpleNamespace
+
 from harness.loader import load_test_from_dict
 from harness.orchestrator import (
     _compute_outcome,
     _negative_judge_context,
     _routing_short_circuit_skills,
+    apply_deterministic_deference,
 )
+
+
+# --- deterministic-validator deference ---------------------------------
+
+
+def _vr(name, passed):
+    return SimpleNamespace(name=name, passed=passed)
+
+
+def test_deference_floors_classification_fail_when_validator_passed():
+    """A passing expected_classifications validator floors Evidence type
+    accuracy / Informant identification from 1 to 2 — the deterministic check
+    verified the classifications, so the judge cannot fail them."""
+    dims = [
+        {"name": "Evidence type accuracy", "score": 1, "rationale": "should be indirect"},
+        {"name": "Informant identification", "score": 1, "rationale": "x"},
+        {"name": "Correctness", "score": 3, "rationale": "ok"},
+    ]
+    apply_deterministic_deference(
+        dims,
+        [_vr("test_expected_classifications", True), _vr("test_id_references_resolve", True)],
+        has_expected_classifications=True,
+    )
+    assert [d["score"] for d in dims] == [2, 2, 3]
+    assert "deterministic-deference" in dims[0]["rationale"]
+    assert "should be indirect" in dims[0]["rationale"]  # original preserved
+
+
+def test_deference_noop_when_validator_failed():
+    """If the expected_classifications validator FAILED, the judge's fail
+    stands — the deterministic check did not verify the classifications."""
+    dims = [{"name": "Evidence type accuracy", "score": 1, "rationale": "wrong"}]
+    apply_deterministic_deference(
+        dims,
+        [_vr("test_expected_classifications", False)],
+        has_expected_classifications=True,
+    )
+    assert dims[0]["score"] == 1
+
+
+def test_deference_noop_without_expected_classifications():
+    dims = [{"name": "Evidence type accuracy", "score": 1, "rationale": "wrong"}]
+    apply_deterministic_deference(
+        dims, [_vr("test_expected_classifications", True)], has_expected_classifications=False
+    )
+    assert dims[0]["score"] == 1
+
+
+def test_deference_leaves_partial_and_pass_and_non_classification_dims_untouched():
+    """Only a score of 1 on a classification dimension is floored; a 2, a 3,
+    and non-classification dimensions (e.g. Correctness) are never touched."""
+    dims = [
+        {"name": "Evidence type accuracy", "score": 2, "rationale": "x"},
+        {"name": "Informant identification", "score": 3, "rationale": "x"},
+        {"name": "Correctness", "score": 1, "rationale": "fabricated a value"},
+        {"name": "Assertion atomicity", "score": 1, "rationale": "compound"},
+    ]
+    apply_deterministic_deference(
+        dims, [_vr("test_expected_classifications", True)], has_expected_classifications=True
+    )
+    assert [d["score"] for d in dims] == [2, 3, 1, 1]
 
 
 # --- judge error handling (item #27) -----------------------------------
@@ -371,7 +435,7 @@ def test_negative_judge_context_frames_decline_and_keeps_test_context():
     base-only judge grades the decline, not the skill's craft task) and
     appends the test's own judge_context unchanged."""
     spec = load_test_from_dict({
-        "test": {"id": "ut_o_003", "skill": "assertion-classification",
+        "test": {"id": "ut_o_003", "skill": "citation",
                   "name": "n", "type": "negative", "description": "x",
                   "tags": []},
         "input": {"user_message": "m", "scenario": None},
@@ -382,7 +446,7 @@ def test_negative_judge_context_frames_decline_and_keeps_test_context():
     ctx = _negative_judge_context(spec)
     assert "NEGATIVE test" in ctx[0]
     assert "record-extraction" in ctx[0]
-    assert "assertion-classification" in ctx[1]
+    assert "citation" in ctx[1]
     assert ctx[-1] == "Should explicitly name record-extraction"
 
 

@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the staged 1850-census Flynn search (one candidate) against tree subject I1 (Patrick Flynn, b.~1845 Ireland). Name, birth year, and place all align, so the record scores high (0.85) and lands at matchRank 1 — but the underlying record (recordTitle 'Patrick Flynn — Head of Household, 1850', role Head) lists a 5-year-old as head of household in 1850, an impossible role the skill's Step-4 logical cross-check must catch. The high match score must NOT be the arbiter: a strong score plus an impossible household role is a needs-review conflict, not a confirmed match. Not attached to any tree person, so the triage decision hinges entirely on the logical cross-check. Matched on subjectId; independent of the per-run stagedResultsRef handle.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:CFLT-9K2",
+        "primaryId": "CP1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Ireland",
+        "collectionTitle": "United States Census, 1850",
+        "matchScore": 0.85,
+        "matchConfidence": 5,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

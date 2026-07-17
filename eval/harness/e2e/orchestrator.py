@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -37,6 +38,9 @@ from claude_agent_sdk import (
 )
 
 from harness.auth import env_for_sdk, resolve_auth
+from harness.context_policy import (
+    bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
+)
 
 from e2e.result import E2eResult, timestamp_slug, write_result_files
 from e2e.stop_checker import (
@@ -45,6 +49,7 @@ from e2e.stop_checker import (
     read_tree_json,
     should_continue_run,
 )
+from e2e.subagent_capture import collect_subagents
 from e2e import judge as judge_module
 
 
@@ -113,11 +118,6 @@ BLOCKED_TREE_TOOLS = frozenset(
 )
 
 
-def _bare_tool_name(tool_name: str) -> str:
-    """Strip the `mcp__<server>__` prefix to get the advertised tool name."""
-    return tool_name.rsplit("__", 1)[-1] if "__" in tool_name else tool_name
-
-
 def is_turn_cap_error(detail: str | None) -> bool:
     """Whether an SDK error result is really a turn-cap hit.
 
@@ -140,6 +140,19 @@ def is_blocked_tree_tool(tool_name: str) -> bool:
     return _bare_tool_name(tool_name) in BLOCKED_TREE_TOOLS
 
 
+def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
+    """Whether a tool call is denied by THIS fixture's `blocked_tools`.
+
+    Same matching rules as the universal tree block: MCP tools only,
+    matched on the bare advertised name. Used for fixtures whose ground
+    truth a specific tool can surface directly (e.g. `wiki_search` on a
+    fixture built from a wiki case-study article that names the answer).
+    """
+    if not tool_name.startswith("mcp__"):
+        return False
+    return _bare_tool_name(tool_name) in blocked_tools
+
+
 @dataclass
 class FixtureCaps:
     # The DEFAULT caps every fixture inherits for any cap it doesn't set.
@@ -147,7 +160,10 @@ class FixtureCaps:
     # caps from here (don't re-hardcode the numbers there). Tuned so a real
     # full-GPS run fits: an early fixture hit the 100-turn cap mid-loop
     # (111 tool calls / 101 turns, still not done) — see e2e-test-spec.md §6.
-    wall_clock_seconds: int = 3600  # 60 min
+    wall_clock_seconds: int = 7200  # 120 min — the formal GPS apparatus
+    # (research-exhaustiveness + gps-mentor gates + proof-conclusion) pushes a
+    # real full-GPS run well past 60 min; kenneth/elizabeth/teitje all hit the
+    # old 3600 cap mid-proof-conclusion (morris already overrode to 4800).
     inactivity_seconds: int = 600   # 10 min with NO SDK message at all (silence)
     # Abort (or, with resume_on_stall, resume) when the agent makes no PROGRESS
     # — no assistant text and no tool call/result — for this long, even while the
@@ -162,7 +178,11 @@ class FixtureCaps:
     # Voluntary-yield nudges allowed before an autonomous run is permitted to
     # end. The agent sometimes narrates the next step then stops mid-loop; a
     # Stop hook vetoes that, bounded by this cap. See should_continue_run().
-    max_continue_nudges: int = 5
+    # Generous by design: a full GPS proof yields after each of ~10+ sub-skill
+    # steps, so a stingy cap ends the loop before proof-conclusion. The
+    # no-progress check (see should_continue_run) is the real backstop against
+    # a genuinely idle agent; this cap only bounds the worst case.
+    max_continue_nudges: int = 20
 
 
 @dataclass
@@ -178,6 +198,17 @@ class Fixture:
     expected_findings: dict[str, Any]
     starting_research_path: Path
     starting_tree_path: Path
+    # Extra tools denied for THIS fixture's runs, beyond the universal
+    # BLOCKED_TREE_TOOLS — bare advertised names (e.g. "wiki_search").
+    # For fixtures whose ground truth derives from a source an MCP tool
+    # can surface directly (a wiki case-study article naming the answer).
+    # See e2e-test-spec.md §6.1 "Per-fixture blocked tools".
+    blocked_tools: frozenset = frozenset()
+    # The fixture's subject person id(s), from starting-research.json's
+    # project.subject_person_ids (plus a real source_pid). Passed to the
+    # avoid-guard so a same-name subject isn't mis-flagged as the avoided
+    # namesake in a look-alike fixture.
+    subject_person_ids: frozenset = frozenset()
 
 
 def load_fixture(fixture_dir: Path) -> Fixture:
@@ -185,6 +216,22 @@ def load_fixture(fixture_dir: Path) -> Fixture:
     fixture_dir = Path(fixture_dir)
     fixture_json = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
     expected = json.loads((fixture_dir / "expected-findings.json").read_text(encoding="utf-8"))
+
+    # Subject person id(s) for the avoid-guard's subject exemption. Primary
+    # source is starting-research.json's project.subject_person_ids; source_pid
+    # is added when it's a real PID (not the "PID-TODO" marker).
+    subject_ids: set[str] = set()
+    try:
+        starting_research = json.loads(
+            (fixture_dir / "starting-research.json").read_text(encoding="utf-8")
+        )
+        for sid in (starting_research.get("project") or {}).get("subject_person_ids") or []:
+            subject_ids.add(str(sid))
+    except (OSError, json.JSONDecodeError):
+        pass
+    src = fixture_json.get("source_pid")
+    if src and "TODO" not in str(src):
+        subject_ids.add(str(src))
 
     # Fill omitted caps from FixtureCaps() — the single source of default
     # values (don't re-hardcode the numbers here, or they drift).
@@ -215,6 +262,8 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         expected_findings=expected,
         starting_research_path=fixture_dir / "starting-research.json",
         starting_tree_path=fixture_dir / "starting-tree.gedcomx.json",
+        blocked_tools=frozenset(fixture_json.get("blocked_tools") or ()),
+        subject_person_ids=frozenset(subject_ids),
     )
 
 
@@ -235,11 +284,28 @@ def provided_documents(fixture: Fixture) -> list[Path]:
     return sorted(p for p in d.iterdir() if p.is_file() and not p.name.startswith("."))
 
 
+def _override_agent_model(md_text: str, model: str) -> str:
+    """Rewrite a staged subagent's ``model:`` frontmatter to ``model``.
+
+    Overrides the agent's own pin (e.g. record-extractor's ``claude-sonnet-5``)
+    so an e2e run can be executed against a different model — e.g. to test
+    whether the sonnet-5 record-extractor freeze reproduces under sonnet-4-6,
+    the model Cowork uses. Inserts a ``model:`` line if the agent has none.
+    """
+    if re.search(r"(?m)^model:[ \t]*.*$", md_text):
+        return re.sub(r"(?m)^model:[ \t]*.*$", f"model: {model}", md_text, count=1)
+    if md_text.startswith("---\n"):
+        return f"---\nmodel: {model}\n" + md_text[len("---\n"):]
+    return md_text  # no frontmatter to pin into
+
+
 def build_workspace(
     fixture: Fixture,
     target: Path,
     skills_dir: Path,
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+    effort_level: str | None = None,
+    agent_model: str | None = None,
 ) -> Path:
     """Populate a temp dir with fixture starting state + plugin skills + agents.
 
@@ -270,7 +336,31 @@ def build_workspace(
         agents_target = target / ".claude" / "agents"
         agents_target.mkdir(parents=True, exist_ok=True)
         for agent_file in sorted(agents_dir.glob("*.md")):
-            shutil.copy(agent_file, agents_target / agent_file.name)
+            dest = agents_target / agent_file.name
+            if agent_model is None:
+                shutil.copy(agent_file, dest)
+            else:
+                # Override every staged subagent's model pin (see agent_model).
+                dest.write_text(
+                    _override_agent_model(agent_file.read_text(encoding="utf-8"), agent_model),
+                    encoding="utf-8",
+                )
+
+    # Optionally pin the run's reasoning effort via a PROJECT-level setting.
+    # setting_sources=["project"] reads this file; the CLAUDE_EFFORT env var does
+    # NOT (it's output-only — verified). This is the only working effort lever
+    # from the harness. Session-wide (parent + every subagent). Left unset, the
+    # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
+    # deep enough that the record-extractor subagent can spend its whole output
+    # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
+    # freeze the run; lower it here to A/B whether that clears (read the runlog's
+    # `subagents[].runaway_thinking`). Valid: low | medium | high | xhigh | max.
+    if effort_level is not None:
+        claude_dir = target / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+        (claude_dir / "settings.json").write_text(
+            json.dumps({"effortLevel": effort_level}, indent=2) + "\n", encoding="utf-8"
+        )
 
     # Drop bundled captures into the workspace root, where an uploaded PDF
     # would land — the agent reads them by filename like a user upload.
@@ -320,6 +410,8 @@ async def _run_agent(
     workspace: Path,
     mcp_server_entry: Path,
     resume_on_stall: bool = False,
+    max_output_tokens: int | None = None,
+    agent_model: str | None = None,
 ) -> tuple[
     list[dict[str, Any]],
     list[str],
@@ -339,7 +431,14 @@ async def _run_agent(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
+    # mcp__-only, for the tool_calls budget cap. Distinct from activity_count
+    # below, which powers the no-progress stop check.
     tool_call_count = {"n": 0}
+    # Any-tool counter (Skill, Read, mcp__, …) for the no-progress check. A
+    # read-only sub-skill step (e.g. research-exhaustiveness deciding "not yet
+    # exhaustive" and writing nothing) is real progress, not a stuck agent —
+    # gating no-progress on mcp__-only calls false-killed runs mid-loop.
+    activity_count = {"n": 0}
     # Every denied attempt to read the answer off the live tree. A
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
@@ -350,7 +449,7 @@ async def _run_agent(
     # bounded by max_continue_nudges + a no-progress check (see
     # should_continue_run) so a genuinely stuck run still ends and fails.
     continue_nudges = {"n": 0}
-    last_nudge_tool_count = {"n": -1}
+    last_nudge_activity_count = {"n": -1}
 
     run_started = time.monotonic()
 
@@ -365,6 +464,10 @@ async def _run_agent(
     last_progress = {"t": run_started}
     # session_id from the SDK init message — required to resume a stalled run.
     session_id: dict[str, str | None] = {"id": None}
+    # Claude Code CLI version from the init message. Logged so a harness-vs-Cowork
+    # discrepancy can be checked against a version delta (the local CLI the SDK
+    # spawns may differ from Cowork's bundled one).
+    cli_version: dict[str, str | None] = {"v": None}
     resumes = {"n": 0}  # how many times we resumed after a stall (capped)
     MAX_RESUME = 2
 
@@ -381,8 +484,22 @@ async def _run_agent(
 
     async def pretool_hook(input_data, _tool_use_id, _ctx):
         tool_name = input_data.get("tool_name", "")
+        # Count EVERY tool the agent issues (Skill, Read, mcp__, …) toward the
+        # no-progress signal — invoking a sub-skill is progress even when that
+        # skill writes nothing. The mcp__-only budget cap is tool_call_count,
+        # incremented separately below.
+        activity_count["n"] += 1
         if not tool_name.startswith("mcp__"):
             return {}
+
+        # NOTE: the per-context tool policy (harness/context_policy.py) is
+        # deliberately NOT enforced here — see docs/plan/image-read-context-policy.md
+        # §4.1. It is unit-only because the guard needs to know which SKILL is
+        # active, and e2e cannot know: sub-skills run in this same session via
+        # the Skill tool (no `agent_id` to attribute them), so a legitimate
+        # `search-images` browse — which declares `image_read` and pages through
+        # volumes itself — is indistinguishable from a record-extraction router
+        # violation. Denying on the bare tool name would break real browsing.
 
         # Block tree-reading tools BEFORE counting toward the cap — a denied
         # call never runs, so it shouldn't consume the budget. The run
@@ -390,7 +507,11 @@ async def _run_agent(
         bare = _bare_tool_name(tool_name)
         if is_blocked_tree_tool(tool_name):
             blocked_tree_reads.append(
-                {"tool": bare, "args": dict(input_data.get("tool_input") or {})}
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "tree",
+                }
             )
             transcript.append(
                 f"\n**[BLOCKED]** `{bare}` denied — tree-reading tools are "
@@ -406,6 +527,32 @@ async def _run_agent(
                         "tree would hand you the stripped answer for free. "
                         "Recover it through records instead (record_search, "
                         "record_read, fulltext_search, image_search, …)."
+                    ),
+                },
+            }
+        if is_fixture_blocked_tool(tool_name, fixture.blocked_tools):
+            blocked_tree_reads.append(
+                {
+                    "tool": bare,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "blocked_by": "fixture",
+                }
+            )
+            transcript.append(
+                f"\n**[BLOCKED]** `{bare}` denied — disabled by this fixture "
+                "(fixture.json `blocked_tools`).\n"
+            )
+            _emit(f"[blocked fixture tool] {bare}")
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"{bare} is disabled for this benchmark fixture: its "
+                        "ground truth derives from a source this tool can "
+                        "surface directly. Recover the answer through record "
+                        "research instead (record_search, record_read, "
+                        "fulltext_search, image_search, …)."
                     ),
                 },
             }
@@ -435,12 +582,12 @@ async def _run_agent(
             research=research,
             nudges_used=continue_nudges["n"],
             max_nudges=fixture.caps.max_continue_nudges,
-            tool_count=tool_call_count["n"],
-            tool_count_at_last_nudge=last_nudge_tool_count["n"],
+            tool_count=activity_count["n"],
+            tool_count_at_last_nudge=last_nudge_activity_count["n"],
         ):
             return {}
         continue_nudges["n"] += 1
-        last_nudge_tool_count["n"] = tool_call_count["n"]
+        last_nudge_activity_count["n"] = activity_count["n"]
         transcript.append(
             f"\n**[HARNESS]** continue-nudge {continue_nudges['n']}/"
             f"{fixture.caps.max_continue_nudges}: agent yielded before "
@@ -493,9 +640,32 @@ async def _run_agent(
         # falls back to injecting the key when there's no subscription. The
         # judge keeps using the key from os.environ — only the agent subprocess
         # env is overridden here.
-        env={"ENABLE_TOOL_SEARCH": "true", **env_for_sdk(resolve_auth())},
-        model=fixture.agent_model,
+        # CLAUDE_CODE_MAX_OUTPUT_TOKENS caps the model's output budget. Unlike
+        # CLAUDE_EFFORT (output-only, verified inert as input), this env var IS
+        # read as input by the CLI. Left unset the run uses the CLI default (for
+        # sonnet-5, 32000). Set it to bound a runaway-thinking subagent that
+        # fills the output budget with thinking (see subagent_capture); recorded
+        # in the runlog. Applies session-wide (parent + every subagent).
+        env={
+            "ENABLE_TOOL_SEARCH": "true",
+            **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
+            **env_for_sdk(resolve_auth()),
+        },
+        # Parent model: the --agent-model override (also applied to staged
+        # subagents in build_workspace) or the fixture's default.
+        model=agent_model or fixture.agent_model,
         max_turns=fixture.caps.max_turns,
+        # The SDK's stdio transport defaults to a 1 MiB max_buffer_size for a
+        # single JSON message (claude_agent_sdk _DEFAULT_MAX_BUFFER_SIZE). A
+        # live image_read response (base64, ~1.33x the raw bytes) plus its
+        # JSON-RPC/MCP envelope can exceed that even when the tool's own
+        # 700KB inline-image guard (packages/engine/mcp-server/src/tools/
+        # image-read.ts MAX_INLINE_IMAGE_BYTES) has already passed the image
+        # through — observed killing this exact e2e run on a real FamilySearch
+        # death-certificate image (2026-07-08). Raised generously here since
+        # this is eval-harness-only config; it does not change production
+        # Cowork behavior or the tool's own inline-image ceiling.
+        max_buffer_size=10 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],
@@ -593,10 +763,15 @@ async def _run_agent(
                     timeline.append([round(now - run_started, 1), "tool_result"])
                 elif isinstance(message, SystemMessage):
                     # Init / config / hint messages. Capture the session id (for
-                    # resume); these do NOT count as progress.
-                    sid = (getattr(message, "data", None) or {}).get("session_id")
+                    # resume) and the CLI version (for the runlog); neither counts
+                    # as progress.
+                    data = getattr(message, "data", None) or {}
+                    sid = data.get("session_id")
                     if sid:
                         session_id["id"] = sid
+                    ver = data.get("version") or data.get("cli_version")
+                    if ver:
+                        cli_version["v"] = ver
                     timeline.append(
                         [round(now - run_started, 1), f"system:{message.subtype}"]
                     )
@@ -694,6 +869,12 @@ async def _run_agent(
         "resumes": resumes["n"],
         "resume_on_stall": resume_on_stall,
         "timeline": timeline,
+        # Reasoning knobs actually used, so a run is self-describing when we
+        # A/B effort × output-budget against subagent behavior. `effort_level`
+        # and `agent_model` are added in run_e2e_test; `max_output_tokens` None
+        # means the CLI default (sonnet-5 -> 32000).
+        "max_output_tokens": max_output_tokens,
+        "cli_version": cli_version["v"],
         "caps": {
             "wall_clock_seconds": fixture.caps.wall_clock_seconds,
             "inactivity_seconds": fixture.caps.inactivity_seconds,
@@ -744,8 +925,22 @@ async def run_e2e_test(
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
     skip_judge: bool = False,
     resume_on_stall: bool = False,
+    effort_level: str | None = "high",
+    max_output_tokens: int | None = None,
+    agent_model: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
-    """Run one e2e fixture end-to-end. Returns (result, written-paths)."""
+    """Run one e2e fixture end-to-end. Returns (result, written-paths).
+
+    Reasoning is pinned deliberately so runs don't inherit the launching Claude
+    Code session / shell (which made verdicts non-reproducible):
+    ``effort_level`` (low|medium|high|xhigh|max, default "high" to match Cowork)
+    via a project-level setting; ``max_output_tokens`` (None = CLI default,
+    sonnet-5 → 32000) via CLAUDE_CODE_MAX_OUTPUT_TOKENS. ``agent_model`` (None =
+    fixture default for the parent + each subagent's own `.md` pin) overrides the
+    model for BOTH the parent and every staged subagent — e.g. run the whole flow
+    under claude-sonnet-4-6 to test whether the sonnet-5 record-extractor freeze
+    reproduces under Cowork's model. All are logged.
+    """
     fixture = load_fixture(fixture_dir)
     if not mcp_server_entry.exists():
         raise FileNotFoundError(
@@ -756,7 +951,9 @@ async def run_e2e_test(
     started_at = time.time()  # real clock (counts system sleep)
     started_mono = time.monotonic()  # active clock (pauses during macOS sleep)
     with tempfile.TemporaryDirectory(prefix=f"e2e-{fixture.id}-") as tmp:
-        workspace = build_workspace(fixture, Path(tmp), skills_dir)
+        workspace = build_workspace(
+            fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
+        )
 
         (
             tool_calls,
@@ -770,6 +967,8 @@ async def run_e2e_test(
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
             resume_on_stall=resume_on_stall,
+            max_output_tokens=max_output_tokens,
+            agent_model=agent_model,
         )
 
         final_research = read_research_json(workspace)
@@ -794,6 +993,15 @@ async def run_e2e_test(
                     final_research=final_research,
                     model=fixture.judge_model,
                 )
+                # Deterministic §3.4.1 backstop: an `avoid` finding whose
+                # target is still in the final tree is forced to matched:
+                # "false" and the verdict recomputed (downgrade-only).
+                judge_output = judge_module.apply_avoid_guard(
+                    judge_output,
+                    expected_findings=fixture.expected_findings,
+                    final_tree=final_tree,
+                    subject_person_ids=fixture.subject_person_ids,
+                )
                 verdict = str(judge_output.get("verdict") or "fail")
             except Exception as e:  # noqa: BLE001 — keep the run loggable
                 judge_output = {"error": f"{type(e).__name__}: {e}"}
@@ -814,7 +1022,24 @@ async def run_e2e_test(
             "real_clock_seconds": real_seconds,
             "slept_seconds": max(0.0, real_seconds - active_seconds),
             "judge_seconds": judge_seconds,
+            # Reasoning config, so a run is self-describing when A/B'ing effort ×
+            # output-budget × model vs subagents[] behavior. `agent_model` is the
+            # effective PARENT model. `subagent_model_override` is non-null only
+            # when --agent-model forced every staged subagent off its own `.md`
+            # pin (record-extractor's default is sonnet-5); null means each
+            # subagent used its pin. `max_output_tokens` / `cli_version` come from
+            # _run_agent.
+            "agent_model": agent_model or fixture.agent_model,
+            "subagent_model_override": agent_model,
+            "effort_level": effort_level,
         }
+
+        # Summarize any subagent transcripts (record-extractor, image-reader, …)
+        # from the SDK's ephemeral cache while `workspace` is still in scope (the
+        # cache lives outside the tempdir, keyed on workspace.name). Best-effort;
+        # surfaces a runaway-thinking subagent freeze directly in the committed
+        # runlog, which tool_calls alone can't show. See subagent_capture.py.
+        subagents = collect_subagents(workspace)
 
         result = E2eResult(
             test_id=fixture.id,
@@ -827,6 +1052,7 @@ async def run_e2e_test(
             error=error,
             tags=fixture.tags,
             blocked_tree_reads=blocked_tree_reads,
+            subagents=subagents,
         )
 
         runlog_dir = runlog_root / fixture.id

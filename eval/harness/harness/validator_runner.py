@@ -39,6 +39,7 @@ def run_validators(
     tool_calls: list[dict[str, Any]],
     skill_frontmatter: dict[str, Any] | None = None,
     test: dict[str, Any] | None = None,
+    blocked_context_calls: list[dict[str, Any]] | None = None,
 ) -> list[ValidatorRunResult]:
     """Run universal validators + the per-skill validator file if present."""
     results: list[ValidatorRunResult] = []
@@ -48,8 +49,16 @@ def run_validators(
         "after_state": after_state,
         "tool_calls": tool_calls,
         "skill_frontmatter": skill_frontmatter or {},
-        # `test` is the parsed test JSON dict (the inner "test" block).
-        # Validators gate test-specific checks on test["tags"], e.g.
+        # Main-thread calls to subagent-only tools that the PreToolUse hook
+        # denied (harness.context_policy). Non-empty means the skill broke the
+        # context boundary. Note this is the *denied* set: because the hook
+        # blocks the call, it never reaches `tool_calls`, so this is the only
+        # place the violation is visible.
+        "blocked_context_calls": blocked_context_calls or [],
+        # `test` is the parsed test JSON dict (the inner "test" block,
+        # plus top-level validator-facing blocks the orchestrator threads
+        # in — currently `expected_classifications`). Validators gate
+        # test-specific checks on test["tags"], e.g.
         #   if "slug-apostrophe" not in test.get("tags", []): pytest.skip(...)
         "test": test or {},
     }

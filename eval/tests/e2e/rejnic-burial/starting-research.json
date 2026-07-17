@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_rejnic_burial",
+    "objective": "Where was Maria Rejnic buried, who was born 15 April 1890 and died 18 June 1967?",
+    "subject_person_ids": [
+      "L86H-T8G"
+    ],
+    "status": "active",
+    "created": "2026-07-14",
+    "updated": "2026-07-14"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

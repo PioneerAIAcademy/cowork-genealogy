@@ -271,11 +271,11 @@ Cowork plugin, and registers the agent in the Cowork plugin list.
 ### Steps
 
 1. Open **Claude Desktop → Settings → Extensions**.
-2. Click **Install Extension…** and select
+2. Click **Advanced Settings → Install extension** and select
    `releases/genealogy-mcp.mcpb`.
 3. Confirm **"Genealogy Research"** appears with a green dot.
 4. Switch to the **Cowork tab** in Claude Desktop.
-5. Click **Customize → Browse plugins → Upload custom plugin**.
+5. Click **Customize → Add → Upload Plugin**.
 6. Select `releases/genealogy-plugin.zip`.
 7. Confirm **"Genealogy Research"** appears in the installed plugins
    list and that `gps-mentor` is one of the available agents.

@@ -21,15 +21,24 @@
     }
   },
   "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "An identifier, unique within its collection. No shape is enforced. Ids arrive from two places and both are legal: FamilySearch-native ids, which are preserved verbatim (person and source PIDs like `KNS4-P6W`, fact UUIDs), and locally synthesized ids for objects FamilySearch does not identify (names, relationships). The `I`/`N`/`F`/`R`/`S` prefixes in simplified-gedcomx-spec.md are a naming convention for synthesized ids, not a constraint — nothing in the codebase reads meaning out of an id's shape. A person's membership in the FamilySearch tree is carried by `ark`, not by the form of `id`."
+    },
     "person": {
       "type": "object",
       "required": ["id", "gender", "names"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^(I.*|[0-9A-Z]{4}-[0-9A-Z]{3})$" },
+        "id": { "$ref": "#/$defs/id" },
         "ark": {
           "type": "string",
           "description": "Persistent FamilySearch ARK URL. Flat lift of full GedcomX's identifiers[\"http://gedcomx.org/Persistent\"][0]. See simplified-gedcomx-spec.md §4.6."
+        },
+        "living": {
+          "type": "boolean",
+          "description": "True when FamilySearch reports the person as living. `person_read` sets this on every person it returns. Living people must never appear in a committed e2e fixture (FamilySearch ToS); see the living-person gate in eval/harness/e2e/author.py."
         },
         "gender": { "$ref": "enums.schema.json#/$defs/gender" },
         "names": {
@@ -40,22 +49,20 @@
         "facts": {
           "type": "array",
           "items": { "$ref": "#/$defs/fact" }
-        },
-        "sources": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/source_reference" }
         }
       }
     },
     "name": {
       "type": "object",
-      "required": ["id", "surname"],
+      "required": ["id", "given", "surname"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^N" },
+        "id": { "$ref": "#/$defs/id" },
         "preferred": { "type": "boolean", "const": true },
-        "given": { "type": "string" },
+        "given": { "type": "string", "description": "Given name(s). Required; spell an unknown given name as \"\" — the engine's own convention (its living-person stub emits given: \"\")." },
         "surname": { "type": "string" },
+        "prefix": { "type": "string", "description": "Name prefix, e.g. `Rev.`. Emitted by person_read when FamilySearch supplies one." },
+        "suffix": { "type": "string", "description": "Name suffix, e.g. `Jr.`. Emitted by person_read when FamilySearch supplies one." },
         "type": { "$ref": "enums.schema.json#/$defs/gedcomx_name_type_recommended" },
         "sources": {
           "type": "array",
@@ -68,7 +75,7 @@
       "required": ["id", "type"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^F" },
+        "id": { "$ref": "#/$defs/id" },
         "type": { "$ref": "enums.schema.json#/$defs/gedcomx_fact_type_recommended" },
         "primary": { "type": "boolean", "const": true },
         "date": { "type": "string" },
@@ -93,10 +100,10 @@
       "required": ["id", "type", "parent", "child"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^R" },
+        "id": { "$ref": "#/$defs/id" },
         "type": { "const": "ParentChild" },
-        "parent": { "type": "string", "pattern": "^(I.*|[0-9A-Z]{4}-[0-9A-Z]{3})$" },
-        "child": { "type": "string", "pattern": "^(I.*|[0-9A-Z]{4}-[0-9A-Z]{3})$" },
+        "parent": { "$ref": "#/$defs/id" },
+        "child": { "$ref": "#/$defs/id" },
         "subtype": { "$ref": "enums.schema.json#/$defs/parent_subtype_recommended" },
         "notes": {
           "type": "array",
@@ -113,10 +120,10 @@
       "required": ["id", "type", "person1", "person2"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^R" },
+        "id": { "$ref": "#/$defs/id" },
         "type": { "const": "Couple" },
-        "person1": { "type": "string", "pattern": "^(I.*|[0-9A-Z]{4}-[0-9A-Z]{3})$" },
-        "person2": { "type": "string", "pattern": "^(I.*|[0-9A-Z]{4}-[0-9A-Z]{3})$" },
+        "person1": { "$ref": "#/$defs/id" },
+        "person2": { "$ref": "#/$defs/id" },
         "facts": {
           "type": "array",
           "items": { "$ref": "#/$defs/fact" }
@@ -136,7 +143,7 @@
       "required": ["id", "title"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "pattern": "^S" },
+        "id": { "$ref": "#/$defs/id" },
         "title": { "type": "string" },
         "citation": { "type": "string" },
         "author": { "type": "string" },
@@ -148,7 +155,7 @@
       "required": ["ref"],
       "additionalProperties": false,
       "properties": {
-        "ref": { "type": "string", "pattern": "^S" },
+        "ref": { "$ref": "#/$defs/id" },
         "page": { "type": "string" },
         "quality": {
           "type": "integer",

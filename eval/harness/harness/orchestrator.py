@@ -15,7 +15,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from harness.allowed_tools import compute_allowed_tools, load_skill_frontmatter
+from harness.allowed_tools import (
+    compute_allowed_tools,
+    declared_skill_tools,
+    load_skill_frontmatter,
+)
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
 from harness.diff import diff_research_json, diff_tree_gedcomx
@@ -407,8 +411,18 @@ async def _execute_single_run(
             "skill_frontmatter": skill_frontmatter,
         },
         tool_calls=result.tool_calls,
+        blocked_context_calls=result.blocked_context_calls,
         skill_frontmatter=skill_frontmatter,
-        test=spec.raw.get("test", {}),
+        test={
+            **spec.raw.get("test", {}),
+            # Top-level validator-facing block threaded in alongside the
+            # inner test metadata: deterministic classification ground
+            # truth for test_expected_classifications
+            # (unit-test-spec.md §5.10).
+            "expected_classifications": spec.raw.get(
+                "expected_classifications", []
+            ),
+        },
     )
     validators_passed = compute_validators_passed(
         validator_results, intentionally_invalid=spec.intentionally_invalid
@@ -424,6 +438,7 @@ async def _execute_single_run(
                 scenario_readme=scenario_readme,
                 result=result,
                 file_changes=file_changes,
+                before_snapshot=before_snapshot,
                 auth=auth,
                 judge_model=judge_model,
             )
@@ -454,6 +469,16 @@ async def _execute_single_run(
         judge_result.duration_ms = (time.perf_counter() - _judge_start) * 1000.0
     else:
         judge_result = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
+
+    # Deterministic-validator deference: a passing expected_classifications
+    # check floors the classification judge-dimensions so a fuzzy re-grade can't
+    # override verified ground truth (the dominant flap source). Runs before the
+    # outcome is computed so the floored scores drive pass/partial/fail.
+    apply_deterministic_deference(
+        judge_result.dimensions,
+        validator_results,
+        has_expected_classifications=bool(spec.raw.get("expected_classifications")),
+    )
 
     outcome = _compute_outcome(
         spec=spec,
@@ -616,6 +641,12 @@ async def _execute_skill_with_retry(
                     ),
                     allowed_tools_override=skill_baseline,
                     routing_short_circuit_skills=routing_short_circuit_skills,
+                    # The skill's OWN declaration, not skill_baseline (which
+                    # unions in its subagents' tools). The gap between the two
+                    # is what the per-context policy guards.
+                    declared_tools=declared_skill_tools(
+                        spec.skill, paths.skills_dir
+                    ),
                 )
                 after_snapshot = snapshot_files(workspace)
             finally:
@@ -712,6 +743,51 @@ def _build_warnings(
         })
 
     return warnings
+
+
+# Judge dimensions whose subject is checked deterministically by the
+# `test_expected_classifications` validator (it verifies evidence_type,
+# informant_proximity, and information_quality on the declared
+# (record_role, fact_type) pairs). When that validator PASSES, the LLM judge
+# must not FAIL these dimensions on the same classifications — a fail there is
+# the judge contradicting verified ground truth (the recurring census
+# direct/indirect inversion, and the death-cert evidence-type flip). This is the
+# single biggest source of run-to-run flap: the deterministic check is stable,
+# the fuzzy re-grade is not. See docs/plan/record-extraction-tool-boundary-plan.md.
+_CLASSIFICATION_DIMENSIONS = frozenset(
+    {"Evidence type accuracy", "Informant identification"}
+)
+
+
+def apply_deterministic_deference(dimensions, validator_results, *, has_expected_classifications):
+    """Floor the classification judge-dimensions at partial(2) when the
+    deterministic `test_expected_classifications` validator verified the declared
+    classifications as correct — a judge FAIL there contradicts verified ground
+    truth. Partial is still permitted (the judge may see a real issue on an
+    assertion the validator did not declare); only the false FAIL is removed.
+    Mutates + returns `dimensions`. No-op when the test declares no
+    expected_classifications, the validator did not pass, or the judge was
+    skipped (empty dimensions)."""
+    if not has_expected_classifications or not dimensions:
+        return dimensions
+    ec_passed = any(
+        getattr(r, "name", None) == "test_expected_classifications"
+        and getattr(r, "passed", False)
+        for r in validator_results
+    )
+    if not ec_passed:
+        return dimensions
+    for dd in dimensions:
+        if dd.get("name") in _CLASSIFICATION_DIMENSIONS and dd.get("score") == 1:
+            orig = dd.get("rationale") or ""
+            dd["score"] = 2
+            dd["rationale"] = (
+                "[deterministic-deference] the expected_classifications validator "
+                "verified the declared classifications as correct, so this dimension "
+                "cannot FAIL on them — floored from the judge's 1 to 2 (partial). "
+                "Original judge rationale: " + orig
+            )
+    return dimensions
 
 
 def _compute_outcome(
@@ -849,6 +925,7 @@ def _run_judge(
     scenario_readme: str,
     result,
     file_changes,
+    before_snapshot: dict[str, Any] | None = None,
     auth: AuthConfig,
     judge_model: str,
 ) -> JudgeOutput:
@@ -879,6 +956,7 @@ def _run_judge(
         tool_calls=result.tool_calls,
         auth=auth,
         model=judge_model,
+        before_state=_summarize_before_state(before_snapshot),
     )
 
 
@@ -910,6 +988,10 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
         f"decline/routing decision: a clear, accurate decline is a full "
         f"pass. Do NOT penalize the response for not carrying out "
         f"{spec.skill}'s task — not doing it is the correct outcome here.",
+        f"Conversely, if {spec.skill} instead carried out its own task, or "
+        f"produced substantive output when it should have declined or stayed "
+        f"silent, score Correctness and Completeness as fail (1) — polished "
+        f"output for the wrong behavior is still a failure, not a pass.",
         *spec.judge_context,
     ]
 
@@ -980,6 +1062,64 @@ def _summarize_changes(file_changes, tool_calls, *, include_content: bool = Fals
             f"full length {len(content_block)} chars]"
         )
     return "\n".join(lines) + "\n" + content_block
+
+
+# Caps for the before-state block. Per-field cap is generous enough to carry
+# a full citation/source note; the overall cap bounds the judge prompt against
+# a large pre-existing project.
+_BEFORE_STATE_STRING_MAX = 4_000
+_BEFORE_STATE_MAX_CHARS = 40_000
+
+
+def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
+    """Render the source entries that existed BEFORE the skill ran, so the
+    judge can mechanically check "not on file" / "fabricated" claims.
+
+    The judge has produced fabrication-class citation failures — asserting
+    that on-file source text was absent or invented — when it had no view of
+    the pre-existing state. Surfacing the before-run `sources` (research.json,
+    `src_` ids) and source descriptions (tree.gedcomx.json, `S` ids) makes
+    such claims checkable against what was actually on file.
+
+    Bounded per-field and overall so a large project can't blow the prompt.
+    Returns "(none)" when there was no prior state (e.g. an empty-project
+    scenario) — itself the correct signal: nothing was on file, so any
+    "altered/removed an existing source" claim is unfounded.
+    """
+    if not before_snapshot:
+        return "(none)"
+    research = before_snapshot.get("research_json")
+    tree = before_snapshot.get("tree_gedcomx_json")
+    research_sources = research.get("sources") if isinstance(research, dict) else None
+    tree_sources = tree.get("sources") if isinstance(tree, dict) else None
+
+    blocks: list[str] = []
+    if research_sources:
+        summarized = _summarize_response(
+            research_sources, string_max=_BEFORE_STATE_STRING_MAX
+        )
+        blocks.append(
+            "research.json sources on file before this run (src_ ids):\n"
+            + json.dumps(summarized, ensure_ascii=False, indent=2)
+        )
+    if tree_sources:
+        summarized = _summarize_response(
+            tree_sources, string_max=_BEFORE_STATE_STRING_MAX
+        )
+        blocks.append(
+            "tree.gedcomx.json source descriptions on file before this run "
+            "(S ids):\n" + json.dumps(summarized, ensure_ascii=False, indent=2)
+        )
+    if not blocks:
+        return "(none)"
+    rendered = "\n\n".join(blocks)
+    if len(rendered) > _BEFORE_STATE_MAX_CHARS:
+        rendered = (
+            rendered[:_BEFORE_STATE_MAX_CHARS]
+            + f"\n[before-state truncated by harness for prompt size; "
+            f"full length {len(rendered)} chars]"
+        )
+    return rendered
 
 
 def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:

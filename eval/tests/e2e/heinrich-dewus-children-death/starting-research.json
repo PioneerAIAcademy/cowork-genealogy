@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_heinrich_dewus_children_death",
+    "objective": "When did Heinrich Dewus of Milwaukee, Wisconsin (born about 1850 in Pommerania, Germany) die, and did he and his wife Augusta have children besides the four already in the tree?",
+    "subject_person_ids": [
+      "9VX4-1C3"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -5,20 +5,38 @@
     "name": "Extract assertions from a death certificate with a named informant",
     "type": "positive",
     "description": "Extract assertions from a 1908 Pennsylvania death certificate. The certificate names a specific informant (wife Mary Flynn) whose proximity to the death facts (primary — she was present) differs from her proximity to the birth facts (secondary — she was told, not present). Tests the Informant identification rubric dimension on a non-census record where the informant is explicitly named.",
-    "tags": ["extraction", "death-certificate", "named-informant", "informant-proximity"]
+    "tags": [
+      "extraction",
+      "death-certificate",
+      "named-informant",
+      "informant-proximity"
+    ]
   },
   "input": {
     "user_message": "Extract assertions from this death certificate for Patrick Flynn:\n\nCommonwealth of Pennsylvania — Certificate of Death\nRegistration District No. 2436 · File No. 89072\n\nFull name: Patrick Flynn\nSex: Male\nColor or race: White\nDate of death: March 12, 1908\nAge: 63 years, 2 months, 10 days\nOccupation: Coal miner\nBirthplace: Ireland\nFather's name: Thomas Flynn\nFather's birthplace: Ireland\nMother's maiden name: Mary Brennan\nMother's birthplace: Ireland\nInformant: Mary Flynn (wife), 214 Main St, Shenandoah, PA\nCause of death: Miners' asthma (pneumoconiosis)\nDuration of last illness: 3 years\nPlace of death: Shenandoah, Schuylkill County, Pennsylvania\nDate of burial: March 15, 1908\nPlace of burial: Annunciation Cemetery, Shenandoah, PA\nUndertaker: J.J. Franey, Shenandoah, PA\nAttending physician: Dr. William H. Stein",
     "scenario": "empty-project-just-created"
   },
+  "expected_classifications": [
+    { "record_role": "deceased", "fact_type": "death", "evidence_type": "direct", "informant_proximity": ["official_duty", "witness"] },
+    { "record_role": "deceased", "fact_type": "cause_of_death", "evidence_type": "direct", "informant_proximity": "official_duty" },
+    { "record_role": "deceased", "fact_type": "age", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "deceased", "fact_type": "birth", "attribute": "date", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "deceased", "fact_type": "birth", "attribute": "place", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "father_of_deceased", "fact_type": "name", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "father_of_deceased", "fact_type": "birth", "attribute": "place", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "mother_of_deceased", "fact_type": "name", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "mother_of_deceased", "fact_type": "birth", "attribute": "place", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" }
+  ],
   "judge_context": [
     "The death certificate names Mary Flynn (wife) as the informant — this should appear in the informant field for facts she reported, not 'unknown'",
-    "Informant proximity varies by fact: Mary Flynn is PRIMARY for death facts (date, place, cause — she was present/aware) but SECONDARY for birth facts (birthplace, parents' names — she was told these by Patrick or others, not personally present at his birth in Ireland)",
-    "The attending physician (Dr. William H. Stein) is the informant for cause of death and duration of illness — he diagnosed it. Mary Flynn may have reported the death date/place but the physician certified the medical cause",
-    "Source classification should be DERIVATIVE — a death certificate is created from information provided by the informant and physician, not an original record of the events it describes. The original events (birth in Ireland, death at home) were not recorded by the certificate creator",
-    "Death date and death place should be separate atomic assertions — do not bundle them into one assertion. Similarly, age and computed birth year should be separate if both are extracted",
+    "Informant assignment follows the settled death-certificate doctrine (matches SKILL.md/agent and rubric — grade against this, not intuition): the attending physician (Dr. William H. Stein) is the informant for the death event itself — death date, death place, cause, duration of illness — with proximity official_duty; Mary Flynn (wife) is the informant for the decedent's biographical facts — name, birthplace, parents' names, occupation — with proximity family_not_present for events she did not witness (Patrick's birth in Ireland); the undertaker (J.J. Franey) is the informant for burial date/place, proximity official_duty",
+    "Do NOT score the extraction down for attributing death date/place/cause to the physician rather than to Mary Flynn — physician attribution is the intended doctrine",
+    "Source classification should be ORIGINAL — the certificate presented here is the record itself, the first recording of both the death and the informants' statements. The informant's secondhand knowledge is captured at the information/evidence layers (family_not_present proximity, indirect evidence), never by demoting the source layer. Only an index, abstract, or transcript OF a death certificate would be derivative",
+    "A single death assertion may carry BOTH the death date and the death place — date and place are attributes of ONE event, and one assertion holding both fields is correct, not compound (do not require them split). Age and a computed birth year, by contrast, are distinct facts and must be separate assertions if both are extracted",
     "Do NOT create a computed birth date assertion (e.g., ~January 2, 1845) — the certificate states age, not birth date. If a birth year is inferred from age, it is indirect evidence and should be labeled as such, but avoid computing exact dates from age/death-date arithmetic",
-    "Parents' names and birthplaces reported on a death certificate are INDIRECT evidence — the wife (informant) is reporting what she was told, not what she witnessed. She was not present at Patrick's birth in Ireland and did not personally know his parents' birthplaces. These are secondhand facts relayed through the informant."
+    "Parents' names and birthplaces reported on a death certificate are INDIRECT evidence — the wife (informant) is reporting what she was told, not what she witnessed. She was not present at Patrick's birth in Ireland and did not personally know his parents' birthplaces. These are secondhand facts relayed through the informant.",
+    "The stated age (63 years, 2 months, 10 days) reported by the family informant is likewise INDIRECT — the informant-knowledge test, same as birth date/birthplace/parents: Mary Flynn is relaying secondhand knowledge of when Patrick was born. Do NOT expect direct here. (Contrast a census, where a household member's stated age IS direct — household knowledge.)",
+    "Do NOT penalize the decedent's name/occupation attributed to the named personal informant at family_not_present — that is the doctrine: the personal informant (Mary Flynn) is the informant for the decedent's biographical facts including name and occupation, all at proximity family_not_present."
   ],
   "execution": {
     "max_turns": 40,

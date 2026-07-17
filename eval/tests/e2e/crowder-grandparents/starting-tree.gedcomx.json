@@ -118,16 +118,14 @@
     },
     {
       "type": "ParentChild",
-      "person1": "p-father",
-      "person2": "PID-TODO",
-      "facts": [],
+      "parent": "p-father",
+      "child": "PID-TODO",
       "id": "rel-2"
     },
     {
       "type": "ParentChild",
-      "person1": "p-mother",
-      "person2": "PID-TODO",
-      "facts": [],
+      "parent": "p-mother",
+      "child": "PID-TODO",
       "id": "rel-3"
     }
   ],

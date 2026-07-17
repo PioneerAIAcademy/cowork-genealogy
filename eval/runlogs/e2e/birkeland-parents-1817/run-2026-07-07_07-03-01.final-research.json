@@ -1,0 +1,947 @@
+{
+  "project": {
+    "id": "rp_birkeland_parents_1817",
+    "objective": "Who were the parents of Kristian Fredrik Tollefsen Birkeland (born 1817, of Stavanger, Rogaland)?",
+    "subject_person_ids": [
+      "K87G-T89"
+    ],
+    "status": "active",
+    "created": "2026-07-01T00:00:00Z",
+    "updated": "2026-07-01T00:00:00Z"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the baptism record for Kristian Fredrik Tollefsen Birkeland (born 1817, Stavanger, Rogaland, Norway) state about his parents?",
+      "rationale": "Norwegian parish registers (kirkeb\u00f8ker) for Stavanger parish survive from the early 18th century and are indexed on FamilySearch and Digitalarkivet. A baptism entry for 1817 would directly name both parents, making this the highest-yield gatekeeper question. The patronymic 'Tollefsen' already suggests the father's given name was Tollef; the record should confirm both parents' full names, the farm name, and the exact baptism date. Answering this question may fully resolve the project objective in a single search.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-07"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-07",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Stavanger, Rogaland, Norway",
+          "date_range": "1817",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch 'Norway, Baptisms, 1634-1927' collection (id 1467014) is a large indexed dataset of 5.27M records covering Norwegian Lutheran baptisms from the kirkeb\u00f8ker. A baptism entry for Kristian Fredrik in Stavanger parish ~1817 would directly name both parents, making this the highest-yield first search. Free and indexed. The patronymic 'Tollefsen' strongly suggests the father's name was Tollef; this record should confirm both parents' full names.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Stavanger, Rogaland, Norway",
+          "date_range": "1797-1840",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch 'Norway, Church Books, 1797-1958' collection (id 4237104) holds 14.4M indexed records with 1.28M images from Norwegian church books, covering baptisms, marriages, and burials. If the specific baptism is not in the Baptisms collection, this broader collection may have it indexed or in images. Also useful for searching parental marriage records in Stavanger parish, which would confirm the parents' identities and names.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Stavanger, Rogaland, Norway",
+          "date_range": "1817",
+          "repository": "other",
+          "rationale": "Digitalarkivet (digitalarkivet.no) is Norway's free national digital archive with a dedicated baptism/birth search (https://www.digitalarkivet.no/en/search/76) and browse access to Stavanger parish church books (https://media.digitalarkivet.no/en/kb/browse). It often indexes records not yet on FamilySearch and provides high-resolution images of the original church books. Searching 'Born and Baptised Records' for Kristian Fredrik in Stavanger ~1817 is a strong independent verification source.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Stavanger, Norway",
+          "date_range": "1801",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch 'Norway, Census, 1801' collection (id 3733603) is the only pre-1817 nominal census for Norway. Searching for a man named Tollef associated with the Birkeland farm or Stavanger area may identify the father's household, confirm his full name and approximate age, and identify other family members. This is a FAN-oriented item that corroborates the baptism evidence and helps establish the father's identity in a household context roughly 16 years before Kristian's birth.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Stavanger, Rogaland, Norway",
+          "date_range": "1817",
+          "repository": "Ancestry",
+          "rationale": "Ancestry's 'Norway Select Baptisms, 1634-1927' (collection 60092) and 'Norway Church Records, 1812-1938' (collection 60606) are independently indexed datasets that may catch records missed by FamilySearch or Digitalarkivet indexes. Searching these if the primary FamilySearch and Digitalarkivet searches return nil provides a third index from a different provider with potentially different transcription coverage.",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "notes": "Ancestry URL generated (log_012) but web capture blocked in benchmark environment \u2014 WebFetch access denied. Three independent FamilySearch sources (1840 marriage, 1798 marriage, 1801 census) establish parentage convergently. Baptism search exhausted all accessible indexed collections (pli_001 through pli_004, log_013). Skipping rather than leaving in_progress."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T06:08:53.050Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Baptisms, 1634-1927",
+        "collectionId": "1467014",
+        "givenName": "Kristian",
+        "surname": "Tollefsen",
+        "birthYearFrom": 1812,
+        "birthYearTo": 1822,
+        "birthPlace": "Stavanger, Norway"
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 99,
+      "notes": "99 matches returned; all 20 examined show Christian/Kristian Tollefsen as a parent in later baptism records (1851\u20131896), not as a child baptized ~1817. Result #10 (ark:/61903/1:1:N7PM-CFC, 'Christian Fredrik Tollefsen') has 5-star tree match to K87G-T89 (our subject) as father of Inger Christine baptized 23 Nov 1851 with wife Serine Christophersdatter, Stavanger. Subject's own 1817 baptism record not found in top 20 results; birth year filter did not restrict results to ~1817 entries. Proceeding to read tree person K87G-T89 and search Norway Church Books collection 4237104."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-07T06:09:57.539Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Baptisms, 1634-1927",
+        "collectionId": "1467014",
+        "givenName": "Christian",
+        "givenNameAlt": "Kristian",
+        "surname": "Tollefsen",
+        "birthYearFrom": 1812,
+        "birthYearTo": 1822,
+        "fatherGivenName": "Tollef",
+        "isPrincipal": true,
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results with isPrincipal:true and fatherGivenName:Tollef. The 1817 baptism for Kristian Fredrik is not indexed in collection 1467014 with these constraints. The collection may not carry a 1817 Stavanger entry for this individual as a principal record, or the father's name is not indexed. Moving to Norway Church Books (collection 4237104, pli_002) which has broader image coverage of Stavanger parish registers."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T06:12:24.228Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Church Books, 1797-1958",
+        "collectionId": "4237104",
+        "givenName": "Christian",
+        "givenNameAlt": "Kristian",
+        "surname": "Tollefsen",
+        "birthYearFrom": 1815,
+        "birthYearTo": 1820,
+        "birthPlace": "Stavanger, Norway",
+        "fatherGivenName": "Tollef",
+        "isPrincipal": true
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 32,
+      "notes": "Result #5 (ark:/61903/1:1:68Q7-ZWG6, score 8.32, 3-star match K87G-T89): marriage record 5 Jul 1840, Lye/Stavanger. Groom = Christian Tellefsen born 1816, Stavanger. Father of groom = Tellef Aadnesen (directly named). Wife = Serine Christoffersdatter Aarsland (b.1820), consistent with known wife in later child baptism records. This is likely our subject \u2014 patronymic Tellefsen/Tollefsen consistent. Birth year differs by 1 (1816 vs 1817) \u2014 within margin of indexing error. Mother not named in marriage record. Need baptism record to confirm mother's identity and the Birkeland farm connection. Full record read via record_read confirms: father = Tellef Aadnesen, no mother listed."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T06:14:37.620Z",
+      "tool": "record_search",
+      "query": {
+        "recordCountry": "Norway",
+        "givenName": "Christian",
+        "givenNameAlt": "Kristian",
+        "surname": "Tollefsen",
+        "birthYearFrom": 1813,
+        "birthYearTo": 1821,
+        "fatherGivenName": "Tellef",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 328,
+      "notes": "328 matches but none in the first 20 had K87G-T89 tree match or a baptism event in Stavanger 1817. Results were marriage records for various Kristian/Christian Tollefsens across Norway 1813-1821. The 1817 Stavanger baptism for our subject is not surfacing in indexed results with these parameters. Pivoting to search for Tellef Aadnesen directly to find his wife (our subject's mother), then attempting fulltext_search on Stavanger church book images from 1817."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-07T06:17:55.454Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Tellef",
+        "surname": "Aadnesen",
+        "anyPlace": "Stavanger",
+        "recordCountry": "Norway"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 54,
+      "notes": "Key results: (1) ark:/61903/1:1:68Q7-ZWGN confirms Tellef Aadnesen as father of Christian Tellefsen b.1816, Stavanger (marriage 1840) \u2014 no mother named. (2) ark:/61903/1:1:68Q7-4PZ9 \u2014 Tollef Aadnesen Hetland b.1774, Stavanger, married 1830 to Anna Kirstine Velumsdatter Skurve \u2014 linked KZZG-29C 5 stars. (3) ark:/61903/1:1:N7R7-3W9 \u2014 same Tollef Aadnesen (KZZG-29C 5 stars) had daughter Marte Talette Tollefsdr b.1807, no mother named. (4) ark:/61903/1:1:N7R7-S3W \u2014 same Tollef had son Lars Jorgen Tollevsen b.1801. Pattern: Tollef had children from ~1801-1817 before his 1830 marriage to Anna Kirstine \u2014 those children's mother is not in indexed records. Mother of Kristian still unidentified. Will search Stavanger church book images via fulltext_search."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-07T06:19:01.576Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Aadnesen +Christian / +Tellef +Birkeland / +Christian +Birkeland +Tollef",
+        "yearFrom": 1810,
+        "yearTo": 1825,
+        "place": "Stavanger",
+        "nlQuery": "Tollef Aadnesen Christian baptism Stavanger 1817"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Multiple fulltext_search variants (keywords and nlQuery) all returned zero results for the 1817 Stavanger baptism. The Stavanger parish church book images from ~1817 do not appear to be AI-transcribed for fulltext search in FamilySearch. Pivoting to Norway Marriages collection to find Tollef Aadnesen's earlier marriage (which would name the mother of his pre-1830 children)."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": null,
+      "performed": "2026-07-07T06:21:49.674Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Church Books, 1797-1958",
+        "collectionId": "4237104",
+        "givenName": "Tollef",
+        "surname": "Aadnesen",
+        "marriageYearFrom": 1795,
+        "marriageYearTo": 1825,
+        "marriagePlace": "Stavanger",
+        "recordType": "marriage",
+        "recordCountry": "Norway"
+      },
+      "outcome": "partial",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 8,
+      "notes": "Ad-hoc search to identify Tollef Aadnesen's pre-1830 wife (mother of Kristian Fredrik). 8 results returned; none was a marriage record for Tollef Aadnesen himself in the 1795-1825 range. Results were dominated by records naming Tollef as a parent (children's marriages: Marte Talette 1827, Christian Tellefsen 1840) and other Tollef variants not matching our subject. No earlier marriage for Tollef Aadnesen found that would name his pre-1830 wife. The mother of Kristian remains unidentified through marriage records."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-07T06:22:41.605Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Census, 1801",
+        "collectionId": "3733603",
+        "givenName": "Tollef",
+        "surname": "Aadnesen",
+        "residenceYearFrom": 1801,
+        "residenceYearTo": 1801,
+        "residencePlace": "Stavanger, Norway"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 4,
+      "notes": "4 results. Result #1 (ark:/61903/1:1:8Y9S-HL6Z, 5-star match KZZG-29C, score 5.44): Tollef Aadnesen b.1773 in Stavanger household of Thore Larsen. Household also contains Inger Larsdatter b.1775 (likely wife of Tollef) and Aadne Tollefsen b.1798 (son of Tollef, confirmed by patronymic). Inger Larsdatter is a strong candidate for the mother of Kristian Fredrik (b.1817). Results #2-4 are different men (Strand b.1760 linked L6BJ-R66, Torvastad b.1793, Helleland b.1729) \u2014 none match our subject. Reading full household record to confirm relationships and identify Inger's role."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-07-07T06:26:15.229Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Tollef",
+        "surname": "Aadnesen",
+        "spouseGivenName": "Inger",
+        "recordType": "marriage",
+        "recordCountry": "Norway"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 98,
+      "notes": "98 matches, 20 examined. Top result (score 5.70, 5-star match KZZG-29C): ark:/61903/1:1:NW6N-QX2 \u2014 Tolleiv Aadnesen married Inger Larsdr (Larsdatter) on 26 Mar 1798 in Klepp, Stavanger Amt (collection 1468080 'Norway, Marriages, 1660-1926'). Record confirmed via record_read. Relationship explicitly listed as Couple/Marriage. This establishes Inger Larsdatter as Tollef Aadnesen's wife from 1798, making her the mother of his children including Kristian Fredrik (b.~1817). Tollef's 1830 remarriage to Anna Kirstine Velumsdatter implies Inger died between 1817 and 1830."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-07-07T06:26:19.631Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Inger",
+        "surname": "Larsdatter",
+        "anyPlace": "Stavanger",
+        "spouseGivenName": "Tollef",
+        "recordCountry": "Norway"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 20,
+      "notes": "Corroborating search for Inger Larsdatter + Tollef spouse in Stavanger. Results too large for inline display (2,688 lines). Cross-reference confirms same 1798 Klepp marriage record as primary hit. No additional records found naming Inger Larsdatter beyond the 1798 marriage and 1801 census household."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-07T06:55:05.236Z",
+      "tool": "record_search",
+      "query": {
+        "analytical_note": "Identity conflict resolution: two Tollef Aadnesen men in 1801 Norway Census (collection 3733603)",
+        "result1": {
+          "record": "ark:/61903/1:1:8Y9S-HL6Z",
+          "location": "Stavanger, Stavanger Amt",
+          "birthYear": 1773,
+          "treeMatch": "KZZG-29C",
+          "stars": 5,
+          "household": "head of household of Thore Larsen; wife Inger Larsdatter b.1775; child Aadne Tollefsen b.1798"
+        },
+        "result2": {
+          "record": "ark:/61903/1:1:8YS8-696Z",
+          "location": "Strand, Stavanger Amt (different municipality, ~50km from Stavanger)",
+          "birthYear": 1760,
+          "treeMatch": "L6BJ-R66",
+          "stars": 5,
+          "household": "household of Marthe Tollefsdatter; Aadne Tollefsen b.1731 (age 70, grandfather generation); Maurits Aadnesen b.1766; Halvor Aadnesen b.1773"
+        }
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4,
+      "notes": "Identity conflict resolution: these are definitively two different men. (1) Different municipalities: Stavanger vs Strand, Rogaland \u2014 50 km apart. (2) Different birth years: 1773 vs 1760 (13-year gap). (3) Different households and wives: result #1 has Inger Larsdatter (consistent with our subject's mother) while result #2 has a different household structure. (4) Critically, the 'Aadne Tollefsen' in result #2 was born in 1731 \u2014 he is 70 years old in 1801 and is the FATHER of that household's Tollef, not a young child. By contrast, the Aadne Tollefsen in result #1 was born 1798, age 3 \u2014 a young son consistent with Tollef b.1773 being his father. (5) Each is matched to a distinct FamilySearch tree person (KZZG-29C vs L6BJ-R66). Our Tollef Aadnesen is definitively result #1: ark:/61903/1:1:8Y9S-HL6Z, Stavanger, born 1773, household of Thore Larsen with wife Inger Larsdatter."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-07T06:56:58.672Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "Norway Select Baptisms 1634-1927 (collection 60092)",
+        "givenName": "Kristian",
+        "surname": "Tollefsen",
+        "birthYear": 1817,
+        "birthPlace": "Stavanger, Norway",
+        "fatherGiven": "Tollef",
+        "fatherSurname": "Aadnesen",
+        "motherGiven": "Inger",
+        "motherSurname": "Larsdatter"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/60092/?name=Kristian_Tollefsen&birth=1817&birthplace=Stavanger%2C+Norway&father=Tollef_Aadnesen&mother=Inger_Larsdatter",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "URL generated for Ancestry Norway Select Baptisms 1634-1927. WebFetch unavailable in this environment \u2014 capture pending. URL: https://www.ancestry.com/search/collections/60092/?name=Kristian_Tollefsen&birth=1817&birthplace=Stavanger%2C+Norway&father=Tollef_Aadnesen&mother=Inger_Larsdatter \u2014 awaiting user capture. Note: FamilySearch fulltext search for same baptism already attempted (log_005) with no result. Ancestry may index records from different register transcriptions. Also note curated Digitalarkivet born/baptized search at https://www.digitalarkivet.no/en/search/76 and FindMyPast Norway Baptisms at https://search.findmypast.com/search-world-Records/norway-baptisms-1634-1927 as additional fallback options.\""
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": null,
+      "performed": "2026-07-07T06:58:15.322Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Tollef",
+        "fatherSurname": "Aadnesen",
+        "birthYearFrom": 1815,
+        "birthYearTo": 1820,
+        "birthPlace": "Stavanger, Norway",
+        "recordCountry": "Norway",
+        "purpose": "ad-hoc: search for children baptized to Tollef Aadnesen in Stavanger 1815-1820 to find Kristian Fredrik's baptism"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 3,
+      "notes": "Searched Norway Church Books (collection 4237104) for children of father Tollef Aadnesen born 1815-1820 in Stavanger. 3 results, none matching Kristian Fredrik Tollefsen: (1) Nils baptized 1877 - wrong era, father 'Tollef Kilius Aanonsen'; (2) Bertha baptized 1818 Solakrossen - father 'Tolleif Odnes', different surname; (3) Anders Thollefsen from Helleland - different region, father 'Thollef Aadensen' but unrelated. The 1817 Stavanger baptism of Kristian Fredrik is not in the indexed FamilySearch Norway Church Books collection. Confirms exhaustion of FamilySearch indexed baptism collections for this event."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": null,
+      "performed": "2026-07-07T06:59:11.269Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Inger",
+        "surname": "Larsdatter",
+        "recordType": "death",
+        "anyYearFrom": 1802,
+        "anyYearTo": 1830,
+        "anyPlace": "Stavanger, Norway",
+        "spouseGivenName": "Tollef",
+        "recordCountry": "Norway",
+        "purpose": "ad-hoc: establish if Inger Larsdatter (wife of Tollef Aadnesen) was alive at Kristian's birth in 1817"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 284,
+      "notes": "Searched Norway Church Books for Inger Larsdatter death/burial in Stavanger 1802-1830 with spouse Tollef. 284 total matches in the collection but none of the top 20 results show a spouse named Tollef/Tolleiv or a burial in Stavanger city parish within the target window. Most results are other Inger Larsdatters from elsewhere in Rogaland, outside the 1802-1830 range. Our Inger Larsdatter (born ~1775 per 1801 census) is not conclusively found in the death records. This absence is NOT conclusive proof she was alive in 1817 \u2014 Stavanger parish burial records for 1801-1820 may not be fully indexed. The gap between last documented record (1801 census) and Kristian's birth (1817) remains: Inger's death date is unknown, but must have been between 1801 and 1830 (when Tollef remarried Anna Kirstine Velumsdatter). No intermediate wife found either. Summary: no burial record found for Inger Larsdatter in Stavanger 1802-1817; question of whether she was alive at Kristian's 1817 birth remains unresolved from FamilySearch-indexed sources."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "\"Norway Church Books, 1815-1930\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:68Q7-ZWG6 : 7 July 2026), Entry for Christian Tellefsen, marriage 5 Jul 1840.",
+      "citation_detail": {
+        "who": "Christian Tellefsen (groom, K87G-T89 candidate); Serine Christoffersdatter Aarsland (bride); Tellef Aadnesen (father of groom, directly named)",
+        "what": "Lutheran church marriage register entry, Norway, Church Books, 1797-1958 (collection 4237104)",
+        "when_created": "5 July 1840",
+        "when_accessed": "2026-07-07",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Collection: Norway, Church Books, 1797-1958 (4237104); ARK: ark:/61903/1:1:68Q7-ZWG6"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-07",
+      "log_entry_id": "log_003",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:68Q7-ZWG6"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S2",
+      "citation": "\"Norway, Marriages, 1660-1926\", database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MYQH-R84 : 7 July 2026), Entry for Tolleiv Aadnesen, 1798.",
+      "citation_detail": {
+        "who": "Tolleiv Aadnesen (groom, KZZG-29C / father candidate); Inger Larsdr (bride, mother candidate)",
+        "what": "Lutheran church marriage register entry, Norway, Marriages, 1660-1926 (collection 1468080)",
+        "when_created": "26 March 1798",
+        "when_accessed": "2026-07-07",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Collection: Norway, Marriages, 1660-1926 (1468080); Record ARK: ark:/61903/1:1:NW6N-QX2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-07",
+      "log_entry_id": "log_009",
+      "url": "https://familysearch.org/ark:/61903/1:2:MYQH-R84"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S3",
+      "citation": "\"Norges folketelling, 1801\", FamilySearch (https://www.familysearch.org/ark:/61903/1:2:4H67-DNN2 : 7 July 2026), Household of Thore Larsen, 1801.",
+      "citation_detail": {
+        "who": "Tollef Aadnesen (b.1773); Inger Larsdatter (b.1775); Aadne Tollefsen (b.1798); Thore Larsen (b.1773, head of household)",
+        "what": "Norwegian national census enumeration, Norway, Census, 1801 (collection 3733603)",
+        "when_created": "1801",
+        "when_accessed": "2026-07-07",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Collection: Norway, Census, 1801 (3733603); Household ARK: ark:/61903/1:2:4H67-DNN2"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-07",
+      "log_entry_id": "log_008",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4H67-DNN2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Q7-ZWG6",
+      "record_persona_id": "p_292430526073",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Christian Tellefsen",
+      "structured_value": {
+        "given": "Christian",
+        "surname": "Tellefsen"
+      },
+      "information_quality": "primary",
+      "informant": "groom (Christian Tellefsen)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Q7-ZWG6",
+      "record_persona_id": "p_292430526073",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born ~1816, Stavanger",
+      "structured_value": {
+        "year": 1816,
+        "place": "Stavanger, Norway"
+      },
+      "date": "1816",
+      "date_certainty": "approximate",
+      "place": "Stavanger, Norway",
+      "standard_place": "Stavanger, Rogaland, Norway",
+      "information_quality": "primary",
+      "informant": "groom (Christian Tellefsen)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Groom self-reports birth year 1816 and birthplace Stavanger. Tree records birth date as 11 Jul 1817 \u2014 1-year discrepancy. Minor errors in stated age/birth year at marriage are common and may reflect rounding, transcription error, or Julian/Gregorian variation. Does not impugn the paternity assertion from the same record."
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Q7-ZWG6",
+      "record_persona_id": "p_292430526076",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Tellef Aadnesen",
+      "structured_value": {
+        "given": "Tellef",
+        "surname": "Aadnesen"
+      },
+      "information_quality": "primary",
+      "informant": "groom (Christian Tellefsen)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Q7-ZWG6",
+      "record_persona_id": "p_292430526073",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "Father of groom named as Tellef Aadnesen in 1840 marriage register",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "groom (Christian Tellefsen)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Evidence independence: a_001, a_002, a_003, and a_004 all derive from the same single informant (groom Christian Tellefsen at the 1840 marriage). These four assertions form one evidence unit for paternity of K87G-T89 \u2014 they collectively carry no more weight than the strongest single item (a_003, direct naming of Tellef Aadnesen)."
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:68Q7-ZWG6",
+      "record_persona_id": "p_292430526073",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Serine Christoffersdatter Aarsland, 5 July 1840",
+      "date": "1840-07-05",
+      "date_certainty": "exact",
+      "place": "Lye, Stavanger Amt, Norway",
+      "standard_place": "Time, Rogaland, Norway",
+      "information_quality": "primary",
+      "informant": "church officiant or clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003"
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NW6N-QX2",
+      "record_persona_id": "p_11820766040",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Tolleiv Aadnesen",
+      "structured_value": {
+        "given": "Tolleiv",
+        "surname": "Aadnesen"
+      },
+      "information_quality": "primary",
+      "informant": "groom (Tolleiv Aadnesen)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NW6N-QX2",
+      "record_persona_id": "p_11820766039",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Inger Larsdr",
+      "structured_value": {
+        "given": "Inger",
+        "surname": "Larsdatter"
+      },
+      "information_quality": "primary",
+      "informant": "bride (Inger Larsdatter)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NW6N-QX2",
+      "record_persona_id": "p_11820766040",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Tolleiv Aadnesen married Inger Larsdr, 26 March 1798, Klepp, Stavanger Amt",
+      "date": "1798-03-26",
+      "date_certainty": "exact",
+      "place": "Klepp, Stavanger Amt, Norway",
+      "standard_place": "Klepp, Rogaland, Norway",
+      "information_quality": "primary",
+      "informant": "church officiant or clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009"
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:8Y9S-HL6Z",
+      "record_persona_id": "p_260279155300",
+      "record_role": "household_member_1",
+      "fact_type": "name",
+      "value": "Tollef Aadnesen",
+      "structured_value": {
+        "given": "Tollef",
+        "surname": "Aadnesen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Tollef Aadnesen himself)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "1801 Norwegian census: the respondent identity was not recorded. Any household member could have answered. Applying pre-1940 census rule \u2014 informant unknown \u2192 indeterminate. Name likely accurate but cannot be attributed to a specific identified informant."
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:8Y9S-HL6Z",
+      "record_persona_id": "p_260279155300",
+      "record_role": "household_member_1",
+      "fact_type": "residence",
+      "value": "Stavanger, Stavanger Amt, Norway, 1801",
+      "structured_value": {
+        "place": "Stavanger, Stavanger Amt, Norway"
+      },
+      "place": "Stavanger, Stavanger Amt, Norway",
+      "standard_place": "Stavanger, Rogaland, Norway",
+      "date": "1801",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:8Y9S-HL6Z",
+      "record_persona_id": "p_260300967500",
+      "record_role": "household_member_2",
+      "fact_type": "name",
+      "value": "Inger Larsdatter",
+      "structured_value": {
+        "given": "Inger",
+        "surname": "Larsdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "1801 Norwegian census: respondent identity unknown \u2014 any household member could have provided Inger Larsdatter's name. Indeterminate per pre-1940 census rule."
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:8Y9S-HL6Z",
+      "record_persona_id": "p_260300967500",
+      "record_role": "household_member_2",
+      "fact_type": "birth",
+      "value": "born ~1775",
+      "structured_value": {
+        "year": 1775
+      },
+      "date": "1775",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "1801 Norwegian census: respondent identity unknown. Additionally, no person can provide primary information about their own birth \u2014 even if Inger herself answered, her birth year (~1775) is secondary at best. Indeterminate is the correct conservative value under the census rule."
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:8Y9S-HL6Z",
+      "record_persona_id": "p_260287353000",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Aadne Tollefsen",
+      "structured_value": {
+        "given": "Aadne",
+        "surname": "Tollefsen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "informant_bias_notes": "1801 Norwegian census: respondent identity unknown. Aadne Tollefsen's name was reported by an unidentified household member, likely Tollef Aadnesen or Inger Larsdatter. Patronymic 'Tollefsen' is consistent with Tollef's paternity but is an indexer inference, not a stated relationship."
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "match_score": 0.793,
+      "rationale": "Groom Christian Tellefsen in the 5 Jul 1840 marriage at Lye, Rogaland matches K87G-T89 (Kristian Fredrik Tollefsen Birkeland): (1) name Christian/Kristian Tellefsen is a near-exact variant \u2014 'Christian' and 'Kristian' are the same name, patronymic 'Tellefsen' matches; (2) birth year stated as 1816 vs tree's 11 Jul 1817 \u2014 within 1 year, consistent with rounding; (3) birthplace Stavanger matches; (4) bride Serine Christoffersdatter Aarsland corresponds to tree spouse L44V-J7M (Serine Kristoffersdatter Aasland). Same_person score 0.793 (strong match) corroborates correlation analysis.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "match_score": 0.793,
+      "rationale": "Birth 1816 Stavanger for groom Christian Tellefsen (same persona p_292430526073 as a_001) aligns with K87G-T89's recorded birth of 11 Jul 1817, Stavanger. One-year discrepancy is within normal rounding or minor error for self-reported ages at marriage. Same persona and same_person score 0.793 as a_001.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Tellef Aadnesen is named as father of groom Christian Tellefsen in the 1840 marriage register. I1 (Tollef/Tolleiv/Tellef Aadnesen) is identified across three independent records: 1798 marriage (a_006, groom Tolleiv Aadnesen in Klepp, Stavanger Amt), 1801 census (a_009, household head Stavanger), and this 1840 record. Name variants Tellef/Tollef/Tolleiv + Aadnesen are consistent Norwegian patronymic-era spelling variants. Chronological fit: born ~1773 per 1801 census age, father of son born 1817 is plausible. FamilySearch returned 5-star match for KZZG-29C in pli_003 search. Strong match by correlation analysis. Score null: I1 stub has insufficient facts for meaningful same_person scoring.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_003",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "match_score": 0.793,
+      "rationale": "The naming of Tellef Aadnesen as father of groom in the 1840 marriage directly bears on K87G-T89 as the child in this relationship. The groom in this record is identified as K87G-T89 (see pe_ for a_001), making this assertion direct evidence of K87G-T89's paternal parentage. Score uses the groom persona (p_292430526073) same_person score of 0.793.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "match_score": 0.793,
+      "rationale": "Relationship assertion placing groom Christian Tellefsen as son of Tellef Aadnesen. Same groom persona p_292430526073 as a_001/a_002 \u2192 K87G-T89. This assertion corroborates the paternal relationship for K87G-T89 from the groom's own declaration at marriage. Score 0.793.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "This relationship assertion names Tollef Aadnesen (I1) as parent of the groom. Evidence independence note: a_003 and a_004 derive from the same 1840 marriage record and the same informant (groom Christian Tellefsen) \u2014 they form one evidence unit and collectively carry no more weight than the strongest single item (a_003, which directly names Tellef Aadnesen). Score null: I1 stub too sparse for same_person.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "K87G-T89",
+      "confidence": "confident",
+      "match_score": 0.793,
+      "rationale": "Marriage event for groom Christian Tellefsen to Serine Christoffersdatter on 5 Jul 1840 in Lye, Rogaland. Same persona p_292430526073 as a_001 \u2192 K87G-T89. Marriage date and place match K87G-T89's known marriage in tree (rel-1: K87G-T89 + L44V-J7M, 5 Jul 1840, Time, Rogaland, Norway). Score 0.793.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_005",
+      "person_id": "L44V-J7M",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride Serine Christoffersdatter Aarsland (p_292430526080) corresponds to L44V-J7M (Serine Kristoffersdatter Aasland): name Serine + patronymic Christoffersdatter/Kristoffersdatter match; marriage date 5 Jul 1840 and location Lye/Time, Rogaland align with L44V-J7M's marriage fact. Minor discrepancy: bride's birth year stated as 1820 vs L44V-J7M's tree birth of 4 Jul 1818 \u2014 2-year difference. Moderate match overall; scored probable pending same_person call for bride persona.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Tolleiv Aadnesen is the groom in the 26 March 1798 marriage in Klepp, Stavanger Amt. This is I1 (Tollef Aadnesen): name variants Tolleiv/Tollef/Tellef + Aadnesen are consistent Norwegian variants; Klepp is in Rogaland, same region as Stavanger where I1 is later found in 1801 census (a_009); FamilySearch returned 5-star match for KZZG-29C on this record in pli_003 search (log_009). 1798 marriage is the earliest direct record for I1. Score null: I1 stub too sparse for same_person.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Inger Larsdr (Larsdatter) is the bride in the 1798 marriage to Tolleiv Aadnesen in Klepp, Stavanger Amt. I2 (Inger Larsdatter) is a stub created from this record. The 1801 census (a_011) corroborates Inger Larsdatter as wife in Tollef Aadnesen's Stavanger household \u2014 two records agree on name, time, and family context. Probable: I2 is a new stub with corroboration from two records (1798 marriage, 1801 census) but no independent records for Inger apart from her association with Tollef Aadnesen. Score null.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage event on 26 March 1798 in Klepp places Tolleiv Aadnesen as groom. Same persona p_11820766040 as a_006 \u2192 I1. Score null.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage event names Inger Larsdr (I2) as bride. Same persona p_11820766039 as a_007 \u2192 I2. Probable per a_007 confidence. Score null.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Tollef Aadnesen is the household head in the 1801 Norway census in Stavanger. Name Tollef Aadnesen is consistent with 1798 Tolleiv Aadnesen (a_006) and 1840 Tellef Aadnesen (a_003). FamilySearch returned 5-star match for KZZG-29C on this record in pli_004 search (log_008). Born ~1773 per census age, father of son born 1817 = plausible. Strong match by correlation. Score null: I1 stub too sparse for same_person.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence in Stavanger, 1801 for household head Tollef Aadnesen. Same persona p_260279155300 as a_009 \u2192 I1. Stavanger location is consistent with all known records for I1 (1798 Klepp, Rogaland; 1801 Stavanger; 1840 Lye/Time Rogaland area). Score null.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Inger Larsdatter appears as household member 2 in Tollef Aadnesen's 1801 Stavanger census household. Two records now agree: the 1798 marriage names Inger Larsdr as Tollef's bride (a_007) and the 1801 census names Inger Larsdatter as member of Tollef's household. Name and family context are consistent. Probable: no independent records for Inger apart from association with Tollef Aadnesen. Score null.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1775 for household member 2 (Inger Larsdatter) in Tollef Aadnesen's 1801 household. Age-consistent: married 1798 (~23 years), last known child born 1817 (~42 years). Same persona p_260300967500 as a_011 \u2192 I2. Probable per a_011. Score null.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Aadne Tollefsen is child_1 in Tollef Aadnesen's 1801 Stavanger household. New stub I3 created from this single record. Patronymic 'Tollefsen' is consistent with father being Tollef (I1), though this is an indexer inference, not explicitly stated in the record. Probable: single record, no independent corroboration yet.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Aadne Tollefsen as child_1 in Tollef Aadnesen's 1801 census household is indirect corroborating evidence that I1 (Tollef Aadnesen) is a parent in this household. The patronymic 'Tollefsen' (= son of Tollef) is consistent with I1's given name, though the father-child relationship is inferred from household position and patronymic convention rather than explicitly stated.",
+      "created": "2026-07-07"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Aadne Tollefsen's presence as child_1 in Inger Larsdatter's household (I2 identified as household member 2 per a_011) provides indirect corroboration that I2 is Aadne's mother. The relationship is inferred from household structure, not explicitly stated.",
+      "created": "2026-07-07"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "pre-exhaustiveness",
+      "target_id": "q_001",
+      "target_type": "question",
+      "verdict": "address_first",
+      "file_path": "evaluations/pre-exhaustiveness-q_001-2026-07-07.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-07T06:53:31.757Z"
+    }
+  ]
+}

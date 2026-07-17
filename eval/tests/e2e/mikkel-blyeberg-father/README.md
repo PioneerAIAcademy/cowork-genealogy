@@ -56,5 +56,15 @@ reach rather than agent skill.
 truth, with no FamilySearch access — the starting tree was *constructed* from the
 document. `source_pid` is an unused placeholder (`PID-TODO`); §6.1 blocks every
 person-keyed tool, so neither the run nor the judge reads it. The §14
-fixture-validity run is still owed; that check is warn-only, so this PID-less draft
+fixture-validity run is still owed; it is not CI-gated, so this PID-less draft
 may land with the validity run outstanding.
+
+**`wiki_search` is disabled for this fixture** (`blocked_tools` in
+`fixture.json`, maintainer call 2026-07-09). The ground-truth source — the
+FamilySearch Wiki's "Danish Military Levying Rolls: Case Study 1" — is a
+*public wiki page* that `wiki_search` surfaces during ordinary locality
+planning, and it names the father directly. Two independent interactive runs
+confirmed the answer is recoverable from records alone (1778 marriage, 1803
+probate index, 1802 burial), so blocking the wiki keeps the benchmark
+measuring record research rather than article retrieval. The same treatment
+applies to any future fixture derived from a wiki case study.
