@@ -21,6 +21,10 @@ before_state/after_state.**
       {"tool": "mcp__server__tool", "args": dict, "matched": {...},
        "response_fixture": str|None, "response": dict}
   - `skill_frontmatter` (dict): convenience copy of before_state's value
+  - `blocked_context_calls` (list): main-thread calls to subagent-only
+      tools that the PreToolUse hook denied, with shape
+      {"tool": "image_read", "args": dict}. Empty = healthy. These calls
+      were blocked, so they never appear in `tool_calls`.
 
 A validator can take any subset of these. Functions are plain pytest
 test functions (raise AssertionError on failure). pytest.skip("...") is
@@ -609,4 +613,36 @@ def test_project_file_changes_route_through_writer_tools(
         f"call — direct file writes bypass validation/id-allocation/.bak; "
         f"route through the writer tools "
         f"({', '.join(sorted(PROJECT_WRITER_TOOLS))})"
+    )
+
+
+def test_no_main_thread_subagent_only_calls(blocked_context_calls):
+    """No subagent-only tool was called from the main session.
+
+    `image_read` returns inline base64; in the router's context the bytes
+    accumulate and overflow the transport's ~1 MiB per-turn buffer, crashing
+    the run. Image reads must be delegated to the image-reader subagent, which
+    absorbs the base64 in a throwaway context and returns text.
+
+    This is the deterministic half of what the LLM judge used to grade by
+    transcript inference — badly: across the 2026-07-16 runs it caught the
+    violation roughly 1-in-8, and a run could pass while violating. The
+    PreToolUse hook denies the call and records it here, so the check is
+    mechanical. Same spirit as `expected_classifications`
+    (unit-test-spec.md §5.10): grade deterministically what is unambiguous,
+    leave the judge the genuinely fuzzy parts.
+
+    Rationale + probe evidence: docs/plan/image-read-context-policy.md.
+    """
+    if not blocked_context_calls:
+        return
+
+    offenders = ", ".join(
+        sorted({c.get("tool", "?") for c in blocked_context_calls})
+    )
+    raise AssertionError(
+        f"subagent-only tool(s) called from the main session: {offenders} "
+        f"({len(blocked_context_calls)} call(s), denied by the hook). "
+        f"Delegate to the owning subagent (image reads → @plugin:image-reader) "
+        f"so the base64 never enters the router's context."
     )

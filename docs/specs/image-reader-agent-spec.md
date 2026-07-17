@@ -126,12 +126,32 @@ miss instead of a silent fabrication.
 
 ## 7. Testing
 
-This path is **not unit-testable** in the eval harness: the unit
-skill-runner backstops the `Task` tool as disallowed
-(`skill_runner.py` `DISALLOWED_BACKSTOP`), and `image_read` cannot be
-mocked (the mock MCP server cannot emit image content blocks — already
-exempt from tool-coverage checks). Like `gps-mentor`, the agent is
-validated at the **e2e** level.
+The agent's **transcription** is not unit-testable: `image_read` cannot be
+mocked as an image (the mock MCP server cannot emit image content blocks —
+already exempt from tool-coverage checks), so like `gps-mentor` the reading
+itself is validated at the **e2e** level.
+
+The **delegation boundary** *is* unit-testable, and is now enforced rather
+than graded. (This section previously said the whole path was untestable
+because "the unit skill-runner backstops the `Task` tool as disallowed" —
+that is stale: `Task` is in the baseline allowlist, and `DISALLOWED_BACKSTOP`
+is only `["Bash", "WebFetch", "WebSearch", "NotebookEdit"]`.) The unit
+harness's PreToolUse hook denies `image_read` on the main thread and fails the
+run through the universal validator `test_no_main_thread_subagent_only_calls`,
+so a caller that reads an image itself — the crash this agent exists to
+prevent — is caught deterministically instead of by judge inference.
+
+Two scope limits worth knowing:
+
+- **The guard is per-skill.** It applies only to a skill that does *not*
+  declare `image_read` in its own `allowed-tools` — i.e. one that holds the
+  tool solely through `@plugin:image-reader`, like `record-extraction`.
+  `search-images` declares it and browses volumes itself, so it is exempt.
+- **Unit only.** e2e runs sub-skills in one session, so it cannot attribute a
+  main-thread `image_read` to a skill and cannot apply the guard.
+
+`harness/context_policy.py`; `docs/plan/image-read-context-policy.md` §4.1.
+`ut_record_extraction_015` exercises the delegation path.
 
 **The validation run must genuinely OCR a real scan.** The `clark-parents`
 run that first accompanied this agent *fabricated* its single image read
