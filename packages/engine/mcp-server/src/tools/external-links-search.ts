@@ -1,5 +1,6 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
+import { stageSearchResults } from "../utils/results-staging.js";
 import type {
   PlaceExternalLink,
   ExternalLinksSearchResult,
@@ -11,12 +12,21 @@ export interface ExternalLinksSearchInput {
   standardPlace: string;
   startYear?: number;
   endYear?: number;
+  host?: string;
+  projectPath?: string;
 }
 
 const FS_EXTERNAL_URL =
   "https://www.familysearch.org/service/search/hr/external/collections/search";
 
 const PAGE_SIZE = 100;
+
+// Backstop cap on the inline `results[]`, applied only once the full set has
+// been staged to disk (so nothing dropped is unrecoverable). A link-dense place
+// (US counties carry several hundred curated resources) with no `host` filter
+// would otherwise overflow the tool-result token cap even after staging. With a
+// `host` filter the matched set is small and the cap effectively never bites.
+const INLINE_CAP = 50;
 
 function parseYear(raw: string | undefined): number | null {
   if (!raw) return null;
@@ -157,7 +167,9 @@ export async function externalLinksSearchTool(
           )
         );
 
-  const results: PlaceExternalLink[] = matched
+  // The full year-filtered set (all hosts). This is what gets staged to disk —
+  // host filtering and the inline cap narrow only the inline copy.
+  const allLinks: PlaceExternalLink[] = matched
     .filter((c) => typeof c.url === "string" && c.url.length > 0)
     .map((c) => ({
       url: c.url as string,
@@ -168,11 +180,51 @@ export async function externalLinksSearchTool(
   if (startYear != null) query.startYear = startYear;
   if (endYear != null) query.endYear = endYear;
 
-  return {
+  const out: ExternalLinksSearchResult = {
     query,
     totalForPlace,
-    results,
+    returned: 0,
+    results: [],
   };
+
+  // Host-side result staging (search-result-staging-spec.md). Stage the FULL
+  // year-filtered set BEFORE any host filter or inline cap, so the complete link
+  // list is retained on disk (research record + feedback bundles) even when the
+  // inline copy is narrowed. Purely additive and best-effort: a staging failure
+  // never fails a successful search.
+  if (input.projectPath !== undefined) {
+    try {
+      out.staged = await stageSearchResults({
+        projectPath: input.projectPath,
+        tool: "external_links",
+        response: { results: allLinks },
+      });
+    } catch (error) {
+      out.staged = null;
+      out.stagingError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  // Narrow the inline copy. The `host` filter is the caller's explicit query
+  // narrowing (return only their target site's links), so it always applies.
+  const host =
+    typeof input.host === "string" ? input.host.trim().toLowerCase() : "";
+  let inline = host
+    ? allLinks.filter((r) => r.url.toLowerCase().includes(host))
+    : allLinks;
+
+  // The backstop cap only bites once the full set is safely staged — mirroring
+  // record_search/fulltext_search, which reshape the inline copy only when
+  // staged so nothing dropped is unrecoverable. An un-staged caller gets the
+  // full (optionally host-filtered) set, exactly as before this change; the
+  // skill always passes projectPath + host, so the staged path is the norm.
+  if (out.staged && inline.length > INLINE_CAP) {
+    inline = inline.slice(0, INLINE_CAP);
+  }
+
+  out.results = inline;
+  out.returned = inline.length;
+  return out;
 }
 
 export const externalLinksSearchToolSchema = {
@@ -184,8 +236,13 @@ export const externalLinksSearchToolSchema = {
     "covering a specific place by standard place name. Pass a standardPlace from " +
     "place_search; add startYear/endYear to keep only collections whose date range " +
     "overlaps that window. Undated wiki/website resources for the place are always " +
-    "included. With no years, every resource for the place is returned. The full " +
-    "filtered set comes back in one response (no pagination).",
+    "included. With no years, every resource for the place is returned. " +
+    "Pass `host` to filter to a single target site (e.g. 'ancestry.com'); the " +
+    "response returns only matching links plus `returned` (their count). Pass " +
+    "`projectPath` to stage the full year-filtered set to disk and get a " +
+    "`staged.resultsRef` handle (pass it to research_log_append as " +
+    "`stagedResultsRef` so the complete link list is retained). The inline " +
+    "`results[]` is capped for safety; the staged sidecar always holds the full set.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -207,6 +264,23 @@ export const externalLinksSearchToolSchema = {
         maximum: 2100,
         description:
           "Latest year of interest (inclusive). Must be >= startYear. Omit for all periods.",
+      },
+      host: {
+        type: "string",
+        description:
+          "Optional target-site host substring (e.g. 'ancestry.com', 'findagrave.com'). " +
+          "When supplied, the inline `results[]` is filtered to links whose URL contains it — " +
+          "returning the small exact set you need instead of every curated site for the place. " +
+          "The full unfiltered set is still what gets staged to disk when `projectPath` is passed.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Absolute path to the active project directory. When supplied, the tool stages the full " +
+          "year-filtered link set host-side and returns a `staged.resultsRef` handle — pass that to " +
+          "research_log_append as `stagedResultsRef` so the complete list is retained in the log " +
+          "sidecar (and rides along in a feedback bundle) without you re-serializing it. Omit only " +
+          "for a throwaway exploratory lookup you will not log.",
       },
     },
     required: ["standardPlace"],

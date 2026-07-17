@@ -34,14 +34,25 @@ than taking it as an argument.
 
 ## 2. Scope
 
-The two sidecar-producing search tools: **`record_search`** and
-**`fulltext_search`** (the only tools whose payloads become `results/` sidecars per
-`research-log-protocol.md`). The staging logic is a shared util so adding a third
-producer later is a one-line opt-in.
+The sidecar-producing search tools: **`record_search`**, **`fulltext_search`**,
+and **`external_links_search`** (`tool: "external_links"`) — the tools whose
+payloads become `results/` sidecars per `research-log-protocol.md`. The staging
+logic is a shared util so adding a producer is a one-line opt-in
+(`external_links_search` was added as the third, 2026-07 — GitHub #696).
 
 The change is **purely additive and back-compatible**: no `projectPath` → the tools
-behave exactly as today. The model-facing results are unchanged in either case
-(staging adds one optional field; it never removes or reshapes results).
+behave exactly as today.
+
+**Inline-payload strip (overflow protection).** Once a producer has staged its
+full payload, it drops the heavy per-result field from the *inline* copy so a
+broad search can't overflow the model's token cap — the bulk lives in the
+sidecar, which `record_read` and `rank_search_matches` read host-side. Each
+producer strips its own heavy field: `record_search` drops `gedcomx`,
+`fulltext_search` drops `textDocument` (the AI-transcribed page), and
+`external_links_search` bounds the inline `results[]` (optional `host` filter +
+a backstop cap) while staging the full year-filtered set. The strip is
+unconditional once staged (so the protection can't be forgotten) and never runs
+on an un-staged search (nothing was retained to re-read).
 
 Out of scope: `research_log_append` itself (its spec), the other search tools
 (image/volume/collections/person — they don't write `results/` sidecars today), and
