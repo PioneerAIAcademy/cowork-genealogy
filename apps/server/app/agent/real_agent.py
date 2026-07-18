@@ -128,6 +128,12 @@ class RealAgent:
         self._session_file = project_dir / ".agent_session"
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
+        # Running cumulative cost/usage last seen from the SDK, so we can emit
+        # per-turn deltas (see _usage_delta). The SDK's ResultMessage reports
+        # session totals, not per-turn values.
+        self._cum_cost = 0.0
+        self._cum_in = 0
+        self._cum_out = 0
         if self._session_file.exists():
             try:
                 self._resume_id = self._session_file.read_text(encoding="utf-8").strip() or None
@@ -143,6 +149,28 @@ class RealAgent:
             )
             await self._client.connect()
         return self._client
+
+    def _usage_delta(self, cost, in_tok, out_tok):
+        """Convert the SDK's cumulative session totals into per-turn increments.
+
+        ``ResultMessage.total_cost_usd`` and ``.usage`` are cumulative across
+        the whole session — they grow every turn. The client sums the usage
+        events it receives (and gets genuine per-turn values from the mock
+        agent), so it must be handed the increment, not the running total;
+        summing running totals over-counts the session cost by ~(turns+1)/2.
+        A ``None`` field passes through as ``None`` without advancing its
+        baseline, and each delta is floored at 0 so a lower snapshot (e.g. a
+        cumulative counter that reset on resume) can't emit a negative."""
+
+        def step(prev, cur):
+            if cur is None:
+                return prev, None
+            return cur, max(cur - prev, 0)
+
+        self._cum_cost, d_cost = step(self._cum_cost, cost)
+        self._cum_in, d_in = step(self._cum_in, in_tok)
+        self._cum_out, d_out = step(self._cum_out, out_tok)
+        return d_cost, d_in, d_out
 
     def _remember_session(self, message) -> None:
         sid = getattr(message, "session_id", None)
@@ -173,20 +201,24 @@ class RealAgent:
                     self._remember_session(message)  # persist for resume on relaunch
                     # Per-turn cost/usage for the operator cost meter (alpha
                     # mode, web only). The SDK's ResultMessage carries
-                    # total_cost_usd + a usage dict that was otherwise discarded;
-                    # emit one event the client sums. Defensive: fields may be
-                    # absent on older SDKs or partial results.
+                    # total_cost_usd + a usage dict that was otherwise discarded,
+                    # both as CUMULATIVE session totals — so emit the per-turn
+                    # delta the client sums (see _usage_delta). Defensive: fields
+                    # may be absent on older SDKs or partial results.
                     usage = getattr(message, "usage", None)
                     if isinstance(usage, dict):
                         in_tok, out_tok = usage.get("input_tokens"), usage.get("output_tokens")
                     else:
                         in_tok = getattr(usage, "input_tokens", None)
                         out_tok = getattr(usage, "output_tokens", None)
+                    d_cost, d_in, d_out = self._usage_delta(
+                        getattr(message, "total_cost_usd", None), in_tok, out_tok
+                    )
                     yield _event(
                         "usage",
-                        cost_usd=getattr(message, "total_cost_usd", None),
-                        input_tokens=in_tok,
-                        output_tokens=out_tok,
+                        cost_usd=d_cost,
+                        input_tokens=d_in,
+                        output_tokens=d_out,
                     )
                     break  # turn complete; the runner emits turn_done
         except Exception as exc:
