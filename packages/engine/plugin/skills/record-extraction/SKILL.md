@@ -66,11 +66,11 @@ Record data arrives in one of four ways:
 4. **Image** — a FamilySearch image ARK (`3:1:.../$dist`) or Image Group
    Number (an imageId like `004022578_00190`). **Do not call `image_read`
    yourself** — delegate to the **`image-reader` subagent** by invoking
-   `@plugin:image-reader`, once per image (it reads exactly one). It
-   absorbs the base64 scan in an isolated context and returns a full
-   text transcription plus an extracted-facts list; the raw image never
-   enters your context (accumulated base64 overflows the transport's
-   ~1 MiB buffer and crashes the run).
+   `@plugin:image-reader`, once per image (it reads exactly one). By
+   default it OCRs the scan cheaply and fast (a hosted Qwen model) and
+   returns a full text transcription plus an extracted-facts list — the
+   raw image never enters your context (accumulated base64 overflows the
+   transport's ~1 MiB buffer and crashes the run).
 
    **`looking_for` is a search key, not the answer.** Phrase it as *who
    or what* to locate — "the christening entry for a Christina born ~Jan
@@ -83,10 +83,23 @@ Record data arrives in one of four ways:
    extraction delegation so it lands in the source's `transcription`
    field.
 
-   **If the reader returns `NOT READ`** (unreachable ARK, image over the
-   transport-safety floor), it includes the verbatim error and a pivot
-   recommendation. Do not treat NOT READ as evidence and do not retry
-   the image — pivot to **indexes** that carry the same facts: the
+   **Ask for a `second_opinion` on reads you'll rely on.** The default read
+   is fast but a single model; for a transcription you are about to **cite**
+   (turn into an assertion) or where an identifying token looks **ambiguous**,
+   re-delegate the same image with `second_opinion` set. The reader then also
+   reads it with Claude's own Sonnet-5 vision and returns a **reconciled**
+   transcription that marks any Qwen↔Sonnet disagreement as uncertain and
+   lists the discrepancies. Treat a flagged token as uncertain (record it
+   `[?]` / tentative); a clean "no discrepancies" is strong confidence. This
+   is a follow-up you decide *after* the first read — not needed for candidate
+   triage.
+
+   **If the reader returns `NOT READ`** (unreachable image, or no OpenRouter
+   key configured for the OCR model), it includes the verbatim error and a
+   pivot recommendation. If the cause is a **missing/rejected OpenRouter
+   key**, that is fixable — set one with `configure_openrouter` and retry,
+   rather than pivoting away. Otherwise do not treat NOT READ as evidence and
+   do not retry the image — pivot to **indexes** that carry the same facts: the
    record's own indexed persona fields (`record_read`), a broader
    `record_search` / `search-full-text`, a Find A Grave entry, or
    related persons' indexed records. Never fill the gap with an assumed
@@ -105,8 +118,10 @@ Record data arrives in one of four ways:
    likely mistranscription (an out-of-place patronymic, a spelling no
    other record corroborates), treat the indexed value as a lead: route
    to the original register image (`volume_search` +
-   `@plugin:image-reader`) to confirm the spelling before it is recorded
-   as established. If the image is unreachable, tell the extractor to
+   `@plugin:image-reader` **with `second_opinion`**) to confirm the
+   spelling before it is recorded as established — the reconciled read
+   flags the token if the two models disagree. If the image is
+   unreachable, tell the extractor to
    record the name **tentative** — `[?]` in `value`, the doubt in the
    bias notes, original-image confirmation named as the outstanding
    step. (This is how an index OCR slip — "Aadnesen" read as "Nadnesen"

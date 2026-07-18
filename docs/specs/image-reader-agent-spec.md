@@ -23,13 +23,16 @@ each ≤458 KB raw (~5.4 MB of base64 total), and crashed with
 image was near `image_read`'s 700 KB ceiling — the *pile* was the problem,
 so lowering the ceiling does not fix it.
 
-The `image-reader` subagent is the fix: it absorbs the base64 in a
-throwaway context and returns only text. The bytes never reach the main
-transcript, so accumulation cannot happen regardless of how many scans a
-session reads. The `image_read` per-image ceiling remains as a transport
-**floor** protecting any single response (see `image-read-spec.md`). The
-complementary "downscale large scans so they stay readable rather than
-refused" work is a separate deferred ticket.
+The `image-reader` subagent is the fix, and it now does more than isolate
+base64. Its **default** reader is `image_transcribe` (host-side Qwen3-VL OCR),
+which returns **text** — so the common path carries no base64 at all, is
+~10× cheaper/faster, and reads scans of any size (the old "downscale large
+scans so they aren't refused" ticket is moot). `image_read` (inline base64,
+the agent's own Sonnet-5 vision) is used only for a `second_opinion`
+reconciliation (§6); its base64 stays in the throwaway context, so
+accumulation cannot happen regardless of how many scans a session reads. The
+`image_read` per-image ceiling remains a transport **floor** protecting any
+single response (see `image-read-spec.md`).
 
 ## 2. Files to Create / Modify
 
@@ -62,36 +65,41 @@ hands this agent the imageId.
 |-----------|----------|---------|
 | `imageId` | yes | The **single** image to read — a DGS Image Group Number (`004022578_00190`) or image ARK (`3:1:.../$dist`). |
 | `looking_for` | no | A **search key only** — *who or what* to locate on the page. It focuses the FOUND / NOT FOUND pointer; it is **not** the expected result and **never** suppresses or shortens the full transcription. If the caller's message asserts the answer ("confirm the father is Adam Schreck"), the agent ignores the assertion and transcribes what the page actually says. |
+| `second_opinion` | no | Also read the scan with the agent's own Sonnet-5 vision (`image_read`) and **reconcile** it against a fresh Qwen read, surfacing disagreements (§6). A **follow-up** the caller decides after seeing the default Qwen read — re-delegate the same `imageId` with `second_opinion` when the read is **cite-worthy** or an identifying token looks **ambiguous** (set it up front only when the objective already flags a token suspect). The invocation is self-contained (re-runs Qwen + a fresh Sonnet-5 read; prior Qwen discarded). Only available for images ≤700 KB (`image_read`'s cap); larger scans return the Qwen read with a note. |
 
 ### 3.2 One image per invocation
 
 The agent reads **exactly one image per invocation** — the single
 `imageId` it is given. It does not read a range, a volume, or a "next
-few." One image is the only count provably under the ~1 MiB buffer for a
-large scan: two large scans (~458 KB raw → ~610 KB base64 each) already
-sum past it inside the subagent's own re-serialized conversation, so "read
-a few" re-creates the crash the subagent exists to prevent. When several
-images are needed the caller invokes the agent **once per image** (which
-also yields clean one-image-per-source provenance). If the caller passes
-more than one imageId, the agent reads only the first and says so.
+few." The default Qwen read returns text (no base64), but a
+`second_opinion` `image_read` returns base64, and one image is the only
+count provably under the ~1 MiB buffer: two ≤700 KB second-opinion reads
+(~930 KB base64 each) already sum past it inside the subagent's own
+re-serialized conversation, so "read a few" re-creates the crash the
+subagent exists to prevent. When several images are needed the caller
+invokes the agent **once per image** (which also yields clean
+one-image-per-source provenance). If the caller passes more than one
+imageId, the agent reads only the first and says so.
 
 ## 4. Agent Frontmatter
 
 - `name: image-reader`
 - `model: claude-sonnet-5` — vision-capable for OCR of dense/old-script
-  registers. Bumped from `claude-sonnet-4-6` per the OCR spike (PR 723):
-  Sonnet 5 read the hard hands **+18 pts** more accurately (61%→79%) while
-  being cheaper and faster — the single biggest accuracy lever in the test.
-  Cowork honors the agent `model:` pin, so this takes effect in production.
-  Quality on faint German Kurrent/Fraktur is still the constraint to watch
-  (untested by the spike; a targeted German pass is the open item).
+  registers, used for the **second-opinion** native read. Bumped from
+  `claude-sonnet-4-6` per the OCR spike (PR 723): Sonnet 5 read the hard hands
+  **+15–18 pts** more accurately than 4.6 (incl. German Kurrent/Fraktur 76% vs
+  60%) while being cheaper and faster. It is more accurate than Qwen on hard
+  hands (~+9 pts) but ~10× the cost/latency, which is why it is the on-demand
+  second opinion, not the default. Cowork honors the agent `model:` pin, so
+  this takes effect in production.
 - `tools: [image_read, image_transcribe]` (qualified as `mcp__genealogy__*`
-  in the frontmatter, per the repo convention) — small scans are read
-  natively via `image_read`; scans over `image_read`'s ~700 KB inline cap
-  route to `image_transcribe`, which OCRs host-side (OpenRouter Qwen3-VL) and
-  returns text (§6). The agent still does not write `research.json` /
-  `tree.gedcomx.json`, create assertions/sources, or search indexes; that
-  stays with the caller.
+  in the frontmatter, per the repo convention). **`image_transcribe`
+  (Qwen3-VL, host-side OCR) is the default reader for every image** — ~10×
+  cheaper/faster and any size. **`image_read` (the agent's own Sonnet-5
+  vision) is used only on a `second_opinion` request**, to reconcile a small
+  scan against the Qwen read (§6). The agent still does not write
+  `research.json` / `tree.gedcomx.json`, create assertions/sources, or search
+  indexes; that stays with the caller.
 
 ## 5. Output Protocol
 
@@ -102,11 +110,25 @@ image, never a request for the caller to fetch it:
 
 - `imageId` + one-line page description (record type, jurisdiction, date
   span, language).
+- **Which model read it** — Qwen (default) or, on a `second_opinion`, both
+  Qwen and the agent's Sonnet-5 vision.
 - The **full transcription of every genealogically relevant entry on the
   page** — not only the entry that matches `looking_for` — using `[?]`
   (uncertain), `[illegible]`, `[torn]`; original spelling/language
   preserved. The transcription is never trimmed or slanted toward an
   expected answer.
+- On a `second_opinion` where `image_read` succeeded: a **base transcription**
+  from the Sonnet-5 read, reconciled against Qwen — a **disagreeing**
+  identifying token (surname / given name / patronymic / date) is marked
+  uncertain **in the base transcription** (both variants inline or `[?]`), not
+  silently resolved to Sonnet-5 (both models err ~equally there); the
+  transcription is the **union** of both reads (an entry only one caught is
+  kept + attributed, never dropped). Plus a **Discrepancies** list — differing
+  readings (quote both) and one-caught-other-missed entries — or "no
+  discrepancies." Any Discrepancy-flagged field is marked uncertain in the
+  extracted-facts list too. On an *unavailable* second opinion (oversize /
+  `image_read` error) there is no Sonnet-5 read and no Discrepancies list —
+  return the Qwen read with the unavailability note; never fabricate one.
 - An **extracted facts** list (names, dates, relationships, places) the
   caller can turn into assertions.
 - If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line — as
@@ -114,25 +136,38 @@ image, never a request for the caller to fetch it:
 
 ## 6. Routing + Failure Behavior
 
-**Oversize routing (the split).** When `image_read` throws its "too large to
-return inline" error — the scan exceeds the ~700 KB inline cap — the agent
-calls `image_transcribe({ imageId, lookingFor? })` instead of failing.
-`image_transcribe` OCRs the scan host-side (OpenRouter Qwen3-VL) and returns
-the transcription as text, with no size limit (the bytes never enter the
-agent's context). The routing is purely mechanical — "can Claude physically
-take the bytes," not "which model reads better" (PR 723) — so no
-quality-based threshold is needed. Qwen only ever handles the scans Claude
-can't take, where the baseline is *losing the page*, so this is a strict
-improvement even before the German-corpus question is settled.
+**Default read: Qwen (all images).** The agent's default reader is
+`image_transcribe` — hosted Qwen3-VL OCR, ~10× cheaper and faster than a
+native Claude read, and any size. It is the default for every image because
+most reads a session makes are throwaway triage of candidate scans (§1).
 
-**Genuine failure.** For a real failure — an unreachable ARK, or
-`image_transcribe` *also* erroring (an unreachable image, or no OpenRouter
-key configured) — the agent **must not** produce a transcription; a
-fabricated read is worse than a visible miss. It returns:
+**Second opinion: Sonnet-5 reconciliation (on request, small images).** A
+follow-up the caller requests *after* the Qwen read, by re-delegating the same
+image with `second_opinion` (§3.1). The agent then *also* reads the scan with
+its own Sonnet-5 vision via `image_read` and reconciles into a **base
+transcription** from the Sonnet-5 read (more accurate on most of the page —
+PR 723). Both models err most on surnames/hard tokens (~43% each), so on a
+**disagreeing** identifying token the agent marks it uncertain rather than
+adopting the Sonnet-5 variant — a disagreement means "uncertain," not
+"Sonnet-5 wins"; *agreement* is real confidence. The returned transcription is
+the **union** of both reads (an entry only one model caught is kept and
+attributed). A **Discrepancies** list records differing readings and
+one-caught-other-missed entries. `image_read` only takes images ≤700 KB; for a
+larger scan — or any `image_read` error — the second opinion is unavailable:
+the agent returns the Qwen read with a note and **never fabricates** a
+Sonnet-5 read. The base64 from the `image_read` call stays in the agent's
+throwaway context (one image → safe), so the accumulation crash the agent
+exists to prevent cannot occur.
+
+**Genuine failure.** A real failure is when the **default** read
+(`image_transcribe`) errors — an unreachable image, or no OpenRouter key
+configured. (A failed `second_opinion` `image_read` is *not* a genuine miss:
+the agent still has the Qwen read.) On a genuine failure the agent **must
+not** produce a transcription; a fabricated read is worse than a visible
+miss. It returns:
 
 - `NOT READ: <imageId>` on its own line;
-- the **exact error message** the failing tool returned, quoted verbatim
-  (whichever of `image_read` / `image_transcribe` failed);
+- the **exact error message** `image_transcribe` returned, quoted verbatim;
 - the pivot recommendation: read the **indexed** record for this image
   (`record_read` / `record_search` / `search-full-text`, or a related
   person's indexed record). If the failure was a missing/rejected OpenRouter
@@ -140,10 +175,8 @@ fabricated read is worse than a visible miss. It returns:
 
 It does **not** retry via browser / `web_fetch` / "Claude in Chrome"
 (unavailable), and it never invents, infers, or guesses page contents when
-the read failed. The caller decides the pivot. This guardrail is independent
-of the ARK-support fix in §8 — the tools can still fail for other reasons,
-and this is what turns a failed read into a clean, visible miss instead of a
-silent fabrication.
+the read failed. The caller decides the pivot. This guardrail turns a failed
+read into a clean, visible miss instead of a silent fabrication.
 
 ## 7. Testing
 
