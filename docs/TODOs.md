@@ -193,6 +193,16 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   "declared = safe". Surfaced 2026-07-16 while implementing
   `docs/plan/image-read-context-policy.md`; NOT investigated.
 
+## Tree materialization (#701) — deferred from implementation
+Deferred from `docs/plan/tree-materialization-plan.md` during the #701 build.
+- [ ] **Batch `add_relationship`** — person-evidence now writes a household's
+  parent-child + spouse edges as N separate `tree_edit add_relationship` calls
+  (Phase 3A, Option 1: tools encode the write, the skill handles matching). A
+  batch mode (multiple edges in one validated write) would make a household's
+  edges atomic and cut tool round-trips for the common census-child case (~7-9
+  edges). Latency/atomicity only — per-edge writes are correct today. Surfaced
+  2026-07-18 while implementing Phase 3A.
+
 ## Eval framework
 - [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
   audit) — RESOLVED (#711 + record-extractor informant-craft follow-up).** The audit

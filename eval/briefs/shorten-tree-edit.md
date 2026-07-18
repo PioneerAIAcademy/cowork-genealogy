@@ -5,8 +5,9 @@
 off on what stays** — this is a real craft skill)
 **Current size:** 324 lines → **Target:** ~150–180 lines (~45% reduction)
 **Tool migration:** **done** — calls `tree_edit`, `merge_tree_persons`,
-`merge_record_into_tree`, plus `person_record_matches` / `person_person_matches`
-for hint checking.
+plus `person_record_matches` / `person_person_matches` for hint checking.
+(`merge_record_into_tree` is retired by the tree-materialization spec §9 — the
+record→tree path is `person-evidence` + `materialize_facts`, not a tree-edit fold.)
 **Still needed as a skill?** **Yes, unambiguously** — it's the gatekeeper for
 the deliverable. The tool alone won't refuse an unsourced edit or require
 probable-tier proof before a merge.
@@ -61,12 +62,13 @@ dead — the tool guarantees it.
   the `tree_edit` schema documents the params. Keep **one** minimal example
   (e.g. `add_fact`) and a one-line list of the other operations.
 - **[~144–198] the merge worked-example + per-tool JSON for
-  `merge_tree_persons` / `merge_record_into_tree`** — collapse to: "Call
-  `merge_tree_persons({ projectPath, merges: [[survivorId, collapsedId]] })`;
-  for a `record_read` candidate use `merge_record_into_tree` with the
-  candidate's `gedcomx`. The tool folds data, repoints all refs, removes the
-  collapsed person, and reports a summary." The blow-by-blow of *what gets
-  repointed* is the tool's job now.
+  `merge_tree_persons`** — collapse to: "Call
+  `merge_tree_persons({ projectPath, merges: [[survivorId, collapsedId]] })`.
+  The tool folds data, repoints all refs, removes the collapsed person, and
+  reports a summary." The blow-by-blow of *what gets repointed* is the tool's
+  job now. (Drop any `merge_record_into_tree` "record_read candidate" branch —
+  that tool is retired; folding a record into the tree is now
+  `person-evidence` + `materialize_facts`.)
 - **[~314–324] "Re-invocation behavior"** — the "do not duplicate / use
   update_* not add_*" point is real but belongs as one line under Decision
   rules; the rest is boilerplate.

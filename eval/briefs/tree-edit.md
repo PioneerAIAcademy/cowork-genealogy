@@ -7,7 +7,7 @@
 **Files:** SKILL.md (328 lines) · references ×4 (227 lines) · tests ×5 · rubric ✓ (19 lines — thin).
 
 ## What this skill does
-Direct edits to `tree.gedcomx.json` (the simplified-GedcomX deliverable). Operations: add a fact, correct a value, create a person, add a relationship, **merge two persons confirmed identical**, **verify** the tree already reflects a known fact (no-op confirmation), check what records FamilySearch has matched/attached (`person_record_matches`), and check for possible duplicate persons (`person_person_matches`). Places get standardized via `place_search`; every edit ends with `validate_research_schema`. **Key invariants: edits are evidence-grounded and minimal (surgical — touch only the target field); merges require a proof-conclusion at probable-or-higher and rewrite ALL references** (relationships, `person_evidence.person_id`, `timelines.person_ids`, `subject_person_ids`) before deleting the deprecated person; **a verification of already-correct data makes NO change** and never adds non-spec fields (`confidence`/`notes`) to "mark" it.
+Direct edits to `tree.gedcomx.json` (the simplified-GedcomX deliverable). Operations: add a fact, correct a value, create a person, add a relationship, **merge two persons confirmed identical**, **verify** the tree already reflects a known fact (no-op confirmation), check what records FamilySearch has matched/attached (`person_record_matches`), and check for possible duplicate persons (`person_person_matches`). Places get standardized via `place_search`; every edit ends with `validate_research_schema`. **Key invariants: edits are evidence-grounded and minimal (surgical — touch only the target field); sourced *evidence* facts/edges land at identity-link time (person-evidence's `materialize_facts`, NOT proof-gated) — the `probable`+ gate here applies only to a *concluded* value (`primary`/`preferred`), an upload, or a merge; merges require a proof-conclusion at probable-or-higher and rewrite ALL references** (relationships, `person_evidence.person_id`, `timelines.person_ids`, `subject_person_ids`) before deleting the deprecated person; **a verification of already-correct data makes NO change** and never adds non-spec fields (`confidence`/`notes`) to "mark" it.
 
 ## Where everything lives
 - `plugin/skills/tree-edit/SKILL.md`
@@ -19,7 +19,7 @@ Direct edits to `tree.gedcomx.json` (the simplified-GedcomX deliverable). Operat
 | id | covers | type | fixtures |
 |----|--------|------|----------|
 | ut_tree_edit_001 | Verify a birth fact matches the resolved conflict — a NO-OP edit (minimality) | positive | — |
-| ut_tree_edit_002 | Add a ParentChild relationship after proof reaches probable (tagged no-op/verify) | positive | — |
+| ut_tree_edit_002 | Verify a ParentChild edge (materialized at link time, carrying a source-ref) is present + correct — no-op/verify | positive | — |
 | ut_tree_edit_003 | "Add facts from the 1880 census to the tree" → route to record-extraction | negative | — |
 | ut_tree_edit_004 | Report record matches/hints for a tree person | positive | person-record-matches-flynn (+2 arg variants) |
 | ut_tree_edit_005 | Find possible duplicate tree persons (merge candidates) | positive | person-person-matches-flynn |

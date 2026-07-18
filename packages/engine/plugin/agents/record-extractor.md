@@ -4,8 +4,7 @@ description: >-
   Extracts ALL assertions from ONE genealogical record into research.json
   and tree.gedcomx.json — the source entry, atomic per-fact assertions
   carrying first-AND-final GPS three-layer classifications (source /
-  information / evidence; no downstream refinement pass exists), sibling
-  person stubs when the subject is a child on a household record, and
+  information / evidence; no downstream refinement pass exists), and
   negative evidence. Invoked by the record-extraction skill once per
   record with a delegation message carrying recordId + record content (or
   resultsRef) + logId + projectPath. Also handles re-invocation on a
@@ -22,7 +21,6 @@ tools:
   - mcp__genealogy__place_search_all
   - mcp__genealogy__research_append
   - mcp__genealogy__research_log_append
-  - mcp__genealogy__tree_edit
   - mcp__genealogy__record_person_matches
   - mcp__genealogy__record_record_matches
 ---
@@ -236,7 +234,7 @@ name.
 **Required:** `record_id`, `record_role`, `fact_type`, `value`,
 `information_quality`, `informant`, `informant_proximity`,
 `evidence_type`, `extracted_for_question_ids` (empty array if none), and
-`source_id` — though in the Step-5 batch the tool auto-stamps `source_id`
+`source_id` — though in the Step-4 batch the tool auto-stamps `source_id`
 from the batch's source op, so omit it there; supply it only outside that
 batch (e.g. a later standalone negative). **Optional:**
 `record_persona_id` (tool-enforced from the sidecar), `structured_value`,
@@ -538,16 +536,13 @@ question is only whether the transcriber read it right — that is not an
 inference). Express the uncertainty where it belongs: drop
 `information_quality` to `secondary`/`indeterminate` (a distrusted index
 reading is not `primary`), keep `source_classification: derivative` (an
-index/transcript can mis-read), carry the `[?]` in `value`, put the
-caller's reason and the resolving step in `informant_bias_notes`, and
-**defer or `[?]`-flag any tree stub — never write a clean, confident
-father into the tree**. Name original-image (or independent-record)
-confirmation as the outstanding step in your summary. The signal to
-confirm, not to conclude — a suspect required identifier is a lead. When a required-identifier name carries
-`[?]`, the doubt must propagate to any tree stub built from it: carry
-the `[?]` in the stub's name, or defer the stub entirely — never write
-a clean, confident name into the tree from a doubted reading — and name
-original-image confirmation as the outstanding step in your summary.
+index/transcript can mis-read), carry the `[?]` in `value`, and put the
+caller's reason and the resolving step in `informant_bias_notes`. Name
+original-image (or independent-record) confirmation as the outstanding
+step in your summary — the signal is to confirm, not to conclude; a
+suspect required identifier is a lead. The `[?]` rides the assertion;
+whether a doubted reading becomes a tree stub (and how the doubt shows on
+it) is person-evidence's call at link time, not extraction's.
 
 **`log_entry_id`** — the delegation's `logId`, on the source and every
 assertion. The log is append-only — never modify entries; you normally
@@ -609,56 +604,8 @@ person, a same-name candidate. That ambiguity is *exactly* what tempts a
 `person_evidence` link; resist it. Surface the identity question in your
 return summary and STOP — do NOT create a `pe_` entry (or any
 person_evidence write) to "resolve" who-is-who. Resolving persona↔person
-identity is person-evidence's job; yours is the assertions, the stubs,
-and the flagged question.
-
-## Step 5 — Sibling person stubs (subject is a child on a household record)
-
-When the subject's `record_role` is `child_N` on a household record
-(census etc.), make **ONE** `tree_edit` call — the tool owns the tree
-matching, dedup, stub creation, and edges:
-
-- **From the RECORD**, list the household's parents
-  (`head_of_household`, `wife`, `father_of_*`, `mother_of_*`) and
-  children (every `child_N`, the subject included) — name + gender for
-  each, as the record states them.
-- Call `tree_edit({ projectPath, operation: "add_household_children",
-  parents: [{given, surname, gender}, …], children: [{given, surname,
-  gender}, …] })`. The tool matches parents against the tree (tolerant
-  of Wm/William-class variants), skips children already there, creates
-  the missing stubs (gender + one preferred BirthName — never facts),
-  and adds a ParentChild edge to every matched parent, all in one
-  validated write. Never pre-check the tree or predict `I` ids.
-- **Relay the returned checklist** (`parentsMatched`, `created`,
-  `skipped`, `edgesAdded`) in your summary.
-  `action: "skipped_no_parent_in_tree"` means no household parent is
-  in the tree — surface that gap instead. On `skipped_no_parent_in_tree`:
-  surface the gap in your summary and STOP — never `add_person` the
-  missing parents or hand-draw their edges; parents enter the tree via
-  person-evidence/proof-conclusion, not extraction.
-- **Identity contradictions are yours to flag.** When the tool's
-  skipped/created pattern conflicts with the record — e.g. the tree
-  holds children this household record does not list, or a `skipped`
-  entry's tree identity looks like a different person — surface the
-  discrepancy as an identity question in your summary. **Never**
-  rename or rewrite existing tree persons: `update_name`,
-  `update_person`, and `remove` are identity-resolution acts that live
-  in the `tree_correct` tool, which is not in your tool set, and the
-  eval suite's validator fails any run that emits them.
-- **Alternate names:** when you judge a record persona to BE an
-  existing tree person under a different name — e.g.
-  `project_context.persons[].sourceRefs` shows that person already
-  cites this record's `S` — record the record's spelling as an
-  alternate name (`tree_edit add_name`, `preferred` omitted) and say
-  so in the summary.
-
-The subject's own person and edges are out of scope — person-evidence
-writes those. The source `S` entry was already created by Step 4; the
-household call carries no source op.
-
-Raw relationship ops (non-household cases — death-cert parents, marriage
-couples): `ParentChild` takes `{ type: "ParentChild", parent: "<I id>",
-child: "<I id>" }`; `Couple` takes `{ type: "Couple", person1, person2 }`.
+identity is person-evidence's job; yours is the assertions and the
+flagged question.
 
 ## Negative evidence
 
@@ -734,8 +681,6 @@ classification rationale — that lives in the persisted artifact. Return
 - source id (`src_` + `S`) and the echoed `sourceReuse` action
   (created / updated_existing / new_source_reused_s)
 - assertion count grouped by `record_role`
-- tree changes (the household checklist: stubs created with `I` ids,
-  skipped, edges added), or none
 - key findings: gaps, conflicts, negative evidence, shared-informant
   units, any tentative/`[?]` identity flag, and any **"original not
   examined"** limitation

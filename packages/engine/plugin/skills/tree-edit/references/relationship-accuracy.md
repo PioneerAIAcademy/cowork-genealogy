@@ -36,28 +36,38 @@ event; the couple relationship is its only correct home.
 
 ## When to create relationships
 
-Create a relationship entry when:
+Relationships follow the same two layers as facts
+(`research-schema-spec.md` §8): a **sourced evidence edge** materializes
+at identity-link time, while a **concluded** relationship is proof-gated.
 
-- A proof conclusion confirms the parent-child or couple connection
-- Direct evidence from a reliable source explicitly states the
-  relationship (e.g., a birth certificate naming parents)
-- Multiple pieces of indirect evidence, when correlated, support
-  the connection and no conflicting evidence remains unresolved
+Create a relationship **edge** (carrying a non-null source-ref) when:
+
+- Direct evidence from a reliable source states the relationship (e.g.,
+  a birth certificate naming parents, or a census listing a household).
+  This is sourced evidence and does **not** require a proof conclusion
+  first; the edge carries the relationship assertion's source-ref.
+- A proof conclusion confirms a parent-child or couple connection that
+  no single record states (the concluded relationship).
+
+A **pre-1880 census parent-child edge is *indirect*** evidence (a
+headship/co-residence inference, not a stated relationship) — it still
+materializes with a source-ref, at a **lower ref quality** reflecting
+the weaker evidence class. Correlating several indirect pieces into a
+*concluded* relationship remains proof-conclusion's act.
 
 Do NOT create a relationship entry when:
 
 - Two people share a surname and lived near each other (name +
-  proximity is not proof)
-- A single secondary source asserts the connection without
-  corroboration
-- The hypothesis has not been tested against potentially
-  conflicting evidence
+  proximity is neither evidence nor proof)
+- No source supports the connection at all
+- You are asserting a *concluded* relationship whose hypothesis has not
+  been tested against potentially conflicting evidence
 
 ## Merge implications for relationships
 
-The merge tools (`merge_tree_persons` / `merge_record_into_tree`)
-repoint every relationship referencing the collapsed person to the
-survivor and drop the duplicate parent-child pairs that result — you do
+The merge tool (`merge_tree_persons`)
+repoints every relationship referencing the collapsed person to the
+survivor and drops the duplicate parent-child pairs that result — you do
 not transfer or de-duplicate relationships by hand. What the tools
 cannot judge is genealogical plausibility: a merge can still leave the
 person as both parent and child of the same individual, give them two
