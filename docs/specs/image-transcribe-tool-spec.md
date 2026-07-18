@@ -9,6 +9,22 @@
 > in §12.
 >
 > Owner: unassigned. Reviewer: spec-review agent (once implemented).
+>
+> **Revision (2026-07-17) — three changes from the original draft, per a
+> design review:**
+> 1. **Hybrid, not full replacement.** Claude's own vision (`image_read` +
+>    the `image-reader` subagent) is **kept** for small images (≤700 KB);
+>    `image_transcribe` handles only the large scans `image_read` refuses.
+>    The `image-reader` subagent is **not retired** — it gains
+>    `image_transcribe` as an oversize fallback. Collapsing to Qwen-only
+>    stays a spike-gated future option, not an upfront move.
+> 2. **Image persistence + viewing (§8.5).** The backing JPEG is saved for
+>    **retained** sources so the Electron viewer (then the hosted web
+>    viewer) can show the scan beside its transcription.
+> 3. **Key handling stays config-only (§6.4–§6.5)** — the MCP server reads
+>    the key only from `~/.familysearch-mcp/config.json`, never from env —
+>    with two orchestration-layer bridges added for e2e and the hosted
+>    sandbox.
 
 ---
 
@@ -49,8 +65,16 @@ at all. That dissolves the entire T13 problem class at once:
 - No base64 accumulation across reads (the crash the `image-reader`
   subagent was built to prevent — see its spec §1).
 - No 700 KB single-image floor.
-- The `image-reader` subagent's reason to exist disappears → it is retired
-  (§8).
+
+For the **large** scans `image_read` refuses today, this is a clean win.
+But we deliberately **keep** Claude's own vision (`image_read` + the
+`image-reader` subagent) for **small** images — Claude's genealogical
+judgment on a scan it can already read is worth preserving, and Phase 0
+(§4) tests whether Qwen matches it. So `image_transcribe` is the
+**large-image path**, and the `image-reader` subagent stays as the
+small-image reader that **routes** oversize reads to it (§8). The
+subagent is not retired; its base64-isolation job simply no longer
+applies to the large-image path.
 
 This spec proposes a new tool, **`image_transcribe`**, that fetches the FS
 scan host-side, optionally pre-processes it for legibility, sends it to a
@@ -76,6 +100,9 @@ assume the outcome in either direction.
 - Not replacing `image_read`'s raw-image return for consumers that genuinely
   need the *pixels* (e.g. Issue #28's OCR-model comparison). `image_read`
   stays (§8).
+- Not replacing Claude's own vision for **small** images. `image_read` +
+  the `image-reader` subagent stay the reader for scans under the 700 KB
+  ceiling; `image_transcribe` is the large-image path (§1, §8).
 - Not a general document-understanding tool. It transcribes one page and
   returns text; matching the page to the research objective stays with the
   caller (record-extraction), exactly as the `image-reader` subagent
@@ -161,10 +188,12 @@ Secondary decisions the experiment also settles:
   collapses to "base64 the original bytes," which needs **no dependency at
   all**. Only port the specific prep steps (from D) that measurably move
   accuracy.
-- **Partial win?** If Qwen wins on printed records but loses on faint German
-  script, consider a split: Qwen for printed/high-confidence, keep the
-  Claude path for the hard script — but weigh that against the complexity it
-  adds before committing.
+- **Partial win?** The design already **keeps Claude for small images**, so
+  a split is the default, not an exception: `image_transcribe`/Qwen covers
+  the large scans Claude can't take, and `image_read`/Claude keeps the
+  small ones. What Phase 0 additionally decides is whether Qwen is strong
+  enough to *also* take the small/hard cases (letting us later simplify to
+  Qwen-only) or whether Claude clearly wins there (locking in the split).
 
 Record the outcome (corpus, per-image grades, decision) as a short results
 doc under `docs/plan/` so the choice is auditable, per the team-review-docs
@@ -181,6 +210,13 @@ convention.
 Fetch a FamilySearch distribution image by `imageId` or `ark`, optionally
 pre-process it for legibility, run VLM OCR host-side, and return a faithful
 text transcription. The image bytes never cross the MCP transport.
+
+This is the **large-image path**. Small images (≤700 KB) are still read by
+Claude's own vision via `image_read` inside the `image-reader` subagent;
+`image_transcribe` handles the scans `image_read` refuses (and, if Phase 0
+shows Qwen matches Claude even on small scans, may later take those too —
+a follow-up decision, not this spec's default). Routing lives in the
+`image-reader` subagent (§8).
 
 ### 5.2 Relationship to existing tools (naming)
 
@@ -200,6 +236,7 @@ consistent across schema, manifest, and skill.)*
   imageId?: string    // DGS Image Group Number "NUMBER_NUMBER", e.g. 004884748_02613
   ark?: string        // FamilySearch document-image ARK / resolver URL / dist URL
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
+  projectPath?: string // absolute project-folder path; supply to stage the JPEG (§8.5)
 }
 ```
 
@@ -210,6 +247,11 @@ consistent across schema, manifest, and skill.)*
   only. It focuses a FOUND/NOT FOUND pointer; it **never** shortens or slants
   the full transcription, and any *assertion* in it ("confirm the father is
   Adam Schreck") is ignored — transcribe what the page says.
+- `projectPath`, when given, makes the tool **stage** the fetched JPEG
+  host-side under `<projectPath>/images/.staging/` and return a
+  `stagedImageRef` (§8.5). Omit it (e.g. in the spike / dev smoke) to skip
+  persistence and just get text. It is an absolute path the caller passes;
+  the tool never invents one and validates it is inside the project.
 - All input is camelCase (MCP wire convention).
 
 ### 5.4 Behavior (pipeline)
@@ -237,6 +279,7 @@ Returns **text only**:
 {
   transcription: string      // faithful full-page OCR (the primary payload)
   found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set
+  stagedImageRef?: string    // present iff projectPath was given — e.g. "images/.staging/<imageId>.jpg" (§8.5)
   metadata: {
     imageId?: string
     ark?: string
@@ -341,6 +384,30 @@ flow. Storage follows the existing per-user config convention exactly:
   key in their own transcript, but note it, mask it in all tool output, and
   do not log it server-side.
 
+### 6.5 Key provisioning across runtimes
+
+The server reads the key **only** from `~/.familysearch-mcp/config.json`
+(`getOpenRouterApiKey`) — never from `process.env`, in any runtime. That is
+the same file channel the MCP server already uses for the FS token
+(`tokens.json`) and `wikiApiUrl`. Each runtime provisions that file with its
+own mechanism; the env var (where one exists) is read at the
+**orchestration layer**, never by the server:
+
+| Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
+|---|---|---|
+| **Cowork desktop** | host (`.mcpb`) | the user pastes it → `configure_openrouter` → `saveConfig` |
+| **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
+| **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
+
+So the env var still does its job for e2e and the Fly control plane — both
+of which legitimately read env — but it is **bridged** into the server's one
+config channel rather than read by the server. This keeps the
+"no env-var fallback" rule intact (the server has zero `process.env` reads)
+while letting each runtime supply the key naturally. The hosted-path
+`fs_oauth.write_tokens` (`TOKENS_PATH = {HOME}/.familysearch-mcp/tokens.json`,
+called from `sessions.py:create_project`) is the exact pattern the
+`write_config` sibling follows.
+
 ## 7. Image pre-processing (`src/utils/image-prep.ts`) — conditional
 
 **Build this only if Phase 0 (§4.4) showed prep measurably helps**, and port
@@ -382,8 +449,56 @@ pipeline base64s the raw `dist.jpg` and no dependency is added.
   accumulation caveats remain valid for *that* return type. Drop only the
   fetch duplication.
 - Update `docs/specs/image-read-spec.md` to cross-reference this tool as the
-  transcription path (and note record-extraction no longer routes through
-  `image_read`).
+  large-image transcription path, and note that the `image-reader` subagent
+  now routes between `image_read` (small) and `image_transcribe` (large).
+
+## 8.5 Image persistence + viewing (retained sources only)
+
+`image_transcribe` returns text, but the researcher will want to **see the
+scan** behind a transcription in the Electron viewer (and later the hosted
+web viewer). Persist the JPEG — but only for sources the researcher keeps,
+so projects don't bloat with every scan read.
+
+**Staging → finalize (mirrors `results-staging.ts`).**
+- When `projectPath` is given, `image_transcribe` stages the fetched JPEG
+  host-side at `<projectPath>/images/.staging/<imageId>.jpg` — a
+  **deterministic path keyed by imageId** (a new `src/utils/image-staging.ts`,
+  following `results-staging.ts`) — and returns `stagedImageRef`. It does
+  **not** write `research.json`. Because the path is derived from the imageId,
+  `research_append` can finalize it **without** the ref being threaded back
+  through the (text-only) `image-reader` subagent.
+- When `research_append` persists an image-sourced source, it **finalizes**
+  the staged JPEG (found at `images/.staging/<imageId>.jpg` for that source's
+  imageId) to `<projectPath>/images/<source_id>.jpg` and sets a new
+  `sources[].image_filename`. Staged images not finalized by the end of the
+  write are discarded — so only **retained** sources keep a file: no orphans,
+  no bloat. This is the same discipline the search-result sidecars use, and it
+  pairs the image with the existing `sources[].transcription` field
+  (`research-schema-spec.md` §5.5).
+
+**Schema change — `sources[].image_filename`** (optional, nullable string).
+A "new field" change with the full blast radius: edit `research.schema.json`
+in **both** trees (`docs/specs/schemas/` and `packages/schema/schemas/`), the
+prose table in `research-schema-spec.md`, the validator
+(`packages/engine/mcp-server/src/validation/validator.ts`), and the
+`packages/schema` TS mirror (`src/index.ts`). It is optional, so it does
+**not** break `eval/fixtures/scenarios/*/research.json`. The validator's
+orphan check must treat `images/` files referenced by a source as legitimate,
+and unreferenced `images/*.jpg` as cleanup targets (not write-blocking).
+
+**Viewing — Electron first, hosted web as a separate project.**
+- **Electron:** the JPEG lives in the connected project folder, so
+  `apps/electron/main` reads `images/<file>` and hands it to `viewer-ui` over
+  the existing IPC transport; `viewer-ui` renders it beside the source's
+  transcription (a `ResearchTransport` image-fetch method).
+- **Hosted web:** the browser cannot read the sandbox filesystem — this is
+  what `apps/server/app/image_proxy.py` (the **501 stub**) is a placeholder
+  for. Wiring a real control-plane→sandbox image route is a **separate
+  follow-on project**, not part of this spec's core DoD.
+
+**Sequencing.** The core text-returning tool (§5–§7) ships first and is
+useful on its own; image persistence + Electron viewing is a follow-up
+increment; hosted-web viewing is its own project.
 
 ## 9. Wiring (standard MCP-tool checklist)
 
@@ -404,22 +519,26 @@ pipeline base64s the raw `dist.jpg` and no dependency is added.
 
 ## 10. Migration (skills + subagent)
 
-- **`record-extraction/SKILL.md`**: replace the `@plugin:image-reader`
-  delegation in the **Image** input path (SKILL.md lines ~66–112) with a
-  direct `image_transcribe` call. Add `image_transcribe` (and, for setup,
-  `configure_openrouter`) to `allowed-tools`. The prose contract barely
-  changes — the skill already treats the return as a text transcription +
-  extracted-facts list and already has the NOT-READ→pivot-to-indexes
-  behavior; point it at the tool's thrown error instead of the subagent's
-  `NOT READ` line. Preserve the "reserve image transcription for facts that
-  exist only on the image" guidance.
-- **Retire the `image-reader` subagent**: delete (or mark deprecated)
-  `packages/engine/plugin/agents/image-reader.md` and
-  `docs/specs/image-reader-agent-spec.md`. Its sole purpose — keeping base64
-  out of the caller's context — is moot once the tool returns text. Follow
-  the **lane rule** (`docs/skill-lifecycle.md` §5): this is a tooling change
-  (lane 1), so the subagent removal + tool add is the PR; SKILL.md prose is
-  edited only to re-route, not to compensate.
+- **`record-extraction/SKILL.md`**: keep delegating the **Image** input path
+  to `@plugin:image-reader` (the subagent now handles the `image_read` →
+  `image_transcribe` routing internally). The skill's prose contract barely
+  changes — it still receives a text transcription + extracted-facts list and
+  keeps the NOT-READ→pivot-to-indexes behavior. Thread `projectPath` through
+  so the subagent's `image_transcribe` call can stage the JPEG (§8.5). For
+  desktop setup, `configure_openrouter` is available so Claude can prompt for a
+  key when `image_transcribe` errors "no key." Preserve the "reserve image
+  transcription for facts that exist only on the image" guidance.
+- **Keep the `image-reader` subagent; give it `image_transcribe` as a
+  fallback.** It stays the small-image reader (Claude vision, base64 isolated
+  in its throwaway context) and gains one branch: try `image_read`; on the
+  oversize error (or a known-large image), call `image_transcribe` instead of
+  the current pivot to "read the indexed record." It still returns **text
+  only** to its caller, so record-extraction's contract is unchanged. Add
+  `mcp__genealogy__image_transcribe` to the subagent's `tools:` and update
+  `docs/specs/image-reader-agent-spec.md`. Follow the **lane rule**
+  (`docs/skill-lifecycle.md` §5): this is a tooling change (lane 1).
+  *(Fully retiring the subagent and routing all reads to Qwen stays a
+  spike-gated future option — see §4.4 — not part of this change.)*
 - Record any deferred follow-ups (e.g. Qwen-loses-on-German split, batching)
   in `docs/TODOs.md` in the same PR that defers them (tech-debt-in-TODOs
   convention).
@@ -524,6 +643,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `src/tools/configure-openrouter.ts`
 - `src/types/image-transcribe.ts`
 - `src/utils/fs-image-fetch.ts` (lifted from `image-read.ts`)
+- `src/utils/image-staging.ts` *(image-persistence increment; mirrors `results-staging.ts`)*
 - `src/utils/image-prep.ts` *(only if Phase 0 warrants prep)*
 - `dev/try-image-transcribe.ts`
 - `tests/tools/image-transcribe.test.ts`
@@ -546,9 +666,27 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `package.json` — add `jimp` *(if prep built)*
 - `docs/TODOs.md` — any deferred follow-ups
 
-**Retire/deprecate**
-- `packages/engine/plugin/agents/image-reader.md`
-- `docs/specs/image-reader-agent-spec.md`
+*Image-persistence increment (§8.5):*
+- `src/tools/research-append.ts` — finalize the staged JPEG + set `image_filename`
+- `docs/specs/schemas/research.schema.json` + `packages/schema/schemas/research.schema.json` — add `sources[].image_filename`
+- `packages/schema/src/index.ts` — mirror `image_filename` on the `Source` type
+- `packages/engine/mcp-server/src/validation/validator.ts` — allow `image_filename`; `images/` orphan handling
+- `docs/specs/research-schema-spec.md` — `image_filename` prose row
+- `packages/engine/plugin/skills/record-extraction/SKILL.md` — thread `projectPath` through
+
+*Hosted + e2e key bridges (§6.5):*
+- `apps/server/app/config.py` — `openrouter_api_key` on `Settings`
+- `apps/server/app/fs_oauth.py` (+ `sessions.py`) — `write_config` sibling writing sandbox `config.json`
+- `eval/harness/e2e/` setup — stage `OPENROUTER_API_KEY` from `eval/.env` into `config.json`
+- `eval/Setup.bat` — write `OPENROUTER_API_KEY` into `eval/.env`
+
+*Electron viewer (fast-follow):*
+- `apps/electron/main` + `packages/viewer-ui` (+ `transport.ts`) — display the saved scan
+
+**Keep + extend (not retire)**
+- `packages/engine/plugin/agents/image-reader.md` — add `image_transcribe`
+  as an oversize fallback tool (small-image path stays Claude vision)
+- `docs/specs/image-reader-agent-spec.md` — document the fallback routing
 
 ## 15. Open questions for the researcher
 
