@@ -17,7 +17,7 @@ the eventual durable system-of-record (see §6).
 **Filename note:** kept as `ably-realtime-migration.md` for cross-reference
 continuity even though the conclusion is to *drop* Ably; rename can happen
 separately.
-**Read with:** `hosted-web-workbench-POC-status.md` (current architecture),
+**Read with:** `realtime-rearch-status.md` (current architecture),
 `sandbox-provider-interface.md`, `e2b-provider-implementation-plan.md`,
 `neon-postgres-plan.md` (its `count > 1` DB work still applies; its affinity-fix
 references were updated to point here), `fly-deploy-plan.md` (likewise).

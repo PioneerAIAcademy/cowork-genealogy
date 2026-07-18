@@ -3,6 +3,40 @@
 Deferred items to revisit. Not blocking the alpha. Architecture context:
 `docs/plan/realtime-rearch-status.md`.
 
+## Alpha readiness — deliberately deferred (2026-07-18)
+Surfaced while preparing for the first alpha testers and consciously left for
+later. Each was judged not to affect a tester's experience; the reasoning is
+recorded so it can be re-examined rather than re-derived.
+
+- [ ] **Session cost does not survive a page reload** — `SessionView.tsx` sums
+  per-turn usage into component state, so a refresh restarts the count. The chip
+  is now shown to all users (it was behind `?alpha=1`), which makes the reset
+  user-visible; the tooltip says "counted since this page loaded" as the interim
+  honesty measure. Real fix: a `Project.cost` column accumulated server-side.
+  Accepted for the alpha (2 testers, no spend cap in play).
+- [ ] **Per-user spend cap** — there is no cost, turn, or session cap anywhere in
+  the control plane, and sandboxes pause but are never reaped. Tolerable at two
+  testers with the cost now visible on every screen; needed before the tester
+  count grows. Opus was removed from the model picker in the meantime
+  (`SessionList.tsx`) since it is ~5× the cost.
+- [ ] **Feedback Drive endpoint accepts unauthenticated writes** — the Apps
+  Script URL is hardcoded in a shipped client and committed to git, deployed with
+  "anyone" access, and `doPost` validates only that the fields are present. So
+  anyone holding the URL can write arbitrary files into the team Drive folder.
+  Explicitly deferred: harden later.
+- [ ] **`feedback-json-spec.md` §6 contradicts the code on thinking blocks** —
+  the spec says thinking is stripped before writing the session log; both
+  bundlers deliberately **keep** it (it is the highest-value triage signal) and a
+  test pins that behaviour. The user-facing copy in `FeedbackDialog.tsx` was
+  corrected 2026-07-18; the spec still needs to catch up. Fix the spec, not the
+  code.
+- [ ] **GEDCOM import** — no GEDCOM 5.5 parser exists anywhere in the repo, and
+  ingesting one needs a parser plus a mapping onto simplified GedcomX plus merge
+  semantics against an existing tree. Alpha testers enter their starting tree
+  conversationally instead (`init-project` builds local stub persons from what
+  they type), and `docs/alpha-user-guide.md` says plainly that import is not
+  available.
+
 ## Pre-production
 - [ ] **Delete-janitor** — GC E2B sandboxes for sessions idle > N days (cost).
   There is no in-session reaper (E2B's `on_timeout: pause` lifecycle is the idle
@@ -45,11 +79,14 @@ Deferred items to revisit. Not blocking the alpha. Architecture context:
   sandbox-as-server arch; the `/v1` turn lock is already DB-backed.)
 
 ## Depends on other work
-- [ ] **Wiki page tools corpus** — `wiki_read` / `wiki_place_page` need the
-  pre-crawled wiki markdown (`wikiMarkdownDir`). Being handled by baking the
-  corpus into the `wiki-query-api` tool (not the sandbox image). Once that lands,
-  point those tools at it (or move them to the networked API like `wiki_search`).
-  Until then they error; everything else works.
+- [x] **Wiki page tools corpus — DONE.** `wiki_read` / `wiki_place_page` were
+  moved to the networked `wiki-query-api` like `wiki_search`; all three are
+  HTTP-only (`getWikiApiUrl()` + `fetch`), and the helper falls back to a working
+  default URL, so nothing needs baking into the sandbox image and no per-sandbox
+  config is required. Verified 2026-07-18. The stale `wikiMarkdownDir` comment in
+  `apps/server/sandbox/e2b.Dockerfile` was removed at the same time — it had been
+  describing a code path that no longer exists, which read as "the wiki page
+  tools are broken" long after they were fixed.
 
 ## FamilySearch login (unified front door)
 The hosted web workbench signs in with FamilySearch once; that login gates app

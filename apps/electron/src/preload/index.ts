@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld('api', {
     userPrompt: string
     agentDid: string
     agentShouldHave: string
+    correctAnswer?: string
     notes?: string
   }) => ipcRenderer.invoke('feedback:submit', payload)
 })
