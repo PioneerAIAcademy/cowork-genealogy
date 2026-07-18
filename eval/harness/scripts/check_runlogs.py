@@ -50,14 +50,26 @@ RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 
-# Orchestrator skills exempt from the per-skill runlog rules (2 + 3). These
-# skills are validated by e2e GPS fixtures, not unit tests, so by design they
-# have no `eval/tests/unit/<skill>/` scaffolding and no
-# `eval/runlogs/unit/<skill>/` dir. Without this exemption, any edit to the
+# Skills exempt from the per-skill runlog rules (2 + 3): those with no unit
+# suite by design, so they have no `eval/tests/unit/<skill>/` scaffolding and
+# no `eval/runlogs/unit/<skill>/` dir. Without this exemption, any edit to the
 # skill body hard-fails with "no run logs" and the `eval-cosmetic-skip` label
 # can't clear it — that escape hatch only relaxes rule 2 once a runlog dir
 # already exists.
-RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research"})
+#
+#   research             — the orchestrator; validated by e2e GPS fixtures.
+#   forget-and-rederive  — a setup/utility skill that sets up a practice run.
+#                          Its mechanical half is a deterministic Python script
+#                          (`scripts/forget.py`); its other half is a behavioral
+#                          prohibition (don't re-read the tree) that a unit
+#                          transcript can't observe. See docs/TODOs.md § "Eval
+#                          framework" — this exemption is a stopgap, not a
+#                          judgment that the skill is untestable.
+#
+# Keep this set minimal: it is the only way to edit a skill body without eval
+# discipline, so every addition needs the "no unit suite by design" rationale
+# above, not just "the gate is inconvenient right now."
+RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research", "forget-and-rederive"})
 
 
 def gh_error(message: str, *, file: str | None = None) -> None:

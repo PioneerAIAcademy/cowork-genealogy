@@ -254,6 +254,23 @@ Deferred during the #701 build.
   2026-07-18 while implementing Phase 3A.
 
 ## Eval framework
+- [ ] **Give `forget-and-rederive` real eval coverage and drop its runlog-gate
+  exemption.** It shipped in #732 with no `eval/tests/unit/forget-and-rederive/`
+  and no runlogs, so the first edit to its body hard-failed `check_runlogs.py`
+  with "no run logs" — which the `eval-cosmetic-skip` label cannot clear. It was
+  added to `RUNLOG_GATE_EXEMPT_SKILLS` as a stopgap, which means **its body can
+  now be edited with no eval discipline at all**. Its two halves need different
+  treatment: the mechanical half (`scripts/forget.py` selectors, cascade
+  reporting, the dry-run/apply split) is deterministic and unit-testable today;
+  the behavioral half — "having forgotten a fact, do not read it back off the
+  FamilySearch tree" — is a multi-turn abstention that a single unit transcript
+  can't observe, and likely wants an e2e fixture that forgets a slice and then
+  fails the run if `person_read`/`person_ancestors` is called on the affected
+  ids. Along with it: the backup-overwrite hazard documented in that skill's
+  "Re-invocation behavior" (`forget.py` rewrites
+  `.tree-before-forget.gedcomx.json` on every non-dry-run, so a second forget
+  destroys the pristine snapshot) is currently only prose — consider making the
+  script refuse to clobber an existing backup instead.
 - [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
   audit) — RESOLVED (#711 + record-extractor informant-craft follow-up).** The audit
   found 3 agent craft gaps + a christening-table gap. Resolution:
