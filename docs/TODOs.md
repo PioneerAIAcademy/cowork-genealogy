@@ -254,6 +254,40 @@ Deferred during the #701 build.
   2026-07-18 while implementing Phase 3A.
 
 ## Eval framework
+- [ ] **Adopt a run-log retention rule — `eval/runlogs/` is 147MB tracked and ~85%
+  of it is inert.** Measured 2026-07-18: 190 unit run logs (116MB) + 152 `.ann.json`
+  (2.9MB) + 56 e2e runs (~27MB). **Nothing in the repo reads more than the latest 2
+  run logs per skill** — `skill-improver`/`rubric-critic` read the latest released
+  or highest candidate, `skill_latency_report` reads `logs[-1]`/`logs[-2]`,
+  `check_runlogs.py` reads the latest, and the CRUD UI halts on first match. The
+  only all-history readers are the trend view (filters `released === true`) and
+  `calibrate_judge` (reads **only** `.ann.json`, 0.2MB). So 164 of 190 unit logs
+  are read by nothing.
+
+  **Root cause is process, not storage: the release action has never been used** —
+  0 released, 190 candidates, all `v1_`. `docs/plan/eval-runlog-versioning.md`
+  already defines the retention model (released `v{N}.json` kept forever; candidates
+  pruned by hand in the CRUD UI; scratch gitignored), but the candidate tier was
+  left manual and never performed. That also leaves the trend view rendering
+  nothing, since it filters on a flag no file carries. Adopting a rule without
+  closing the `v1` line on the mature skills just re-accumulates the same 108MB.
+
+  Proposed rule: (1) keep every `.ann.json` forever — 195 files, 3.1MB, expensive
+  genealogist labor and the sole `calibrate_judge` input; (2) keep all released
+  `v{N}.json` forever; (3) keep the latest 2 candidates per skill, pruning older
+  ones **that have no sibling `.ann.json`** (~25MB); (4) for older candidates that
+  *do* have an annotation, **strip the inline `snapshot` block instead of deleting
+  the file** — it is 46% of unit-runlog bytes, exists only to support activate /
+  active-detection, and a superseded candidate will never be activated, so this
+  keeps every judge rationale the annotation argues against (~37MB); (5) delete
+  e2e `.transcript.md` older than 60 days where the run has a finalized `.ann.json`
+  — nothing reads transcripts back, `result.py` calls them a lossy summary, and the
+  annotation carries the durable judgment (~5MB). Keep e2e `final-tree` /
+  `final-research` regardless: `grade-e2e-run` reads exactly those to produce future
+  annotations. **≈67MB reclaimed with zero loss of annotations, released logs, or
+  regradeable evidence.** Deleting all 164 superseded candidates outright would
+  reclaim 108MB but orphans 125 annotations from the traces they argue against —
+  not recommended.
 - [ ] **Make `forget.py` refuse to clobber an existing backup.** It writes
   `.tree-before-forget.gedcomx.json` unconditionally on every non-dry-run
   (`forget.py:332`), so the snapshot always reflects the tree at the start of
