@@ -62,5 +62,5 @@ truth, with no FamilySearch access — the starting tree was *constructed* from 
 document, not captured from a live `person_read` snapshot, so sanity-check its
 fidelity. `source_pid` is an unused placeholder (`PID-TODO`); §6.1 blocks every
 person-keyed tool, so neither the run nor the judge reads it. The §14
-fixture-validity run is still owed; that check is warn-only, so this PID-less draft
+fixture-validity run is still owed; it is not CI-gated, so this PID-less draft
 may land with the validity run outstanding.

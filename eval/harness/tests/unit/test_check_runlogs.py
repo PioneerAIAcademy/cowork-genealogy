@@ -286,3 +286,28 @@ def test_touched_agent_without_references_gates_nothing(monkeypatch, capsys, tmp
     rc = check_runlogs.main()
     assert rc == 0
     assert "All runlog rules satisfied" in capsys.readouterr().out
+
+
+# --- git_diff_touched_paths uses a 3-dot (merge-base) diff -----------------
+
+
+def test_touched_paths_uses_three_dot_diff(monkeypatch):
+    """Touched-skill detection must scope to the PR's own commits via a 3-dot
+    `base...head` refspec, so a branch merely behind main doesn't inherit
+    phantom touched skills from main-only additions appearing as deletions."""
+    monkeypatch.setenv("BASE_SHA", "base123")
+    monkeypatch.setenv("HEAD_SHA", "head456")
+    captured: dict = {}
+
+    def fake_check_output(cmd, *args, **kwargs):
+        captured["cmd"] = cmd
+        return "M\tpackages/engine/plugin/skills/foo/SKILL.md\n"
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", fake_check_output)
+    paths = check_runlogs.git_diff_touched_paths()
+    assert paths == ["packages/engine/plugin/skills/foo/SKILL.md"]
+    # The two SHAs are combined into one 3-dot arg, not passed as separate
+    # 2-dot operands (which would re-introduce the phantom-deletion bug).
+    assert "base123...head456" in captured["cmd"]
+    assert "base123" not in captured["cmd"]
+    assert "head456" not in captured["cmd"]

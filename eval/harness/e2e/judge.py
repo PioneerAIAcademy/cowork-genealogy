@@ -40,6 +40,14 @@ from e2e.validate_fixture import check_stripping
 
 
 DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
+# This judge is NOT temperature-pinned, and cannot be. The unit judge pins its
+# first sample to temperature=0 (harness/judge.py::JUDGE_TEMPERATURE), but
+# sampling parameters are removed on the Opus 4.7/4.8 family: sending
+# `temperature` here returns a 400 ("`temperature` is deprecated for this
+# model"). The asymmetry is an upstream API constraint, not an oversight — do
+# not "fix" it by adding temperature=0. Pinning would mean dropping to an older
+# judge model, which is a bigger loss than the grading jitter it would buy back.
+#
 # Generous cap: on a rich run (large tree, several findings, a long proof), the
 # judge's adaptive thinking + the structured verdict together overflowed the old
 # 4096 — the JSON was truncated (stop_reason='max_tokens') → JudgeOutputError →
@@ -239,6 +247,7 @@ def apply_avoid_guard(
     *,
     expected_findings: dict[str, Any],
     final_tree: dict[str, Any] | None,
+    subject_person_ids: "set[str] | frozenset[str] | list[str] | None" = None,
 ) -> dict[str, Any]:
     """Deterministic backstop for ``polarity: "avoid"`` findings (spec §3.4.1).
 
@@ -256,6 +265,13 @@ def apply_avoid_guard(
     and in the affected findings' ``notes``. Returns the input unchanged
     (same object) when there is nothing to do — including when the judge was
     skipped or errored (no ``per_finding``).
+
+    ``subject_person_ids`` (the fixture's own subject) are exempt from the
+    match. The subject legitimately stays in the tree, and in a same-name
+    ("look-alike") fixture the avoided namesake shares the subject's name by
+    construction — so a name-token hit on the subject is a false positive, not
+    an over-claim. A real over-claim attaches a *different* person id, which is
+    still caught.
     """
     findings = expected_findings.get("findings") or []
     avoid = [f for f in findings if str(f.get("polarity", "recover")) == "avoid"]
@@ -263,6 +279,9 @@ def apply_avoid_guard(
         return judge_output
 
     suspects = check_stripping({"findings": avoid}, final_tree or {})
+    exempt = {str(pid) for pid in (subject_person_ids or ())}
+    if exempt:
+        suspects = [s for s in suspects if s.person_id not in exempt]
     if not suspects:
         return judge_output
 

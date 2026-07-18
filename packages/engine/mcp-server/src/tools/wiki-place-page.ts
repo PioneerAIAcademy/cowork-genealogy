@@ -1,8 +1,6 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
 import { getPlaceCandidateNames } from "./place-search.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
-import { getWikiMarkdownDir } from "../auth/config.js";
+import { getWikiApiUrl } from "../auth/config.js";
 import type {
   WikiPlacePageInput,
   WikiPlacePageResult,
@@ -10,6 +8,12 @@ import type {
 } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
+
+interface PageApiResponse {
+  title: string;
+  content: string;
+  source_url: string;
+}
 
 function nameToSlug(name: string): string {
   return name.trim().replace(/ /g, "_");
@@ -38,32 +42,60 @@ function candidateSlugsFor(
   }
 }
 
-async function tryReadFile(filePath: string): Promise<string | null> {
+/**
+ * GET {WIKI_API_URL}/page/{slug}.
+ * Returns the response body on 200, null on 404 (so the caller can try
+ * the next candidate), and throws on network failure or any other
+ * non-OK status (a transient 5xx must not be silently treated as
+ * "page not found").
+ */
+async function fetchPage(
+  baseUrl: string,
+  slug: string
+): Promise<PageApiResponse | null> {
+  let response: Response;
   try {
-    return await readFile(filePath, "utf8");
-  } catch {
-    return null;
+    response = await fetch(`${baseUrl}/page/${slug}`, {
+      method: "GET",
+      headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
+    });
+  } catch (error) {
+    const cause = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Could not reach wiki-query-api at ${baseUrl}. Is the server running? (${cause})`
+    );
   }
+
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`wiki-query-api error: ${response.status}`);
+  }
+  return (await response.json()) as PageApiResponse;
 }
 
 /**
- * Try a list of candidate place names against the local pre-crawled wiki
- * corpus, returning the first matching page or null. Pure file reads — the
- * file-existence check is the reliable filter (only the canonical name has a
- * matching file). No network.
+ * Try a list of candidate place names against the wiki-query-api server,
+ * returning the first matching page or null. The server's 404 is the
+ * reliable filter (only the canonical name has a corresponding page in
+ * the corpus).
  */
 async function tryNames(
   names: string[],
   getCandidateSlugs: (nameSlug: string) => string[],
-  wikiDir: string,
+  baseUrl: string,
   standardPlace: string
 ): Promise<WikiPlacePageResult | null> {
   for (const name of names) {
     const nameSlug = nameToSlug(name);
     for (const slug of getCandidateSlugs(nameSlug)) {
-      const content = await tryReadFile(join(wikiDir, `${slug}.md`));
-      if (content !== null) {
-        return { url: `${FS_WIKI_BASE}/${slug}`, content, standardPlace, placeName: name };
+      const page = await fetchPage(baseUrl, slug);
+      if (page !== null) {
+        return {
+          url: `${FS_WIKI_BASE}/${slug}`,
+          content: page.content,
+          standardPlace,
+          placeName: name,
+        };
       }
     }
   }
@@ -81,13 +113,13 @@ async function readPlacePage(
     );
   }
 
-  const wikiDir = await getWikiMarkdownDir();
+  const baseUrl = await getWikiApiUrl();
   const leaf = standardPlace.split(",")[0].trim();
 
-  // 1) Common case: try the standard place's own leaf name against the local
-  //    wiki files first — no network (e.g. "Portugal" -> Portugal_Genealogy.md).
+  // 1) Common case: try the standard place's own leaf name against the
+  //    server first (e.g. "Portugal" -> Portugal_Genealogy).
   if (leaf) {
-    const hit = await tryNames([leaf], getCandidateSlugs, wikiDir, standardPlace);
+    const hit = await tryNames([leaf], getCandidateSlugs, baseUrl, standardPlace);
     if (hit) return hit;
   }
 
@@ -97,7 +129,7 @@ async function readPlacePage(
   const placeId = await standardPlaceToPlaceId(standardPlace);
   if (placeId) {
     const variants = (await getPlaceCandidateNames(placeId)).filter((n) => n !== leaf);
-    const hit = await tryNames(variants, getCandidateSlugs, wikiDir, standardPlace);
+    const hit = await tryNames(variants, getCandidateSlugs, baseUrl, standardPlace);
     if (hit) return hit;
   }
 
@@ -124,11 +156,11 @@ export const wikiPlacePageSchema = {
   description:
     "Return a FamilySearch Research Wiki page for a place (country, US state, " +
     "or Canadian province). Provide a standardPlace from place_search and the " +
-    "section you want. Reads the pre-crawled wiki markdown for that jurisdiction " +
-    "and returns it. The wiki corpus covers the country level everywhere, plus " +
-    "the state/province level for the US and Canada; for a more specific place " +
-    "(county, town) no page exists — broaden the standardPlace one jurisdiction " +
-    "(see places guidance) and call again.",
+    "section you want. Fetches the markdown for that jurisdiction from the " +
+    "hosted wiki-query-api server. The wiki corpus covers the country level " +
+    "everywhere, plus the state/province level for the US and Canada; for a " +
+    "more specific place (county, town) no page exists — broaden the " +
+    "standardPlace one jurisdiction (see places guidance) and call again.",
   inputSchema: {
     type: "object" as const,
     properties: {

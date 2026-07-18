@@ -62,6 +62,7 @@ Current live tools:
 
 from __future__ import annotations
 
+import functools
 import json
 import subprocess
 import sys
@@ -71,7 +72,6 @@ from typing import Any
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
 from harness.fixtures import build_manifest, load_fixtures, matches
-from harness.tool_catalog import default_tools_dir, load_tool_catalog
 
 # Bare tool names that are always registered as live handlers rather than
 # fixture-backed mocks. See module docstring for the rationale.
@@ -88,6 +88,73 @@ LIVE_TOOLS: set[str] = {
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 
+# Last-resort input schema for a tool that is neither in the compiled build
+# nor given an explicit fixture-provided input_schema (e.g. an aspirational
+# tool that has fixtures but no .ts source yet). Lets the LLM pass any args.
+# Read-only — the SDK treats an advertised inputSchema as a validation
+# descriptor and never mutates it.
+_PERMISSIVE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": True,
+}
+
+
+@functools.lru_cache(maxsize=1)
+def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
+    """Load ``{tool_name: {"description", "inputSchema"}}`` from the compiled
+    MCP server build (``allToolSchemas`` in ``build/tool-schemas.js``) — the
+    single source of truth for the tool list production advertises.
+
+    This is what both the fixture-backed and live mock tools use to advertise
+    production-identical descriptions and input schemas, replacing two
+    hand-maintained mirrors that had drifted: the per-live-tool input schemas
+    (``research_append`` once lacked ``ops``) and the fixture fallback that
+    left tools with no schema at all (the match-tool fixtures, so the model
+    probed with ``{}`` and was graded down for the harness-induced retries —
+    rx_007/008).
+
+    Importing the aggregate resolves the engine's ``node_modules``, which is a
+    guaranteed prerequisite of every eval run (the Makefile's ``$(ENGINE_BUILD)``
+    depends on ``$(ENGINE_DEPS)``, and ``run_tests.py``'s build-fresh gate aborts
+    a stale/missing build). Returns ``{}`` on any failure so the mock degrades
+    to permissive schemas / stub descriptions rather than aborting the run.
+
+    Cached at module level so ``node`` is spawned once per process, not once
+    per test. The returned structures are treated as read-only.
+    """
+    schemas_js = _MCP_BUILD / "tool-schemas.js"
+    if not schemas_js.exists():
+        return {}
+    sjs_posix = str(schemas_js).replace("\\", "/").replace("'", "\\'")
+    schemas_url = ("file:///" + sjs_posix) if sys.platform == "win32" else sjs_posix
+    script = (
+        f"import {{ allToolSchemas }} from '{schemas_url}';"
+        " const out = allToolSchemas.map("
+        "(s) => ({ name: s.name, description: s.description, inputSchema: s.inputSchema })"
+        ");"
+        " process.stdout.write(JSON.stringify(out));"
+    )
+    try:
+        proc = subprocess.run(
+            ["node", "--input-type=module", "--eval", script],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        out = proc.stdout.strip()
+        if not out:
+            return {}
+        return {
+            entry["name"]: {
+                "description": entry.get("description"),
+                "inputSchema": entry.get("inputSchema"),
+            }
+            for entry in json.loads(out)
+        }
+    except Exception:
+        return {}
+
 # Fixture-backed search tools whose canned response must be *staged* so the
 # live `research_log_append` can finalize the results/<log_id>.json sidecar.
 # The real record_search/fulltext_search stage their verbatim payload to
@@ -95,7 +162,7 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # a canned payload, so we materialize the staged file here (via the compiled
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
-STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search"}
+STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
 
 
 def _stage_search_results(
@@ -165,23 +232,33 @@ def create_mock_server(
     """
     fixtures = load_fixtures(fixture_names, fixtures_dir)
     manifest = build_manifest(fixtures)
-    # Real production descriptions when available (eval/production parity);
-    # fall back to a generic stub per-tool below. Callers may pass an
-    # explicit map (e.g., tests) to override the catalog lookup.
+    # Production tool metadata (descriptions + input schemas) pulled from the
+    # compiled build — the single source of truth (eval/production parity).
+    build_catalog = _load_build_tool_catalog()
+    # Real production descriptions when available; fall back to a generic stub
+    # per-tool below. Callers may pass an explicit map (e.g., tests) to
+    # override the catalog lookup.
     if tool_descriptions is None:
-        tool_descriptions = load_tool_catalog(default_tools_dir())
+        tool_descriptions = {
+            name: meta["description"]
+            for name, meta in build_catalog.items()
+            if meta.get("description")
+        }
     call_log: list[dict[str, Any]] = []
 
     tools = []
     for tool_name, bucket in manifest.items():
         predicated = list(bucket["predicated"])
-        # Fixture-provided input schema (optional) — when absent, use a
-        # permissive shape so the LLM can still pass any args.
-        input_schema = bucket.get("input_schema") or {
-            "type": "object",
-            "properties": {},
-            "additionalProperties": True,
-        }
+        # Input schema precedence: the compiled production schema wins (the
+        # single source of truth), so fixture-backed tools advertise exactly
+        # what production does. A fixture-provided input_schema is honored only
+        # for tools absent from the build (aspirational tools with fixtures but
+        # no .ts source yet); a permissive shape is the last resort.
+        input_schema = (
+            (build_catalog.get(tool_name) or {}).get("inputSchema")
+            or bucket.get("input_schema")
+            or _PERMISSIVE_SCHEMA
+        )
 
         # Capture loop variables via default args so closures bind by value.
         async def handler(
@@ -260,305 +337,19 @@ def create_mock_server(
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
         )
-        input_schema = _live_tool_input_schema(live_tool_name)
+        # Same source as fixture tools: the compiled production schema. Every
+        # live tool has a .ts source, so it is always in the build; the
+        # permissive fallback only guards a missing/failed build.
+        input_schema = (
+            (build_catalog.get(live_tool_name) or {}).get("inputSchema")
+            or _PERMISSIVE_SCHEMA
+        )
         decorated = tool(live_tool_name, description, input_schema)(live_handler)
         tools.append(decorated)
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
     tools_by_name = {t.name: t for t in tools}
     return server, call_log, tools_by_name
-
-
-def _live_tool_input_schema(tool_name: str) -> dict[str, Any]:
-    """Return the input schema for a live tool."""
-    if tool_name == "validate_research_schema":
-        return {
-            "type": "object",
-            "properties": {"projectPath": {"type": "string"}},
-            "required": ["projectPath"],
-        }
-    if tool_name == "research_log_append":
-        # Mirror the production tool's input schema (research-log-append.ts).
-        # externalSite MUST be a typed nested object here — production advertises
-        # it, so omitting it makes the eval model omit/stringify the field on its
-        # first call (a fidelity gap, not a skill defect). The tool-side coercion
-        # is a backstop for stringification; this declaration prevents the
-        # first-call omission so eval behaviour matches production.
-        return {
-            "type": "object",
-            "properties": {
-                "projectPath": {"type": "string"},
-                "tool": {"type": "string"},
-                "query": {"type": "object"},
-                "outcome": {"type": "string", "enum": ["positive", "negative", "partial", "error"]},
-                "resultsExamined": {"type": "number"},
-                "planItemId": {"type": ["string", "null"]},
-                "resultsAvailable": {"type": ["number", "null"]},
-                "notes": {"type": ["string", "null"]},
-                "externalSite": {
-                    "type": ["object", "null"],
-                    "properties": {
-                        "site": {
-                            "type": "string",
-                            "enum": [
-                                "ancestry",
-                                "myheritage",
-                                "findmypast",
-                                "findagrave",
-                                "newspapers",
-                                "familysearch_web",
-                            ],
-                        },
-                        "urlGenerated": {"type": "string"},
-                        "captureReceived": {"type": "boolean"},
-                        "captureFilename": {"type": ["string", "null"]},
-                    },
-                    "required": ["site", "urlGenerated", "captureReceived"],
-                },
-                "stagedResultsRef": {"type": ["string", "null"]},
-            },
-            "required": ["projectPath", "tool", "query", "outcome", "resultsExamined"],
-        }
-    if tool_name == "research_append":
-        # Mirror the production tool's input schema (research-append.ts).
-        # Advertising the `ops` batch array, the `sourceDescription` composite
-        # object, and the per-op section/op enums (rather than a single-op-only
-        # stub) keeps eval behaviour matching production — the model batches a
-        # whole record and lets the tool create the tree S entry on its first
-        # call. Hand-maintained: update alongside researchAppendSchema.
-        _section_enum = [
-            "sources",
-            "assertions",
-            "person_evidence",
-            "questions",
-            "plans",
-            "plan_items",
-            "conflicts",
-            "hypotheses",
-            "timelines",
-            "proof_summaries",
-            "evaluations",
-            "known_holdings",
-            "project",
-        ]
-        _ra_op_fields = {
-            "section": {"type": "string", "enum": _section_enum},
-            "op": {"type": "string", "enum": ["append", "update"]},
-            "entry": {"type": "object"},
-            "entryId": {"type": "string"},
-            "fields": {"type": "object"},
-            "planId": {"type": "string"},
-        }
-        return {
-            "type": "object",
-            "properties": {
-                "projectPath": {"type": "string"},
-                **_ra_op_fields,
-                "ops": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": _ra_op_fields,
-                        "required": ["section", "op"],
-                    },
-                },
-                "sourceDescription": {
-                    "type": "object",
-                    "properties": {
-                        "title": {"type": "string"},
-                        "author": {"type": "string"},
-                        "url": {"type": "string"},
-                    },
-                    "required": ["title"],
-                },
-                "resolveStandardPlace": {"type": "boolean"},
-            },
-            "required": ["projectPath"],
-        }
-    if tool_name == "tree_edit":
-        # Mirror the production tool's input schema (tree-edit.ts). Advertising
-        # the `operation` enum and the `ops` batch array (rather than a
-        # permissive stub) keeps eval behaviour matching production — the model
-        # picks a valid operation and can batch on its first call. Additive ops
-        # only; the correction/removal ops are tree_correct's (the split).
-        _op_enum = [
-            "add_fact",
-            "add_name",
-            "add_person",
-            "add_relationship",
-            "add_source",
-            "add_household_children",
-        ]
-        _household_member_items = {
-            "type": "object",
-            "properties": {
-                "given": {"type": "string"},
-                "surname": {"type": "string"},
-                "gender": {
-                    "type": "string",
-                    "description": "Male/Female/Unknown (M/F/U accepted).",
-                },
-            },
-            "required": ["gender"],
-        }
-        _op_fields = {
-            "operation": {
-                "type": "string",
-                "enum": _op_enum,
-                "description": (
-                    "The addition to perform. Corrections/removals: use "
-                    "tree_correct."
-                ),
-            },
-            "personId": {
-                "type": "string",
-                "description": (
-                    "Target person id — for add_fact (person-held facts; "
-                    "exactly one of personId or relationshipId) and add_name."
-                ),
-            },
-            "relationshipId": {
-                "type": "string",
-                "description": (
-                    "Target relationship id — for add_fact on a Couple "
-                    "relationship's own facts (e.g. a Marriage lives on the Couple, "
-                    "not on each spouse; exactly one of personId or relationshipId)."
-                ),
-            },
-            "fact": {
-                "type": "object",
-                "description": (
-                    "The fact to add (full, no id). "
-                    "date/standard_date/place/standard_place/value "
-                    'are plain strings (date: "2 October 1876"), never nested '
-                    "objects."
-                ),
-            },
-            "name": {"type": "object"},
-            "person": {
-                "type": "object",
-                "description": (
-                    "The person to add (gender + at least one name; no ids — the "
-                    "tool assigns I, N, and F ids, including for any inline "
-                    "`facts`)."
-                ),
-            },
-            "relationship": {"type": "object"},
-            "source": {"type": "object"},
-            "parents": {
-                "type": "array",
-                "description": (
-                    "add_household_children: the record's parent roles as the "
-                    "RECORD names them — the tool matches them against tree "
-                    "persons."
-                ),
-                "items": _household_member_items,
-            },
-            "children": {
-                "type": "array",
-                "description": (
-                    "add_household_children: the record's child_N roles (the "
-                    "subject included — the tool skips anyone already in the "
-                    "tree)."
-                ),
-                "items": _household_member_items,
-            },
-            "resolveStandardPlace": {"type": "boolean"},
-        }
-        return {
-            "type": "object",
-            "properties": {
-                "projectPath": {"type": "string"},
-                **_op_fields,
-                "ops": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": _op_fields,
-                        "required": ["operation"],
-                    },
-                },
-            },
-            "required": ["projectPath"],
-        }
-    if tool_name == "project_context":
-        # Mirror the production tool's input schema (project-context.ts) —
-        # never leave a live tool on the permissive fallback (a permissive
-        # shape lets the eval model invent argument forms production rejects).
-        return {
-            "type": "object",
-            "properties": {"projectPath": {"type": "string"}},
-            "required": ["projectPath"],
-        }
-    if tool_name == "tree_correct":
-        # Mirror the production tool's input schema (tree-correct.ts) — the
-        # correction/removal half of the tree_edit split.
-        _op_enum = [
-            "update_fact",
-            "update_name",
-            "update_person",
-            "update_source",
-            "remove",
-        ]
-        _op_fields = {
-            "operation": {
-                "type": "string",
-                "enum": _op_enum,
-                "description": (
-                    "The correction/removal to perform. Additions: use tree_edit."
-                ),
-            },
-            "personId": {
-                "type": "string",
-                "description": (
-                    "Target person id — for update_fact (person-held facts; "
-                    "exactly one of personId or relationshipId), update_name, "
-                    "update_person."
-                ),
-            },
-            "factId": {"type": "string"},
-            "nameId": {"type": "string"},
-            "relationshipId": {
-                "type": "string",
-                "description": (
-                    "Target relationship id — for update_fact on a Couple "
-                    "relationship's own facts (exactly one of personId or "
-                    "relationshipId), and for remove."
-                ),
-            },
-            "sourceId": {"type": "string"},
-            "fact": {
-                "type": "object",
-                "description": (
-                    "update_fact: the fields to set (id immutable). "
-                    "date/standard_date/place/standard_place/value "
-                    'are plain strings (date: "2 October 1876"), never nested '
-                    "objects."
-                ),
-            },
-            "name": {"type": "object"},
-            "source": {"type": "object"},
-            "gender": {"type": "string"},
-            "ark": {"type": "string"},
-            "resolveStandardPlace": {"type": "boolean"},
-        }
-        return {
-            "type": "object",
-            "properties": {
-                "projectPath": {"type": "string"},
-                **_op_fields,
-                "ops": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": _op_fields,
-                        "required": ["operation"],
-                    },
-                },
-            },
-            "required": ["projectPath"],
-        }
-    return {"type": "object", "properties": {}, "additionalProperties": True}
 
 
 def _make_live_handler(

@@ -1,0 +1,1346 @@
+{
+  "project": {
+    "id": "rp_hole_parents_negative",
+    "objective": "Who were the parents of Christian Peter Hole?",
+    "subject_person_ids": [
+      "KD96-TV2"
+    ],
+    "status": "completed",
+    "created": "2026-07-09",
+    "updated": "2026-07-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1876 christening record for Christian Peter Hole in Ringebu, Oppland, Norway name as his parents?",
+      "rationale": "Christian Peter Hole was christened 5 November 1876 in Ringebu, Oppland, Norway. Norwegian parish baptismal registers routinely record both parents' names, making this the most direct and likely richest source for parentage. Ringebu records are indexed on FamilySearch. This is the gatekeeper question: identifying the parents from the christening record provides the foundation for all further research into Norwegian parentage.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-13",
+      "resolution_assertion_ids": [
+        "a_004",
+        "a_005"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three searches across FamilySearch church, census, and marriage collections. The 1876 Ringebu christening record (src_001) directly names Benjamin Christophersen (father) and Matea Pedersdtr (mother). The 1876 V\u00e5g\u00e5 marriage record (src_003) independently confirms this couple married 17 Aug 1876 \u2014 46 days before Christian Peter's birth \u2014 from a different record type with different informants. Two independent sources from different Norwegian parishes and record-creation processes converge on the same parents, with the christening providing direct child-linking evidence and the marriage corroborating the couple. No contradicting evidence found across 8 logged searches.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the christening record (src_001, a_004\u2013a_005) directly names Benjamin Christophersen as father and Matea Pedersdtr as mother; the marriage record (src_003) independently confirms this couple, married 46 days before the birth. The specific research question (what the 1876 christening record names as parents) is definitively answered.",
+          "repository_breadth": "FamilySearch church books (4237104), census (1529106), and marriages (1468080) all searched with multiple query variants. Emigration searched on FamilySearch (nil, log_007\u2013008); Ancestry emigration (collection 61757) not accessible in this session and noted as unsearched. Levy rolls (pli_006) skipped \u2014 Christian Peter emigrated c. 1882 at ~age 6, before meaningful enrollment age. Norwegian emigration records are the one unsearched external source; they could corroborate but are extremely unlikely to name different parents.",
+          "original_substitution": "Christening image (ark:/61903/3:1:3QHK-Q3PG-BXD7) was identified via record_read and genuinely attempted via image-reader but is 1.1 MB \u2014 exceeds the MCP transport cap of ~700 KB; verified pursued-and-unavailable, not an unsearched gap. Marriage original image not separately attempted; same transport limitation applies. Both records are derivative database entries derived from original Norwegian parish registers. The two indexed records are internally consistent and cross-corroborate, mitigating the non-image-confirmation limitation.",
+          "independent_verification": "Two independent sources: (1) src_001 \u2014 1876 Ringebu christening places Christian Peter as child of both named parents (direct parentage evidence; minister and parents as informants); (2) src_003 \u2014 1876 V\u00e5g\u00e5 marriage record places Benjamin Christophersen and Mathea Pedersdr as a married couple 46 days before the birth (indirect corroboration; bride, groom, minister as informants). Different record types (baptism vs. marriage), different parishes (Ringebu vs. V\u00e5g\u00e5), different events, different informants \u2014 genuinely independent.",
+          "evidence_class": "src_001 (christening) is the primary evidence record: original Norwegian parish baptismal entry accessed via FamilySearch database. The informants (officiating minister, parents present at the christening) had first-hand knowledge of the child's parentage. Evidence type is direct for the parentage assertions (a_004, a_005). src_003 (marriage) provides primary information for the marriage fact with direct evidence of the couple's identity.",
+          "conflict_resolution": "One apparent conflict resolved: the 1875 census household head 'Kristofer Kristofersen Hole' has a different patronymic from the marriage record's named father 'Christopher Jespersen' (Kristofersen = son of Kristofer; Jespersen = son of Jesper \u2014 different men). The 1875 census shows Benjamin in Kristofer's household but the record carries no relationship field; Benjamin was likely boarding, not a son. This discrepancy does not affect the parentage conclusion for q_001. No unresolved conflicts on the main question.",
+          "overturn_risk": "Low. The christening record is direct, primary evidence from an original Norwegian parish register naming both parents. The marriage record independently converges on the same couple. No contradicting parentage evidence was found across 8 searches. The one significant unsearched source (Ancestry Norway emigration records) could show the family emigrating together, adding corroboration \u2014 but it cannot plausibly name different parents for a child whose baptism explicitly records both parents' names in a contemporaneous ministerial entry."
+        }
+      },
+      "created": "2026-07-13"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-13",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Ringebu, Oppland, Norway",
+          "date_range": "1876",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 4237104 'Norway, Church Books, 1797-1958' (14M+ records, fully indexed) aggregates Ringebu parish baptism registers. A baptism entry for Christian Peter born 2 Oct 1876 should name both parents, their farm (likely 'Hoel'/'Hole'), and the child's patronymic. Search under given name 'Christian Peter' with birth year 1876 and place Ringebu; try both 'Hole' (farm name) and no-surname to account for patronymic indexing. This is the single most direct source for the parentage question.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Ringebu, Oppland, Norway",
+          "date_range": "1634-1927",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1467014 'Norway, Baptisms, 1634-1927' indexes baptism records separately from the broader church-book collection (1467014 vs. 4237104 pull from different indexing projects). If pli_001 yields no result, search here with the same name variants. Together these two collections cover virtually all indexed Ringebu baptisms.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Ringebu, Oppland, Norway",
+          "date_range": "1875",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1529106 'Norway, Census, 1875' (333K records indexed) captures the Ringebu population one year before Christian's birth. His parents should appear as a household unit. The 1875 census names all household members with age, relationship, birthplace, and occupation, establishing the parents' identities and allowing cross-referencing against the baptism entry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Ringebu, Oppland, Norway",
+          "date_range": "1865",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 3756102 'Norway, Census, 1865' (1.7M records indexed) captures Ringebu households eleven years before Christian's birth. His parents and any older siblings would appear. The 1865 census provides birth years and birthplaces for parents, enabling identification even if their surname differs between records (patronymic vs. farm name).",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Ringebu, Oppland, Norway",
+          "date_range": "1840-1876",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1468080 'Norway, Marriages, 1660-1926' (1.3M records). This is the dedicated parents'-marriage plan item: the couple's marriage record (a) confirms the two individuals as a married pair; (b) supplies the mother's maiden name, which census and death records typically omit; and (c) by its date relative to Christian's 1876 birth corroborates a father whose name appears only indirectly on census or death records. Note: the marriage proves the couple married, not that Christian is their child \u2014 that link is established by the baptism placing him with them. Search for the father identified from the baptism/census, targeting Ringebu, ca. 1840-1876.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "military",
+          "jurisdiction": "Ringebu, Oppland, Norway",
+          "date_range": "1876-1900",
+          "repository": "other",
+          "rationale": "Norwegian conscription levy rolls (l\u00e6gdsruller/rulleregistre) at Digitalarkivet (media.digitalarkivet.no/kb/browse and riksarkivet.no). Per BCG guidance for male subjects in Norwegian patronymic/conscription-era records: Christian Peter Hole was enrolled in the levy rolls as a boy under his father's name, making this direct parentage evidence. The father's name appears above the son's entry; session notations track the father's status. Search Digitalarkivet's military/conscription records for Ringebu/Oppland, ca. 1876-1900. Many rolls are browse-only images; if so, route to search-images.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Ringebu, Oppland, Norway",
+          "date_range": "1876",
+          "repository": "other",
+          "rationale": "Browse Ringebu parish church books directly at Digitalarkivet (media.digitalarkivet.no/en/kb/browse) \u2014 the Norwegian national digital archive. If the indexed FamilySearch searches (pli_001, pli_002) miss the baptism due to indexing gaps or name variant issues, the original church register images are accessible here. Navigate to Ringebu prestekontor, locate the 1876 baptism register, and read the October\u2013November 1876 pages. Route to search-images skill for this browse-only step.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "immigration",
+          "jurisdiction": "Norway",
+          "date_range": "1882-1884",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 61757 'Norway Emigration Records, 1867-1960'. Christian Peter Hole emigrated from Norway ca. 1882-1883 per the tree facts. Norwegian emigration protocols (utvandrerprotokoll) typically list the emigrant's name, age, place of origin, destination, and head of household \u2014 they may name the father or record the family unit, giving indirect parentage evidence. Search for 'Christian' (or 'Christian Peter') Hole/Hoel emigrating from Ringebu, Oppland, 1882-1884.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-13T17:33:07.909Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Church Books, 1797-1958 (4237104)",
+        "surname": "Hole",
+        "givenName": "Christian",
+        "birthYearFrom": 1874,
+        "birthYearTo": 1878,
+        "birthPlace": "Ringebu, Oppland, Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 8,
+      "notes": "8 results returned; all are false positives matching loosely on 'Christian'+'Hole' (e.g. Kristian Holoen, Kristen Holen). Top match score 0.00055 \u2014 effectively zero. subjectResolvable: false. No match for Christian Peter Hole born 2 Oct 1876 in Ringebu. In Norwegian records 'Hole' is a farm name; the child's indexed surname may be a patronymic (e.g. Christiansen) rather than the farm name. Retrying with recordCountry anchor and no surname."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-13T17:34:11.990Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Church Books, 1797-1958 (4237104)",
+        "recordCountry": "Norway",
+        "givenName": "Christian",
+        "birthYearFrom": 1876,
+        "birthYearTo": 1876,
+        "birthPlace": "Ringebu, Oppland, Norway"
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 402,
+      "notes": "Strong hit: 'Christian Peder', born 2 Oct 1876, baptized 5 Nov 1876, Ringebu, Oppland \u2014 matchScore 0.886, matchConfidence 5, already attached to KD96-TV2. Father: Benjamin Christophersen (b. 1853); Mother: Matea Pedersdtr (b. 1857). Record ARK: ark:/61903/1:1:683F-NTZ9. Passing to record-extraction."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-13T17:44:38.250Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Census, 1875 (1529106)",
+        "surname": "Christophersen",
+        "givenName": "Benjamin",
+        "residenceYearFrom": 1875,
+        "residenceYearTo": 1875,
+        "residencePlace": "Ringebu, Oppland, Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results. Benjamin Christophersen not found in 1875 census with Ringebu place filter. Trying broader place (Oppland) and no-surname variants."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-13T17:45:22.392Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway, Census, 1875 (1529106)",
+        "surname": "Christophersen",
+        "givenName": "Benjamin",
+        "birthYearFrom": 1848,
+        "birthYearTo": 1858,
+        "recordCountry": "Norway"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 3,
+      "notes": "3 results, none in Ringebu or Oppland (L\u00f8ten/Hedmark, Akershus, \u00d8stfold). All false positives. Note: collection 1529106 has only 333K records vs. Norway population ~1.8M in 1875 \u2014 substantially incomplete; nil may reflect indexing gaps rather than absence."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-13T17:49:10.517Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway Census 1875",
+        "collectionId": 1529106,
+        "givenName": "Benjamin",
+        "birthYearFrom": 1848,
+        "birthYearTo": 1858,
+        "recordCountry": "Norway",
+        "residencePlace": "Ringebu",
+        "residenceYearFrom": 1875,
+        "residenceYearTo": 1875,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 26,
+      "notes": "26 results; subjectResolvable:false (I1 too sparse to score). Top candidate: Benjamin Kristofersen Hole (ark:/61903/1:1:V65K-3XF), born 1852 Lesje, household of Kristofer Kristofersen Hole in V\u00e5g\u00e5 \u2014 qualitatively plausible (Kristofersen\u2248Christophersen; V\u00e5g\u00e5 adjacent to Ringebu). Routing to record-extraction for full review."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-13T18:01:34.628Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Norway Marriages 1660-1926",
+        "collectionId": 1468080,
+        "givenName": "Benjamin",
+        "surname": "Christophersen",
+        "spouseGivenName": "Matea",
+        "recordType": "marriage",
+        "marriageYearFrom": 1868,
+        "marriageYearTo": 1876,
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 21,
+      "notes": "Top result ark:/61903/1:1:NWCK-N49: Benjamin Christophersen (b.1852) married Mathea Pedersdr (b.1857) on 17 Aug 1876 in Vag\u00e5 \u2014 exactly matches christening parents. Groom's father: Christopher Jespersen (new info; different patronymic from 1875 census household head). Routing to record-extraction."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-13T18:08:17.103Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Christian",
+        "surname": "Hole",
+        "recordType": "immigration",
+        "recordCountry": "Norway",
+        "anyYearFrom": 1880,
+        "anyYearTo": 1885
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "0 results. FamilySearch has no indexed Norwegian emigration records for Christian Hole 1880-1885. 'Hole' is a US farm name; Norwegian records would use patronymic. Retried with father's name below."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-13T18:08:25.437Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Benjamin",
+        "surname": "Christophersen",
+        "recordType": "immigration",
+        "recordCountry": "Norway",
+        "anyYearFrom": 1880,
+        "anyYearTo": 1885
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "0 results. FamilySearch has no indexed Norwegian emigration records matching the family head for 1880-1885. Ancestry collection 61757 (Norway Emigration Records 1867-1960) is the planned primary source but is not accessible within this FamilySearch-focused autonomous session."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Norway Church Books, 1815-1930\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:683F-NTZ9 : Sun Jul 21 04:11:09 UTC 2024), Entry for Christian Peder, \"Norway Church Books, 1815-1930\", 5 Nov 1876.",
+      "citation_detail": {
+        "who": "Parish clergy of Ringebu parish (Church of Norway)",
+        "what": "Baptismal entry for Christian Peder, recording birth and christening dates and naming parents Benjamin Christophersen and Matea Pedersdtr",
+        "when_created": "5 Nov 1876",
+        "when_accessed": "2026-07-13",
+        "where": "Ringebu, Oppland, Norway (parish church register)",
+        "where_within": "Norway Church Books, 1815-1930; FamilySearch collection 4237104, image ark:/61903/1:2:4BXD-XNCV"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4BXD-XNCV",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1",
+      "notes": "FamilySearch database/index entry derived from the original Ringebu parish baptismal register. The original church register image (ark:/61903/3:1:3QHK-Q3PG-BXD7) was identified and a read was genuinely attempted but was inaccessible due to file size (1.1 MB exceeds the MCP transport limit). Information is primary (officiating minister and parents were present). Classification corrected from 'original' per GPS mentor critique of ps_001."
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Norway Census, 1875,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:9M3P-FQ4T : 8 November 2017), Household of Kristofer Kristofersen Hole, Stade Nodre, V\u00e5g\u00e5, Oppland, Norway, Rikssarkivet, Oslo (National Archives, Oslo); FHL microfilm 273,226.",
+      "citation_detail": {
+        "who": "Rikssarkivet (Norwegian National Archives), Oslo; indexed by FamilySearch",
+        "what": "1875 Norway Census enumeration, household of Kristofer Kristofersen Hole",
+        "when_created": "1875",
+        "when_accessed": "2026-07-13",
+        "where": "Stade Nodre, V\u00e5g\u00e5, Oppland, Norway",
+        "where_within": "Rikssarkivet, Oslo (National Archives, Oslo); FHL microfilm 273,226"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:V65K-3XF",
+      "notes": "original not examined \u2014 accessed via FamilySearch indexed database/search result (record_read from staged search sidecar); the underlying microfilm image (FHL 273,226) was not viewed directly.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Norway Marriages, 1660-1926\", database, FamilySearch (https://familysearch.org/ark:/61903/1:2:MY3F-K4X : 20 February 2020), Entry for Benjamin Christophersen, 1876.",
+      "citation_detail": {
+        "who": "Norway, Marriages, 1660-1926 (database)",
+        "what": "Marriage entry for Benjamin Christophersen and Mathea Pedersdr, 17 Aug 1876, V\u00e5g\u00e5, Oppland, Norway",
+        "when_created": "Compiled from parish marriage registers; entry indexed 20 February 2020",
+        "when_accessed": "2026-07-13",
+        "where": "FamilySearch (https://familysearch.org/ark:/61903/1:2:MY3F-K4X)",
+        "where_within": "V\u00e5g\u00e5 parish, Oppland, Norway"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-13",
+      "notes": "Original not examined \u2014 this is the FamilySearch index/database entry; the underlying original Norwegian church marriage register image was not reached/examined.",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "child",
+      "record_persona_id": "p_292414505701",
+      "fact_type": "name",
+      "value": "Christian Peder",
+      "structured_value": {
+        "given": "Christian Peder"
+      },
+      "information_quality": "primary",
+      "informant": "the parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "child",
+      "record_persona_id": "p_292414505701",
+      "fact_type": "birth",
+      "value": "2 Oct 1876",
+      "date": "2 Oct 1876",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "the parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth date reported by parents at time of baptism, about five weeks after the birth; short interval limits recall error risk.",
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "child",
+      "record_persona_id": "p_292414505701",
+      "fact_type": "christening",
+      "value": "5 Nov 1876, Ringebu, Oppland, Norge",
+      "date": "5 Nov 1876",
+      "date_certainty": "exact",
+      "place": "Ringebu, Oppland, Norge",
+      "standard_place": "Ringebu, Oppland, Norway",
+      "information_quality": "primary",
+      "informant": "the officiating clergyman",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "child",
+      "record_persona_id": "p_292414505701",
+      "fact_type": "relationship",
+      "value": "son of Benjamin Christophersen",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "the parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parentage stated by the parents present at the baptism; shares the same informant unit as the mother-parentage assertion and both parents' own name assertions from this same entry \u2014 not independent corroboration.",
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "child",
+      "record_persona_id": "p_292414505701",
+      "fact_type": "relationship",
+      "value": "son of Matea Pedersdtr",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "the parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parentage stated by the parents present at the baptism; same evidence unit as the father-parentage assertion from this single baptism entry.",
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "father",
+      "record_persona_id": "p_292414505703",
+      "fact_type": "name",
+      "value": "Benjamin Christophersen",
+      "structured_value": {
+        "given": "Benjamin",
+        "surname": "Christophersen"
+      },
+      "information_quality": "primary",
+      "informant": "Benjamin Christophersen",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "father",
+      "record_persona_id": "p_292414505703",
+      "fact_type": "birth",
+      "value": "1853",
+      "date": "1853",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Birth year attached to this persona in the FamilySearch record structure; not evidently stated in the baptism entry text itself (Norwegian christening entries of this period do not typically record parents' birth years), so its source and reliability cannot be confirmed from this record alone.",
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "mother",
+      "record_persona_id": "p_292414505707",
+      "fact_type": "name",
+      "value": "Matea Pedersdtr",
+      "structured_value": {
+        "given": "Matea",
+        "surname": "Pedersdtr"
+      },
+      "information_quality": "primary",
+      "informant": "Matea Pedersdtr",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "mother",
+      "record_persona_id": "p_292414505707",
+      "fact_type": "birth",
+      "value": "1857",
+      "date": "1857",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Same caveat as the father's birth year \u2014 likely a FamilySearch-attached figure rather than text stated in the baptism entry.",
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:683F-NTZ9",
+      "record_role": "father",
+      "record_persona_id": "p_292414505703",
+      "fact_type": "relationship",
+      "value": "husband of Matea Pedersdtr [inferred from joint parentage at baptism]",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "none \u2014 inferred from the record's joint listing of both parents",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "enumerated_person_1",
+      "fact_type": "name",
+      "value": "Benjamin Kristofersen Hole",
+      "structured_value": {
+        "given": "Benjamin Kristofersen",
+        "surname": "Hole"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856135",
+      "informant_bias_notes": "1875 Norway census does not record who in the household answered; respondent unidentifiable. Strong candidate match for tree person I1 (Benjamin Christophersen) \u2014 'Kristofersen' and 'Christophersen' are Norwegian patronymic spelling variants for a father named Kristofer/Christopher.",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "enumerated_person_1",
+      "fact_type": "birth",
+      "value": "Birth year 1852, Lesje Hovedsogn",
+      "date": "1852",
+      "date_certainty": "exact",
+      "place": "Lesje Hovedsogn",
+      "standard_place": "Lesja, Oppland, Norway",
+      "structured_value": {
+        "year": "1852",
+        "place": "Lesje Hovedsogn"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856135",
+      "informant_bias_notes": "Birth year ~1852 is consistent with I1's estimated birth range (~1848-1858).",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "enumerated_person_1",
+      "fact_type": "occupation",
+      "value": "Skolel\u00e6rer Ved Offentlig Skole (teacher at public school)",
+      "structured_value": {
+        "occupation": "Skolel\u00e6rer Ved Offentlig Skole"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856135",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "enumerated_person_1",
+      "fact_type": "residence",
+      "value": "Stade Nodre, V\u00e5g\u00e5, Oppland, Norway (1875 census)",
+      "date": "1875",
+      "date_certainty": "exact",
+      "place": "Stade Nodre, V\u00e5g\u00e5, Oppland, Norway",
+      "standard_place": "V\u00e5g\u00e5, Oppland, Norway",
+      "structured_value": {
+        "place": "Stade Nodre, V\u00e5g\u00e5, Oppland, Norway"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856135",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "enumerated_person_1",
+      "fact_type": "gender",
+      "value": "Female [?] (as indexed) \u2014 likely error; given name 'Benjamin' is customarily male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856135",
+      "informant_bias_notes": "Sex is indexed as Female in the FamilySearch database for both Benjamin and household head Kristofer, both of whom carry customarily-male given names \u2014 almost certainly an indexing error, not evidence the manuscript itself records them as female.",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Kristofer Kristofersen Hole",
+      "structured_value": {
+        "given": "Kristofer Kristofersen",
+        "surname": "Hole"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856134",
+      "informant_bias_notes": "Household is titled 'Household of Kristofer Kristofersen Hole' in the source citation, confirming his role as head.",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Birth year 1860, Lesje Hovedsogn",
+      "date": "1860",
+      "date_certainty": "exact",
+      "place": "Lesje Hovedsogn",
+      "standard_place": "Lesja, Oppland, Norway",
+      "structured_value": {
+        "year": "1860",
+        "place": "Lesje Hovedsogn"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856134",
+      "informant_bias_notes": "CONFLICT: household head's indexed birth year (1860) is LATER than Benjamin's (1852), which would make the head younger than Benjamin \u2014 inconsistent with Kristofer being Benjamin's father. Either a transcription/indexing error in the birth year, or the head-Benjamin relationship is not father-son (e.g. brother, uncle, unrelated boarder sharing the Hole farm name). Needs original-image confirmation before assuming a parent-child relationship.",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Stade Nodre, V\u00e5g\u00e5, Oppland, Norway (1875 census)",
+      "date": "1875",
+      "date_certainty": "exact",
+      "place": "Stade Nodre, V\u00e5g\u00e5, Oppland, Norway",
+      "standard_place": "V\u00e5g\u00e5, Oppland, Norway",
+      "structured_value": {
+        "place": "Stade Nodre, V\u00e5g\u00e5, Oppland, Norway"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856134",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:V65K-3XF",
+      "record_role": "head_of_household",
+      "fact_type": "gender",
+      "value": "Female [?] (as indexed) \u2014 likely error; given name 'Kristofer' is customarily male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_13457856134",
+      "informant_bias_notes": "See Benjamin's gender assertion note \u2014 same indexing anomaly pattern for both persons in this household.",
+      "log_entry_id": "log_005",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "groom",
+      "record_persona_id": "p_11817617611",
+      "log_entry_id": "log_006",
+      "fact_type": "name",
+      "value": "Benjamin Christophersen",
+      "structured_value": {
+        "given": "Benjamin",
+        "surname": "Christophersen"
+      },
+      "information_quality": "primary",
+      "informant": "Benjamin Christophersen (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "groom",
+      "record_persona_id": "p_11817617611",
+      "log_entry_id": "log_006",
+      "fact_type": "birth",
+      "value": "born 1852",
+      "date": "1852",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Benjamin Christophersen (self)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A person cannot provide primary/firsthand information about his own birth; birth year likely derived from stated age at marriage or church baptismal record, not from personal recollection of the event.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "groom",
+      "record_persona_id": "p_11817617611",
+      "log_entry_id": "log_006",
+      "fact_type": "marriage",
+      "value": "married Mathea Pedersdr, 17 Aug 1876, V\u00e5g\u00e5, Oppland, Norway",
+      "date": "17 Aug 1876",
+      "date_certainty": "exact",
+      "place": "V\u00e5g\u00e5, Oppland, Norway",
+      "standard_place": "V\u00e5g\u00e5, Oppland, Norway",
+      "information_quality": "primary",
+      "informant": "the officiating minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "bride",
+      "record_persona_id": "p_11817617609",
+      "log_entry_id": "log_006",
+      "fact_type": "name",
+      "value": "Mathea Pedersdr",
+      "structured_value": {
+        "given": "Mathea",
+        "surname": "Pedersdr"
+      },
+      "information_quality": "primary",
+      "informant": "Mathea Pedersdr (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "\"Mathea\" is a spelling variant of tree person I2's recorded name \"Matea Pedersdtr\" \u2014 same individual, alternate spelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "bride",
+      "record_persona_id": "p_11817617609",
+      "log_entry_id": "log_006",
+      "fact_type": "birth",
+      "value": "born 1857",
+      "date": "1857",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Mathea Pedersdr (self)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "A person cannot provide primary/firsthand information about her own birth; birth year likely derived from stated age at marriage or church baptismal record.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "bride",
+      "record_persona_id": "p_11817617609",
+      "log_entry_id": "log_006",
+      "fact_type": "marriage",
+      "value": "married Benjamin Christophersen, 17 Aug 1876, V\u00e5g\u00e5, Oppland, Norway",
+      "date": "17 Aug 1876",
+      "date_certainty": "exact",
+      "place": "V\u00e5g\u00e5, Oppland, Norway",
+      "standard_place": "V\u00e5g\u00e5, Oppland, Norway",
+      "information_quality": "primary",
+      "informant": "the officiating minister",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "groom_father",
+      "record_persona_id": "p_11817617612",
+      "log_entry_id": "log_006",
+      "fact_type": "name",
+      "value": "Christopher Jespersen",
+      "structured_value": {
+        "given": "Christopher",
+        "surname": "Jespersen"
+      },
+      "information_quality": "primary",
+      "informant": "Benjamin Christophersen (self, reporting his own father's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Shared-informant unit with Benjamin's own name/birth assertions (same informant, Benjamin himself). Patronymic \"Jespersen\" (son of Jesper) differs from tree person I3 Kristofer Kristofersen Hole's patronymic (\"Kristofersen\", son of Kristofer) \u2014 these are distinct men; I3 is NOT Benjamin's father per this record.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "groom_father",
+      "record_persona_id": "p_11817617612",
+      "log_entry_id": "log_006",
+      "fact_type": "relationship",
+      "value": "Father of groom Benjamin Christophersen",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Benjamin Christophersen (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "bride_father",
+      "record_persona_id": "p_11817617610",
+      "log_entry_id": "log_006",
+      "fact_type": "name",
+      "value": "Peder Pedersen",
+      "structured_value": {
+        "given": "Peder",
+        "surname": "Pedersen"
+      },
+      "information_quality": "primary",
+      "informant": "Mathea Pedersdr (self, reporting her own father's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Name \"Peder Pedersen\" corroborates the \"-Pedersdtr\" patronymic already recorded for tree person I2.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:NWCK-N49",
+      "record_role": "bride_father",
+      "record_persona_id": "p_11817617610",
+      "log_entry_id": "log_006",
+      "fact_type": "relationship",
+      "value": "Father of bride Mathea Pedersdr",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Mathea Pedersdr (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KD96-TV2",
+      "confidence": "confident",
+      "match_score": 0.886,
+      "rationale": "Name 'Christian Peder' is the Norwegian-language equivalent of 'Christian Peter' (Peder = Peter). Birth date 2 Oct 1876 and christening 5 Nov 1876 at Ringebu, Oppland match KD96-TV2's tree facts exactly. FamilySearch scored this record a 5-star match to KD96-TV2 with matchScore 0.886. All core identifiers \u2014 name, birth date, christening date, place \u2014 agree. Strong match.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KD96-TV2",
+      "confidence": "confident",
+      "match_score": 0.886,
+      "rationale": "Birth date 2 Oct 1876 from the child persona matches KD96-TV2's tree birth fact exactly. Same strong match rationale as a_001.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KD96-TV2",
+      "confidence": "confident",
+      "match_score": 0.886,
+      "rationale": "Christening date 5 Nov 1876, Ringebu, Oppland matches KD96-TV2's tree christening fact exactly. Same strong match rationale as a_001.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KD96-TV2",
+      "confidence": "confident",
+      "match_score": 0.886,
+      "rationale": "This relationship assertion ('son of Benjamin Christophersen') bears on the child persona = KD96-TV2. All core identifiers on the child side agree (name, birth, christening, place). Links to KD96-TV2 as the child in the father-child relationship stated in the baptism register.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion states the child's father is 'Benjamin Christophersen.' I1 is the tree stub created by the extractor from this same record persona (p_292414505703). Name, gender, and relationship R1 (I1\u2192KD96-TV2) are consistent. Single-record stub \u2014 no independent corroboration yet; probable appropriate for a newly created stub.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "KD96-TV2",
+      "confidence": "confident",
+      "match_score": 0.886,
+      "rationale": "This relationship assertion ('son of Matea Pedersdtr') bears on the child persona = KD96-TV2. Same strong match as a_001\u2013a_004.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Assertion states the child's mother is 'Matea Pedersdtr.' I2 is the tree stub created from this same record persona (p_292414505707). Name, gender, and relationship R2 (I2\u2192KD96-TV2) are consistent. Single-record stub, probable.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father's name assertion 'Benjamin Christophersen' from the baptism register. I1 was created from this persona (p_292414505703) by the extractor; stub created solely from this record, so probable is the appropriate ceiling until independently corroborated.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Father's estimated birth year 1853 attached to Benjamin Christophersen persona. Linked to stub I1 at probable; the extractor flagged this figure as likely FamilySearch-attached rather than explicitly stated in the baptism register, so indeterminate classification was applied to the assertion itself.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother's name assertion 'Matea Pedersdtr' from the baptism register. I2 was created from this persona (p_292414505707); single-record stub, probable.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mother's estimated birth year 1857. Linked to stub I2 at probable; same caveat as a_007 \u2014 indeterminate origin.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Inferred spousal relationship: Benjamin Christophersen is listed jointly with Matea Pedersdtr as parents at this baptism, implying a couple relationship. Linked to I1 as the husband. The assertion is classified indirect/indeterminate since the relationship is structurally inferred, not explicitly stated as a marriage in the record.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Same inferred couple relationship \u2014 linking the other side: Matea Pedersdtr (I2) as the wife. Both parties appear together at the baptism as parents of KD96-TV2.",
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Given name 'Benjamin' is an exact match (uncommon in Norway). Patronymic 'Kristofersen' = 'Christophersen' (Kristofer/Christopher are the same personal name; this is a spelling variant, not a different father). Record is from V\u00e5g\u00e5, Oppland, immediately adjacent to Ringebu where Christian Peter was christened 12 months later. Single-record stub \u2014 confidence capped at probable pending image confirmation and corroborating records.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Birth year 1852 from Lesje Hovedsogn is within I1's estimated birth range (~1848\u20131858) and consistent with being a 24-year-old father in 1876. Same name and location match as a_011.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Occupation (schoolteacher) recorded for the same enumerated_person_1 persona as a_011. Identity rests on the same name/place match.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "1875 residence at Stade Nodre, V\u00e5g\u00e5, Oppland for the same persona as a_011. V\u00e5g\u00e5 is immediately north of Ringebu \u2014 consistent with Benjamin moving to Ringebu by November 1876 for Christian Peter's christening.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Gender assertion for the same persona as a_011. Indexed as 'Female' \u2014 almost certainly an indexing error given the customarily-male given name 'Benjamin'. Confidence limited by this discrepancy; original image should be confirmed.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "I3 (Kristofer Kristofersen Hole) was created as a stub specifically from this record. The record title 'Household of Kristofer Kristofersen Hole' names him as head. Probable only \u2014 single source, birth year conflict with enumerated person (see a_017), original image not examined. His role relative to I1 (father, brother, or other) remains unresolved pending image confirmation.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birth year 1860 for Kristofer Kristofersen Hole \u2014 same persona as a_016. This is almost certainly an indexing error (a 15-year-old household head is implausible). The actual birth year from the original microfilm image is needed before this fact can be relied upon.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "1875 residence at Stade Nodre, V\u00e5g\u00e5, Oppland \u2014 same persona as a_016.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Gender indexed as 'Female' \u2014 almost certainly an indexing error for the same reason as a_015 (given name 'Kristofer' is customarily male).",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Record titled 'Entry for Benjamin Christophersen' \u2014 Benjamin is the groom/principal. Name matches I1 exactly. Birth year 1852 consistent with census (a_012) and I1's estimated range. Bride 'Mathea Pedersdr' matches I2 (spelling variant). Marriage 17 Aug 1876 in V\u00e5g\u00e5 \u2014 46 days before Christian Peter's birth 2 Oct 1876. Multiple independent attributes align: name, birth year, spouse, location, timing.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year 1852 for groom Benjamin Christophersen \u2014 consistent with I1's estimated birth range and matching the 1875 census assertion a_012. Same persona as a_020.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage event (17 Aug 1876, V\u00e5g\u00e5) recorded from the groom's role \u2014 same persona as a_020. The marriage date and place are temporally and geographically consistent with Christian Peter's christening in Ringebu, 5 Nov 1876.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage event (17 Aug 1876, V\u00e5g\u00e5) is a couple relationship \u2014 bears on both parties. The bride 'Mathea Pedersdr' (born 1857) matches I2 exactly (spelling variant of 'Matea Pedersdtr').",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Bride's name 'Mathea Pedersdr' is a spelling variant of I2's name 'Matea Pedersdtr' \u2014 both are the same Norwegian name. Birth year 1857 matches I2's estimated birth (a_009). Spouse 'Benjamin Christophersen' matches I1. Strong multi-attribute match.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth year 1857 for bride Mathea Pedersdr \u2014 consistent with I2's estimated birth range (a_009). Same persona as a_023.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage event (17 Aug 1876, V\u00e5g\u00e5) from the bride's role \u2014 same persona as a_023.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage event (17 Aug 1876, V\u00e5g\u00e5) is a couple relationship \u2014 bears on both parties. The groom 'Benjamin Christophersen' (born 1852) matches I1.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_026",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "I4 (Christopher Jespersen) was created as a stub specifically from this record's groom_father persona. Single source \u2014 capped at probable pending corroboration.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_027",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Groom_father relationship assertion: Christopher Jespersen is named as Benjamin Christophersen's father. Probable \u2014 single source, original church register image not examined.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Groom_father relationship assertion bears on I1 as the son. Identifies I4 (Christopher Jespersen) as I1's father. Note: Christopher's patronymic 'Jespersen' (son of Jesper) is distinct from I3's 'Kristofersen' (son of Kristofer), confirming I3 is NOT I1's father.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_028",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "I5 (Peder Pedersen) was created as a stub specifically from this record's bride_father persona. His name 'Peder Pedersen' directly corroborates I2's '-Pedersdtr' patronymic (daughter of Peder). Single source \u2014 capped at probable.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_029",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Bride_father relationship assertion: Peder Pedersen is named as Mathea Pedersdr's father. Probable \u2014 single source, original register image not examined.",
+      "match_score": null,
+      "created": "2026-07-13"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Bride_father relationship assertion bears on I2 as the daughter. Identifies I5 (Peder Pedersen) as I2's father. Corroborates I2's patronymic '-Pedersdtr'.",
+      "match_score": null,
+      "created": "2026-07-13"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_008",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_025"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch church books (collection 4237104), 1875 census (collection 1529106, three search variants), and marriage records (collection 1468080) were searched. Candidate elimination performed on log_002 (402 available, top 50 ranked): rank-1 (score 0.886) separated from rank-2 (0.021) by 42x; ranks 2-10 are 'Christian' (no second name) with different birth dates at other Oppland parishes \u2014 no competing candidate for the Ringebu 2-Oct-1876 christening. Candidate elimination performed on log_006 (21 available): rank-1 (score 0.387) separated from rank-2 (0.007) by 52x; ranks 2-10 are surname-only stubs, witnesses in other grooms' records, or Kristofersen/Kristen variants \u2014 no competing Benjamin Christophersen + Mathea Pedersdr marriage candidate. Norwegian emigration searched on FamilySearch (nil); Ancestry collection 61757 not accessed. Military levy rolls omitted \u2014 emigrated c. 1882 at ~age 6. Christening image confirmed inaccessible (1.1 MB, transport cap). src_001 source_classification corrected to 'derivative' per mentor critique.",
+      "narrative_markdown": "## Parentage of Christian Peter Hole: Parents Identified from the 1876 Ringebu Christening Record\n\n**Research Question:** What does the 1876 christening record for Christian Peter Hole in Ringebu, Oppland, Norway name as his parents?\n\n**Conclusion:** The preponderance of evidence strongly supports that Christian Peter Hole (born 2 October 1876, Ringebu, Oppland, Norway) was the son of **Benjamin Christophersen** and **Matea Pedersdtr**. The conclusion is rated *probable*: both key records are derivative database entries derived from original Norwegian parish registers; the original register images were confirmed inaccessible via the research system's transport constraints, and the Ancestry Norwegian emigration collection remains unsearched. No contradicting evidence was found.\n\n### Primary Evidence: The 1876 Ringebu Christening Record\n\nThe baptismal entry for \"Christian Peder\" in the Ringebu parish church book, accessed through FamilySearch's \"Norway Church Books, 1815\u20131930\" database (ark:/61903/1:1:683F-NTZ9; source classification: *derivative* of an original Norwegian Church of Norway parish register), records:\n\n- **Child:** Christian Peder, born 2 October 1876, christened 5 November 1876, Ringebu, Oppland, Norway\n- **Father:** Benjamin Christophersen (born approximately 1853)\n- **Mother:** Matea Pedersdtr (born approximately 1857)\n\nThe officiating minister recorded both parents' names at the time of the christening, making the parentage assertions *primary information* \u2014 the informant had contemporaneous, first-hand knowledge of the child's birth and family. The evidence type is *direct*: the record explicitly names the parents without requiring inference. This entry is the decisive record for q_001 and the child-linking record for the parentage conclusion.\n\nThe original church register page (ark:/61903/3:1:3QHK-Q3PG-BXD7) was identified and a read was genuinely attempted; the image is 1.1 MB and exceeds the MCP transport limit. It is classified as *pursued and unavailable*, not an unsearched gap.\n\n### Corroborating Evidence: The 1876 V\u00e5g\u00e5 Marriage Record\n\nA marriage record in FamilySearch's \"Norway, Marriages, 1660\u20131926\" (collection 1468080; ark:/61903/1:1:NWCK-N49; source classification: *derivative* of an original V\u00e5g\u00e5 parish marriage register) records the marriage of **Benjamin Christophersen** (born 1852) to **Mathea Pedersdr** (born 1857) on 17 August 1876 in V\u00e5g\u00e5, Oppland \u2014 just 46 days before Christian Peter's birth. This record is independent of the christening: it was created by different informants (the bride, groom, and officiating minister), in a different parish (V\u00e5g\u00e5, not Ringebu), at a different event (marriage, not baptism), from a different collection. The bride's name \"Mathea Pedersdr\" is a spelling variant of \"Matea Pedersdtr\" in the christening \u2014 Norwegian transcriptions of the same name and patronymic. V\u00e5g\u00e5 parish adjoins Ringebu parish in Gudbrandsdalen valley, Oppland; the family's presence in the adjacent parish 46 days before the birth is geographically consistent.\n\nThis record does not place Christian Peter with his parents \u2014 that is the christening's role \u2014 but it independently confirms the couple as a married unit immediately before the child's birth, corroborating that Benjamin Christophersen and Matea Pedersdtr were together as a family in the Ringebu\u2013V\u00e5g\u00e5 area in 1876.\n\n### Ancillary Evidence: The 1875 Census\n\nThe 1875 Norway Census (FamilySearch collection 1529106; ark:/61903/1:1:V65K-3XF) shows a \"Benjamin Kristofersen Hole\" \u2014 born approximately 1852, Lesje Hovedsogn \u2014 in the household of \"Kristofer Kristofersen Hole\" at Stade Nodre, V\u00e5g\u00e5, Oppland. \"Kristofersen\" and \"Christophersen\" are Norwegian spelling variants of the same patronymic (Norwegian *Kristofer* = Latin *Christopher*). The name, birth year (~1852), and location (V\u00e5g\u00e5) are all consistent with the father named in the christening and marriage records. This record is treated as corroborating Benjamin's presence in the V\u00e5g\u00e5 area in 1875, one year before Christian Peter's birth.\n\n**Discrepancy resolved:** The household head \"Kristofer Kristofersen\" has a different patronymic from the marriage record's named father \"Christopher Jespersen\" (Kristofersen = son of Kristofer; Jespersen = son of Jesper \u2014 different fathers' given names). These men cannot be the same person. The census record carries no explicit relationship field; Benjamin was likely boarding in Kristofer's household rather than living as his son. This discrepancy concerns Benjamin's own parentage, not Christian Peter's, and does not affect the conclusion.\n\n### Research Scope and Limitations\n\nSearches were conducted in FamilySearch's church book (collection 4237104), census (collection 1529106), and marriage (collection 1468080) collections, with multiple query variants addressing Norwegian patronymic naming conventions. Norwegian emigration records were searched on FamilySearch with nil results; the Ancestry collection 61757 (\"Norway Emigration Records, 1867\u20131960\") was not accessed. Military levy rolls were omitted: Christian Peter Hole emigrated from Norway circa 1882 at approximately age six, before any meaningful enrollment age in the Norwegian conscription system. Neither key source was examined in original-image form due to transport constraints.\n\n### Conclusion\n\nThe preponderance of evidence strongly supports that **Christian Peter Hole was the son of Benjamin Christophersen and Matea Pedersdtr**. Two independent records \u2014 the 1876 Ringebu christening (direct parentage evidence) and the 1876 V\u00e5g\u00e5 marriage (independent confirmation of the couple) \u2014 converge on the same parents without contradiction. The conclusion is rated *probable*. Examination of the original parish register images and a search of Norwegian emigration records (Ancestry collection 61757) would, if accessible and positive, support advancing this conclusion to *proved*."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "focus": "proof-critique",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-13T18:23:40.688Z"
+    }
+  ]
+}

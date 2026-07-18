@@ -208,11 +208,19 @@ the host stages the raw results and the response gains a
 `staged.resultsRef` handle you hand to `research_log_append` in step 8
 to retain them — you never serialize the payload yourself.
 
-**Verify staging before you log.** If a search returned ≥1 result but
-the response has no `staged.resultsRef`, you omitted `projectPath` —
-re-run the identical query **with** `projectPath` before step 8, or the
-results are not retained and the log entry will have no sidecar. (A nil
-search correctly has no `staged.resultsRef`; that is expected.)
+**Always log the search (step 8) — that is unconditional; never skip it.**
+`projectPath` on the call is what earns the log entry its results sidecar: the
+response comes back with a `staged.resultsRef` you hand to `research_log_append`.
+If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`,
+re-run the identical query **with** `projectPath` and log **that** staged re-run,
+so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search
+entry can't feed extraction — `record_persona_id` is auto-filled from the
+sidecar, and `research_append` rejects an assertions append against a
+sidecar-less search — so **re-stage before any handoff to extraction**. A
+missing handle is a reason to re-run and re-log, never a reason to skip logging.
+If a `stagingError` persists across one retry, surface it to the user. (A nil
+search correctly has no `staged.resultsRef` — nothing was found to retain; that
+is expected.)
 
 **Decision rules by hit count:**
 - **0 results** → See step 10 (handle nil results)
