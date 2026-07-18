@@ -1,6 +1,6 @@
 # Eval Framework
 
-Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/gps/skill-mcp-testing-plan.md`](../docs/gps/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
+Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/skill-mcp-testing-plan.md`](../docs/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
 
 New to how skills are built, tested, and improved? Start with the lifecycle map: [`docs/skill-lifecycle.md`](../docs/skill-lifecycle.md).
 
@@ -23,8 +23,6 @@ eval/
     e2e/            GPS proof-statement tests (each in its own directory)
   runlogs/         Harness output; see "Run log naming" below
   app/             Next.js CRUD UI for test authoring, annotation, comparison
-  briefs/          Per-skill briefs: <skill>.md deep-dive/coverage (tester orientation)
-                   + shorten-<skill>.md SKILL.md-shortening briefs (shorten-skills-overview.md indexes them)
   slides/          Kickoff + onboarding decks
   Setup.bat        Windows: one-time setup
   Start.bat        Windows: launch the CRUD UI
@@ -390,4 +388,3 @@ the lid open unless you're on power with an external display.
 - `docs/specs/research-schema-spec.md` — `research.json` schema.
 - `docs/specs/simplified-gedcomx-spec.md` — `tree.gedcomx.json` schema.
 - `docs/specs/schemas/` — Machine-readable JSON schemas referenced above.
-- `docs/eval-rollout.md` — Active rollout plan and decision log.

@@ -1,7 +1,7 @@
 """Skill-specific validators for the search-wikipedia skill.
 
-search-wikipedia has no `rubric.md` (deleted in the criteria-demotion rollout
-— see docs/plan/criteria-demotion-and-rubric-opt-in.md). All mechanical
+search-wikipedia has no `rubric.md` (deleted in the criteria-demotion
+rollout). All mechanical
 checks live here; narrative judgment lands on the base Correctness +
 Completeness dimensions in the LLM judge.
 

@@ -1,6 +1,6 @@
 # Simplified GedcomX Specification
 
-This document defines the complete schema for `tree.gedcomx.json`, the deliverable file in a genealogy research project. It formalizes the simplification rules described in `docs/gps/simplified-gedcomx.md`.
+This document defines the complete schema for `tree.gedcomx.json`, the deliverable file in a genealogy research project. It formalizes the simplification rules sketched in the earlier pre-implementation draft.
 
 **Machine-readable schema:** [`docs/specs/schemas/tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json). Enum definitions are shared with `research.json` in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json). This prose document is normative for humans; the JSON Schema files are normative for machine validation.
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Read with:**
 `hosted-web-workbench-spec.md` (§0.5 is the POC scope),
-`hosted-web-workbench-implementation-plan.md`, `sandbox-provider-interface.md`.
+`sandbox-provider-interface.md`.
 
 This is what was built overnight: the full alpha POC (M0–M5), runnable **entirely
 locally with mocks** — no E2B, no Anthropic key, no OAuth setup required to demo.

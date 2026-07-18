@@ -413,8 +413,7 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
 	# tokens, read from the unit re-run the edit already forces — no e2e run.
 	# Diff leads with "concision" (both-active tests); tests going to 0 output
-	# are activation/abort changes, not concision, and are excluded. See
-	# docs/plan/research-latency-baseline-2026-07-05.md.
+	# are activation/abort changes, not concision, and are excluded.
 	cd eval/harness && uv run python -m skill_latency_report \
 		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \

@@ -38,8 +38,10 @@ Constraints to keep in mind:
 
 To submit: fork, add the skill directory under `packages/engine/plugin/skills/`, write
 the `SKILL.md`, add any reference docs under
-`packages/engine/plugin/skills/<your-skill>/references/`, write a testing-guide stub
-under `docs/testing-guides/`, and open a PR.
+`packages/engine/plugin/skills/<your-skill>/references/`, and open a PR.
+Skills are verified by the eval harness rather than by a hand-written
+testing guide — see `docs/skill-lifecycle.md` for how a new skill gets
+tests and a rubric.
 
 ## MCP server contributions (rarer, higher leverage)
 

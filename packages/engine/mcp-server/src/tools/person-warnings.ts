@@ -2759,7 +2759,7 @@ const BIRTH_DEATH_FACT_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * A2 — defined in docs/plan/match-merge-workflow-plan.md (M2/A2), NOT ported
+ * A2 — defined in docs/specs/match-merge-workflow-spec.md (M2/A2), NOT ported
  * (we lack the FS `EventsOutsideLifespan` source). Returns the worst severity
  * of any non-birth/death event of one mob falling outside the OTHER mob's
  * [earliest-birth, latest-death] window, checked in both directions:

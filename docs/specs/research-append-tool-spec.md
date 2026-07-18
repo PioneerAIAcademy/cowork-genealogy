@@ -193,7 +193,7 @@ research_append({
 Semantics — heterogeneous ops chosen over a homogeneous `entries` array because the
 skills' natural unit of work (one record / household / plan) spans multiple sections,
 and the single-call form already dispatches per-op on `section`, so heterogeneity is
-no more expensive (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
+no more expensive (decision from the e2e research-runtime speedup review, §6 Q1):
 
 - **All-or-nothing.** Every op is applied to one in-memory `research`, the **whole
   document is validated once**, and `research.json` is written **once**. Any op's
@@ -247,8 +247,9 @@ same tolerance to its `ops` and single-op nested objects (and to
 
 The record-extraction unit of work is one record = one tree `S` entry + one
 research source + N assertions. The composite makes that ONE call — the tool, not
-the model, owns every id and every cross-file link (decision D1,
-`docs/plan/record-extraction-consolidation-plan.md` §3).
+the model, owns every id and every cross-file link (decision D1 of the
+record-extraction consolidation; see
+`docs/plan/record-extraction-consolidation-closing-report.md`).
 
 - **`sourceDescription: { title, author?, url? }`** (camelCase param; the payload
   keys are exactly the simplified-GedcomX `S`-entry fields). When present, the call

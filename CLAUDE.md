@@ -107,12 +107,21 @@ Memorable commands live in the **`Makefile`** (`make install`, `make server`,
 `make web`, `make test`, `make mcpb`, `make plugin`). The POC runs fully on
 mocks (no E2B/Anthropic/OAuth needed).
 
-- `docs/plan/` — Implementation plans for tools (how we intend to build).
+- `docs/plan/` — Implementation plans for work that is **not yet built**.
+  A plan is deleted once the work ships: the spec, the code, and any
+  `docs/TODOs.md` entries become the record. Do not keep shipped plans
+  as historical artifacts — if a plan's rationale is worth preserving,
+  fold it into the spec instead.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
-- `docs/*-testing-guide.md` — Layered manual testing playbooks
-  (Inspector → Claude Code → Cowork). Used to verify each new tool
-  end-to-end before shipping.
+  This is the durable tier; a live tool must have a live spec.
+- **Verification is automated, not a manual playbook.** New tools are
+  verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
+  and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
+  by writing a per-tool testing guide. The three surviving guides in
+  `docs/testing-guides/` cover setup paths the harness can't
+  (`oauth-tool-testing-guide.md`, `mcpb-install-testing-guide.md`,
+  `gps-mentor-agent-testing-guide.md`). Do not add new ones.
 
 ## Tools and skills
 
@@ -125,10 +134,8 @@ Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their sche
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
 source of truth for the advertised tool list); `src/index.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
-`docs/specs/<tool>-tool-spec.md` — a spec can land before the tool
-does (e.g. `merge_gedcomx`, specced in `docs/specs/merge-gedcomx-spec.md`,
-is not yet implemented). Implementation plans and design notes are in
-`docs/plan/`.
+`docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
+does. Implementation plans for unbuilt work are in `docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
 skill uses `person_search` to find a person in the FamilySearch tree
 when the user doesn't have a FamilySearch ID to provide.

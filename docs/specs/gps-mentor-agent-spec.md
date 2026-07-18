@@ -93,7 +93,7 @@ The `pre-exhaustiveness` and `conclusion-readiness` focuses remain supported for
 use ("am I ready to conclude?"), but `/research` no longer auto-gates on them: they duplicated
 `research-exhaustiveness`'s own 7-point check and `proof-conclusion`'s tier analysis, the
 read-only mentor cannot verify exhaustiveness without search tools, and their forced rework
-starved the proof step (see the e2e latency analysis, `docs/plan/e2e-latency-analysis-and-plan.md`).
+starved the proof step (per the e2e latency analysis).
 The single `proof-critique` gate is identical in interactive and `--autonomous` mode and never
 blocks the flow — see §11.
 
@@ -697,11 +697,12 @@ These items are acknowledged but not specified here. They belong in future issue
 
 ### 17.1 Reducing per-gate mentor cost (defer until measurable)
 
-The e2e research-runtime speedup plan
-(`docs/plan/e2e-research-runtime-speedup-plan.md`, idea 2b) considered
+An earlier e2e research-runtime speedup proposal (idea 2b) considered
 collapsing the three mentor gates (pre-exhaustiveness, conclusion-readiness,
 proof-critique) to a single conclusion gate to cut the cost of an autonomous
-`/research` run. **That change is explicitly NOT adopted**, for three reasons:
+`/research` run; the surviving version of that lever is tracked in
+`docs/TODOs.md` § "Research latency (e2e `/research` runs)".
+**That change is explicitly NOT adopted**, for three reasons:
 
 1. **It is unmeasurable today.** The e2e harness does not stage
    `packages/engine/plugin/agents/` into the sandbox — `build_workspace`
