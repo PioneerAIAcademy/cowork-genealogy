@@ -69,10 +69,6 @@ import type { MergeWarningsInput } from "./types/merge-warnings.js";
 import { volumeSearchTool } from "./tools/volume-search.js";
 import type { VolumeSearchInput } from "./types/volume-search.js";
 import {
-  mergeRecordIntoTree,
-  type MergeRecordIntoTreeInput,
-} from "./tools/merge-record-into-tree.js";
-import {
   mergeTreePersons,
   type MergeTreePersonsInput,
 } from "./tools/merge-tree-persons.js";
@@ -593,16 +589,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as VolumeSearchInput;
       const result = await volumeSearchTool(args);
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
-    }
-  }
-  if (request.params.name === "merge_record_into_tree") {
-    try {
-      const args = request.params.arguments as unknown as MergeRecordIntoTreeInput;
-      const result = await mergeRecordIntoTree(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

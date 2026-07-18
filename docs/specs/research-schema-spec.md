@@ -148,24 +148,24 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, record-extraction | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
-| `relationships` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `relationships` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal) | Mutable; preserve IDs |
+| `sources` | init-project, tree-edit, proof-conclusion, person-evidence, record-extraction | (terminal) | Mutable; preserve IDs |
 
 `init-project` writes the initial stub persons at project creation;
-`tree-edit` applies user-directed changes; `proof-conclusion` promotes
-research conclusions to the tree when a proof summary reaches
-`probable` or higher (see Section 8 "tree.gedcomx.json update timing"
-and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
-`person-evidence` mints a stub `person` when a newly discovered persona
-matches no one in the tree (see Section 8). `record-extraction` writes
-`sources` (the GedcomX `S` entry that mirrors each `src_` it appends to
-`research.json`); it additionally writes `persons` and `relationships`
-under the §5d trigger — when the subject appears as a child on a
-household record, it creates minimal person stubs for the subject's
-siblings and `ParentChild` edges from the existing in-tree parent to
-each new sibling, so downstream skills can discover them. The harness's
-`test_tree_ownership_table` universal validator enforces this.
+`tree-edit` applies user-directed changes; `proof-conclusion` lands the
+*conclusion* on the tree — marking the concluded value `primary` and
+writing the concluded relationship (see Section 8 "tree.gedcomx.json
+update timing" and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
+`person-evidence` **owns the household skeleton**: it mints a `person`
+when a newly discovered persona matches no one in the tree — with its
+first sourced evidence facts, via `materialize_facts` create-or-enrich,
+never a name-only stub — and writes the parent-child / spouse edges via
+`add_relationship` (see Section 8). `record-extraction` is
+**assertion-only**: it writes `sources` (the GedcomX `S` entry that
+mirrors each `src_` it appends to `research.json`) plus the assertions,
+and does **not** write `persons` or `relationships`. The harness's
+`test_tree_ownership_table` universal validator enforces this ownership.
 
 ---
 
@@ -657,11 +657,19 @@ Users may manually edit `tree.gedcomx.json` — adding a person, correcting a fa
 
 ### `tree.gedcomx.json` update timing
 
-The `probable`-or-higher update rule applies to **persons, relationships, and facts** in `tree.gedcomx.json` — the concluded genealogical data. It is updated when a proof summary at tier `probable` or higher is written. During early research (before any proof summary exists), the GedcomX file contains stub persons with whatever is known at project initialization. As proof summaries are written or revised, the corresponding facts, relationships, and sources in `tree.gedcomx.json` are updated to match the concluded state. The worked example shows this: the GedcomX birthplace is "Ireland" (matching the resolved conflict c_001 and the `probable` proof summary ps_001), and the ParentChild relationship R1 is present because ps_001 concludes parentage at `probable`. If ps_001 were later revised to `not_proved`, R1 should be removed from the GedcomX file.
+`tree.gedcomx.json` is maintained under a **two-layer rule** — evidence and conclusion are distinct layers, written at different times by different owners.
 
-**Exceptions to the proof-conclusion-only rule:**
-- **Source descriptions** are created by record-extraction during active research, because `research.json` sources need `gedcomx_source_description_id` references to exist. Source descriptions in the GedcomX file represent "this source was consulted," not "this source's conclusions are finalized."
-- **Person stubs** may be created by person-evidence when a newly discovered person doesn't yet exist in the GedcomX file. These stubs have minimal data (name, gender) and are refined as research progresses.
+**Layer 1 — evidence, materialized at identity-link time.** When person-evidence links a persona to a tree person, the evidence facts and names that persona asserts materialize onto the person via `materialize_facts`. Each materialized fact and name carries **provenance** — a non-null source reference back to the record it came from. This happens as soon as the identity link is made, **independent of any proof summary**. The tree therefore accumulates evidence facts as research proceeds, not only once a conclusion is reached; conflicting values of the same fact type **coexist as separate sourced facts** rather than being withheld until the conflict is resolved.
+
+**Layer 2 — conclusion, governed by `primary`/`preferred` + `proof_tier`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags together with `proof_tier` — written by **proof-conclusion alone**. Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`/`proof_tier`; the underlying evidence facts stay in the tree as evidence.
+
+**Upload is conclusion-gated.** Only `primary`/proof-backed persons, relationships, and facts are sent to FamilySearch at upload time; the tree may hold un-concluded evidence facts that never upload. Upload gating is proof-conclusion / upload-workflow logic, not a materialization concern.
+
+The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary`/`proof_tier` markers that proof summary ps_001 (`probable`) sets, not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but their `primary`/`proof_tier` conclusion markers would be cleared.
+
+**Two further evidence-layer writes during active research:**
+- **Source descriptions (`S` entries)** are created by record-extraction — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."
+- **Person stubs** are minted when a newly discovered person doesn't yet exist in the GedcomX file — by person-evidence, increasingly via `materialize_facts`' create-or-enrich (the stub arrives *with* its first evidence facts and their provenance). Stubs carry minimal data and gain evidence facts as research progresses.
 
 ### Source ownership: record-extraction vs. citation
 

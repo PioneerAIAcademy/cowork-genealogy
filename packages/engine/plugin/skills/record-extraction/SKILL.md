@@ -165,10 +165,12 @@ NEVER frame the task as "fix" or "correct" the existing tree (corrective
 framing has induced destructive edits).
 
 One record per invocation; several records = several invocations, each
-carrying its own content. The agent extracts every assertion, writes the
-source + assertions in one composite `research_append`, creates sibling
-person stubs when the subject is a child on a household record, and
-returns a ≤10-line summary.
+carrying its own content. The agent extracts every assertion (including
+relationship-type assertions), writes the source + assertions in one
+composite `research_append`, and returns a ≤10-line summary. It is
+**assertion-only** — it does not write tree persons or edges; the
+household skeleton (member stubs + parent-child edges) is minted by
+person-evidence at link time via `materialize_facts`.
 
 **Match checks belong to the extractor, not you.** When the user asks
 to check FamilySearch matches, relay it as the flag above — never call

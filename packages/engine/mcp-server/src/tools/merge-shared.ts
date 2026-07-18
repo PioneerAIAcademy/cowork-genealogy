@@ -1,6 +1,6 @@
-// Shared helpers for the two merge tools (merge_record_into_tree,
-// merge_tree_persons). The pure tree merge lives in utils/merge-gedcomx.ts;
-// this module owns the tool-layer concerns both wrappers share: reading the
+// Shared helpers for the merge tools (merge_tree_persons and the read-only
+// merge_warnings dry-run). The pure tree merge lives in utils/merge-gedcomx.ts;
+// this module owns the tool-layer concerns those wrappers share: reading the
 // project files, validating an inline candidate, deriving the compact summary
 // from the merged document, backing up before an irreversible overwrite, and
 // the Mode-2 research.json person-id remap. Spec: merge-gedcomx-spec.md §5b.

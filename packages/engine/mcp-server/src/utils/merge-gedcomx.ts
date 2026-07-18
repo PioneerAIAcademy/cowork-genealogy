@@ -12,9 +12,10 @@
 //     each pair = [targetIdA, targetIdB]; B folds into A within the target.
 //
 // Pure: inputs are never mutated; a fresh document is returned. This is the
-// pure core only — the two MCP tools that own filesystem I/O, the research.json
-// remap, validation, and persistence are merge_record_into_tree (Mode 1) and
-// merge_tree_persons (Mode 2) in src/tools/ (spec §5b).
+// pure core only. Mode 2's filesystem I/O, research.json remap, validation, and
+// persistence live in merge_tree_persons (src/tools/); Mode 1 (cross-document)
+// no longer has a dedicated write tool — it is exercised only, read-only, by
+// merge_warnings's dry-run (spec §5b).
 
 import type {
   SimplifiedFact,
