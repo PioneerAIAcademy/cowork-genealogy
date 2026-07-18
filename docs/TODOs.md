@@ -426,3 +426,40 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
 - ~~`/v1` public REST chat API~~ — **shipped** (#294) as a control-plane
   WS-client to the in-sandbox server; bearer auth, sync + SSE, DB-backed turn
   lock. Spec: `docs/plan/public-rest-api.md`.
+- **Router-side (main-thread) lane enforcement** — `extraction_append` (#695)
+  makes the record-extractor structurally unable to write `person_evidence`,
+  but nothing restrains the *router*: e2e grants `mcp__genealogy` wholesale
+  (`eval/harness/e2e/orchestrator.py`) and the hosted path runs
+  `permission_mode="bypassPermissions"` with no allowlist
+  (`apps/server/app/agent/real_agent.py`). Precedent that this matters:
+  `eval/harness/harness/context_policy.py` exists because the router was
+  observed calling `image_read` directly after the same class of lane was
+  closed on the agent. Current mitigation is prose in
+  `record-extraction/SKILL.md`. The instrument if it recurs is a
+  `context_policy` PreToolUse rule keyed on `agent_id` — eval-only, so it
+  would not cover Cowork or the hosted path.
+- **Cowork honoring of agent `tools:` / `disallowedTools` is unverified** —
+  the #695 denial is probe-verified for Claude Code subagents and documented
+  for the SDK, but Anthropic's plugin docs are silent on whether Cowork
+  enforces either field for plugin-shipped agents (they explicitly state
+  `hooks`, `mcpServers`, and `permissionMode` are *not* honored). We already
+  know Cowork honors agent `model:` while ignoring skill `model:`, so parity
+  is not assumed. Needs a Cowork spot-check: delegate to `record-extractor`
+  and instruct it to call `research_append`.
+- **`match_score` remains fabricable by person-evidence** — it is not
+  derivable at the tool boundary (`same_person`'s tree side is a hand-curated
+  record-sized slice; a local stub returns a degenerate near-zero score the
+  skill must read as *no score*), so the lever is eval/rubric, not tooling.
+  A provenance guard was designed and cut in #695: zero observed true
+  positives across all 15 `eval/tests/unit/person-evidence/` cases, against a
+  real false-positive class.
+- **`_make_research_append_handler` duplicates `_make_compiled_tool_handler`** —
+  in `eval/harness/harness/mock_mcp.py` the two are now byte-equivalent modulo
+  the parameterized names; the `ops`-shape fallback that justified the bespoke
+  copy is gone. `extraction_append` (#695) uses the generic builder. Collapse
+  `research_append` onto it too and delete the bespoke handler.
+- **README tool catalog is stale** — `README.md` says "33 tools" in one place
+  and "31 MCP tools" in another; `manifest.json` lists 45. `research_append`,
+  `tree_edit`, `materialize_facts`, and `extraction_append` appear in no README
+  tool table, and `docs/specs/mcpb-package-spec.md` still tells a manual tester
+  to assert 21 tools. No CI reads either, so nothing reds.

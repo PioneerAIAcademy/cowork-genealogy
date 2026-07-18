@@ -19,10 +19,16 @@ tools:
   - mcp__genealogy__record_read
   - mcp__genealogy__place_search
   - mcp__genealogy__place_search_all
-  - mcp__genealogy__research_append
+  - mcp__genealogy__extraction_append
   - mcp__genealogy__research_log_append
   - mcp__genealogy__record_person_matches
   - mcp__genealogy__record_record_matches
+# `extraction_append` writes only `sources` + `assertions`. The broad
+# `research_append` is denied both by omission above and explicitly here:
+# a `disallowedTools` deny is enforced even under `bypassPermissions`,
+# which the hosted path runs (issue #695).
+disallowedTools:
+  - mcp__genealogy__research_append
 ---
 
 # Record Extractor
@@ -248,7 +254,7 @@ invent fields — `notes` is a source field, not an assertion field.
 
 **`record_id`** — copy the caller's recordId; any ARK form is accepted
 (URL, bare `ark:/61903/1:1:<id>`, or entity id) — for sidecar-backed
-assertions `research_append` canonicalizes it to the sidecar's stored
+assertions `extraction_append` canonicalizes it to the sidecar's stored
 form. Non-FamilySearch sources use `ancestry:<collection>:<id>` or
 `capture:<descriptive>`. Same `record_id` on every assertion from one
 record.
@@ -264,7 +270,7 @@ assertion** from that record — **explicitly including the focus
 persona**: the searched person's id is the result's `primaryId`. Do NOT
 treat the primary as implied and set it only on the others — that is the
 known failure mode. Non-focus household members/witnesses take the
-matching `gedcomx.persons[]` id. `research_append` verifies every
+matching `gedcomx.persons[]` id. `extraction_append` verifies every
 supplied id (and auto-fills the searched persona as a safety net — do
 not rely on it; supply the id yourself). No sidecar (`record_read`,
 image, PDF, full-text) → leave it out on every assertion — supplying one
@@ -304,7 +310,7 @@ parent-child links are always inferred: `relationship_type:
 "spouse_inferred"`, `"child_inferred"`, `"parent_inferred"`, never the
 bare `"spouse"`/`"child"`.
 
-**`standard_place`** — leave it out: `research_append` resolves it at
+**`standard_place`** — leave it out: `extraction_append` resolves it at
 persist time (sidecar copy first, else geocoding) and echoes every
 resolution in `resolvedPlaces` — sanity-check those. Supply a value only
 when you already hold the correct standard form (e.g. from a
@@ -554,12 +560,12 @@ record (then use its returned `logId`).
 bears on (the caller may name them; otherwise use `project_context`'s
 `openQuestions`); empty array for opportunistic extraction.
 
-## Step 4 — Persist: ONE `research_append` call per record
+## Step 4 — Persist: ONE `extraction_append` call per record
 
 **Call the tool before narrating anything.** The transcript must show the
-actual `research_append` invocation, not text claiming you made it.
+actual `extraction_append` invocation, not text claiming you made it.
 
-Make **one** `research_append` call with top-level `sourceDescription:
+Make **one** `extraction_append` call with top-level `sourceDescription:
 { title, author?, url? }` (omit inapplicable fields entirely — never
 `null`, never an `id`) and `ops` = one `sources` append (leave
 `gedcomx_source_description_id` out — tool-stamped) followed by one
@@ -576,7 +582,7 @@ writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
 net. If a persistence tool shows as deferred, load it via ToolSearch with
-the fully-qualified name (`mcp__genealogy__research_append`) first.
+the fully-qualified name (`mcp__genealogy__extraction_append`) first.
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same
@@ -595,17 +601,19 @@ retry blindly and never drop unnamed ops.
 keep a one-deep `.bak`; a successful return is proof the write is valid.
 Do not re-read the files to "sanity check" a success.
 
-**Never write the `person_evidence` section** — identity assessments
-(record persona = tree person) go in your return summary only; the
-person-evidence skill owns that section. This holds **even when the
-record poses an identity puzzle** — a household head whose surname
-differs from the subject's, a persona that might be an existing tree
-person, a same-name candidate. That ambiguity is *exactly* what tempts a
-`person_evidence` link; resist it. Surface the identity question in your
-return summary and STOP — do NOT create a `pe_` entry (or any
-person_evidence write) to "resolve" who-is-who. Resolving persona↔person
-identity is person-evidence's job; yours is the assertions and the
-flagged question.
+**You cannot write the `person_evidence` section.** `extraction_append`
+writes `sources` and `assertions` and rejects every other section, so
+there is no `pe_` entry you can create — not even if a delegation message
+asks you to. That is deliberate: a delegation once argued a prose version
+of this rule down and produced a fabricated identity link carrying a
+match score no tool had computed.
+
+Identity assessments (record persona = tree person) go in your **return
+summary**. When the record poses an identity puzzle — a household head
+whose surname differs from the subject's, a persona that might be an
+existing tree person, a same-name candidate — describe it there and stop.
+Resolving persona↔person identity is person-evidence's job; yours is the
+assertions and the flagged question.
 
 ## Negative evidence
 

@@ -612,7 +612,9 @@ dispatch in `src/index.ts`, name in `manifest.json` (packaging drift test enforc
 parity). Reuses `atomicWriteJson` + `validateParsed`; share the per-prefix max-id
 helper with `tree_edit`/the merge core (lift `maxIdNum` to a shared util).
 
-Consumers — the skills whose hand-written section writes it replaces:
+Consumers — the skills whose hand-written section writes it replaces
+(`record-extraction` reaches this machinery through `extraction_append`, §11,
+not through `research_append` itself):
 `record-extraction` (sources + assertions + classification field updates —
 classification merged from the former assertion-classification skill,
 2026-07-11), `person-evidence` (`pe_` links + supersede), `conflict-resolution`
@@ -621,3 +623,104 @@ classification merged from the former assertion-classification skill,
 plan-items), `proof-conclusion` (question resolution). Their SKILL.md rewrites are a
 follow-up (companion to `skill-rewrites-for-persistence-tools-spec.md`), not part of
 this tool's landing.
+
+---
+
+## 11. `extraction_append` — the lane-scoped variant
+
+`extraction_append` is this tool restricted to the two sections the
+`record-extractor` agent owns: **`sources` and `assertions`**. Same
+implementation, same input surface, same validate-once/write-once semantics; the
+other eleven sections are simply not reachable through it.
+
+### 11.1 Why a second tool and not a parameter
+
+In the birkeland re-run (`record-extraction-consolidation-closing-report.md`
+§3.1) the router's delegation message instructed the extractor to write
+`person_evidence` entries at `confident` — against the agent body's prose lane
+rule — and the agent complied, fabricating a `0.92` `match_score` no tool had
+computed.
+
+Three ways to express a lane, and only one holds:
+
+| Expression | Holds? |
+|---|---|
+| Prose in the agent body | **No** — a caller that prompts against it wins; this is the observed failure |
+| A parameter on the tool input | **No** — the caller supplies the input, so it can widen its own lane |
+| Tool identity | **Yes** — the agent's `tools:` frontmatter omits the broad writer, so there is no call it can emit |
+
+The lane is therefore the *tool*, and the extractor's frontmatter omits
+`research_append` and additionally names it in `disallowedTools` (a deny is
+enforced even under `permission_mode="bypassPermissions"`, which the hosted path
+runs; an omission alone is not).
+
+**Enforcement evidence.** A subagent declared `tools: Read, Grep, Glob, Bash`,
+told its caller had authorized overriding its convention, then instructed to
+call `Write` and `ToolSearch`, reported both as *absent from its toolset* rather
+than rejected at call time — the control `Read` succeeded. Anthropic's subagent
+docs extend this to MCP tools explicitly. **Open:** whether Cowork honors
+`tools:`/`disallowedTools` for plugin agents is undocumented, and Cowork is known
+to honor agent `model:` while ignoring skill `model:`, so parity is not assumed.
+The unit harness and hosted SDK paths do enforce.
+
+### 11.2 The gate
+
+Lane scoping is a **second function parameter** on `researchAppend`, never a
+field on `ResearchAppendInput`:
+
+```ts
+researchAppend(input, { allowedSections, toolName })
+```
+
+Two properties follow, and both are load-bearing:
+
+- **Unforgeable.** `index.ts` dispatches `researchAppend(args)` with a single
+  argument built from `request.params.arguments`. An extra JSON key on the tool
+  input lands on `input`, never on the options object. (Note that tool
+  `inputSchema` `enum`s are *documentation*, not a gate — `index.ts` casts
+  arguments and the MCP SDK validates only the request envelope.)
+- **Visible to the eval harness.** `eval/harness/harness/mock_mcp.py` imports
+  these exported functions directly and never routes through `index.ts`. A gate
+  in the dispatch layer would be invisible to every eval run, so it lives in the
+  module.
+
+The check runs **after ops are resolved and before `prepareOps`**, which does
+live Places-API resolution and mutates the tree in memory: a call that was always
+going to be rejected must not burn network round-trips first.
+
+### 11.3 Error contract
+
+A lane rejection names **only** the calling tool and the sections it *does*
+write:
+
+```
+section 'person_evidence' is not writable by extraction_append
+(it writes only: sources, assertions). Another skill owns that section —
+surface the finding in your summary instead.
+```
+
+It must **not** name the tool that would accept the section, nor enumerate the
+denied sections. Either string is a routing map — precisely what a model needs to
+work around the lane. (`applyOne`'s generic "not supported by research_append
+(supported: …)" message is reached only for a genuinely unknown section under
+`research_append` itself; the lane gate intercepts first for a scoped caller.)
+
+Batch form prefixes the failing index as usual (`ops[1]: section '…' is not
+writable by …`), and the batch stays all-or-nothing: nothing is written.
+
+### 11.4 What this does *not* fix
+
+The router (main thread) is unrestrained in production — e2e grants
+`mcp__genealogy` wholesale and the hosted path runs `bypassPermissions` with no
+allowlist — so nothing stops the *router* from writing `person_evidence` itself,
+and there is precedent for a router doing directly what a subagent was denied
+(`eval/harness/harness/context_policy.py` was built after the router was observed
+calling `image_read` directly). The mitigation is prose in
+`record-extraction/SKILL.md` forbidding delegations that order identity writes;
+the instrument if it recurs is a `context_policy` PreToolUse rule keyed on
+`agent_id`, which is eval-only.
+
+`match_score` also remains fabricable by `person-evidence` itself. It is not
+derivable at the tool boundary: `same_person`'s tree side is a hand-curated
+"record-sized" slice, and a local stub returns a degenerate near-zero score the
+skill must interpret as *no score*. The lever there is eval/rubric, not tooling.
