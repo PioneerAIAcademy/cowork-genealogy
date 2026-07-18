@@ -1,16 +1,17 @@
 // merge_warnings — merge-mode ("what-if") warnings for a proposed merge.
 //
-// Read-only analog of merge_record_into_tree (utils/merge-gedcomx.ts Mode 1):
-// reads tree.gedcomx.json fresh, folds the candidate record into the named
-// survivors IN MEMORY via the SAME pure mergeGedcomx, then — instead of
-// writing — runs the merge-mode warning checks (warnings.java's
+// Read-only exerciser of the Mode-1 (cross-document) merge core
+// (utils/merge-gedcomx.ts): reads tree.gedcomx.json fresh, folds the candidate
+// record into the named survivors IN MEMORY via the pure mergeGedcomx, then —
+// instead of writing — runs the merge-mode warning checks (warnings.java's
 // getWarnings(target, candidate, merged, isFinalWarnings=false)) on each pair
-// and returns the warnings. Writes nothing.
+// and returns the warnings. Writes nothing. Since the Mode-1 writer was retired,
+// this is the sole caller of mergeGedcomx with a non-null candidate.
 //
-// Gate-validity invariant: merge_warnings and merge_record_into_tree call the
-// identical mergeGedcomx with the identical `merges` shape, so the dry-run
-// merged mob is byte-for-byte the persisted merge — that equivalence is what
-// makes the coherence gate trustworthy. Spec: match-merge-workflow-spec.md §7.
+// Gate-validity invariant: the dry-run drives the identical mergeGedcomx with
+// the identical `merges` shape a real merge would, so the merged mob it inspects
+// is the merge the caller is about to commit — that equivalence is what makes
+// the coherence gate trustworthy. Spec: match-merge-workflow-spec.md §7.
 
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import type {
@@ -38,8 +39,8 @@ export async function mergeWarnings(
   const merges = (input.merges ?? []) as Array<[string, string]>;
 
   try {
-    // 1. Read the tree fresh (same as merge_record_into_tree, so the dry-run
-    //    sees exactly the state a real merge would).
+    // 1. Read the tree fresh, so the dry-run sees exactly the state a real
+    //    merge would.
     const treeSanitized = sanitizeTree(
       await readProjectJson(projectPath, "tree.gedcomx.json"),
     );
@@ -66,10 +67,10 @@ export async function mergeWarnings(
       return { ok: false, errors: [e instanceof Error ? e.message : String(e)] };
     }
 
-    // 3b. Validate the would-be project exactly as merge_record_into_tree does
-    //     before writing, so the dry-run is a complete preview: a merge the
-    //     writer would reject is surfaced here as { ok: false } rather than
-    //     reported as clean. research.json is read but never written.
+    // 3b. Validate the would-be project exactly as a real merge would before
+    //     writing, so the dry-run is a complete preview: a merge validation
+    //     would reject is surfaced here as { ok: false } rather than reported
+    //     as clean. research.json is read but never written.
     const research = await readProjectJson(projectPath, "research.json");
     const validation = await validateParsed(research, merged, { projectPath });
     if (!validation.valid) {
@@ -131,10 +132,11 @@ export const mergeWarningsSchema = {
   name: "merge_warnings",
   description:
     "Dry-run the coherence checks for a proposed merge WITHOUT writing — the " +
-    "merge-mode analog of `person_warnings`. Pass the same `candidateGedcomx` " +
-    "and `merges` (`[treeId, candidateId]` pairs) you would hand " +
-    "`merge_record_into_tree`; it merges in memory with the identical core and " +
-    "returns the warnings the merge would introduce.\n" +
+    "merge-mode analog of `person_warnings`. Pass the `candidateGedcomx` and " +
+    "`merges` (`[treeId, candidateId]` pairs) for the merge you are considering; " +
+    "it folds the candidate into the named survivors in memory (the " +
+    "cross-document merge core) and returns the warnings that merge would " +
+    "introduce.\n" +
     "\n" +
     "Use this as the coherence gate before merging: a `severity: \"error\"` " +
     "warning (e.g. `hasSameCensus` — two personas sharing a census collection " +

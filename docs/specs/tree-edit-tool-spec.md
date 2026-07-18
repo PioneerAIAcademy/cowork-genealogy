@@ -62,7 +62,6 @@ In scope — the `tree-edit` ad-hoc operations (`SKILL.md:52–124`):
 | `add_person` | `tree_edit` | "Adding a person" |
 | `add_relationship` | `tree_edit` | "Adding a relationship" |
 | `add_source` / `update_source` | `tree_edit` / `tree_correct` | source-description (`S` entry) add/correct — ad-hoc/manual source work and proof-conclusion step 6. (Record-extraction's per-record `S` entry is created by `research_append`'s composite `sourceDescription` instead — see §4.3 cross-tool ordering.) |
-| `add_household_children` | `tree_edit` | record-extraction §5d sibling stubs — the parent-lookup + dedup + stub + edge sequence, internalized (see §4.4) |
 | `remove` | `tree_correct` | "Removing concluded data (tier downgrade)" — facts/relationships only |
 
 ### 2.1 The `tree_edit` / `tree_correct` split
@@ -73,7 +72,7 @@ implementation core (`src/tools/tree-edit.ts` `executeTreeOps`;
 
 | Tool | Admitted ops |
 |------|--------------|
-| `tree_edit` | `add_fact`, `add_name`, `add_person`, `add_relationship`, `add_source`, `add_household_children` — **additive only** |
+| `tree_edit` | `add_fact`, `add_name`, `add_person`, `add_relationship`, `add_source` — **additive only** |
 | `tree_correct` | `update_fact`, `update_name`, `update_person`, `update_source`, `remove` — **corrections/removals only** |
 
 **Rationale:** extraction must be **structurally unable to rewrite identity**.
@@ -121,7 +120,7 @@ step, run after — see §8).
 | Simplified ids are `I/N/F/R/S`, "unique within their array, immutable once created" | `docs/specs/simplified-gedcomx-spec.md:61–69` |
 | `SimplifiedFact.primary?`, `SimplifiedName.preferred?`, relationship `parent/child` vs `person1/person2` | `src/types/gedcomx.ts:104–151` |
 | Shared write layer: `atomicWriteJson`, `assertInsideProject`, `validateParsed`, exported `validateGedcomx` | `src/utils/project-io.ts`, `src/validation/validator.ts` (shipped) |
-| `.bak`-before-overwrite + compact-return + validate-before-persist pattern | `src/tools/merge-record-into-tree.ts` (Mode 1 writes only the tree) |
+| `.bak`-before-overwrite + compact-return + validate-before-persist pattern | `src/tools/merge-tree-persons.ts` + `src/utils/project-io.ts` (`atomicWriteJson`) |
 | Per-prefix max-id logic already exists (private) | `src/utils/merge-gedcomx.ts` `maxIdNum` |
 | Name→standard place resolver | `src/utils/place-resolver.ts` `resolveStandardPlace` (`place_search` returns `standardPlace`) |
 
@@ -136,8 +135,7 @@ tree_edit({
     | "add_fact" | "update_fact"
     | "add_name" | "update_name" | "update_person"
     | "add_person" | "add_relationship"
-    | "add_source" | "update_source" | "remove"
-    | "add_household_children",
+    | "add_source" | "update_source" | "remove",
 
   // ── targeting (per operation) ──
   personId?: string,          // add_fact/update_fact (person-held facts — exactly one of
@@ -155,10 +153,6 @@ tree_edit({
   relationship?: SimplifiedRelationship, // add_relationship (full)
   source?: SimplifiedSourceDescription,  // add_source (full) / update_source (fields to set)
   gender?: string, ark?: string,    // update_person
-
-  // add_household_children (§4.4) — record-side household roster:
-  parents?: [{ given?, surname?, gender }],
-  children?: [{ given?, surname?, gender }],
 
   resolveStandardPlace?: boolean,   // default true: auto-resolve standard_place when place is set
 })
@@ -246,12 +240,8 @@ malformed nested date later crashed `person_warnings` date parsing.
     relationship?: string, source?: string,
     names?: string[],             // add_person nested names
     facts?: string[],             // add_person / add_relationship nested facts
-    persons?: string[],           // add_household_children stubs
-    relationships?: string[],     // add_household_children edges
   },
-  household?: { parentsMatched, created, skipped, edgesAdded },  // add_household_children (§4.4)
-  action?: "skipped_no_parent_in_tree",                          // add_household_children no-op (§4.4)
-  filesWritten: ["tree.gedcomx.json"],  // [] when the call mutated nothing (§4.4 no-op paths)
+  filesWritten: ["tree.gedcomx.json"],
   validation: { valid: true, warnings: string[] },
 }
 // on failure: { ok: false, errors: string[] } — nothing written
@@ -304,85 +294,9 @@ Semantics (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
 
 The persisted tree shape is unchanged — `ops` changes only the number of write calls.
 
-### 4.4 `add_household_children` — sibling stubs from a household record
+### 4.4 Stringified-argument tolerance
 
-Record-extraction §5d used to be an agent-side sequence: read the tree, look
-up each household parent by name+gender, tolerantly dedup each child against
-existing tree persons, then write two `tree_edit` batches (stubs, then edges).
-Every step except "list who is on the record" is a mechanical lookup over
-`tree.gedcomx.json` — which this tool already holds in memory — so the whole
-sequence is now one additive op. The caller supplies only the record-side
-roster; the tool owns matching, dedup, stub creation, and edge creation
-(extractor state diet, 2026-07-12).
-
-```typescript
-tree_edit({
-  projectPath,
-  operation: "add_household_children",
-  parents:  [{ given?: string, surname?: string, gender: string }, …],  // the record's parent roles
-  children: [{ given?: string, surname?: string, gender: string }, …],  // the record's child_N roles
-})
-```
-
-Both arrays are required and non-empty; each entry needs a normalizable
-`gender` (`Male`/`Female`/`Unknown`, case-insensitive, `M`/`F`/`U` accepted)
-and at least one of `given`/`surname`.
-
-**Name normalization + tolerant given match (the documented rule).** A name
-token normalizes by casefolding, Unicode-decomposing (NFKD), and stripping
-every character outside `[a-z0-9]` (so `Sóstenes` ≡ `sostenes`, `O'Brien` ≡
-`obrien`). Two persons match when gender matches (normalized equality),
-surnames are normalized-equal, and givens **tolerantly** match: normalized-
-equal, OR (both ≥2 chars) one is a prefix of the other (`Will`/`William`),
-OR the shorter is a first-letter-anchored subsequence of the longer — the
-`Wm`/`William`, `Thos`/`Thomas`, `Chas`/`Charles` contraction class. An
-empty field on one side matches only an empty field on the other. Every
-`names[]` entry of a tree person (preferred or alternate) is eligible.
-
-**Behavior (all internal, one transaction):**
-
-1. **Match parents** against `persons[]` (first match in array order per
-   input parent; two inputs matching the same person collapse to one).
-   No parent matched → `{ ok: true, action: "skipped_no_parent_in_tree" }`
-   with the empty checklist — **zero writes**, no `.bak`, no validation
-   churn.
-2. **Dedup children.** A child is skipped when it tolerantly matches (a) an
-   existing child of any matched parent (via `ParentChild` edges) — reason
-   `already_child_of_parent` — or (b) any person in the tree with the same
-   name+gender — reason `person_exists_in_tree`. Skip entries carry the
-   matched person's `id` so the caller can flag identity contradictions.
-   Checks run against the live tree, so a duplicate within `children[]`
-   itself dedups against the just-created stub.
-3. **Create stubs** for the remaining children: the established stub shape —
-   `gender` + a single `names` entry (`given`/`surname`,
-   `type: "BirthName"`, `preferred: true`), tool-assigned `I`/`N` ids, **no
-   facts**, no `ark` (`simplified-gedcomx-spec.md` §4.6) — plus one
-   `ParentChild` edge per (stub × matched parent) pair, tool-assigned `R`
-   ids. All in the op's single apply; the call's usual validate-on-write +
-   `.bak` + atomic write follow (§5).
-4. **Return the checklist** (relayable verbatim):
-
-```typescript
-{
-  parentsMatched: [{ name, id }],           // name = the input (record-side) spelling
-  created:        [{ name, id }],           // stub I ids
-  skipped:        [{ name, reason, id? }],  // reason: already_child_of_parent | person_exists_in_tree
-  edgesAdded:     n,
-}
-```
-
-surfaced as `household` on the op's result row (plus
-`assignedIds.persons`/`assignedIds.relationships`). When every child dedups
-away (nothing created, no edges), the op — like the no-parent case — writes
-nothing (`filesWritten: []` when no other op in the call mutated).
-
-The op is **additive-only by construction** (it never renames, rewrites, or
-removes), so it lives in `tree_edit`, not `tree_correct` — the extraction
-authority split (§2.1) is preserved. The subject's own person and edges
-remain out of scope (person-evidence writes those); the caller lists the
-subject among `children[]` and the dedup skips them.
-
-**Stringified-argument tolerance.** The model occasionally serializes a large or
+The model occasionally serializes a large or
 deeply nested argument as a JSON **string** rather than inline JSON. Since the input
 schema declares `ops` as an array and the single-op payloads (`fact`, `name`,
 `person`, `relationship`, `source`) as objects, a string value is unambiguously a
@@ -398,7 +312,7 @@ one-op-per-call fallback. `research_append` applies the same tolerance to its
 
 ## 5. Persistence — validate-before-persist, atomic, tree-only
 
-Sequence (mirrors `merge_record_into_tree`):
+Sequence (validate-before-persist, tree-only):
 
 1. Read `tree.gedcomx.json` fresh from disk (ids checked against current state;
    a stale `factId`/`personId`/`relationshipId` is a clear error, not a silent
@@ -530,17 +444,6 @@ The caller (`tree-edit` skill) still:
   immutable), errors on an unknown `sourceId`; missing-payload guards return
   `{ ok: false }`; a titleless `add_source` fails validation and writes nothing.
 - **remove** — fact/relationship deleted by id; `remove` with `personId` rejected.
-- **add_household_children (§4.4)** — trigger/skip matrix: parent matched →
-  stubs + edges + checklist; no parent matched → `skipped_no_parent_in_tree`,
-  zero writes, tree byte-unchanged, no `.bak`; dedup tolerance (`Wm`/`William`
-  contraction, `Will`/`William` prefix, accent-folded exact) against both an
-  existing child-of-parent and a global same-name+gender person, with the
-  matched `id` echoed on skips; gender mismatch does NOT dedup; multi-parent →
-  one edge per (stub × matched parent); all-children-deduped → no write; stub
-  shape (gender + single preferred BirthName, NO facts, no ark);
-  `assignedIds.persons`/`assignedIds.relationships` reported; malformed input
-  (missing arrays, entry without gender or without any name part) rejected;
-  `tree_correct` rejects the op (additive gate).
 - **staleness** — an unknown `factId` returns an error, writes nothing.
 - **validate-before-persist** — an edit that would invalidate the project writes
   nothing and returns `{ ok: false, errors }`; no `.bak` written.

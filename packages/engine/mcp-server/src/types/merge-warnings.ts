@@ -7,7 +7,7 @@ import type { PersonWarning } from "./person-warnings.js";
 export interface MergeWarningsInput {
   projectPath: string;
   candidateGedcomx: SimplifiedGedcomX;
-  /** `[treeId, candidateId]` pairs — the same shape merge_record_into_tree takes. */
+  /** `[treeId, candidateId]` pairs for the proposed cross-document merge. */
   merges: Array<[string, string]>;
 }
 

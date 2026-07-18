@@ -60,7 +60,6 @@
     { "name": "person_quality" },
     { "name": "merge_warnings" },
     { "name": "volume_search" },
-    { "name": "merge_record_into_tree" },
     { "name": "merge_tree_persons" },
     { "name": "research_log_append" },
     { "name": "convert_calendar" },
@@ -68,7 +67,8 @@
     { "name": "tree_correct" },
     { "name": "research_append" },
     { "name": "rank_search_matches" },
-    { "name": "project_context" }
+    { "name": "project_context" },
+    { "name": "materialize_facts" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

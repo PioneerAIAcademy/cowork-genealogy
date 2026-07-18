@@ -277,6 +277,14 @@ the model, owns every id and every cross-file link (decision D1,
   supplied `source_id` always wins (rare multi-source batches). Calls with zero or
   2+ sources append ops auto-stamp nothing: assertion `source_id` requirements are
   exactly as before.
+- **Scope: `S` entry only, never tree facts.** The composite's tree write is
+  limited to the source-description `S` entry — `research_append` **owns S-entry
+  creation** but never writes person facts, names, or relationships into
+  `tree.gedcomx.json`. Evidence facts materialize onto tree persons separately, at
+  identity-link time, via **`materialize_facts`** (the fact writer), which reads
+  the assertions this call persisted and stamps each fact with a provenance ref
+  that resolves through the `S` id created here. See `research-schema-spec.md` §8,
+  "tree.gedcomx.json update timing" (the two-layer rule).
 
 ### 3.4.1 Source-reuse auto-detection
 

@@ -1,7 +1,7 @@
 # Validation Protocol
 
-`research_append`, `tree_edit`, `merge_tree_persons`, and
-`merge_record_into_tree` validate-before-persist — they conform-check
+`research_append`, `tree_edit`, `tree_correct`, and
+`merge_tree_persons` validate-before-persist — they conform-check
 the project against the published schemas and write nothing on
 `{ ok: false, errors }`. So there is no separate post-write
 `validate-schema` step for those writes; just surface any returned
