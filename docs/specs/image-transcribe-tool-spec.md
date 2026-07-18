@@ -496,19 +496,24 @@ needs `image_filename` on its source field allow-list; `images/` cleanup is
 the `research_append` TTL sweep above, not a validator orphan check — unlike
 `results/`, a stray `images/*.jpg` never blocks a write, it just ages out.
 
-**Viewing — Electron first, hosted web as a separate project.**
-- **Electron:** the JPEG lives in the connected project folder, so
-  `apps/electron/main` reads `images/<file>` and hands it to `viewer-ui` over
-  the existing IPC transport; `viewer-ui` renders it beside the source's
-  transcription (a `ResearchTransport` image-fetch method).
-- **Hosted web:** the browser cannot read the sandbox filesystem — this is
-  what `apps/server/app/image_proxy.py` (the **501 stub**) is a placeholder
-  for. Wiring a real control-plane→sandbox image route is a **separate
-  follow-on project**, not part of this spec's core DoD.
+**Viewing — via the shared `ResearchTransport.getSourceImage` seam.** The
+`viewer-ui` `SourcesSection` renders the scan beside the transcription whenever
+a source has `image_filename`, lazy-loading it through an optional transport
+method (absent → no scan shown). Both adapters implement it:
+- **Electron:** `apps/electron/main` reads `images/<file>` from the connected
+  project folder over a validated `project:read-image` IPC channel and returns
+  a `data:` URL (`img-src data:` already in the CSP).
+- **Hosted web:** the browser cannot read the sandbox filesystem, so
+  `WsResearchTransport.getSourceImage` fetches
+  `GET /api/sessions/{id}/image?filename=images/<key>.jpg` — a control-plane
+  route (`sessions.py`) that reads the file from the session's sandbox
+  (`sandbox.read_file`, same pattern as the sidecar route) with the same
+  `images/<key>.jpg` validation, and streams `image/jpeg` back. (This is
+  distinct from `image_proxy.py`, which is a separate, still-stubbed route for
+  proxying *FamilySearch* image bytes.)
 
-**Sequencing.** The core text-returning tool (§5–§7) ships first and is
-useful on its own; image persistence + Electron viewing is a follow-up
-increment; hosted-web viewing is its own project.
+**Sequencing.** The core text-returning tool (§5–§7) ships first and is useful
+on its own; image persistence + the Electron and hosted-web viewers followed.
 
 ## 9. Wiring (standard MCP-tool checklist)
 
