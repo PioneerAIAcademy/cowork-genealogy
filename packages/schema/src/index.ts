@@ -198,6 +198,9 @@ export interface Source {
   notes: string | null
   log_entry_id?: string | null
   transcription?: string | null
+  /** Project-relative path of the saved page scan (images/<key>.jpg), when the
+   *  source is image-backed and image_transcribe persisted it (§8.5). */
+  image_filename?: string | null
 }
 
 export interface Assertion {
