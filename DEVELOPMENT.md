@@ -55,6 +55,15 @@ read out of `git log`, and it keeps personal email addresses out of the repo.
 Don't "fix" it by adding an address. Claude/AI co-authors don't satisfy the
 check — the whole point is recording the human you worked with.
 
+The local hook fires at commit time on stderr, which is easy to miss (and
+invisible when commits are made through a wrapper). So a CI counterpart,
+`.github/workflows/check-coauthor.yml`, re-emits the same nudge as a **warning
+annotation on the PR** when *none* of the PR's commits carry a human
+`Co-authored-by:` trailer. It uses the identical "human" definition and, like
+the hook, only warns — it never blocks merge. It's a per-PR check (not
+per-commit) because the squash-merge folds every commit's trailers together, so
+credit survives as long as one commit records it.
+
 ## Smoke-test tools against live APIs
 
 Bypass the MCP harness to debug a tool in isolation:
