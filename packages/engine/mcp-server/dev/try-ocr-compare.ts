@@ -58,6 +58,7 @@ interface ImageSpec {
   languageHint: string;
   imageId?: string;
   ark?: string;
+  localPath?: string; // a local JPEG (e.g. a user-supplied scan) — bypasses FS fetch
 }
 
 const IMAGES: ImageSpec[] = [
@@ -170,6 +171,17 @@ const IMAGES: ImageSpec[] = [
     languageHint:
       "This is a late-19th / early-20th-century U.S. vital record from New York, in English.",
     ark: "3:1:33S7-9RK9-BPN",
+  },
+  {
+    slug: "german-kurrent",
+    scenario: "(user-supplied)",
+    lang: "German (Kurrent + Fraktur)",
+    recordType: "Protestant baptism register (Taufregister), 1854",
+    note: "user-supplied (imageId 101848470_00570); fetched from FS by ARK for repeatability; two-page 1854 Taufregister spread, entries #15–19 — the bet's headline domain",
+    subset: "hard",
+    languageHint:
+      "This is an 1854 German Protestant church baptism register (Taufregister). The column headers are printed in Fraktur; the entries are handwritten in Kurrent script. Columns: child's baptismal name, parents, place of birth, time of birth, place/day of baptism, officiant, and godparents (Taufzeugen).",
+    ark: "ark:/61903/3:1:3Q9M-CSQR-S57W",
   },
 ];
 
@@ -407,7 +419,17 @@ async function main() {
   console.log(`Variants: ${variants.map((v) => v.key).join(", ")}`);
   console.log(`Ground truth: ${GROUND_TRUTH_MODEL} (thinking disabled)\n`);
 
-  const token = await getValidToken();
+  // Merge into any existing results.json so a --only run ADDS images without
+  // clobbering previously-transcribed ones. FS auth is fetched lazily — a run
+  // over only local images needs no FamilySearch session.
+  let priorImages: any = {};
+  try {
+    priorImages = JSON.parse(readFileSync(join(OUT_DIR, "results.json"), "utf-8")).images ?? {};
+  } catch {
+    /* no prior run */
+  }
+
+  let token: string | undefined;
   const results: any = {
     meta: {
       groundTruthModel: GROUND_TRUTH_MODEL,
@@ -416,7 +438,7 @@ async function main() {
       maxLongestSidePrep: MAX_LONGEST_SIDE,
       privacyFlag: 'provider.data_collection="deny"',
     },
-    images: {},
+    images: priorImages,
   };
 
   const needsPrep = variants.some((v) => v.prep);
@@ -427,18 +449,25 @@ async function main() {
     mkdirSync(dir, { recursive: true });
     console.log(`\n=== ${slug} (${img.lang}, ${img.recordType}) ===`);
 
-    const url = resolveImageUrl(img);
+    const source = img.localPath ?? resolveImageUrl(img);
     let rawBytes: Buffer;
     let rawMime: string;
     try {
-      const fetched = await fetchScan(url, token);
-      rawBytes = fetched.bytes;
-      rawMime = fetched.mimeType;
+      if (img.localPath) {
+        rawBytes = readFileSync(img.localPath);
+        rawMime = img.localPath.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+        console.log(`  local raw: ${(rawBytes.length / 1e6).toFixed(2)} MB (${rawMime})`);
+      } else {
+        token ??= await getValidToken();
+        const fetched = await fetchScan(source, token);
+        rawBytes = fetched.bytes;
+        rawMime = fetched.mimeType;
+        console.log(`  fetched raw: ${(rawBytes.length / 1e6).toFixed(2)} MB (${rawMime})`);
+      }
       writeFileSync(join(dir, "raw.jpg"), rawBytes);
-      console.log(`  fetched raw: ${(rawBytes.length / 1e6).toFixed(2)} MB (${rawMime})`);
     } catch (e) {
       console.log(`  FETCH FAILED: ${e}`);
-      results.images[slug] = { ...imgMeta(img), source: url, error: String(e) };
+      results.images[slug] = { ...imgMeta(img), source, error: String(e) };
       continue;
     }
 
@@ -486,7 +515,7 @@ async function main() {
 
     results.images[slug] = {
       ...imgMeta(img),
-      source: url,
+      source,
       rawMime,
       dims: prepInfo,
       groundTruth: { model: GROUND_TRUTH_MODEL, ...gt },

@@ -117,7 +117,16 @@ async function main() {
 
   const results = JSON.parse(readFileSync(join(OUT_DIR, "results.json"), "utf-8"));
   const variantKeys: string[] = results.meta.variants.map((v: any) => v.key);
-  const grades: any = { meta: { judgeModel: JUDGE_MODEL, groundTruthModel: results.meta.groundTruthModel }, images: {} };
+
+  // Merge into any existing grades.json so a --only run adds/updates one image's
+  // grades and preserves the rest; the summary is recomputed over all below.
+  let priorGradeImages: any = {};
+  try {
+    priorGradeImages = JSON.parse(readFileSync(join(OUT_DIR, "grades.json"), "utf-8")).images ?? {};
+  } catch {
+    /* no prior grades */
+  }
+  const grades: any = { meta: { judgeModel: JUDGE_MODEL, groundTruthModel: results.meta.groundTruthModel }, images: priorGradeImages };
 
   for (const [slug, img] of Object.entries<any>(results.images)) {
     if (only && !only.includes(slug)) continue;
