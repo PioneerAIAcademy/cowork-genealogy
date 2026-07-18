@@ -627,3 +627,27 @@ button {
 .chatSend:disabled {
   opacity: 0.5;
 }
+/* Attach a document/image for the agent to read (uploads/ in the project). */
+.chatAttach {
+  align-self: stretch;
+  background: var(--bg-card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.chatAttach:hover:not(:disabled) {
+  border-color: var(--accent-soft);
+}
+.chatAttach:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.chatUploadError {
+  padding: 0 10px 8px;
+  font-size: 12px;
+  color: var(--danger, #c0392b);
+}

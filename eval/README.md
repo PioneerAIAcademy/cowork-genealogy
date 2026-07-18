@@ -192,7 +192,7 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 
 - **[`eval/JUNIOR-WALKTHROUGH.md`](JUNIOR-WALKTHROUGH.md)** — your first PR as a junior genealogist: edit a skill, run the harness, review scores, push.
 - **[`eval/SENIOR-WALKTHROUGH.md`](SENIOR-WALKTHROUGH.md)** — reviewing a PR + releasing: pull, compare, dispute via PR comments, click Release.
-- **[`eval/ALPHA-WALKTHROUGH.md`](ALPHA-WALKTHROUGH.md)** — authoring e2e research tests as an external (alpha) senior genealogist on Windows: pick a person, strip the answer, watch a live run, open a fixture PR.
+- **[`docs/alpha-user-guide.md`](../docs/alpha-user-guide.md)** — what alpha testers actually do: real research in the hosted web app, then feedback. They do **not** author fixtures or run the harness (that changed 2026-07-18; the old ALPHA-WALKTHROUGH described a fixture-authoring role no alpha tester has).
 
 ## Workflow
 

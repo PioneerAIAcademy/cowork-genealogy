@@ -33,6 +33,16 @@ class Settings(BaseSettings):
     # docs/specs/image-transcribe-tool-spec.md §6.5.
     openrouter_api_key: str | None = None
 
+    # ── Build identity ───────────────────────────────────────────
+    # Stamped into every feedback bundle so triage can tell which build a case
+    # came from. Set at image build time by deploy/Dockerfile ARGs, which
+    # `make deploy` fills from git. Both stay "dev" locally, where the running
+    # code is just the working tree. build_date is the human-readable half —
+    # a date tells a triager "this is from before Tuesday's fix" at a glance;
+    # git_sha is the exact-checkout half.
+    git_sha: str = "dev"
+    build_date: str = "dev"
+
     # ── Sandbox provider ─────────────────────────────────────────
     # "local" → LocalProvider (subprocess + local dir; the POC default).
     # "e2b"   → E2BProvider (per-user microVM; needs E2B_API_KEY).
