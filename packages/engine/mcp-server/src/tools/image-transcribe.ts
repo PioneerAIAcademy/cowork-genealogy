@@ -3,6 +3,7 @@ import {
   resolveFsImageInput,
   fetchFsImageBytes,
 } from "../utils/fs-image-fetch.js";
+import { saveSourceImage } from "../utils/image-store.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
@@ -60,7 +61,7 @@ function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
 export async function imageTranscribeTool(
   input: ImageTranscribeInput
 ): Promise<ImageTranscribeResult> {
-  const { url } = resolveFsImageInput(input, "image_transcribe");
+  const { url, label } = resolveFsImageInput(input, "image_transcribe");
 
   // Resolve credentials/config BEFORE fetching the image: a missing key
   // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
@@ -140,10 +141,28 @@ export async function imageTranscribeTool(
     );
   }
 
+  // Persist the scan for a retained source (§8.5, design B) — best-effort: the
+  // transcription is the primary payload, so a save failure (e.g. a bad
+  // projectPath) omits imageRef rather than losing the text. A TTL sweep in
+  // research_append GCs images no source ends up citing.
+  let imageRef: string | undefined;
+  if (input.projectPath) {
+    try {
+      imageRef = await saveSourceImage({
+        projectPath: input.projectPath,
+        imageKey: label,
+        bytes,
+      });
+    } catch {
+      imageRef = undefined;
+    }
+  }
+
   const key = input.lookingFor?.trim();
   return {
     transcription,
     ...(key ? { found: parseFound(transcription) } : {}),
+    ...(imageRef ? { imageRef } : {}),
     metadata: {
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
@@ -184,6 +203,14 @@ export const imageTranscribeToolSchema = {
           "Optional: who or what to locate on the page. A search key only — " +
           "it sets a FOUND/NOT FOUND pointer and never shortens or slants the " +
           "full transcription.",
+      },
+      projectPath: {
+        type: "string",
+        description:
+          "Optional absolute path to the project folder. When set, the fetched " +
+          "page scan is saved under images/ and its project-relative path is " +
+          "returned as imageRef, so a retained source can cite it (image_filename) " +
+          "for viewer display.",
       },
     },
   },

@@ -8,6 +8,9 @@ export interface ImageTranscribeInput {
    * `looking_for`.
    */
   lookingFor?: string;
+  /** Absolute project-folder path. When given, the fetched JPEG is saved under
+   *  images/<key>.jpg and its project-relative path returned as `imageRef` (§8.5). */
+  projectPath?: string;
 }
 
 export interface ImageTranscribeResult {
@@ -15,6 +18,9 @@ export interface ImageTranscribeResult {
   transcription: string;
   /** Present only when `lookingFor` was provided. */
   found?: "FOUND" | "NOT FOUND";
+  /** Project-relative path of the saved scan (images/<key>.jpg), present only
+   *  when projectPath was supplied and the save succeeded (§8.5). */
+  imageRef?: string;
   metadata: {
     imageId?: string;
     ark?: string;

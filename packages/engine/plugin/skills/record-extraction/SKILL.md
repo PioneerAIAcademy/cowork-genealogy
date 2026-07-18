@@ -83,6 +83,14 @@ Record data arrives in one of four ways:
    extraction delegation so it lands in the source's `transcription`
    field.
 
+   **Pass `project_path` so the scan is saved for the source.** Include
+   `project_path: <your working folder>` in the delegation; the reader's
+   default read then saves the JPEG and reports `Saved image:
+   images/<key>.jpg`. Set the source's **`image_filename`** to that path
+   (alongside `transcription`) in the append, so the viewer can show the
+   scan. Only images a retained source cites are kept — an uncited scan is
+   swept — so there is no cleanup to do.
+
    **Ask for a `second_opinion` on reads you'll rely on.** The default read
    is fast but a single model; for a transcription you are about to **cite**
    (turn into an assertion) or where an identifying token looks **ambiguous**,

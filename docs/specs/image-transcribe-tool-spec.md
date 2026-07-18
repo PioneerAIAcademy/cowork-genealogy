@@ -252,7 +252,7 @@ consistent across schema, manifest, and skill.)*
   imageId?: string    // DGS Image Group Number "NUMBER_NUMBER", e.g. 004884748_02613
   ark?: string        // FamilySearch document-image ARK / resolver URL / dist URL
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
-  projectPath?: string // absolute project-folder path; supply to stage the JPEG (§8.5)
+  projectPath?: string // absolute project-folder path; supply to save the JPEG (§8.5)
 }
 ```
 
@@ -263,11 +263,11 @@ consistent across schema, manifest, and skill.)*
   only. It focuses a FOUND/NOT FOUND pointer; it **never** shortens or slants
   the full transcription, and any *assertion* in it ("confirm the father is
   Adam Schreck") is ignored — transcribe what the page says.
-- `projectPath`, when given, makes the tool **stage** the fetched JPEG
-  host-side under `<projectPath>/images/.staging/` and return a
-  `stagedImageRef` (§8.5). Omit it (e.g. in the spike / dev smoke) to skip
-  persistence and just get text. It is an absolute path the caller passes;
-  the tool never invents one and validates it is inside the project.
+- `projectPath`, when given, makes the tool **save** the fetched JPEG
+  host-side to `<projectPath>/images/<key>.jpg` and return an `imageRef`
+  (§8.5). Best-effort: a save failure omits `imageRef` rather than losing the
+  transcription. Omit it (e.g. in the spike / dev smoke) to skip persistence
+  and just get text.
 - All input is camelCase (MCP wire convention).
 
 ### 5.4 Behavior (pipeline)
@@ -297,7 +297,7 @@ Returns **text only**:
 {
   transcription: string      // faithful full-page OCR (the primary payload)
   found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set
-  stagedImageRef?: string    // present iff projectPath was given (§8.5, persistence increment) — e.g. "images/.staging/<imageId>.jpg"
+  imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
   metadata: {
     imageId?: string
     ark?: string
@@ -465,22 +465,25 @@ scan** behind a transcription in the Electron viewer (and later the hosted
 web viewer). Persist the JPEG — but only for sources the researcher keeps,
 so projects don't bloat with every scan read.
 
-**Staging → finalize (mirrors `results-staging.ts`).**
-- When `projectPath` is given, `image_transcribe` stages the fetched JPEG
-  host-side at `<projectPath>/images/.staging/<imageId>.jpg` — a
-  **deterministic path keyed by imageId** (a new `src/utils/image-staging.ts`,
-  following `results-staging.ts`) — and returns `stagedImageRef`. It does
-  **not** write `research.json`. Because the path is derived from the imageId,
-  `research_append` can finalize it **without** the ref being threaded back
-  through the (text-only) `image-reader` subagent.
-- When `research_append` persists an image-sourced source, it **finalizes**
-  the staged JPEG (found at `images/.staging/<imageId>.jpg` for that source's
-  imageId) to `<projectPath>/images/<source_id>.jpg` and sets a new
-  `sources[].image_filename`. Staged images not finalized by the end of the
-  write are discarded — so only **retained** sources keep a file: no orphans,
-  no bloat. This is the same discipline the search-result sidecars use, and it
-  pairs the image with the existing `sources[].transcription` field
-  (`research-schema-spec.md` §5.5).
+**Save-by-imageId + TTL sweep (design B).** A source carries no imageId to
+key a staging→finalize on, so a GC sweep replaces the finalize:
+- When `projectPath` is given, `image_transcribe` saves the fetched JPEG
+  directly to `<projectPath>/images/<key>.jpg` (`key` = the sanitized imageId
+  or ARK label; `src/utils/image-store.ts`) and returns `imageRef` (the
+  project-relative path). Best-effort — a save failure omits `imageRef` rather
+  than losing the transcription. It does **not** write `research.json`.
+- The `image-reader` subagent threads `projectPath` into that call and reports
+  the returned `imageRef`; `record-extraction` sets the retained source's
+  `sources[].image_filename` to it in the `research_append` call (pairing the
+  image with the existing `transcription` field, `research-schema-spec.md`
+  §5.5).
+- `research_append` runs a **best-effort, TTL-gated sweep**
+  (`gcUnreferencedImages`) after each write: remove `images/*.jpg` that no
+  source's `image_filename` cites **and** that are older than the TTL (24 h,
+  the `results-staging` value). TTL-gating makes it race-safe — a scan just
+  saved by `image_transcribe` survives until the `research_append` that cites
+  it (kept) or ages out (pruned) — so only **retained** sources keep an image,
+  with no orphans and no finalize hook inside `research_append`'s batch logic.
 
 **Schema change — `sources[].image_filename`** (optional, nullable string).
 A "new field" change with the full blast radius: edit `research.schema.json`
@@ -488,9 +491,10 @@ in **both** trees (`docs/specs/schemas/` and `packages/schema/schemas/`), the
 prose table in `research-schema-spec.md`, the validator
 (`packages/engine/mcp-server/src/validation/validator.ts`), and the
 `packages/schema` TS mirror (`src/index.ts`). It is optional, so it does
-**not** break `eval/fixtures/scenarios/*/research.json`. The validator's
-orphan check must treat `images/` files referenced by a source as legitimate,
-and unreferenced `images/*.jpg` as cleanup targets (not write-blocking).
+**not** break `eval/fixtures/scenarios/*/research.json`. The validator only
+needs `image_filename` on its source field allow-list; `images/` cleanup is
+the `research_append` TTL sweep above, not a validator orphan check — unlike
+`results/`, a stray `images/*.jpg` never blocks a write, it just ages out.
 
 **Viewing — Electron first, hosted web as a separate project.**
 - **Electron:** the JPEG lives in the connected project folder, so
@@ -650,7 +654,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `src/tools/configure-openrouter.ts`
 - `src/types/image-transcribe.ts`
 - `src/utils/fs-image-fetch.ts` (lifted from `image-read.ts`)
-- `src/utils/image-staging.ts` *(image-persistence increment; mirrors `results-staging.ts`)*
+- `src/utils/image-store.ts` *(image-persistence: save + TTL-GC, §8.5)*
 - `dev/try-image-transcribe.ts`
 - `tests/tools/image-transcribe.test.ts`
 - `tests/tools/configure-openrouter.test.ts`
@@ -671,12 +675,12 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `docs/TODOs.md` — any deferred follow-ups (e.g. multi-image batching)
 
 *Image-persistence increment (§8.5):*
-- `src/tools/research-append.ts` — finalize the staged JPEG + set `image_filename`
+- `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write
 - `docs/specs/schemas/research.schema.json` + `packages/schema/schemas/research.schema.json` — add `sources[].image_filename`
 - `packages/schema/src/index.ts` — mirror `image_filename` on the `Source` type
-- `packages/engine/mcp-server/src/validation/validator.ts` — allow `image_filename`; `images/` orphan handling
+- `packages/engine/mcp-server/src/validation/validator.ts` — allow `image_filename` on the source field set
 - `docs/specs/research-schema-spec.md` — `image_filename` prose row
-- `packages/engine/plugin/skills/record-extraction/SKILL.md` — thread `projectPath` through
+- `packages/engine/plugin/agents/image-reader.md` + `.../skills/record-extraction/SKILL.md` — thread `project_path` → `imageRef` → `image_filename`
 
 *Hosted + e2e key bridges (§6.5):*
 - `apps/server/app/config.py` — `openrouter_api_key` on `Settings`

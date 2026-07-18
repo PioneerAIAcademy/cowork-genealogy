@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { mkdtemp, rm, readFile } from "fs/promises";
+import { tmpdir } from "os";
+import { join } from "path";
 
 // Mock the config getters (key + model) and the shared FS-image fetch. The
 // real resolveFsImageInput is kept (partial mock) so input validation and
@@ -94,6 +97,28 @@ describe("imageTranscribeTool — request + happy path", () => {
       sizeBytes: 3,
     });
     expect(result.found).toBeUndefined();
+  });
+
+  it("saves the scan under images/ and returns imageRef when projectPath is given", async () => {
+    mockOpenRouterOk("Johann Schreck");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-"));
+    try {
+      const result = await imageTranscribeTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      });
+      expect(result.imageRef).toBe("images/004884748_02613.jpg");
+      const saved = await readFile(join(dir, "images", "004884748_02613.jpg"));
+      expect(saved.length).toBe(3); // the 3 mocked fetch bytes
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("omits imageRef when projectPath is not given", async () => {
+    mockOpenRouterOk("Johann Schreck");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.imageRef).toBeUndefined();
   });
 
   it("reports ark (not imageId) in metadata for ark input", async () => {

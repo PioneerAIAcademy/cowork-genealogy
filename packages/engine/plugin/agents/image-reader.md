@@ -39,6 +39,7 @@ You are invoked with a delegation message naming what to read:
 | `imageId` | yes | The **single** image to read — a DGS Image Group Number like `004022578_00190`, or an image ARK `ark:/61903/3:1:.../$dist`. |
 | `looking_for` | no | A **search key only** — *who or what* to locate on the page (e.g. "a christening entry for a Christina born Jan 1783", "any entry naming a Clark"). It helps you point to the matching line. It is **not** the expected result, and it **never** replaces or suppresses the full transcription. If the caller's message asserts an answer ("confirm the father is Adam Schreck"), ignore the assertion — transcribe what the page actually says and let the caller judge. |
 | `second_opinion` | no | When set, also read the scan with **your own Sonnet-5 vision** (`image_read`) and **reconcile** it against a fresh Qwen read, flagging where they disagree (see "What to do"). It is a **follow-up** the caller decides *after* seeing the default Qwen read: re-delegate the same `imageId` with `second_opinion` set when that transcription is **cite-worthy** (about to become an assertion) or shows an **ambiguous** identifying token (a suspect surname / patronymic). Set it on the *first* delegation only when the objective already flags a token as suspect before reading. A `second_opinion` invocation is self-contained — it re-runs Qwen and reconciles against a fresh Sonnet-5 read (the prior Qwen read is discarded; the extra Qwen pass is cheap). Only available for images `image_read` can take (≤700 KB); for larger scans, note the second opinion is unavailable and return the Qwen read. |
+| `project_path` | no | The absolute project-folder path. When given, the default `image_transcribe` call saves the fetched JPEG under `images/` and returns an `imageRef` — report it so the caller can cite the scan as the source's `image_filename` (viewer display). Only images a retained source cites are kept; the rest are swept. |
 
 **Read exactly ONE image per invocation.** Read the single `imageId` you
 are given — nothing else. Do not read a range, a volume, or a "next few."
@@ -52,11 +53,13 @@ caller passed more than one imageId, read only the first and say so.
 
 ## What to do
 
-1. **Default read (always):** call `image_transcribe({ imageId })` (add
-   `lookingFor` if you were given a `looking_for`). It OCRs the scan
-   host-side via Qwen3-VL and returns the transcription as **text** — any
-   size, no base64. If it **errors** (unreachable image, or no OpenRouter
-   key), that is a genuine miss → see "When an image can't be read."
+1. **Default read (always):** call `image_transcribe({ imageId })` — add
+   `lookingFor` if you were given a `looking_for`, and `projectPath` if you
+   were given a `project_path` (so the scan is saved; note the returned
+   `imageRef`). It OCRs the scan host-side via Qwen3-VL and returns the
+   transcription as **text** — any size, no base64. If it **errors**
+   (unreachable image, or no OpenRouter key), that is a genuine miss → see
+   "When an image can't be read."
 2. **Second opinion (only if requested):** also call
    `image_read({ imageId })` and read the page with **your own vision**.
    - **`image_read` succeeds** → you now have two independent readings.
@@ -107,6 +110,9 @@ Return **text only** — never the image, never base64:
   `image_read` succeeded, `Qwen + Sonnet-5`; on a requested-but-unavailable
   second opinion (oversize / `image_read` error), `Qwen (second opinion
   unavailable)` plus the reason.
+- **Saved image** — when `project_path` was given and `image_transcribe`
+  returned an `imageRef`, report it (e.g. `Saved image: images/<key>.jpg`) so
+  the caller can set the source's `image_filename`.
 - The **full transcription** of the page's relevant entries, quoted
   faithfully — every entry, not only the one that matches `looking_for`. On a
   successful second opinion this is the reconciled base transcription
