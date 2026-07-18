@@ -10,15 +10,16 @@
 >
 > **Revision (2026-07-17) — three changes from the original draft, per a
 > design review:**
-> 1. **Qwen-first, with a Sonnet-5 reconciling second opinion.** The
->    `image-reader` subagent OCRs **every** image by default via
->    `image_transcribe` (Qwen3-VL — ~10× cheaper/faster, any size). It reads
->    a small scan with Claude's own Sonnet-5 vision (`image_read`) **only on a
->    `second_opinion` request** — for a cite-worthy or ambiguous read — and
->    reconciles the two, flagging where they disagree. (This replaced an
->    earlier "Sonnet for small, Qwen for large" split once the spike showed
->    Qwen is a strong-enough default and cost/latency dominates the common
->    triage path.) The subagent is **not** retired.
+> 1. **Qwen-only reader.** The `image-reader` subagent OCRs **every** image via
+>    `image_transcribe` (Qwen3-VL — ~10× cheaper/faster, any size, text out).
+>    That is the sole runtime reader. (Design history: a "Sonnet for small,
+>    Qwen for large" split, then a Qwen-first path with an opt-in Sonnet-5
+>    reconciling *second opinion*, were both tried and **dropped** — the second
+>    opinion was rarely used, and the viewer (item 2) lets a human verify a
+>    cite-worthy read against the actual scan, a better check than a second
+>    machine read. A user-invoked **Opus** transcription is parked in
+>    `docs/TODOs.md`, separate from this Qwen-only workflow.) `image_read`'s
+>    inline path is unused by the agent (kept only for the Issue #28 eval).
 > 2. **Image persistence + viewing (§8.5).** The backing JPEG is saved for
 >    **retained** sources so the Electron viewer (then the hosted web
 >    viewer) can show the scan beside its transcription.
@@ -31,10 +32,11 @@
 > The gate passed: build the tool and route large scans to **Qwen3-VL-235B
 > Instruct, raw bytes — no pre-processing** (prep *lowered* accuracy and
 > doubled hallucinations, so §7's `jimp` path is dropped, not built). Bonus:
-> **Sonnet 5 ≫ Sonnet 4.6 for OCR** (incl. German Kurrent/Fraktur, added to
-> the spike: Sonnet 5 76% / Qwen 67% / Sonnet 4.6 60% — same pattern as the
-> other hard hands), so Sonnet 5 is the second-opinion reader (revision item
-> 1). German is no longer an open item; it read like every other hard record.
+> Bonus spike finding: **Sonnet 5 ≫ Sonnet 4.6 for OCR** (incl. German
+> Kurrent/Fraktur: Sonnet 5 76% / Qwen 67% / Sonnet 4.6 60% — same pattern as
+> the other hard hands). This motivated the (now-dropped) Sonnet-5 second
+> opinion; the workflow reader is Qwen only (revision item 1). German is no
+> longer an open item; it read like every other hard record.
 
 ---
 
@@ -76,14 +78,13 @@ at all. That dissolves the entire T13 problem class at once:
   subagent was built to prevent — see its spec §1).
 - No 700 KB single-image floor.
 
-For the **large** scans `image_read` refuses today, this is a clean win —
-and the spike (§4) showed Qwen is a strong-enough reader that it became the
-**default for every image**, not just the large ones: the `image-reader`
-subagent OCRs via `image_transcribe` by default (~10× cheaper/faster) and
-reads a small scan with Claude's own Sonnet-5 vision (`image_read`) only on a
-`second_opinion` request, reconciling the two (§8). The subagent is not
-retired; its base64-isolation job now applies only to those second-opinion
-reads.
+For the **large** scans `image_read` refuses today, this is a clean win — and
+the spike (§4) showed Qwen is a strong-enough reader that it became the **only
+reader for every image**, not just the large ones: the `image-reader` subagent
+OCRs via `image_transcribe` (Qwen) for every scan and never reads inline. The
+subagent is not retired, but its base64-isolation job is now moot (the tool
+returns text) — it remains as the delegation seam + one-image-per-source
+boundary.
 
 This spec proposes a new tool, **`image_transcribe`**, that fetches the FS
 scan host-side and sends the raw bytes to a vision-language model (VLM)
@@ -112,10 +113,11 @@ the same pattern as the other hard hands — so it is no longer an open item.)
 - Not replacing `image_read`'s raw-image return for consumers that genuinely
   need the *pixels* (e.g. Issue #28's OCR-model comparison). `image_read`
   stays (§8).
-- Not removing Claude's own vision as an option for small images — the
-  `image-reader` subagent keeps `image_read` (Sonnet-5) available as a
-  `second_opinion` reconciliation, just no longer as the default reader
-  (§1, §8).
+- Not a native-vision reader. The `image-reader` subagent OCRs every scan via
+  `image_transcribe` (Qwen) and does **not** use Claude's own vision. A
+  Qwen-first path with an opt-in Sonnet-5 reconciling second opinion was tried
+  and dropped (§1); `image_read` the tool is kept only for the Issue #28 eval
+  (§8), not as a workflow reader.
 - Not a general document-understanding tool. It transcribes one page and
   returns text; matching the page to the research objective stays with the
   caller (record-extraction), exactly as the `image-reader` subagent
@@ -206,11 +208,11 @@ Secondary decisions the experiment also settles:
   doubled hallucinations (13→27). The tool base64s the raw bytes; **no `jimp`
   dependency** — the prep path in §7 is dropped.
 - **Partial win? — RESOLVED (PR 723).** Qwen is strong enough to be the
-  **default** reader for all images — it beats the old Sonnet-4.6 default on
+  **only** reader for all images — it beats the old Sonnet-4.6 default on
   every hard hand, including German. Sonnet 5 reads ~9 pts more accurately on
-  hard hands but at ~10× cost/latency, so it is kept as an on-demand
-  `second_opinion` reconciliation for cite-worthy/ambiguous reads, not the
-  default.
+  hard hands but at ~10× cost/latency; an opt-in Sonnet-5 reconciling second
+  opinion was considered and **dropped** (§1) — the viewer lets a human verify
+  a cite-worthy read against the actual scan, so Qwen is the sole reader.
 
 Record the outcome (corpus, per-image grades, decision) as a short results
 doc under `docs/plan/` so the choice is auditable, per the team-review-docs
@@ -228,11 +230,9 @@ Fetch a FamilySearch distribution image by `imageId` or `ark`, run VLM OCR
 host-side, and return a faithful text transcription. The image bytes never
 cross the MCP transport.
 
-This is the **default read** for every image, via the `image-reader` subagent
-(the spike showed Qwen is a strong-enough default; §8). Claude's own Sonnet-5
-vision (`image_read`) reads a small scan only on a `second_opinion` request,
-to reconcile against this Qwen read. Routing lives in the `image-reader`
-subagent (§8).
+This is the **sole read** for every image, via the `image-reader` subagent
+(the spike showed Qwen is a strong-enough reader; §8). There is no second
+reader — the agent never reads a scan inline with Claude's own vision.
 
 ### 5.2 Relationship to existing tools (naming)
 
@@ -454,9 +454,9 @@ built now.)
   accumulation caveats remain valid for *that* return type. Drop only the
   fetch duplication.
 - Update `docs/specs/image-read-spec.md` to cross-reference this tool as the
-  `image-reader` subagent's **default** OCR path, and note that `image_read`
-  is now the subagent's `second_opinion` reader (Sonnet-5 reconciliation on
-  small scans), not the default.
+  `image-reader` subagent's **sole** OCR path, and note that `image_read`'s
+  inline-base64 return is no longer used by that subagent (it stays only for
+  the Issue #28 pixel consumer).
 
 ## 8.5 Image persistence + viewing (retained sources only)
 
@@ -535,29 +535,24 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
 ## 10. Migration (skills + subagent)
 
 - **`record-extraction/SKILL.md`**: keep delegating the **Image** input path
-  to `@plugin:image-reader` (the subagent picks Qwen by default and Sonnet-5
-  on request, internally). The skill's prose contract barely changes — it
-  still receives a text transcription + extracted-facts list and keeps the
-  NOT-READ→pivot-to-indexes behavior. **Add the escalation rule** (a follow-up
-  on the returned Qwen read, not a pre-commit): after the default delegation,
-  if that transcription is a read you will **rely on** (cite / build an
-  assertion from) or shows an **ambiguous** identifying token (a suspect
-  surname/patronymic), re-delegate the same image with `second_opinion` — this
-  slots into the skill's existing "route a suspect identifying name to the
-  original register image to confirm the spelling" step. Thread `projectPath`
-  through so the subagent's `image_transcribe` call can stage the JPEG (§8.5).
-  For desktop setup, `configure_openrouter` is available so Claude can prompt
-  for a key when `image_transcribe` errors "no key." Preserve the "reserve
-  image transcription for facts that exist only on the image" guidance.
-- **`image-reader` subagent: Qwen-first with a Sonnet-5 second opinion.** Its
-  **default** reader is `image_transcribe` (Qwen) for every image; on a caller
-  `second_opinion` request it also reads a small scan with its own Sonnet-5
-  vision (`image_read`) and **reconciles** the two, flagging disagreements. It
-  still returns **text only**, so record-extraction's contract is unchanged.
-  Both tools are in the subagent's `tools:` (`mcp__genealogy__*`),
-  `model: claude-sonnet-5`, and `docs/specs/image-reader-agent-spec.md` is
-  updated to match. Follow the **lane rule** (`docs/skill-lifecycle.md` §5):
-  this is a tooling change (lane 1).
+  to `@plugin:image-reader` (the subagent OCRs every scan with Qwen). The
+  skill's prose contract barely changes — it still receives a text
+  transcription + extracted-facts list and keeps the NOT-READ→pivot-to-indexes
+  behavior. Thread `projectPath` through so the subagent's `image_transcribe`
+  call can stage the JPEG (§8.5). For desktop setup, `configure_openrouter` is
+  available so Claude can prompt for a key when `image_transcribe` errors "no
+  key." Preserve the "reserve image transcription for facts that exist only on
+  the image" guidance. (A Sonnet-5 second-opinion escalation was considered and
+  **dropped** — the viewer lets a human verify a cite-worthy read against the
+  scan; a user-invoked Opus transcription is parked in `docs/TODOs.md`.)
+- **`image-reader` subagent: Qwen only.** Its sole reader is `image_transcribe`
+  (Qwen) for every image; it never reads a scan inline with Claude's own
+  vision. It returns **text only**, so record-extraction's contract is
+  unchanged. Its one tool is `image_transcribe` (`mcp__genealogy__*`),
+  `model: claude-sonnet-4-6` (relays/formats text only — Qwen does the OCR),
+  and `docs/specs/image-reader-agent-spec.md` is updated to match. Follow the
+  **lane rule** (`docs/skill-lifecycle.md` §5): this is a tooling change
+  (lane 1).
 - Record any deferred follow-ups (e.g. multi-image batching) in
   `docs/TODOs.md` in the same PR that defers them (tech-debt-in-TODOs
   convention).
@@ -698,12 +693,10 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 
 **Keep + extend (not retire)**
 - `packages/engine/plugin/agents/image-reader.md` — make `image_transcribe`
-  (Qwen) the **default** reader for every image; add `image_read` as the
-  `second_opinion` Sonnet-5 reconciliation on small scans; `model` 4.6 →
-  **claude-sonnet-5** (spike PR 723: +15–18 pts on hard hands incl. German).
-- `docs/specs/image-reader-agent-spec.md` — document the Qwen-first + second-
-  opinion routing +
-  the Sonnet 5 bump.
+  (Qwen) the **sole** reader for every image; drop the inline `image_read`
+  path; `model` stays **claude-sonnet-4-6** (the agent relays/formats text
+  only — Qwen does the OCR).
+- `docs/specs/image-reader-agent-spec.md` — document the Qwen-only reader.
 
 ## 15. Open questions for the researcher
 
@@ -719,9 +712,11 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
    or raises cost.
 5. **Privacy sign-off.** Is sending FS record scans to OpenRouter acceptable
    (§11)? Policy call for Dallan.
-6. ~~**Partial-win handling.**~~ RESOLVED (PR 723): Qwen is the default reader
-   for all record types incl. German; Sonnet 5 is the on-demand
-   `second_opinion` reconciliation — no per-record-type split.
+6. ~~**Partial-win handling.**~~ RESOLVED (PR 723): Qwen is the sole reader for
+   all record types incl. German — no per-record-type split. A Sonnet-5 second
+   opinion was considered and dropped (the viewer lets a human verify a
+   cite-worthy read against the scan; a user-invoked Opus transcription is
+   parked in `docs/TODOs.md`).
 7. **Batching / cost.** Worth a multi-image call later, or is one-per-call
    fine? (Kept out of v1.)
 8. **Fallback if OpenRouter is down** at runtime — degrade to a clean
@@ -730,12 +725,12 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 ## 16. References
 
 - `docs/plan/record-extraction-consolidation-closing-report.md` §1 (T13)
-- `docs/specs/image-read-spec.md` (`image_read` is now the `image-reader`
-  subagent's `second_opinion` reader — Sonnet-5 vision on small scans — not
-  its default; its transport floor still guards that single read)
-- `docs/specs/image-reader-agent-spec.md` (the subagent — **kept**;
-  Qwen-first by default with `image_read` as the Sonnet-5 second opinion; its
-  OCR prompt/output protocol is reused verbatim)
+- `docs/specs/image-read-spec.md` (`image_read`'s inline-base64 path is no
+  longer used by the `image-reader` subagent; it stays only for the Issue #28
+  pixel consumer, and its transport floor still guards that single read)
+- `docs/specs/image-reader-agent-spec.md` (the subagent — **kept**; Qwen-only
+  reader via `image_transcribe`; its OCR prompt/output protocol is reused
+  verbatim)
 - `~/pioneeradademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
   (`enhance_for_ocr` — the prep pipeline the spike evaluated and rejected; §7)
 - `src/tools/wiki-search.ts` + `tests/tools/wiki-search.test.ts` (HTTP-tool

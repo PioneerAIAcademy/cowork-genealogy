@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 31 tools.
+The MCP server exposes 33 tools.
 
 ### FamilySearch records and places
 
@@ -96,6 +96,8 @@ The MCP server exposes 31 tools.
 | `place_population` | Historical population data + indexed record counts | None |
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata | OAuth |
+| `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Qwen3-VL via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
+| `configure_openrouter` | Save the user's OpenRouter API key to `~/.familysearch-mcp/config.json` (`openRouterApiKey`) so `image_transcribe` can run; returns a masked preview. Direct-invocation — Claude calls it when `image_transcribe` reports a missing/rejected key. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
@@ -119,6 +121,14 @@ gapminder, and FamilySearch indexed birth records. The `wiki_search`
 tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
 sidecar APIs (Pop Stats and `wiki-query-api`); no local setup required
 for end users.
+
+The `image_transcribe` tool OCRs page scans host-side via OpenRouter
+(default model `qwen/qwen3-vl-235b-a22b-instruct`). It needs an
+OpenRouter API key in `~/.familysearch-mcp/config.json` (`openRouterApiKey`);
+in Cowork, if the key is missing or rejected the workflow asks the user
+for one and saves it via `configure_openrouter`. The e2e harness and the
+hosted web server bridge the key from their own environment (see
+CLAUDE.md).
 
 Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 

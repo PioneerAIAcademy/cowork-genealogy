@@ -91,17 +91,6 @@ Record data arrives in one of four ways:
    scan. Only images a retained source cites are kept — an uncited scan is
    swept — so there is no cleanup to do.
 
-   **Ask for a `second_opinion` on reads you'll rely on.** The default read
-   is fast but a single model; for a transcription you are about to **cite**
-   (turn into an assertion) or where an identifying token looks **ambiguous**,
-   re-delegate the same image with `second_opinion` set. The reader then also
-   reads it with Claude's own Sonnet-5 vision and returns a **reconciled**
-   transcription that marks any Qwen↔Sonnet disagreement as uncertain and
-   lists the discrepancies. Treat a flagged token as uncertain (record it
-   `[?]` / tentative); a clean "no discrepancies" is strong confidence. This
-   is a follow-up you decide *after* the first read — not needed for candidate
-   triage.
-
    **If the reader returns `NOT READ`** (unreachable image, or no OpenRouter
    key configured for the OCR model), it includes the verbatim error and a
    pivot recommendation. If the cause is a **missing/rejected OpenRouter
@@ -126,10 +115,9 @@ Record data arrives in one of four ways:
    likely mistranscription (an out-of-place patronymic, a spelling no
    other record corroborates), treat the indexed value as a lead: route
    to the original register image (`volume_search` +
-   `@plugin:image-reader` **with `second_opinion`**) to confirm the
-   spelling before it is recorded as established — the reconciled read
-   flags the token if the two models disagree. If the image is
-   unreachable, tell the extractor to
+   `@plugin:image-reader`) to confirm the spelling before it is recorded
+   as established (the original scan usually settles a suspect index
+   reading). If the image is unreachable, tell the extractor to
    record the name **tentative** — `[?]` in `value`, the doubt in the
    bias notes, original-image confirmation named as the outstanding
    step. (This is how an index OCR slip — "Aadnesen" read as "Nadnesen"
