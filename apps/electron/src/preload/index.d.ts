@@ -28,6 +28,7 @@ export interface AppAPI {
     notes?: string
   }) => Promise<{ ok: true; filename?: string }>
   readSidecar: (logId: string) => Promise<{ raw: string; mtime: number } | null>
+  readImage: (filename: string) => Promise<string | null>
 }
 
 declare global {

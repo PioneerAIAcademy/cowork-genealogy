@@ -85,4 +85,12 @@ export interface ResearchTransport {
    * file-list preview. Optional: when absent the dialog hides the preview.
    */
   getFeedbackContext?(): Promise<FeedbackContext>
+
+  /**
+   * Read a saved source page-scan (`images/<key>.jpg`) as a `data:` URL for
+   * display beside its transcription. `null` when the file is absent. Optional —
+   * the web client may not expose the project filesystem, so callers must treat
+   * it as optional (no scan shown when absent).
+   */
+  getSourceImage?(filename: string): Promise<string | null>
 }

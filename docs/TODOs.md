@@ -15,6 +15,22 @@ Deferred items to revisit. Not blocking the alpha. Architecture context:
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
 
+## Engine — image transcription
+- [ ] **User-invoked Opus transcription (`image_transcribe` Flow 2)** — brainstormed,
+  **not requested by any user yet** (parked per YAGNI/scope-discipline). The research
+  workflow uses **Qwen only** (`image_transcribe`); this would let a user ask Claude
+  to transcribe a *specific* image with **Opus** on demand (premium, higher accuracy).
+  Recommended shape: a user-only tool `image_transcribe_opus` — a thin wrapper over the
+  same host-side OCR helper with the model pinned to an Opus slug **via OpenRouter** (so
+  it inherits any-size + text-out + no base64, since the bytes never cross the MCP stdio
+  transport) — that the research skills do **not** list in `allowed-tools`, invoked by
+  the main session on request or a `/transcribe-image` command. Present the transcription;
+  optionally write it into the source's `transcription` (the tool can already persist the
+  scan via `projectPath`). Ideal future UX: a "Transcribe with Opus" button in the viewer
+  beside the saved scan (needs a viewer→action channel). Open impl detail: Opus via
+  OpenRouter (reuses the key; may lag the latest 4.8) vs the Anthropic API directly
+  (latest, needs an Anthropic-key path). See `docs/specs/image-transcribe-tool-spec.md`.
+
 ## Before horizontal scaling (`count > 1`)
 - [ ] **`init_db` → Fly `release_command`** — move `init_db()` (`create_all()` +
   the allowlist seed) off the per-boot path into a one-time Fly `release_command`
