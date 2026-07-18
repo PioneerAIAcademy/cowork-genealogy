@@ -1,7 +1,7 @@
 # TODOs — hosted web workbench
 
 Deferred items to revisit. Not blocking the alpha. Architecture context:
-`docs/plan/realtime-rearch-status.md`.
+`docs/plan/ably-realtime-migration.md`.
 
 ## Alpha readiness — deliberately deferred (2026-07-18)
 Surfaced while preparing for the first alpha testers and consciously left for
@@ -64,6 +64,18 @@ recorded so it can be re-examined rather than re-derived.
   beside the saved scan (needs a viewer→action channel). Open impl detail: Opus via
   OpenRouter (reuses the key; may lag the latest 4.8) vs the Anthropic API directly
   (latest, needs an Anthropic-key path). See `docs/specs/image-transcribe-tool-spec.md`.
+- [ ] **Upgrade `image-reader` (small-image path) Sonnet 4.6 → Sonnet 5** — called out
+  by the OCR quality spike as the **biggest remaining accuracy lever**, and cheaper and
+  faster than the current pin. A one-line `model:` frontmatter change in
+  `packages/engine/plugin/agents/image-reader.md`, gated by the eval suite, independent
+  of the Qwen/`image_transcribe` work. Note the countervailing evidence from the
+  record-extractor A/B: sonnet-5 at high effort can run away on adaptive thinking, so
+  gate on a full suite run, not a spot check.
+- [ ] **(Optional) Firm up the German OCR result** — the spike rested on a single
+  German register page, which is thin for the domain the accuracy bet depends on. A few
+  more German Kurrent pages would tighten the confidence interval before final sign-off.
+- [ ] **(Optional) Add a third-party OCR datapoint** (Gemini / Mistral via OpenRouter)
+  if the small-image cost question resurfaces.
 
 ## Before horizontal scaling (`count > 1`)
 - [ ] **`init_db` → Fly `release_command`** — move `init_db()` (`create_all()` +
@@ -122,7 +134,8 @@ These MCP tools are shipped, specced, and advertised, but no skill references th
   `person_ancestors`). Wire it into the relevant tree/research workflow.
 
 ## Record-extraction consolidation follow-ups (2026-07 window)
-Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
+Deferred at wrap; see
+`docs/plan/record-extraction-consolidation-closing-report.md`.
 - [ ] **Record-type playbook files + snapshot carve-out** — per-record-type
   references (census/death/probate/church/marriage) as the parallel-team
   ownership surface. Blocked on a design decision: inside the skill dir every
@@ -154,7 +167,7 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   `evidence_type` calls. Deferred mitigation: follow the rx-partials pattern of
   adding concrete point-of-use examples (NOT duplicate rules), then re-run the
   record-extraction unit suite to confirm recovery. Do **not** target the 009
-  death-cert case — judge noise, not craft (`rx-partials-to-passes-plan.md §1.C`).
+  death-cert case — judge noise, not craft.
 - [x] **Upstream sidecar-staging gap — DONE (#699).** One e2e run had all 18
   `record_persona_id`s nulled because the search never staged a sidecar
   (spriggs). D2 can't auto-fill what was never staged, and — since
@@ -231,7 +244,7 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   `docs/plan/image-read-context-policy.md`; NOT investigated.
 
 ## Tree materialization (#701) — deferred from implementation
-Deferred from `docs/plan/tree-materialization-plan.md` during the #701 build.
+Deferred during the #701 build.
 - [ ] **Batch `add_relationship`** — person-evidence now writes a household's
   parent-child + spouse edges as N separate `tree_edit add_relationship` calls
   (Phase 3A, Option 1: tools encode the write, the skill handles matching). A
@@ -304,6 +317,79 @@ Deferred from `docs/plan/tree-materialization-plan.md` during the #701 build.
   warn-only, CI rule 2b). It is the primary partial→pass lever toward the
   record-extraction 75%-pass target; validate its effect (and guard against
   over-reach) with the N≥3 acceptance run per the plan's §10 acceptance test.
+- [ ] **Verify harness stop-early kill reliability on Windows; robust path if it
+  fails.** The shipped quick path leans on OS process-group signal delivery plus the
+  SDK's `atexit` sweep to kill in-flight subprocesses — reliable on macOS/Linux, but
+  `CTRL_C_EVENT` reaching child console processes on **Windows** (the genealogist
+  team's platform) is murkier. **Verify on a real Windows box.** If in-flight `claude`
+  processes survive a Ctrl-C there, adopt the robust path: run each test in a child
+  process the harness owns — replace the `ThreadPoolExecutor` of `run_one_test` calls
+  with a `ProcessPoolExecutor`/explicit `subprocess`, spawned `start_new_session=True`,
+  and have the stop handler terminate each worker's process group explicitly
+  (`os.killpg` on POSIX, `CTRL_BREAK_EVENT`/`TerminateProcess` on Windows).
+  **Inversion to watch:** putting children in their own session means a terminal
+  Ctrl-C no longer auto-kills them — ship the explicit teardown *with* it or
+  interrupts hang. Cost: `run_one_test` currently shares the parent's imports, auth
+  object, and `OrchestratorPaths` in-process, so inputs must become picklable or be
+  reconstructed in the child. Bonus: owned subprocesses make a SIGKILL under memory
+  pressure one lost test rather than a process-wide hazard. Incremental partial
+  persistence is transport-agnostic and unaffected either way.
+- [ ] **Attack the eval stall tax (fix deferred pending data).** Instrumentation is in
+  place (`duration_api_ms`, `skill_attempts`, and the harness's post-run "Timing
+  breakdown": skill work vs wall, API %, judge time, turns, transient retries). The
+  *fix* was deliberately deferred — committing to a service-tier change or a
+  silence-watchdog retune blind would be guessing. Use `make eval-timings` to decide.
+  Related, no harness code: use `num_turns` + output tokens to spot chatty or
+  over-scoped *positive* tests; that time is inherent model generation, so cutting it
+  is a test-authoring / skill-prompt decision. **Decided against:** mass-tightening the
+  80+ oversized `max_wall_clock_seconds` caps — once LPT weights by actual duration the
+  cap is only a safety ceiling, so an over-generous cap costs nothing, and tightening
+  adds abort/flakiness risk. Revisit only if a specific runaway needs a faster ceiling.
+- [ ] **Judge is blind to provenance nulling** — the record-extraction closing report §4
+  notes no judge/eval dimension detects a null-persona regression. Needs a rubric or
+  deterministic-validator change to catch it.
+
+## Research latency (e2e `/research` runs)
+Parent plan: `docs/plan/research-latency-reduction-plan.md`. These two levers were
+sized by the Phase-0 latency analysis and are not covered by the parent plan's phases.
+- [ ] **Negative-result short-circuit / defer proof** *(top direct lever)* — in the
+  `/research` orchestrator, when a question's retrieval yields **no candidate answer
+  for the objective**, `research_log_append` a negative result and route to the next
+  question, **deferring** the exhaustiveness / proof-conclusion / gps-mentor gates until
+  a candidate exists at the objective level. *Defer, don't eliminate* — GPS rigor stays.
+  Gate on the agent's explicit "no candidate" signal (it already emits one). Co-design
+  with `question-selection`, which is the root cause (it posed the elizabeth gatekeeper
+  question); consider not spawning full-proof-cycle gatekeeper questions at all.
+  **Rigor-critical: validate on an instrumented e2e re-run before shipping.** Exit
+  criteria: on elizabeth-class runs the breakthrough moves earlier and the answering
+  question's proof completes inside the cap; answering-first runs (bottemiller) are
+  unaffected.
+- [ ] **Cut gps-mentor gate count** — gps-mentor is invoked 3–4 gates per answering
+  question at ~40–84s each (≈3.5–4 min/question) on the critical path, since the parent
+  blocks on each gate. The model half of this lever is **already banked** (repinned
+  `claude-opus-4-8` → `claude-sonnet-5`); the residual is the gate *count*: the spec has
+  3 checkpoints but runs show 4 (re-checks, "second pass", "final critique after
+  revisions"). Consolidate the re-invocations. Optionally right-size per gate — run the
+  lightweight readiness gates on a faster model and reserve the stronger model for the
+  substantive post-proof critique. (The negative-result short-circuit above already
+  removes gates entirely for *non-answering* questions; this covers the answering path.)
+
+## Skills / tools — smaller deferrals
+- [ ] **Write `docs/specs/place-distance-tool-spec.md`** — `place_distance` is
+  advertised in `tool-schemas.ts` but is the only live tool with **no spec**, so
+  `spec-review` cannot check it. The 2026-05-07 timeline-distances design doc was the
+  de facto stand-in and has been retired; the behavior is currently defined only by
+  `src/tools/place-distance.ts` and its use in `timeline/SKILL.md`.
+- [ ] **Optional `site`/`host` filter param on `external_links_search`** — deferred from
+  the search-shaping work (option B) as unnecessary while the count cap holds. File it
+  properly if the cap proves insufficient on real runs.
+- [ ] **Named-agents catalog + contributions on-ramp in README** — the researcher-
+  experience plan designed a "Named Agents" capability table (job-title framing —
+  Question Finder, Record Extractor, Conflict Resolver, … ≈22 rows mapping to skills,
+  deliberately excluding `wiki-lookup` as the reference example) to replace the flat
+  skill list, plus a CONTRIBUTIONS section with researcher-responsibility framing. The
+  `researcher_profile` half of that plan shipped; this presentation half never did.
+  Unbuilt product intent, recorded here because the plan doc is being retired.
 
 ## Done
 - ~~Generate the mock input-schema mirror from compiled schemas~~ —

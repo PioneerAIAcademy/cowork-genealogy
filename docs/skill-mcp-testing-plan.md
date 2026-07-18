@@ -6,7 +6,7 @@
 
 **Document role:** This is the strategic plan — the design contract for the eval pipeline. It defines what we're building, who does it, and how the pieces fit together. It's rarely edited.
 
-For week-to-week execution (current round, team assignments, calibration log, blockers, decisions), see [`docs/eval-rollout.md`](../eval-rollout.md). The rollout doc executes against the contract this plan defines.
+Week-to-week execution — current round, team assignments, calibration log, blockers, decisions — is tracked separately, against the contract this plan defines.
 
 ---
 
@@ -51,7 +51,7 @@ Per the per-PR review workflow (`docs/plan/per-pr-review-workflow.md`), senior g
 
 - **Review each PR.** Each PR contains an updated skill prompt, tests, one run log, and one `.ann` annotation file (per skill touched). The senior reads the prompt diff, the test diff, the team's corrected grades, and the side-by-side comparison view (PR's run log vs main's) in the CRUD UI. Decision is holistic: did the skill improve, are the tests reasonable, are the grade corrections sound? Feedback comes as GitHub PR comments. Target: **1 business day** turnaround. If that slips, the team escalates to the senior volunteer pool (see Team Structure below).
 - **Leakage check on test additions.** The biggest validity threat to LLM-as-judge grading is when the test author embeds the expected answer in their `additional_criteria` — e.g., "Should resolve the conflict in favor of the Irish birthplace, citing informant proximity." The judge then "agrees" with the author by construction. For every test reviewed, the senior applies the **neutrality test** from `unit-test-spec.md` §5.4: *would a genealogist who reached the opposite conclusion still endorse this criterion as fair?* If not, the criterion gets rewritten to grade the reasoning rather than the verdict.
-- **Monthly judge-prompt review.** On the first Monday of each month, the designated review owner (a senior genealogist, with senior engineer pairing for the first 1-2 cycles) aggregates the prior month's `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)`. Systematic deltas trigger an edit to `eval/harness/judge/prompt.md`; the new `judge_prompt_hash` is recorded in `docs/eval-rollout.md` calibration log. See plan §2.6.
+- **Monthly judge-prompt review.** On the first Monday of each month, the designated review owner (a senior genealogist, with senior engineer pairing for the first 1-2 cycles) aggregates the prior month's `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)`. Systematic deltas trigger an edit to `eval/harness/judge/prompt.md`; the new `judge_prompt_hash` is recorded in the calibration log. See plan §2.6.
 
 100% PR coverage replaces the prior sampling-based review model. At 3 seniors × 8 hr/wk + a volunteer pool, the team can absorb ~20 PRs/week. If review SLA slips, the senior engineer (who is also the hiring manager) brings additional capacity online — either more paid seniors or expanded volunteer participation.
 
@@ -72,7 +72,7 @@ The CRUD UI is not the gate — the senior's PR-merge action is. The UI shows nu
 
 ### 7. Hire and train junior genealogists
 
-10 junior genealogists, 2 per team across 5 teams. Each team owns 1–3 skills per round; rotation schedule lives in `docs/eval-rollout.md`. New juniors complete an **onboarding task** (Appendix B) before being assigned skills.
+10 junior genealogists, 2 per team across 5 teams. Each team owns 1–3 skills per round; the rotation schedule is tracked separately. New juniors complete an **onboarding task** (Appendix B) before being assigned skills.
 
 ### 8. Prompt improver
 
@@ -102,7 +102,7 @@ This is structural maintenance, not per-test grading. Out-of-band from the weekl
 
 ### Phase 1: Foundation
 
-- Define e2e and unit test formats (see `docs/specs/unit-test-spec.md`, `docs/specs/gps-test-spec.md`).
+- Define e2e and unit test formats (see `docs/specs/unit-test-spec.md`, `docs/specs/e2e-test-spec.md`).
 - **Seed bootstrap scenarios.** Juniors reference scenarios from a dropdown; until each exists, tests that need them are blocked by the runnability gate (`unit-test-spec.md` §9). Devs create the following before juniors ramp:
 
   | Scenario | Needed for | Status |
@@ -120,7 +120,7 @@ This is structural maintenance, not per-test grading. Out-of-band from the weekl
 - Build deterministic validators (universal + per-skill, per `unit-test-spec.md` §8).
 - Port Anthropic's `run_loop.py` for description optimization.
 - Write LLM judge rubrics for all 23 skills (`rubric.md` per skill).
-- **Calibrate the judge model iteratively.** Don't try to build large per-artifact golden sets before juniors start. Instead, during Round 1 of the rollout (see [`docs/eval-rollout.md`](../eval-rollout.md)), seniors and juniors dual-grade a rotating sample of tests as juniors author them. Compute three agreement matrices each week: junior×senior, junior×Haiku, senior×Haiku. Target **≥80% senior×Haiku agreement** on the per-dimension scores; if Haiku falls below 80%, edit `eval/harness/judge/prompt.md` (changes `judge_prompt_hash` and invalidates prior runs — fine during calibration). If the prompt can't reach 80% across iterations, upgrade the judge model and record the choice in `judge_model` per `unit-test-spec.md` §10. The 80% threshold is an initial target from LLM-as-judge literature; re-evaluate after the first calibration cycle.
+- **Calibrate the judge model iteratively.** Don't try to build large per-artifact golden sets before juniors start. Instead, during Round 1 of the rollout, seniors and juniors dual-grade a rotating sample of tests as juniors author them. Compute three agreement matrices each week: junior×senior, junior×Haiku, senior×Haiku. Target **≥80% senior×Haiku agreement** on the per-dimension scores; if Haiku falls below 80%, edit `eval/harness/judge/prompt.md` (changes `judge_prompt_hash` and invalidates prior runs — fine during calibration). If the prompt can't reach 80% across iterations, upgrade the judge model and record the choice in `judge_model` per `unit-test-spec.md` §10. The 80% threshold is an initial target from LLM-as-judge literature; re-evaluate after the first calibration cycle.
 
 **Gate:** All 23 skills have a `rubric.md`; at least one calibration cycle has run and produced an agreement-matrix entry in the rollout calibration log; the senior×Haiku rate is either ≥80% or there's a written plan in the rollout log for closing the gap. Don't start the description optimizer until this gate clears — its candidate scoring assumes a calibrated judge.
 
@@ -154,7 +154,7 @@ Once unit tests are passing reasonably well, start executing e2e tests against G
 | Senior genealogists | 1-3 | ~8 each | Review every PR (target 1 business day), apply leakage check on new tests, run the monthly judge-prompt review |
 | Senior volunteer pool | flexible | ad hoc | Absorb PR-review overflow when paid seniors are saturated; maintained outside this document |
 
-**Escalation path:** if a PR's review age exceeds 1 business day, the team @-mentions the senior volunteer pool. Volunteers absorb overflow without taking on the monthly judge-prompt review or other paid-senior responsibilities. When volunteer escalations become routine, the hiring manager brings on another paid senior. Personnel details (who's in the pool, training materials) are handled outside this plan; see `docs/eval-rollout.md` Open Blockers.
+**Escalation path:** if a PR's review age exceeds 1 business day, the team @-mentions the senior volunteer pool. Volunteers absorb overflow without taking on the monthly judge-prompt review or other paid-senior responsibilities. When volunteer escalations become routine, the hiring manager brings on another paid senior. Personnel details (who's in the pool, training materials) are handled outside this plan.
 
 ---
 

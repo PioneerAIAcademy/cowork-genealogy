@@ -2,7 +2,7 @@
 
 **Status:** DEFERRED (recommend *not* doing it as a quick fix; see Recommendation).
 **Date:** 2026-06-21.
-**Context:** [`research-latency-quick-wins-spec.md`](../specs/research-latency-quick-wins-spec.md) §"Out of scope" deferred this; this doc is the captured analysis so it does not have to be re-derived. Cited line numbers are point-in-time (verified 2026-06-21) — confirm against current files before acting.
+**Context:** the research-latency quick-wins work deferred this as out of scope; this doc is the captured analysis so it does not have to be re-derived. Cited line numbers are point-in-time (verified 2026-06-21) — confirm against current files before acting.
 
 ---
 

@@ -1081,14 +1081,8 @@ correction of the judge's own labels.
 - [`docs/skill-lifecycle.md`](skill-lifecycle.md) — the full authoring →
   test → improve → release loop the unit-test half plugs into
 - the `skill-improver` and `rubric-critic` agents — `.claude/agents/`
-- [`docs/plan/e2e-annotation-calibration.md`](plan/e2e-annotation-calibration.md)
-  — the per-run annotation calibration design (annotation shape, grade-blind
-  flow, loader classification rules)
 - [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the
   authoritative test format and harness contract
-- [`docs/specs/gps-test-spec.md`](specs/gps-test-spec.md) —
-  alternate "tests derived from published GPS proof statements"
-  approach, held for future work
 - [`docs/specs/research-schema-spec.md`](specs/research-schema-spec.md)
   — `research.json` schema, relevant when authoring
   `starting-research.json`

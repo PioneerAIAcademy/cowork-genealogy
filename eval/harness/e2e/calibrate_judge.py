@@ -5,7 +5,7 @@ accuracy must be established here, in the cheap offline loop — never inferred 
 expensive live e2e runs. This script runs ONLY the judge (no agent, no live
 FamilySearch) against committed human grades, and reports agreement.
 
-See docs/plan/e2e-annotation-calibration.md and docs/specs/e2e-test-spec.md §7.
+See docs/specs/e2e-test-spec.md §7 and docs/e2e-testing-guide.md.
 
 ## Where the grades live
 

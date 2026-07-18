@@ -600,9 +600,8 @@ npx @modelcontextprotocol/inspector node build/index.js
 - *"Now show me his parents and children."* — Claude chains to `person_read({ personId: "LZJW-C31", relatives: true })`.
 
 ### Manual Layers 0–3 (smoke → Inspector → Claude Code → Cowork)
-Full layered playbook in
-`docs/testing-guides/person-search-tool-testing-guide.md` (OAuth setup
-per `docs/testing-guides/oauth-tool-testing-guide.md`).
+Run `dev/try-person-search.ts` for the smoke layer; OAuth setup per
+`docs/testing-guides/oauth-tool-testing-guide.md`.
 
 ---
 

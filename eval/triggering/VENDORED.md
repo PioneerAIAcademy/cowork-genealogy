@@ -34,7 +34,7 @@ as advisory and apply the proposed description as a human-reviewed SKILL.md edit
 `make optimize-skill` writes `results.json` + the HTML report to
 `eval/runlogs/optimizer/<ts>/` (excluded from the release gate + comparisons).
 
-Spec / rationale: `docs/plan/skill-mcp-optimization-plan.md`; lifecycle: `docs/skill-lifecycle.md` §7.
+Spec / rationale / lifecycle: `docs/skill-lifecycle.md` §7.
 
 Provenance: copied from the local skill-creator cache on 2026-06-10. Record the
 upstream commit here when re-vendoring.
