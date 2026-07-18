@@ -105,3 +105,25 @@ The researcher will compare it against what they know.
   nothing, say the evidence isn't there rather than reaching for a guess — that
   is a legitimate and useful outcome, and reporting it honestly is worth more
   than a lucky hit.
+
+## Re-invocation behavior
+
+**Writes:** `tree.gedcomx.json` — removes the persons, relationships, and facts
+named by the `--forget` selectors, plus everything that cascades from them — and
+`.tree-before-forget.gedcomx.json`, the pre-run snapshot. It writes nothing to
+`research.json` and nothing to the `results/` sidecars. `--dry-run` writes
+neither file.
+
+**Re-running against existing state:** removals are cumulative, not idempotent.
+A second invocation strips a further slice from the already-stripped tree.
+Re-running the *same* selector is a safe no-op — the ids are already gone, and
+the dry-run reporting zero removals is the signal it was already applied.
+
+**The backup is overwritten on every non-dry-run invocation.** It is a snapshot
+of the tree as it was at the start of *that* run, not of the original tree. So a
+second forget replaces the pristine snapshot with the already-forgotten tree,
+and the first slice is no longer recoverable from it. Before forgetting a second
+slice, either confirm the researcher no longer needs the original restore point,
+or have them copy `.tree-before-forget.gedcomx.json` aside first. Decide this by
+asking them — never by reading either file, which would put the forgotten
+information straight back into your context.
