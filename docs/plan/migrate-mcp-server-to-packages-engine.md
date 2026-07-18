@@ -6,7 +6,7 @@ after the hosted-web-workbench POC has settled.
 
 **Branch:** `hosted-web-workbench` (or a child of it). This is a
 follow-up to deviation #1 in
-`docs/plan/hosted-web-workbench-POC-status.md` ("Engine stays at
+`docs/plan/hosted-web-workbench-spec.md` ("Engine stays at
 `mcp-server/` + `plugin/` … Moving it is cosmetic and can happen
 later"). It is purely a relocation: no engine behavior changes.
 

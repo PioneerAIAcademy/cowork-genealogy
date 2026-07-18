@@ -82,7 +82,7 @@ instance); end users do not need to set this for normal operation.
 ### Hosted web workbench (monorepo overlay)
 
 This repo is also a **pnpm + turborepo monorepo** for the hosted web product
-(POC; see `docs/plan/hosted-web-workbench-POC-status.md`). The engine
+(see `DEVELOPMENT.md` and `docs/plan/realtime-rearch-status.md`). The engine
 (`packages/engine/{mcp-server,plugin}`) is deliberately **kept out of the pnpm
 workspace** via the `!packages/engine/**` negation in `pnpm-workspace.yaml`,
 and stays npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.

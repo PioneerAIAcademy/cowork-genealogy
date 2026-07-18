@@ -114,10 +114,11 @@ export default function SessionView({
           </button>
           <span className="chatTitle">{session?.title ?? 'Loading…'}</span>
 
-          {/* Operator/dev affordances — hidden for normal users, shown only when
-              alpha mode is on (visit /?alpha=1). Removable after the alpha test. */}
-          {alpha && (
-            <span className="alphaCluster">
+          {/* The cost chip is shown to everyone — alpha testers asked to see what
+              they are spending. The ALPHA tag and Logs button stay operator-only
+              (visit /?alpha=1) and are removable after the alpha test. */}
+          <span className="alphaCluster">
+            {alpha && (
               <button
                 className="alphaTag"
                 onClick={() => setAlpha(false)}
@@ -125,22 +126,24 @@ export default function SessionView({
               >
                 ALPHA
               </button>
-              <span
-                className="costChip"
-                title={`${cost.turns} turn${cost.turns === 1 ? '' : 's'} · ${cost.inTok.toLocaleString()} in / ${cost.outTok.toLocaleString()} out tokens${cost.estimated ? ' · mock estimate' : ''}`}
-              >
-                {costLabel}
-              </span>
+            )}
+            <span
+              className="costChip"
+              title={`${cost.turns} turn${cost.turns === 1 ? '' : 's'} · ${cost.inTok.toLocaleString()} in / ${cost.outTok.toLocaleString()} out tokens${cost.estimated ? ' · mock estimate' : ''} · counted since this page loaded`}
+            >
+              {costLabel}
+            </span>
+            {alpha && (
               <button className="btnGhost" onClick={() => void viewLogs()} title="Sandbox WS + agent logs">
                 Logs
               </button>
-            </span>
-          )}
+            )}
+          </span>
 
           <ThemeToggle />
         </header>
         {conn ? (
-          <ChatPane conn={conn} isNew={isNew} onUsage={onUsage} />
+          <ChatPane conn={conn} sessionId={sessionId} isNew={isNew} onUsage={onUsage} />
         ) : (
           <div className="chatBody">
             <div className="chatPlaceholder muted">Connecting…</div>

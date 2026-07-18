@@ -110,6 +110,8 @@ export type FeedbackReport = {
   userPrompt: string
   agentDid: string
   agentShouldHave: string
+  /** Ground truth, when the agent reached a wrong conclusion. Optional. */
+  correctAnswer?: string
   notes: string | undefined
 }
 
@@ -134,6 +136,7 @@ type NormalizedFields = {
   userPrompt: string
   agentDid: string
   agentShouldHave: string
+  correctAnswer: string
   notes: string
 }
 
@@ -143,6 +146,7 @@ function normalizeAndValidate(report: FeedbackReport): NormalizedFields {
     userPrompt: report.userPrompt.trim(),
     agentDid: report.agentDid.trim(),
     agentShouldHave: report.agentShouldHave.trim(),
+    correctAnswer: (report.correctAnswer ?? '').trim(),
     notes: (report.notes ?? '').trim()
   }
   for (const [name, value] of Object.entries(fields)) {
@@ -266,6 +270,7 @@ function renderFeedbackJson(args: {
     user_prompt: args.fields.userPrompt,
     agent_did: args.fields.agentDid,
     agent_should_have: args.fields.agentShouldHave,
+    correct_answer: args.fields.correctAnswer,
     notes: args.fields.notes
   }
   return JSON.stringify(payload, null, 2) + '\n'
@@ -301,6 +306,10 @@ function renderFeedbackMarkdown(args: {
     '',
     fields.agentShouldHave
   ]
+
+  if (fields.correctAnswer) {
+    sections.push('', '## The correct answer, and the evidence for it', '', fields.correctAnswer)
+  }
 
   if (fields.notes) {
     sections.push('', '## Notes', '', fields.notes)
