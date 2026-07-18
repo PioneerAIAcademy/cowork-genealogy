@@ -5,9 +5,12 @@
 on the GPS reasoning, tier judgment, and the question-ownership boundary**)
 **Current size:** 407 lines → **Target:** ~230–250 lines (~40% reduction)
 **Tool migration:** **done** — frontmatter calls `research_append`,
-`tree_edit`, `merge_tree_persons`, `merge_record_into_tree`. No leftover
-post-write `validate_research_schema` call (lines 339–341 already state there
-is no separate post-write validation step).
+`tree_correct` (set `primary`), `tree_edit` (additive synthesized `add_fact`),
+`merge_tree_persons`, and `merge_warnings`. `merge_record_into_tree` is retired
+by the materialization spec (§9) and dropped from the roster — the record→tree
+fold is now person-evidence's `materialize_facts`. No leftover post-write
+`validate_research_schema` call (lines 339–341 already state there is no
+separate post-write validation step).
 **Still needed as a skill?** **Yes, unambiguously** — the tools persist; the
 skill supplies the entire GPS proof (tier selection, form selection, narrative
 reasoning) and is the *only* place that holds the "do NOT resolve the question
@@ -49,12 +52,16 @@ the "tools validate-before-persist" note); nothing left to cut there.
     `…possible…`, `…not_proved…`, `…disproved…` — the tier the skill writes
     must match the scenario's evidence strength. (The tier *table* + decision
     rules are what produce these; they are load-bearing, not cuttable.)
-  - Tree write-back invariant: `test_no_tree_write_below_probable` (tag
-    `no-tree-write`) — at possible/not_proved/disproved the tree must be
-    **byte-identical** before/after; `test_tree_write_present_at_probable_plus`
-    (tag `tree-write-expected`) — at probable/proved the concluded ParentChild
-    (parent I2 → child I1) must be present. The "tier ≥ probable" gate in Step 6
-    backs both.
+  - Conclusion-write invariant: `test_no_tree_write_below_probable` (tag
+    `no-tree-write`) — at possible/not_proved/disproved the skill reaches no
+    conclusion, so it sets no `primary` and the tree is **byte-identical**
+    before/after its run (the already-materialized evidence facts stay put);
+    `test_tree_write_present_at_probable_plus` (tag `tree-write-expected`) — at
+    probable/proved the concluded ParentChild (parent I2 → child I1) must be
+    present (typically already minted by person-evidence at identity-link time).
+    Step 6's **two-path conclusion write** — set `primary` via `tree_correct`,
+    or add a synthesized `tree_edit add_fact` — is what produces the probable+
+    change; below probable it makes none.
   - `test_reinvocation_no_duplicate_proof` (tag `reinvocation-dedup`) — exactly
     **one** proof_summary for q_001 after re-invocation (update in place).
   - `test_conflict_blocks_proved` (tag `conflict-blocks-proved`) — must not
@@ -76,7 +83,10 @@ the "tools validate-before-persist" note); nothing left to cut there.
   resolution, tier declaration), *Evidence completeness* (cites all relevant
   assertions + resolved conflicts; omitting inconvenient evidence is a GPS
   violation), *Proof-conclusion fit* (Statement/Summary/Argument matches the
-  evidence shape).
+  evidence shape), *Tree encoding* (at probable+ the conclusion is set `primary`
+  on the tree — via `tree_correct` `update_fact` on an existing evidence fact,
+  or a synthesized `tree_edit add_fact` with multi-refs — not merely narrated;
+  the concluded edge is present + sourced; upload is conclusion-gated).
 
 - **Base dims:** Correctness, Completeness, Tool Arguments.
 
@@ -212,9 +222,12 @@ the "tools validate-before-persist" note); nothing left to cut there.
    rules (KEEP, tighten templates).
 8. Step 5 Write `proof_summaries` — one line + no JSON block; one Validation
    note (validates-before-persist; surface errors; re-invoke updates in place).
-9. Step 6 Tree updates (tier ≥ probable) — one minimal example or operation
-   list; the merge decision boundary (2 lines); the two known hand-writes
-   (`S` entry, downgrade-removal) one line each; "run check-warnings."
+9. Step 6 Tree conclusion write (tier ≥ probable) — the two-path write (set
+   `primary` via `tree_correct` `update_fact` on an existing evidence fact; or
+   `tree_edit add_fact` `primary:true` + multi-refs for a synthesized
+   conclusion, §7.1) + conclusion-gated upload; the merge decision boundary
+   (2 lines); the two known hand-writes (`S` entry, downgrade-removal) one line
+   each; "run check-warnings."
 10. **Step 7 Do not modify the question — KEEP (the boundary; merge with the
     Important-rules echo but do not dilute).**
 11. Step 8 project.status — keep (known hand-write gap).

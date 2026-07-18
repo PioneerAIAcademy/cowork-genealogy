@@ -81,6 +81,7 @@ LIVE_TOOLS: set[str] = {
     "research_append",
     "tree_edit",
     "tree_correct",
+    "materialize_facts",
     "project_context",
 }
 
@@ -368,6 +369,10 @@ def _make_live_handler(
         return _make_compiled_tool_handler("tree_edit", "tree-edit.js", "treeEdit", workspace, call_log)
     if tool_name == "tree_correct":
         return _make_compiled_tool_handler("tree_correct", "tree-correct.js", "treeCorrect", workspace, call_log)
+    if tool_name == "materialize_facts":
+        return _make_compiled_tool_handler(
+            "materialize_facts", "materialize-facts.js", "materializeFacts", workspace, call_log
+        )
     if tool_name == "project_context":
         return _make_compiled_tool_handler(
             "project_context", "project-context.js", "projectContext", workspace, call_log
