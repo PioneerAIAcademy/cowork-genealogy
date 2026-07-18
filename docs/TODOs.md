@@ -90,6 +90,18 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   written at `confident` from one uncorroborated record with `[?]` readings
   (clark-parents). The extractor agent got a tentative-cap line; person-evidence
   needs the equivalent gate + mandatory conflicts entry.
+- [ ] **Recover the classification-quality drop from the sonnet-4-6 pin.** The
+  extractor was re-pinned sonnet-5 → `claude-sonnet-4-6` (this PR) because sonnet-5
+  hangs at Cowork/e2e `effortLevel: high` (adaptive-thinking runaway); the 8k
+  output-cap alternative is non-viable (starves before any tool call, or runs away
+  across turns — 0 pass, ~20 min/test in a 5-test A/B). Downgrading is the surgical
+  fix (effort is session-wide, model is per-subagent) but costs ~0.24/3 mean judge
+  score, concentrated in GPS classification nuance: 4.6 slips on the **existing**
+  "Blank columns produce no assertions" rule and on `informant_proximity` /
+  `evidence_type` calls. Deferred mitigation: follow the rx-partials pattern of
+  adding concrete point-of-use examples (NOT duplicate rules), then re-run the
+  record-extraction unit suite to confirm recovery. Do **not** target the 009
+  death-cert case — judge noise, not craft (`rx-partials-to-passes-plan.md §1.C`).
 - [x] **Upstream sidecar-staging gap — DONE (#699).** One e2e run had all 18
   `record_persona_id`s nulled because the search never staged a sidecar
   (spriggs). D2 can't auto-fill what was never staged, and — since
