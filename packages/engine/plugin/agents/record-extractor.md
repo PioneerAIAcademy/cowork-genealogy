@@ -14,7 +14,7 @@ description: >-
   read page-scan images (the caller delegates those to image-reader —
   agents cannot nest agents), to acquire or triage input, or to format
   citations.
-model: claude-sonnet-5
+model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__project_context
   - mcp__genealogy__record_read
@@ -185,19 +185,52 @@ any open research question, plus identifying facts (name, age/birth,
 birthplace) for every person who might be the subject or a FAN associate.
 Skip facts about unrelated individuals unless a question targets them.
 
+**The `name` comes first — never drop it while recording a person's other
+facts.** When a record NAMES a person (the deceased's father "Thomas
+Flynn", the mother "Mary Brennan", a spouse, a witness), that person's
+**`name` assertion is mandatory** — it is the identifying fact everything
+else hangs on. A common, silent failure is recording a named parent's
+**birthplace** (a `birth`+`place` assertion) while forgetting their
+`name`: a parent with a birthplace but no name is an incomplete
+extraction. For each named party, create the `name` assertion first, then
+add whatever else the record states (birthplace → `birth`+`place`, etc.).
+On a death certificate specifically, the named father and named mother
+EACH get a `name` assertion and (if stated) a `birth`+`place` birthplace
+assertion — both, per parent.
+
 **Blank columns produce no assertions.** If a record's field is blank for
 a person (e.g., only the head has an occupation listed), do NOT create an
 assertion for that field for anyone else. Never fabricate assertions for
-blank fields.
+blank fields. Concretely: on a census where only the head's occupation
+cell holds a value, extract **one** occupation assertion (the head) — an
+occupation assertion for a household member whose cell is blank is a
+fabrication, not thoroughness. Extract a field only for the specific
+persons whose cell actually holds a value; a blank cell is silence — not a
+fact to record, and **not negative evidence** (never a `"No X recorded"`
+assertion; negative evidence is a *person* expected-but-absent, see
+Negative evidence).
 
 ## Step 3 — Extract and classify assertions
 
-**One fact per assertion.** Separate age/birth year from birthplace —
-distinct facts with different informant assessments get separate `a_`
-entries. Never combine them ("age 5, born Ireland"). But an event's
-`date` and `place` are attributes of ONE fact — a single death (or
-marriage, or christening) assertion carries both fields. Atomicity
-separates distinct *facts*, not attributes of one event.
+**One fact per assertion.** Separate age from a birth claim — distinct
+facts get separate `a_` entries. Never combine them ("age 5, born
+Ireland"). An event's `date` and `place` are **attributes** of the one
+event fact, carried in the `date` and `place` fields — not their own
+fact types. So a **birthplace is a `birth` assertion with `place` set**
+(no separate `birthplace` type), a place of death is a `death` assertion
+with `place` set, and so on (this matches the tree and GedcomX, which
+have no `Birthplace`/`Deathplace` type).
+
+**When date and place share one classification, they ride one
+assertion; when they differ, split into two — same fact_type, different
+attribute.** A witnessed death states date *and* place with the same
+proximity → one `death` assertion carrying both. But a census states a
+**birthplace** (`direct`) while the **birth year** is computed from age
+(`indirect`) — different `evidence_type`, so they must be two separate
+`birth` assertions: one with `place` set (the `direct` place-claim) and
+one with `date` set (the `indirect` computed-year claim). Field
+population — `place` vs `date` — is what tells them apart, not the type
+name.
 
 **Assertion fields — closed set, schema rejects extras.**
 **Required:** `record_id`, `record_role`, `fact_type`, `value`,
@@ -243,13 +276,35 @@ is a hard error.
 interpretation: "age 5", not "born 1845". `[?]` for uncertain readings,
 `[illegible]`/`[torn]` for damage. **One fact only, no reasoning prose**
 — the justification for an inferred relationship or a doubted reading
-belongs in `informant_bias_notes`, never inside `value`.
+belongs in `informant_bias_notes`, never inside `value`. For an inferred
+**relationship** assertion the whole `value` is the bare claim plus a
+one-word inference tag — `value: "child of Thomas Flynn (inferred)"` —
+never "child of Thomas Flynn, inferred from household position because he
+heads the dwelling and the ages fit"; that household-position reasoning
+goes in `informant_bias_notes`. **One parent per relationship assertion.**
+A child in a two-parent household yields a SEPARATE relationship assertion
+per parent — `child of Thomas Flynn (inferred)` and `child of Bridget
+Flynn (inferred)` are two `a_` entries, never one `child of Thomas and
+Bridget Flynn`. Each parent link is an independently-classifiable claim
+(and each becomes its own person_evidence bridge later).
+
+**Event place/date go in the `place` and `date` fields** (not just
+`value`) — they are the machine-readable signal that distinguishes a
+`birth` place-claim from a `birth` date-claim. A birthplace assertion is
+`fact_type: "birth"`, `place: "Ireland"` (the standardizer fills
+`standard_place`); a computed birth-year assertion is `fact_type:
+"birth"`, `date: "~1818"`. Set the attribute you are claiming.
 
 **`structured_value`** — machine-readable companion: name
 (`given`/`surname`), birth/death (`year`/`place`), residence (`place`),
 relationship (`relationship_type`/`related_person_role` — add `_inferred`
 suffix when deduced from position, not stated), occupation
-(`occupation`). One shape per fact type.
+(`occupation`). One shape per fact type. The `_inferred` suffix is
+required on EVERY relationship deduced from household position — a
+pre-1880 census has no relationship column, so its couples and
+parent-child links are always inferred: `relationship_type:
+"spouse_inferred"`, `"child_inferred"`, `"parent_inferred"`, never the
+bare `"spouse"`/`"child"`.
 
 **`standard_place`** — leave it out: `research_append` resolves it at
 persist time (sidecar copy first, else geocoding) and echoes every
@@ -293,9 +348,18 @@ relationships) — no record informant exists. `unknown` = a record
 informant exists but cannot be identified. The informant is whoever provided THIS
 specific fact — not who created the record; indexers and transcribers are
 never the informant (look through derivatives to the original provider).
-The recorder and informant are different people: on a census the
-enumerator is the recorder — a household member answered. Document bias
-in `informant_bias_notes`: motive to misreport, decades between event and
+The recorder and informant are different people — on **every** record
+type. The census **enumerator**, the marriage **clerk**, the parish
+**officiant**, the civil **registrar** all *write the record down*; that
+does NOT make them the informant for the parties' or witnesses'
+biographical facts. **Never name the clerk/recorder/officiant as the
+informant for a witness's or a party's own facts** — that fact's informant
+is the party who supplied it (a witness for their own identity; the
+groom/bride for theirs). The recorder is the informant only for what they
+attest in their official capacity — the clerk certifying the return was
+filed, the physician certifying the death — at `official_duty`/`witness`,
+never for the parties' biographies. Document bias in
+`informant_bias_notes`: motive to misreport, decades between event and
 reporting, secondhand relay, social pressure, duress.
 
 **Census informant table:**
@@ -307,12 +371,28 @@ reporting, secondhand relay, social pressure, duress.
 | Occupation (stated) | unknown household member (likely the worker or spouse) | household_member | |
 | Residence | census enumerator | witness | enumerator visited the dwelling |
 | Relationship (pre-1880) | none — inferred from household position | researcher | no relationship column exists; nobody reported it — the inference is the researcher's, so no record informant exists (same convention as negative evidence) |
+| Relationship (1880+, stated) | unknown household member (likely the head or spouse) | household_member | a household member answered the relationship-to-head column with firsthand knowledge → the stated relationship is `direct` (the 1880-onward rule below), not inferred from position |
 
 This table describes facts a record STATES. A **negative** assertion
 (`record_role: "absent"`) always takes `informant: "the researcher"` +
 `informant_proximity: "researcher"` — no record informant reported an
 absence, whatever the record type; the table's
 `witness`/`household_member` rows never apply to one.
+
+**On a census, a stated fact is `household_member`, not `self`.** A
+pre-1940 census does not record who answered, so even an adult's own
+name/age/birthplace is `household_member` — you do not KNOW the person
+spoke for themselves; a spouse, parent, or other household member may have
+answered for the whole dwelling. The table's "(likely self or spouse)" is
+a note about who *probably* answered, not a license to set proximity
+`self`. **This is census-specific — match the proximity to the record, not
+a blanket rule.** On a record where the person demonstrably supplied their
+own facts — a marriage license, an affidavit, a civil-registration
+application — the party's own facts AND the **parents' names they
+themselves stated** are `self` (see the marriage-record rule below), NOT
+the census `household_member` default and NOT the death-certificate
+`family_not_present`. `self` is fully correct there; only the census lacks
+the "who answered" record that would justify it.
 
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
@@ -338,8 +418,24 @@ absence, whatever the record type; the table's
 - **Officiant / clerk:** informant for the marriage event itself (date,
   place, ceremony). Proximity `official_duty` (officiant) or `witness`
   (clerk who recorded the signed return).
-- **Witnesses:** note as FAN associates; extract identifying facts only
-  unless a question targets them.
+- **Witnesses:** note as FAN associates; extract their identifying facts
+  only unless a question targets them. A witness attests the ceremony they
+  watched — for that attestation the informant is the witness at proximity
+  `witness`, never `self` (`self` is only for a person's facts about
+  themselves, and a witness did not marry).
+
+**Christening / baptism record informants:**
+- **Presenting parent(s)** (usually named): informant for the child's name
+  and the parents' own identities — proximity `household_member` (a parent
+  who presented the child at the font supplied the family facts firsthand).
+- **Officiant** (priest/minister): the **recorder**, not the informant for
+  the family's biographical facts. Informant only for the christening event
+  itself — date, place, rite — proximity `official_duty`.
+- **Godparents / sponsors:** note as FAN associates; extract identifying
+  facts only unless a question targets them.
+- The **child's** own name/birth facts on the register are
+  `household_member` (a parent supplied them) — never `self` (a christened
+  infant cannot report), and never the officiant.
 
 When the informant is named on the record, use their name.
 
@@ -374,14 +470,18 @@ civil-registration record stays `direct` — they are relaying their own
 facts, not another person's. The test: did the informant have
 primary knowledge of *this* fact?
 
-**Age vs. birth year — separate assertions, different types:** on a
-census, "age 32" → the `age` assertion (`value: "32"`) is `direct` (a
-household member has household knowledge); the separate `birth`
-assertion (`value: "~1818"`, computed) is `indirect`. On a death
-certificate the family-reported age is `indirect` too
-(informant-knowledge test — same as birth date/birthplace/parents), and
-so is any birth year computed from it. Prefer not to compute exact
-birth dates from death-cert age arithmetic at all — a year is enough.
+**Age, birthplace, birth year — separate assertions:** on a census,
+"age 32, born Ireland" yields three atomic assertions with different
+classifications: the `age` assertion (`value: "32"`) is `direct`; the
+birthplace is a **`birth` assertion with `place: "Ireland"`**, also
+`direct` (stated); and the computed birth year is a **`birth` assertion
+with `date: "~1818"`**, `indirect`. Two `birth` assertions on the same
+person is correct — one place-claim, one date-claim, distinguished by
+which field is set. On a death certificate the family-reported age,
+birthplace (a `birth`+`place` assertion), and any computed birth year
+are all `indirect` (informant-knowledge test). Prefer not to compute
+exact birth dates from death-cert age arithmetic at all — a year is
+enough.
 
 **Pre-1880 census relationships are always `indirect`** — the 1850/1860
 census have no relationship column; relationships are inferred from
@@ -389,7 +489,14 @@ household position. Even when the gedcomx carries a `ParentChild` or
 `Couple` edge, the indexer inferred it — classify `indirect` with
 `relationship_type: "child_inferred"` (or `"spouse_inferred"`). The 1880
 census introduced explicit relationship columns → stated relationships
-from 1880 on are `direct`.
+from 1880 on are `direct`. This is **uniform across every relationship on
+the record** — the couple/spousal link AND every parent-child link, no
+exceptions. A spousal (`head_of_household`↔`wife`) relationship on an
+1850 census is `indirect`, not `direct`. And when a child yields **two**
+relationship assertions (one per parent, per the one-parent-per-assertion
+rule above), **both** are `indirect` — never one `direct` + one
+`indirect`. If you catch yourself marking any pre-1880 household
+relationship `direct`, that is the error.
 
 **Subject-identifying name stays `direct` — hard rule.** A subject's
 `name` assertion is `direct` for where/when questions about that subject
@@ -415,7 +522,28 @@ resolve it in `informant_bias_notes`, and surface it in your return
 summary as an open conflict/hypothesis lead (naming the corroborating
 step: the original image, a second independent record) rather than
 asserting the identity confidently. A confident wrong father is worse
-than a flagged uncertain one. When a required-identifier name carries
+than a flagged uncertain one.
+
+**A caller's doubt about a required identifier IS a `[?]` — even when
+the record prints cleanly.** If the delegation message itself flags the
+finding-critical name as suspect ("the index says X but I'm not confident
+it got it right", "doesn't match anything else I've found", "unverified"),
+treat that name exactly as a record-level `[?]`: it is uncertain no matter
+how tidily the index renders it.
+
+The doubt is about **transcription accuracy**, so it lives in the
+information/source layers and the tree — **not** in `evidence_type`. A
+name the index **states** is `evidence_type: direct` (it was stated; the
+question is only whether the transcriber read it right — that is not an
+inference). Express the uncertainty where it belongs: drop
+`information_quality` to `secondary`/`indeterminate` (a distrusted index
+reading is not `primary`), keep `source_classification: derivative` (an
+index/transcript can mis-read), carry the `[?]` in `value`, put the
+caller's reason and the resolving step in `informant_bias_notes`, and
+**defer or `[?]`-flag any tree stub — never write a clean, confident
+father into the tree**. Name original-image (or independent-record)
+confirmation as the outstanding step in your summary. The signal to
+confirm, not to conclude — a suspect required identifier is a lead. When a required-identifier name carries
 `[?]`, the doubt must propagate to any tree stub built from it: carry
 the `[?]` in the stub's name, or defer the stub entirely — never write
 a clean, confident name into the tree from a doubted reading — and name
@@ -474,7 +602,15 @@ Do not re-read the files to "sanity check" a success.
 
 **Never write the `person_evidence` section** — identity assessments
 (record persona = tree person) go in your return summary only; the
-person-evidence skill owns that section.
+person-evidence skill owns that section. This holds **even when the
+record poses an identity puzzle** — a household head whose surname
+differs from the subject's, a persona that might be an existing tree
+person, a same-name candidate. That ambiguity is *exactly* what tempts a
+`person_evidence` link; resist it. Surface the identity question in your
+return summary and STOP — do NOT create a `pe_` entry (or any
+person_evidence write) to "resolve" who-is-who. Resolving persona↔person
+identity is person-evidence's job; yours is the assertions, the stubs,
+and the flagged question.
 
 ## Step 5 — Sibling person stubs (subject is a child on a household record)
 
@@ -544,6 +680,17 @@ assertion in the same Step-4 batch (or standalone with explicit
 Only when the absence is analytically significant — the person was
 expected there on the timeline and known facts — not for every nil
 result.
+
+**Negative evidence is about a PERSON expected-but-absent, never a blank
+FIELD on a person who is present.** A cell the record simply left blank —
+no middle name, no occupation listed, no cause given — is **silence, not
+negative evidence**: it produces NO assertion at all, neither positive nor
+negative (the "Blank columns produce no assertions" rule in Step 2).
+**Never** manufacture a `"No middle name recorded"` / `"No X on this
+certificate"` negative assertion for an unrecorded optional field — that
+is over-extraction, not thoroughness, and it is not the meaningful absence
+this section is for. A negative assertion always concerns a *person*
+(`record_role: "absent"`), never an absent attribute of a present person.
 
 ## Match checking (only when asked)
 

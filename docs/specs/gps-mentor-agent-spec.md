@@ -110,15 +110,21 @@ description: BCG-style senior genealogist who reviews research work and tells th
 model: claude-sonnet-5
 tools:
   - Read
-  - validate_research_schema
-  - place_search
-  - place_distance
-  - collections_search
-  - external_links_search
-  - wiki_place_page
-  - wiki_search
+  - mcp__genealogy__validate_research_schema
+  - mcp__genealogy__place_search
+  - mcp__genealogy__place_distance
+  - mcp__genealogy__collections_search
+  - mcp__genealogy__external_links_search
+  - mcp__genealogy__wiki_place_page
+  - mcp__genealogy__wiki_search
 ---
 ```
+
+The MCP tools **must** be listed under their fully-qualified
+`mcp__genealogy__*` names — bare names leave the subagent toolless in the
+unit-harness SDK path (only the e2e harness tolerated them, via its
+ToolSearch prefix allowlist). `Read` is a built-in Cowork tool, not an MCP
+tool, so it stays bare.
 
 **Model requirement:** `claude-sonnet-5`. The gates read and cross-reference large research
 files with careful analytical reasoning. Sonnet 5 — released after this spec was first written —

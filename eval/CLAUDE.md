@@ -170,12 +170,13 @@ The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-
 
 ### E2E checks (`check-e2e-fixtures.yml`)
 
-A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` with two checks:
+A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check:
 
 | Check | Severity | What |
 |---|---|---|
 | Grading gate | **block** | Every `run-<ts>.json` **added in the PR** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped to PR-added logs via `git diff --diff-filter=A` (`BASE_SHA`/`HEAD_SHA`); presence only — content validity is the maintainer's `calibrate_judge --dry-run`, not CI. |
-| Fixture validity | warn | Every fixture under `eval/tests/e2e/<slug>/` should have a committed `run-*.json` with `verdict=pass` (spec §14). Advisory so draft/PID-less fixtures can land with the validity run still owed; `--strict` hard-fails locally. |
+
+**Fixture validity is not CI-gated.** Whether a fixture has a committed *passing* run log (proof it is solvable from live FamilySearch — spec §14) is a recommended authoring practice surfaced in the docs, not a check. A fixture can land without one (draft/PID-less fixtures routinely do). This used to be an advisory warning; it was removed because it re-flagged every un-run fixture in the repo on every e2e PR — pure noise.
 
 The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **not** the CRUD UI — see the "never hand-write" note above, which is scoped to *unit* annotations.
 
@@ -184,6 +185,8 @@ The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **
 The skill harness pins a specific model per skill via `model:` in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.
 
 `judge_model` is project-global, not per-run-versioned — bumping the judge model is a separate decision that invalidates historical comparisons.
+
+Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — project-global like `judge_model`, not recorded per run. Adopted 2026-07-16: grades drawn before that date (at the API default of 1.0) are not comparable to grades after it.
 
 ## What This Framework Does NOT Cover
 
@@ -197,7 +200,7 @@ The skill harness pins a specific model per skill via `model:` in `packages/engi
 The harness is deliberately *not* a perfect reproduction of how skills run in Cowork. A passing eval suite does not guarantee identical production behavior. The known divergences:
 
 - **`setting_sources=["project"]`.** Production loads `["user","project"]`. Eval omits `"user"` so a developer's `~/.claude/skills/` doesn't contaminate routing tests.
-- **No `temperature=0`.** The installed `claude-agent-sdk` doesn't expose a `temperature` field. Variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`).
+- **No `temperature=0` on the skill run.** The installed `claude-agent-sdk` doesn't expose a `temperature` field, so the skill under test samples freely and variance leaks into single-run outcomes — fine for PR gates, matters for description-optimizer / golden-set work (bump `runs_per_test`). The judge *is* pinned (see "Model Pinning"), so this jitter is the skill's behavior, not its grade.
 - **Mock MCP server.** Production hits real APIs; eval hits in-process mock responses from `eval/fixtures/mcp/`. Argument-quality grading is approximate.
 - **Sandboxed workspace.** Production runs in Cowork's VM with its egress allowlist; eval runs in a tempdir on the host.
 - **Concurrent execution.** Eval runs tests through a bounded thread pool *within a single invocation* (RAM-aware default ~4–8 slots; override with `--concurrency N`, or `--concurrency 1` to force serial). Tests are submitted **longest-first** (estimated from each test's `max_wall_clock_seconds` cap) so a long-pole test can't land in the last wave and stretch the makespan tail. To cover several skills, pass them to **one** invocation — `--skill a b c` (or `make eval-skill SKILL="a b c"`); each skill still writes its own releasable run log and they all share the one pool. **Still avoid running multiple `run_tests.py` invocations concurrently from the shell on one machine** — each spawns its own Claude Code SDK subprocess and the parallel memory pressure has been observed to trigger SIGKILL (`exit code -9`); the in-process pool (one invocation, many skills) is the safe way to parallelize. The retry mechanism recovers most transient stalls.

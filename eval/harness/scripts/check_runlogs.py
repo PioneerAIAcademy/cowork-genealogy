@@ -99,18 +99,28 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
 
 
 def git_diff_touched_paths() -> list[str]:
-    """Every path changed in the PR, regardless of status (added, modified,
-    deleted, renamed — both sides of a rename).
+    """Every path the PR ITSELF changed, regardless of status (added,
+    modified, deleted, renamed — both sides of a rename).
 
     The touched-skill detection for rules 2 + 3 keys off this view: a
     *modification* to a SKILL.md, test JSON, or referenced plugin agent
     invalidates the run-log snapshot just as surely as an addition, so the
     AR-only view rule 1 uses would miss it.
+
+    Uses a **three-dot** diff (``base...head`` == ``merge-base(base, head)``
+    → ``head``) so the change set is the PR's own commits only — exactly what
+    GitHub's "Files changed" tab shows. A two-dot ``base head`` diff would
+    additionally surface everything main added since this branch diverged as
+    spurious *deletions* (present in base, absent in head), dragging skills the
+    PR never touched into `touched_skills` and hard-failing their (stale-vs-main
+    but untouched-by-this-PR) run logs on rule 2. Keying off merge-base makes a
+    branch that is simply behind main immune to that phantom. Full history is
+    fetched in CI (``fetch-depth: 0``), so the merge-base resolves.
     """
     base = os.environ["BASE_SHA"]
     head = os.environ["HEAD_SHA"]
     out = subprocess.check_output(
-        ["git", "diff", "--name-status", base, head],
+        ["git", "diff", "--name-status", f"{base}...{head}"],
         text=True,
     )
     paths: list[str] = []

@@ -1,0 +1,61 @@
+{
+  "project": {
+    "id": "rp_anders_unna_marriage",
+    "objective": "When and where did Anders Monsen marry Unna Halsteinsdatter, and what does the marriage record show?",
+    "subject_person_ids": ["LKFW-9XH"],
+    "status": "active",
+    "created": "2026-07-09",
+    "updated": "2026-07-09"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Anders Monsen (LKFW-9XH) marry Unna Halsteinsdatter (KZHH-VTX), and what does the marriage record show?",
+      "rationale": "The couple appears in the tree with no marriage date or place recorded. Norwegian church marriage registers for the Hamre/Meland parishes are the primary source for this event.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-09",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamre prestegjeld, Hordaland, Norway",
+          "date_range": "1770-1800",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1468080 'Norway, Marriages, 1660-1926' is an indexed database of Norwegian church-book marriage entries. Search for Unna Halsteinsdatter (KZHH-VTX) as the principal — her distinctive patronymic narrows results faster than searching under the far more common 'Anders Monsen'.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

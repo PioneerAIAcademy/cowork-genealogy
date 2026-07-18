@@ -23,13 +23,16 @@ each ≤458 KB raw (~5.4 MB of base64 total), and crashed with
 image was near `image_read`'s 700 KB ceiling — the *pile* was the problem,
 so lowering the ceiling does not fix it.
 
-The `image-reader` subagent is the fix: it absorbs the base64 in a
-throwaway context and returns only text. The bytes never reach the main
-transcript, so accumulation cannot happen regardless of how many scans a
-session reads. The `image_read` per-image ceiling remains as a transport
-**floor** protecting any single response (see `image-read-spec.md`). The
-complementary "downscale large scans so they stay readable rather than
-refused" work is a separate deferred ticket.
+The `image-reader` subagent's reader is `image_transcribe` (host-side Qwen3-VL
+OCR), which returns **text** — so no base64 ever enters the caller's context,
+the read is ~10× cheaper/faster, and it handles scans of any size (the old
+"downscale large scans so they aren't refused" ticket is moot). Because the
+tool returns text, the accumulation crash this agent was created to prevent is
+now structurally impossible on the read path; the subagent remains as the
+delegation seam + one-image-per-source boundary + context hygiene for long
+transcriptions. `image_read`'s inline-base64 path is no longer used by this
+agent (its 700 KB floor still guards any direct `image_read` consumer — see
+`image-read-spec.md`).
 
 ## 2. Files to Create / Modify
 
@@ -62,28 +65,29 @@ hands this agent the imageId.
 |-----------|----------|---------|
 | `imageId` | yes | The **single** image to read — a DGS Image Group Number (`004022578_00190`) or image ARK (`3:1:.../$dist`). |
 | `looking_for` | no | A **search key only** — *who or what* to locate on the page. It focuses the FOUND / NOT FOUND pointer; it is **not** the expected result and **never** suppresses or shortens the full transcription. If the caller's message asserts the answer ("confirm the father is Adam Schreck"), the agent ignores the assertion and transcribes what the page actually says. |
+| `project_path` | no | Absolute project-folder path. When given, `image_transcribe` saves the fetched JPEG under `images/` and returns an `imageRef` the agent reports, so the caller can cite it as the source's `image_filename` (viewer). Only retained-source images are kept; the rest are swept. |
 
 ### 3.2 One image per invocation
 
-The agent reads **exactly one image per invocation** — the single
-`imageId` it is given. It does not read a range, a volume, or a "next
-few." One image is the only count provably under the ~1 MiB buffer for a
-large scan: two large scans (~458 KB raw → ~610 KB base64 each) already
-sum past it inside the subagent's own re-serialized conversation, so "read
-a few" re-creates the crash the subagent exists to prevent. When several
-images are needed the caller invokes the agent **once per image** (which
-also yields clean one-image-per-source provenance). If the caller passes
-more than one imageId, the agent reads only the first and says so.
+The agent reads **exactly one image per invocation** — the single `imageId`
+it is given. It does not read a range, a volume, or a "next few." This keeps a
+clean one-image-per-source provenance and one delegation per scan; when
+several images are needed the caller invokes the agent **once per image**. If
+the caller passes more than one imageId, the agent reads only the first and
+says so.
 
 ## 4. Agent Frontmatter
 
 - `name: image-reader`
-- `model: claude-sonnet-4-6` — vision-capable for OCR of dense/old-script
-  registers. MAY be swapped for a cheaper vision model later (Cowork
-  honors the agent `model:` pin); quality on faint German script is the
-  constraint to watch.
-- `tools: [image_read]` — the agent's sole capability. It does not write
-  `research.json` / `tree.gedcomx.json`, create assertions/sources, or
+- `model: claude-sonnet-4-6` — the subagent does **no** vision itself
+  (Qwen3-VL does the OCR host-side via `image_transcribe`); its own model only
+  relays/formats the returned text and extracts a short facts list. A cheaper
+  text model (e.g. `claude-haiku-4-5`) would suffice and is a candidate cost
+  optimization — left at `claude-sonnet-4-6` (the pre-spike default) for
+  safety. Cowork honors the agent `model:` pin.
+- `tools: [image_transcribe]` (qualified as `mcp__genealogy__*` in the
+  frontmatter, per the repo convention) — the agent's sole reader. It does not
+  write `research.json` / `tree.gedcomx.json`, create assertions/sources, or
   search indexes; that stays with the caller.
 
 ## 5. Output Protocol
@@ -97,9 +101,10 @@ image, never a request for the caller to fetch it:
   span, language).
 - The **full transcription of every genealogically relevant entry on the
   page** — not only the entry that matches `looking_for` — using `[?]`
-  (uncertain), `[illegible]`, `[torn]`; original spelling/language
-  preserved. The transcription is never trimmed or slanted toward an
-  expected answer.
+  (uncertain), `[illegible]`, `[torn]`; original spelling/language preserved.
+  The transcription is never trimmed or slanted toward an expected answer.
+- When `project_path` was given: the **saved-image** ref (`images/<key>.jpg`)
+  from `image_transcribe`, so the caller can set the source's `image_filename`.
 - An **extracted facts** list (names, dates, relationships, places) the
   caller can turn into assertions.
 - If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line — as
@@ -107,31 +112,52 @@ image, never a request for the caller to fetch it:
 
 ## 6. Failure Behavior
 
-If `image_read` throws (image over the 700 KB transport floor, an
-unreachable ARK, or any other error) the agent **must not** produce a
-transcription — a fabricated read is worse than a visible miss. It returns:
+The agent's only reader is `image_transcribe` (host-side Qwen3-VL OCR, any
+size, text out). A **genuine** failure is when it errors — an unreachable
+image, or no OpenRouter key configured. On a genuine failure the agent **must
+not** produce a transcription; a fabricated read is worse than a visible miss.
+It returns:
 
 - `NOT READ: <imageId>` on its own line;
-- the **exact error message** `image_read` returned, quoted verbatim;
+- the **exact error message** `image_transcribe` returned, quoted verbatim;
 - the pivot recommendation: read the **indexed** record for this image
   (`record_read` / `record_search` / `search-full-text`, or a related
-  person's indexed record).
+  person's indexed record). If the failure was a missing/rejected OpenRouter
+  key, note the caller can fix it via `configure_openrouter`.
 
 It does **not** retry via browser / `web_fetch` / "Claude in Chrome"
 (unavailable), and it never invents, infers, or guesses page contents when
-the read failed. The caller decides the pivot. This guardrail is
-independent of the ARK-support fix in §8 — the tool can still fail for
-other reasons, and this is what turns a failed read into a clean, visible
-miss instead of a silent fabrication.
+the read failed. The caller decides the pivot. This guardrail turns a failed
+read into a clean, visible miss instead of a silent fabrication.
 
 ## 7. Testing
 
-This path is **not unit-testable** in the eval harness: the unit
-skill-runner backstops the `Task` tool as disallowed
-(`skill_runner.py` `DISALLOWED_BACKSTOP`), and `image_read` cannot be
-mocked (the mock MCP server cannot emit image content blocks — already
-exempt from tool-coverage checks). Like `gps-mentor`, the agent is
-validated at the **e2e** level.
+The agent's **transcription** is not unit-testable: `image_read` cannot be
+mocked as an image (the mock MCP server cannot emit image content blocks —
+already exempt from tool-coverage checks), so like `gps-mentor` the reading
+itself is validated at the **e2e** level.
+
+The **delegation boundary** *is* unit-testable, and is now enforced rather
+than graded. (This section previously said the whole path was untestable
+because "the unit skill-runner backstops the `Task` tool as disallowed" —
+that is stale: `Task` is in the baseline allowlist, and `DISALLOWED_BACKSTOP`
+is only `["Bash", "WebFetch", "WebSearch", "NotebookEdit"]`.) The unit
+harness's PreToolUse hook denies `image_read` on the main thread and fails the
+run through the universal validator `test_no_main_thread_subagent_only_calls`,
+so a caller that reads an image itself — the crash this agent exists to
+prevent — is caught deterministically instead of by judge inference.
+
+Two scope limits worth knowing:
+
+- **The guard is per-skill.** It applies only to a skill that does *not*
+  declare `image_read` in its own `allowed-tools` — i.e. one that holds the
+  tool solely through `@plugin:image-reader`, like `record-extraction`.
+  `search-images` declares it and browses volumes itself, so it is exempt.
+- **Unit only.** e2e runs sub-skills in one session, so it cannot attribute a
+  main-thread `image_read` to a skill and cannot apply the guard.
+
+`harness/context_policy.py`; `docs/plan/image-read-context-policy.md` §4.1.
+`ut_record_extraction_015` exercises the delegation path.
 
 **The validation run must genuinely OCR a real scan.** The `clark-parents`
 run that first accompanied this agent *fabricated* its single image read

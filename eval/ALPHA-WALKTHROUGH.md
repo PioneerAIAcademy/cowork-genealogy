@@ -238,11 +238,11 @@ In GitHub Desktop:
 
 You do **not** merge — the project owner does.
 
-> **Expect a yellow "fixture validity" advisory on the PR.** The
-> `check-e2e-fixtures` check warns that your fixture doesn't yet have a passing
-> scored run. That's **expected and non-blocking** for a fixture-only PR — the
-> internal team supplies the scored run when they pick it up. A *red* check
-> means something else; ask a developer.
+> **A fixture-only PR needs no scored run to land.** The `check-e2e-fixtures`
+> check does **not** warn about a fixture that lacks a passing scored run — the
+> internal team supplies that run when they pick it up. If that check shows
+> *red*, it's the grading gate (a committed run missing its grade), not your
+> fixture; ask a developer.
 
 ---
 

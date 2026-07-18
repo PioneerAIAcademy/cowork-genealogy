@@ -38,5 +38,17 @@ export interface ExternalLinksSearchResult {
   // "resources exist here, just not in your years". results.length is the
   // matched count, so there is no separate matchedCount field.
   totalForPlace: number;
+  // Number of links in `results` after year + host filtering and the inline
+  // cap. Equal to `results.length`; surfaced explicitly so a capped/filtered
+  // response is self-describing alongside `totalForPlace`.
+  returned: number;
   results: PlaceExternalLink[];
+  // Host-side staging handle (search-result-staging-spec.md). Present only when
+  // `projectPath` was supplied and the pre-filter set was non-empty. The staged
+  // sidecar holds the FULL year-filtered set (before any host filter or inline
+  // cap), so the complete link list is retained on disk for the research record
+  // and feedback bundles even when `results` is narrowed. `null` when staging
+  // was attempted but failed; absent when `projectPath` was not supplied.
+  staged?: { resultsRef: string; returnedCount: number } | null;
+  stagingError?: string;
 }

@@ -86,7 +86,7 @@ The following are **open enums** — recommended values that skills should prefe
 
 | Enum name | Recommended values | Used by |
 |-----------|-------------------|---------|
-| `fact_type` | `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` | assertions |
+| `fact_type` | `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` | assertions |
 | `record_type` | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `newspaper`, `cemetery`, `tax`, `immigration`, `court`, `other` | plan items |
 | `event_type` | `birth`, `baptism`, `marriage`, `death`, `burial`, `residence`, `census`, `military`, `immigration`, `emigration`, `land_transaction`, `probate`, `other` | timeline events |
 | `record_role` | See naming convention below | assertions |
@@ -300,7 +300,7 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Log entry ID (`log_` prefix) |
-| `plan_item_id` | string or null | yes | `pli_` reference, or null for ad-hoc searches |
+| `plan_item_id` | string or null | yes | `pli_` reference, or null for ad-hoc searches. `validate_research_schema` enforces the `^pli_` prefix here (matching the JSON Schema and the sibling reference fields); a non-`pli_` value such as a question id is invalid. |
 | `performed` | string | yes | ISO 8601 datetime with timezone |
 | `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `person_read`, `image_search`, `external_site`) |
 | `query` | object | yes | Freeform object capturing the search parameters used |
@@ -354,7 +354,8 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `url` | string or null | no | URL to the digital source |
 | `url_archived` | string or null | no | Web archive URL |
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
-| `transcription` | string or null | no | Full verbatim transcription of an image record, when the record was extracted from a FamilySearch image via `image_read`. `image_read` returns an image (not text), so the transcription is Claude's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
+| `transcription` | string or null | no | Full verbatim transcription of a page-scan record, when it was read via the `image-reader` subagent (`image_transcribe` OCR). The transcription is the model's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
+| `image_filename` | string or null | no | Project-relative path (`images/<key>.jpg`) of the saved page scan, when `image_transcribe` persisted it (a `projectPath` was supplied). Lets the viewer show the scan beside its `transcription`. Only retained-source images survive: a best-effort TTL sweep in `research_append` GCs `images/*.jpg` that no source's `image_filename` cites (§8.5). Null when the source is not image-backed or the image was not persisted. |
 | `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
 **`citation_detail`** — Enforces the Who/What/When/Where/Where-within framework from Evidence Explained.
@@ -383,7 +384,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
 | `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions (no sidecar → supplying a value is a hard error). |
-| `fact_type` | string | yes | The type of fact: `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` |
+| `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `direct`, computed birth year `indirect`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
 | `date` | string or null | no | Date of the event/fact |
@@ -1064,7 +1065,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": null,
       "information_quality": "indeterminate",
       "informant": "Unknown household member reporting to census enumerator",
-      "informant_proximity": "unknown",
+      "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
@@ -1120,7 +1121,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": "Schuylkill County, Pennsylvania",
       "information_quality": "indeterminate",
       "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
-      "informant_proximity": "unknown",
+      "informant_proximity": "researcher",
       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
@@ -1138,7 +1139,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": null,
       "information_quality": "indeterminate",
       "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
-      "informant_proximity": "unknown",
+      "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
@@ -1192,7 +1193,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": null,
       "information_quality": "indeterminate",
       "informant": "Unknown household member reporting to census enumerator",
-      "informant_proximity": "unknown",
+      "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
       "evidence_type": "direct",
       "log_entry_id": "log_004",
@@ -1247,7 +1248,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": "Schuylkill County, Pennsylvania",
       "information_quality": "primary",
       "informant": "Attending physician (signature on certificate)",
-      "informant_proximity": "witness",
+      "informant_proximity": "official_duty",
       "informant_bias_notes": null,
       "evidence_type": "direct",
       "log_entry_id": "log_005",
@@ -1268,7 +1269,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.",
-      "evidence_type": "direct",
+      "evidence_type": "indirect",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1287,7 +1288,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
-      "evidence_type": "direct",
+      "evidence_type": "indirect",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     }

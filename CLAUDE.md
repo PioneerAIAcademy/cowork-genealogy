@@ -151,6 +151,16 @@ orchestrator auto-delegates to the agent. Agents run in fresh context
 explicitly specced otherwise. The first such agent is `gps-mentor`
 (spec: `docs/specs/gps-mentor-agent-spec.md`).
 
+**Qualified tool names.** In the `tools:` frontmatter, MCP tools **must**
+be listed under their fully-qualified `mcp__genealogy__*` names, never the
+bare tool name. A bare name leaves the subagent toolless in the
+unit-harness SDK path (only the e2e harness tolerated bare names, via its
+ToolSearch prefix allowlist); qualifying makes an agent behave identically
+across Cowork, the e2e harness, the unit harness, and the hosted web SDK
+path. Built-in Cowork tools that are not MCP tools — `Read` — stay bare.
+All three current agents follow this (`gps-mentor`, `image-reader`,
+`record-extractor`).
+
 ## Handling user feedback submissions
 
 When a user submits a feedback zip via the Cowork viewer, the workflow
@@ -275,6 +285,8 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
 | `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
+| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`qwen/qwen3-vl-235b-a22b-instruct`) when absent. |
 | `learningCenterDir` | (future) | Optional | Path to the pre-crawled learning center markdown files. Read by `getLearningCenterDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 | `libraryDir` | (future) | Optional | Path to the pre-crawled library markdown files. Read by `getLibraryDir()` in `src/auth/config.ts`. Returns `null` when absent (not an error). |
 

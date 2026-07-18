@@ -15,6 +15,22 @@ Deferred items to revisit. Not blocking the alpha. Architecture context:
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
 
+## Engine — image transcription
+- [ ] **User-invoked Opus transcription (`image_transcribe` Flow 2)** — brainstormed,
+  **not requested by any user yet** (parked per YAGNI/scope-discipline). The research
+  workflow uses **Qwen only** (`image_transcribe`); this would let a user ask Claude
+  to transcribe a *specific* image with **Opus** on demand (premium, higher accuracy).
+  Recommended shape: a user-only tool `image_transcribe_opus` — a thin wrapper over the
+  same host-side OCR helper with the model pinned to an Opus slug **via OpenRouter** (so
+  it inherits any-size + text-out + no base64, since the bytes never cross the MCP stdio
+  transport) — that the research skills do **not** list in `allowed-tools`, invoked by
+  the main session on request or a `/transcribe-image` command. Present the transcription;
+  optionally write it into the source's `transcription` (the tool can already persist the
+  scan via `projectPath`). Ideal future UX: a "Transcribe with Opus" button in the viewer
+  beside the saved scan (needs a viewer→action channel). Open impl detail: Opus via
+  OpenRouter (reuses the key; may lag the latest 4.8) vs the Anthropic API directly
+  (latest, needs an Anthropic-key path). See `docs/specs/image-transcribe-tool-spec.md`.
+
 ## Before horizontal scaling (`count > 1`)
 - [ ] **`init_db` → Fly `release_command`** — move `init_db()` (`create_all()` +
   the allowlist seed) off the per-boot path into a one-time Fly `release_command`
@@ -90,16 +106,39 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   written at `confident` from one uncorroborated record with `[?]` readings
   (clark-parents). The extractor agent got a tentative-cap line; person-evidence
   needs the equivalent gate + mandatory conflicts entry.
-- [ ] **Upstream sidecar-staging gap** — one e2e run had all 18
+- [ ] **Recover the classification-quality drop from the sonnet-4-6 pin.** The
+  extractor was re-pinned sonnet-5 → `claude-sonnet-4-6` (this PR) because sonnet-5
+  hangs at Cowork/e2e `effortLevel: high` (adaptive-thinking runaway); the 8k
+  output-cap alternative is non-viable (starves before any tool call, or runs away
+  across turns — 0 pass, ~20 min/test in a 5-test A/B). Downgrading is the surgical
+  fix (effort is session-wide, model is per-subagent) but costs ~0.24/3 mean judge
+  score, concentrated in GPS classification nuance: 4.6 slips on the **existing**
+  "Blank columns produce no assertions" rule and on `informant_proximity` /
+  `evidence_type` calls. Deferred mitigation: follow the rx-partials pattern of
+  adding concrete point-of-use examples (NOT duplicate rules), then re-run the
+  record-extraction unit suite to confirm recovery. Do **not** target the 009
+  death-cert case — judge noise, not craft (`rx-partials-to-passes-plan.md §1.C`).
+- [x] **Upstream sidecar-staging gap — DONE (#699).** One e2e run had all 18
   `record_persona_id`s nulled because the search never staged a sidecar
-  (spriggs). D2 can't auto-fill what was never staged; the fix is
-  search-skill-side (always pass `projectPath` / surface the staging failure).
-- [ ] **Bare agent-tool names in gps-mentor.md / image-reader.md** — the
-  agent-mode spike proved bare tool names leave a subagent toolless in the
-  unit-harness SDK path (needs `mcp__genealogy__*`), yet these two agents use
-  bare names and work in Cowork/e2e paths. Reconcile once the PR-3
-  investigation lands: qualify (or dual-list) so all agents work identically
-  in Cowork, the e2e harness, the unit harness, and the hosted web SDK path.
+  (spriggs). D2 can't auto-fill what was never staged, and — since
+  `research_log_append` sets `results_ref` only from a `stagedResultsRef` — a
+  search that omitted `projectPath` had **no** manual way to recover a sidecar.
+  Fixed on two sides: the `search-records` / `search-full-text` skills now treat
+  staging as a **hard gate** (results but no `staged.resultsRef`/a `stagingError`
+  → stop and re-run with `projectPath`, never proceed), and `research_append`
+  now **rejects** an assertions append whose log entry is a producer search
+  (`record_search`/`fulltext_search`) that returned results but has `results_ref:
+  null`, instead of silently nulling the persona ids.
+- [x] **Bare agent-tool names in gps-mentor.md / image-reader.md — DONE
+  (#698).** The agent-mode spike proved bare tool names leave a subagent
+  toolless in the unit-harness SDK path (needs `mcp__genealogy__*`), yet the
+  agents used bare names and worked in Cowork/e2e paths (e2e tolerated them
+  via its ToolSearch prefix allowlist). All three agents now qualify their
+  MCP tools (`image-reader` and `record-extractor` earlier; `gps-mentor` in
+  #698, which also updated `docs/specs/gps-mentor-agent-spec.md`), so they
+  behave identically in Cowork, the e2e harness, the unit harness, and the
+  hosted web SDK path. The convention is documented in CLAUDE.md's "Cowork
+  plugin agents" section (built-in `Read` stays bare).
 
 - [x] **Extractor write authority is too broad (op-level restriction)** —
   **superseded by the `tree_edit`/`tree_correct` split (this commit,
@@ -117,14 +156,76 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   listed `researcher` as invalid after it became a valid
   `informant_proximity`; record-extractor's negative-evidence section still
   said `unknown`).
-- [ ] **`image_read` callable by the main session** — prose failed 3x (rx_015):
-  the record-extraction skill tells the MAIN session not to call `image_read`
-  itself (delegate to image-reader), but no environment can currently deny a
-  main session a tool an agent needs — Cowork allowed-tools are per-skill, not
-  per-context. Wants a per-context tool-policy design (main-session denylist
-  while an agent holds the tool).
+- [ ] **`image_read` callable by the main session — PRODUCTION half only; the
+  harness is fixed.** The router must not call `image_read` itself: the inline
+  base64 overflows the transport's ~1 MiB per-turn buffer and crashes the run.
+  *Both harnesses now enforce this* — the PreToolUse hook denies the call when
+  `agent_id` is absent (main thread) and a universal validator hard-fails the
+  test (`harness/context_policy.py`; plan: `docs/plan/image-read-context-policy.md`).
+  **This item's original premise was wrong** and is kept here as a correction:
+  "no environment can currently deny a main session a tool an agent needs" is
+  true of the *allowlist* layer only — per-agent `tools:` is subtractive, so the
+  session set is always a superset — but false of the *hook* layer, which can
+  discriminate by context and always could. Do not re-derive a per-context policy
+  design; it exists.
+  **What remains is production.** Cowork has no eval hook, so the crash is still
+  reachable there, and because per-agent tools are subtractive production is in
+  one of two bug states that e2e cannot distinguish (its allowlist is a
+  `mcp__genealogy` wildcard): either Cowork's session set honors the skill's
+  `allowed-tools` and excludes `image_read` — in which case the image-reader
+  subagent cannot call it either and **image reading is silently broken in
+  production** — or Cowork grants a broader set and **the router can crash a real
+  user's run**. Settling it needs one live Cowork run against an image ARK, not a
+  repo read. See plan §5.
+- [ ] **Does `search-images` have the same base64 crash exposure?** Two shipped
+  claims contradict each other and both can't be right. `record-extraction/SKILL.md:70-73`
+  and `agents/image-reader.md:13-16` say accumulated `image_read` base64 overflows
+  the transport's ~1 MiB per-turn buffer and **crashes the whole run**, which is why
+  that skill delegates to a throwaway subagent. But `search-images` declares
+  `image_read` itself (`SKILL.md:20`) and browses a volume **page-by-page in its own
+  main-session context** (`§4 Browse with image_read`) — the accumulation pattern the
+  warning describes, only more so. Either search-images is exposed to the same crash
+  (and should delegate per-page, or the reader should), or the crash needs conditions
+  beyond "more than one image" and the record-extraction rationale is overstated.
+  Worth settling because the answer changes the per-context guard's scope: today it
+  exempts search-images purely because the skill declared the tool
+  (`harness/context_policy.py`, plan §4.1), which encodes "declared = intended", not
+  "declared = safe". Surfaced 2026-07-16 while implementing
+  `docs/plan/image-read-context-policy.md`; NOT investigated.
 
 ## Eval framework
+- [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
+  audit) — RESOLVED (#711 + record-extractor informant-craft follow-up).** The audit
+  found 3 agent craft gaps + a christening-table gap. Resolution:
+  (2) *stated birthplace marked `indirect`* — subsumed by **#711** (the census
+  direct/indirect rubric rebuttal + agent doctrine + structured `birth`+`place`=`direct`
+  model; the skill already persists it `direct` — the inversion was the judge's, now
+  fixed).
+  (1) *census `informant_proximity: self`* — added an explicit "**never `self` on a
+  census**; a pre-1940 enumerator didn't record who answered → `household_member`"
+  prohibition to the agent.
+  (3) *clerk/recorder named as informant for a witness's/party's facts* — generalized the
+  recorder≠informant principle across record types (enumerator/clerk/officiant/registrar
+  *record* but don't *inform* for the parties' biographies).
+  Christening informant table added (officiant = recorder; presenting parent = informant,
+  `household_member`; a christened infant is never `self`) — the specifying fix for
+  ut_016. All in the record-extractor agent body, gated by the unit suite.
+- [x] **Stop the record-extraction suite flapping — grade unambiguous things reliably
+  (2026-07-16).** After the systematic fixes (#711), the residual fails were rotating
+  sampling/judge noise, not defects. Three grading-quality changes (not agent tuning):
+  (1) **deterministic-validator deference** (`orchestrator.apply_deterministic_deference`)
+  — when `test_expected_classifications` passes, the LLM `Evidence type accuracy` /
+  `Informant identification` dimensions cannot FAIL on the verified classifications
+  (floored 1→2); kills the recurring census/death-cert judge-inversion flap. (2) an
+  **`optional` matcher flag** — a fact whose *existence* the skill produces unreliably
+  (009's death-cert parent names) is no longer a hard `expected_classifications` gate;
+  its classification is still checked when present, and the soft `Completeness` dimension
+  covers the omission. (3) **fixture clarifications** for genuine ambiguities the
+  atomicity edit exposed (018: child->head `direct` stated vs child->spouse-of-head
+  `indirect` inferred). The 009 `xfail` was reverted (xfail is for deterministic
+  known-failures, not flaps). If a dimension needs stronger stability later, consider
+  extending the deference to force-3 for comprehensively-declared fixtures, or
+  `runs_per_test>1` (the only lever for raw skill-output variance).
 - [ ] **Revert the temporary $25 e2e cost caps** — `bottemiller-parents` and
   `cruz-corona-ancestry` fixtures carry `caps.max_cost_usd: 25` as experiment
   headroom for the extractor-state-diet measurement window (3 of 5 e2e runs
@@ -132,21 +233,30 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   diet (`project_context` + tool-side source reuse + `add_household_children`)
   demonstrably lands runs under $15, drop the `caps` blocks so the default cap
   is the regression gate again.
-- [ ] **Judge fabrication class — give the judge before-state file content** —
-  three citation fails (2026-07-12) came from the judge claiming on-file text
-  was fabricated or absent; the judge context should include the relevant
-  before-state source entries so "not on file" claims are mechanically
-  checkable.
-- [ ] **Revisit recovered-retry Tool Arguments scoring** — the judge policy
-  (`eval/harness/judge/prompt.md` + the mirror note in
-  `eval/tests/unit/record-extraction/rubric.md`) caps a validation-rejected
-  call that Claude cleanly fixed on the first retry at partial (2). Chosen
-  while the suite is *diagnostic*: the retry path is where wasted round-trips
-  and silent op-drops were observed, and scoring it 3 would blind the trend
-  to the failure class the composite-persist work eliminates. Once
-  composite-persist has made validation rejections rare and the suite's role
-  shifts toward regression acceptance (post-alpha), consider full credit for
-  a cleanly-recovered single retry — decide with post-composite data.
+- [x] **Judge fabrication class — give the judge before-state file content** —
+  **shipped (branch `rx-tool-boundary`).** three citation fails (2026-07-12)
+  came from the judge claiming on-file text was fabricated or absent. The
+  harness now threads the before-run `sources` (research.json `src_`) + tree
+  source descriptions (`S`) into a `{before_state}` judge-prompt slot
+  (`orchestrator._summarize_before_state` → `judge.grade`), bounded, with a
+  prompt section telling the judge to check "not on file" claims against it.
+  `(none)` for empty-project scenarios (most record-extraction tests).
+- [x] **Revisit recovered-retry Tool Arguments scoring** — **DECIDED + shipped
+  (2026-07-16, branch `rx-tool-boundary`).** The prior policy capped a
+  cleanly-recovered validation retry at partial (2) — chosen while the suite was
+  *diagnostic*, to keep the retry-cost failure class visible. The tool-boundary
+  work (record-extraction-tool-boundary-plan.md: name-lift, access_date ISO,
+  plan_item_id) turns most of those rejections into silent normalizations, so
+  the remaining rejections are rare and legitimate ("tool says exactly what to
+  fix → Claude fixes it"). New policy in `eval/harness/judge/prompt.md` (+ the
+  rubric.md mirror): a **single clean recovery** scores **3** (grade the final
+  persisted state, not the rejected attempt); **2** is reserved for an *unclean*
+  recovery (multiple retries / thrashing / a retry still leaving a non-critical
+  arg wrong); a wrong critical arg or an unrecovered error still fails. This is a
+  project-global judge-prompt change (bumps `judge_prompt_hash` for all skills —
+  warn-only, CI rule 2b). It is the primary partial→pass lever toward the
+  record-extraction 75%-pass target; validate its effect (and guard against
+  over-reach) with the N≥3 acceptance run per the plan's §10 acceptance test.
 
 ## Done
 - ~~Generate the mock input-schema mirror from compiled schemas~~ —
