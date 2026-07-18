@@ -1,0 +1,46 @@
+{
+  "project": {
+    "id": "rp_tree_name_transposed",
+    "objective": "Confirm the marriage of John Cooper and Mary Harvey and record Mary's correct full name.",
+    "subject_person_ids": ["I2"],
+    "status": "active",
+    "created": "2026-07-16",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What was the marriage of John Cooper and Mary Harvey, and what is Mary's correct full name?",
+      "rationale": "A marriage record is being extracted to confirm the couple and Mary's maiden name.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-16",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -178,7 +178,27 @@ List every person mentioned and assign a `record_role`:
   `daughter_in_law_N`, never `child_N`, and still capture the actual
   child. Neighbors, friends, pallbearers, and caregivers named in an
   obituary are FAN associates (`neighbor_1`, `friend_1`) — never role them
-  as kin without a stated relationship.
+  as kin without a stated relationship. A survivor whose relationship to
+  the subject is **not stated** (a caregiver, someone merely "also survived
+  by", anyone thanked) must **never** get a generic `family_member` /
+  `relative` role — that silently asserts kinship. Give them their FAN role
+  (`neighbor_N`, `friend_N`) when the text supports one, or capture their
+  identifying facts with the relationship left unasserted; do not default
+  to `family_member`.
+- **Assemble a person's name in genealogical order, and refine it as
+  records accumulate.** Record given names in natural order (given, then
+  middle), the current/married surname as the surname, and a maiden/birth
+  surname as a separate birth name (*née*) — **never interleave a maiden
+  surname among the given names.** A married woman is "Mary Ann Johnson
+  Smith" (given Mary, middle Ann, maiden Johnson, married Smith), never
+  "Mary Johnson Ann". A single index can render a name with its parts out
+  of order; when you extract a record that presents a **better-structured
+  or corroborated** form of a person **already in the tree**, add the
+  corrected, canonically-ordered name with `preferred: true` — `add_name`
+  swaps the preferred flag, so the corrected name becomes that person's
+  primary name and the transposed rendering stays as a non-preferred
+  alternate. Do **not** merely add the maiden surname as an extra alternate
+  while leaving the transposed name preferred.
 
 **Extraction policy (BCG Standard 27):** extract all facts relevant to
 any open research question, plus identifying facts (name, age/birth,

@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_record_extraction_019",
+    "skill": "record-extraction",
+    "name": "Name refinement: reorder a transposed given-name when a record clarifies the maiden surname",
+    "type": "positive",
+    "description": "The tree already contains Mary 'Harvey Ann' Cooper (I2) — an obituary-index rendering that wrongly interleaves her maiden surname (Harvey) between her given name (Mary) and middle name (Ann). Extracting a marriage record that establishes Harvey as her maiden surname should let the agent refine her primary name to genealogical order — 'Mary Ann Harvey Cooper' (given Mary, middle Ann, maiden Harvey, married Cooper) — not leave the transposed 'Mary Harvey Ann' in place. From the applegarth-parents-1936 e2e run (Olive 'Harvey Annie' vs the correct 'Annie Harvey') + senior-genealogist (Leduthet) review.",
+    "tags": [
+      "extraction",
+      "marriage",
+      "name-order",
+      "maiden-name",
+      "name-reconciliation",
+      "refinement"
+    ]
+  },
+  "input": {
+    "user_message": "Extract assertions from this marriage record into the project. The existing tree person Mary Harvey Ann Cooper (I2) is the bride.\n\nMarriage record — Weber County, Utah. On 12 June 1928, John Cooper (age 24) married Mary Harvey (age 22). The bride is recorded under her maiden name, Harvey. Neither party's parents are listed.",
+    "scenario": "tree-name-transposed"
+  },
+  "judge_context": [
+    "The tree already contains the bride as person I2 with the primary name 'Mary Harvey Ann Cooper' — a transposed obituary-index rendering in which the maiden surname 'Harvey' is wrongly placed BETWEEN the given name (Mary) and the middle name (Ann). The correct genealogical order is given + middle + maiden: 'Mary Ann Harvey Cooper' (given Mary, middle Ann, maiden Harvey, married Cooper).",
+    "The marriage record establishes 'Harvey' as the bride's MAIDEN surname (she is recorded under it when marrying John Cooper). With that, the agent can tell that in the existing name 'Mary Harvey Ann', the 'Harvey' component is the maiden surname (which belongs after the middle name, or as a separate birth/née name) and 'Ann' is the middle name.",
+    "PASS: the agent refines person I2's primary/preferred name to the canonical order — 'Mary Ann Harvey Cooper' (or equivalently given 'Mary Ann', maiden 'Harvey', married surname 'Cooper') — moving the maiden surname out from between the given and middle names. Keeping the transposed 'Mary Harvey Ann' as an alternate name is acceptable.",
+    "FAIL: the agent leaves I2's primary name as the transposed 'Mary Harvey Ann Cooper', drops the middle name 'Ann', or creates a duplicate second person for Mary instead of updating the existing I2.",
+    "This tests name-order reconciliation of an existing person, not the marriage facts themselves. Do not require exhaustive extraction of the marriage-event facts beyond establishing the maiden surname; the focus is whether the existing person's transposed name is corrected."
+  ],
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  }
+}
