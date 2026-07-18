@@ -44,6 +44,8 @@ BROWSER_USER_AGENT = (
 FS_OAUTH_COOKIE = "fs_oauth"
 # Where the engine's MCP server reads the token inside the sandbox FS.
 TOKENS_PATH = f"{HOME_DIR}/.familysearch-mcp/tokens.json"
+# Where it reads per-user config (OpenRouter key, wiki URL, …) inside the sandbox.
+CONFIG_PATH = f"{HOME_DIR}/.familysearch-mcp/config.json"
 
 
 def fs_serializer() -> URLSafeTimedSerializer:
@@ -137,3 +139,13 @@ async def write_tokens(
     await sandbox.write_file(
         TOKENS_PATH, tokens_file_bytes(access_token, refresh_token, expires_at)
     )
+
+
+async def write_config(sandbox, config: dict) -> None:
+    """Inject per-user MCP config (~/.familysearch-mcp/config.json) into a
+    sandbox at CONFIG_PATH — the file channel the engine reads config-only for
+    the OpenRouter key (image-transcribe-tool-spec.md §6.5), the wiki URL, etc.
+    Sibling of write_tokens: the control plane owns provisioning this file, the
+    same way it provisions tokens.json. Writes the whole document (it is the
+    only writer today)."""
+    await sandbox.write_file(CONFIG_PATH, json.dumps(config, indent=2).encode())

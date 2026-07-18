@@ -25,6 +25,13 @@ class Settings(BaseSettings):
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
     default_model: str = "claude-sonnet-4-6"
+    # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
+    # MCP server reads it config-only (never from env), so — unlike
+    # ANTHROPIC_API_KEY, which the Agent SDK reads from the sandbox env — this
+    # is written into the sandbox's ~/.familysearch-mcp/config.json on connect
+    # (fs_oauth.write_config, sessions.create_project). See
+    # docs/specs/image-transcribe-tool-spec.md §6.5.
+    openrouter_api_key: str | None = None
 
     # ── Sandbox provider ─────────────────────────────────────────
     # "local" → LocalProvider (subprocess + local dir; the POC default).

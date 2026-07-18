@@ -166,6 +166,13 @@ async def create_project(
             await fs_oauth.write_tokens(
                 sandbox, row.access_token, row.refresh_token, row.expires_at
             )
+    # Provision the OpenRouter key into the sandbox's ~/.familysearch-mcp/config.json
+    # so the in-sandbox image_transcribe tool can OCR scans. Config-only (the MCP
+    # server never reads env); see image-transcribe-tool-spec.md §6.5.
+    if settings.openrouter_api_key:
+        await fs_oauth.write_config(
+            sandbox, {"openRouterApiKey": settings.openrouter_api_key}
+        )
     if sample:
         await seed_sample_project(sandbox)
 
