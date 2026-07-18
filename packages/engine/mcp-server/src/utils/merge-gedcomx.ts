@@ -537,8 +537,11 @@ function firstDuplicate(ids: string[]): string | undefined {
 
 // ─── Fact equivalence (spec §7.2) ───────────────────────────────────────────
 
-/** Single-occurrence vital types: exactly one of each is marked `primary`. */
-const VITAL_PRIMARY_TYPES: ReadonlySet<string> = new Set([
+/** Single-occurrence vital types: exactly one of each is marked `primary`.
+ *  Exported so assertion-driven writers (materialize_facts) can gate
+ *  conflict-surfacing to these single-valued types without re-declaring the set
+ *  (CLAUDE.md code-reuse rule). */
+export const VITAL_PRIMARY_TYPES: ReadonlySet<string> = new Set([
   "Birth",
   "Death",
   "Christening",
@@ -610,7 +613,16 @@ function setOrDelete<K extends keyof SimplifiedFact>(
   else delete fact[key];
 }
 
-function factsEquivalent(a: SimplifiedFact, b: SimplifiedFact): boolean {
+/**
+ * Two facts are equivalent when they share a `type` and their dates and places
+ * are compatible (one contains/prefixes the other, or either is absent). This is
+ * the fact-identity primitive: materialize_facts reuses it (plus an equal-`value`
+ * check) to decide whether an assertion corroborates an existing tree fact or
+ * coexists as a competing one. Exported for that reuse — do NOT re-invent a
+ * `(type, value)` key (`value` is null for event facts, which would collapse
+ * every Birth into one fact and drop conflicting dates/places).
+ */
+export function factsEquivalent(a: SimplifiedFact, b: SimplifiedFact): boolean {
   if (a.type !== b.type) return false;
   return datesCompatible(a, b) && placesCompatible(a, b);
 }

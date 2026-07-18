@@ -13,16 +13,11 @@ import { createReport, isValid } from "../validation/types.js";
 import type { ValidationError } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
 import { backupIfExists } from "../utils/project-io.js";
+// Single source of the vital single-occurrence fact types — shared with the
+// merge core and materialize_facts's conflict-surfacing gate (spec §4.4).
+import { VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 
 export { backupIfExists };
-
-/** Vital types the core marks exactly one `primary` fact for (mirrors the core). */
-const VITAL_PRIMARY_TYPES: ReadonlySet<string> = new Set([
-  "Birth",
-  "Death",
-  "Christening",
-  "Burial",
-]);
 
 export interface MergePairSummary {
   survivorId: string;

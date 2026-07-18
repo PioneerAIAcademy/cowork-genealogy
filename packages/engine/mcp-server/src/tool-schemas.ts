@@ -50,6 +50,7 @@ import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { researchAppendSchema } from "./tools/research-append.js";
 import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
 import { projectContextSchema } from "./tools/project-context.js";
+import { materializeFactsSchema } from "./tools/materialize-facts.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -94,4 +95,5 @@ export const allToolSchemas = [
   researchAppendSchema,
   rankSearchMatchesSchema,
   projectContextSchema,
+  materializeFactsSchema,
 ];
