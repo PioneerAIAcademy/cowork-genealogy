@@ -70,5 +70,31 @@ export const api = {
   connectSession: (sessionId: string) =>
     req<{ wssUrl: string; token: string }>(`/api/sessions/${sessionId}/connect`, {
       method: 'POST'
+    }),
+
+  // Upload a document/image into <project>/uploads/ so the agent can read it.
+  // Not routed through req(): multipart needs the browser to set Content-Type
+  // (it carries the boundary), and req() forces application/json.
+  uploadSessionFile: async (
+    sessionId: string,
+    file: File
+  ): Promise<{ path: string; sizeBytes: number }> => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch(`/api/sessions/${sessionId}/files`, {
+      method: 'POST',
+      credentials: 'include',
+      body: form
     })
+    if (!res.ok) {
+      let detail = res.statusText
+      try {
+        detail = (await res.json()).detail ?? detail
+      } catch {
+        /* non-JSON error */
+      }
+      throw new ApiError(res.status, detail)
+    }
+    return (await res.json()) as { path: string; sizeBytes: number }
+  }
 }

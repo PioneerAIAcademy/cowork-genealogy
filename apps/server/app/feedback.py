@@ -47,20 +47,76 @@ _CLAUDE_PROJECTS_DIR = f"{HOME_DIR}/.claude/projects/{_CLAUDE_PROJECT_SLUG}"
 # limit. The reported failure is ~always at the end, so we keep the newest entries.
 _SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 
+# Mirrors apps/electron/src/main/feedback.ts so a web case and a desktop case
+# unzip to the same shape and the triage workflow consumes them identically.
+_MEDIA_EXTS = frozenset(
+    {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp",
+     ".mp3", ".wav", ".m4a", ".ogg", ".mp4", ".mov", ".avi"}
+)
+_TEXT_EXTS = frozenset({".json", ".md", ".txt", ".csv", ".tsv", ".yaml", ".yml"})
+_INDIVIDUAL_FILE_CAP_BYTES = 25 * 1024 * 1024
+_ZIP_CAP_BYTES = 35 * 1024 * 1024
 
-async def _project_files(sandbox) -> list[tuple[str, bytes]]:
-    """(relativePath, bytes) for research.json, tree.gedcomx.json, results/*."""
+
+def _ext(name: str) -> str:
+    dot = name.rfind(".")
+    return name[dot:].lower() if dot > 0 else ""
+
+
+async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
+    """(relativePath, bytes) for every file under PROJECT_DIR, recursively.
+
+    Matches the Electron walker: skips dotfiles and dot-directories, and skips
+    any single file over the per-file cap. Previously this returned only
+    research.json / tree.gedcomx.json / results/*.json, which meant a web case
+    could not reproduce anything touching the rest of the project (uploads,
+    CLAUDE.md, images). DirEntry carries no size, so the read is what tells us
+    how big a file is — fine for a project folder, which is small by design.
+    """
     out: list[tuple[str, bytes]] = []
-    for name in ("research.json", "tree.gedcomx.json"):
-        raw = await sandbox.read_file(f"{PROJECT_DIR}/{name}")
-        if raw is not None:
-            out.append((name, raw))
-    for entry in await sandbox.list_dir(f"{PROJECT_DIR}/results"):
-        if not entry.is_dir and entry.name.endswith(".json"):
+
+    async def walk(dir_path: str, prefix: str) -> None:
+        for entry in await sandbox.list_dir(dir_path):
+            if entry.name.startswith("."):
+                continue
+            rel = f"{prefix}{entry.name}"
+            if entry.is_dir:
+                await walk(entry.path, f"{rel}/")
+                continue
             raw = await sandbox.read_file(entry.path)
-            if raw is not None:
-                out.append((f"results/{entry.name}", raw))
+            if raw is None or len(raw) > _INDIVIDUAL_FILE_CAP_BYTES:
+                continue
+            out.append((rel, raw))
+
+    await walk(PROJECT_DIR, "")
     return out
+
+
+def _select_files(
+    files: list[tuple[str, bytes]], include_media: bool
+) -> tuple[list[tuple[str, bytes]], list[str]]:
+    """Apply the media toggle and the total-size cap.
+
+    Returns (kept, dropped_relpaths). Over the cap we drop largest-first, which
+    preserves the small structured JSON that triage actually reads and sheds the
+    big binaries. Whatever gets dropped is named in FEEDBACK.md rather than
+    vanishing silently.
+    """
+    def wanted(rel: str) -> bool:
+        return include_media or _ext(rel) not in _MEDIA_EXTS
+
+    kept = [(rel, data) for rel, data in files if wanted(rel)]
+    dropped = [rel for rel, _ in files if not wanted(rel)]
+
+    total = sum(len(d) for _, d in kept)
+    if total > _ZIP_CAP_BYTES:
+        for rel, data in sorted(kept, key=lambda kv: len(kv[1]), reverse=True):
+            if total <= _ZIP_CAP_BYTES:
+                break
+            kept = [kv for kv in kept if kv[0] != rel]
+            dropped.append(rel)
+            total -= len(data)
+    return kept, dropped
 
 
 def _filter_transcript(raw: bytes) -> bytes | None:
@@ -140,6 +196,11 @@ class FeedbackBody(BaseModel):
     userPrompt: str = ""
     agentDid: str = ""
     agentShouldHave: str = ""
+    # Ground truth, when the agent reached a *wrong conclusion* rather than just
+    # working badly. Optional and always shown in the UI — the app can't tell
+    # which kind of failure this is, so the tester decides whether to fill it in.
+    # This is what lets a case become a test without going back to the submitter.
+    correctAnswer: str = ""
     notes: str | None = None
     includeMedia: bool = False
     includeSessionLog: bool = True
@@ -155,8 +216,13 @@ async def feedback_context(
     project = _owned(session, user, sessionId)
     sandbox = await provider.resume(project.sandbox_id)
     files = [
-        {"relativePath": rel, "sizeBytes": len(data), "isMedia": False, "isText": True}
-        for rel, data in await _project_files(sandbox)
+        {
+            "relativePath": rel,
+            "sizeBytes": len(data),
+            "isMedia": _ext(rel) in _MEDIA_EXTS,
+            "isText": _ext(rel) in _TEXT_EXTS,
+        }
+        for rel, data in await _walk_project(sandbox)
     ]
     log = await _session_log(sandbox)
     return {"files": files, "sessionLogSize": len(log) if log else 0, "hasSessionLog": bool(log)}
@@ -169,13 +235,20 @@ def _norm(v: str) -> str:
     return v
 
 
-def _feedback_markdown(f: dict, submitted_at: str, project_label: str, session_log: bool) -> str:
+def _feedback_markdown(
+    f: dict,
+    submitted_at: str,
+    project_label: str,
+    session_log: bool,
+    viewer_version: str,
+    dropped: list[str] | None = None,
+) -> str:
     parts = [
         "# Feedback",
         "",
         f"- **From:** {f['email']}",
         f"- **When:** {submitted_at}",
-        "- **Viewer version:** web-poc",
+        f"- **Viewer version:** {viewer_version}",
         f"- **Project:** {project_label}",
         "",
         "## What I asked",
@@ -190,6 +263,8 @@ def _feedback_markdown(f: dict, submitted_at: str, project_label: str, session_l
         "",
         f["agentShouldHave"],
     ]
+    if f["correctAnswer"]:
+        parts += ["", "## The correct answer, and the evidence for it", "", f["correctAnswer"]]
     if f["notes"]:
         parts += ["", "## Notes", "", f["notes"]]
     if session_log:
@@ -199,6 +274,15 @@ def _feedback_markdown(f: dict, submitted_at: str, project_label: str, session_l
             "",
             "See `_feedback/session-log.jsonl` — the full Claude Code conversation "
             "transcript (user turns, tool calls, results, and the agent's reasoning).",
+        ]
+    if dropped:
+        parts += [
+            "",
+            "## Files not included",
+            "",
+            "Left out of this bundle (media excluded, or over the total size cap):",
+            "",
+            *[f"- `{rel}`" for rel in sorted(dropped)],
         ]
     return "\n".join(parts) + "\n"
 
@@ -218,6 +302,7 @@ async def submit_feedback(
         "userPrompt": _norm(body.userPrompt),
         "agentDid": _norm(body.agentDid),
         "agentShouldHave": _norm(body.agentShouldHave),
+        "correctAnswer": _norm(body.correctAnswer),
         "notes": _norm(body.notes or ""),
     }
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -226,24 +311,39 @@ async def submit_feedback(
     # agent's reasoning). None when the agent never ran or in mock-mode local runs.
     session_log = (await _session_log(sandbox)) if body.includeSessionLog else None
 
+    settings = get_settings()
+    # Human-readable date first — a triager reading a stack of cases dates one at
+    # a glance; the sha is there when they need the exact checkout.
+    viewer_version = f"web {settings.build_date} ({settings.git_sha})"
+
     feedback_json = {
         "schema_version": FEEDBACK_SCHEMA_VERSION,
         "submitted_at": submitted_at,
-        "viewer_version": "web-poc",
+        "viewer_version": viewer_version,
+        "build_date": settings.build_date,
+        "git_sha": settings.git_sha,
         "platform": "web",
         "email": fields["email"],
         "project_folder_path": body.sessionId,  # web analog of the local folder
         "user_prompt": fields["userPrompt"],
         "agent_did": fields["agentDid"],
         "agent_should_have": fields["agentShouldHave"],
+        "correct_answer": fields["correctAnswer"],
         "notes": fields["notes"],
     }
 
+    project_files, dropped = _select_files(await _walk_project(sandbox), body.includeMedia)
+
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for rel, data in await _project_files(sandbox):
+        for rel, data in project_files:
             zf.writestr(rel, data)
-        zf.writestr("FEEDBACK.md", _feedback_markdown(fields, submitted_at, project.title, bool(session_log)))
+        zf.writestr(
+            "FEEDBACK.md",
+            _feedback_markdown(
+                fields, submitted_at, project.title, bool(session_log), viewer_version, dropped
+            ),
+        )
         zf.writestr("_feedback/feedback.json", json.dumps(feedback_json, indent=2) + "\n")
         if session_log:
             zf.writestr("_feedback/session-log.jsonl", session_log)

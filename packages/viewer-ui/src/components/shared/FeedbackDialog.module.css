@@ -192,6 +192,14 @@
   font-weight: 400;
 }
 
+/* Explanatory text under a field, for the one field whose "when do I fill this
+   in?" isn't obvious from its label. */
+.fieldHint {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+
 .input {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);

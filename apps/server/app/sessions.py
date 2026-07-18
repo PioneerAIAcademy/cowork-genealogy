@@ -8,7 +8,7 @@ import json
 import re
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
@@ -28,6 +28,12 @@ _LOG_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 # Persisted source scans: images/<sanitized-key>.jpg (engine image-store.ts).
 # Rejects subdirectories, traversal, and any other extension.
 _IMAGE_REF_RE = re.compile(r"^images/[A-Za-z0-9._-]+\.jpg$")
+# Researcher uploads land in <project>/uploads/ — inside the project folder, so
+# the agent reads them with a relative path and they ride along in a feedback
+# bundle. The name is taken as a basename and constrained; no subdirectories.
+_UPLOAD_DIR = "uploads"
+_UPLOAD_MAX_BYTES = 25 * 1024 * 1024
+_UPLOAD_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]{0,120}$")
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
@@ -336,6 +342,52 @@ async def session_image(
     if raw is None:
         raise HTTPException(status_code=404, detail="Image not found")
     return Response(content=raw, media_type="image/jpeg")
+
+
+@router.post("/{session_id}/files")
+async def upload_session_file(
+    session_id: str,
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+    provider: SandboxProvider = Depends(get_provider),
+) -> dict:
+    """Write a researcher-supplied document/image into <project>/uploads/.
+
+    This is the only way bytes get into a session. The FamilySearch tools reach
+    FS-hosted record images, but a scan from another site, a county PDF, or a
+    photo of a family bible has no path in without it — the researcher could
+    only describe it. The agent reads the result with a relative path
+    ("uploads/<name>"), and because it lives in the project folder it is also
+    captured in any feedback bundle.
+    """
+    project = _owned(session, user, session_id)
+
+    # Basename only: a client-supplied name may carry a path (some browsers send
+    # one for directory uploads) and must never steer the write.
+    raw_name = (file.filename or "").replace("\\", "/").split("/")[-1].strip()
+    if not _UPLOAD_NAME_RE.match(raw_name) or ".." in raw_name:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid filename. Use letters, numbers, spaces, dots, dashes or "
+                "underscores (max 120 characters)."
+            ),
+        )
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="That file is empty.")
+    if len(data) > _UPLOAD_MAX_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"That file is larger than the {_UPLOAD_MAX_BYTES // (1024 * 1024)} MB limit.",
+        )
+
+    sandbox = await provider.resume(project.sandbox_id)
+    rel = f"{_UPLOAD_DIR}/{raw_name}"
+    await sandbox.write_file(f"{PROJECT_DIR}/{rel}", data)
+    return {"path": rel, "sizeBytes": len(data)}
 
 
 @router.get("/{session_id}/logs")

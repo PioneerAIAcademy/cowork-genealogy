@@ -9,8 +9,11 @@ description: Mine a first-cut regression unit test, scenario, and MCP
   Invoke as `/mine-unit-test` (it asks what it needs) or with
   `--skill <name>`, `--project <dir>`, or `--e2e-run <dir>`. Writes a
   DRAFT test JSON, scenario, and MCP fixtures into eval/; the user refines
-  them via the CRUD UI before committing. NOT for a submitted feedback
-  case (use draft-unit-test) and NOT for authoring an e2e fixture (use
+  them via the CRUD UI before committing. Also the right skill for triaging
+  an alpha feedback case: unpack it, continue the research from where the
+  user left off, and mine the failure you reproduce (`--project <case-dir>`).
+  Use draft-unit-test instead when the bug is already fixed and you are
+  promoting that fix; NOT for authoring an e2e fixture (use
   author-e2e-fixture).
 allowed-tools:
   - Read
@@ -34,11 +37,21 @@ problem (Step 1), pinning *which* sub-skill (Step 2), and carving the
 *mid-flow* scenario the sub-skill actually saw (Step 5). Propose a draft;
 the user fixes it.
 
-**Sibling to `draft-unit-test`.** That skill mines from a submitted
-*feedback case* (a `.feedback-repo-root` case directory). This one mines
-from a *live or recorded research project*. They emit the **same** test
-format (`docs/specs/unit-test-spec.md` is the authority) but read
-different inputs — don't run this one inside a feedback-case directory.
+**Sibling to `draft-unit-test`.** Both emit the **same** test format
+(`docs/specs/unit-test-spec.md` is the authority); they differ in *when* you
+reach for them, not in what directory you stand in.
+
+- **`draft-unit-test`** — the bug is already **fixed**, and you are promoting
+  that fix into a regression test. It expects `/compare-state --against=desired`
+  to report "matches" first.
+- **`mine-unit-test`** (this one) — the failure is **live in front of you**.
+  You are reproducing it, not memorialising a fix.
+
+An unpacked feedback case is a perfectly good input here. It is a research
+project — `research.json`, `tree.gedcomx.json`, `results/` — and the most
+direct way to triage alpha feedback is to open that directory, **continue the
+research from where the alpha user left off**, watch the same failure happen,
+and mine it. Pass it as `--project <case-dir>`.
 
 ## Where the failure comes from — two inputs
 
@@ -336,7 +349,7 @@ As the **last thing**, print to the session:
 | The cause is a tool bug or a stale rubric/fixture (Step 1) | Stop. Say so and route it (MCP PR, or `rubric-critic`) — do not mine a unit test. |
 | Can't confidently name one sub-skill | Ask the user; on the recorded path, run `/interpret-e2e-result` first. |
 | Cause is `/research` routing, FS drift, or jitter | Not a body test. Split `/research`: "picked the wrong sub-skill" → `make optimize-skill` (description optimizer); "skipped a GPS step" → a `research`-body (orchestrator) `SKILL.md` edit (the optimizer can't fix it). Discard *jitter*. **FS drift needs a second look:** finding simply *unreachable* because FS data changed → discard; but skill **mishandled** a real FS data quirk (mislinked image, mis-transcription, wrong-collection filing) → **mine it** — the gap is the skill's *response*, not the data. |
-| Run inside a feedback-case dir (a `.feedback-repo-root` is present) | You're in the wrong skill — use `/draft-unit-test`. |
+| Run inside a feedback-case dir (a `.feedback-repo-root` is present) | Fine — mine it as `--project <case-dir>`. Resolve the repo from that marker rather than assuming cwd, and read `_feedback/feedback.json` for the submitter's Did/Should (and `correct_answer`, when they supplied ground truth) instead of interviewing the user for it. Switch to `/draft-unit-test` only if the bug is already fixed and you are promoting the fix. |
 | The `results/` folder / recorded payloads are absent | Emit fixture placeholders and flag them in the Step 8 printout for the user to fill in. |
 | A test or scenario for `<slug>` already exists | Don't overwrite — append `-2`/`-3` and let the user consolidate. |
 | Skill has no `eval/tests/unit/<skill>/` dir yet | Create it; flag in the Step 8 printout that the rubric needs authoring. |

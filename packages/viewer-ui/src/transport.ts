@@ -12,6 +12,9 @@ export interface FeedbackPayload {
   userPrompt: string
   agentDid: string
   agentShouldHave: string
+  /** Ground truth — the right answer plus its evidence — when the agent reached a
+   *  wrong *conclusion*. Optional: most feedback is about process, not answers. */
+  correctAnswer?: string
   notes?: string
 }
 
