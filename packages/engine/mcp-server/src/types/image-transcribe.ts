@@ -20,11 +20,8 @@ export interface ImageTranscribeResult {
     ark?: string;
     /** The OpenRouter model slug actually used. */
     model: string;
-    /** Raw FamilySearch image size. */
-    sizeBytesFetched: number;
-    /** Bytes sent to OCR (== fetched until image pre-processing lands). */
-    sizeBytesSent: number;
-    preprocessed: boolean;
+    /** Raw FamilySearch image size (sent to OCR as-is; no pre-processing). */
+    sizeBytes: number;
   };
 }
 

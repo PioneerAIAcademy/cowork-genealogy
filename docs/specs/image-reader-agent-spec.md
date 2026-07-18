@@ -78,13 +78,20 @@ more than one imageId, the agent reads only the first and says so.
 ## 4. Agent Frontmatter
 
 - `name: image-reader`
-- `model: claude-sonnet-4-6` — vision-capable for OCR of dense/old-script
-  registers. MAY be swapped for a cheaper vision model later (Cowork
-  honors the agent `model:` pin); quality on faint German script is the
-  constraint to watch.
-- `tools: [image_read]` — the agent's sole capability. It does not write
-  `research.json` / `tree.gedcomx.json`, create assertions/sources, or
-  search indexes; that stays with the caller.
+- `model: claude-sonnet-5` — vision-capable for OCR of dense/old-script
+  registers. Bumped from `claude-sonnet-4-6` per the OCR spike (PR 723):
+  Sonnet 5 read the hard hands **+18 pts** more accurately (61%→79%) while
+  being cheaper and faster — the single biggest accuracy lever in the test.
+  Cowork honors the agent `model:` pin, so this takes effect in production.
+  Quality on faint German Kurrent/Fraktur is still the constraint to watch
+  (untested by the spike; a targeted German pass is the open item).
+- `tools: [image_read, image_transcribe]` (qualified as `mcp__genealogy__*`
+  in the frontmatter, per the repo convention) — small scans are read
+  natively via `image_read`; scans over `image_read`'s ~700 KB inline cap
+  route to `image_transcribe`, which OCRs host-side (OpenRouter Qwen3-VL) and
+  returns text (§6). The agent still does not write `research.json` /
+  `tree.gedcomx.json`, create assertions/sources, or search indexes; that
+  stays with the caller.
 
 ## 5. Output Protocol
 
@@ -105,24 +112,38 @@ image, never a request for the caller to fetch it:
 - If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line — as
   a pointer for the caller, never a substitute for the full transcription.
 
-## 6. Failure Behavior
+## 6. Routing + Failure Behavior
 
-If `image_read` throws (image over the 700 KB transport floor, an
-unreachable ARK, or any other error) the agent **must not** produce a
-transcription — a fabricated read is worse than a visible miss. It returns:
+**Oversize routing (the split).** When `image_read` throws its "too large to
+return inline" error — the scan exceeds the ~700 KB inline cap — the agent
+calls `image_transcribe({ imageId, lookingFor? })` instead of failing.
+`image_transcribe` OCRs the scan host-side (OpenRouter Qwen3-VL) and returns
+the transcription as text, with no size limit (the bytes never enter the
+agent's context). The routing is purely mechanical — "can Claude physically
+take the bytes," not "which model reads better" (PR 723) — so no
+quality-based threshold is needed. Qwen only ever handles the scans Claude
+can't take, where the baseline is *losing the page*, so this is a strict
+improvement even before the German-corpus question is settled.
+
+**Genuine failure.** For a real failure — an unreachable ARK, or
+`image_transcribe` *also* erroring (an unreachable image, or no OpenRouter
+key configured) — the agent **must not** produce a transcription; a
+fabricated read is worse than a visible miss. It returns:
 
 - `NOT READ: <imageId>` on its own line;
-- the **exact error message** `image_read` returned, quoted verbatim;
+- the **exact error message** the failing tool returned, quoted verbatim
+  (whichever of `image_read` / `image_transcribe` failed);
 - the pivot recommendation: read the **indexed** record for this image
   (`record_read` / `record_search` / `search-full-text`, or a related
-  person's indexed record).
+  person's indexed record). If the failure was a missing/rejected OpenRouter
+  key, note the caller can fix it via `configure_openrouter`.
 
 It does **not** retry via browser / `web_fetch` / "Claude in Chrome"
 (unavailable), and it never invents, infers, or guesses page contents when
-the read failed. The caller decides the pivot. This guardrail is
-independent of the ARK-support fix in §8 — the tool can still fail for
-other reasons, and this is what turns a failed read into a clean, visible
-miss instead of a silent fabrication.
+the read failed. The caller decides the pivot. This guardrail is independent
+of the ARK-support fix in §8 — the tools can still fail for other reasons,
+and this is what turns a failed read into a clean, visible miss instead of a
+silent fabrication.
 
 ## 7. Testing
 

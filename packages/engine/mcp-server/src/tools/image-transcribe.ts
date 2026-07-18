@@ -38,8 +38,16 @@ function buildOcrPrompt(lookingFor?: string): string {
 }
 
 function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
-  if (/\bNOT\s+FOUND\b/i.test(text)) return "NOT FOUND";
-  if (/\bFOUND\b/i.test(text)) return "FOUND";
+  // The prompt asks for the marker on a FINAL line ("write exactly FOUND or
+  // NOT FOUND"). Read the last non-empty line and require the marker at its
+  // start, so body text like "infant found abandoned" cannot spoof it.
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const last = lines[lines.length - 1] ?? "";
+  if (/^\W*NOT\s+FOUND\b/i.test(last)) return "NOT FOUND";
+  if (/^\W*FOUND\b/i.test(last)) return "FOUND";
   return undefined;
 }
 
@@ -140,9 +148,7 @@ export async function imageTranscribeTool(
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
       model,
-      sizeBytesFetched: sizeBytes,
-      sizeBytesSent: sizeBytes, // == fetched until image pre-processing lands
-      preprocessed: false,
+      sizeBytes,
     },
   };
 }

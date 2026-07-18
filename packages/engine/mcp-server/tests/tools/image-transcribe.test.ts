@@ -91,9 +91,7 @@ describe("imageTranscribeTool — request + happy path", () => {
     expect(result.metadata).toEqual({
       imageId: "004884748_02613",
       model: MODEL,
-      sizeBytesFetched: 3,
-      sizeBytesSent: 3,
-      preprocessed: false,
+      sizeBytes: 3,
     });
     expect(result.found).toBeUndefined();
   });
@@ -126,6 +124,15 @@ describe("imageTranscribeTool — lookingFor", () => {
       lookingFor: "Schreck",
     });
     expect(result.found).toBe("NOT FOUND");
+  });
+
+  it("does not spoof found from body text — only the final-line marker counts", async () => {
+    mockOpenRouterOk("Entry: infant found abandoned, no surname given.");
+    const result = await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Schreck",
+    });
+    expect(result.found).toBeUndefined();
   });
 });
 

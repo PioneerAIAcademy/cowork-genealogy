@@ -1,12 +1,10 @@
 # Specification: `image_transcribe` tool (host-side VLM OCR)
 
-> **Status: DRAFT — research-gated.** This spec has two parts. **Phase 0
-> (§4)** is a research/validation experiment that must pass before any
-> implementation begins. **§5–§11** are the tool contract to build *only if
-> Phase 0's quality gate is met*. A developer picking this up should run
-> Phase 0 first and treat the build sections as conditional. If Phase 0
-> fails, do **not** ship this tool — fall back to the downscale/tile options
-> in §12.
+> **Status: Phase 0 PASSED — build approved (spike PR 723).** This spec was
+> research-gated: **Phase 0 (§4)** had to clear a quality gate before the
+> **§5–§11** build contract could proceed. It did (see the revision note
+> below), so the build is unblocked and the §12 fallback is not triggered.
+> §4 is retained as the record of the experiment that was run.
 >
 > Owner: unassigned. Reviewer: spec-review agent (once implemented).
 >
@@ -25,6 +23,15 @@
 >    the key only from `~/.familysearch-mcp/config.json`, never from env —
 >    with two orchestration-layer bridges added for e2e and the hosted
 >    sandbox.
+>
+> **Phase 0 is COMPLETE — spike PR 723 (`docs/plan/ocr-quality-spike-results.md`).**
+> The gate passed: build the tool and route large scans to **Qwen3-VL-235B
+> Instruct, raw bytes — no pre-processing** (prep *lowered* accuracy and
+> doubled hallucinations, so §7's `jimp` path is dropped, not built). Bonus:
+> **Sonnet 5 ≫ Sonnet 4.6 for OCR**, so the `image-reader` small-image path is
+> bumped 4.6 → 5 (see its spec §4). The one open item is a German
+> Kurrent/Fraktur pass — the domain the bet is framed around, untested by the
+> spike.
 
 ---
 
@@ -77,9 +84,9 @@ subagent is not retired; its base64-isolation job simply no longer
 applies to the large-image path.
 
 This spec proposes a new tool, **`image_transcribe`**, that fetches the FS
-scan host-side, optionally pre-processes it for legibility, sends it to a
-vision-language model (VLM) hosted on **OpenRouter** (default **Qwen-VL**),
-and returns a faithful text transcription.
+scan host-side and sends the raw bytes to a vision-language model (VLM)
+hosted on **OpenRouter** (default **Qwen3-VL-235B Instruct**), returning a
+faithful text transcription.
 
 ## 2. The bet (why Phase 0 exists)
 
@@ -91,9 +98,10 @@ already flags "quality on faint German script is the constraint to watch."
 
 The upsides are real and worth chasing — no transport cap, materially
 cheaper per image than Claude vision, and the main model is freed — **but
-they only cash in if Qwen holds recall on *this* corpus.** That is an
-empirical question, and Phase 0 answers it before we build anything. Do not
-assume the outcome in either direction.
+they only cash in if Qwen holds recall on *this* corpus.** That was an
+empirical question, and Phase 0 answered it (PR 723): Qwen Instruct clears
+the bar on the hard subset, so the tool is built. (German Kurrent/Fraktur
+remains untested — the one open item.)
 
 ## 3. Non-goals
 
@@ -111,12 +119,16 @@ assume the outcome in either direction.
 
 ---
 
-## 4. Phase 0 — research & validation (DO THIS FIRST)
+## 4. Phase 0 — research & validation (record of the experiment that ran)
+
+> **This section is the historical protocol; the gate has since PASSED
+> (PR 723). It is kept as the record of what was run.** See the top banner
+> and §4.4 for the outcome — the imperatives below describe how the spike
+> was conducted, not pending work.
 
 **Goal:** decide, on evidence, (a) whether Qwen-VL on OpenRouter matches or
 beats the current Claude-Sonnet path on the actual hard corpus, and (b)
-whether image pre-processing helps enough to be worth a dependency. No tool
-code until this passes.
+whether image pre-processing helps enough to be worth a dependency.
 
 ### 4.1 Corpus
 
@@ -141,16 +153,16 @@ sponsors/witnesses). This is the answer key; keep it blind from the models.
 
 | Variant | Model | Pre-processing |
 |---|---|---|
-| **A (baseline)** | Claude Sonnet 4.6 vision (current `image-reader` path) | none |
+| **A1 (baseline)** | Claude Sonnet 4.6 vision (the `image-reader` path at spike time) | none |
+| **A2** | Claude Sonnet 5 vision (added during the spike at Dallan's direction) | none |
 | **B** | Qwen-VL on OpenRouter | none (raw `dist.jpg`) |
 | **C** | Qwen-VL on OpenRouter | full `image_prep.py` (grayscale + autocontrast cutoff=2 + unsharp + JPEG q95) |
-| **D** *(only if C≠B)* | Qwen-VL on OpenRouter | ablations: grayscale-only, autocontrast-only, sharpen-only |
+| **D** | Qwen-VL on OpenRouter | ablations (only if C≠B) |
 
-Reference prep implementation to port/prototype from:
+The prep pipeline prototyped from
 `~/pioneeradademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
-(`enhance_for_ocr`). For Phase 0 it is fastest to generate the prepped
-variants with that **existing Python** (PIL) — do not build the JS port
-until §7 says prep is warranted.
+(`enhance_for_ocr`) was generated with that **existing Python** (PIL); the JS
+port was **not** built — §7 records the decision against prep.
 
 Use the **same faithful-OCR prompt** for A/B/C/D so the comparison isolates
 model+prep, not prompt. Reuse the `image-reader.md` protocol verbatim
@@ -184,10 +196,10 @@ Implement §5–§11 **only if** the best Qwen variant:
 
 Secondary decisions the experiment also settles:
 
-- **Does prep help? (B vs C)** If C ≈ B, **skip prep entirely** — §7
-  collapses to "base64 the original bytes," which needs **no dependency at
-  all**. Only port the specific prep steps (from D) that measurably move
-  accuracy.
+- **Does prep help? — RESOLVED: no (PR 723).** The full `enhance_for_ocr`
+  pipeline *lowered* Qwen's hard-subset accuracy (69%→59%) and more than
+  doubled hallucinations (13→27). The tool base64s the raw bytes; **no `jimp`
+  dependency** — the prep path in §7 is dropped.
 - **Partial win?** The design already **keeps Claude for small images**, so
   a split is the default, not an exception: `image_transcribe`/Qwen covers
   the large scans Claude can't take, and `image_read`/Claude keeps the
@@ -207,9 +219,9 @@ convention.
 
 ### 5.1 Purpose
 
-Fetch a FamilySearch distribution image by `imageId` or `ark`, optionally
-pre-process it for legibility, run VLM OCR host-side, and return a faithful
-text transcription. The image bytes never cross the MCP transport.
+Fetch a FamilySearch distribution image by `imageId` or `ark`, run VLM OCR
+host-side, and return a faithful text transcription. The image bytes never
+cross the MCP transport.
 
 This is the **large-image path**. Small images (≤700 KB) are still read by
 Claude's own vision via `image_read` inside the `image-reader` subagent;
@@ -259,17 +271,19 @@ consistent across schema, manifest, and skill.)*
 1. **Resolve + fetch** the FS distribution image host-side, authed, via the
    shared fetcher lifted from `image-read.ts` (§8). Reuse `getValidToken()`
    and `BROWSER_USER_AGENT` — do **not** re-implement token or fetch logic.
-2. **Pre-process** the bytes (§7) — *only if Phase 0 warranted it*; otherwise
-   pass the raw JPEG through.
-3. **OCR** via OpenRouter (§6): base64 the (prepped) image into a data URL,
-   POST an OpenAI-compatible chat/completions request with the faithful-OCR
-   prompt, read `choices[0].message.content`.
+2. **No pre-processing** — the spike (PR 723) showed prep lowers accuracy, so
+   the raw JPEG bytes go straight to OCR (no `jimp`; see §7).
+3. **OCR** via OpenRouter (§6): base64 the raw image into a data URL, POST an
+   OpenAI-compatible chat/completions request with the faithful-OCR prompt,
+   read `choices[0].message.content`.
 4. **Return** the transcription text + light metadata (§5.5). No image block.
 
 There is **no size cap on the fetched image** for transport reasons — the
-image goes host→OpenRouter, never back over MCP. The only ceiling that
-applies is OpenRouter/Qwen's own request-body limit, which `max_dimension`
-in prep (§7) keeps well under.
+image goes host→OpenRouter, never back over MCP. The raw `dist.jpg` bytes are
+sent as-is (no prep, §7); the spike (PR 723) confirmed Qwen3-VL reads the
+large T13 scans that way with no body-limit issue. A pathological multi-MB
+scan exceeding OpenRouter/Qwen's own request-body limit is an open risk, not
+handled today.
 
 ### 5.5 Output
 
@@ -279,14 +293,12 @@ Returns **text only**:
 {
   transcription: string      // faithful full-page OCR (the primary payload)
   found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set
-  stagedImageRef?: string    // present iff projectPath was given — e.g. "images/.staging/<imageId>.jpg" (§8.5)
+  stagedImageRef?: string    // present iff projectPath was given (§8.5, persistence increment) — e.g. "images/.staging/<imageId>.jpg"
   metadata: {
     imageId?: string
     ark?: string
     model: string            // the OpenRouter model slug actually used
-    sizeBytesFetched: number // raw FS image size
-    sizeBytesSent: number    // after prep (== fetched if prep skipped)
-    preprocessed: boolean
+    sizeBytes: number        // raw FS image size (sent to OCR as-is; no pre-processing)
   }
 }
 ```
@@ -373,10 +385,12 @@ flow. Storage follows the existing per-user config convention exactly:
   round-trip the tool drives itself; an API key is a static paste the tool
   cannot obtain on its own. So provide a minimal write path:
 
-  **New tool `configure_openrouter({ apiKey, model? })`** → validates
-  (non-empty, plausible prefix) and calls `saveConfig({ openRouterApiKey,
-  openRouterModel })`. Returns a masked confirmation (`sk-or-…abcd`), never
-  echoes the full key. Flow: `image_transcribe` errors "no key" → Claude asks
+  **New tool `configure_openrouter({ apiKey, model? })`** → validates the key
+  is **non-empty** (no format/prefix check — OpenRouter's key format is not a
+  stable contract, and a wrong key is caught cleanly at the first
+  `image_transcribe` call via the 401→re-configure path) and calls
+  `saveConfig({ openRouterApiKey, openRouterModel })`. Returns a masked
+  confirmation (`sk-or-…abcd`), never echoes the full key. Flow: `image_transcribe` errors "no key" → Claude asks
   the user → user pastes → Claude calls `configure_openrouter` → retry.
 
   **Caveat to document:** the key passes through the tool-call arguments and
@@ -408,33 +422,20 @@ while letting each runtime supply the key naturally. The hosted-path
 called from `sessions.py:create_project`) is the exact pattern the
 `write_config` sibling follows.
 
-## 7. Image pre-processing (`src/utils/image-prep.ts`) — conditional
+## 7. Image pre-processing — decided against (PR 723)
 
-**Build this only if Phase 0 (§4.4) showed prep measurably helps**, and port
-only the steps that helped.
+**No pre-processing. No `jimp` dependency.** The spike tested the full
+`enhance_for_ocr` pipeline (grayscale + autocontrast + unsharp + JPEG q95, via
+PIL) against raw bytes, and it *hurt*: Qwen's hard-subset field accuracy fell
+69%→59% and hallucinations more than doubled (13→27); sharpening even
+*enlarged* some payloads (grayscale+sharpen+q95 > the original JPEG's
+compression). The shipped tool base64s the **raw** `dist.jpg` bytes and sends
+them as-is.
 
-- **Dependency: `jimp` — pure JavaScript, zero native binaries.** This is the
-  load-bearing constraint. Node has **no built-in image codec**; any
-  pixel-level operation (grayscale, autocontrast, unsharp, resize, JPEG
-  re-encode) requires decoding the JPEG, which stdlib cannot do. "No
-  dependencies" and "PIL-equivalent prep" cannot both hold — the correct way
-  to honor the portability intent is **no *native* deps**, which is jimp, not
-  `sharp` (sharp ships per-platform native binaries and is the exact
-  cross-platform `.mcpb` packaging risk we avoid).
-- Port of `enhance_for_ocr` (see the reference file):
-  grayscale → autocontrast (histogram stretch, cutoff≈2%) → unsharp mask
-  (radius 1.5, ~150%, threshold 3) → optional Lanczos downscale to
-  `max_dimension` → JPEG q95. jimp covers grayscale, contrast, resize, and
-  convolution (unsharp via a kernel); match PIL's behavior as closely as
-  jimp allows and note any divergence.
-- **Upscaling stays off** (the reference notes Qwen downsamples to its token
-  budget anyway — upscaling costs tokens without helping).
-- `max_dimension` (cap the longest side, e.g. ~2000 px) keeps the payload
-  under OpenRouter's request limit and Qwen's effective resolution.
-- Verify jimp's contribution to the bundled `.mcpb` size is acceptable.
-
-If Phase 0 said prep does **not** help, skip this module entirely; the
-pipeline base64s the raw `dist.jpg` and no dependency is added.
+(The rejected design and its rationale — pure-JS `jimp`, never `sharp`, to
+avoid native `.mcpb` binaries — is preserved in git history / PR 723 in case a
+future corpus, e.g. faint German Kurrent, reopens the question. It is not
+built now.)
 
 ## 8. Shared fetch + `image_read` disposition
 
@@ -557,10 +558,11 @@ increment; hosted-web viewing is its own project.
   this is acceptable to Dallan before shipping — it is a policy decision, not
   just a technical one.
 
-## 12. Fallback if Phase 0 fails
+## 12. Fallback if Phase 0 fails — NOT TRIGGERED (Phase 0 passed, PR 723)
 
-If Qwen (any variant) cannot match the Claude path on the hard corpus, do
-**not** ship `image_transcribe`. Fall back to keeping the current
+*Phase 0 passed, so this fallback is not used; kept as a record of the
+alternatives that were considered.* If Qwen (any variant) cannot match the
+Claude path on the hard corpus, do **not** ship `image_transcribe`. Fall back to keeping the current
 `image-reader` subagent (Claude vision) and solving T13's *size* problem by
 response-shaping `image_read` itself, per the earlier brainstorm:
 
@@ -577,8 +579,8 @@ These are documented so the fallback is a known path, not a restart.
 ## 13. Testing
 
 ### 13.1 Phase 0 experiment
-Per §4 — the quality gate. This is the most important test and it precedes
-implementation.
+Per §4 — the quality gate. It was the most important test and it preceded
+implementation; it passed (PR 723).
 
 ### 13.2 Unit tests (`tests/tools/image-transcribe.test.ts`)
 
@@ -592,8 +594,7 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
   carries the configured model, a `data:image/jpeg;base64,...` image_url,
   `Authorization: Bearer <key>`, and `temperature: 0`.
 - **Happy path**: mocked OpenRouter response → `transcription` extracted from
-  `choices[0].message.content`; metadata populated (model, sizes,
-  preprocessed flag).
+  `choices[0].message.content`; metadata populated (model, `sizeBytes`).
 - **`lookingFor`**: sets `found` from the FOUND/NOT FOUND marker; asserts the
   full transcription is still returned (never shortened).
 - **No key** → LLM-instruction error, **and `fetch` to OpenRouter is never
@@ -605,13 +606,10 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
 - **Input validation**: neither/both of imageId/ark; bad formats (reuse
   `image_read`'s cases via the shared resolver).
 
-### 13.3 Image-prep unit tests (`tests/utils/image-prep.test.ts`) — if built
+### 13.3 Image-prep unit tests — not applicable
 
-jimp is deterministic, so feed a small known fixture image and assert:
-grayscale output has no chroma; `max_dimension` cap resizes the longest side
-and preserves aspect ratio; output is valid JPEG; upscaling is a no-op.
-Ablation parity: optionally snapshot that each toggle changes bytes as
-expected.
+Pre-processing was decided against (§7, PR 723), so there is no `image-prep`
+module to test.
 
 ### 13.4 `configure_openrouter` unit tests
 
@@ -644,12 +642,10 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `src/types/image-transcribe.ts`
 - `src/utils/fs-image-fetch.ts` (lifted from `image-read.ts`)
 - `src/utils/image-staging.ts` *(image-persistence increment; mirrors `results-staging.ts`)*
-- `src/utils/image-prep.ts` *(only if Phase 0 warrants prep)*
 - `dev/try-image-transcribe.ts`
 - `tests/tools/image-transcribe.test.ts`
 - `tests/tools/configure-openrouter.test.ts`
-- `tests/utils/image-prep.test.ts` *(if prep built)*
-- Phase 0 results doc under `docs/plan/`
+- Phase 0 results doc under `docs/plan/` *(done: `ocr-quality-spike-results.md`, PR 723)*
 
 **Modify**
 - `src/types/auth.ts` — `openRouterApiKey`, `openRouterModel` on `AppConfig`
@@ -663,8 +659,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
   path to `image_transcribe`
 - `docs/specs/image-read-spec.md` — cross-reference
 - `CLAUDE.md` — new per-user config keys in the config table
-- `package.json` — add `jimp` *(if prep built)*
-- `docs/TODOs.md` — any deferred follow-ups
+- `docs/TODOs.md` — any deferred follow-ups (e.g. the German Kurrent pass)
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — finalize the staged JPEG + set `image_filename`
@@ -684,17 +679,19 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `apps/electron/main` + `packages/viewer-ui` (+ `transport.ts`) — display the saved scan
 
 **Keep + extend (not retire)**
-- `packages/engine/plugin/agents/image-reader.md` — add `image_transcribe`
-  as an oversize fallback tool (small-image path stays Claude vision)
-- `docs/specs/image-reader-agent-spec.md` — document the fallback routing
+- `packages/engine/plugin/agents/image-reader.md` — add `image_transcribe` as
+  an oversize fallback tool, and bump `model` 4.6 → **claude-sonnet-5** (spike
+  PR 723: +18 pts on hard hands, cheaper + faster). Small-image path stays
+  Claude vision.
+- `docs/specs/image-reader-agent-spec.md` — document the fallback routing +
+  the Sonnet 5 bump.
 
 ## 15. Open questions for the researcher
 
-1. **Exact Qwen model + tier.** Confirm the current OpenRouter slug and pick
-   a tier on the Phase 0 cost/quality curve (e.g. Qwen2.5-VL 7B vs 32B vs
-   72B, or a newer Qwen3-VL). The default in §6.3 comes from this.
-2. **Does prep help, and which steps?** (B vs C vs D.) Determines whether
-   `jimp` is added at all.
+1. ~~**Exact Qwen model + tier.**~~ RESOLVED (PR 723): `qwen/qwen3-vl-235b-a22b-instruct`
+   — Instruct, not Thinking; raw bytes. This is the §6.3 default.
+2. ~~**Does prep help, and which steps?**~~ RESOLVED (PR 723): no — prep hurt
+   accuracy and doubled hallucinations. No `jimp`.
 3. **Prompt/language hinting.** Does Qwen benefit from a language hint
    ("German church register, Kurrent script") in the OCR prompt, or does the
    reuse-`image-reader.md` prompt suffice?
@@ -714,11 +711,13 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 ## 16. References
 
 - `docs/plan/record-extraction-consolidation-closing-report.md` §1 (T13)
-- `docs/specs/image-read-spec.md` (the transport floor being superseded)
-- `docs/specs/image-reader-agent-spec.md` (the subagent being retired; its
-  OCR prompt/output protocol is reused verbatim)
+- `docs/specs/image-read-spec.md` (the transport floor `image_transcribe`
+  routes around for large scans; kept for small ones)
+- `docs/specs/image-reader-agent-spec.md` (the subagent — **kept** as the
+  small-image reader; it gains `image_transcribe` as an oversize fallback and
+  its OCR prompt/output protocol is reused verbatim)
 - `~/pioneeradademy/book-to-tree/backend/src/book_to_tree/ocr/image_prep.py`
-  (`enhance_for_ocr` — prep to port)
+  (`enhance_for_ocr` — the prep pipeline the spike evaluated and rejected; §7)
 - `src/tools/wiki-search.ts` + `tests/tools/wiki-search.test.ts` (HTTP-tool
   and mocked-`fetch` test patterns to mirror)
 - `src/auth/config.ts` (`loadConfig`/`saveConfig`/`get*` — key-storage

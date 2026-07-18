@@ -59,9 +59,9 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
     throw new Error(
       `FamilySearch image ${label} is ${mb} MB — too large to return inline. ` +
         `The MCP transport caps a single response near 1 MB and base64 encoding inflates ` +
-        `the image by ~33%, so returning it would crash the session. Read the indexed ` +
-        `record for this image with record_read / record_search instead of fetching the ` +
-        `page scan, or choose a more specific image.`
+        `the image by ~33%, so returning it would crash the session. OCR it with ` +
+        `image_transcribe instead (it reads the scan host-side and returns text, with no ` +
+        `size limit), or read the indexed record with record_read / record_search.`
     );
   }
 
