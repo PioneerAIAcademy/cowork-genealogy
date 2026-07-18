@@ -104,6 +104,52 @@ US English ×2)**
    *not* solved by any model here. Qwen's value is that it is *no worse than Sonnet
    4.6* at this, for a tenth of the cost.
 
+### Sonnet 5 vs Qwen Instruct (head-to-head)
+
+The two live-recommendation models, compared directly. **Bottom line:** Sonnet 5
+reads more accurately — especially on the hardest hands — while Qwen Instruct is
+*competitive* (ties on Spanish and printed forms, no more hallucination) at ~8×
+lower cost and ~2× lower latency. Sonnet 5's accuracy lead is an **upper bound**:
+it shares a model family with the Opus answer key, so the true gap is smaller than
+shown.
+
+| Metric | Claude Sonnet 5 | Qwen Instruct (raw) | Edge |
+|---|--:|--:|:--|
+| Field acc — hard subset | **79%** | 69% | Sonnet 5 (+10, inflated by key bias) |
+| Field acc — controls | 91% | 89% | ~tie |
+| Hallucinations (hard, total) | 15 | **13** | ~tie (Qwen slightly fewer) |
+| Hard-token acc — hard | 44% | 43% | tie |
+| Hard-token acc — controls | 47% | **75%** | **Qwen** (nailed printed surnames/initials) |
+| Cost / page | $0.031 | **$0.004** | **Qwen (~8×)** |
+| Latency / page | 23.8s | **10.5s** | Qwen (but high variance: 0.4–51s) |
+
+Per-image field accuracy (Sonnet 5 wins or ties **every** image; margin widest on
+the toughest hand, gone on Spanish/printed):
+
+| Hand | Sonnet 5 | Qwen Instruct |
+|---|--:|--:|
+| Dutch 1833 (teitje) | **75%** | 48% |
+| Norwegian 1883 (birkeland) | **66%** | 54% |
+| Ohio English 1820s (geach) | **84%** | 70% |
+| Mexican Spanish ~1910 (cruz) | **91%** | 81% |
+| NY English (reese) | **86%** | 80% |
+| Bolivian Spanish 1913 (zuniga) | 89% | 86% *(~tie)* |
+| Slovak/Latin 1893 (jan-gallo) | 66% | 65% *(tie)* |
+| US census (spriggs) | **97%** | 96% *(~tie)* |
+| US marriage (rossi) | **85%** | 81% |
+
+The two share the same failure mode and ceiling (surnames/hard tokens); neither
+"solves" hard hands. Sonnet 5's extra points come partly from *confidently
+committing* readings on illegible fields — right more often, but the one behavior
+that risks confident error; Qwen makes transliteration-style surname slips
+(Zuza→Luza, van Lier→van der Lier) while getting structure/dates/relationships
+right. **This is why the two map to different routes, not a single winner:** use
+Sonnet 5 where Claude's vision is already in the loop (small images — best
+accuracy, and cheaper+faster than the Sonnet 4.6 there today); use Qwen Instruct
+for the large scans Claude physically can't take, where the alternative isn't
+Sonnet 5, it's losing the page — and Qwen still beats Sonnet 4.6 at a tenth the
+cost.
+
 ## Cost & latency
 
 Qwen Instruct is ~8–12× cheaper and ~4× faster than Claude per page (e.g. hard
