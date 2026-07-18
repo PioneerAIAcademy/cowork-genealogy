@@ -254,23 +254,17 @@ Deferred during the #701 build.
   2026-07-18 while implementing Phase 3A.
 
 ## Eval framework
-- [ ] **Give `forget-and-rederive` real eval coverage and drop its runlog-gate
-  exemption.** It shipped in #732 with no `eval/tests/unit/forget-and-rederive/`
-  and no runlogs, so the first edit to its body hard-failed `check_runlogs.py`
-  with "no run logs" — which the `eval-cosmetic-skip` label cannot clear. It was
-  added to `RUNLOG_GATE_EXEMPT_SKILLS` as a stopgap, which means **its body can
-  now be edited with no eval discipline at all**. Its two halves need different
-  treatment: the mechanical half (`scripts/forget.py` selectors, cascade
-  reporting, the dry-run/apply split) is deterministic and unit-testable today;
-  the behavioral half — "having forgotten a fact, do not read it back off the
-  FamilySearch tree" — is a multi-turn abstention that a single unit transcript
-  can't observe, and likely wants an e2e fixture that forgets a slice and then
-  fails the run if `person_read`/`person_ancestors` is called on the affected
-  ids. Along with it: the backup-overwrite hazard documented in that skill's
-  "Re-invocation behavior" (`forget.py` rewrites
-  `.tree-before-forget.gedcomx.json` on every non-dry-run, so a second forget
-  destroys the pristine snapshot) is currently only prose — consider making the
-  script refuse to clobber an existing backup instead.
+- [ ] **Make `forget.py` refuse to clobber an existing backup.** It writes
+  `.tree-before-forget.gedcomx.json` unconditionally on every non-dry-run
+  (`forget.py:332`), so the snapshot always reflects the tree at the start of
+  *that* run. A second forget therefore overwrites the pristine snapshot with
+  the already-forgotten tree and the first slice becomes unrecoverable from it —
+  silent data loss on a file the researcher is told is their restore point.
+  Currently mitigated only by prose in the skill's "Re-invocation behavior".
+  A guard (refuse, or write `.tree-before-forget.<n>.gedcomx.json`) would make
+  the prose unnecessary. Note `forget-and-rederive` is deliberately exempt from
+  the runlog gate (`RUNLOG_GATE_EXEMPT_SKILLS`), so a change here is not gated
+  by the eval suite — verify it by hand.
 - [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
   audit) — RESOLVED (#711 + record-extractor informant-craft follow-up).** The audit
   found 3 agent craft gaps + a christening-table gap. Resolution:

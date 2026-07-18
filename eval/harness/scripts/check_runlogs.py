@@ -58,13 +58,13 @@ AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 # already exists.
 #
 #   research             — the orchestrator; validated by e2e GPS fixtures.
-#   forget-and-rederive  — a setup/utility skill that sets up a practice run.
-#                          Its mechanical half is a deterministic Python script
-#                          (`scripts/forget.py`); its other half is a behavioral
-#                          prohibition (don't re-read the tree) that a unit
-#                          transcript can't observe. See docs/TODOs.md § "Eval
-#                          framework" — this exemption is a stopgap, not a
-#                          judgment that the skill is untestable.
+#   forget-and-rederive  — a setup/utility skill that stages a practice run.
+#                          Deliberately has no unit suite: its mechanical half
+#                          is a deterministic Python script (`scripts/forget.py`)
+#                          and its other half is a behavioral prohibition (don't
+#                          re-read the forgotten facts off the tree) that a unit
+#                          transcript can't observe. Permanent, not a stopgap —
+#                          confirmed by Dallan 2026-07-18.
 #
 # Keep this set minimal: it is the only way to edit a skill body without eval
 # discipline, so every addition needs the "no unit suite by design" rationale
