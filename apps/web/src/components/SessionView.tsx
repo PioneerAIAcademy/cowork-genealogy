@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { App as ViewerApp } from '@genealogy/viewer-ui'
 import { api, type SessionSummary } from '../api'
 import { useAlpha } from '../lib/alpha'
+import { useChatWidth } from '../lib/chatWidth'
 import { makeSessionConnection } from '../transport/makeSessionConnection'
 import type { SessionConnection } from '../transport/SessionConnection'
 import { WsResearchTransport } from '../transport/WsResearchTransport'
@@ -27,6 +28,7 @@ export default function SessionView({
   const [conn, setConn] = useState<SessionConnection | null>(null)
   const [logs, setLogs] = useState<{ ws: string; agent: string } | null>(null)
   const { alpha, setAlpha } = useAlpha()
+  const { width: chatWidth, dragging, dividerProps } = useChatWidth()
 
   // Running cost for this session connection — operator/sponsor signal during
   // alpha (per-turn usage summed from the agent event stream). Resets on
@@ -100,7 +102,11 @@ export default function SessionView({
   const costLabel = `${cost.estimated ? '~' : ''}$${cost.usd.toFixed(cost.usd >= 1 ? 2 : 4)}`
 
   return (
-    <div className="sessionShell">
+    <div
+      className="sessionShell"
+      data-dragging={dragging ? 'true' : undefined}
+      style={{ '--chat-w': `${chatWidth}px` } as React.CSSProperties}
+    >
       <aside className="chatPane">
         <header className="chatHeader">
           <button className="btnGhost" onClick={onBack} title="Back to sessions" aria-label="Back to sessions">
@@ -141,6 +147,7 @@ export default function SessionView({
           </div>
         )}
       </aside>
+      <div {...dividerProps} />
       <section className="viewerPane">
         {/* The web shell provides its own theme toggle in the chat header, so
             tell the embedded viewer to hide its (redundant) sidebar one.
