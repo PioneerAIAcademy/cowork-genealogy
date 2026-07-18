@@ -4,10 +4,7 @@ model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the tier
   (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
   (Statement/Summary/Argument), and writes a self-contained narrative
-  markdown uploadable to FamilySearch. Marks the concluded value in
-  tree.gedcomx.json — sets primary/preferred on the evidence facts already
-  materialized there (via tree_correct, or an additive tree_edit fact for a
-  synthesized conclusion) — and gates FamilySearch upload to concluded facts.
+  markdown uploadable to FamilySearch.
   GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
