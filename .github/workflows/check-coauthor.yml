@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out PR with full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Need base.sha and every PR commit reachable to walk the range.
           fetch-depth: 0
