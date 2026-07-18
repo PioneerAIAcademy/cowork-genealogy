@@ -32,11 +32,14 @@ scenarios; judges penalize the thin tree):
 
 1. **No skill promotes extracted facts onto tree persons.** Tree persons
    stay name-only shells while the evidence sits one file away.
-2. **Fact-less sibling stubs are never enriched.** `add_household_children`
-   (record-extraction §5d) mints name-only stubs; a later record carrying
-   facts about that sibling never lands them.
-3. **The §5d trigger can't fire on a family's first record** — it needs the
-   parents already in the tree. (This symptom **dissolves** under §4:
+2. **Fact-less sibling stubs are never enriched.** Today an
+   `add_household_children` step mints name-only stubs; a later record
+   carrying facts about that sibling never lands them. (Under §3, household
+   stub-minting moves onto person-evidence's `materialize_facts`
+   create-or-enrich — which mints each member *with* facts — and
+   `add_household_children` retires; §9.)
+3. **The stub-minting trigger can't fire on a family's first record** — it
+   needs the parents already in the tree. (This symptom **dissolves** under §4:
    create-or-enrich is one path, so "first record" stops being special.)
 
 ### 1.2 What cruz actually proves (the provenance rider)
@@ -140,10 +143,10 @@ read as its confidence.
 
 | Skill | Responsibility | Tools |
 |---|---|---|
-| **record-extraction** *(unchanged)* | Extract classified assertions onto `record_id`+`record_role` (personas); create the per-record S-entry. **Never touches the tree.** | `research_append` (assertions + composite `sourceDescription`), `research_log_append` |
-| **person-evidence** *(grows — the fix)* | Decide identity (link persona→person, or mint a new person); **write the linked persona's assertions as sourced facts/names onto the tree person** via `materialize_facts`. Match later personas to fact-less stubs to enrich them. **Never sets `primary`/`preferred`.** | **`materialize_facts`** (new), `research_append` (`pe_` links), `same_person`; `tree_edit` `add_household_children`/`add_relationship` for household skeleton + edges |
+| **record-extraction** *(narrows — assertion-only)* | Extract classified assertions onto `record_id`+`record_role` (personas), **including relationship-type assertions** (parent-child, spouse); create the per-record S-entry. Emits **assertions only** — `mcp__genealogy__tree_edit` is dropped from its frontmatter and it no longer writes household stubs or names. **Writes only the source S-entry** (via `research_append`'s composite `sourceDescription`); it writes no persons, facts, names, or relationships. | `research_append` (assertions + composite `sourceDescription`), `research_log_append` |
+| **person-evidence** *(grows — the fix)* | Decide identity (link persona→person, or mint a new person); **write the linked persona's assertions as sourced facts/names onto the tree person** via `materialize_facts`; own the **household skeleton** — mint each member (sibling stubs included) via `materialize_facts` create-or-enrich, and write parent-child + spouse-spouse **edges** via `tree_edit` `add_relationship`, each edge carrying a source-ref resolved from the relationship assertion's `source_id` (same resolver as `materialize_facts`). Match later personas to fact-less stubs to enrich them. Before committing a household's materialization, **dry-run `merge_warnings`** as a coherence gate (§9). **Never sets `primary`/`preferred`.** | **`materialize_facts`** (new), `research_append` (`pe_` links), `same_person`, `tree_edit` (`add_relationship`), `merge_warnings` |
 | **conflict-resolution** *(unchanged role, now fed by materialization)* | Resolve the coexisting-conflict facts materialization surfaces; write `conflicts`. | `research_append` (conflicts) |
-| **proof-conclusion** *(narrows)* | Weigh already-materialized evidence, set **`primary`/`preferred`** on the concluded value, write `proof_summary`+`proof_tier`; at upload copy ESM citations onto S-entries and gate upload to concluded facts; collapse duplicate tree persons. | `tree_correct` (`update_fact` → set `primary`), `research_append` (`proof_summaries`), `merge_tree_persons`, `merge_warnings` |
+| **proof-conclusion** *(narrows)* | Weigh already-materialized evidence, set **`primary`/`preferred`** on the concluded value — via `tree_correct` `update_fact` when the value matches an existing evidence fact, or via `tree_edit` `add_fact` (`primary:true` + multi-refs) when the conclusion is **synthesized** and matches no single record (§7.1); write `proof_summary`+`proof_tier`; at upload copy ESM citations onto S-entries and gate upload to concluded facts; collapse duplicate tree persons. | `tree_correct` (`update_fact` → set `primary`), `tree_edit` (`add_fact`), `research_append` (`proof_summaries`), `merge_tree_persons`, `merge_warnings` |
 
 The seam that makes this un-guessable is **substrate + operation**:
 
@@ -190,13 +193,27 @@ materialize_facts({ projectPath, personId, recordId, recordRole })
    does not exist, **error** (do not silently null; the S-entry is an
    upstream `research_append` responsibility, and a missing one is a gate
    failure to surface, not to paper over).
-3. **Upsert onto the person:**
-   - fact of `(type, value)` already present → **union** the new ref into its
-     `sources[]` (ref-set dedup). Corroboration accumulates as refs.
-   - `(type, new value)` → **add** a new fact carrying the ref. A competing
-     value is *surfaced* (see §4.4), not overwritten.
-   - **`primary` is never set here.** Names get the same treatment;
-     `preferred` is never set here.
+3. **Upsert onto the person** — fact identity is **not** `(fact_type, value)`.
+   The GedcomX `value` field is a qualifier that is **null for event facts**
+   (Birth/Death/Marriage/Residence), so keying on `(type, value)` collapses
+   *every* birth into one fact and silently drops conflicting dates/places.
+   Two facts are the **same fact** (union their source-refs) **iff
+   `factsEquivalent(a, b)` AND `a.value === b.value`**, where `factsEquivalent`
+   is the **existing** helper in
+   `packages/engine/mcp-server/src/utils/merge-gedcomx.ts` (`type` +
+   `datesCompatible` + `placesCompatible`). Reuse it (CLAUDE.md code-reuse
+   rule) — lift only `factsEquivalent` and its date/place-compat helpers; do
+   **not** reuse `mergeFacts` wholesale, which sets `primary` on
+   `VITAL_PRIMARY_TYPES` and would violate "materialization never sets
+   `primary`."
+   - **Same fact** (`factsEquivalent` **and** equal `value`) → **union** the
+     new ref into its `sources[]` (ref-set dedup). Corroboration accumulates
+     as refs.
+   - **Incompatible date/place, OR a different `value`** → the facts
+     **coexist** as separate facts; the new one carries its ref. A competing
+     value is *surfaced* (see §4.4), never overwritten.
+   - **`primary` is never set here.** Names get the same treatment
+     (equivalence + value); `preferred` is never set here.
 
 ### 4.3 Create-or-enrich (dissolves the "first record" symptom)
 
@@ -214,19 +231,30 @@ structural cure for symptoms (1) and (2).
 ### 4.4 Idempotency and conflict surfacing
 
 - **Idempotent.** Re-running the same persona's materialization (retries are
-  common) duplicates neither facts nor refs — upsert by `(type, value)` +
-  ref-set union. Mirrors the `add_household_children` idempotent-skip
-  ratified as correct in `#711`.
-- **Conflicts surfaced, not resolved.** When a competing value is added, the
-  return lists it (`conflicts_surfaced: [{ personId, factType, values }]`).
-  `materialize_facts` **does not** write `conflicts` entries — that stays
+  common) duplicates neither facts nor refs — the §4.2 fact-identity test
+  (`factsEquivalent` + equal `value`) plus ref-set union makes a re-run a
+  no-op. Mirrors the idempotent-skip ratified as correct in `#711`.
+- **Conflicts surfaced, not resolved — and only for single-valued types.**
+  Conflict surfacing is **gated to single-valued / vital fact types**: reuse
+  the existing `VITAL_PRIMARY_TYPES` set (`Birth`, `Death`, `Christening`,
+  `Burial` — `Marriage` is a couple-relationship fact and is **not** in the
+  set; leave it out unless a later need proves otherwise). For those types, an
+  incompatible competing value is listed on return
+  (`conflicts_surfaced: [{ personId, factType, values }]`). **Multi-valued
+  types** — `Occupation`, `Citizenship`, and the `RESIDENCELIKE_FACT_TYPES`
+  family (`Census`, `MunicipalCensus`, `Residence`) — legitimately hold many
+  concurrent values; they **coexist as separate sourced facts and are NOT
+  reported in `conflicts_surfaced`.** `VITAL_PRIMARY_TYPES` currently lives in
+  two copies (`merge-shared.ts`, `merge-gedcomx.ts`); lift it to a shared
+  module so this gate and the merge core read one definition.
+- `materialize_facts` **does not** write `conflicts` entries — that stays
   `conflict-resolution`'s job. The tool reports; the skill routes.
 
 ### 4.5 What it never does
 
 Never sets `primary`/`preferred`; never resolves conflicts; never collapses
 or merges persons; never writes relationships (those are `tree_edit`
-`add_relationship`/`add_household_children`, see §8).
+`add_relationship`, see §8).
 
 ---
 
@@ -234,27 +262,59 @@ or merges persons; never writes relationships (those are `tree_edit`
 
 | Tool | Role | Status |
 |---|---|---|
-| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref; never sets `primary`. | **NEW — the record→tree workhorse** |
-| **`merge_tree_persons`** | Collapse two duplicate **tree nodes**; union their already-refed facts. | **Keep** (needs a trigger — e.g. cruz's unmerged grandparents — but the tool is right) |
+| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref on every fact/name it authors; never sets `primary`. | **NEW — the record→tree workhorse** |
+| **`merge_tree_persons`** | Collapse two duplicate **tree nodes**; union their facts, carrying each fact's existing refs through untouched. Legacy ref-less facts are **tolerated** — the Mode-2 fold neither requires nor fabricates a ref (Cluster B / §6). | **Keep** (needs a trigger — e.g. cruz's unmerged grandparents — but the tool is right) |
 | **`merge_record_into_tree`** | Fold a candidate GedcomX *document*. | **Retire** (§9) — 0 live calls; its hand-assembled-candidate input is the re-serialize anti-pattern that dropped cruz's refs; its niche does not occur in the assertion pipeline |
-| `tree_edit` / `tree_correct` | Structure (`add_person`, `add_household_children`, `add_relationship`) / corrections + `primary`. | Keep; **refs mandatory** on names & edges too (§6, §8) |
+| `tree_edit` / `tree_correct` | Structure (`add_person`, `add_relationship`) / corrections + `primary`. `add_household_children` **retires** (§9) — superseded by `materialize_facts` create-or-enrich (stubs, now with facts) + `add_relationship` (edges). | Keep; refs mandatory on **newly-authored** facts/names/edges only (add-ops); `tree_correct` may not null an existing ref (§6, §8) |
 
 ---
 
 ## 6. Provenance: structural, not disciplinary
 
-**Every fact, name, and relationship written to the tree carries a non-null
-source-ref, enforced at every writer tool's boundary** (`materialize_facts`,
-`tree_edit` add-ops, `tree_correct`, and the merge tools' fold path). A
-write that would leave a fact/name/relationship ref-less is **rejected**.
+The mandatory-ref guard is **delta-scoped** — it enforces a non-null
+source-ref only on content a writer **newly authors or introduces**, never on
+pre-existing nodes merely carried through. A write is **rejected** when it
+*introduces* a ref-less fact, name, or edge; it is **not** rejected for a
+ref-less node it did not create.
+
+Where the guard fires:
+
+- **`materialize_facts`** — every fact and name it authors (new or the
+  enriching ref on an existing fact) must carry a resolved non-null ref, or
+  the call errors (§4.2 step 2).
+- **`tree_edit` add-ops** — `add_fact`, `add_person` inline facts,
+  `add_relationship`, and any other new-node op must carry a ref on the
+  content they introduce (§8).
+- **`tree_correct`** — the guard is "**the op did not remove an existing
+  ref**": clearing a populated `sources[]` to null is rejected. It is **not**
+  "the result has a ref," so touching an already-ref-less legacy fact without
+  removing anything is allowed.
+
+Where the guard does **not** fire:
+
+- **`merge_tree_persons` (Mode 2 / `mergeSameDocument`) carries no
+  mandatory-ref guard.** Mode 2 only relocates already-persisted facts
+  between nodes; a result-state guard here is either vacuous or **bricks every
+  merge of a legacy ref-less tree** — 98% of the 52 e2e starting trees (cruz
+  0/13) — and would reject the §5-style merge of cruz's grandparents.
+- **Legacy ref-less trees are tolerated** on the merge and correct paths. We
+  deliberately do **not** fabricate, backfill, or heal refs for pre-existing
+  ref-less content — a fabricated ref is a worse lie than an honest null.
 
 Consequences:
 
-- The cruz leak (100% of facts ref-less) becomes **unrepresentable**.
+- The cruz leak (100% of *newly written* facts ref-less) becomes
+  **unrepresentable** at the writing seam — every fact/name/edge a writer
+  *authors* carries a ref.
 - **Provenance-nulling-as-error-recovery** (closing report §3.4) becomes
-  unrepresentable — there is nothing nullable to escape validation through.
-- A candidate node folded by a merge tool must likewise carry refs, so the
-  leak cannot reappear through the merge path.
+  unrepresentable on the write path — a writer cannot null a ref to escape
+  validation.
+
+A **golden anti-regression test** asserts that every fact, name, and edge a
+**writer wrote** carries a non-null ref — scoped to **written content**, not
+"every node in the whole tree" (which would fail on tolerated legacy nodes).
+`merge-tree-persons.test.ts` is **not** in the golden writer list — the Mode-2
+fold authors nothing.
 
 **The ESM citation string is out of scope here.** The tree S-entry's
 `citation` stays populated by `proof-conclusion` at upload time (copied from
@@ -280,16 +340,60 @@ the **source-ref (pointer)**; the `citation` skill / proof-conclusion own the
   Strength always lives in the `proof_summary`'s `proof_tier`; a lone
   `primary` fact from one source is `possible` at best.
 
+### 7.1 Indirect evidence and synthesized conclusions
+
+Two conclusion paths for `proof-conclusion`, both of which set `primary` (§7):
+
+- **Value matches an existing evidence fact** (the common case) — the
+  concluded value equals a fact already materialized from a record. Set
+  `primary` on it via `tree_correct` `update_fact`; **no fact is added.**
+- **Synthesized conclusion** — the correlated value matches **no single
+  record** (e.g. three census ages → a computed "abt 1805"). `proof-conclusion`
+  **adds** a fact with `primary: true` carrying **multiple source-refs to all
+  the correlated evidence S-entries** (multi-ref `sources[]` is already
+  supported — §2.1). This is why `tree_edit` `add_fact` is in
+  proof-conclusion's roster (§3).
+
+How indirect evidence flows through materialization:
+
+1. **Extraction already classifies it.** An indirect claim lands with
+   `evidence_type: indirect` and `date_certainty: calculated` (per `#711`,
+   which splits a census into a *direct* birthplace assertion and an
+   *indirect* computed birth-year). Materialization does not re-derive the
+   class; it reads it.
+2. **Value-bearing indirect evidence materializes** as a fact/edge, but the
+   inference is encoded **honestly in the value/date** — a GEDCOM
+   `abt`/`cal`/`est` qualifier, never a bare stated year — and the source-ref
+   **quality reflects the weaker evidence class**. The full classification
+   stays in `research.json`, reachable through the ref; the tree fact is the
+   honest summary, not the audit trail.
+3. **Indirect evidence never self-concludes.** It reaches a *concluded*
+   (`primary`) value only through `proof-conclusion` correlation plus a
+   written argument — which is exactly **why only `proof-conclusion` sets
+   `primary`** (§7). A materialized indirect fact sits un-`primary` until then.
+4. **Purely-argumentative / negative evidence does not materialize as a
+   fact** — there is no positive value to write. It stays a `research.json`
+   assertion feeding the argument; only its *conclusion* (e.g. a death
+   "bef 1870" established by absence) materializes, and that is
+   `proof-conclusion`'s additive write.
+
 ---
 
 ## 8. Relationships carry refs
 
 A census (etc.) establishes parent-child and spousal edges — evidence from
-that record. Relationship edges written to the tree
-(`tree_edit` `add_relationship`, `add_household_children`) **carry a non-null
-source-ref** under the same §6 rule, or relationships become the next
-provenance leak. `materialize_facts` writes facts/names only; relationship
-provenance rides the relationship-writing op.
+that record. **Newly written** relationship edges (`tree_edit`
+`add_relationship`) **carry a non-null source-ref** under the delta-scoped §6
+rule, resolved from the relationship assertion's `source_id` (the same
+resolver `materialize_facts` uses), or relationships become the next
+provenance leak. `add_household_children` **retires** (§9); person-evidence
+mints household members via `materialize_facts` create-or-enrich and writes
+their edges via `add_relationship`. Pre-existing legacy edges are tolerated
+(they are not re-authored). `materialize_facts` writes facts/names only;
+relationship provenance rides the edge-writing op. Note: a **pre-1880 census
+parent-child edge is *indirect* evidence** (a headship/co-residence inference,
+not a stated relationship) — it still carries a ref, at a **lower ref
+quality** reflecting the weaker evidence class (§7.1).
 
 ---
 
@@ -301,39 +405,72 @@ verified phase inside the implementing PR** — not deferred. Scope:
 
 **Remove:**
 - `packages/engine/mcp-server/src/tools/merge-record-into-tree.ts`
-- Its **Mode 1 (cross-document)** path in
-  `packages/engine/mcp-server/src/utils/merge-gedcomx.ts` — **keep Mode 2**
-  (same-document), which `merge_tree_persons` uses.
 - Its schema entry in `src/tool-schemas.ts`, dispatch in `src/index.ts`, and
   entry in `manifest.json` (the manifest-drift test enforces sync).
 - `tests/tools/merge-record-into-tree.test.ts`.
-- Mode-1-only helpers in `src/tools/merge-shared.ts` (e.g.
-  `sanitizeCandidate`, `validateCandidateGedcomx`, `derivePairSummaries`) —
-  **only** those not also used by `merge_tree_persons`; verify each before
-  deleting.
 - `merge_record_into_tree` prose in `person-evidence/SKILL.md` §7,
   `proof-conclusion/SKILL.md` (+ `references/validation-protocol.md`), and
   `tree-edit/SKILL.md` (+ `references/relationship-accuracy.md`) — replaced by
   the `materialize_facts` flow (§3).
 
+**Retiring `merge_record_into_tree` frees zero shared code.** It deletes no
+`merge-gedcomx.ts` mode and no `merge-shared.ts` helper: `merge_warnings`
+(`merge-warnings.ts:64`) calls `mergeGedcomx(tree, candidate, merges)` with a
+**non-null candidate**, so it independently exercises **Mode 1
+(cross-document)** and `sanitizeCandidate` / `validateCandidateGedcomx`. All
+three **stay**. The deletable set is exactly the tool file, its test, and the
+four wiring/prose sites above.
+
 **Preserve (verify still live):** `merge_tree_persons`, `merge_warnings`
-(pre-merge coherence for `merge_tree_persons`), the shared `merge-shared.ts`
-core used by `merge_tree_persons`.
+(pre-merge coherence for `merge_tree_persons`, **and now** person-evidence's
+pre-materialization household coherence gate — Cluster D), the shared
+`merge-shared.ts` core (including `sanitizeCandidate` /
+`validateCandidateGedcomx`), and **Mode 1** of `merge-gedcomx.ts` — the last two
+independently required by `merge_warnings`.
+
+**Also retire in this phase — `add_household_children` (recommend retire):**
+- The `add_household_children` op in
+  `packages/engine/mcp-server/src/tools/tree-edit.ts` (op handler, helpers,
+  schema/checklist copy) — its name-only-stub role is superseded by
+  `materialize_facts` create-or-enrich (stubs now arrive *with* facts) and its
+  edges by `add_relationship`. **Scope note (reshape-vs-retire):** the op
+  *could* be reshaped to write refs, but with both of its jobs already owned by
+  other tools it has no remaining caller — **recommend retire**, not reshape.
+- `packages/engine/plugin/agents/record-extractor.md` — **drop
+  `mcp__genealogy__tree_edit` from its frontmatter**, remove the Step-5
+  `add_household_children` call and the `add_name` call, and **reword the
+  `description` frontmatter** to strike the "sibling person stubs when the
+  subject is a child on a household record" clause (the auto-delegation trigger
+  must reflect assertion-only extraction). record-extraction emits **assertions
+  only** (including relationship-type assertions); person-evidence owns the
+  household skeleton (§3, Cluster C).
+- `tests/tools/tree-edit.test.ts` `add_household_children` cases and any
+  fixture asserting extraction writes stubs/names.
+- `docs/specs/tree-edit-tool-spec.md` — remove `add_household_children` from its
+  op table, admitted-ops list, ops checklist, result-shape fields, and the §4.4
+  behavioral section (op retired, not reshaped — its `record-extraction §5d`
+  ownership row is deleted, not repointed).
 
 **Rewire, do not supersede (decided):**
 `docs/specs/match-merge-workflow-spec.md` and
 `tests/integration/match-merge-workflow.test.ts` reference
 `merge_record_into_tree` for their "fold" step. That workflow is **rewired
 to `materialize_facts`**, not superseded — its genuine contribution, the
-**coherence gate** (`merge_warnings` / the `hasSameCensus` MobWarnings port),
-is orthogonal to the fold and worth keeping. Under the rewire the monolithic
-household "fold" **dissolves** into the per-persona flow (link →
-`materialize_facts` → relationship edges, §3–§4), and the coherence gate
-**re-anchors** to run *before* person-evidence commits a household's
-materialization — it currently gates a `merge_record_into_tree` fold that no
-longer exists. The actual edit to `match-merge-workflow-spec.md` is a
-follow-up within the implementing PR (§12 phase 3, alongside the skill
-rewrites); this spec records the decision, not the rewrite.
+**coherence gate** (`merge_warnings` / the `hasSameCensus` and
+`hasEventsOutsideLifespanFar` MobWarnings port), is orthogonal to the fold and
+worth keeping. Under the rewire the monolithic household "fold" **dissolves**
+into the per-persona flow (link → `materialize_facts` → relationship edges,
+§3–§4). The coherence gate's **invocation owner moves from proof-conclusion to
+person-evidence** (Cluster D): person-evidence runs `merge_warnings` as a
+**dry-run on the household merge set *before* committing** the household's
+materialization, applying the **error-block / warning-advisory** tiers, with
+`hasSameCensus` etc. **re-anchored to the pre-materialization state** (they
+currently gate a `merge_record_into_tree` fold that no longer exists). This is
+**wired in this PR** (§12 phase 3, alongside the skill rewrites) — **not**
+deferred to Open Questions or `docs/TODOs.md`. The
+`match-merge-workflow-spec.md` edit and its integration-test coherence
+assertions (`hasSameCensus`, `hasEventsOutsideLifespanFar`) are preserved and
+carried by that phase.
 
 **Verification gate for the phase:** `grep` for any surviving
 `merge_record_into_tree` / `mergeRecordIntoTree` reference returns nothing
@@ -367,6 +504,13 @@ and `primary`/`preferred`). Sites to touch:
   writer.
 - The four skill bodies in §3, plus their eval briefs/rubrics where they
   assert the old thin-tree doctrine.
+- `packages/engine/plugin/agents/record-extractor.md` — drop
+  `mcp__genealogy__tree_edit`; assertion-only, no stub/name writes (Cluster C
+  / §9).
+- The **delta-scoped mandatory-ref guard** (§6) is enforced at the
+  writer-tool boundaries (`materialize_facts`, `tree-edit.ts` add-ops,
+  `tree-correct.ts`), **not** as a whole-tree `validator.ts` invariant — so no
+  closed-enum or tree-shape allow-list change (Cluster B).
 - The web mirror (`packages/schema/`) needs **no** change (no field/enum/
   tree-shape edit) — confirm during implementation.
 
@@ -391,18 +535,39 @@ down-rate it purely for the stub lacking vitals.** No new matching mechanism —
 ## 12. Implementation phases (spec-then-implement)
 
 1. **`materialize_facts` tool** — types, tool, schema/dispatch/manifest wiring,
-   `dev/try-*`, unit tests. Enforces §4 + §6 (mandatory ref, create-or-enrich,
-   idempotency, conflict surfacing). Follows the standard four-file scaffold.
-2. **Mandatory-ref enforcement on the other writers** — `tree_edit` add-ops,
-   `add_household_children`/`add_relationship` (§8), `tree_correct`, and the
-   `merge_tree_persons` fold path reject ref-less facts/names/relationships.
-3. **Skill rewrites** — person-evidence (call `materialize_facts` on link;
-   §11 stub-match craft), proof-conclusion (narrow to `primary` + proof
-   summary + upload citation/gating), conflict-resolution (consume surfaced
-   conflicts). Update eval briefs/rubrics.
+   `dev/try-*`, unit tests. Enforces §4 + §6 (delta-scoped mandatory ref,
+   create-or-enrich, idempotency, conflict surfacing). **Fact identity reuses
+   `factsEquivalent` from `merge-gedcomx.ts`** (type + date/place-compat) AND
+   equal `value` — never `(fact_type, value)` alone (§4.2). Conflict surfacing
+   is **gated to `VITAL_PRIMARY_TYPES`** (§4.4 / Cluster F); lift that set to a
+   shared module. Unit tests: two `Birth` assertions with different
+   dates/places yield **two coexisting facts + one surfaced conflict** (not one
+   fact with a lost value); the conflict test uses a **vital (`Birth`)**, not
+   `Occupation`. Follows the standard four-file scaffold.
+2. **Delta-scoped mandatory-ref enforcement on the other writers** —
+   `tree_edit` add-ops (`add_fact`, `add_relationship` (§8), `add_person`
+   inline facts) reject ref-less **newly-authored** content; `tree_correct`
+   rejects an op that **removes** an existing ref (not "result lacks a ref").
+   **`merge_tree_persons` is NOT in this list** — its Mode-2 fold carries no
+   mandatory-ref guard and tolerates legacy ref-less trees (§6). Add the
+   **golden anti-regression test** (every fact/name/edge a writer *wrote*
+   carries a ref; scoped to written content; `merge-tree-persons.test.ts`
+   excluded). Blast-radius: the delta guard lives at the writer-tool
+   boundaries, **not** as a whole-tree `validator.ts` invariant.
+3. **Skill rewrites** — record-extractor.md (**drop `mcp__genealogy__tree_edit`**;
+   emit assertions only, incl. relationship-type — Cluster C); person-evidence
+   (call `materialize_facts` on link; write parent-child/spouse **edges** via
+   `add_relationship`; **dry-run `merge_warnings`** as the household coherence
+   gate before committing — Cluster D; §11 stub-match craft); proof-conclusion
+   (set `primary` via `tree_correct`; **additive path** — `tree_edit` `add_fact`
+   with `primary:true` + multi-refs for synthesized conclusions, §7.1 /
+   Cluster E; upload citation/gating); conflict-resolution (consume surfaced
+   conflicts). Rewire `match-merge-workflow-spec.md` invocation owner to
+   person-evidence. Update eval briefs/rubrics.
 4. **Doctrine edit** — `research-schema-spec.md` §8 + the sites in §10.
-5. **Dead-code removal** — §9, behind its verification gate. **Last**, so the
-   new path is proven before the old one is deleted.
+5. **Dead-code removal** — §9, behind its verification gate: retire
+   `merge_record_into_tree` **and** `add_household_children` (recommend
+   retire). **Last**, so the new path is proven before the old one is deleted.
 
 Each phase is independently reviewable; the suite stays green between them.
 
@@ -418,7 +583,9 @@ Each phase is independently reviewable; the suite stays green between them.
   the recommendation (references only, tool reads assertions). An
   `assertionIds[]` variant is possible if a caller ever needs to materialize a
   strict subset of a persona's assertions; deferred until a real need.
-- **Synthesized-conclusion facts** — a `proof-conclusion` value that no single
-  record asserts (a calculated/inferred conclusion) still needs a fact + a
-  ref; it references the supporting assertions/proof. Confirm proof-conclusion
-  can write such a fact with a valid ref under §6.
+- **Synthesized-conclusion facts — DECIDED (additive path).** A
+  `proof-conclusion` value that no single record asserts (a calculated/inferred
+  conclusion, e.g. three census ages → "abt 1805") materializes via `tree_edit`
+  `add_fact` with `primary: true`, carrying **multiple** source-refs to all the
+  correlated evidence S-entries (§7.1). `tree_edit` `add_fact` is in
+  proof-conclusion's roster (§3). Resolved — no longer open.
