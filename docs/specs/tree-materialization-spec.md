@@ -282,9 +282,10 @@ Where the guard fires:
 - **`materialize_facts`** — every fact and name it authors (new or the
   enriching ref on an existing fact) must carry a resolved non-null ref, or
   the call errors (§4.2 step 2).
-- **`tree_edit` add-ops** — `add_fact`, `add_person` inline facts,
-  `add_relationship`, and any other new-node op must carry a ref on the
-  content they introduce (§8).
+- **`tree_edit` add-ops** — `add_fact`, `add_person` inline **facts**, and
+  `add_relationship` edges must carry a ref on the content they introduce
+  (§8). Ad-hoc **name** authoring (`add_name`, `add_person` names) is a
+  reasoned exemption — see below.
 - **`tree_correct`** — the guard is "**the op did not remove an existing
   ref**": clearing a populated `sources[]` to null is rejected. It is **not**
   "the result has a ref," so touching an already-ref-less legacy fact without
@@ -300,21 +301,36 @@ Where the guard does **not** fire:
 - **Legacy ref-less trees are tolerated** on the merge and correct paths. We
   deliberately do **not** fabricate, backfill, or heal refs for pre-existing
   ref-less content — a fabricated ref is a worse lie than an honest null.
+- **`tree_edit` `add_name` / `add_person` names are ref-tolerant** (a
+  deliberate, reasoned exemption, like the two above). The leak this spec
+  closes is *record-derived* evidence losing its provenance — and those names
+  come through `materialize_facts`, which enforces a resolved ref on every
+  name it authors. `tree_edit`'s name path serves **hypothesis, oral, and
+  manual** stubs — the init-project subject built from *"grandma said her
+  mother was Mary Donovan"*, or a name added by hand — which legitimately have
+  **no documentary source yet**. A name is not evidence that lost its source;
+  it is a working conclusion whose source may not exist. Requiring a ref here
+  would forbid the "start from what the family told you" workflow, and it is
+  safe: **upload is conclusion-gated (§7)**, so a ref-less hypothesis name
+  never reaches FamilySearch until it is proof-backed.
 
 Consequences:
 
 - The cruz leak (100% of *newly written* facts ref-less) becomes
-  **unrepresentable** at the writing seam — every fact/name/edge a writer
-  *authors* carries a ref.
+  **unrepresentable** at the writing seam — every fact and edge a writer
+  *authors*, and every *record-derived* name (via `materialize_facts`),
+  carries a ref (ad-hoc hypothesis names excepted above).
 - **Provenance-nulling-as-error-recovery** (closing report §3.4) becomes
   unrepresentable on the write path — a writer cannot null a ref to escape
   validation.
 
-A **golden anti-regression test** asserts that every fact, name, and edge a
-**writer wrote** carries a non-null ref — scoped to **written content**, not
-"every node in the whole tree" (which would fail on tolerated legacy nodes).
-`merge-tree-persons.test.ts` is **not** in the golden writer list — the Mode-2
-fold authors nothing.
+A **golden anti-regression test** asserts that written content carries a
+non-null ref — scoped to **written content**, not "every node in the whole
+tree" (which would fail on tolerated legacy nodes). `materialize_facts`'s
+golden covers every **fact and name** it authors (the record→tree path, where
+the cruz names leaked); `tree_edit`'s golden covers every **fact and edge** it
+authors (its ad-hoc names are exempt above). `merge-tree-persons.test.ts` is
+**not** in either golden writer list — the Mode-2 fold authors nothing.
 
 **The ESM citation string is out of scope here.** The tree S-entry's
 `citation` stays populated by `proof-conclusion` at upload time (copied from
@@ -550,8 +566,9 @@ down-rate it purely for the stub lacking vitals.** No new matching mechanism —
    rejects an op that **removes** an existing ref (not "result lacks a ref").
    **`merge_tree_persons` is NOT in this list** — its Mode-2 fold carries no
    mandatory-ref guard and tolerates legacy ref-less trees (§6). Add the
-   **golden anti-regression test** (every fact/name/edge a writer *wrote*
-   carries a ref; scoped to written content; `merge-tree-persons.test.ts`
+   **golden anti-regression test** (written content carries a ref: fact +
+   name for `materialize_facts`, fact + edge for `tree_edit` — ad-hoc names
+   exempt per §6; scoped to written content; `merge-tree-persons.test.ts`
    excluded). Blast-radius: the delta guard lives at the writer-tool
    boundaries, **not** as a whole-tree `validator.ts` invariant.
 3. **Skill rewrites** — record-extractor.md (**drop `mcp__genealogy__tree_edit`**;

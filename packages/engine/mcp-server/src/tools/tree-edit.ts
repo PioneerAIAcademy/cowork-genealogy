@@ -25,6 +25,7 @@ import type {
   SimplifiedFact,
   SimplifiedRelationship,
   SimplifiedSourceDescription,
+  SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import { validateParsed } from "../validation/validator.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -245,6 +246,42 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
   }
 }
 
+// ─── delta-scoped mandatory-ref guard (tree-materialization-spec §6, §8) ─────
+//
+// A fact/name/relationship-edge a writer NEWLY AUTHORS must record where it came
+// from — a non-null source-ref. The guard is per-op and DELTA-scoped: it fires
+// only on content the op introduces, never on a pre-existing (legacy) ref-less
+// node merely carried through. It is deliberately NOT a rule in the shared
+// validateGedcomx / checkTreeFact (a whole-tree required-`sources` rule would
+// brick every legacy ref-less project's next write and the merge_tree_persons
+// fold); the schema keeps `sources` optional and the validator stays tolerant so
+// legacy projects load. We do not fabricate/backfill refs for legacy content.
+
+/** True when the node carries at least one non-null, non-empty source-ref. */
+function hasNonNullRef(node: { sources?: SimplifiedSourceReference[] }): boolean {
+  return (
+    Array.isArray(node.sources) &&
+    node.sources.some((s) => s && typeof s.ref === "string" && s.ref !== "")
+  );
+}
+
+/** Reject a newly-authored node (fact/name/edge) that carries no non-null
+ *  source-ref. Fires only on content the op introduces (§6, delta-scoped). */
+function assertNodeHasRef(
+  node: { sources?: SimplifiedSourceReference[] },
+  what: string,
+  op: string,
+): void {
+  if (!hasNonNullRef(node)) {
+    throw new TreeEditError(
+      `${op}: ${what} must carry a non-null source-ref (e.g. sources: [{ ref: "S1" }]) — ` +
+        "newly-authored tree content records its provenance (tree-materialization-spec §6). " +
+        "Supply the source-ref that resolves the assertion's source_id (its tree S-entry id), " +
+        "or use materialize_facts to write a record persona's sourced facts.",
+    );
+  }
+}
+
 // ─── add_household_children helpers (spec §4.4) ──────────────────────────────
 
 /** Name-token normalization: casefold, Unicode-decompose (NFKD), strip every
@@ -390,6 +427,7 @@ async function applyOperation(
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
+      assertNodeHasRef(fact, "the added fact", "add_fact");
       await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
       holder.facts = [...(holder.facts ?? []), fact];
@@ -406,9 +444,21 @@ async function applyOperation(
         const where = input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`;
         throw new TreeEditError(`fact '${input.factId}' not found on ${where}`);
       }
+      // Delta-scoped provenance rule (§6): an update may not REMOVE an existing
+      // ref (e.g. clear a populated `sources`). It is NOT "the result must have a
+      // ref" — touching an already-ref-less legacy fact without removing anything
+      // is allowed.
+      const factHadRef = hasNonNullRef(existing);
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
         (existing as any)[k] = v;
+      }
+      if (factHadRef && !hasNonNullRef(existing)) {
+        throw new TreeEditError(
+          "update_fact must not remove an existing source-ref — clearing a populated `sources` " +
+            "strips provenance (tree-materialization-spec §6). Downgrade a fact by removing the " +
+            "whole fact (tree_correct remove) instead of nulling its ref.",
+        );
       }
       if (input.fact.place !== undefined) await maybeResolvePlace(existing, input.fact.standard_place !== undefined);
       if (existing.primary === true) clearPrimaryOfType(holder, existing.type, existing.id);
@@ -430,9 +480,17 @@ async function applyOperation(
       if (!input.name) throw new TreeEditError("update_name requires `name` fields to set");
       const existing = (person.names ?? []).find((n) => n.id === input.nameId);
       if (!existing) throw new TreeEditError(`name '${input.nameId}' not found on person '${input.personId}'`);
+      // Same delta-scoped no-remove-ref rule as update_fact (§6).
+      const nameHadRef = hasNonNullRef(existing);
       for (const [k, v] of Object.entries(input.name)) {
         if (k === "id") continue;
         (existing as any)[k] = v;
+      }
+      if (nameHadRef && !hasNonNullRef(existing)) {
+        throw new TreeEditError(
+          "update_name must not remove an existing source-ref — clearing a populated `sources` " +
+            "strips provenance (tree-materialization-spec §6).",
+        );
       }
       if (existing.preferred === true) clearPreferred(person, existing.id);
       break;
@@ -488,6 +546,7 @@ async function applyOperation(
         for (const f of person.facts) {
           if (f.id) throw new TreeEditError("add_person facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_person");
+          assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
           await maybeResolvePlace(f, f.standard_place !== undefined);
           factIds.push(f.id);
@@ -502,6 +561,12 @@ async function applyOperation(
       if (!input.relationship) throw new TreeEditError("add_relationship requires a `relationship`");
       if (input.relationship.id) throw new TreeEditError("add_relationship `relationship` must not carry an id");
       const rel: SimplifiedRelationship = { ...input.relationship, id: nextId(tree, "R") };
+      // The newly-authored edge carries a non-null source-ref (§6/§8): a census
+      // etc. establishing a parent-child/spousal edge is evidence from that
+      // record. The relationship object already carries `sources[]`
+      // (TREE_COUPLE_FIELDS / TREE_PARENT_CHILD_FIELDS), so the caller supplies
+      // the ref resolved from the relationship assertion's source_id.
+      assertNodeHasRef(rel, "the added relationship edge", "add_relationship");
       tree.relationships = [...(tree.relationships ?? []), rel];
       // Facts supplied on a new relationship (e.g. a Marriage on a Couple) are
       // the relationship's own facts: assign each a tool-allocated F id and
@@ -518,6 +583,7 @@ async function applyOperation(
         for (const f of rel.facts) {
           if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_relationship");
+          assertNodeHasRef(f, "each Couple fact", "add_relationship");
           f.id = nextId(tree, "F");
           await maybeResolvePlace(f, f.standard_place !== undefined);
           factIds.push(f.id);

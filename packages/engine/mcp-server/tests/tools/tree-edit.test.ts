@@ -51,6 +51,8 @@ describe("tree_edit", () => {
         id: "I1",
         gender: "Male",
         names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        // Pre-existing (legacy) ref-less fact — tolerated; the delta guard fires
+        // only on NEWLY-authored content, never on this one.
         facts: [{ id: "F1", type: "Birth", date: "1850", primary: true }],
       },
     ],
@@ -58,15 +60,56 @@ describe("tree_edit", () => {
     sources: [],
   });
 
+  // Same person, but the tree carries an S1 source so a NEWLY-authored fact /
+  // name / edge can attach a resolvable non-null ref (mandatory-ref guard, §6).
+  const onePersonSourced = () => {
+    const t = onePerson();
+    (t as any).sources = [{ id: "S1", title: "1850 U.S. Federal Census" }];
+    return t;
+  };
+
+  // GOLDEN anti-regression helper (§6 / Test strategy): every fact/edge a writer
+  // AUTHORED in the call carries a non-empty sources[] with a non-null ref that
+  // points at an existing tree S-entry. Scoped to WRITTEN content (the ids the op
+  // returned), NOT the whole tree — legacy ref-less nodes are tolerated. Asserts
+  // the count of ref-less written nodes is 0 (inverts the cruz "0/13 facts carried
+  // a ref" leak). merge_tree_persons is excluded from this writer list.
+  const assertWrittenNodesHaveRefs = (
+    treeDoc: any,
+    written: { factIds?: string[]; relationshipIds?: string[] },
+  ) => {
+    const sourceIds = new Set((treeDoc.sources ?? []).map((s: any) => s.id));
+    const allFacts = [
+      ...treeDoc.persons.flatMap((p: any) => p.facts ?? []),
+      ...treeDoc.relationships.flatMap((r: any) => r.facts ?? []),
+    ];
+    const hasRef = (node: any) =>
+      Array.isArray(node?.sources) &&
+      node.sources.length > 0 &&
+      node.sources.every((r: any) => r.ref != null && sourceIds.has(r.ref));
+    let refless = 0;
+    for (const id of written.factIds ?? []) {
+      const f = allFacts.find((x: any) => x.id === id);
+      expect(f).toBeTruthy();
+      if (!hasRef(f)) refless++;
+    }
+    for (const id of written.relationshipIds ?? []) {
+      const rel = treeDoc.relationships.find((x: any) => x.id === id);
+      expect(rel).toBeTruthy();
+      if (!hasRef(rel)) refless++;
+    }
+    expect(refless).toBe(0);
+  };
+
   it("add_fact: assigns the next F id, resolves standard_place, swaps the primary, writes only the tree + .bak", async () => {
-    await writeProject(onePerson());
+    await writeProject(onePersonSourced());
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
     const r = await treeEdit({
       projectPath: dir,
       operation: "add_fact",
       personId: "I1",
-      fact: { type: "Birth", date: "1851", place: "Schuylkill County, Pennsylvania", primary: true },
+      fact: { type: "Birth", date: "1851", place: "Schuylkill County, Pennsylvania", primary: true, sources: [{ ref: "S1" }] },
     });
 
     expect(r.ok).toBe(true);
@@ -198,20 +241,20 @@ describe("tree_edit", () => {
   });
 
   it("add_relationship: assigns R id and links existing persons", async () => {
-    const tree = onePerson();
+    const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
     await writeProject(tree);
     const r = await treeEdit({
       projectPath: dir,
       operation: "add_relationship",
-      relationship: { type: "Couple", person1: "I1", person2: "I2" },
+      relationship: { type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
     });
     expect(r.ok && r.assignedIds?.relationship).toBe("R1");
     expect((await readTree()).relationships[0]).toMatchObject({ id: "R1", type: "Couple", person1: "I1", person2: "I2" });
   });
 
   it("add_relationship: assigns F ids to couple facts (Marriage) so the tree validates", async () => {
-    const tree = onePerson();
+    const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
     await writeProject(tree);
     const r = await treeEdit({
@@ -221,7 +264,8 @@ describe("tree_edit", () => {
         type: "Couple",
         person1: "I1",
         person2: "I2",
-        facts: [{ type: "Marriage", date: "12 May 1843", place: "St. Patrick's Church, Schuylkill County, Pennsylvania" }],
+        sources: [{ ref: "S1" }],
+        facts: [{ type: "Marriage", date: "12 May 1843", place: "St. Patrick's Church, Schuylkill County, Pennsylvania", sources: [{ ref: "S1" }] }],
       } as any,
     });
     expect(r.ok).toBe(true);
@@ -233,7 +277,7 @@ describe("tree_edit", () => {
   });
 
   it("add_relationship: rejects a caller-supplied fact id", async () => {
-    const tree = onePerson();
+    const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
     await writeProject(tree);
     const bad = await treeEdit({
@@ -243,7 +287,8 @@ describe("tree_edit", () => {
         type: "Couple",
         person1: "I1",
         person2: "I2",
-        facts: [{ id: "F9", type: "Marriage", date: "1843" }],
+        sources: [{ ref: "S1" }],
+        facts: [{ id: "F9", type: "Marriage", date: "1843", sources: [{ ref: "S1" }] }],
       } as any,
     });
     expect(bad.ok).toBe(false);
@@ -352,13 +397,14 @@ describe("tree_edit", () => {
   });
 
   it("writes nothing when the edit would invalidate the project", async () => {
-    await writeProject(onePerson());
+    await writeProject(onePersonSourced());
     const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
-    // A ParentChild relationship referencing a non-existent child fails validation.
+    // A ParentChild relationship referencing a non-existent child fails validation
+    // (the edge carries a valid ref, so the guard passes and validation is reached).
     const r = await treeEdit({
       projectPath: dir,
       operation: "add_relationship",
-      relationship: { type: "ParentChild", parent: "I1", child: "I_GHOST" },
+      relationship: { type: "ParentChild", parent: "I1", child: "I_GHOST", sources: [{ ref: "S1" }] },
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
@@ -465,7 +511,7 @@ describe("tree_edit", () => {
 
   // ── add_person inline facts: F ids assigned like add_relationship's ────────
   const twoPersonCoupleTree = () => {
-    const tree = onePerson();
+    const tree = onePersonSourced();
     tree.persons.push({
       id: "I2",
       gender: "Female",
@@ -473,13 +519,14 @@ describe("tree_edit", () => {
       facts: [],
     } as any);
     (tree as any).relationships = [
+      // Pre-existing (legacy) ref-less Couple fact — tolerated (delta scope).
       { id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ id: "F2", type: "Marriage", date: "1840", primary: true }] },
     ];
     return tree;
   };
 
   it("add_person: assigns F ids to inline facts, resolves standard_place, reports them in assignedIds", async () => {
-    await writeProject(onePerson());
+    await writeProject(onePersonSourced());
     const r = await treeEdit({
       projectPath: dir,
       operation: "add_person",
@@ -487,8 +534,8 @@ describe("tree_edit", () => {
         gender: "Female",
         names: [{ given: "Margaret", surname: "Smith" }],
         facts: [
-          { type: "Birth", date: "1852", place: "Schuylkill County, Pennsylvania" },
-          { type: "Death", date: "1930" },
+          { type: "Birth", date: "1852", place: "Schuylkill County, Pennsylvania", sources: [{ ref: "S1" }] },
+          { type: "Death", date: "1930", sources: [{ ref: "S1" }] },
         ],
       } as any,
     });
@@ -527,7 +574,7 @@ describe("tree_edit", () => {
       projectPath: dir,
       operation: "add_fact",
       relationshipId: "R1",
-      fact: { type: "Marriage", date: "12 May 1843", place: "Schuylkill County, Pennsylvania", primary: true },
+      fact: { type: "Marriage", date: "12 May 1843", place: "Schuylkill County, Pennsylvania", primary: true, sources: [{ ref: "S1" }] },
     });
     expect(r.ok).toBe(true);
     if (!r.ok || !("assignedIds" in r)) return;
@@ -637,11 +684,12 @@ describe("tree_edit", () => {
         operation: "add_person",
         person: { gender: "Male", names: [{ given: "Sam", surname: "Smith" }], facts: [{ type: "Birth", date: nestedDate }] } as any,
       }),
-      // add_relationship fact
+      // add_relationship fact (edge carries a valid ref so the shape check, not
+      // the mandatory-ref guard, is what rejects the nested date)
       treeEdit({
         projectPath: dir,
         operation: "add_relationship",
-        relationship: { type: "Couple", person1: "I1", person2: "I2", facts: [{ type: "Divorce", date: nestedDate }] } as any,
+        relationship: { type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }], facts: [{ type: "Divorce", date: nestedDate }] } as any,
       }),
     ];
     for (const attempt of attempts) {
@@ -690,6 +738,165 @@ describe("tree_edit", () => {
     expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
   });
+
+  // ── Delta-scoped mandatory-ref guard (tree-materialization-spec §6, §8) ─────
+  // Every fact/edge a writer NEWLY AUTHORS must carry a non-null source-ref;
+  // an update may not REMOVE an existing ref. The guard fires only on introduced
+  // content — a pre-existing (legacy) ref-less node is tolerated. Ad-hoc names
+  // (add_name / add_person names) are exempt (§6); record names carry refs via
+  // materialize_facts.
+  describe("mandatory-ref (delta-scoped) guard", () => {
+    it("add_fact: rejects a newly-authored fact with no source-ref, writing nothing", async () => {
+      await writeProject(onePersonSourced());
+      const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Death", date: "1899" }, // no sources[]
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/must carry a non-null source-ref/);
+      expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+      expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+    });
+
+    it("add_fact: rejects a fact whose only sources entry has a null/empty ref", async () => {
+      await writeProject(onePersonSourced());
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Death", date: "1899", sources: [{ page: "p. 4" }] } as any, // ref-less source entry
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/must carry a non-null source-ref/);
+    });
+
+    it("add_person: rejects an inline fact with no source-ref", async () => {
+      await writeProject(onePersonSourced());
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_person",
+        person: {
+          gender: "Female",
+          names: [{ given: "Margaret", surname: "Smith" }],
+          facts: [{ type: "Birth", date: "1852" }], // no sources[]
+        } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/add_person: each inline fact must carry a non-null source-ref/);
+    });
+
+    it("add_relationship: rejects a newly-authored edge with no source-ref", async () => {
+      const tree = onePersonSourced();
+      tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
+      await writeProject(tree);
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: { type: "Couple", person1: "I1", person2: "I2" }, // no sources[]
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/add_relationship: the added relationship edge must carry a non-null source-ref/);
+    });
+
+    it("add_relationship: rejects a Couple fact with no source-ref even when the edge has one", async () => {
+      const tree = onePersonSourced();
+      tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
+      await writeProject(tree);
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1843" }], // fact has no sources[]
+        } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/add_relationship: each Couple fact must carry a non-null source-ref/);
+    });
+
+    it("tree_correct update_fact: rejects an op that REMOVES an existing ref, writing nothing", async () => {
+      const tree = onePersonSourced();
+      // F1 CARRIES a ref here (so removing it is a real delta).
+      tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "1850", sources: [{ ref: "S1" }] }] as any;
+      await writeProject(tree);
+      const treeBefore = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+      const r = await treeCorrect({
+        projectPath: dir,
+        operation: "update_fact",
+        personId: "I1",
+        factId: "F1",
+        fact: { sources: [] } as any, // clears the populated sources
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/update_fact must not remove an existing source-ref/);
+      expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(treeBefore);
+      expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+    });
+
+    it("tree_correct update_fact: ALLOWS touching an already-ref-less legacy fact (no ref removed)", async () => {
+      // onePerson()'s F1 is a legacy ref-less fact — updating its date removes no
+      // ref, so the delta guard does not fire (§6: not 'the result must have a ref').
+      await writeProject(onePerson());
+      const r = await treeCorrect({
+        projectPath: dir,
+        operation: "update_fact",
+        personId: "I1",
+        factId: "F1",
+        fact: { date: "1849" },
+      });
+      expect(r.ok).toBe(true);
+      const f1 = (await readTree()).persons[0].facts.find((f: any) => f.id === "F1");
+      expect(f1.date).toBe("1849");
+      expect(f1.sources ?? []).toHaveLength(0); // still ref-less, tolerated
+    });
+
+    it("tree_correct update_name: rejects an op that REMOVES an existing name ref", async () => {
+      const tree = onePersonSourced();
+      tree.persons[0].names = [{ id: "N1", given: "John", surname: "Smith", preferred: true, sources: [{ ref: "S1" }] }] as any;
+      await writeProject(tree);
+      const r = await treeCorrect({
+        projectPath: dir,
+        operation: "update_name",
+        personId: "I1",
+        nameId: "N1",
+        name: { sources: [] } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/update_name must not remove an existing source-ref/);
+    });
+
+    it("GOLDEN: every fact/edge a writer AUTHORED carries a non-null ref (cruz anti-regression)", async () => {
+      const tree = onePersonSourced();
+      tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
+      await writeProject(tree);
+      const r = await treeEdit({
+        projectPath: dir,
+        ops: [
+          { operation: "add_fact", personId: "I1", fact: { type: "Death", date: "1899", sources: [{ ref: "S1" }] } },
+          { operation: "add_person", person: { gender: "Male", names: [{ given: "Sam", surname: "Smith" }], facts: [{ type: "Birth", date: "1875", sources: [{ ref: "S1" }] }] } },
+          { operation: "add_relationship", relationship: { type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }], facts: [{ type: "Marriage", date: "1843", sources: [{ ref: "S1" }] }] } },
+        ],
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      const writtenFactIds = r.results.flatMap((x) => [x.assignedIds?.fact, ...(x.assignedIds?.facts ?? [])]).filter(Boolean) as string[];
+      const writtenRelIds = r.results.map((x) => x.assignedIds?.relationship).filter(Boolean) as string[];
+      assertWrittenNodesHaveRefs(await readTree(), { factIds: writtenFactIds, relationshipIds: writtenRelIds });
+    });
+  });
 });
 
 describe("tree_edit (batch ops)", () => {
@@ -726,7 +933,7 @@ describe("tree_edit (batch ops)", () => {
       ops: [
         { operation: "add_source", source: { title: "1850 Census" } }, // → S1
         { operation: "add_person", person: { gender: "Female", names: [{ given: "Mary", surname: "Smith" }] } }, // → I2
-        { operation: "add_fact", personId: "I1", fact: { type: "Death", date: "1899" } }, // → F2 on existing person
+        { operation: "add_fact", personId: "I1", fact: { type: "Death", date: "1899", sources: [{ ref: "S1" }] } }, // → F2; refs the S1 added by op #0
       ],
     });
     expect(r.ok).toBe(true);
@@ -743,12 +950,14 @@ describe("tree_edit (batch ops)", () => {
   });
 
   it("intra-batch cross-op: add_person then add_relationship referencing the predicted I id validates", async () => {
-    await writeProject(onePerson());
+    const t = onePerson();
+    (t as any).sources = [{ id: "S1", title: "1850 Census" }];
+    await writeProject(t);
     const r = await treeEdit({
       projectPath: dir,
       ops: [
         { operation: "add_person", person: { gender: "Female", names: [{ given: "Mary", surname: "Smith" }] } }, // → I2 (max I is I1)
-        { operation: "add_relationship", relationship: { type: "Couple", person1: "I1", person2: "I2" } }, // references op #0's I2
+        { operation: "add_relationship", relationship: { type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] } }, // references op #0's I2
       ],
     });
     expect(r.ok).toBe(true);
@@ -764,8 +973,8 @@ describe("tree_edit (batch ops)", () => {
     const r = await treeEdit({
       projectPath: dir,
       ops: [
-        { operation: "add_source", source: { title: "Valid source" } }, // ok alone
-        { operation: "add_relationship", relationship: { type: "ParentChild", parent: "I1", child: "I_GHOST" } }, // dangling → validation fails
+        { operation: "add_source", source: { title: "Valid source" } }, // ok alone → S1
+        { operation: "add_relationship", relationship: { type: "ParentChild", parent: "I1", child: "I_GHOST", sources: [{ ref: "S1" }] } }, // valid ref (refs op #0's S1) but dangling child → validation fails
       ],
     });
     expect(r.ok).toBe(false);
@@ -809,7 +1018,7 @@ describe("tree_edit (batch ops)", () => {
     const opsArray = [
       { operation: "add_source", source: { title: "1850 Census" } }, // → S1
       { operation: "add_person", person: { gender: "Female", names: [{ given: "Mary", surname: "Smith" }] } }, // → I2
-      { operation: "add_fact", personId: "I1", fact: { type: "Death", date: "1899" } }, // → F2
+      { operation: "add_fact", personId: "I1", fact: { type: "Death", date: "1899", sources: [{ ref: "S1" }] } }, // → F2; refs op #0's S1
     ];
     const r = await treeEdit({ projectPath: dir, ops: JSON.stringify(opsArray) as any });
     expect(r.ok).toBe(true);

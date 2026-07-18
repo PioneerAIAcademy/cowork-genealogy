@@ -618,13 +618,17 @@ schema change" claim is **verified**, not assumed:
 ## Test strategy
 
 **GOLDEN anti-regression test (the cruz assertion).** A shared helper
-`assertWrittenNodesHaveRefs(tree, writtenNodeIds)` that walks the fact/name/edge
-nodes a writer **authored in that call** and asserts each carries a non-empty
-`sources[]` with a **non-null `ref`** pointing at an existing `tree.sources[].id`.
-It is **scoped to written content**, **not** "every node in the whole tree" — a
-whole-tree assertion would fail on tolerated legacy ref-less nodes (Cluster B).
-Assert the count of ref-less **written** nodes is **0** (directly inverting the
-cruz "0/13 facts, 0/19 names carried a ref" leak). Used by:
+`assertWrittenNodesHaveRefs(tree, writtenNodeIds)` that walks the nodes a writer
+**authored in that call** and asserts each carries a non-empty `sources[]` with a
+**non-null `ref`** pointing at an existing `tree.sources[].id`. Scope per writer:
+`materialize_facts` covers **facts + names** (the record→tree path where the cruz
+names leaked); `tree_edit` covers **facts + edges** (its ad-hoc `add_name` /
+`add_person` names are a reasoned exemption — §6). It is **scoped to written
+content**, **not** "every node in the whole tree" — a whole-tree assertion would
+fail on tolerated legacy ref-less nodes (Cluster B). Assert the count of ref-less
+**written** nodes is **0** (inverting the cruz "0/13 facts, 0/19 names carried a
+ref" leak — the names half closed on the record path by `materialize_facts`).
+Used by:
 - `materialize-facts.test.ts` — after a create-or-enrich run (phase 1, the
   primary end-to-end assertion).
 - `tree-edit.test.ts` / `tree-correct.test.ts` — after each add-op / update
