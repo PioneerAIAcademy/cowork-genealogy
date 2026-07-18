@@ -2,11 +2,22 @@
 
 > **Status:** Draft v1 (2026-06-21). A single, combined spec for the
 > end-to-end **match + merge** workflow: matching a multi-person record (e.g. a
-> census household) to people in `tree.gedcomx.json`, gating the merge on both
-> *identity* and *coherence*, then folding the record into the tree. It
-> **coordinates existing skills** rather than re-architecting them, and it
-> **owns one new MCP capability** — a *merge-mode* (pre-merge, "what-if")
-> warnings entry point — plus the data-model additions that capability needs.
+> census household) to people in `tree.gedcomx.json`, gating the incorporation on
+> both *identity* and *coherence*, then materializing the record's evidence onto
+> the tree persons. It **coordinates existing skills** rather than
+> re-architecting them, and it **owns one new MCP capability** — a *merge-mode*
+> (pre-merge, "what-if") warnings entry point — plus the data-model additions
+> that capability needs.
+>
+> **Superseded on the write path (2026-07-18, `#701`).** The monolithic "fold
+> the candidate document" step is **rewired to the per-persona
+> `materialize_facts` flow** (`tree-materialization-spec.md` §3-§4, §9), and the
+> coherence gate's **invocation owner moves from proof-conclusion to
+> person-evidence** — it runs *before* person-evidence commits a household's
+> materialization. The coherence gate itself (`merge_warnings` / the
+> `hasSameCensus` MobWarnings port) is unchanged and preserved. Any passage below
+> that still describes a `merge_record_into_tree` fold is historical unless
+> updated inline.
 >
 > This spec is the source of truth for the cross-skill contract. For the
 > internal behavior of each step it **references** the existing specs:
@@ -44,7 +55,9 @@ execute, and `check-warnings` runs *after* the write. Two things are missing:
    assembled to a defined shape.
 
 This spec closes both gaps **within the existing pipeline split**. It does not
-add a new skill (see §5.0) and does not change `merge_record_into_tree`.
+add a new skill (see §5.0); the record→tree write is the per-persona
+`materialize_facts` flow (`tree-materialization-spec.md` §3-§4), not a
+candidate-document fold.
 
 ---
 
@@ -60,7 +73,7 @@ add a new skill (see §5.0) and does not change `merge_record_into_tree`.
 
 **Out of scope (referenced, not re-specified):**
 - The internal behavior of `search-records`, `record-extraction`,
-  `proof-conclusion`, `tree-edit`, `merge_record_into_tree`,
+  `proof-conclusion`, `tree-edit`, `materialize_facts`,
   `merge_tree_persons` — owned by their existing specs/skills.
 - Selective field-level merge tooling and `tree_edit` source-write operations
   (§14).
@@ -83,32 +96,33 @@ merges = [
   [ "<treeJohn>",    "<censusJohn>"  ],   // focus ↔ focus
   [ "<treeSusan>",   "<censusSusan>" ],   // spouse ↔ spouse
   [ "<treeWilliam>", "<censusBill>"  ],   // child ↔ child (nickname identity)
-  [ "<stubMary>",    "<censusMary>"  ],   // NEW person, stub-first (§4)
+  [ "<stubMary>",    "<censusMary>"  ],   // NEW person, create-or-enrich (§4)
 ]
 ```
 
-Note every census persona is **paired** — including Mary, who is created as a
-stub first so the merge folds into her rather than carrying her in unpaired
-(§4, §5.3). `merge_record_into_tree`'s unpaired carry-in is not used in this
-workflow.
+Note every census persona is **linked to a tree person** — including Mary, who
+under create-or-enrich (§4, §5.3) is minted *with* her census facts rather than
+carried in as an unpaired duplicate. There is no unpaired document carry-in in
+this workflow; each pair drives one per-persona `materialize_facts` write
+(persona → tree person).
 
 ---
 
 ## 4. Architecture & invariants
 
-- **Coordinate the existing GPS split.** `person-evidence` matches,
-  `proof-conclusion` decides, the `merge_*` tools execute. We add the coherence
-  gate and the matching contract; we do not collapse or fast-path the split.
-  The split is the false-positive-merge guardrail and the coherence gate
-  reinforces it.
+- **Coordinate the existing GPS split.** `person-evidence` matches and
+  materializes, `proof-conclusion` concludes, the write tools
+  (`materialize_facts`, `merge_*`) execute. We add the coherence gate and the
+  matching contract; we do not collapse or fast-path the split. The split is the
+  false-positive-merge guardrail and the coherence gate reinforces it.
 - **Two orthogonal gates (§6).** *Identity:* "are these the same person?"
-  *Coherence:* "does the merged result contain impossibilities?" Both must pass
-  (or be explicitly overridden) before a merge is written.
-- **stub-first + always-pair.** A record persona with no tree match is created
-  as a stub by `person-evidence` (so its assertions can be linked), then merged
-  as a *paired* entry. This gives exactly one owner of person creation
-  (person-evidence) and removes the duplicate-person path that unpaired
-  carry-in would create.
+  *Coherence:* "does materializing this household introduce impossibilities?"
+  Both must pass (or be explicitly overridden) before a household is materialized.
+- **person-evidence owns person creation.** A record persona with no tree match
+  is created by `person-evidence` and enriched with its sourced facts via
+  `materialize_facts` create-or-enrich (§5.5), so a new person arrives *with*
+  facts. This gives exactly one owner of person creation (person-evidence) and
+  removes the duplicate-person path that unpaired document carry-in would create.
 - **Premature-identity constraint.** Extracted assertions stay **unattached**
   (keyed by `record_id` + `record_role`) until `person-evidence` links them.
   Extraction never guesses identity. (Honors the `subject_person_id` concern in
@@ -128,16 +142,18 @@ workflow.
 
 | Skill | Change | Magnitude |
 |---|---|---|
-| `person-evidence` | Household-matching contract (§5.3, §9): assemble the matching mob, cross-person consistency check, emit the `merges` pair-set, stub-first + always-pair. | **Largest** |
-| `proof-conclusion` | Insert the coherence gate (§5.4, §6): run the merge-mode warnings dry-run before `merge_record_into_tree`; apply error-block / warning-advisory; drive tiered HITL. Add the merge-mode warnings tool to `allowed-tools`. | **Large** |
-| `check-warnings` | Update the "does NOT cover merge-mode" caveat; document the new pre-merge capability. Remains the post-merge *final-mode* owner. | Small |
-| `tree-edit` | Doc tweak: in this workflow merges are always-paired; "unpaired carry-in" note becomes "for direct tree-edit use outside the pipeline." | Small |
+| `person-evidence` | Household-matching contract (§5.3, §9): assemble the matching mob, cross-person consistency check, emit the `merges` pair-set, create-or-enrich each persona. **Owns the coherence gate** (§5.4, §6): dry-run `merge_warnings` on the pair-set and apply error-block / warning-advisory **before** materializing. Then **materialize** each linked persona via `materialize_facts` and write household edges via `tree_edit add_relationship`. Add `merge_warnings` + `materialize_facts` to `allowed-tools`. | **Largest** |
+| `proof-conclusion` | Weigh the materialized evidence and set `primary`/`preferred` on the concluded value (§5.6). **No longer runs the coherence gate** (that moved to person-evidence) and no longer folds a candidate document. | Small |
+| `check-warnings` | Update the "does NOT cover merge-mode" caveat; document the new pre-merge capability. Remains the post-materialization *final-mode* owner. | Small |
+| `tree-edit` | Provides `add_relationship` for the household edges person-evidence writes (each carrying a source-ref). The old `merge_record_into_tree` "unpaired carry-in" note is dropped — this workflow no longer folds a candidate document. | Small |
 | `search-records`, `record-extraction`, `research` | Referenced unchanged; verify routing only. | None/minimal |
 
-**Ownership call:** `proof-conclusion` invokes the merge-mode warnings dry-run
-directly (it already owns the merge decision and calls `merge_record_into_tree`).
-`check-warnings` stays the post-merge guardrail. This keeps `check-warnings` a
-one-line update rather than a new invocation path.
+**Ownership call:** `person-evidence` invokes the merge-mode warnings dry-run
+directly — it assembles the household match set and owns the record→tree
+materialization, so it runs the coherence gate on the pair-set **before**
+committing each household's `materialize_facts` writes. `check-warnings` stays
+the post-materialization guardrail — a one-line update, not a new invocation
+path.
 
 ### 5.1 search-records *(reference)*
 
@@ -168,46 +184,69 @@ The matching step produces the `merges` pair-set. For each record persona:
    spouse/parent/child should map to the counterpart's, or be flagged. This
    catches independent-pairwise incoherence (John↔treeJohn but Susan↔a
    *different* tree woman) that no single `same_person` call sees.
-5. **stub-first creation.** A persona with no acceptable match (Mary) is created
-   via `tree_edit add_person`; its extracted assertions are linked to the stub.
-   It then enters `merges` as a **paired** entry (`[stubId, candidateId]`).
+5. **New-person handling.** A persona with no acceptable match (Mary) is given a
+   tree id — a name-only stub (`tree_edit add_person`) — so the pair-set carries
+   a tree id the coherence gate can score. `materialize_facts` create-or-enrich
+   then lands her census facts *onto that stub* after the gate clears (§5.5), so
+   — unlike the old empty-stub path — she never stays fact-less
+   (`tree-materialization-spec.md` §4.3).
 
-Output: the `merges` pair-set + per-pair confidence, handed to
-`proof-conclusion`. person-evidence still creates LINKS, never merges.
+Output: the `merges` pair-set + per-pair confidence. person-evidence then runs
+the coherence gate (§5.4) and materializes each pair (§5.5); it decides
+identity/links and materializes evidence — it never folds a candidate document.
 
-### 5.4 Coherence gate *(NEW)*
+### 5.4 Coherence gate *(owned by person-evidence)*
 
-Before any write, `proof-conclusion` runs the merge-mode warnings dry-run (§7)
-on the proposed `merges`. The dry-run merges in memory and persists nothing.
-Results feed the gate in §6.
+Before it materializes a household, `person-evidence` runs the merge-mode
+warnings dry-run (§7) on the proposed `merges` pair-set. The dry-run folds the
+candidate into the survivors in memory and persists nothing; it is **re-anchored
+to the pre-materialization tree state** — it evaluates what materializing this
+household *would* introduce. Results feed the gate in §6. Only after the gate
+passes (or an `error` is explicitly overridden) does person-evidence commit the
+per-persona `materialize_facts` writes (§5.5).
 
-### 5.5 proof-conclusion — identity decision
+### 5.5 person-evidence — materialization *(replaces the document fold)*
 
-At `probable`+ identity confidence, write concluded facts/relationships via
-`tree_edit`, ensure cited sources have GedcomX `S` entries. Then proceed to the
-coherence gate result (§6) before executing the merge.
+With the coherence gate clean (§5.4), `person-evidence` materializes each pair
+per `tree-materialization-spec.md` §3-§4: for every `[treeId, recordPersona]`
+pair it calls `materialize_facts({ projectPath, personId: treeId, recordId,
+recordRole })`, which reads that persona's assertions from `research.json` and
+writes them as **sourced** facts/names onto the tree person (create-or-enrich
+mints Mary *with* her facts). Relationship edges (parent-child, spouse) are
+written via `tree_edit add_relationship`, each carrying a source-ref resolved
+from the relationship assertion. The tree persons survive; each persona's
+evidence lands on its linked person with provenance intact. **No candidate
+document is folded** — the old `merge_record_into_tree` step is retired
+(`tree-materialization-spec.md` §9).
 
-### 5.6 Merge execution
+### 5.6 proof-conclusion — conclusion
 
-`merge_record_into_tree({ projectPath, candidateGedcomx, merges })` with the
-always-paired `merges`. The tree persons survive; census personas fold in
-(whole-fold, §15). Mary's stub receives the census-Mary facts.
+Once the household's evidence is materialized (§5.5), `proof-conclusion` weighs
+it and sets `primary`/`preferred` on the concluded value — via `tree_correct
+update_fact` when the value matches an existing evidence fact, or `tree_edit
+add_fact` (`primary: true` + multi-refs) for a synthesized conclusion matching
+no single record (`tree-materialization-spec.md` §7/§7.1). It writes
+`proof_summary`+`proof_tier`, ensures cited sources have GedcomX `S` entries, and
+gates upload to concluded facts. It no longer runs the coherence gate (§5.4) or
+folds a candidate document.
 
-### 5.7 Post-merge
+### 5.7 Post-materialization
 
 Run `check-warnings` (final mode) on each affected anchor; verify
-`research.json` reference integrity. (`merge_record_into_tree` validates before
-persisting and writes nothing on error — `merge-gedcomx-spec.md` §10.)
+`research.json` reference integrity. (`materialize_facts` and the `tree_edit`
+edge writes validate the would-be project before persisting and write nothing on
+error — `tree-materialization-spec.md` §4.1.)
 
 ---
 
 ## 6. Gate semantics
 
-A merge is written only when **both** gates pass (or coherence is explicitly
-overridden).
+A household is materialized only when **both** gates pass (or coherence is
+explicitly overridden).
 
-**Identity gate** (unchanged): person-evidence match-threshold policy +
-`proof-conclusion` at `probable` or higher.
+**Identity gate** (now gated by person-evidence): its match-threshold policy
+decides when a persona is confidently enough linked to materialize onto a tree
+person.
 
 **Coherence gate** (new): the merge-mode warnings dry-run (§7).
 - `severity: "error"` → **blocks**. Errors are biological/temporal
@@ -222,8 +261,8 @@ reason to **revisit identity**, not merely dismissed — `hasSameCensus` in
 particular is strong evidence the pairing is wrong.
 
 **Tiered human-in-the-loop:**
-- Both gates clean → **plan-level confirm** only: "Merge census John/Susan/Bill
-  into your John/Susan/William, add Mary as a new child — confirm?" No fact-diff
+- Both gates clean → **plan-level confirm** only: "Materialize the census onto
+  your John/Susan/William and add Mary as a new child — confirm?" No fact-diff
   burden.
 - Any `warning` fires **or** any pair's match score is low → **escalate**: show
   the specific flag / weak pair and the affected facts, and require an explicit
@@ -367,10 +406,10 @@ not a clean result.
 
 ### 7.6 Invocation
 
-`proof-conclusion` calls `merge_warnings` after the identity gate passes and
-before `merge_record_into_tree`. It narrates from the compact result and applies
-§6. `check-warnings` is unchanged in role — still the post-merge final-mode pass
-(§5.7).
+`person-evidence` calls `merge_warnings` after assembling the household match set
+and **before** it materializes (§5.4-§5.5). It narrates from the compact result
+and applies §6. `check-warnings` is unchanged in role — still the
+post-materialization final-mode pass (§5.7).
 
 ---
 
@@ -477,12 +516,14 @@ under Block — corrected to match.)
 - **Re-run / idempotency.** Re-processing a census already merged must be a
   detected no-op, not a duplicate. `source_attachments` (already-attached
   detection) + research-log state drive this; `hasSameCensus` is a backstop.
-- **Always-pair → no duplicate persons.** Every census persona is paired
-  (matched or stub); unpaired carry-in is not used here (§3, §4).
+- **Always-link → no duplicate persons.** Every census persona is linked to a
+  tree person (matched, or minted by create-or-enrich); there is no unpaired
+  document carry-in (§3, §4).
 - **Override logging.** An `error` cleared by the user records the override and
   the shown impossibility.
-- **Validation failure.** `merge_record_into_tree` writes nothing on
-  `{ ok: false }` (`merge-gedcomx-spec.md` §10).
+- **Validation failure.** `materialize_facts` and the `tree_edit` writes validate
+  the would-be project and write nothing on failure
+  (`tree-materialization-spec.md` §4.1).
 - **Missing data.** No collection title / no parseable dates → the affected
   check returns no warning silently; the gate never throws on absent data.
 
@@ -517,8 +558,8 @@ start-over model and the cost of maintaining reversibility metadata.
 - `tree_edit` source-write operations (`add_source` / `update_source`) — still
   hand-done (`skill-rewrites-for-persistence-tools-spec.md`).
 - Per-sibling relative-mobs — deferred, matching `warnings.java`.
-- Attach-source-only incorporation as a default — rejected in favor of
-  whole-fold (§15).
+- Attach-source-only incorporation as a default — rejected in favor of full
+  evidence materialization (the per-persona `materialize_facts` flow, §5.5).
 
 ---
 
@@ -526,6 +567,14 @@ start-over model and the cost of maintaining reversibility metadata.
 
 Settled with Dallan over 2026-06-21; recorded so implementation doesn't
 re-litigate.
+
+> **Superseded on the write path (`#701`, 2026-07-18):** decision (8)'s
+> `merge_warnings`-mirrors-`merge_record_into_tree` design note still stands (the
+> tool is retired only in a later phase), but (9) "whole-fold default" is
+> replaced by the per-persona `materialize_facts` flow and (5)'s stub carry-in is
+> now create-or-enrich (`tree-materialization-spec.md` §3-§4, §9). The two-gate
+> model (2) and the coherence primitive are unchanged; the gate's invocation
+> owner is now person-evidence.
 
 1. **One combined spec** — orchestration + the merge-mode warnings primitive in
    one doc, since the gate is the heart of the workflow.

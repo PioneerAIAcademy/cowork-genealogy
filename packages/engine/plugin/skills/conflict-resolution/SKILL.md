@@ -106,6 +106,23 @@ Look for:
 - person_evidence entries with `speculative` confidence — these
   are unresolved identity questions
 
+**Materialization-surfaced conflicts:**
+- When `person-evidence` links a persona and materializes its
+  assertions onto a tree person, `materialize_facts` returns a
+  `conflicts_surfaced: [{ personId, factType, values }]` array listing
+  every **single-valued / vital** fact type (`Birth`, `Death`,
+  `Christening`, `Burial`) whose incompatible values now coexist as
+  separate sourced facts on that person. Each surfaced entry is a fact
+  conflict to record here (§2): `disputed_attribute` names the fact type
+  and `competing_assertion_ids` the assertions behind the coexisting
+  facts.
+- **Multi-valued fact types are never surfaced.** `Occupation`,
+  `Residence`, `Census`, and `Citizenship` legitimately hold many
+  concurrent values, so materialization lets them coexist as separate
+  sourced facts and omits them from `conflicts_surfaced` — they are not
+  conflicts. Do not manufacture a conflict entry for differing
+  occupations or residences.
+
 **Already-identified conflicts:**
 - Check existing `conflicts[]` for `status: "unresolved"` — these
   need attention

@@ -20,6 +20,8 @@ allowed-tools:
   - research_append
   - tree_edit
   - same_person
+  - materialize_facts
+  - merge_warnings
 ---
 
 # Person Evidence
@@ -282,10 +284,21 @@ determines the allowed confidence:
 
 | Match strength | Allowed confidence | Action |
 |------------|-------------------|--------|
-| **Weak** — only the name matches, or a core identifier conflicts | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match. The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
+| **Weak** — only the name matches, or a core identifier conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match. The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
 | **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Present the evidence to the user before linking. Explain what matches and what doesn't. Create the link with `probable` confidence if the user agrees. |
 | **Strong** — name, age, place, and relationship fit all agree | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
+
+**Stub match on relationship-fit alone (household enrichment).** A
+fact-less stub is still matchable — by its name, gender, and parent-child
+edge — and a **strong relationship-fit is the strongest household
+signal.** When a persona sits in the right position under known parents
+(or beside a known spouse), that fit is a **sufficient** stub match on
+its own: treat it as **Moderate** (link at `probable`) and materialize
+the facts onto the stub. Do **not** down-rate it to Weak purely because
+the stub lacks vitals — you match *to add* facts, so demanding vitals
+first would deadlock enrichment (you'd need the facts to confirm the
+identity that would let you add them).
 
 **The `same_person` score is an input, never a substitute.**
 When a score is available it *modulates* confidence within what
@@ -349,19 +362,24 @@ than retrying blindly.
 
 ### 5. Handle new persons (stub creation)
 
-When an assertion's persona doesn't match any existing GedcomX
-person, create a new **stub person** in tree.gedcomx.json with
-`tree_edit({ operation: "add_person", person })`. The minimum stub is
-`gender` (may be `Unknown`) plus one name with at least a `surname`
-(`given` may be empty if unknown); `facts` may be omitted —
-proof-conclusion populates them later. Omit ids: the tool allocates the
-synthetic `I`/`N` ids and validates before persisting. **Never use
-FamilySearch IDs for a new stub** — those belong to persons already in
-the tree.
+When an assertion's persona doesn't match any existing GedcomX person,
+**materialize the persona onto a new person** via `materialize_facts`'s
+create-or-enrich path — do **not** hand-build a name-only stub with
+`tree_edit add_person`. Call `materialize_facts({ personId, recordId,
+recordRole })` with a `personId` that doesn't yet exist (or omit it): the
+tool mints the person from the persona's name/gender assertions **and
+writes its assertions as sourced facts/names in the same validated
+call**, so the new person arrives WITH its facts, never as a name-only
+shell that a later step fills in. The tool allocates the synthetic
+`I`/`N` ids, resolves and attaches each fact's source-ref, and never sets
+`primary`/`preferred` (concluding the preferred value stays
+proof-conclusion's job). **Never use FamilySearch IDs for a new person** —
+those belong to persons already in the tree.
 
 **Stub person rules:**
 - Then create the `pe_` entry (Step 4) linking the assertion to the
-  new person, using the `I` id the tool returned in its compact summary
+  new person, using the `personId` that `materialize_facts` returned in
+  its compact summary
 - **Confidence:** a stub rests on the single record that introduced the
   person, with no independent corroboration yet, so its `pe_` link is
   `probable` at most — `speculative` when the persona is only
@@ -428,19 +446,51 @@ toward a user pause), the same way a qualitative conflict does — it does
 not silently block the link. Note the inconsistency in the link
 rationale so proof-conclusion sees it.
 
-**Always-pair the household → the merge set.** Every record persona in a
-household you process ends up **paired**: either matched to an existing
-tree person, or (Step 5) created as a stub and linked to it. There is no
-unpaired persona left dangling. Each high-scoring `matchRelatives` triple
-(step 2.4) is already a `[candidateId (tree), targetId (record)]` pair
-with a ready score/confidence — seed the merge set from those rather than
-re-deriving them. The resulting set of
-`[treePersonId, recordPersonaId]` pairs — one per persona, stubs
-included — is the **merge set** that proof-conclusion feeds to
-`merge_warnings` (the coherence gate) and then `merge_record_into_tree`.
-person-evidence does not merge; it produces the coherent, always-paired
-links (the `pe_` entries + stubs) that *are* that set. Present the
-pairing plainly so proof-conclusion can assemble it from the links.
+**person-evidence owns the household skeleton.** Building the household
+structure — the member persons and the edges between them — is now this
+skill's job, not record-extraction's (which emits assertions only).
+person-evidence materializes the household **directly**; it no longer
+hands a merge set to proof-conclusion to fold. For a household record:
+
+1. **Tolerantly match the parents against the tree.** Find the
+   head/spouse among existing tree persons by name + place +
+   relationship position, allowing transcription and name variants. If
+   **no household parent is in the tree**, surface that gap plainly and
+   do **not** fabricate a parent to anchor the household on. The
+   `matchRelatives` triples from step 2.4 give the persona→tree-person
+   pairings; a new member (no tree match) pairs to a fresh id you mint in
+   step 3.
+2. **Dry-run `merge_warnings` as the coherence gate — before any write.**
+   On the **pre-materialization** household set (the matched tree persons
+   plus the record personas you are about to pair), dry-run
+   `merge_warnings` and apply its tiers **before** materializing anything:
+   - **Error tier blocks.** A hard coherence failure (an event outside a
+     lifespan, a relationship that cannot hold) stops the materialization —
+     resolve it before writing.
+   - **Warning tier is advisory.** A softer flag (e.g. a shared-census
+     signal that doesn't fully cohere) does not block; note it in the
+     affected `pe_` rationale and proceed.
+3. **Materialize every member, per persona.** Only after the gate clears
+   the error tier: for each persona — the subject *and* each
+   sibling/spouse — call
+   `materialize_facts({ personId, recordId, recordRole })` to write that
+   persona's assertions as sourced facts/names onto its tree person, and
+   create the `pe_` link (Step 4). For a persona **matched** to an
+   existing tree person you already have the `personId`; for a **new**
+   member, create-or-enrich mints it WITH its facts (never a name-only
+   stub) — pass a not-yet-existing `personId`, or omit it and the tool
+   allocates one, then link to the id it returns.
+4. **Write the edges.** Write the parent-child and spouse-spouse
+   relationships this record establishes via `tree_edit`
+   `add_relationship`, each edge carrying a source-ref resolved from the
+   relationship assertion's `source_id`. A pre-1880 census parent-child
+   edge is *indirect* evidence (a headship/co-residence inference, not a
+   stated relationship); it still carries a ref, at a **lower ref
+   quality** reflecting the weaker evidence class.
+
+Every household persona ends up **paired** — matched to an existing tree
+person, or minted via create-or-enrich — with none left dangling.
+Present the materialized household plainly.
 
 ### 8. Check warnings and present
 
