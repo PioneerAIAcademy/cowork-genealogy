@@ -105,3 +105,26 @@ The researcher will compare it against what they know.
   nothing, say the evidence isn't there rather than reaching for a guess — that
   is a legitimate and useful outcome, and reporting it honestly is worth more
   than a lucky hit.
+
+## Re-invocation behavior
+
+**Writes** `tree.gedcomx.json` only — `scripts/forget.py` removes the selected
+persons, facts, and relationships in place. It does **not** touch
+`research.json`, the `log`, or the `results/` sidecars. It also writes the
+restore file `.tree-before-forget.gedcomx.json` next to the tree.
+
+**On re-invocation,** forgetting is additive, and re-running a selector whose
+target is already gone is an **error, not a no-op**: the script raises
+`"<selector> matched nothing"` (or an unknown-id error, if a previous
+`person:` run removed the person the selector names), exits non-zero, and
+writes nothing. That is a safe failure — no partial edit — but read it as "this
+was already forgotten", not as a problem to route around. Dry-run first every
+time regardless: the cascade depends on the tree's *current* shape, so the
+second run's blast radius is not the first run's.
+
+**The restore file is overwritten on every non-dry-run.** It always holds the
+tree as it was immediately before the most recent run, not the original. Two
+forget passes therefore leave you able to undo only the second: after pass 2 the
+backup already has pass 1's removals baked in. If the researcher may want the
+original tree back, copy `.tree-before-forget.gedcomx.json` somewhere else before
+forgetting again — and still never read it, since it holds the answers.

@@ -50,14 +50,25 @@ RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 
-# Orchestrator skills exempt from the per-skill runlog rules (2 + 3). These
-# skills are validated by e2e GPS fixtures, not unit tests, so by design they
+# Skills exempt from the per-skill runlog rules (2 + 3) — skills that by design
 # have no `eval/tests/unit/<skill>/` scaffolding and no
 # `eval/runlogs/unit/<skill>/` dir. Without this exemption, any edit to the
 # skill body hard-fails with "no run logs" and the `eval-cosmetic-skip` label
 # can't clear it — that escape hatch only relaxes rule 2 once a runlog dir
 # already exists.
-RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research"})
+#
+# Two reasons a skill lands here:
+#   - `research` — an orchestrator, validated by e2e GPS fixtures rather than
+#     unit tests.
+#   - `forget-and-rederive` — a project-setup utility, not a research step. It
+#     strips a slice of the local tree to stage a practice run; there is no
+#     genealogical output for a judge to grade, so there is nothing a unit
+#     rubric would score. (Its real logic lives in `scripts/forget.py`, which
+#     has no automated coverage today — see docs/TODOs.md. That is a gap worth
+#     closing with script-level tests, not with a skill eval suite.)
+#
+# Adding a unit suite for such a skill later means removing it from this set.
+RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research", "forget-and-rederive"})
 
 
 def gh_error(message: str, *, file: str | None = None) -> None:
