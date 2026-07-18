@@ -27,7 +27,7 @@ from e2e.orchestrator import (
     DEFAULT_RUNLOG_ROOT,
     run_e2e_test,
 )
-from e2e.env import ENV_FILE, load_env_file
+from e2e.env import ENV_FILE, load_env_file, stage_openrouter_key
 from e2e.report import print_rollup
 from e2e.result import E2eResult, is_committable_run
 
@@ -105,6 +105,7 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
 
 def main(argv: list[str] | None = None) -> int:
     load_env_file()  # make ANTHROPIC_API_KEY from eval/.env available to the judge
+    stage_openrouter_key()  # bridge OPENROUTER_API_KEY -> ~/.familysearch-mcp/config.json for the MCP subprocess (spec §6.5)
     parser = argparse.ArgumentParser(
         prog="e2e.run_e2e",
         description="Run one or more e2e tests against the GPS research flow.",

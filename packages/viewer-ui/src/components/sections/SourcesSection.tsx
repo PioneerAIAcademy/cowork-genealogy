@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
@@ -33,6 +33,34 @@ function Transcription({ text }: { text: string }): React.JSX.Element {
       )}
     </>
   )
+}
+
+function SourceImage({ filename }: { filename: string }): React.JSX.Element | null {
+  const { getSourceImage } = useResearchData()
+  const [src, setSrc] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    if (!getSourceImage) return
+    let alive = true
+    setSrc(null)
+    setFailed(false)
+    getSourceImage(filename)
+      .then((url) => {
+        if (alive) setSrc(url)
+      })
+      .catch(() => {
+        if (alive) setFailed(true)
+      })
+    return () => {
+      alive = false
+    }
+  }, [getSourceImage, filename])
+
+  // No transport support (web client), a load error, or the file is gone →
+  // show nothing (the transcription still stands on its own).
+  if (!getSourceImage || failed || !src) return null
+  return <img className={styles.sourceImage} src={src} alt="Source page scan" />
 }
 
 function SourceCard({ source }: { source: Source }): React.JSX.Element {
@@ -118,6 +146,13 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Transcription</div>
           <Transcription text={source.transcription} />
+        </div>
+      )}
+
+      {source.image_filename && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Page scan</div>
+          <SourceImage filename={source.image_filename} />
         </div>
       )}
     </Card>

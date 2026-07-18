@@ -21,6 +21,12 @@ import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js"
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
+import { imageTranscribeTool } from "./tools/image-transcribe.js";
+import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import {
+  configureOpenRouterTool,
+  type ConfigureOpenRouterInput,
+} from "./tools/configure-openrouter.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
@@ -293,6 +299,37 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           { type: "image", data: imageData, mimeType: metadata.mimeType },
           { type: "text", text: JSON.stringify(metadata, null, 2) },
         ],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
+    }
+  }
+  if (request.params.name === "image_transcribe") {
+    try {
+      const args = request.params.arguments as unknown as ImageTranscribeInput;
+      const result = await imageTranscribeTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
+    }
+  }
+  if (request.params.name === "configure_openrouter") {
+    try {
+      const args = request.params
+        .arguments as unknown as ConfigureOpenRouterInput;
+      const result = await configureOpenRouterTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

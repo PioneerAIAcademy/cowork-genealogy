@@ -14,7 +14,7 @@ description: >-
   read page-scan images (the caller delegates those to image-reader —
   agents cannot nest agents), to acquire or triage input, or to format
   citations.
-model: claude-sonnet-5
+model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__project_context
   - mcp__genealogy__record_read

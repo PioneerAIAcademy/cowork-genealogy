@@ -30,6 +30,7 @@ import {
   isInsideProject,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { resolveStandardPlace } from "../utils/place-resolver.js";
@@ -1300,6 +1301,17 @@ export async function researchAppend(
         await atomicWriteJson(researchPath, research);
         filesWritten = ["research.json"];
       }
+      // GC unreferenced source images (best-effort, TTL-gated) — design B, §8.5:
+      // remove images/*.jpg no source cites and older than the TTL, so a
+      // just-transcribed-but-unretained scan ages out instead of lingering.
+      await gcUnreferencedImages(
+        projectPath,
+        new Set(
+          (Array.isArray(research.sources) ? research.sources : [])
+            .map((s: any) => s?.image_filename)
+            .filter((f: unknown): f is string => typeof f === "string" && f.length > 0),
+        ),
+      ).catch(() => {});
     }
 
     const validationBlock = { valid: true as const, warnings: [...validationWarnings, ...opWarnings] };

@@ -15,6 +15,22 @@ Deferred items to revisit. Not blocking the alpha. Architecture context:
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
 
+## Engine — image transcription
+- [ ] **User-invoked Opus transcription (`image_transcribe` Flow 2)** — brainstormed,
+  **not requested by any user yet** (parked per YAGNI/scope-discipline). The research
+  workflow uses **Qwen only** (`image_transcribe`); this would let a user ask Claude
+  to transcribe a *specific* image with **Opus** on demand (premium, higher accuracy).
+  Recommended shape: a user-only tool `image_transcribe_opus` — a thin wrapper over the
+  same host-side OCR helper with the model pinned to an Opus slug **via OpenRouter** (so
+  it inherits any-size + text-out + no base64, since the bytes never cross the MCP stdio
+  transport) — that the research skills do **not** list in `allowed-tools`, invoked by
+  the main session on request or a `/transcribe-image` command. Present the transcription;
+  optionally write it into the source's `transcription` (the tool can already persist the
+  scan via `projectPath`). Ideal future UX: a "Transcribe with Opus" button in the viewer
+  beside the saved scan (needs a viewer→action channel). Open impl detail: Opus via
+  OpenRouter (reuses the key; may lag the latest 4.8) vs the Anthropic API directly
+  (latest, needs an Anthropic-key path). See `docs/specs/image-transcribe-tool-spec.md`.
+
 ## Before horizontal scaling (`count > 1`)
 - [ ] **`init_db` → Fly `release_command`** — move `init_db()` (`create_all()` +
   the allowlist seed) off the per-boot path into a one-time Fly `release_command`
@@ -90,6 +106,18 @@ Deferred from `docs/plan/record-extraction-consolidation-plan.md` §7 at wrap.
   written at `confident` from one uncorroborated record with `[?]` readings
   (clark-parents). The extractor agent got a tentative-cap line; person-evidence
   needs the equivalent gate + mandatory conflicts entry.
+- [ ] **Recover the classification-quality drop from the sonnet-4-6 pin.** The
+  extractor was re-pinned sonnet-5 → `claude-sonnet-4-6` (this PR) because sonnet-5
+  hangs at Cowork/e2e `effortLevel: high` (adaptive-thinking runaway); the 8k
+  output-cap alternative is non-viable (starves before any tool call, or runs away
+  across turns — 0 pass, ~20 min/test in a 5-test A/B). Downgrading is the surgical
+  fix (effort is session-wide, model is per-subagent) but costs ~0.24/3 mean judge
+  score, concentrated in GPS classification nuance: 4.6 slips on the **existing**
+  "Blank columns produce no assertions" rule and on `informant_proximity` /
+  `evidence_type` calls. Deferred mitigation: follow the rx-partials pattern of
+  adding concrete point-of-use examples (NOT duplicate rules), then re-run the
+  record-extraction unit suite to confirm recovery. Do **not** target the 009
+  death-cert case — judge noise, not craft (`rx-partials-to-passes-plan.md §1.C`).
 - [x] **Upstream sidecar-staging gap — DONE (#699).** One e2e run had all 18
   `record_persona_id`s nulled because the search never staged a sidecar
   (spriggs). D2 can't auto-fill what was never staged, and — since

@@ -19,6 +19,8 @@ import { placeDistanceToolSchema } from "./tools/distance.js";
 import { populationToolSchema } from "./tools/place-population.js";
 import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
+import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
+import { configureOpenRouterSchema } from "./tools/configure-openrouter.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
@@ -66,6 +68,8 @@ export const allToolSchemas = [
   populationToolSchema,
   externalLinksSearchToolSchema,
   imageReadToolSchema,
+  imageTranscribeToolSchema,
+  configureOpenRouterSchema,
   recordSearchToolSchema,
   personSearchToolSchema,
   personAncestorsToolSchema,

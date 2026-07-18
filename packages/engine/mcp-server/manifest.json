@@ -38,6 +38,8 @@
     { "name": "place_population" },
     { "name": "external_links_search" },
     { "name": "image_read" },
+    { "name": "image_transcribe" },
+    { "name": "configure_openrouter" },
     { "name": "record_search" },
     { "name": "person_search" },
     { "name": "person_ancestors" },
