@@ -28,7 +28,7 @@
 >    with two orchestration-layer bridges added for e2e and the hosted
 >    sandbox.
 >
-> **Phase 0 is COMPLETE — spike PR 723 (`docs/plan/ocr-quality-spike-results.md`).**
+> **Phase 0 is COMPLETE — spike PR 723.**
 > The gate passed: build the tool and route large scans to **Qwen3-VL-235B
 > Instruct, raw bytes — no pre-processing** (prep *lowered* accuracy and
 > doubled hallucinations, so §7's `jimp` path is dropped, not built). Bonus:
@@ -658,7 +658,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `dev/try-image-transcribe.ts`
 - `tests/tools/image-transcribe.test.ts`
 - `tests/tools/configure-openrouter.test.ts`
-- Phase 0 results doc under `docs/plan/` *(done: `ocr-quality-spike-results.md`, PR 723)*
+- Phase 0 results write-up *(done: PR 723; conclusions folded into `docs/TODOs.md` § "Engine — image transcription")*
 
 **Modify**
 - `src/types/auth.ts` — `openRouterApiKey`, `openRouterModel` on `AppConfig`

@@ -267,7 +267,7 @@ tree_edit({
 // on failure: { ok: false, errors: ["ops[<i>]: <msg>"] } — nothing written
 ```
 
-Semantics (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
+Semantics (decision from the e2e research-runtime speedup review, §6 Q1):
 
 - **All-or-nothing.** Every op applies to one in-memory tree; the whole tree is
   **validated once** and written **once** (one `.bak` reflecting pre-batch state). Any

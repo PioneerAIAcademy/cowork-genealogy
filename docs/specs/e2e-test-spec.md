@@ -826,8 +826,8 @@ acting.
 
 - Mocking MCP for e2e tests — live calls only
 - Full GPS-proof grading with human verification — the proof-quality
-  axis (§7) is a single rubric-graded score, not the multi-layer
-  human-verified grading of `gps-test-spec.md`
+  axis (§7) is a single rubric-graded score, not a multi-layer
+  human-verified grade
 - CI integration of the *live run* — e2e runs are too expensive to gate
   PRs. (One cheap artifact check runs in CI — a blocking grading gate;
   fixture validity is a non-CI authoring practice, see §14.)
@@ -849,7 +849,6 @@ acting.
 | Spec | Relationship |
 |------|--------------|
 | `unit-test-spec.md` | Complementary: unit tests cover skills in isolation with mocked MCP; e2e covers the full autonomous flow with live MCP |
-| `gps-test-spec.md` | Different testing approach for the same goal: tests derived from published GPS proof statements, with multi-layer grading and human verification. Held for future work; not active in v1 |
 | `research-schema-spec.md` | Defines the shape of `starting-research.json` |
 | `simplified-gedcomx-spec.md` | Defines the shape of `starting-tree.gedcomx.json` |
 | `eval/CLAUDE.md` | Eval-framework conventions; this spec is the e2e layer |

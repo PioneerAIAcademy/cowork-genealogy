@@ -221,7 +221,7 @@ The project owner merges. Done.
 
 ## Cadence
 
-Per `docs/plan/per-pr-review-workflow.md`: target 1 business day from PR open to senior response. If you're over capacity, escalate to the senior volunteer pool (see `docs/eval-rollout.md` for current names). If a PR sits for >2 days, the senior engineer takes it.
+Per `docs/plan/per-pr-review-workflow.md`: target 1 business day from PR open to senior response. If you're over capacity, escalate to the senior volunteer pool. If a PR sits for >2 days, the senior engineer takes it.
 
 ## What you don't do
 

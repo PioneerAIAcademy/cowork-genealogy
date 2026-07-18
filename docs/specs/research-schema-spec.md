@@ -1,6 +1,6 @@
 # Research Schema Specification
 
-This document defines the complete schema for `research.json`, the GPS audit trail and working artifact for genealogy research projects. It supersedes the earlier draft in `docs/gps/schema.md`.
+This document defines the complete schema for `research.json`, the GPS audit trail and working artifact for genealogy research projects. It supersedes the earlier pre-implementation draft.
 
 **Machine-readable schema:** [`docs/specs/schemas/research.schema.json`](schemas/research.schema.json). Enum definitions live in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json) and are referenced via `$ref`. This prose document is normative for humans; the JSON Schema files are normative for machine validation. When the two disagree, fix the stale side and audit the other.
 
@@ -8,7 +8,7 @@ This document defines the complete schema for `research.json`, the GPS audit tra
 
 A genealogy research project consists of two files:
 
-- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/gps/simplified-gedcomx.md`). This is what uploads to FamilySearch.
+- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/specs/simplified-gedcomx-spec.md`). This is what uploads to FamilySearch.
 - **`research.json`** — The working artifact. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. This is the GPS audit trail that proves the conclusions in the GedcomX file are sound.
 
 ### The two-file boundary
@@ -1468,7 +1468,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
 
 ## 10. Changes from Draft Schema
 
-This section documents what changed from the earlier draft in `docs/gps/schema.md` and why.
+This section documents what changed from the earlier pre-implementation draft and why.
 
 | Change | Rationale |
 |--------|-----------|

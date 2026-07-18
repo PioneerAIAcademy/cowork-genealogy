@@ -125,8 +125,8 @@ this workflow; each pair drives one per-persona `materialize_facts` write
   removes the duplicate-person path that unpaired document carry-in would create.
 - **Premature-identity constraint.** Extracted assertions stay **unattached**
   (keyed by `record_id` + `record_role`) until `person-evidence` links them.
-  Extraction never guesses identity. (Honors the `subject_person_id` concern in
-  `docs/gps/skills-convo.md`.)
+  Extraction never guesses identity. (Honors the `subject_person_id` concern
+  raised in the skills design conversation.)
 - **Host/VM split.** Matching (`same_person`), the merge tools, and the new
   merge-mode warnings are **MCP tools** (host). Skills orchestrate them; they
   never compute matches or warnings in the VM.

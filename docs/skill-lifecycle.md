@@ -337,6 +337,5 @@ these to follow the flow above:
 | Skill architecture & the three skill kinds | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
 | Per-PR review + run-log release/active/candidate mechanics | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
-| The full evaluation + optimizer design | [`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
 | Triaging an actual user feedback zip (per-platform setup + click-paths) | [`docs/feedback-workflow.md`](feedback-workflow.md) — superseded as the canonical flow by this doc |

@@ -80,7 +80,7 @@ This eval framework is one of three complementary testing layers:
 
 1. **Vitest** (`packages/engine/mcp-server/tests/`) — Tests whether MCP tool code works correctly. Developers maintain these.
 2. **Skill evals** (this framework) — Tests whether Claude performs genealogy tasks well when using skills, including tool usage. Genealogists create, run, and grade these.
-3. **Prompt optimizers** (automated) — Description and grading-prompt optimizers consume eval results to improve prompts. Both run unattended. See `docs/gps/skill-mcp-testing-plan.md` Appendix C.
+3. **Prompt optimizers** (automated) — Description and grading-prompt optimizers consume eval results to improve prompts. Both run unattended. See `docs/skill-mcp-testing-plan.md` Appendix C.
 
 Skill evals include tool-usage rubric dimensions, so there is no separate MCP tool eval suite for genealogists to maintain.
 
@@ -191,7 +191,7 @@ Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — pro
 ## What This Framework Does NOT Cover
 
 - MCP tool code correctness (use Vitest in `packages/engine/mcp-server/tests/`)
-- Description optimization (automated, see `docs/gps/skill-mcp-testing-plan.md` Appendix C)
+- Description optimization (automated, see `docs/skill-mcp-testing-plan.md` Appendix C)
 - Grading prompt optimization (automated, see same)
 - Network/integration testing of MCP tools (use `packages/engine/mcp-server/dev/try-*.ts`)
 

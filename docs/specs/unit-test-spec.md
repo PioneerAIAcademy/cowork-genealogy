@@ -410,7 +410,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/plan/invariant-grading.md."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous."
         }
       },
       "additionalProperties": false
@@ -526,7 +526,7 @@ Guidelines for writing `judge_context` notes:
   | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
   | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
 
-  Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/gps/skill-mcp-testing-plan.md`) covers the review cadence.
+  Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/skill-mcp-testing-plan.md`) covers the review cadence.
 
 ### 5.5 `negative`
 
@@ -733,7 +733,7 @@ Plain-English statement of what this dimension evaluates.
 
 Conventions: H1 is the skill name, H2 is each dimension name (exactly one H2 per dimension), and each H2 section ends with the three bulleted criteria (`pass`, `partial`, `fail`). The judge prompt parses on H2 headers and the three bullets. Don't add extra H2s, footnotes, or appendices — they confuse parsing. If a dimension genuinely can't take a `partial`, write `**partial:** not applicable — this dimension is binary` rather than omitting the bullet.
 
-**Tool-usage dimensions for MCP-calling skills.** Skills with `allowed-tools` in their frontmatter (search-records, search-full-text, locality-guide, etc.) must include at least one dimension covering MCP tool usage. This aligns with the three-axis breakdown in `docs/gps/skill-mcp-testing-plan.md` (tool selection, argument quality, response interpretation). Two patterns:
+**Tool-usage dimensions for MCP-calling skills.** Skills with `allowed-tools` in their frontmatter (search-records, search-full-text, locality-guide, etc.) must include at least one dimension covering MCP tool usage. This aligns with the three-axis breakdown in `docs/skill-mcp-testing-plan.md` (tool selection, argument quality, response interpretation). Two patterns:
 
 - **Single combined dimension:** "Tool usage — correct tool selected for the task, arguments well-formed and faithful to the user's request, response interpreted accurately." Use for skills with a single dominant tool.
 - **Split dimensions:** "Argument quality" and "Response interpretation" as separate dimensions. Use for skills where tool selection is non-trivial (multiple plausible tools) or where the response shape is complex enough that interpretation is its own skill.
@@ -1007,7 +1007,7 @@ The `research-schema-spec.md` ownership table is the source of truth for structu
 
 ## 9. Pre-flight Conditions
 
-Before the harness executes a test, it runs the runnability gate below. Test authoring workflow lives in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md); senior review cadence, calibration protocols, and Phase 1 bootstrap sequencing live in [`docs/gps/skill-mcp-testing-plan.md`](../gps/skill-mcp-testing-plan.md). This section covers only what the harness checks.
+Before the harness executes a test, it runs the runnability gate below. Test authoring workflow lives in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md); senior review cadence, calibration protocols, and Phase 1 bootstrap sequencing live in [`docs/skill-mcp-testing-plan.md`](../skill-mcp-testing-plan.md). This section covers only what the harness checks.
 
 ### Runnability gate
 
@@ -1255,7 +1255,7 @@ Target: **10-20 tests per skill**, split roughly 50/50 between positive and nega
 
 With 23 in-scope skills (excluding multi-turn skills — see Section 1), the target is **230-460 tests total**. This is enough to catch regressions and give the LLM judge meaningful signal. More tests per skill yields diminishing returns — the 15th conflict-resolution test teaches less than the 5th.
 
-**Relationship to the description optimizer.** The master testing plan (`docs/gps/skill-mcp-testing-plan.md`, Appendix C) cites ~30 labeled queries as a typical setup for low-variance candidate ranking in description optimization. The optimizer works with fewer — 10-20 well-chosen tests yield usable signal — but candidate scoring is noisier and a strict 60/40 train/test split becomes thin. Mitigations: skip per-skill holdout and rely on senior review of proposed descriptions, or treat boundary tests from confusable-skill pairs as cross-skill holdouts. Authoring an additional 10 synthetic queries per skill at optimization time is also acceptable; those queries are ephemeral and need not be checked into `eval/tests/unit/`.
+**Relationship to the description optimizer.** The master testing plan (`docs/skill-mcp-testing-plan.md`, Appendix C) cites ~30 labeled queries as a typical setup for low-variance candidate ranking in description optimization. The optimizer works with fewer — 10-20 well-chosen tests yield usable signal — but candidate scoring is noisier and a strict 60/40 train/test split becomes thin. Mitigations: skip per-skill holdout and rely on senior review of proposed descriptions, or treat boundary tests from confusable-skill pairs as cross-skill holdouts. Authoring an additional 10 synthetic queries per skill at optimization time is also acceptable; those queries are ephemeral and need not be checked into `eval/tests/unit/`.
 
 Junior genealogists create tests via the CRUD UI. Senior genealogists review a subset as golden sets for calibration.
 
@@ -1800,7 +1800,7 @@ The following seed files exist in the repo as working references for harness dev
 
 ### Scenarios
 
-Two scenarios are shipped today: `mid-research-flynn` and `flynn-with-birthplace-conflict` (both under `eval/fixtures/scenarios/`). The full list of bootstrap scenarios devs must seed for Phase 1 — including which are still needed — lives in [`docs/gps/skill-mcp-testing-plan.md`](../gps/skill-mcp-testing-plan.md) under "Sequencing > Phase 1." That's the single source of truth for scenario inventory and priority; this section links rather than restates to prevent drift.
+Two scenarios are shipped today: `mid-research-flynn` and `flynn-with-birthplace-conflict` (both under `eval/fixtures/scenarios/`). The full list of bootstrap scenarios devs must seed for Phase 1 — including which are still needed — lives in [`docs/skill-mcp-testing-plan.md`](../skill-mcp-testing-plan.md) under "Sequencing > Phase 1." That's the single source of truth for scenario inventory and priority; this section links rather than restates to prevent drift.
 
 Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`. The two JSON files must validate against [`research.schema.json`](schemas/research.schema.json) and [`tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json).
 

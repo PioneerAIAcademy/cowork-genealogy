@@ -18,7 +18,7 @@ the eventual durable system-of-record (see §6).
 continuity even though the conclusion is to *drop* Ably; rename can happen
 separately.
 **Read with:** `realtime-rearch-status.md` (current architecture),
-`sandbox-provider-interface.md`, `e2b-provider-implementation-plan.md`,
+`sandbox-provider-interface.md`,
 `neon-postgres-plan.md` (its `count > 1` DB work still applies; its affinity-fix
 references were updated to point here), `fly-deploy-plan.md` (likewise).
 **Reviewers:** Dallan + eng reviewer.
@@ -314,7 +314,7 @@ streaming (the echo server stood in for it); a multi-minute *no-ping* idle; the
   janitor's keys; no new persistence.
 - `local_ws` realtime + `/ws/sessions/{id}` — kept for local dev.
 - `viewer-ui` `ResearchTransport` — socket-agnostic, untouched.
-- E2B provider scaffold (`app/sandbox/e2b.py`) + `e2b-provider-implementation-plan.md`.
+- E2B provider scaffold (`app/sandbox/e2b.py`).
 
 ---
 
