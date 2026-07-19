@@ -65,13 +65,29 @@ class E2eResult:
     # report can group without re-reading every fixture.
     tags: dict[str, str] = field(default_factory=dict)
 
-    # Denied attempts to read the answer off the live tree (person_read /
-    # person_search / person_ancestors are disabled in e2e runs — see
-    # e2e-test-spec.md §6.1). Each entry is {tool, args}. A non-empty list
-    # means the agent tried to shortcut research by reading the tree; the
-    # calls were blocked, so the verdict is still earned from records, but
-    # it's worth a reviewer's eye.
+    # Tool calls the PreToolUse hook denied. Each entry is
+    # {tool, args, blocked_by}; the name predates the second and third
+    # reasons, so read `blocked_by` rather than assuming a tree read:
+    #
+    #   "tree"    — reading the answer off the live tree (person_read /
+    #               person_search / person_ancestors are disabled in e2e runs,
+    #               e2e-test-spec.md §6.1). The agent tried to shortcut
+    #               research; the verdict is still earned from records, but
+    #               it's worth a reviewer's eye.
+    #   "fixture" — blocked by the fixture's own `blocked_tools`.
+    #
+    # In every case the call was denied, so it never reaches `tool_calls` —
+    # this list is the only record that it was attempted.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
+
+    # Compact per-subagent transcript summaries (agent_type, per-turn
+    # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
+    # Captured from the SDK's ephemeral subagent cache — which the runlog
+    # otherwise does not store — so a subagent that burned its whole output
+    # budget on thinking (stop_reason=max_tokens, no tool call), invisible from
+    # `tool_calls` alone, is diagnosable directly from the committed runlog.
+    # See subagent_capture.py.
+    subagents: list[dict[str, Any]] = field(default_factory=list)
 
 
 def timestamp_slug(now: datetime | None = None) -> str:
@@ -95,7 +111,7 @@ def is_committable_run(verdict: str) -> bool:
 
     Fixture *validity* is a separate axis (e2e-test-spec.md §14): only a `pass`
     proves the fixture solvable. A committed `fail` does NOT validate the
-    fixture — check_e2e_fixtures.py looks specifically for verdict==pass.
+    fixture (validity is a recommended authoring practice, not a CI check).
     """
     return verdict in _GRADED_VERDICTS
 

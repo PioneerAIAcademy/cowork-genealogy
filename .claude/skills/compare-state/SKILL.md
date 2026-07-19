@@ -54,7 +54,7 @@ Verify:
 
 If any check fails, abort with a message that names the specific
 field and points the user at
-`cowork-genealogy-ui/docs/feedback-json-spec.md` §3. Do not proceed to the LLM
+`apps/electron/docs/feedback-json-spec.md` §3. Do not proceed to the LLM
 comparison — surfacing a bad case fixture here is much better than
 a downstream judgment producing nonsense.
 
@@ -142,7 +142,7 @@ beyond Read / Bash / Glob for file inspection. Use Claude Sonnet 4.6
 | Situation | Action |
 |---|---|
 | `_feedback/feedback.json` is missing | Abort with "Not a feedback-case directory. Run `scripts/setup-feedback-case.sh <zip>` first; see docs/specs/feedback-case-spec.md §3.1." |
-| `_feedback/feedback.json` exists but the target field is empty | Abort with "feedback.json has empty `<field>`. Per `cowork-genealogy-ui/docs/feedback-json-spec.md` §3, this field is required and must be non-empty. Have the submitter resubmit." |
+| `_feedback/feedback.json` exists but the target field is empty | Abort with "feedback.json has empty `<field>`. Per `apps/electron/docs/feedback-json-spec.md` §3, this field is required and must be non-empty. Have the submitter resubmit." |
 | `--against` flag missing or invalid | Print usage (`--against=what-went-wrong` or `--against=desired`) and abort. |
 | The case directory has no git baseline (no `.git/`) | Warn but continue — the user may be running this outside the standard setup. State-diff falls back to reading the canonical files only. |
 | The user invokes this from a directory that is NOT a feedback case (no `_feedback/`) | Abort with the message in row 1 above. |

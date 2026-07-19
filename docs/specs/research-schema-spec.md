@@ -1,6 +1,6 @@
 # Research Schema Specification
 
-This document defines the complete schema for `research.json`, the GPS audit trail and working artifact for genealogy research projects. It supersedes the earlier draft in `docs/gps/schema.md`.
+This document defines the complete schema for `research.json`, the GPS audit trail and working artifact for genealogy research projects. It supersedes the earlier pre-implementation draft.
 
 **Machine-readable schema:** [`docs/specs/schemas/research.schema.json`](schemas/research.schema.json). Enum definitions live in [`docs/specs/schemas/enums.schema.json`](schemas/enums.schema.json) and are referenced via `$ref`. This prose document is normative for humans; the JSON Schema files are normative for machine validation. When the two disagree, fix the stale side and audit the other.
 
@@ -8,7 +8,7 @@ This document defines the complete schema for `research.json`, the GPS audit tra
 
 A genealogy research project consists of two files:
 
-- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/gps/simplified-gedcomx.md`). This is what uploads to FamilySearch.
+- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/specs/simplified-gedcomx-spec.md`). This is what uploads to FamilySearch.
 - **`research.json`** — The working artifact. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. This is the GPS audit trail that proves the conclusions in the GedcomX file are sound.
 
 ### The two-file boundary
@@ -86,7 +86,7 @@ The following are **open enums** — recommended values that skills should prefe
 
 | Enum name | Recommended values | Used by |
 |-----------|-------------------|---------|
-| `fact_type` | `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` | assertions |
+| `fact_type` | `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` | assertions |
 | `record_type` | `census`, `vital_record`, `probate`, `land`, `church`, `military`, `newspaper`, `cemetery`, `tax`, `immigration`, `court`, `other` | plan items |
 | `event_type` | `birth`, `baptism`, `marriage`, `death`, `burial`, `residence`, `census`, `military`, `immigration`, `emigration`, `land_transaction`, `probate`, `other` | timeline events |
 | `record_role` | See naming convention below | assertions |
@@ -148,24 +148,24 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, record-extraction | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
-| `relationships` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, record-extraction | (terminal) | Mutable; preserve IDs |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `relationships` | init-project, tree-edit, proof-conclusion, person-evidence | (terminal) | Mutable; preserve IDs |
+| `sources` | init-project, tree-edit, proof-conclusion, person-evidence, record-extraction | (terminal) | Mutable; preserve IDs |
 
 `init-project` writes the initial stub persons at project creation;
-`tree-edit` applies user-directed changes; `proof-conclusion` promotes
-research conclusions to the tree when a proof summary reaches
-`probable` or higher (see Section 8 "tree.gedcomx.json update timing"
-and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
-`person-evidence` mints a stub `person` when a newly discovered persona
-matches no one in the tree (see Section 8). `record-extraction` writes
-`sources` (the GedcomX `S` entry that mirrors each `src_` it appends to
-`research.json`); it additionally writes `persons` and `relationships`
-under the §5d trigger — when the subject appears as a child on a
-household record, it creates minimal person stubs for the subject's
-siblings and `ParentChild` edges from the existing in-tree parent to
-each new sibling, so downstream skills can discover them. The harness's
-`test_tree_ownership_table` universal validator enforces this.
+`tree-edit` applies user-directed changes; `proof-conclusion` lands the
+*conclusion* on the tree — marking the concluded value `primary` and
+writing the concluded relationship (see Section 8 "tree.gedcomx.json
+update timing" and [`simplified-gedcomx-spec.md`](simplified-gedcomx-spec.md) §1).
+`person-evidence` **owns the household skeleton**: it mints a `person`
+when a newly discovered persona matches no one in the tree — with its
+first sourced evidence facts, via `materialize_facts` create-or-enrich,
+never a name-only stub — and writes the parent-child / spouse edges via
+`add_relationship` (see Section 8). `record-extraction` is
+**assertion-only**: it writes `sources` (the GedcomX `S` entry that
+mirrors each `src_` it appends to `research.json`) plus the assertions,
+and does **not** write `persons` or `relationships`. The harness's
+`test_tree_ownership_table` universal validator enforces this ownership.
 
 ---
 
@@ -300,7 +300,7 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Log entry ID (`log_` prefix) |
-| `plan_item_id` | string or null | yes | `pli_` reference, or null for ad-hoc searches |
+| `plan_item_id` | string or null | yes | `pli_` reference, or null for ad-hoc searches. `validate_research_schema` enforces the `^pli_` prefix here (matching the JSON Schema and the sibling reference fields); a non-`pli_` value such as a question id is invalid. |
 | `performed` | string | yes | ISO 8601 datetime with timezone |
 | `tool` | string | yes | The MCP tool or method used (e.g., `record_search`, `fulltext_search`, `person_read`, `image_search`, `external_site`) |
 | `query` | object | yes | Freeform object capturing the search parameters used |
@@ -354,7 +354,8 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `url` | string or null | no | URL to the digital source |
 | `url_archived` | string or null | no | Web archive URL |
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
-| `transcription` | string or null | no | Full verbatim transcription of an image record, when the record was extracted from a FamilySearch image via `image_read`. `image_read` returns an image (not text), so the transcription is Claude's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
+| `transcription` | string or null | no | Full verbatim transcription of a page-scan record, when it was read via the `image-reader` subagent (`image_transcribe` OCR). The transcription is the model's product and is retained here rather than in a results sidecar. Null for records that are not image-sourced. |
+| `image_filename` | string or null | no | Project-relative path (`images/<key>.jpg`) of the saved page scan, when `image_transcribe` persisted it (a `projectPath` was supplied). Lets the viewer show the scan beside its `transcription`. Only retained-source images survive: a best-effort TTL sweep in `research_append` GCs `images/*.jpg` that no source's `image_filename` cites (§8.5). Null when the source is not image-backed or the image was not persisted. |
 | `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
 **`citation_detail`** — Enforces the Who/What/When/Where/Where-within framework from Evidence Explained.
@@ -383,7 +384,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
 | `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions (no sidecar → supplying a value is a hard error). |
-| `fact_type` | string | yes | The type of fact: `name`, `birth`, `death`, `burial`, `marriage`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other` |
+| `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `direct`, computed birth year `indirect`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
 | `date` | string or null | no | Date of the event/fact |
@@ -656,11 +657,19 @@ Users may manually edit `tree.gedcomx.json` — adding a person, correcting a fa
 
 ### `tree.gedcomx.json` update timing
 
-The `probable`-or-higher update rule applies to **persons, relationships, and facts** in `tree.gedcomx.json` — the concluded genealogical data. It is updated when a proof summary at tier `probable` or higher is written. During early research (before any proof summary exists), the GedcomX file contains stub persons with whatever is known at project initialization. As proof summaries are written or revised, the corresponding facts, relationships, and sources in `tree.gedcomx.json` are updated to match the concluded state. The worked example shows this: the GedcomX birthplace is "Ireland" (matching the resolved conflict c_001 and the `probable` proof summary ps_001), and the ParentChild relationship R1 is present because ps_001 concludes parentage at `probable`. If ps_001 were later revised to `not_proved`, R1 should be removed from the GedcomX file.
+`tree.gedcomx.json` is maintained under a **two-layer rule** — evidence and conclusion are distinct layers, written at different times by different owners.
 
-**Exceptions to the proof-conclusion-only rule:**
-- **Source descriptions** are created by record-extraction during active research, because `research.json` sources need `gedcomx_source_description_id` references to exist. Source descriptions in the GedcomX file represent "this source was consulted," not "this source's conclusions are finalized."
-- **Person stubs** may be created by person-evidence when a newly discovered person doesn't yet exist in the GedcomX file. These stubs have minimal data (name, gender) and are refined as research progresses.
+**Layer 1 — evidence, materialized at identity-link time.** When person-evidence links a persona to a tree person, the evidence facts and names that persona asserts materialize onto the person via `materialize_facts`. Each materialized fact and name carries **provenance** — a non-null source reference back to the record it came from. This happens as soon as the identity link is made, **independent of any proof summary**. The tree therefore accumulates evidence facts as research proceeds, not only once a conclusion is reached; conflicting values of the same fact type **coexist as separate sourced facts** rather than being withheld until the conflict is resolved.
+
+**Layer 2 — conclusion, governed by `primary`/`preferred` + `proof_tier`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags together with `proof_tier` — written by **proof-conclusion alone**. Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`/`proof_tier`; the underlying evidence facts stay in the tree as evidence.
+
+**Upload is conclusion-gated.** Only `primary`/proof-backed persons, relationships, and facts are sent to FamilySearch at upload time; the tree may hold un-concluded evidence facts that never upload. Upload gating is proof-conclusion / upload-workflow logic, not a materialization concern.
+
+The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary`/`proof_tier` markers that proof summary ps_001 (`probable`) sets, not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but their `primary`/`proof_tier` conclusion markers would be cleared.
+
+**Two further evidence-layer writes during active research:**
+- **Source descriptions (`S` entries)** are created by record-extraction — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."
+- **Person stubs** are minted when a newly discovered person doesn't yet exist in the GedcomX file — by person-evidence, increasingly via `materialize_facts`' create-or-enrich (the stub arrives *with* its first evidence facts and their provenance). Stubs carry minimal data and gain evidence facts as research progresses.
 
 ### Source ownership: record-extraction vs. citation
 
@@ -1064,7 +1073,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": null,
       "information_quality": "indeterminate",
       "informant": "Unknown household member reporting to census enumerator",
-      "informant_proximity": "unknown",
+      "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
       "evidence_type": "direct",
       "log_entry_id": "log_001",
@@ -1120,7 +1129,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": "Schuylkill County, Pennsylvania",
       "information_quality": "indeterminate",
       "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
-      "informant_proximity": "unknown",
+      "informant_proximity": "researcher",
       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
@@ -1138,7 +1147,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": null,
       "information_quality": "indeterminate",
       "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
-      "informant_proximity": "unknown",
+      "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
       "evidence_type": "indirect",
       "log_entry_id": "log_001",
@@ -1192,7 +1201,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": null,
       "information_quality": "indeterminate",
       "informant": "Unknown household member reporting to census enumerator",
-      "informant_proximity": "unknown",
+      "informant_proximity": "household_member",
       "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
       "evidence_type": "direct",
       "log_entry_id": "log_004",
@@ -1247,7 +1256,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "place": "Schuylkill County, Pennsylvania",
       "information_quality": "primary",
       "informant": "Attending physician (signature on certificate)",
-      "informant_proximity": "witness",
+      "informant_proximity": "official_duty",
       "informant_bias_notes": null,
       "evidence_type": "direct",
       "log_entry_id": "log_005",
@@ -1268,7 +1277,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.",
-      "evidence_type": "direct",
+      "evidence_type": "indirect",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     },
@@ -1287,7 +1296,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "informant": "James Brown (son-in-law)",
       "informant_proximity": "family_not_present",
       "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
-      "evidence_type": "direct",
+      "evidence_type": "indirect",
       "log_entry_id": "log_005",
       "extracted_for_question_ids": ["q_001"]
     }
@@ -1459,7 +1468,7 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
 
 ## 10. Changes from Draft Schema
 
-This section documents what changed from the earlier draft in `docs/gps/schema.md` and why.
+This section documents what changed from the earlier pre-implementation draft and why.
 
 | Change | Rationale |
 |--------|-----------|

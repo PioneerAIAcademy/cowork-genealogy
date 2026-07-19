@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Agent's Couple relationship (rel-anders-unna) has an empty facts array -- no marriage date or place recorded at all. Agent instead documented indirect evidence (1801 census co-residence) but never located the direct marriage record.",
+    "f2": "Agent's final sources are the death/burial record, a christening record, a baptism index entry, and the 1801 census -- none is 'Norway, Marriages, 1660-1926'. Root cause confirmed from tool_calls: the agent tried 3 record_search variants against collection 1468080, varying which party was principal and dropping surname/place filters, but never varied the spelling of the bride's given name itself (the real record indexes her as 'Urna'; the census independently indexes her as 'Udna' -- neither was tried)."
+  }
+}

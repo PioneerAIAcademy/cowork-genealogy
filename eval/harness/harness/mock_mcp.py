@@ -79,8 +79,10 @@ LIVE_TOOLS: set[str] = {
     "validate_research_schema",
     "research_log_append",
     "research_append",
+    "extraction_append",
     "tree_edit",
     "tree_correct",
+    "materialize_facts",
     "project_context",
 }
 
@@ -162,7 +164,7 @@ def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
 # a canned payload, so we materialize the staged file here (via the compiled
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
-STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search"}
+STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
 
 
 def _stage_search_results(
@@ -364,10 +366,22 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "extraction_append":
+        # The record-extraction lane's writer (issue #695). Uses the generic
+        # compiled-tool handler: the lane restriction lives inside the exported
+        # extractionAppend function, so calling it directly here — as this
+        # harness does, bypassing index.ts — still enforces the lane.
+        return _make_compiled_tool_handler(
+            "extraction_append", "extraction-append.js", "extractionAppend", workspace, call_log
+        )
     if tool_name == "tree_edit":
         return _make_compiled_tool_handler("tree_edit", "tree-edit.js", "treeEdit", workspace, call_log)
     if tool_name == "tree_correct":
         return _make_compiled_tool_handler("tree_correct", "tree-correct.js", "treeCorrect", workspace, call_log)
+    if tool_name == "materialize_facts":
+        return _make_compiled_tool_handler(
+            "materialize_facts", "materialize-facts.js", "materializeFacts", workspace, call_log
+        )
     if tool_name == "project_context":
         return _make_compiled_tool_handler(
             "project_context", "project-context.js", "projectContext", workspace, call_log

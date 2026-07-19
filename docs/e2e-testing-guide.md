@@ -155,15 +155,9 @@ Before running any e2e test:
 
 ## Creating a new e2e test
 
-> **External (alpha) senior genealogist authoring on Windows?** Follow the
-> friendly start-to-PR click-path in
-> [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — it wraps the
-> steps in this section in a single walkthrough (author → validate → watch a
-> live run → open the fixture PR). The material below is the reference behind it.
-
 > **Where these skills live.** `author-e2e-fixture`, `interpret-e2e-result`, and
 > `grade-e2e-run` are repo-local dev tooling under `.claude/skills/` (alongside
-> `compare-state` and `draft-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
+> `compare-state`, `draft-unit-test`, and `mine-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
 > picks them up automatically when you work in this checkout, so the `/`-commands
 > below just work. See [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) for why
 > they're a distinct class from the research skills.
@@ -751,6 +745,175 @@ When a test fails (or a previously-passing test regresses):
 
 ---
 
+## From a noticed issue to a fix (the skill-improvement loop)
+
+E2e tests are a **stakeholder-facing benchmark, not a regression suite** — so when
+live research surfaces a *skill* problem, the durable fix is a **unit regression
+test plus a `SKILL.md` edit**, measured before you adopt it. This section is that
+bridge: how an issue you *notice while researching* becomes a committed fix that
+can't silently come back.
+
+> **New to this loop? Read the ELI5 walkthrough first:**
+> [`e2e-testing-example.md`](e2e-testing-example.md) follows one concrete example
+> — a citation missing its page/line — end to end, calling out which of **Cowork /
+> Claude Code / terminal** each step happens in. The section below is the terse
+> reference behind that story.
+
+In practice you rarely catch this as a *recorded* e2e failure — teams fix skills
+before the PR — so the real trigger is a **human noticing something wrong during
+research in Cowork.** That is also the *easiest* fuel: the seeded project directory
+**is** the research state, so the unit-test scenario is mostly already built.
+
+The design and rationale live in
+[`docs/plan/gated-skill-improvement-slice.md`](plan/gated-skill-improvement-slice.md);
+this is the operational how-to. **Every step below runs today** — the gate
+(`make gate-skill`, step 6), the improver's ≤3-edit budget (step 5), and the
+`mine-unit-test` skill (`.claude/skills/mine-unit-test/`, step 3).
+
+**Preconditions for the live Cowork steps (1 and 7):** be logged in to
+FamilySearch (`make e2e-login`, once a day) and have the genealogy tools installed
+in Cowork — build+install the `.mcpb` extension (`make mcpb`) and upload the plugin
+`.zip` (`make plugin`), per `eval/README.md` → "Debug a fixture interactively
+(Cowork + the viewer)". (`make engine-build` alone wires only the Claude Code
+scratch path, not Cowork.)
+
+**1. Notice the issue during research (Cowork).** Seed an editable project and
+watch it in the viewer:
+```bash
+make e2e-project TEST=<slug>      # Windows: SeedProject.bat
+```
+Open the seeded `eval/e2e-project/<slug>/` in **Claude Cowork** with the Research
+Viewer. When something looks wrong — a weak citation, a missed record, an
+over-claim — the project state (`research.json` + `tree.gedcomx.json` + `results/`)
+is right there, and that state is the raw material for step 3.
+
+**2. Classify before you fix (the lane gate).** Not every issue is a skill-body
+problem. Using the project's `results/` sidecar files (the real tool responses) and
+the transcript, place the cause — this is `skill-lifecycle.md` §5's lane rule:
+- **Tool defect** — the sub-skill called the right tool with the right args but it
+  returned wrong/missing data (or rejected a valid payload) → an **MCP tool PR +
+  vitest**, not a skill edit. (The cause list in "Investigating failures" above has
+  *no* tool-defect entry, so this is the easy one to skip — don't.)
+- **Eval / rubric defect** — the skill did the right thing and a stale
+  rubric/fixture would ding it → a **rubric or judge-prompt** fix (start with the
+  `rubric-critic` agent, step 5).
+- **Record-type craft gap** — a single record type's nuance (a death-cert,
+  probate, or church-record subtlety) was mishandled → fix it in **that record
+  type's playbook/table, not global `SKILL.md` prose**; this loop's body edit is
+  the wrong lever. (Still worth a regression test.)
+- **Core doctrine** — a genuine cross-record-type behavior the prose steered wrong
+  → continue this loop.
+
+The last two lanes proceed to a unit test (a record-type fix lands in its
+playbook/table; a core-doctrine fix in `SKILL.md`).
+
+**3. Mine a unit test that exhibits the issue.** In a **Claude Code** session at
+the repo root, run the **`mine-unit-test`** skill (`.claude/skills/mine-unit-test/`)
+— point it at the Cowork project (`--project <dir>`) or a recorded e2e run
+(`--e2e-run <dir>`), and give it your Did/Should/Gap note. It applies the lane
+gate (Step 2 above), localizes to the sub-skill, carves a mid-flow scenario from
+the project state, synthesizes mock fixtures from the project's `results/` sidecars
+(the `log[].query` gives the args, `results/<log_id>.json` the response), and
+writes a `_draft` test + scenario + fixtures under `eval/`. It's **guided
+authoring** — treat the scenario carve especially as a first cut to verify.
+(`mine-unit-test` is the sibling of `draft-unit-test`, which mines from a submitted
+*feedback case* instead.) **Keep the test general** — it
+must capture the *class* of mistake, not memorize the one scenario (a case-patch
+is a regression in disguise).
+
+**4. Run the mined test and annotate it — this is what lets the improver act.**
+```bash
+make eval-skill SKILL=<skill>     # runs the skill's suite, including the new test
+```
+Then open the CRUD UI (`make eval-ui`) and annotate the mined test's failing
+dimension: in its correction `comment` (a single free-text field) write what the
+skill **Did**, what it **Should** have done, and the **Gap** in the `SKILL.md`
+prose between them — the same problem you spotted in step 1. This is not optional:
+the `skill-improver` proposes nothing for a lone, unannotated test (its bar is "≥2
+tests **OR** one human correction with a specific comment"). You already hold that
+comment — write it down.
+
+**Precondition — hold-out tests must exist before you gate.** Steps 5 and 6 assume
+your pilot skill already has 2–3 hold-out tests (the improver excludes them; the
+gate unions them into its no-regression check). Today only `citation`,
+`search-external-sites`, `search-images`, and `validate-schema` have any (9
+hold-out tests, of 343 total). If your pilot has none, that check is silently
+inert — first designate 2–3 diverse, stable tests as hold-out via the CRUD UI's
+Hold-out toggle. Marking a test hold-out is a grading-relevant change that flips
+the skill's active run-log inactive, so do it **before** this step and let this
+step's `make eval-skill` establish the fresh baseline.
+
+**5. Audit the rubric (once), then improve the skill.** Before trusting the judge
+to score the improvement loop, make sure the skill's rubric discriminates:
+> **`rubric-critic`** (Claude Code subagent, `.claude/agents/rubric-critic.md`) —
+> *"audit the rubric for `<skill>`."* Read-only; flags dimensions that never vary,
+> flaky ones, and systematic judge-vs-human divergence. This is a **once-per-skill
+> precondition** (plan §10), not a step you repeat every round — skip it if the
+> skill's rubric was audited recently.
+
+Then run the body optimizer:
+> **`skill-improver`** (Claude Code subagent, `.claude/agents/skill-improver.md`) —
+> *"improve `<skill>` from its eval results."* Report-only: it reads the annotated
+> run-log and proposes evidence-cited `SKILL.md` edits, **capped at ≤3 ranked edits
+> per round** (the edit budget). It excludes hold-out tests, routes non-body causes
+> elsewhere, and refuses case-patches. **You apply the edits to the working-tree
+> `SKILL.md`** — it never writes files.
+
+Trusting the (good-in-aggregate) LLM judge to score this loop is fine **bounded
+by**: the rubric was just audited; the fix must *reproduce on the old skill, then
+pass on the new* (never a lone pass); the loop is iteration-capped (don't
+loop-until-the-judge-is-happy — that reward-hacks the judge); and a hold-out the
+improver never sees backstops it.
+
+**6. Gate the edit (`make gate-skill`), then produce the release run.** First
+apply the improver's ≤3 edits to the working-tree `SKILL.md`. Then:
+```bash
+make gate-skill SKILL=<skill> TEST=<mined-test-id> [DIMENSION="<failing dim>"]
+```
+It runs the mined test ∪ the skill's hold-out set on your **candidate** (the
+working tree, edits applied), mock-backed, and compares to the **incumbent**
+scores read from your **step-4 run** (the pre-edit `make eval-skill` run you
+annotated — human corrections are used as the baseline). It prints a per-dimension
+comparison + a **LOOKS GOOD / NEEDS YOUR EYES / INCONCLUSIVE** signal, and
+**credits the fix only if the failure reproduced on the step-4 baseline and then
+passed on the candidate** — an `INCONCLUSIVE` means it didn't reproduce at step 4
+(jitter or a too-weak test: re-mine or drop it). Hold-out drops are flagged for you
+to eyeball, never auto-rejected. The gate runs **one side, writes no run-logs, and
+needs no `git`** — you decide, using generalization-by-inspection as the primary
+guard. (It errors if you haven't run step 4 yet — it needs that baseline. No
+hold-out tests? The no-regression half is inert — see the step-4 precondition.)
+
+Then produce the **releasable, annotated run** the PR needs:
+```bash
+make eval-skill SKILL=<skill>
+```
+Annotate it in the CRUD UI (correct only the dimensions you disagree with). A
+senior reviews these corrected grades and releases the run-log version.
+
+**7. Verify in Cowork (sanity check).** Re-run the same research in the seeded
+project (step 1) and confirm the issue is gone. Belt-and-suspenders: the **unit
+test is the durable regression guard**; one live e2e run against drifting
+FamilySearch data is a sanity check, not proof.
+
+**8. Open the PR.** One skill per PR: the `SKILL.md` edit + the mined unit test
+(+ scenario/fixtures) + the run-log + your annotations. A senior reviews the
+corrected grades and releases the run-log version.
+
+### Where each step runs
+
+| Step | Tool | Runs in |
+|---|---|---|
+| 1 Notice | `make e2e-project` + Research Viewer | **Cowork** |
+| 2 Classify | judgment + `results/` + transcript | Claude Code |
+| 3 Mine | `mine-unit-test` | Claude Code (repo root) |
+| 4 Run + annotate | `make eval-skill` + CRUD UI (`make eval-ui`) | Claude Code / browser |
+| 5 Audit + improve | `rubric-critic`, `skill-improver` | Claude Code |
+| 6 Gate | `make gate-skill` + `make eval-skill` + CRUD UI | Claude Code / browser |
+| 7 Verify | `make e2e-project` | **Cowork** |
+| 8 PR | git / GitHub | — |
+
+---
+
 ## Judge calibration
 
 The verdict on every e2e run comes from one LLM judge call. Before you
@@ -912,14 +1075,14 @@ correction of the judge's own labels.
 
 - [`docs/plan/e2e-skills.md`](plan/e2e-skills.md) — design rationale,
   the three-cadence model, and the remaining build work
-- [`docs/plan/e2e-annotation-calibration.md`](plan/e2e-annotation-calibration.md)
-  — the per-run annotation calibration design (annotation shape, grade-blind
-  flow, loader classification rules)
+- [`docs/plan/gated-skill-improvement-slice.md`](plan/gated-skill-improvement-slice.md)
+  — the design behind "From a noticed issue to a fix": mining unit tests from
+  noticed failures (E), the gate (A), and the improver edit budget (B)
+- [`docs/skill-lifecycle.md`](skill-lifecycle.md) — the full authoring →
+  test → improve → release loop the unit-test half plugs into
+- the `skill-improver` and `rubric-critic` agents — `.claude/agents/`
 - [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the
   authoritative test format and harness contract
-- [`docs/specs/gps-test-spec.md`](specs/gps-test-spec.md) —
-  alternate "tests derived from published GPS proof statements"
-  approach, held for future work
 - [`docs/specs/research-schema-spec.md`](specs/research-schema-spec.md)
   — `research.json` schema, relevant when authoring
   `starting-research.json`
@@ -928,7 +1091,9 @@ correction of the judge's own labels.
   `starting-tree.gedcomx.json`
 - [`eval/CLAUDE.md`](../eval/CLAUDE.md) — eval framework
   conventions (unit tests; e2e shares the runlog discipline)
-- [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — start-to-PR
-  walkthrough for external (alpha) senior genealogists authoring fixtures
+- [`docs/alpha-user-guide.md`](alpha-user-guide.md) — what alpha testers do
+  (research in the hosted web app; they do not author fixtures)
+- [`docs/alpha-feedback-example.md`](alpha-feedback-example.md) — one alpha
+  report followed end to end into a committed regression test
 - [`packages/engine/plugin/skills/research/SKILL.md`](../packages/engine/plugin/skills/research/SKILL.md)
   — the `/research` skill that e2e tests invoke

@@ -1,0 +1,454 @@
+{
+  "run_log": "v1_2026-07-08_15-47-10.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "place_distance tool was available in fixtures but not called. Implicit reasoning about trans-Atlantic feasibility isn't sufficient when the tool exists."
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The skill correctly routed to conflict-resolution, which is exactly what a negative test expects. The judge misread the empty text response as a failure, routing to the correct skill IS the expected behavior. No\ntext explanation is needed beyond the routing action itself."
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Routing to conflict-resolution without elaboration is sufficient for a negative routing test. he skill declined its own task and delegated correctly."
+    },
+    {
+      "test_id": "ut_timeline_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Performed conflict-resolution instead of routing to person-evidence. Fundamental misrouting."
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Wrong task executed entirely."
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Tool calls made by the wrong skill\n timeline should have declined without calling any tools. "
+    },
+    {
+      "test_id": "ut_timeline_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Chronological ordering",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Didn't call place_distance or provide explicit travel-time reasoning despite the trans-Atlantic move being the key geographic question."
+    }
+  ]
+}

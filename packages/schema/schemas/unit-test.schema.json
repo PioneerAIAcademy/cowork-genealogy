@@ -108,19 +108,38 @@
           },
           "fact_type": {
             "type": "string",
-            "description": "The assertion's fact_type, exactly as the skill persists it (e.g. name, age, birthplace, residence, relationship, death, cause_of_death)."
+            "description": "The assertion's fact_type, exactly as the skill persists it (e.g. name, age, birth, residence, relationship, death, cause_of_death). Event place/date are attributes of the event fact, not their own types: a birthplace is fact_type `birth` with the `place` set — pair it with `attribute: \"place\"` (below)."
+          },
+          "attribute": {
+            "type": "string",
+            "enum": ["date", "place"],
+            "description": "Optional facet for an event fact whose date and place are separate attributes of the one event type. When set, the matcher matches ONLY new assertions of the given fact_type that have that attribute populated (`place`/`standard_place` for \"place\", `date` for \"date\") — so a `birth` place-claim (`direct`) and a `birth` date-claim (`indirect`) stay independently checkable. Omit for facts that don't split date from place."
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, the matcher does NOT require a matching assertion to EXIST — it only checks the classification IF one is present. Use for a fact whose existence is completeness the skill produces unreliably (gating on it flaps), while still verifying its classification when present. The judge's soft Completeness dimension covers the omission. Defaults to false (existence required)."
           },
           "evidence_type": {
-            "type": "string",
-            "description": "Expected evidence_type on every matching new assertion (direct | indirect | negative)."
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ],
+            "description": "Expected evidence_type on every matching new assertion (direct | indirect | negative). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
           },
           "informant_proximity": {
-            "type": "string",
-            "description": "Expected informant_proximity on every matching new assertion (self | witness | household_member | family_not_present | researcher | official_duty | unknown)."
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ],
+            "description": "Expected informant_proximity on every matching new assertion (self | witness | household_member | family_not_present | researcher | official_duty | unknown). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
           },
           "information_quality": {
-            "type": "string",
-            "description": "Expected information_quality on every matching new assertion (primary | secondary | indeterminate)."
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ],
+            "description": "Expected information_quality on every matching new assertion (primary | secondary | indeterminate). A single string is exact-matched; a list of values means any is accepted — used for a genuinely-ambiguous classification the field itself splits on."
           }
         }
       }
@@ -142,7 +161,7 @@
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe (e.g. citation refuse-new-source: the skill may or may not fire, but no run may fabricate a source). REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/plan/invariant-grading.md."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe (e.g. citation refuse-new-source: the skill may or may not fire, but no run may fabricate a source). REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/specs/unit-test-spec.md."
         }
       }
     },

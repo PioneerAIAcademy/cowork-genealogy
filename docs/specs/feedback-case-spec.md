@@ -15,8 +15,11 @@ user's full project folder at the moment of failure plus a structured
 description of what they asked, what the agent did, and what it should
 have done. Submissions land in a Google Drive folder accessible to
 the dev team. The submission format is specified in
-`cowork-genealogy-ui/docs/feedback-json-spec.md`, which lives in the sibling
-`cowork-genealogy-ui` repo (the viewer is what implements the contract).
+`apps/electron/docs/feedback-json-spec.md` (the viewer implements the
+contract; the former sibling `cowork-genealogy-ui` repo is now
+`apps/electron/` in this monorepo). The **hosted web app** implements the
+same contract in `apps/server/app/feedback.py`, so a web case and a
+desktop case unzip to the same shape.
 
 This document specifies the **iteration workflow** a dev or
 genealogist follows to turn one of those submissions into a fix plus
@@ -81,7 +84,7 @@ git checkout . && git clean -fd
 /draft-unit-test                                # scaffold test + scenario + fixtures
 # - the skill prints the absolute paths of every file it wrote AND
 #   the exact run_tests.py command to run next.
-# - edit drafts via the eval/app/ CRUD UI (flip pii_review_required → false)
+# - refine drafts via the eval/app/ CRUD UI (and review PII before committing)
 # - run the test once to confirm it passes (§3.4 step 14):
 cd ~/cowork-genealogy/eval/harness
 uv run python run_tests.py --test <ut_… id printed by /draft-unit-test>
@@ -259,7 +262,7 @@ Ask a developer if any of these are unclear in context.
     The skill (§4.2) reads `_feedback/feedback.json::agent_should_have`,
     the current state, and the recent transcript, and produces (in
     the main repo at the path stored in `.feedback-repo-root`):
-    - `eval/tests/unit/<skill>/<slug>.json` — the test JSON, marked DRAFT
+    - `eval/tests/unit/<skill>/<slug>.json` — the test JSON (a first cut, schema-clean)
     - `eval/fixtures/scenarios/<slug>/` — scenario directory
       (`README.md`, `research.json`, `tree.gedcomx.json`)
     - `eval/fixtures/mcp/<fixture-name>.json` (one or more) — MCP
@@ -275,11 +278,11 @@ Ask a developer if any of these are unclear in context.
     cd ~/cowork-genealogy/eval/app && npm run dev
     ```
     then open the URL the dev server prints. The new test appears
-    in the unit-tests list, marked DRAFT. In the UI: tighten the
+    in the unit-tests list. In the UI: tighten the
     test's `judge_context` bullets, prune the scenario to the
     minimum that exhibits the failure, refine the fixture `args`
-    predicates and `response` placeholders. Flip
-    `pii_review_required` to `false` after reviewing.
+    predicates and `response` placeholders, and **review the PII
+    scrub** in the scenario before committing.
 
     **Fixture-coverage gap to watch for.** The skill emitted
     fixtures for the tools the *failing* agent called. If the fix
@@ -455,7 +458,7 @@ serves as the comparison target:
    `--against=what-went-wrong`, `agent_should_have` for
    `--against=desired`) is present and non-empty. On any failure,
    abort with a message that names the specific field and points
-   you at `cowork-genealogy-ui/docs/feedback-json-spec.md` §3. The skill is
+   you at `apps/electron/docs/feedback-json-spec.md` §3. The skill is
    the first command you run; surfacing a bad case fixture
    here is much better than a downstream LLM call producing
    nonsense.
@@ -534,10 +537,11 @@ See `docs/specs/feedback-case-spec.md` §11."
      which without external lookups. The dev's CRUD-UI edit pass
      (workflow step 13) is the real PII gate, not this step.
    - `tree.gedcomx.json` — minimal GedcomX, same scrub rules.
-   The scrubbed scenario also carries a `pii_review_required: true`
-   marker in `research.json` under a top-level `_draft` block; the
-   CRUD UI surfaces it and **must** refuse to commit the scenario
-   until you flip it to `false` after reviewing.
+   Keep `research.json` and `tree.gedcomx.json` **schema-clean** — no
+   top-level `_draft` block (the harness validates the scenario before
+   running, and a stray top-level key aborts the test as not-runnable). The
+   PII scrub is best-effort, so the dev reviews it by hand before committing
+   (workflow step 13).
 5. **Emit the test JSON** at
    `<repo>/eval/tests/unit/<skill>/<slug>.json`. Shape mirrors the
    existing tests in that directory:
@@ -558,17 +562,14 @@ See `docs/specs/feedback-case-spec.md` §11."
      "judge_context": [
        "<one bullet per concrete behavior the skill should exhibit, derived from agent_should_have>",
        "..."
-     ],
-     "_draft": {
-       "pii_review_required": true,
-       "todo": [
-         "Tighten judge_context bullets to specific assertions",
-         "Confirm scenario captures the failure mode",
-         "Review fixture args predicates"
-       ]
-     }
+     ]
    }
    ```
+   The emitted test is a **first cut** but **schema-clean** — no top-level
+   `_draft` block (nothing consumes it and it would make the harness skip the
+   test as schema-invalid). The dev refines `judge_context` / scenario /
+   fixtures and reviews PII in the CRUD UI before committing; the skill prints
+   those reminders rather than persisting a marker in the file.
    `NNN` is the next unused integer for that skill (scan existing
    `ut_<skill>_*` ids, pick `max + 1`, zero-pad to three digits).
    `judge_context` is background for the LLM judge, not a scored
@@ -676,7 +677,7 @@ already contain partial or incorrect work from the original failure.
 
 This is irreducible — we cannot synthesize pre-failure state from
 the zip alone. A viewer-side workaround (continuous pre-action
-snapshots) was considered and rejected; see `cowork-genealogy-ui/docs/feedback-json-spec.md`
+snapshots) was considered and rejected; see `apps/electron/docs/feedback-json-spec.md`
 §7.1 for the analysis.
 
 The mitigation is a **skill contract**: every SKILL.md in
@@ -780,7 +781,7 @@ not produce a perfect reproduction of the user's original
 experience.
 
 A viewer-side enhancement (continuous pre-action snapshots) was
-considered and rejected; see `cowork-genealogy-ui/docs/feedback-json-spec.md` §7.1.
+considered and rejected; see `apps/electron/docs/feedback-json-spec.md` §7.1.
 
 ---
 
@@ -828,7 +829,7 @@ directory no longer exists.
 
 1. **`feedback.json` emission in `cowork-genealogy-ui`.** Cross-repo
    change; gating dependency for every other step. Spec:
-   `cowork-genealogy-ui/docs/feedback-json-spec.md` (in the sibling repo).
+   `apps/electron/docs/feedback-json-spec.md`.
 2. **Setup helper script.** `scripts/setup-feedback-case.sh
    <zip-path>` — unzip, git init, symlink plugin skills. Full
    contract in §11.
@@ -910,7 +911,7 @@ lands in both files in the same commit.
   timestamp plus `git log` is the answer. If this proves
   insufficient, the lowest-friction fix is for `init-project` to
   write `runtime_versions` into `research.json`; see
-  `cowork-genealogy-ui/docs/feedback-json-spec.md` §7.2.
+  `apps/electron/docs/feedback-json-spec.md` §7.2.
 
 ---
 
@@ -930,7 +931,7 @@ Behavior:
 1. Resolve `<dest-dir>` (default: `~/feedback/<slug>/`, where
    `<slug>` is the zip basename with `.zip` stripped and any
    timestamp suffix kept verbatim — uniqueness is guaranteed by
-   the viewer's submission filename per `cowork-genealogy-ui/docs/feedback-json-spec.md`
+   the viewer's submission filename per `apps/electron/docs/feedback-json-spec.md`
    discussions).
 2. Refuse to overwrite an existing non-empty `<dest-dir>` unless
    `--force` is given. Print the existing path so you can
@@ -1002,7 +1003,7 @@ Behavior:
    The script may shell out to `jq` if available; if not, a
    minimal pure-bash JSON read (anchored on the `"user_prompt":`
    key) is acceptable since `feedback.json` is small and
-   pretty-printed (per `cowork-genealogy-ui/docs/feedback-json-spec.md` §3).
+   pretty-printed (per `apps/electron/docs/feedback-json-spec.md` §3).
 
 **Determining `<repo-root>`.** The script is invoked from a known
 location inside this repo, so it can derive its own repo root via
@@ -1012,7 +1013,7 @@ caller has cd'd elsewhere, the script still finds the right repo.
 **What the script does not do.**
 
 - Does **not** download the zip from Drive. You do that in
-  a browser; per §6.3 of `cowork-genealogy-ui/docs/feedback-json-spec.md` and the
+  a browser; per §6.3 of `apps/electron/docs/feedback-json-spec.md` and the
   workflow's expected volume, automating Drive access is not
   worth the per-user auth setup.
 - Does **not** register the MCP server. That's a one-time setup

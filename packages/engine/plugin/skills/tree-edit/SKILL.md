@@ -14,15 +14,15 @@ description: Direct edits to tree.gedcomx.json — add fact, correct value,
   duplicates", "check for merge candidates". Do NOT use to search
   records (search-records), write a conclusion (proof-conclusion), link
   assertions to persons (person-evidence), or extract facts from a
-  newly-found record (record-extraction — facts flow extraction →
-  proof-conclusion → tree).
+  newly-found record (record-extraction — sourced facts materialize onto
+  tree persons via person-evidence, then proof-conclusion sets the
+  concluded value).
 allowed-tools:
   - place_search
   - place_search_all
   - tree_edit
   - tree_correct
   - merge_tree_persons
-  - merge_record_into_tree
   - person_record_matches
   - person_person_matches
 ---
@@ -74,11 +74,12 @@ When proof-conclusion confirms two persons are the same individual, execute the 
 **Survivor-selection:** prefer the FamilySearch ID over a synthetic stub; otherwise the most complete record; otherwise the id in `project.subject_person_ids`.
 
 - **Both persons in the tree:** call `merge_tree_persons({ projectPath, merges: [[survivorId, collapsedId]] })` — returns a compact summary of folded name/fact counts and `researchRefsUpdated`.
-- **Record candidate from `record_read`:** call `merge_record_into_tree({ projectPath, candidateGedcomx: <gedcomx field of record_read result>, merges: [[treeId, candidateId]] })` — unpaired candidate persons carry in as new relatives with fresh ids.
+
+(Folding a record's personas into the tree is **not** a merge here — that is person-evidence's job, per-persona via `materialize_facts`. This skill only collapses two persons already in the tree.)
 
 **Once you've picked the survivor and gotten the user's go-ahead, actually call the merge tool — do not stop at a plan or report a merge you haven't executed.** The merge is real only when the tool returns `ok: true`; narrate the folded counts from that returned summary, never from a description of what you intend to do.
 
-On `{ ok: false, errors }` neither tool writes anything — surface the errors.
+On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
 ## Record and duplicate checking
 
@@ -90,14 +91,14 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 ## Validation
 
-`tree_edit`, `tree_correct`, `merge_tree_persons`, and `merge_record_into_tree` all validate-before-persist; no separate `validate_research_schema` call is needed. After ANY edit or merge, run **`check-warnings`** to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
+`tree_edit`, `tree_correct`, and `merge_tree_persons` all validate-before-persist; no separate `validate_research_schema` call is needed. After ANY edit or merge, run **`check-warnings`** to catch genealogical impossibilities the structural validator cannot (impossible dates, relationship loops, etc.).
 
 ## Important rules
 
 - **Merges are irreversible in practice.** Present the merge plan and get confirmation before executing: "I will merge I5 (James Flynn, stub) into KWCJ-RN7 (James Patrick Flynn). This will update 3 person_evidence entries and 1 timeline. Proceed?"
 - **Only merge when proof-conclusion confirms identity.** The threshold is a `probable` or higher proof_summary confirming the two persons are the same. Never merge on a speculative link or unresolved hypothesis.
 - **Preserve the more complete record.** Keep the person with more data and the more authoritative ID (FamilySearch ID > synthetic).
-- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline (record-extraction → person-evidence → proof-conclusion → tree-edit). Direct edits are for corrections and confirmed merges, not for bypassing the GPS process.
+- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — record-extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
 
 ## Decision rules for ambiguous situations
 
@@ -107,9 +108,9 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 **Edit without source support:** Ask the user to identify the source. Typo corrections verifiable against an already-cited source may proceed; otherwise require at least one source reference before writing.
 
-**Relationship threshold not met:** Apply the threshold from `references/relationship-accuracy.md`. If not met, explain what is needed and suggest proof-conclusion first.
+**Relationship threshold not met:** Apply the two-layer threshold from `references/relationship-accuracy.md` — a sourced evidence edge materializes at link time carrying its source-ref; a *concluded* relationship that no single record states is proof-gated. If neither is met, explain what is needed and suggest proof-conclusion first.
 
-**Conflicting evidence not yet resolved:** Do not pick a side. Tell the user to resolve the conflict in proof-conclusion before editing the tree.
+**Conflicting evidence not yet resolved:** Do not pick a side. Coexisting sourced evidence facts may both live in the tree, each carrying its own ref — what waits for proof-conclusion is the *concluded* value (`primary`/`preferred`), not the evidence itself. Do not set the concluded value until the conflict is resolved in proof-conclusion.
 
 **Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence`, `notes`, or any field not in `docs/specs/simplified-gedcomx-spec.md` §4.2 — the audit trail belongs in your reply, not in tree fields.
 

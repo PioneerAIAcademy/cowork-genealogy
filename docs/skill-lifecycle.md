@@ -190,9 +190,9 @@ statistical bake-off:
 - **One run is enough for a big fix.** A real problem is a dimension that
   fails *consistently* (a 1, not a flicker); a single run sees that.
   Don't require multiple runs to chase small score deltas you can't trust
-  — the harness has no `temperature=0`, so treat a sub-noise movement as
-  noise, not victory. (Bump `runs_per_test` only when you genuinely need
-  to measure a marginal change later.)
+  — the skill run has no `temperature=0` (only the judge is pinned), so
+  treat a sub-noise movement as noise, not victory. (Bump `runs_per_test`
+  only when you genuinely need to measure a marginal change later.)
 - **Gate on the named problem, not the mean.** The question is "did the
   dimension that was failing now pass, with nothing obvious regressing?"
   — a binary a single run answers — not "did the weighted mean rise by
@@ -337,6 +337,5 @@ these to follow the flow above:
 | Skill architecture & the three skill kinds | [`docs/specs/skill-architecture-spec.md`](specs/skill-architecture-spec.md) |
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
 | Per-PR review + run-log release/active/candidate mechanics | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
-| The full evaluation + optimizer design | [`docs/plan/skill-mcp-optimization-plan.md`](plan/skill-mcp-optimization-plan.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
 | Triaging an actual user feedback zip (per-platform setup + click-paths) | [`docs/feedback-workflow.md`](feedback-workflow.md) — superseded as the canonical flow by this doc |

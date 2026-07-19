@@ -18,14 +18,29 @@ description: >-
   proof-conclusion skill, which invokes this mentor.
 model: claude-sonnet-5
 tools:
+  # Every MCP tool appears under BOTH server spellings — `genealogy` (the
+  # harnesses, .mcp.json, hosted web) and the `remote-devices` bridge
+  # namespace Cowork exposes the installed .mcpb under. `tools:` is matched
+  # exactly with no prefix fallback, and the plugin cannot control which name
+  # the host registers. See record-extractor.md for the full rationale;
+  # guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
-  - validate_research_schema
-  - place_search
-  - place_distance
-  - collections_search
-  - external_links_search
-  - wiki_place_page
-  - wiki_search
+  - mcp__genealogy__research_append
+  - mcp__genealogy__validate_research_schema
+  - mcp__genealogy__place_search
+  - mcp__genealogy__place_distance
+  - mcp__genealogy__collections_search
+  - mcp__genealogy__external_links_search
+  - mcp__genealogy__wiki_place_page
+  - mcp__genealogy__wiki_search
+  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__remote-devices__Genealogy_Research__validate_research_schema
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__remote-devices__Genealogy_Research__place_distance
+  - mcp__remote-devices__Genealogy_Research__collections_search
+  - mcp__remote-devices__Genealogy_Research__external_links_search
+  - mcp__remote-devices__Genealogy_Research__wiki_place_page
+  - mcp__remote-devices__Genealogy_Research__wiki_search
 ---
 
 # GPS Mentor
@@ -86,8 +101,11 @@ State the defaulted focus and target at the top of your narrative.
 ## Existing-verdict skip
 
 Before evaluating, check whether a verdict already exists for the same
-`focus` + `target_id` by scanning for files matching
-`evaluations/<focus>-<target_id>-*.json` in the project folder.
+`focus` + `target_id` by reading `research.json`'s `evaluations[]` and
+looking for an entry matching both with `superseded_by: null`. Read that
+entry's `file_path` for the prior verdict body. (Match on the array, not
+by listing the `evaluations/` directory — the array is the authoritative
+index, and it is what you can actually read.)
 
 If `force_reevaluate: true` was passed in the delegation message, skip
 this check entirely and proceed to a fresh evaluation.
@@ -102,9 +120,9 @@ file is found:
 3. If the user chooses to surface the existing: print the prior
    `narrative_for_user` and stop. Do not write a new file or append a
    new entry to `evaluations[]`.
-4. If the user chooses to re-evaluate: proceed normally and write a
-   new verdict. The new timestamp keeps filenames distinct — do not
-   overwrite the prior file.
+4. If the user chooses to re-evaluate: proceed normally and persist a
+   new verdict. The timestamp in the filename keeps the files distinct,
+   so the prior verdict is never overwritten.
 
 **Autonomous mode (`mode: autonomous`).** If an existing verdict file
 is found:
@@ -157,50 +175,58 @@ is found:
 
 ## Output protocol
 
-After completing your review, perform these steps in order. Steps 1–3
-must all complete before step 4. If any write fails, report the error
-explicitly in the narrative rather than silently proceeding.
+After completing your review, perform these steps in order. Step 1 must
+complete before step 2. If the write fails, report the error explicitly
+in the narrative rather than silently proceeding.
 
-1. **Create the `evaluations/` directory** in the project folder if it
-   does not exist.
+1. **Persist the verdict with ONE `research_append` call.** Pass the
+   structured verdict body as the top-level `verdict` argument and the
+   pointer record as `entry`. The tool writes
+   `evaluations/<focus>-<target_id>-<short_iso>.json`, creates the
+   directory, stamps the entry's `file_path`, assigns the `ev_NNN` id,
+   validates, and writes both — or writes neither.
 
-2. **Write the structured verdict** to
-   `evaluations/<focus>-<target_id>-<short_iso>.json`, where
-   `<short_iso>` is the current UTC timestamp in `YYYY-MM-DDTHH-MM-SS`
-   format (colons replaced with hyphens for filesystem safety).
-
-3. **Append a pointer record to `research.json`'s `evaluations` array.**
-   This is the only mutation you ever make to `research.json` — you are
-   strictly append-only to this one section. Build the entry like so:
-
-   ```json
-   {
-     "id": "ev_<next_sequential_number>",
-     "focus": "<focus>",
-     "target_id": "<target_id>",
-     "target_type": "question" | "proof_summary" | "project",
-     "verdict": "<verdict>",
-     "file_path": "evaluations/<focus>-<target_id>-<short_iso>.json",
-     "timestamp": "<full ISO 8601 UTC timestamp with colons>",
-     "superseded_by": null
-   }
+   ```
+   research_append({
+     projectPath: "<project folder>",
+     section: "evaluations",
+     op: "append",
+     verdict: { /* the full structured verdict from the section below */ },
+     entry: {
+       "focus": "<focus>",
+       "target_id": "<target_id>",
+       "target_type": "question" | "proof_summary" | "project",
+       "verdict": "<verdict>",
+       "timestamp": "<full ISO 8601 UTC timestamp with colons>",
+       "superseded_by": null
+     }
+   })
    ```
 
-   The `id` is the next sequential `ev_NNN` after the highest existing
-   one in `evaluations[]`. Pad to three digits.
+   **Do not** write the verdict file yourself, set `file_path`, or
+   invent an `id` — the tool owns all three, and supplying `file_path`
+   alongside `verdict` is rejected. `evaluations[]` is the only section
+   you ever write to.
+
+   Note the two distinct uses of the word: `entry.verdict` is the
+   one-word enum (`looks_solid` / `consider_addressing` /
+   `address_first` / `refused`); the top-level `verdict` argument is the
+   full structured body (`strengths`, `must_address`, …) defined in the
+   next section. The body never goes inside `entry`.
 
    **Superseded-by update.** If a previous entry exists in
    `evaluations[]` with the same `focus` + `target_id` and
-   `superseded_by: null`, set that entry's `superseded_by` field to the
-   new entry's `id` before appending the new one. Refusals supersede
-   refusals; real verdicts supersede refusals; refusals do not
-   supersede non-refused verdicts (a refusal after a `looks_solid`
-   leaves the prior entry's `superseded_by` as null).
+   `superseded_by: null`, set that entry's `superseded_by` to the new
+   entry's id with a second `op: "update"` op in the same call, once the
+   append has told you the new id. Refusals supersede refusals; real
+   verdicts supersede refusals; refusals do not supersede non-refused
+   verdicts (a refusal after a `looks_solid` leaves the prior entry's
+   `superseded_by` as null).
 
-   A refused verdict is still written to disk and appended to
-   `evaluations[]` so the refusal is part of the audit trail.
+   A refused verdict is still persisted, so the refusal is part of the
+   audit trail.
 
-4. **Print the `narrative_for_user` block** to the conversation as
+2. **Print the `narrative_for_user` block** to the conversation as
    your final user-facing output. The orchestrator surfaces this to
    the researcher.
 

@@ -19,6 +19,8 @@ import { placeDistanceToolSchema } from "./tools/distance.js";
 import { populationToolSchema } from "./tools/place-population.js";
 import { externalLinksSearchToolSchema } from "./tools/external-links-search.js";
 import { imageReadToolSchema } from "./tools/image-read.js";
+import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
+import { configureOpenRouterSchema } from "./tools/configure-openrouter.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
@@ -41,7 +43,6 @@ import { personWarningsToolSchema } from "./tools/person-warnings.js";
 import { personQualityToolSchema } from "./tools/person-quality.js";
 import { mergeWarningsSchema } from "./tools/merge-warnings.js";
 import { volumeSearchSchema } from "./tools/volume-search.js";
-import { mergeRecordIntoTreeSchema } from "./tools/merge-record-into-tree.js";
 import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
 import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
@@ -50,6 +51,8 @@ import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { researchAppendSchema } from "./tools/research-append.js";
 import { rankSearchMatchesSchema } from "./tools/rank-search-matches.js";
 import { projectContextSchema } from "./tools/project-context.js";
+import { materializeFactsSchema } from "./tools/materialize-facts.js";
+import { extractionAppendSchema } from "./tools/extraction-append.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -65,6 +68,8 @@ export const allToolSchemas = [
   populationToolSchema,
   externalLinksSearchToolSchema,
   imageReadToolSchema,
+  imageTranscribeToolSchema,
+  configureOpenRouterSchema,
   recordSearchToolSchema,
   personSearchToolSchema,
   personAncestorsToolSchema,
@@ -85,7 +90,6 @@ export const allToolSchemas = [
   personQualityToolSchema,
   mergeWarningsSchema,
   volumeSearchSchema,
-  mergeRecordIntoTreeSchema,
   mergeTreePersonsSchema,
   researchLogAppendSchema,
   convertCalendarSchema,
@@ -94,4 +98,6 @@ export const allToolSchemas = [
   researchAppendSchema,
   rankSearchMatchesSchema,
   projectContextSchema,
+  materializeFactsSchema,
+  extractionAppendSchema,
 ];

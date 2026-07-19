@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import auth, feedback, image_proxy, sessions, v1
+from . import auth, feedback, sessions, v1
 from .config import get_settings
 from .db import init_db
 from .obs import setup_logging
@@ -52,7 +52,6 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(auth.callback_router)  # top-level /callback (reuses the FS desktop registration)
 app.include_router(sessions.router)
-app.include_router(image_proxy.router)
 app.include_router(feedback.router)
 app.include_router(v1.router)
 

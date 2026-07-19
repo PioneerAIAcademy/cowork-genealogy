@@ -25,6 +25,23 @@ class Settings(BaseSettings):
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
     default_model: str = "claude-sonnet-4-6"
+    # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
+    # MCP server reads it config-only (never from env), so — unlike
+    # ANTHROPIC_API_KEY, which the Agent SDK reads from the sandbox env — this
+    # is written into the sandbox's ~/.familysearch-mcp/config.json on connect
+    # (fs_oauth.write_config, sessions.create_project). See
+    # docs/specs/image-transcribe-tool-spec.md §6.5.
+    openrouter_api_key: str | None = None
+
+    # ── Build identity ───────────────────────────────────────────
+    # Stamped into every feedback bundle so triage can tell which build a case
+    # came from. Set at image build time by deploy/Dockerfile ARGs, which
+    # `make deploy` fills from git. Both stay "dev" locally, where the running
+    # code is just the working tree. build_date is the human-readable half —
+    # a date tells a triager "this is from before Tuesday's fix" at a glance;
+    # git_sha is the exact-checkout half.
+    git_sha: str = "dev"
+    build_date: str = "dev"
 
     # ── Sandbox provider ─────────────────────────────────────────
     # "local" → LocalProvider (subprocess + local dir; the POC default).

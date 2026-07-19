@@ -1,6 +1,6 @@
 # Eval Framework
 
-Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/gps/skill-mcp-testing-plan.md`](../docs/gps/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
+Systematic evaluation of Cowork Genealogy skills. Tests live as version-controlled JSON; the harness runs them against the Claude Agent SDK; an LLM judge grades each run; humans verify the grades through the CRUD UI. See [`docs/skill-mcp-testing-plan.md`](../docs/skill-mcp-testing-plan.md) for the strategic plan, [`docs/specs/unit-test-spec.md`](../docs/specs/unit-test-spec.md) for the test format, and [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.md) for the run-log versioning and release workflow.
 
 New to how skills are built, tested, and improved? Start with the lifecycle map: [`docs/skill-lifecycle.md`](../docs/skill-lifecycle.md).
 
@@ -23,12 +23,11 @@ eval/
     e2e/            GPS proof-statement tests (each in its own directory)
   runlogs/         Harness output; see "Run log naming" below
   app/             Next.js CRUD UI for test authoring, annotation, comparison
-  briefs/          Per-skill briefs: <skill>.md deep-dive/coverage (tester orientation)
-                   + shorten-<skill>.md SKILL.md-shortening briefs (shorten-skills-overview.md indexes them)
   slides/          Kickoff + onboarding decks
   Setup.bat        Windows: one-time setup
   Start.bat        Windows: launch the CRUD UI
   RunTests.bat     Windows: run the unit harness
+  GateSkill.bat    Windows: gate a candidate SKILL.md edit vs its pre-edit baseline
   Login.bat               Windows: FamilySearch login for e2e (once a day)
   CheckSetup.bat          Windows: e2e preflight (run this first)
   RunE2E.bat              Windows: run one e2e benchmark fixture (live FS)
@@ -194,7 +193,7 @@ The CRUD UI's run-log detail page (`/results/<skill>/<filename-without-ext>`) is
 
 - **[`eval/JUNIOR-WALKTHROUGH.md`](JUNIOR-WALKTHROUGH.md)** — your first PR as a junior genealogist: edit a skill, run the harness, review scores, push.
 - **[`eval/SENIOR-WALKTHROUGH.md`](SENIOR-WALKTHROUGH.md)** — reviewing a PR + releasing: pull, compare, dispute via PR comments, click Release.
-- **[`eval/ALPHA-WALKTHROUGH.md`](ALPHA-WALKTHROUGH.md)** — authoring e2e research tests as an external (alpha) senior genealogist on Windows: pick a person, strip the answer, watch a live run, open a fixture PR.
+- **[`docs/alpha-user-guide.md`](../docs/alpha-user-guide.md)** — what alpha testers actually do: real research in the hosted web app, then feedback. They do **not** author fixtures or run the harness (that changed 2026-07-18; the old ALPHA-WALKTHROUGH described a fixture-authoring role no alpha tester has).
 
 ## Workflow
 
@@ -390,4 +389,3 @@ the lid open unless you're on power with an external display.
 - `docs/specs/research-schema-spec.md` — `research.json` schema.
 - `docs/specs/simplified-gedcomx-spec.md` — `tree.gedcomx.json` schema.
 - `docs/specs/schemas/` — Machine-readable JSON schemas referenced above.
-- `docs/eval-rollout.md` — Active rollout plan and decision log.

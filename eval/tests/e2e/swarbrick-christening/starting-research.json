@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_swarbrick_christening",
+    "objective": "Who were the parents of Robert Swarbrick, and when and where was he christened, given that two same-named Robert Swarbricks were christened within months of each other in neighboring Lancashire parishes in 1797?",
+    "subject_person_ids": [
+      "MM4W-19N"
+    ],
+    "status": "active",
+    "created": "2026-07-16",
+    "updated": "2026-07-16"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -4,8 +4,7 @@ model: claude-sonnet-4-6
 description: Writes GPS-conformant proof conclusions — selects the tier
   (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
   (Statement/Summary/Argument), and writes a self-contained narrative
-  markdown uploadable to FamilySearch. Updates tree.gedcomx.json at tier
-  probable or higher.
+  markdown uploadable to FamilySearch.
   GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
@@ -22,7 +21,6 @@ allowed-tools:
   - tree_edit
   - tree_correct
   - merge_tree_persons
-  - merge_record_into_tree
   - merge_warnings
   - source_attachments
 ---
@@ -113,6 +111,8 @@ Do not restate evidence already quoted verbatim elsewhere — cite it. Most conc
 
 The `narrative_markdown` is the **authoritative GPS conclusion** — if structured fields disagree, the narrative governs. It must be **self-contained**: readable without the JSON and uploadable to FamilySearch as a Memory/Document. Write in the Statement / Summary / Argument form selected above (section headings, evidence summary, conflict resolution, tier declaration, inline citations on every factual claim). Organize by significance, not chronology. Name informants when their identity affects weighing. State source classifications explicitly so the reader sees the three-layer analysis.
 
+**Never claim a digital image exists unless the tool data confirms it.** Only describe a source as having an "accessible" or "digitized" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`). A source-description ARK or citation URL is not itself proof of a linked image — many FamilySearch collections are index-only, and telling a reader an image is "accessible" when it isn't sends them looking for something that doesn't exist.
+
 ### 5. Write the proof_summaries entry
 
 `research_append({ projectPath, section: "proof_summaries", op: "append", entry })` without an `id` — the tool assigns `ps_NNN`, validates the whole project, and writes nothing on failure. Surface `{ ok: false, errors }` and fix before retrying.
@@ -123,17 +123,21 @@ On re-invocation where a proof summary for this question already exists, use `op
 
 ### 6. Encode the conclusion in tree.gedcomx.json (tier >= probable)
 
-**This step — not the proof summary — is where the conclusion actually lands. Do not skip it.** The `narrative_markdown` you wrote in §5 is the *argument*; the researcher's tree stays unchanged until you write it here. If the question was a parentage (or a marriage), **the relationship that answers it is the primary output of this skill.** A concluded parentage you do NOT write as a tree relationship is an **incomplete conclusion** — the persons sit in the tree unlinked and the question is effectively unanswered in the tree, even though your narrative concluded it.
+**This step — not the proof summary — is where the conclusion actually lands. Do not skip it.** The `narrative_markdown` you wrote in §5 is the *argument*; the tree already carries the sourced evidence facts (materialized at link time by person-evidence), and this step lands the *conclusion* on top of them — the concluded relationship plus the `primary`/`preferred` marking on the concluded value. If the question was a parentage (or a marriage), **the relationship that answers it is the primary output of this skill.** A concluded parentage you do NOT write as a tree relationship is an **incomplete conclusion** — the persons sit in the tree unlinked and the question is effectively unanswered in the tree, even though your narrative concluded it.
 
 Use `tree_edit`, **batched into ONE call via its `ops[]` array**, in this order:
 
-1. **The concluded relationship(s) FIRST** — `add_relationship` with a `relationship` object. Parentage: `{ "type": "ParentChild", "parent": "<parentId>", "child": "<childId>" }`. Marriage: `{ "type": "Couple", "person1": "<id>", "person2": "<id>" }`. Endpoints must be **existing** person ids — link the persons already in the tree, don't re-add them (`ParentChild` uses `parent`/`child`, NOT `person1`/`person2`). This is the answer to the question; write it before anything else so it cannot be dropped.
-2. **Facts** — `add_fact` with `primary: true`.
-3. **Source entries** — `add_source` for a new tree source (in this `tree_edit` batch), or `update_source` with its `sourceId` to refine an existing one — `update_source` lives in **`tree_correct`** (same batched `ops[]` form), so issue it as a separate `tree_correct` call. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole write fails validation).
+1. **The concluded relationship(s) FIRST** — `add_relationship` with a `relationship` object, **carrying a non-null `sources[]` ref** (the Phase-2 guard rejects a ref-less edge, so the whole all-or-nothing batch would fail without it). Parentage: `{ "type": "ParentChild", "parent": "<parentId>", "child": "<childId>", "sources": [{ "ref": "S..", "quality": <0-3> }] }`. Marriage: `{ "type": "Couple", "person1": "<id>", "person2": "<id>", "sources": [{ "ref": "S..", "quality": <0-3> }] }`. Resolve the ref from the relationship assertion's `source_id` (its tree S-entry); for an **indirect/correlated** parentage matching no single record, carry **multiple refs** in `sources[]` to all the correlated evidence S-entries, at a lower `quality` reflecting the indirect class (mirroring the synthesized-fact write in step 2). Endpoints must be **existing** person ids — link the persons already in the tree, don't re-add them (`ParentChild` uses `parent`/`child`, NOT `person1`/`person2`). This is the answer to the question; write it before anything else so it cannot be dropped.
+2. **Facts — the concluded value.** person-evidence already materialized the sourced evidence facts onto the tree person at link time; this step marks *which* value is concluded by setting `primary: true`. Two paths, depending on whether the concluded value already sits on the person as a materialized evidence fact:
+   - **Common case (value matches an existing evidence fact)** — the concluded value equals a fact already materialized from a record. **Set `primary: true` on that existing fact via `tree_correct` `update_fact`** (issued as a separate `tree_correct` call, not this `tree_edit` batch) — **do NOT add a second fact.**
+   - **Synthesized case (value matches no single record)** — an indirect conclusion whose correlated value matches **no single record** (e.g. three census ages → a computed "abt 1805"). Use `tree_edit` `add_fact` with `primary: true`, carrying **multiple source-refs** in its `sources[]` pointing at **all** the correlated evidence S-entries (multi-ref `sources[]` is supported).
+
+   **Indirect evidence.** Extraction already classifies indirect claims (`evidence_type: indirect`, `date_certainty: calculated`); value-bearing indirect evidence materializes with the inference encoded **honestly** — a GEDCOM `abt`/`cal`/`est` qualifier, never a bare stated year — at a **lower ref quality** reflecting the weaker evidence class. Indirect evidence **never self-concludes**: only proof-conclusion correlation sets `primary`. Purely-argumentative / negative evidence does **not** materialize as a fact (there is no positive value to write) — only its *conclusion* (e.g. a death "bef 1870" established by absence) lands, via this additive write.
+3. **Source entries (upload-time citation + conclusion-gated upload).** `add_source` for a new tree source (in this `tree_edit` batch), or `update_source` with its `sourceId` to refine an existing one — `update_source` lives in **`tree_correct`** (same batched `ops[]` form), so issue it as a separate `tree_correct` call. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole write fails validation). **Upload is conclusion-gated:** the working tree carries *all* sourced evidence facts (materialized at link time by person-evidence), but **only `primary`/proof-backed facts upload to FamilySearch** — un-concluded evidence stays out. Copy the ESM citation onto an S-entry only as part of that conclusion-gated upload.
 
 Batching applies every op to a single in-memory tree, validates once, and writes once (all-or-nothing); ids allocated by earlier ops are visible to later ops (so an `add_source` can reference a fact or relationship added earlier in the same batch). Set source reference `quality`: 3 = original+primary+direct; 2 = original+secondary or derivative+primary; 1 = derivative+secondary; 0 = authored. On downgrade, remove the concluded fact or relationship with a `remove` op — removals live in **`tree_correct`** (a separate call with the same batched `ops[]` form), not `tree_edit`.
 
-**Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "error"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "warning"` is advisory. Get confirmation, then call `merge_tree_persons` or `merge_record_into_tree`.
+**Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "error"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "warning"` is advisory. Get confirmation, then call `merge_tree_persons`.
 
 After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct` call — or a merge, run `check-warnings` **once** (see `references/validation-protocol.md`) — not after each op.
 
@@ -164,7 +168,7 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier).
+- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years).
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
 

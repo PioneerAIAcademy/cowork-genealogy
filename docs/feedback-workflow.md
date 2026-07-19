@@ -183,15 +183,15 @@ cd ~/cowork-genealogy/eval/app && npm run dev
 ```
 
 Open the URL the dev server prints. Find the new test in the list
-(marked DRAFT). Edit it:
+(a first cut — the files are schema-clean, so they run as-is). Refine it:
 
 - **Tighten the `judge_context` bullets** so they're specific
   assertions, not vague hopes.
 - **Prune the scenario** to the minimum that exhibits the bug.
 - **Refine the MCP fixture** `args` predicates and `response`
   placeholders if the auto-extracted values look off.
-- **Flip `pii_review_required` to `false`** after you've reviewed
-  the scenario for personal data that needs generalizing (names →
+- **Review the scenario for PII** before committing — the auto-scrub is
+  best-effort, so generalize anything that slipped through (names →
   `Person A`, exact dates → decade, specific places → county).
 
 ### 6. Run the test
@@ -285,7 +285,7 @@ the setup script first, then `cd` into the resulting directory.
 **`/compare-state` says feedback.json has empty `<field>`.**
 The user's submission was missing a required field. Ask them to
 resubmit — that field is required by the submission format
-(`cowork-genealogy-ui/docs/feedback-json-spec.md`).
+(`apps/electron/docs/feedback-json-spec.md`).
 
 **`/draft-unit-test` can't identify the failing skill.**
 Run it as `/draft-unit-test --skill <name>` and pick the skill you

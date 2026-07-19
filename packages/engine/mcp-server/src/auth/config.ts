@@ -37,6 +37,16 @@ export const CLIENT_ID_PACKAGING_ERROR =
 
 export const DEFAULT_WIKI_API_URL = "https://malachi.taild68f1b.ts.net/wiki";
 
+// Default OCR model for image_transcribe. Overridable per-user via
+// `openRouterModel` in config.json (set the Phase-0-chosen slug without a
+// rebuild). The LLM does not choose the model — it is not a tool parameter.
+export const DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-vl-235b-a22b-instruct";
+
+export const OPENROUTER_API_KEY_MISSING_MESSAGE =
+  "No OpenRouter API key is configured. Ask the user for their OpenRouter " +
+  "API key (from https://openrouter.ai/keys) and call configure_openrouter " +
+  "to save it for future projects.";
+
 export async function loadConfig(): Promise<AppConfig> {
   try {
     const raw = await readFile(CONFIG_STORAGE_PATH, "utf8");
@@ -98,4 +108,22 @@ export async function getLearningCenterDir(): Promise<string | null> {
 export async function getLibraryDir(): Promise<string | null> {
   const config = await loadConfig();
   return config.libraryDir?.trim() ?? null;
+}
+
+// OpenRouter key resolution is config-only (no env-var fallback, per the repo
+// rule): the server reads it here in every runtime. e2e and the hosted
+// sandbox bridge their env var into config.json at the orchestration layer —
+// see docs/specs/image-transcribe-tool-spec.md §6.5.
+export async function getOpenRouterApiKey(): Promise<string> {
+  const config = await loadConfig();
+  const key = config.openRouterApiKey?.trim();
+  if (!key) {
+    throw new Error(OPENROUTER_API_KEY_MISSING_MESSAGE);
+  }
+  return key;
+}
+
+export async function getOpenRouterModel(): Promise<string> {
+  const config = await loadConfig();
+  return config.openRouterModel?.trim() || DEFAULT_OPENROUTER_MODEL;
 }

@@ -63,5 +63,5 @@ document, not captured from a live `person_read` snapshot, so sanity-check its
 fidelity. `source_pid` is an unused placeholder (`PID-TODO`); §6.1 blocks every
 person-keyed tool, so neither the run nor the judge reads it. The §14
 fixture-validity run is still owed (a committed `run-*.json` with `verdict=pass`);
-that check is warn-only, so this PID-less draft may land with the validity run
+it is not CI-gated, so this PID-less draft may land with the validity run
 outstanding.
