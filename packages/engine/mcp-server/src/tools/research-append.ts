@@ -30,6 +30,7 @@ import {
   isInsideProject,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
@@ -115,6 +116,56 @@ function planActiveInvariants(entry: any, research: any): string[] {
     ];
   }
   return [];
+}
+
+/** An uncertain transcription rides in the assertion's `value` as `[?]` — the
+ *  record-extractor contract ("Keep the uncertain reading in `value` with
+ *  `[?]`"). Nothing else in the entry marks doubt structurally. */
+function hasUncertainReading(assertion: any): boolean {
+  return typeof assertion?.value === "string" && assertion.value.includes("[?]");
+}
+
+/** Distinct records (falling back to source) that already tie other, still-live
+ *  person_evidence rows to this person — excluding this entry and its own
+ *  record. Size 0 ⇒ the identity rests on this single record alone. */
+function corroboratingRecordCount(entry: any, research: any, byId: Map<string, any>): number {
+  const own = byId.get(entry.assertion_id);
+  const ownRecord = own?.record_id ?? own?.source_id ?? null;
+  const distinct = new Set<string>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe === entry || pe.id === entry.id) continue;
+    if (pe.person_id !== entry.person_id) continue;
+    if (pe.superseded_by != null) continue;
+    const a = byId.get(pe.assertion_id);
+    const rec = a?.record_id ?? a?.source_id ?? null;
+    if (rec != null && rec !== ownRecord) distinct.add(rec);
+  }
+  return distinct.size;
+}
+
+/** Epistemic gate for identity over-reach (the record-extractor's tentative-cap,
+ *  enforced at the link point rather than left to prose).
+ *
+ *  Deliberately CONJUNCTIVE: an uncertain reading AND no corroborating record.
+ *  A `confident` link off a single *clean* record stays legal — that is the
+ *  ordinary case (a death certificate that plainly names its subject), and
+ *  gating on record-count alone would reject it. Doubt only becomes
+ *  disqualifying when nothing independent backs it up. */
+function personEvidenceInvariants(entry: any, research: any): string[] {
+  if (entry.confidence !== "confident") return [];
+  const assertions: any[] = research.assertions ?? [];
+  const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
+  const linked = byId.get(entry.assertion_id);
+  // Missing FK is already reported by the document validator; don't double-fault.
+  if (!linked || !hasUncertainReading(linked)) return [];
+  if (corroboratingRecordCount(entry, research, byId) > 0) return [];
+  return [
+    `confidence 'confident' is not available here: assertion '${entry.assertion_id}' carries an ` +
+      `uncertain reading ([?]) and no other record independently ties person '${entry.person_id}' ` +
+      `to this identity. Use 'probable' (or 'speculative'), keep the [?] in the assertion value, ` +
+      `and record what would resolve it — a second independent record, or the original image. ` +
+      `A confident wrong parent is worse than a flagged uncertain one.`,
+  ];
 }
 
 export type ResearchAppendSection = keyof typeof SECTIONS | string;
@@ -604,6 +655,11 @@ function applyOne(research: any, op: ResearchAppendOp, appendedThisBatch?: Set<s
   // (re)sets status to "active"; the helper no-ops for non-active entries.
   if (section === "plans") {
     invariantErrors.push(...planActiveInvariants(resultEntry, research));
+  }
+  // Identity over-reach: runs on append AND on an update that raises confidence
+  // to "confident"; the helper no-ops for every other confidence value.
+  if (section === "person_evidence") {
+    invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -1222,8 +1278,16 @@ export async function researchAppend(
 
   const isBatch = input.ops !== undefined;
   const opsReceived = isBatch && Array.isArray(input.ops) ? input.ops.length : undefined;
-  const fail = (errors: string[]): ResearchAppendResult =>
-    opsReceived !== undefined ? { ok: false, errors, opsReceived } : { ok: false, errors };
+  /** `hint` names the op(s) the failure is about; their worked examples are
+   *  appended so a rejected call teaches the shape on the spot instead of
+   *  depending on the right SKILL.md having been loaded. */
+  const fail = (
+    errors: string[],
+    hint?: Array<{ section: string; op: "append" | "update" }>,
+  ): ResearchAppendResult => {
+    const all = hint && hint.length > 0 ? [...errors, ...exampleHints(hint)] : errors;
+    return opsReceived !== undefined ? { ok: false, errors: all, opsReceived } : { ok: false, errors: all };
+  };
 
   try {
     const research = await readJson(projectPath, "research.json");
@@ -1269,7 +1333,10 @@ export async function researchAppend(
       } catch (e) {
         if (e instanceof ResearchAppendError) {
           // Identify the failing op; nothing has been written.
-          return fail(e.errors.map((m) => fmt(i, m)));
+          return fail(
+            e.errors.map((m) => fmt(i, m)),
+            [{ section: String(ops[i].section), op: ops[i].op === "update" ? "update" : "append" }],
+          );
         }
         throw e;
       }
@@ -1284,7 +1351,20 @@ export async function researchAppend(
     if (anyMutation) {
       const validation = await validateParsed(research, tree, { projectPath });
       if (!validation.valid) {
-        return fail(mapValidationErrors(formatIssues(validation.errors), applied, isBatch));
+        // Shape errors surface here (the document validator, not applyOne), so
+        // this is the site the evaluations/known_holdings rejections land on.
+        const mapped = mapValidationErrors(formatIssues(validation.errors), applied, isBatch);
+        // Only hint the sections the errors actually name — in a wide batch,
+        // examples for ops that validated fine would be noise pointing away
+        // from the real problem.
+        const blamed = ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
+        return fail(
+          mapped,
+          (blamed.length > 0 ? blamed : ops).map((o) => ({
+            section: String(o.section),
+            op: o.op === "update" ? "update" : "append",
+          })),
+        );
       }
       validationWarnings = formatIssues(validation.warnings);
       const researchPath = join(projectPath, "research.json");
@@ -1339,7 +1419,14 @@ export async function researchAppend(
       validation: validationBlock,
     };
   } catch (e) {
-    if (e instanceof ResearchAppendError) return fail(e.errors);
+    if (e instanceof ResearchAppendError) {
+      // Single-op path (and pre-pass throws): the section is only known when
+      // the caller used the non-batch form.
+      return fail(
+        e.errors,
+        input.section ? [{ section: String(input.section), op: input.op === "update" ? "update" : "append" }] : undefined,
+      );
+    }
     throw e;
   }
 }
