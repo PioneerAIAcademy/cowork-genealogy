@@ -254,6 +254,51 @@ Deferred during the #701 build.
   2026-07-18 while implementing Phase 3A.
 
 ## Eval framework
+- [ ] **Adopt a run-log retention rule — `eval/runlogs/` is 147MB tracked and ~85%
+  of it is inert.** Measured 2026-07-18: 190 unit run logs (116MB) + 152 `.ann.json`
+  (2.9MB) + 56 e2e runs (~27MB). **Nothing in the repo reads more than the latest 2
+  run logs per skill** — `skill-improver`/`rubric-critic` read the latest released
+  or highest candidate, `skill_latency_report` reads `logs[-1]`/`logs[-2]`,
+  `check_runlogs.py` reads the latest, and the CRUD UI halts on first match. The
+  only all-history readers are the trend view (filters `released === true`) and
+  `calibrate_judge` (reads **only** `.ann.json`, 0.2MB). So 164 of 190 unit logs
+  are read by nothing.
+
+  **Root cause is process, not storage: the release action has never been used** —
+  0 released, 190 candidates, all `v1_`. `docs/plan/eval-runlog-versioning.md`
+  already defines the retention model (released `v{N}.json` kept forever; candidates
+  pruned by hand in the CRUD UI; scratch gitignored), but the candidate tier was
+  left manual and never performed. That also leaves the trend view rendering
+  nothing, since it filters on a flag no file carries. Adopting a rule without
+  closing the `v1` line on the mature skills just re-accumulates the same 108MB.
+
+  Proposed rule: (1) keep every `.ann.json` forever — 195 files, 3.1MB, expensive
+  genealogist labor and the sole `calibrate_judge` input; (2) keep all released
+  `v{N}.json` forever; (3) keep the latest 2 candidates per skill, pruning older
+  ones **that have no sibling `.ann.json`** (~25MB); (4) for older candidates that
+  *do* have an annotation, **strip the inline `snapshot` block instead of deleting
+  the file** — it is 46% of unit-runlog bytes, exists only to support activate /
+  active-detection, and a superseded candidate will never be activated, so this
+  keeps every judge rationale the annotation argues against (~37MB); (5) delete
+  e2e `.transcript.md` older than 60 days where the run has a finalized `.ann.json`
+  — nothing reads transcripts back, `result.py` calls them a lossy summary, and the
+  annotation carries the durable judgment (~5MB). Keep e2e `final-tree` /
+  `final-research` regardless: `grade-e2e-run` reads exactly those to produce future
+  annotations. **≈67MB reclaimed with zero loss of annotations, released logs, or
+  regradeable evidence.** Deleting all 164 superseded candidates outright would
+  reclaim 108MB but orphans 125 annotations from the traces they argue against —
+  not recommended.
+- [ ] **Make `forget.py` refuse to clobber an existing backup.** It writes
+  `.tree-before-forget.gedcomx.json` unconditionally on every non-dry-run
+  (`forget.py:332`), so the snapshot always reflects the tree at the start of
+  *that* run. A second forget therefore overwrites the pristine snapshot with
+  the already-forgotten tree and the first slice becomes unrecoverable from it —
+  silent data loss on a file the researcher is told is their restore point.
+  Currently mitigated only by prose in the skill's "Re-invocation behavior".
+  A guard (refuse, or write `.tree-before-forget.<n>.gedcomx.json`) would make
+  the prose unnecessary. Note `forget-and-rederive` is deliberately exempt from
+  the runlog gate (`RUNLOG_GATE_EXEMPT_SKILLS`), so a change here is not gated
+  by the eval suite — verify it by hand.
 - [x] **record-extraction real craft gaps (surfaced by the 2026-07-16 classification
   audit) — RESOLVED (#711 + record-extractor informant-craft follow-up).** The audit
   found 3 agent craft gaps + a christening-table gap. Resolution:
@@ -489,3 +534,20 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `tree_edit`, `materialize_facts`, and `extraction_append` appear in no README
   tool table, and `docs/specs/mcpb-package-spec.md` still tells a manual tester
   to assert 21 tools. No CI reads either, so nothing reds.
+- **`forget-and-rederive/scripts/forget.py` has no automated coverage** — the
+  selector resolution, the relationship cascade, and the restore-file write are
+  all untested. The skill is exempt from the runlog gate
+  (`RUNLOG_GATE_EXEMPT_SKILLS`) because a tree-stripping utility has no
+  genealogical output for a judge to grade, so the right coverage is
+  script-level tests, not a skill eval suite. Highest-value cases: the cascade
+  when `person:` removes someone with relationships in both directions, and the
+  `matched nothing` error paths.
+- **`forget.py` overwrites its restore file on every non-dry-run** — 
+  `.tree-before-forget.gedcomx.json` is written unconditionally
+  (`forget.py:332-333`, no existence check), so it always holds the tree as of
+  the most recent run. After a second forget pass the original tree is
+  unrecoverable: pass 1's removals are already baked into the backup. This may
+  be intended (incremental forgetting wants the immediately-prior state), which
+  is why it was documented in the skill's Re-invocation section rather than
+  changed. Decide: keep and document, or refuse to overwrite an existing
+  backup / write per-run timestamped restore files.

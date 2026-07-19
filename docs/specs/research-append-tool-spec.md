@@ -117,6 +117,12 @@ research_append({
   // call's single sources append op and stamp its gedcomx_source_description_id.
   sourceDescription?: { title: string, author?: string, url?: string },
 
+  // Composite persist (§3.4.2): the structured verdict body for an
+  // `evaluations` append. The tool writes it to
+  // evaluations/<focus>-<target_id>-<short_iso>.json and stamps the entry's
+  // file_path. Rejected alongside an explicit file_path, or on any other section.
+  verdict?: Record<string, unknown>,
+
   // §3.6: default true — resolve standard_place for assertion appends that
   // carry a `place` but omit `standard_place` (sidecar copy first, then
   // geocoding). false skips only the geocoding lookup.
@@ -340,6 +346,36 @@ call is a research-only write (`filesWritten: ["research.json"]`, no
 path 2: a stamped `S` id must exist in the tree or the batch is rejected
 op-indexed.
 
+### 3.4.2 Composite persist (`verdict`) — evaluations sidecar
+
+`evaluations[].file_path` is the same design as `log[].results_ref`: research.json
+holds a pointer, and the payload lives in a sidecar only the host writes
+(`results-staging.ts` is the precedent). The verdict body is large, structured, and
+would bloat every whole-file read of research.json — which is exactly what the
+orchestrator state diet is trying to shrink — so it does not go inline the way
+`proof_summaries.narrative_markdown` does.
+
+On an `evaluations` append carrying a top-level `verdict`, the tool:
+
+1. derives `evaluations/<focus>-<target_id>-<short_iso>.json` from the entry's
+   `focus`, `target_id` and `timestamp` (colons replaced for filesystem safety),
+2. stamps that path onto the entry as `file_path`,
+3. writes the sidecar **after** whole-document validation passes and **before** the
+   research.json commit, creating `evaluations/` as needed.
+
+Ordering matters in both directions: a rejected call leaves no orphan verdict file,
+and a persisted pointer never names a file that does not exist. Doing it in one call
+is what makes a dangling `file_path` structurally impossible rather than merely
+unlikely — the failure mode the agent-writes-it-itself design could not rule out.
+
+Rejected: `verdict` together with an explicit `entry.file_path` (ambiguous
+ownership), `verdict` on any section other than `evaluations`, `verdict` spanning
+more than one evaluations append in a batch, and an entry missing the `focus` /
+`target_id` the filename is derived from.
+
+The consumer is the `gps-mentor` agent, which holds no filesystem write tool; see
+`docs/specs/gps-mentor-agent-spec.md` §8.
+
 ### 3.5 Persona/record-id enforcement matrix — D2
 
 For every `assertions` append op whose `log_entry_id` resolves to a log entry, the
@@ -488,6 +524,7 @@ audit's recommendation #5):
 | `questions` update → `exhaustive_declared` | `exhaustive_declaration.declared` true ⇒ `log_entry_ids` non-empty and `stop_criteria` non-null; a re-declare on an already-declared question is a **no-op short-circuit** (don't overwrite a settled GPS Component-1 record) | `validator.ts:417–424` + audit |
 | `plans` append | at most **one active plan per question** — a second `active` plan for the same `question_id` is rejected | audit; `research-schema-spec.md:265` |
 | `person_evidence` revision | revision is an `append` of the new entry **plus** an `update` setting `superseded_by` on the old one; never a field-overwrite-in-place that loses the prior link | `research-schema-spec.md:427–431` |
+| `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
