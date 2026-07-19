@@ -2384,6 +2384,9 @@ describe("research_append — worked examples are themselves valid", () => {
       op: "append",
       entry,
       ...(section === "plan_items" ? { planId: "pl_001" } : {}),
+      // The evaluations example is a pointer with no file_path by design; the
+      // composite `verdict` arg is what fills it.
+      ...(section === "evaluations" ? { verdict: { strengths: [], must_address: [] } } : {}),
       ...(section === "sources"
         ? {
             sourceDescription: {
@@ -2420,5 +2423,155 @@ describe("research_append — worked examples are themselves valid", () => {
     const joined = (r.errors ?? []).join("\n");
     expect(joined).toMatch(/worked example for 'evaluations'/);
     expect(joined).toMatch(/file_path/);
+  });
+});
+
+// ─── Composite verdict persist (gps-mentor write path) ──────────────────────
+//
+// evaluations[].file_path is the same design as log[].results_ref: a pointer in
+// research.json to a sidecar only the host writes. Writing both in one call is
+// what makes a dangling file_path impossible.
+
+describe("research_append — evaluations verdict composite", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-verdict-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const VERDICT = {
+    focus: "conclusion-readiness",
+    target_id: "q_002",
+    target_type: "question",
+    verdict: "address_first",
+    strengths: ["Independence analysis on c_001 is correct (Standard 46)."],
+    must_address: [
+      {
+        standard: "Standard 14 — topical breadth",
+        issue: "No probate search planned for Schuylkill County 1875-1890.",
+        what_would_change_my_mind: "An executed probate search, even a nil result.",
+        suggested_skill: "research-plan",
+        specific_action: "Add a probate plan item.",
+      },
+    ],
+    narrative_for_user: "You are close. The probate gap is the one thing standing between this and a defensible conclusion.",
+  };
+  const pointer = () => ({
+    focus: "conclusion-readiness",
+    target_id: "q_002",
+    target_type: "question",
+    verdict: "address_first",
+    timestamp: "2026-07-18T14:05:00Z",
+    superseded_by: null,
+  });
+  async function writeProject() {
+    const r: any = baseResearch();
+    r.questions = [
+      {
+        id: "q_002",
+        question: "Who were the parents of Patrick Flynn?",
+        rationale: "Seed.",
+        selection_basis: "objective_decomposition",
+        priority: "high",
+        status: "open",
+        depends_on: [],
+        unblocks: [],
+        created: "2026-07-18",
+        resolved: null,
+        resolution_assertion_ids: [],
+        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+
+  it("writes the sidecar, stamps file_path, and keeps the body out of research.json", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "evaluations",
+      op: "append",
+      entry: pointer(),
+      verdict: VERDICT,
+    } as any);
+    expect(r.errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const ev = research.evaluations[0];
+    expect(ev.file_path).toBe("evaluations/conclusion-readiness-q_002-2026-07-18T14-05-00.json");
+    // The pointer stays a pointer: no verdict body leaked into research.json.
+    expect(ev.strengths).toBeUndefined();
+    expect(ev.must_address).toBeUndefined();
+
+    // …and the file it names actually exists, with the body.
+    const written = JSON.parse(await readFile(join(dir, ev.file_path), "utf-8"));
+    expect(written.must_address[0].standard).toMatch(/Standard 14/);
+    expect(written.narrative_for_user).toMatch(/probate gap/);
+  });
+
+  it("rejects verdict + an explicit file_path (ambiguous ownership)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "evaluations",
+      op: "append",
+      entry: { ...pointer(), file_path: "evaluations/hand-written.json" },
+      verdict: VERDICT,
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors?.join(" ")).toMatch(/use one/i);
+  });
+
+  it("rejects verdict on a non-evaluations section", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "append",
+      entry: {
+        claim: "Test claim.",
+        status: "active",
+        supporting_assertion_ids: [],
+        contradicting_assertion_ids: [],
+        ruled_out: false,
+        ruled_out_reason: null,
+        notes: null,
+        related_question_ids: [],
+      },
+      verdict: VERDICT,
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors?.join(" ")).toMatch(/only valid on an `evaluations` append/);
+  });
+
+  // The failure mode the composite exists to prevent: a rejected call must not
+  // leave an orphan verdict file behind for a pointer that was never persisted.
+  it("writes no sidecar when the document fails validation", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "evaluations",
+      op: "append",
+      entry: { ...pointer(), target_id: "q_nonexistent" },
+      verdict: VERDICT,
+    } as any);
+    expect(r.ok).toBe(false);
+    await expect(access(join(dir, "evaluations"))).rejects.toThrow();
+  });
+
+  it("still supports the pointer-only form (caller wrote the file itself)", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "evaluations",
+      op: "append",
+      entry: { ...pointer(), file_path: "evaluations/hand-written.json" },
+    } as any);
+    expect(r.errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
   });
 });

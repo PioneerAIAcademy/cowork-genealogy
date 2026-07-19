@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { join } from "path";
-import { readFile } from "fs/promises";
+import { readFile, mkdir } from "fs/promises";
 import { validateParsed } from "../validation/validator.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
@@ -205,6 +205,14 @@ export interface ResearchAppendInput {
   // Composite persist: create the tree.gedcomx.json `S` entry for this call's
   // single sources append op and stamp its `gedcomx_source_description_id`.
   sourceDescription?: SourceDescriptionInput;
+  // Composite persist (evaluations): the structured verdict body. When present
+  // on an `evaluations` append, the tool writes it to
+  // `evaluations/<focus>-<target_id>-<short_iso>.json` and stamps the entry's
+  // `file_path` itself — the same shape as the search-results sidecar, where
+  // `log[].results_ref` points at a file only the host writes. Writing the
+  // pointer and its payload in one call is what makes a dangling `file_path`
+  // structurally impossible; the agent never hand-serializes the verdict.
+  verdict?: Record<string, unknown>;
   // Default true: auto-resolve standard_place for an assertion append that has a
   // `place` but omits `standard_place` (sidecar copy first, then geocoding).
   // Pass false to skip the geocoding network call (sidecar copy still applies).
@@ -786,6 +794,79 @@ interface PreparedOps {
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces: ResolvedPlaceEcho[];
   warnings: string[];
+  /** Verdict sidecar to write iff the whole call validates. */
+  verdictFile?: { relPath: string; body: unknown };
+}
+
+/** `YYYY-MM-DDTHH-MM-SS` — colons replaced for filesystem safety, matching the
+ *  gps-mentor spec's `<short_iso>`. */
+function shortIso(timestamp: unknown): string {
+  const d = typeof timestamp === "string" ? new Date(timestamp) : new Date();
+  const iso = (isNaN(d.getTime()) ? new Date() : d).toISOString();
+  return iso.slice(0, 19).replace(/:/g, "-");
+}
+
+/** Filesystem-safe slug for the focus/target segments of the verdict filename. */
+function fileSlug(v: unknown): string {
+  return String(v ?? "")
+    .trim()
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
+/**
+ * Composite verdict persist. On an `evaluations` append carrying `verdict`,
+ * derive the sidecar path, stamp it onto the entry as `file_path`, and hand the
+ * body back for the write phase. Nothing touches disk here — the file is only
+ * written once the whole document validates, so a rejected call leaves no
+ * orphan verdict file behind.
+ */
+function prepareVerdict(
+  input: ResearchAppendInput,
+  ops: ResearchAppendOp[],
+  fmt: (i: number, msg: string) => string,
+  errors: string[],
+): PreparedOps["verdictFile"] {
+  if (input.verdict === undefined) return undefined;
+  const idxs = ops
+    .map((o, i) => ({ o, i }))
+    .filter(({ o }) => o.section === "evaluations" && o.op === "append");
+  if (idxs.length === 0) {
+    errors.push("`verdict` is only valid on an `evaluations` append op");
+    return undefined;
+  }
+  if (idxs.length > 1) {
+    errors.push("`verdict` applies to a single evaluations append; this call has more than one");
+    return undefined;
+  }
+  const { o, i } = idxs[0];
+  if (!input.verdict || typeof input.verdict !== "object" || Array.isArray(input.verdict)) {
+    errors.push(fmt(i, "`verdict` must be an object (the structured verdict body)"));
+    return undefined;
+  }
+  const entry = o.entry as any;
+  if (!entry || typeof entry !== "object") return undefined;
+  if (entry.file_path != null) {
+    errors.push(
+      fmt(
+        i,
+        "entry carries a file_path AND the call supplies `verdict` — use one: pass `verdict` " +
+          "and let the tool write the file and stamp file_path, or write the file yourself and " +
+          "pass file_path alone",
+      ),
+    );
+    return undefined;
+  }
+  const focus = fileSlug(entry.focus);
+  const target = fileSlug(entry.target_id);
+  if (!focus || !target) {
+    errors.push(fmt(i, "`verdict` requires the entry to carry `focus` and `target_id` (they name the file)"));
+    return undefined;
+  }
+  const relPath = `evaluations/${focus}-${target}-${shortIso(entry.timestamp)}.json`;
+  entry.file_path = relPath;
+  return { relPath, body: input.verdict };
 }
 
 /** Normalized-exact repository comparison key (trim + casefold). */
@@ -1257,7 +1338,9 @@ async function prepareOps(
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
-  return { treeMutated, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings };
+  const verdictFile = prepareVerdict(input, ops, fmt, errors);
+  if (errors.length > 0) throw new ResearchAppendError(errors);
+  return { treeMutated, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -1275,6 +1358,7 @@ export async function researchAppend(
   input.entry = coerceJsonArg(input.entry) as Record<string, unknown> | undefined;
   input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
   input.sourceDescription = coerceJsonArg(input.sourceDescription) as SourceDescriptionInput | undefined;
+  input.verdict = coerceJsonArg(input.verdict) as Record<string, unknown> | undefined;
 
   const isBatch = input.ops !== undefined;
   const opsReceived = isBatch && Array.isArray(input.ops) ? input.ops.length : undefined;
@@ -1367,6 +1451,13 @@ export async function researchAppend(
         );
       }
       validationWarnings = formatIssues(validation.warnings);
+      // Verdict sidecar first: research.json's file_path pointer must never
+      // name a file that does not exist. Written before the document commit so
+      // a failure here aborts before the pointer is persisted.
+      if (prep.verdictFile) {
+        await mkdir(join(projectPath, "evaluations"), { recursive: true });
+        await atomicWriteJson(join(projectPath, prep.verdictFile.relPath), prep.verdictFile.body);
+      }
       const researchPath = join(projectPath, "research.json");
       if (prep.treeMutated) {
         const treePath = join(projectPath, "tree.gedcomx.json");
@@ -1381,6 +1472,7 @@ export async function researchAppend(
         await atomicWriteJson(researchPath, research);
         filesWritten = ["research.json"];
       }
+      if (prep.verdictFile) filesWritten = [...filesWritten, prep.verdictFile.relPath];
       // GC unreferenced source images (best-effort, TTL-gated) — design B, §8.5:
       // remove images/*.jpg no source cites and older than the TTL, so a
       // just-transcribed-but-unretained scan ages out instead of lingering.
@@ -1587,6 +1679,17 @@ export const researchAppendSchema = {
           url: { type: "string", description: "Optional URL. Omit when not applicable (never null)." },
         },
         required: ["title"],
+      },
+      verdict: {
+        type: "object",
+        description:
+          "Composite persist for an `evaluations` append: the structured verdict body " +
+          "(strengths, must_address, consider_addressing, narrative_for_user, …). The " +
+          "tool writes it to evaluations/<focus>-<target_id>-<short_iso>.json and stamps " +
+          "the entry's `file_path` itself — do NOT write the file yourself, and do NOT " +
+          "set file_path when passing this. The entry stays a pointer record; the verdict " +
+          "body never goes into research.json. Supplying both `verdict` and `file_path` " +
+          "is rejected.",
       },
       resolveStandardPlace: {
         type: "boolean",
