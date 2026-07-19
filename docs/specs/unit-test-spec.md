@@ -410,7 +410,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "grade_on_invariant": {
           "type": "boolean",
           "default": false,
-          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous. See docs/plan/invariant-grading.md."
+          "description": "When true, this negative test is graded SOLELY on its deterministic invariant validator(s) in eval/harness/validators/test_<skill>.py (gated on a tag) — routing and activation are NOT gated. Use for routing-flaky negatives where every plausible route is state-safe. REQUIRES a tag-gated invariant validator that actually runs; without one the pass is vacuous."
         }
       },
       "additionalProperties": false
@@ -526,7 +526,7 @@ Guidelines for writing `judge_context` notes:
   | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
   | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
 
-  Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/gps/skill-mcp-testing-plan.md`) covers the review cadence.
+  Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/skill-mcp-testing-plan.md`) covers the review cadence.
 
 ### 5.5 `negative`
 
@@ -576,6 +576,13 @@ Default `false` reproduces the legacy counts-only judge input **byte-for-byte fo
 ### 5.10 `expected_classifications`
 
 Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `evidence_type`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
+
+Two matcher modifiers keep the check both precise and non-flappy:
+
+- **`attribute: "date" | "place"`** — for an event fact whose date and place are separate attributes of the one type (a birthplace is `birth` with `place` set; a computed year is `birth` with `date` set), matches only assertions of the given `fact_type` that have that attribute populated. Lets a `birth` place-claim (`direct`) and date-claim (`indirect`) be checked independently.
+- **`optional: true`** — drops the *existence* requirement: the matcher checks the classification only IF a matching assertion is present, and passes silently when absent. Use for a fact whose *existence* is completeness the skill produces **unreliably** (e.g. a death cert's named-parent `name` assertions) — hard-gating on unreliable existence is what makes a test flap. The judge's soft `Completeness` dimension covers the omission instead. Do **not** use `optional` to paper over a *classification* that flaps; use it only for unreliable *existence*.
+
+**Deterministic-validator deference (grading).** When `test_expected_classifications` **passes**, the LLM judge's `Evidence type accuracy` and `Informant identification` dimensions cannot **FAIL** on the verified classifications — the harness floors a judge `1` to `2` (`orchestrator.apply_deterministic_deference`). A fuzzy re-grade must not override a deterministic check that already confirmed the classification (this retired the recurring census direct/indirect judge-inversion flap). Partial (`2`) is still permitted for a real issue on an *undeclared* assertion. Correctness likewise does not grade classification at all (base judge prompt) — evidence_type/proximity/quality are the classification dimensions' scope.
 
 ---
 
@@ -726,7 +733,7 @@ Plain-English statement of what this dimension evaluates.
 
 Conventions: H1 is the skill name, H2 is each dimension name (exactly one H2 per dimension), and each H2 section ends with the three bulleted criteria (`pass`, `partial`, `fail`). The judge prompt parses on H2 headers and the three bullets. Don't add extra H2s, footnotes, or appendices — they confuse parsing. If a dimension genuinely can't take a `partial`, write `**partial:** not applicable — this dimension is binary` rather than omitting the bullet.
 
-**Tool-usage dimensions for MCP-calling skills.** Skills with `allowed-tools` in their frontmatter (search-records, search-full-text, locality-guide, etc.) must include at least one dimension covering MCP tool usage. This aligns with the three-axis breakdown in `docs/gps/skill-mcp-testing-plan.md` (tool selection, argument quality, response interpretation). Two patterns:
+**Tool-usage dimensions for MCP-calling skills.** Skills with `allowed-tools` in their frontmatter (search-records, search-full-text, locality-guide, etc.) must include at least one dimension covering MCP tool usage. This aligns with the three-axis breakdown in `docs/skill-mcp-testing-plan.md` (tool selection, argument quality, response interpretation). Two patterns:
 
 - **Single combined dimension:** "Tool usage — correct tool selected for the task, arguments well-formed and faithful to the user's request, response interpreted accurately." Use for skills with a single dominant tool.
 - **Split dimensions:** "Argument quality" and "Response interpretation" as separate dimensions. Use for skills where tool selection is non-trivial (multiple plausible tools) or where the response shape is complex enough that interpretation is its own skill.
@@ -1000,7 +1007,7 @@ The `research-schema-spec.md` ownership table is the source of truth for structu
 
 ## 9. Pre-flight Conditions
 
-Before the harness executes a test, it runs the runnability gate below. Test authoring workflow lives in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md); senior review cadence, calibration protocols, and Phase 1 bootstrap sequencing live in [`docs/gps/skill-mcp-testing-plan.md`](../gps/skill-mcp-testing-plan.md). This section covers only what the harness checks.
+Before the harness executes a test, it runs the runnability gate below. Test authoring workflow lives in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md); senior review cadence, calibration protocols, and Phase 1 bootstrap sequencing live in [`docs/skill-mcp-testing-plan.md`](../skill-mcp-testing-plan.md). This section covers only what the harness checks.
 
 ### Runnability gate
 
@@ -1248,7 +1255,7 @@ Target: **10-20 tests per skill**, split roughly 50/50 between positive and nega
 
 With 23 in-scope skills (excluding multi-turn skills — see Section 1), the target is **230-460 tests total**. This is enough to catch regressions and give the LLM judge meaningful signal. More tests per skill yields diminishing returns — the 15th conflict-resolution test teaches less than the 5th.
 
-**Relationship to the description optimizer.** The master testing plan (`docs/gps/skill-mcp-testing-plan.md`, Appendix C) cites ~30 labeled queries as a typical setup for low-variance candidate ranking in description optimization. The optimizer works with fewer — 10-20 well-chosen tests yield usable signal — but candidate scoring is noisier and a strict 60/40 train/test split becomes thin. Mitigations: skip per-skill holdout and rely on senior review of proposed descriptions, or treat boundary tests from confusable-skill pairs as cross-skill holdouts. Authoring an additional 10 synthetic queries per skill at optimization time is also acceptable; those queries are ephemeral and need not be checked into `eval/tests/unit/`.
+**Relationship to the description optimizer.** The master testing plan (`docs/skill-mcp-testing-plan.md`, Appendix C) cites ~30 labeled queries as a typical setup for low-variance candidate ranking in description optimization. The optimizer works with fewer — 10-20 well-chosen tests yield usable signal — but candidate scoring is noisier and a strict 60/40 train/test split becomes thin. Mitigations: skip per-skill holdout and rely on senior review of proposed descriptions, or treat boundary tests from confusable-skill pairs as cross-skill holdouts. Authoring an additional 10 synthetic queries per skill at optimization time is also acceptable; those queries are ephemeral and need not be checked into `eval/tests/unit/`.
 
 Junior genealogists create tests via the CRUD UI. Senior genealogists review a subset as golden sets for calibration.
 
@@ -1528,11 +1535,25 @@ def compute_allowed_tools(skill_name: str, tmp_dir: Path) -> list[str]:
     # file" (see prose above). The universal ownership validator catches
     # research.json misuse and the disallowed-tools backstop blocks
     # dangerous host tools.
-    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
+    # Task is always in the baseline — plugin subagents are staged into
+    # every workspace and a skill delegates only when its SKILL.md says to.
+    baseline = ["Read", "Glob", "Grep", "Write", "Edit", "Skill", "Task"]
+    # Plus the frontmatter `tools:` of every plugin agent the skill
+    # delegates to via `@plugin:<name>`. A delegated agent's MCP calls run
+    # in the SAME session and go through the same allow/deny lists, so they
+    # must be in the union or the SDK denies them. Per-agent `tools:` is
+    # subtractive (it narrows a set inherited from the session), which is
+    # why this union is required rather than a leak to be fixed.
+    for agent in agent_refs_for_skill(skill_md):
+        declared.extend(parse_frontmatter(agents_dir / f"{agent}.md").get("tools", []))
     return baseline + declared
 ```
 
 A skill that calls a tool not in its derived list is rejected by the SDK at call time. The harness records the rejection as a tool_call with `matched.kind: "none"` and an error envelope, and the run typically fails the tool-allowlist validator.
+
+**The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
+
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — `search-images` declares `image_read` and browses volumes page-by-page itself, while `record-extraction` holds it only through `@plugin:image-reader` and must delegate. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked` via PreToolUse
 
@@ -1779,7 +1800,7 @@ The following seed files exist in the repo as working references for harness dev
 
 ### Scenarios
 
-Two scenarios are shipped today: `mid-research-flynn` and `flynn-with-birthplace-conflict` (both under `eval/fixtures/scenarios/`). The full list of bootstrap scenarios devs must seed for Phase 1 — including which are still needed — lives in [`docs/gps/skill-mcp-testing-plan.md`](../gps/skill-mcp-testing-plan.md) under "Sequencing > Phase 1." That's the single source of truth for scenario inventory and priority; this section links rather than restates to prevent drift.
+Two scenarios are shipped today: `mid-research-flynn` and `flynn-with-birthplace-conflict` (both under `eval/fixtures/scenarios/`). The full list of bootstrap scenarios devs must seed for Phase 1 — including which are still needed — lives in [`docs/skill-mcp-testing-plan.md`](../skill-mcp-testing-plan.md) under "Sequencing > Phase 1." That's the single source of truth for scenario inventory and priority; this section links rather than restates to prevent drift.
 
 Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`. The two JSON files must validate against [`research.schema.json`](schemas/research.schema.json) and [`tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json).
 

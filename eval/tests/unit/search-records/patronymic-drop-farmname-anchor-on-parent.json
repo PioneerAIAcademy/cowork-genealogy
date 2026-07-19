@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_search_records_021",
+    "skill": "search-records",
+    "name": "Patronymic culture: drop the Americanized farm-name surname; re-anchor the christening search on given name + date + a recovered parent",
+    "type": "positive",
+    "description": "Executing pli_001 (find Anders Moen's 1868 Norwegian christening to confirm his parents), the subject carries the Americanized farm-name surname 'Moen' the family adopted in the US, while the Norwegian church book indexes the child under his father's PATRONYMIC, not the farm name. US records (1900 census, in the scenario) already recovered the parents' given names — father Hans, mother Marit. A surname-anchored Norwegian search ('Moen') returns nil (record-search-moen-surname-nil). The skill must apply the patronymic carve-out: NOT keep 'Moen' as the surname, and instead re-anchor on givenName Anders + recordCountry Norway + a recovered parent's given name (motherGivenName Marit and/or fatherGivenName Hans) + the ~1868 birth year — the search-by-parent recovery — which surfaces the christening naming Hans Olsen and Marit Pedersdatter (record-search-anders-patronymic-hit). Guards the patronymic doctrine and the re-anchor-on-a-relative lever; a surname-nil must NOT be read as 'unindexed'.",
+    "tags": [
+      "search",
+      "church",
+      "patronymic",
+      "scandinavian",
+      "nil-recovery",
+      "search-by-parent",
+      "name-search-mechanics"
+    ]
+  },
+  "input": {
+    "user_message": "Execute plan item pli_001 — search FamilySearch's Norwegian church books for Anders Moen's christening (born about October 1868, Ringsaker, Hedmark) to confirm his parents.",
+    "scenario": "norwegian-patronymic-nil-recovery"
+  },
+  "mcp_fixtures": [
+    "record-search-moen-surname-nil",
+    "record-search-anders-patronymic-hit",
+    "rank-search-matches-anders-christening"
+  ],
+  "judge_context": [
+    "CORE (Tool Arguments): the christening search must NOT keep 'Moen' as the surname constraint. 'Moen' is an Americanized farm name; a Norwegian church book indexes the child under a patronymic, so a surname-anchored search nils. Score Tool Arguments 3 if a record_search drops the surname and anchors on givenName Anders + recordCountry Norway + a recovered parent's given name (motherGivenName 'Marit' and/or fatherGivenName 'Hans') and/or the ~1868 birth year. Score 1 if the skill keeps surname='Moen' as the anchor and does not re-anchor. (recordCountry Norway supplies the required search anchor once the surname is dropped.)",
+    "CORE (Correctness): the skill should recognize that for a patronymic-culture subject the farm/Americanized surname is the least stable identifier, and re-anchor on the given name + exact date + the parents' given names already recovered from US records (Hans, Marit) — the search-by-parent move. Reaching the christening (record-search-anders-patronymic-hit), which names Hans Olsen and Marit Pedersdatter, is the successful outcome.",
+    "If the skill first tries the surname 'Moen' and gets nil, it should treat that as a query-shape failure (the farm surname is the wrong anchor) and re-anchor — NOT conclude the christening is unindexed or does not exist. Concluding 'unindexed / not found' from the surname-nil alone is a FAIL.",
+    "Completeness: the search should be logged (a nil surname attempt and/or the successful parent-anchored attempt). Finding the christening under patronymics is a complete answer; do NOT require the skill to also complete extraction/attachment in this test.",
+    "Do NOT penalize the skill for not calling place_search or collections_search — recordCountry 'Norway' is a sufficient anchor for the church search, and a validate_research_schema call is acceptable if made."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

@@ -34,7 +34,6 @@ Two skills wrap the human ends of that loop:
 | **Lives in** | `packages/engine/plugin/skills/` | `.claude/skills/` (repo-local dev tooling) |
 | **Ships in the Cowork plugin?** | Yes | **No** — not under `plugin/skills/`, so never packaged |
 | **Eval shape** | Unit tests vs. MCP fixtures + neighbor negatives | Synthetic run-log / finished-project artifacts; no MCP-fixture corpus |
-| **Deep-dive brief?** | Yes (`eval/briefs/<skill>.md`) | **No** — the brief format doesn't fit; this plan replaces it |
 
 These two skills live in **`.claude/skills/`**, alongside the other repo-local dev
 skills `compare-state` and `draft-unit-test`. Because the plugin packager
@@ -60,9 +59,7 @@ structurally, with no exclusion list to maintain. Claude Code still loads
 1. **Don't ship them in the Cowork plugin.** Done — they live in `.claude/skills/`,
    outside the `packages/engine/plugin/skills/` tree the packager zips, so the
    exclusion is structural. No `zip -x` list to keep in sync.
-2. **No deep-dive brief.** They are intentionally absent from `eval/briefs/`; the
-   README there carries a pointer to this plan instead.
-3. **Their "fixtures" are not `eval/fixtures/mcp/` mocks.** `author-e2e-fixture`
+2. **Their "fixtures" are not `eval/fixtures/mcp/` mocks.** `author-e2e-fixture`
    needs a *finished-project* input state; `interpret-e2e-result` needs a
    *synthetic run-log* input. Both are heavier to stand up than a normal skill's
    mock responses, and neither uses the MCP-fixture machinery.
@@ -165,8 +162,8 @@ files only, never runs a live e2e) plus the testing-guide authoring steps.
 ## Judge calibration set (per-run annotations)
 
 A committed, offline dataset that establishes judge-vs-human agreement,
-**decoupled from the e2e pipeline** (no agent, no live FS). Full design:
-[`e2e-annotation-calibration.md`](e2e-annotation-calibration.md).
+**decoupled from the e2e pipeline** (no agent, no live FS). Contract:
+[`../specs/e2e-test-spec.md`](../specs/e2e-test-spec.md) §7.
 
 - **Runner** — `eval/harness/e2e/calibrate_judge.py` (tested in
   `tests/unit/test_e2e_calibrate_judge.py`). Calls **only the judge**, reports
@@ -262,8 +259,7 @@ The interpreter's tests need run logs; real run logs need a fixture + a live
 - ~~**Judge calibration runner + seeder exist** (`calibrate_judge.py`,
   `seed_calibration_case.py`; reports ≥80% per-finding agreement). The committed
   set is a per-file directory `eval/tests/e2e/calibration/cases/`, seeded from real
-  runs.~~ **Superseded** by
-  [`e2e-annotation-calibration.md`](e2e-annotation-calibration.md): the seeder and
+  runs.~~ **Superseded** by the per-run annotation design: the seeder and
   the `calibration/cases/` directory are retired; calibration now reads per-run
   `run-<ts>.ann.json` grades committed beside the run logs.
   `calibrate_judge.py` remains (reports ≥80% per-finding agreement). Windows

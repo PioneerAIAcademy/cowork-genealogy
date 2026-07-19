@@ -7,7 +7,7 @@ of [{query, should_trigger}] items. This script builds that list for free from
 the genealogist-authored unit tests, so the optimizer trains on real,
 domain-expert phrasings instead of hand-written queries.
 
-Mapping (see docs/plan/skill-mcp-optimization-plan.md):
+Mapping:
   - every POSITIVE test for skill X            -> {query, should_trigger: true}
   - every NEGATIVE test for skill X            -> {query, should_trigger: false}
   - every NEGATIVE test in ANOTHER skill whose

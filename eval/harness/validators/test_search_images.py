@@ -1,9 +1,9 @@
 """Skill-specific validators for the search-images skill.
 
 search-images browses FamilySearch digitized image volumes page-by-page
-(volume_search → image_search → image_read) when a record set is digitized
-but not indexed and not full-text searchable, and logs every browse via
-research_log_append. image_search does not stage results, so no results/
+(volume_search → image_search → delegate each page to the image-reader
+subagent) when a record set is digitized but not indexed and not full-text
+searchable, and logs every browse via research_log_append. image_search does not stage results, so no results/
 sidecar is written — the log entry stands alone.
 
 Narrative-quality dimensions (volume selection, browse procedure,

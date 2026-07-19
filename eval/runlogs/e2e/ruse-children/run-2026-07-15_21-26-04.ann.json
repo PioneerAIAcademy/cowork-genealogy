@@ -1,0 +1,16 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false",
+    "f3": "true",
+    "f4": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Ora S. Raney (I1, Orie S. Rainey, b. 20 Aug 1879) recovered and linked, from the Ohio birth record naming mother Mary L. Ruse and corroborated by the 1880/1900 censuses.",
+    "f2": "FAIL per reviewer ruling (Shaunese Luthy, with Dallan). The AI merged 'Mary L. Raney' (1887 birth record) and 'Bertha Belle Raney' (marriage/death) into one 1887 daughter. Per the reviewer these are DIFFERENT people: the differing middle names — Mary 'L.' vs Bertha 'Belle' — indicate separate individuals, and the 'Mary L. Raney' birth record does NOT belong to this family, so it must not be used for Bertha. Bertha Belle is the true 1887 daughter; the 1900 census enumerating four living children does not make Mary L. one of them. Merging on a shared birth date + parent names alone, without further records proving identity, is the error — clearly differently-named individuals require additional research before they can be merged. proof_quality lowered to 2: the proof conclusion rests on this wrong merge.",
+    "f3": "Robert M. Raney (I4, b. 25 Feb 1891, also Milan/Milen) recovered and linked, from the Ohio birth record and 1945 death record naming his parents.",
+    "f4": "Armeda L. Raney (I2, b. 1882) recovered and linked — found via a father-name birth search (indexed under the mother variant 'Levina Ruze'), corroborated by the 1900 census. Proof tier 'proved' on four original birth records each naming the mother, corroborated by censuses; name-variant conflicts resolved."
+  },
+  "annotator": "ernest"
+}

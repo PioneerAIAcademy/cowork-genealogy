@@ -1,0 +1,20 @@
+{
+  "tool": "record_search",
+  "description": "record_search that CONSTRAINS on the Americanized farm-name surname 'Moen' returns nil — the Norwegian christening indexes the child under his father's patronymic, not the farm name the family adopted in the US, so a surname-anchored Norwegian church search finds nothing. Matched on surname~Moen so it fires for any search that keeps 'Moen' as the surname. Guards the patronymic carve-out: keeping the farm surname is the wrong move. Ordered before the parent-anchored hit fixture so a surname-constrained query nils first (prompting the skill to drop the surname and re-anchor).",
+  "args": {
+    "surname": "~Moen"
+  },
+  "response": {
+    "query": {
+      "surname": "Moen",
+      "givenName": "Anders",
+      "recordCountry": "Norway"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

@@ -3,10 +3,9 @@ import { api, ApiError, type SessionSummary } from '../api'
 import { useAuth } from '../auth'
 import ThemeToggle from './ThemeToggle'
 
-const MODELS = [
-  { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6 — fast & economical' },
-  { id: 'claude-opus-4-8', label: 'Opus 4.8 — most capable (~5× cost)' }
-]
+// Opus is deliberately not offered during the alpha: ~5× the cost, and there is
+// no spend cap in the control plane. Re-add it once a cap exists.
+const MODELS = [{ id: 'claude-sonnet-4-6', label: 'Sonnet 4.6 — fast & economical' }]
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()

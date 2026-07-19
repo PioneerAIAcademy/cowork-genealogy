@@ -50,14 +50,31 @@ RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
 AGENT_PATH_RE = re.compile(r"^packages/engine/plugin/agents/([^/]+)\.md$")
 
 
-# Orchestrator skills exempt from the per-skill runlog rules (2 + 3). These
-# skills are validated by e2e GPS fixtures, not unit tests, so by design they
-# have no `eval/tests/unit/<skill>/` scaffolding and no
-# `eval/runlogs/unit/<skill>/` dir. Without this exemption, any edit to the
+# Skills exempt from the per-skill runlog rules (2 + 3) — skills that by design
+# have no unit suite, so they have no `eval/tests/unit/<skill>/` scaffolding and
+# no `eval/runlogs/unit/<skill>/` dir. Without this exemption, any edit to the
 # skill body hard-fails with "no run logs" and the `eval-cosmetic-skip` label
 # can't clear it — that escape hatch only relaxes rule 2 once a runlog dir
 # already exists.
-RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research"})
+#
+# Two reasons a skill lands here:
+#   - `research` — an orchestrator, validated by e2e GPS fixtures rather than
+#     unit tests.
+#   - `forget-and-rederive` — a setup/utility skill, not a research step. It
+#     strips a slice of the local tree to stage a practice run, so there is no
+#     genealogical output for a judge to grade: its mechanical half is a
+#     deterministic Python script (`scripts/forget.py`) and its other half is a
+#     behavioral prohibition (don't re-read the forgotten facts off the tree)
+#     that a unit transcript can't observe. Permanent, not a stopgap — confirmed
+#     by Dallan 2026-07-18. `forget.py` itself has no automated coverage today
+#     (see docs/TODOs.md); that gap wants script-level tests, not a skill eval
+#     suite.
+#
+# Adding a unit suite for such a skill later means removing it from this set.
+# Otherwise keep this set minimal: it is the only way to edit a skill body
+# without eval discipline, so every addition needs the "no unit suite by design"
+# rationale above, not just "the gate is inconvenient right now."
+RUNLOG_GATE_EXEMPT_SKILLS = frozenset({"research", "forget-and-rederive"})
 
 
 def gh_error(message: str, *, file: str | None = None) -> None:
@@ -99,18 +116,28 @@ def git_diff_changes() -> list[tuple[str, str | None]]:
 
 
 def git_diff_touched_paths() -> list[str]:
-    """Every path changed in the PR, regardless of status (added, modified,
-    deleted, renamed — both sides of a rename).
+    """Every path the PR ITSELF changed, regardless of status (added,
+    modified, deleted, renamed — both sides of a rename).
 
     The touched-skill detection for rules 2 + 3 keys off this view: a
     *modification* to a SKILL.md, test JSON, or referenced plugin agent
     invalidates the run-log snapshot just as surely as an addition, so the
     AR-only view rule 1 uses would miss it.
+
+    Uses a **three-dot** diff (``base...head`` == ``merge-base(base, head)``
+    → ``head``) so the change set is the PR's own commits only — exactly what
+    GitHub's "Files changed" tab shows. A two-dot ``base head`` diff would
+    additionally surface everything main added since this branch diverged as
+    spurious *deletions* (present in base, absent in head), dragging skills the
+    PR never touched into `touched_skills` and hard-failing their (stale-vs-main
+    but untouched-by-this-PR) run logs on rule 2. Keying off merge-base makes a
+    branch that is simply behind main immune to that phantom. Full history is
+    fetched in CI (``fetch-depth: 0``), so the merge-base resolves.
     """
     base = os.environ["BASE_SHA"]
     head = os.environ["HEAD_SHA"]
     out = subprocess.check_output(
-        ["git", "diff", "--name-status", base, head],
+        ["git", "diff", "--name-status", f"{base}...{head}"],
         text=True,
     )
     paths: list[str] = []

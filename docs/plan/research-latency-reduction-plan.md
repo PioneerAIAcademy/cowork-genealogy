@@ -5,8 +5,8 @@
 **Goal:** Roughly halve the agent-controllable wall-clock of a single research
 session, without removing safety gates on irreversible/external actions and without
 re-architecting the skill pipeline.
-**Companion doc:** [`research-latency-quick-wins-spec.md`](../specs/research-latency-quick-wins-spec.md)
-covers the two changes that should land *before* this plan's measurement gate.
+**Companion work:** the research-latency quick wins — two changes that should land
+*before* this plan's measurement gate.
 
 ---
 
@@ -96,8 +96,7 @@ The migration left three hand-edit gaps and one ergonomics gap. Closing them fin
 the persistence-tool architecture and removes the last JSON hand-edits.
 
 ### 1a. `tree_edit`: `add_source` / `update_source`
-**Delivered by the quick-wins spec** — see
-[`research-latency-quick-wins-spec.md`](../specs/research-latency-quick-wins-spec.md) §2.
+**Delivered by the quick-wins work.**
 Removes the hand-written tree `S` entries in `record-extraction` and `proof-conclusion`.
 Listed here for completeness of the coverage map; assumed already landed.
 
@@ -168,7 +167,7 @@ feedback was *"it did great, just too long."*
   `no_evidence` dead-end).
 - Beyond that: scope novice narration to **user-facing output**, not internal thinking;
   cut re-derivation of analysis the tools/skills already encode. This interacts with
-  the in-flight **SKILL.md shortening briefs** (`eval/briefs/shorten-*.md`) — coordinate
+  the in-flight **SKILL.md shortening work** — coordinate
   so the two efforts don't fight.
 - Tradeoff: do not gut the teaching value — the complaint is verbosity, the fix is
   *precision*, not silence. This is the lever most likely to move the needle if Phase 0
@@ -177,9 +176,8 @@ feedback was *"it did great, just too long."*
 ### 2b. Round-trip reduction
 - **MCP-tool preloading:** the run spent ~11 turns on `ToolSearch` (one per deferred-tool
   load). Pre-loading the always-used genealogy tools would remove them — **but the
-  mechanism is runtime-dependent**: per `skill-mcp-optimization-plan.md` §12,
-  `allowed-tools` SKILL.md frontmatter is honored by **Cowork** but **silently ignored
-  by the Agent SDK** (the hosted-web path). So this is "investigate the deferral knob per
+  mechanism is runtime-dependent**: `allowed-tools` SKILL.md frontmatter is honored
+  by **Cowork** but **silently ignored by the Agent SDK** (the hosted-web path). So this is "investigate the deferral knob per
   runtime, then apply where controllable," not a confident win. Verify first.
 - **Batch adaptive search retries:** `search-records` fired the wildcard + broad-fallback
   searches as separate sequential turns. Where the broadening is not data-dependent,
@@ -240,7 +238,4 @@ Whether to auto-chain, and how much to narrate while doing so, trades against th
   schema touch.
 - `docs/specs/skill-rewrites-for-persistence-tools-spec.md` — the 2026-06-19 migration
   whose skills 1c/1d re-touch.
-- `docs/plan/skill-mcp-optimization-plan.md` §12 — `allowed-tools` is honored by Cowork,
-  ignored by the Agent SDK (relevant to 2b).
 - `eval/tests/e2e/kenneth-quass-death` — the fixture for Phase 0 / final re-measure.
-- `eval/briefs/shorten-*.md` — the in-flight SKILL-shortening work that 2a coordinates with.

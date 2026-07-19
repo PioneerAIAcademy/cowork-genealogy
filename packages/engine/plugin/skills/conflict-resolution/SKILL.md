@@ -86,10 +86,17 @@ refinement) as a next step, then proceed with what is recorded.
 Look for:
 
 **Fact conflicts:**
-- Same person, same fact_type, different values. Compare assertions
-  linked to the same person_id via person_evidence.
-- Use `structured_value` for programmatic comparison where available
-  (birth year as number, place as string).
+- Same person, same fact_type **and same attribute**, different values.
+  Compare assertions linked to the same person_id via person_evidence.
+  Event place/date are attributes of the one event fact, so a `birth`
+  place-claim (`place` set) and a `birth` date-claim (`date` set) share
+  the `birth` fact_type but are **not** a conflict — compare place with
+  place and date with date. A real birthplace conflict is two `birth`
+  assertions with different `place` values; a birth-year conflict is two
+  with different `date` values.
+- Use `place`/`standard_place`, `date`, and `structured_value` for
+  programmatic comparison (birth year as date/number, place as string) —
+  not the free-text `value`.
 
 **Identity conflicts:**
 - Timeline impossibilities (from the timeline skill) — two events
@@ -98,6 +105,23 @@ Look for:
   locations
 - person_evidence entries with `speculative` confidence — these
   are unresolved identity questions
+
+**Materialization-surfaced conflicts:**
+- When `person-evidence` links a persona and materializes its
+  assertions onto a tree person, `materialize_facts` returns a
+  `conflicts_surfaced: [{ personId, factType, values }]` array listing
+  every **single-valued / vital** fact type (`Birth`, `Death`,
+  `Christening`, `Burial`) whose incompatible values now coexist as
+  separate sourced facts on that person. Each surfaced entry is a fact
+  conflict to record here (§2): `disputed_attribute` names the fact type
+  and `competing_assertion_ids` the assertions behind the coexisting
+  facts.
+- **Multi-valued fact types are never surfaced.** `Occupation`,
+  `Residence`, `Census`, and `Citizenship` legitimately hold many
+  concurrent values, so materialization lets them coexist as separate
+  sourced facts and omits them from `conflicts_surfaced` — they are not
+  conflicts. Do not manufacture a conflict entry for differing
+  occupations or residences.
 
 **Already-identified conflicts:**
 - Check existing `conflicts[]` for `status: "unresolved"` — these
@@ -307,6 +331,14 @@ resolution patterns:
    whether events cohere into one life
 4. Check: do the ages fit? Do the locations make sense? Are there
    impossibilities?
+5. A **patronymic mismatch is a different-person signal, never a
+   spelling variant.** In patronymic naming (Scandinavian -sen/-datter,
+   -son/-dotter, and similar) the surname encodes the *father's* given
+   name, so two records giving the "same" person different patronymics
+   name different fathers — treat that as evidence of distinct people,
+   not a surname variant to smooth over. (The Americanized/farm surname
+   an emigrant later adopts is separate from, and does not resolve,
+   the patronymic.)
 
 **Do not confirm identity by the absence of an alternative.** Not
 finding a competing same-name candidate in a later record is not
