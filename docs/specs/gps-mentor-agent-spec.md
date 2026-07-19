@@ -16,6 +16,14 @@ sections other than `evaluations[]`, and `tree.gedcomx.json`). Its only write ou
 
 - A structured JSON verdict written to `evaluations/` in the project folder
 - A pointer record **appended** to the `evaluations` array in `research.json` (append-only — it does not touch any other section)
+
+Both are produced by a **single `research_append` call** carrying the verdict body as
+the top-level `verdict` argument: the tool writes the sidecar, creates the directory,
+stamps `file_path`, assigns the `ev_NNN` id, and commits both files atomically. The agent
+holds no filesystem write tool and never hand-serializes the verdict — the same division
+of labour as `log[].results_ref`, where research.json holds the pointer and only the host
+writes the payload. Writing pointer and payload in one call is what makes a `file_path`
+naming a nonexistent file structurally impossible.
 - A markdown narrative printed to the conversation
 
 The agent fills the role of the experienced colleague a researcher would be lucky to have
@@ -110,6 +118,7 @@ description: BCG-style senior genealogist who reviews research work and tells th
 model: claude-sonnet-5
 tools:
   - Read
+  - mcp__genealogy__research_append
   - mcp__genealogy__validate_research_schema
   - mcp__genealogy__place_search
   - mcp__genealogy__place_distance
@@ -404,13 +413,20 @@ user-facing output. It must follow this structure:
 
 After completing a review, the agent must:
 
-1. Create the `evaluations/` directory in the project folder if it does not exist.
-2. Write the structured verdict to `evaluations/<focus>-<target_id>-<short_iso>.json`.
-3. Append one pointer record to the `evaluations` array in `research.json` (see §12).
-4. Print the `narrative_for_user` block to the conversation as the final user-facing output.
+1. Make one `research_append` call on `section: "evaluations"`, `op: "append"`, passing
+   the structured verdict body as the top-level `verdict` argument and the pointer record
+   as `entry` (see §12). The tool creates `evaluations/`, writes
+   `evaluations/<focus>-<target_id>-<short_iso>.json`, stamps `file_path`, assigns the
+   `ev_NNN` id, validates, and commits — or writes nothing.
+2. Print the `narrative_for_user` block to the conversation as the final user-facing output.
 
-Steps 2–3 must both complete before step 4. If writing the file fails, the agent must
-report the error explicitly rather than silently proceeding to print the narrative.
+Step 1 must complete before step 2. If the call fails, the agent must report the error
+explicitly rather than silently proceeding to print the narrative.
+
+The agent must NOT write the verdict file itself, set `file_path`, or invent an `id`; the
+tool owns all three, and supplying `file_path` alongside `verdict` is rejected. Note that
+`entry.verdict` (the one-word enum) and the top-level `verdict` argument (the full
+structured body) are different things — the body never goes inside `entry`.
 
 ---
 
@@ -511,6 +527,10 @@ filesystem; the research.json entry is a pointer, not a duplicate.
 
 ### 12.1 Entry shape
 
+This is the entry **as persisted**. The agent supplies only the non-tool-owned fields
+(`focus`, `target_id`, `target_type`, `verdict`, `timestamp`, `superseded_by`); `id` and
+`file_path` are filled in by `research_append` (§8).
+
 ```json
 {
   "id": "ev_001",
@@ -526,12 +546,12 @@ filesystem; the research.json entry is a pointer, not a duplicate.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | `ev_` prefix. Immutable once created. |
+| `id` | string | yes | `ev_` prefix. Immutable once created. **Assigned by `research_append`** — the agent must not supply it. |
 | `focus` | string | yes | Focus mode used |
 | `target_id` | string | yes | `q_` or `ps_` ID evaluated |
 | `target_type` | string | yes | `"question"`, `"proof_summary"`, or `"project"` |
 | `verdict` | string | yes | Verdict value from the evaluation |
-| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder |
+| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder. **Stamped by `research_append`** from the `verdict` argument — the agent must not supply it. |
 | `timestamp` | string | yes | UTC ISO 8601 timestamp |
 | `superseded_by` | string \| null | yes | `ev_` ID of a later evaluation for the same focus+target, or null |
 
