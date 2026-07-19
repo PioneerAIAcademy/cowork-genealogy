@@ -436,6 +436,16 @@ eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Ne
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
 
+.PHONY: feedback-case
+feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]
+	# Wraps scripts/setup-feedback-case.sh (contract: docs/specs/feedback-case-spec.md
+	# §11). Unzips the bundle, git-inits it, writes .feedback-repo-root back to this
+	# checkout, and symlinks the plugin + repo skills in — so the result is a live
+	# research project you open in Claude Code and continue, not an archive.
+	# Windows: run scripts\setup-feedback-case.bat instead.
+	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-case ZIP=~/Downloads/feedback-2026-07-21T09-14-22Z.zip" >&2; exit 1; }
+	scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
+
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
 # BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
