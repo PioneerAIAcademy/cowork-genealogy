@@ -359,7 +359,7 @@ def test_new_sources_have_citation_detail(before_state, after_state):
 # universal `test_tool_allowlist` in test_universal.py — which, unlike the
 # local copy, unions the frontmatter `tools:` of every plugin agent the
 # skill delegates to via `@plugin:<name>` (record-extraction now delegates
-# persistence to the record-extractor agent, whose research_append /
+# persistence to the record-extractor agent, whose extraction_append /
 # tree_edit / place_search calls land in the same session tool_calls log).
 # Same removal was already applied to conflict-resolution and
 # proof-conclusion for the same redundancy reason.

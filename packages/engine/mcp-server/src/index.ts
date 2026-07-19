@@ -92,6 +92,7 @@ import {
   projectContext,
   type ProjectContextInput,
 } from "./tools/project-context.js";
+import { extractionAppend } from "./tools/extraction-append.js";
 import { materializeFacts } from "./tools/materialize-facts.js";
 import type { MaterializeFactsInput } from "./types/materialize-facts.js";
 import { allToolSchemas } from "./tool-schemas.js";
@@ -649,6 +650,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeCorrectInput;
       const result = await treeCorrect(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "extraction_append") {
+    try {
+      // Lane scoping lives inside extractionAppend, not here — see
+      // ResearchAppendOptions. Dispatch passes only the tool arguments.
+      const args = request.params.arguments as unknown as ResearchAppendInput;
+      const result = await extractionAppend(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

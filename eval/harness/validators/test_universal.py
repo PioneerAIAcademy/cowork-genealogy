@@ -561,10 +561,11 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
 # (mcp__genealogy__research_append → research_append).
 PROJECT_WRITER_TOOLS = {
     "research_append",
+    "extraction_append",
     "research_log_append",
     "tree_edit",
     "tree_correct",
-    "merge_record_into_tree",
+    "materialize_facts",
     "merge_tree_persons",
 }
 

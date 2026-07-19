@@ -250,13 +250,13 @@ from a fixture at `$REPO/eval/fixtures/mcp/<name>.json`
   fixture's predicate already covers the call, reuse it (don't write a
   duplicate). If unsure, write a `-2`/`-3` variant and let the user
   consolidate.
-- **Skip the six live tools** — `validate_research_schema`,
-  `research_log_append`, `research_append`, `tree_edit`, `tree_correct`, and
-  `project_context`. Each runs the real implementation against the workspace
-  (`mock_mcp.py`'s `LIVE_TOOLS`), so it needs no fixture — and its response
-  isn't in `results/`, so don't hunt for a `payload` to copy for a
-  `research_append`/`tree_edit` call. Every *other* (network) tool the
-  sub-skill calls needs one.
+- **Skip the eight live tools** — `validate_research_schema`,
+  `research_log_append`, `research_append`, `extraction_append`, `tree_edit`,
+  `tree_correct`, `materialize_facts`, and `project_context`. Each runs the
+  real implementation against the workspace (`mock_mcp.py`'s `LIVE_TOOLS`), so
+  it needs no fixture — and its response isn't in `results/`, so don't hunt for
+  a `payload` to copy for a `research_append`/`tree_edit` call. Every *other*
+  (network) tool the sub-skill calls needs one.
 - **`image_read` can't be mocked** — the mock server can't emit image content
   blocks (`image_read` is exempt; see `eval/CLAUDE.md`). If the failure hinges on
   what an `image_read` returned (e.g. a mislinked image showing the wrong person),

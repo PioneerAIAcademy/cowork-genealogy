@@ -1345,8 +1345,28 @@ async function prepareOps(
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
+/** Lane scoping for a narrow caller (e.g. `extraction_append`).
+ *
+ *  This is a second FUNCTION PARAMETER, deliberately not a field on
+ *  `ResearchAppendInput`: `index.ts` dispatches with `researchAppend(args)`, a
+ *  single argument built from `request.params.arguments`, so an extra key on the
+ *  tool input can never reach this object. The restriction is therefore
+ *  unforgeable from the LLM side — a caller cannot widen its own lane.
+ *
+ *  It also lives here, in the module, rather than in the dispatch layer, because
+ *  `eval/harness/harness/mock_mcp.py` imports these functions directly and never
+ *  routes through `index.ts`. A gate in dispatch would be invisible to every
+ *  eval run. */
+export interface ResearchAppendOptions {
+  /** Sections this caller may write. Omitted = every section (`research_append`). */
+  allowedSections?: ReadonlySet<string>;
+  /** Tool name used in lane-rejection text, so a narrow caller names itself. */
+  toolName?: string;
+}
+
 export async function researchAppend(
   input: ResearchAppendInput,
+  options: ResearchAppendOptions = {},
 ): Promise<ResearchAppendResult> {
   const { projectPath } = input;
 
@@ -1404,6 +1424,32 @@ export async function researchAppend(
     }
 
     const fmt = (i: number, msg: string) => (isBatch ? `ops[${i}]: ${msg}` : msg);
+
+    // ─── Lane gate ───────────────────────────────────────────────────────────
+    // Runs BEFORE prepareOps: that pre-pass does live Places-API resolution and
+    // mutates the tree in memory, so a call that was always going to be rejected
+    // must not burn network round-trips first.
+    //
+    // The message names ONLY this tool and the sections it does write. It must
+    // not name the broad tool or enumerate the denied sections — that string is
+    // exactly the routing map a model needs to work around the lane.
+    if (options.allowedSections) {
+      const allowed = options.allowedSections;
+      const toolName = options.toolName ?? "this tool";
+      const writes = [...allowed].join(", ");
+      for (let i = 0; i < ops.length; i++) {
+        const section = ops[i]?.section;
+        if (typeof section !== "string" || !allowed.has(section)) {
+          return fail([
+            fmt(
+              i,
+              `section '${section}' is not writable by ${toolName} (it writes only: ${writes}). ` +
+                "Another skill owns that section — surface the finding in your summary instead.",
+            ),
+          ]);
+        }
+      }
+    }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
