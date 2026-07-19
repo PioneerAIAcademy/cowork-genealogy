@@ -18,6 +18,12 @@ description: >-
   proof-conclusion skill, which invokes this mentor.
 model: claude-sonnet-5
 tools:
+  # Every MCP tool appears under BOTH server spellings — `genealogy` (the
+  # harnesses, .mcp.json, hosted web) and the `remote-devices` bridge
+  # namespace Cowork exposes the installed .mcpb under. `tools:` is matched
+  # exactly with no prefix fallback, and the plugin cannot control which name
+  # the host registers. See record-extractor.md for the full rationale;
+  # guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
   - mcp__genealogy__research_append
   - mcp__genealogy__validate_research_schema
@@ -27,6 +33,14 @@ tools:
   - mcp__genealogy__external_links_search
   - mcp__genealogy__wiki_place_page
   - mcp__genealogy__wiki_search
+  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__remote-devices__Genealogy_Research__validate_research_schema
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__remote-devices__Genealogy_Research__place_distance
+  - mcp__remote-devices__Genealogy_Research__collections_search
+  - mcp__remote-devices__Genealogy_Research__external_links_search
+  - mcp__remote-devices__Genealogy_Research__wiki_place_page
+  - mcp__remote-devices__Genealogy_Research__wiki_search
 ---
 
 # GPS Mentor

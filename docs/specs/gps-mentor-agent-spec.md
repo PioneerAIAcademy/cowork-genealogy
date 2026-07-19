@@ -126,14 +126,28 @@ tools:
   - mcp__genealogy__external_links_search
   - mcp__genealogy__wiki_place_page
   - mcp__genealogy__wiki_search
+  - mcp__remote-devices__Genealogy_Research__research_append
+  - mcp__remote-devices__Genealogy_Research__validate_research_schema
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__remote-devices__Genealogy_Research__place_distance
+  - mcp__remote-devices__Genealogy_Research__collections_search
+  - mcp__remote-devices__Genealogy_Research__external_links_search
+  - mcp__remote-devices__Genealogy_Research__wiki_place_page
+  - mcp__remote-devices__Genealogy_Research__wiki_search
 ---
 ```
 
-The MCP tools **must** be listed under their fully-qualified
-`mcp__genealogy__*` names — bare names leave the subagent toolless in the
-unit-harness SDK path (only the e2e harness tolerated them, via its
-ToolSearch prefix allowlist). `Read` is a built-in Cowork tool, not an MCP
-tool, so it stays bare.
+Every MCP tool **must** appear under **both** server spellings. Bare names
+leave the subagent toolless in the unit-harness SDK path, but a single
+qualified name is equally wrong: `mcp__genealogy__*` resolves under
+`.mcp.json`, both harnesses, and hosted web, while Cowork exposes the
+host-installed `.mcpb` through a remote-device bridge as
+`mcp__remote-devices__Genealogy_Research__*`. Entries are matched exactly
+with no fallback, and an agent whose entries all miss is refused a spawn
+outright. Unrecognized entries are ignored so long as one resolves, so
+listing both is safe. Enforced by
+`tests/packaging/agent-tool-names.test.ts`. `Read` is a built-in Cowork
+tool, not an MCP tool, so it stays bare.
 
 **Model requirement:** `claude-sonnet-5`. The gates read and cross-reference large research
 files with careful analytical reasoning. Sonnet 5 — released after this spec was first written —

@@ -158,15 +158,52 @@ orchestrator auto-delegates to the agent. Agents run in fresh context
 explicitly specced otherwise. The first such agent is `gps-mentor`
 (spec: `docs/specs/gps-mentor-agent-spec.md`).
 
-**Qualified tool names.** In the `tools:` frontmatter, MCP tools **must**
-be listed under their fully-qualified `mcp__genealogy__*` names, never the
-bare tool name. A bare name leaves the subagent toolless in the
-unit-harness SDK path (only the e2e harness tolerated bare names, via its
-ToolSearch prefix allowlist); qualifying makes an agent behave identically
-across Cowork, the e2e harness, the unit harness, and the hosted web SDK
-path. Built-in Cowork tools that are not MCP tools — `Read` — stay bare.
-All three current agents follow this (`gps-mentor`, `image-reader`,
-`record-extractor`).
+**Dual-spelled tool names.** In `tools:` — and in `disallowedTools:` —
+every MCP tool **must** be listed twice, once under each server spelling:
+
+    - mcp__genealogy__record_read
+    - mcp__remote-devices__Genealogy_Research__record_read
+
+Bare names do not work (they leave the subagent toolless in the
+unit-harness SDK path), but neither does a single qualified name. The MCP
+server's name is chosen by whoever registers it, and the plugin — which
+ships into the VM — cannot control that choice. `.mcp.json`, both
+harnesses, and the hosted web control plane register it under the key
+`genealogy`; Cowork reaches the host-installed `.mcpb` through a
+remote-device bridge that namespaces it by `manifest.json`'s
+`display_name`. No single spelling resolves everywhere.
+
+Entries are matched **exactly** — no prefix fallback, no inherit-on-miss.
+When every `tools:` entry misses, the runtime refuses to spawn the agent at
+all ("would be spawned with zero tools — refusing"). That is how #650/#698
+broke all three agents in Cowork while CI stayed green: they were qualified
+against the *harness's* arbitrary dict key rather than the product's name.
+Listing both spellings is safe because unrecognized entries are ignored so
+long as at least one resolves.
+
+`disallowedTools:` matters more, not less. A deny binds even under
+`bypassPermissions` (the hosted path, issue #695), so it is the last line
+of defence keeping `record-extractor` off the broad `research_append` — and
+a deny naming one spelling silently fails to bind under the other.
+
+Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
+that namespace also carries `device_bash`, `device_commit_files`, and
+`project_memory_write`, so it would hand a read-only agent shell access to
+the host.
+
+Built-in Cowork tools that are not MCP tools — `Read` — stay bare. Skills'
+`allowed-tools` frontmatter also stays **bare** (it is not an exact-match
+spawn filter); only agent `tools:`/`disallowedTools:` are dual-spelled.
+Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives the
+bridge prefix from `display_name` so renaming the extension fails loudly in
+CI instead of silently in production.
+
+**Never hardcode a qualified name in a ToolSearch query.** Cowork defers
+the ~40 genealogy tool schemas (both harnesses set `ENABLE_TOOL_SEARCH=true`
+to avoid this; Cowork offers no such control), so ToolSearch is the real
+load path there. Search by bare tool name — `query: "+research_append"` —
+which matches whatever prefix the session exposes. The same packaging test
+fails any `select:mcp__…` in a plugin body.
 
 ## Handling user feedback submissions
 

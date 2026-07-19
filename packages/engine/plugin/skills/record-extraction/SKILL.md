@@ -210,10 +210,13 @@ failure — the summary is a progress marker, not a stopping point.
 ## Tool availability
 
 **If `record_read`, `volume_search`, or `research_log_append` are not
-immediately available** (e.g., shown as deferred), call ToolSearch first
-with the fully-qualified names, e.g.
-`query: "select:mcp__genealogy__record_read,mcp__genealogy__volume_search,mcp__genealogy__research_log_append"`
-(adjust the server prefix if yours differs), then proceed. **Never fall
+immediately available** (e.g., shown as deferred), call ToolSearch first.
+**Search by bare tool name, never by a fully-qualified `select:` list** —
+the MCP server prefix differs per deployment (`mcp__genealogy__…` under
+the harnesses, `mcp__remote-devices__Genealogy_Research__…` under Cowork),
+so a hardcoded qualified name resolves to nothing in some environments.
+Use one keyword search per tool, e.g. `query: "+record_read"`, which
+matches whatever prefix this session actually exposes. **Never fall
 back to writing `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass schema validation, id allocation, and the `.bak`
 safety net; persistence belongs to the record-extractor agent's tools.

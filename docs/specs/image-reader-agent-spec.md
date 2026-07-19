@@ -85,8 +85,12 @@ says so.
   text model (e.g. `claude-haiku-4-5`) would suffice and is a candidate cost
   optimization — left at `claude-sonnet-4-6` (the pre-spike default) for
   safety. Cowork honors the agent `model:` pin.
-- `tools: [image_transcribe]` (qualified as `mcp__genealogy__*` in the
-  frontmatter, per the repo convention) — the agent's sole reader. It does not
+- `tools: [image_transcribe]` — listed in the frontmatter under **both**
+  server spellings (`mcp__genealogy__image_transcribe` and
+  `mcp__remote-devices__Genealogy_Research__image_transcribe`), per the repo
+  convention: the harnesses and Cowork register the MCP server under
+  different names and `tools:` is matched exactly — the agent's sole reader.
+  It does not
   write `research.json` / `tree.gedcomx.json`, create assertions/sources, or
   search indexes; that stays with the caller.
 

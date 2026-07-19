@@ -499,14 +499,49 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   mechanism is sound and only the names are wrong.
   Affects all three agents (`gps-mentor` 7 tools, `record-extractor` 9,
   `image-reader` 1) — pre-existing, not introduced by #695.
-  **Open questions the fix must answer:** is the prefix deployment-dependent
-  (remote/bridged MCP vs a local `.mcpb` install)? If so, no hardcoded string is
-  right everywhere — is a server-level pattern (`mcp__<server>` /
-  `mcp__<server>__*`) viable, or bare names (CLAUDE.md says bare names left the
-  subagent toolless in the unit-harness SDK path, so neither form is currently
-  known-good in both)? The fix must also correct `CLAUDE.md`'s claim that
-  qualified names make an agent "behave identically across Cowork, the e2e
-  harness, the unit harness, and the hosted web SDK path" — that is false.
+  **RESOLVED (2026-07-18) — dual-spelled names.** The open questions are
+  answered: **yes, the prefix is deployment-dependent**, and no hardcoded
+  string is right everywhere. `genealogy` is the arbitrary `mcp_servers` dict
+  key the harnesses/`.mcp.json`/hosted web chose; Cowork reaches the
+  host-installed `.mcpb` through a remote-device *bridge* whose namespace is
+  `remote-devices`, with the tool named `Genealogy_Research__<tool>` after
+  `manifest.json`'s `display_name`. The two can never converge — you cannot
+  register a local stdio server and have the bridge infix synthesized.
+  **A server-level pattern is viable but unsafe here:** `mcp__remote-devices`
+  also carries `device_bash`, `device_commit_files`, and
+  `project_memory_write`, so granting it would hand a read-only agent shell
+  access to the host. **Bare names remain broken** in the unit-harness SDK
+  path, as CLAUDE.md said.
+  Fix: list every MCP tool under **both** spellings in `tools:` *and*
+  `disallowedTools:` — safe because unrecognized entries are ignored so long
+  as one resolves. Guarded by `tests/packaging/agent-tool-names.test.ts`,
+  which derives the bridge prefix from `display_name`. CLAUDE.md's
+  "behave identically" claim is corrected, and the ToolSearch fallback paths
+  (which hardcoded `select:mcp__genealogy__…` and so resolved to nothing in
+  Cowork, where the ~40 schemas *are* deferred) now search by bare tool name.
+
+- [x] **Dual-spelled agent tool names — VERIFIED in Cowork (2026-07-18).**
+  The fix rested on one unproven assumption: that the runtime refuses a spawn
+  only when **every** `tools:` entry is unrecognized ("would be spawned with
+  zero tools — refusing"), so the half that miss in any given environment are
+  harmlessly ignored. Had it instead refused on *any* unrecognized entry,
+  dual-spelling would have failed in all four environments at once.
+  Confirmed by a live Cowork run: `@plugin:image-reader` — 1 of its 2 entries
+  unresolvable there — spawned normally, resolved `image_transcribe` through
+  the bridge (permission prompt showed `ark: 3:2:77P1-FRQ` reaching the host
+  tool), and returned a full transcription of an 1898 German family-register
+  index page. The same run's "loaded tools" step exercised the bare-name
+  ToolSearch path. Ignore-unrecognized-if-one-resolves is therefore the real
+  behavior, and the dual-spelling approach is sound.
+
+- [ ] **Scope the record-extraction outage window.** `record-extractor` could
+  not spawn in Cowork between 2026-07-12 (#650) and this fix. Because the
+  runtime refuses rather than launching a toolless agent, the failure was loud
+  and nothing should have been silently half-persisted — but that assumes
+  Cowork ran a build with the loud refusal for the whole window (it landed in
+  CLI 2.1.208; the VM CLI on disk is 2.1.205, so an earlier silent-toolless
+  window is possible). Spot-check live projects (e.g. `kenneth-quass-parents`)
+  for records with a research-log entry but no corresponding assertions.
 - **The router substitutes for a denied subagent tool — observed in production.**
   In the same Cowork session the `record-extraction` router correctly recited
   that it "cannot call ... `research_append` ... or `image_transcribe`/`image_read`

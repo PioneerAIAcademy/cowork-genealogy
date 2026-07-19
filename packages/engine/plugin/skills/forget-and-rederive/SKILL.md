@@ -1,7 +1,7 @@
 ---
 name: forget-and-rederive
 description: Set up a practice run by removing information the researcher already has from the project tree, so it must be re-derived from records. Use when the researcher says "forget what you know about X and find it again", "hide his parents and see if you can find them", "I want to test whether you can work this out", "re-derive this from scratch", or seeds a project from a well-documented FamilySearch person specifically to check whether the agent can rediscover a known answer. Do NOT use to correct a wrong fact (use tree_correct), to remove a duplicate person (use merge_tree_persons), or to start a project (use init-project).
-allowed-tools: Bash, Read, mcp__genealogy__validate_research_schema
+allowed-tools: Bash, Read, validate_research_schema
 ---
 
 **Narration:** read `researcher_profile.narration_guidance` in `research.json` and
