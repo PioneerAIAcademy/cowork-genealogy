@@ -161,15 +161,16 @@ const EXAMPLES: Record<string, string> = {
 }`,
 
   // The section that drew the identical rejection in 4+ runs across 4
-  // scenarios. `file_path` and `superseded_by` are BOTH required; the verdict
-  // body (`strengths`, `must_address`, …) is NOT part of this entry — it lives
-  // in the file at `file_path`. This entry is a pointer, not the report.
+  // scenarios. This entry is a POINTER, not the report: the verdict body
+  // (`strengths`, `must_address`, …) is not part of it and must not be
+  // appended here. Pass the body as the top-level `verdict` argument instead —
+  // the tool writes the sidecar and stamps `file_path` (hence its absence
+  // below; supplying both is rejected).
   evaluations: `{
   "focus": "conclusion-readiness",
   "target_id": "q_002",
   "target_type": "question",
   "verdict": "consider_addressing",
-  "file_path": "evaluations/ev-2026-07-18-q002.md",
   "timestamp": "2026-07-18T14:05:00Z",
   "superseded_by": null
 }`,
@@ -205,6 +206,12 @@ export function exampleFor(section: string, op: "append" | "update" = "append"):
   // A source append must either reference an S entry that already exists in the
   // tree or create one in the same call. The composite form is the norm, so the
   // example teaches it rather than a bare id that would be rejected.
+  // The evaluations example is a pointer; the verdict body rides alongside it
+  // as the top-level `verdict` argument, which is what fills file_path.
+  const verdictArg =
+    section === "evaluations"
+      ? `\n  verdict: { /* strengths, must_address, consider_addressing, narrative_for_user, ... */ },`
+      : "";
   const sourceDescription =
     section === "sources"
       ? `\n  sourceDescription: {\n    title: "Pennsylvania Death Certificate — Patrick Flynn (1908)",\n    author: "Pennsylvania Department of Health",\n    url: "https://www.familysearch.org/ark:/61903/1:1:MDEF"\n  },`
@@ -222,7 +229,7 @@ export function exampleFor(section: string, op: "append" | "update" = "append"):
   return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "${section}",
-  op: "append",${planId}${sourceDescription}
+  op: "append",${planId}${sourceDescription}${verdictArg}
   entry: ${indented}
 })`;
 }
