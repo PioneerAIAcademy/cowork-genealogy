@@ -17,6 +17,7 @@ vi.mock("../../src/utils/place-resolver.js", () => ({
 }));
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
+import { __testing } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
@@ -2086,5 +2087,338 @@ describe("countryConsistency heuristic", () => {
     ["Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States", "unverifiable"], // no country named
   ])("%s vs %s → %s", (place, standard, expected) => {
     expect(countryConsistency(place as string, standard as string)).toBe(expected);
+  });
+});
+
+// ─── Identity over-reach gate (#700) ────────────────────────────────────────
+//
+// Conjunctive by design: uncertain reading AND no corroborating record. The
+// eval fixture corpus carries no `[?]` at all, so nothing in eval/ exercises
+// this — these tests are the only coverage.
+
+describe("research_append — person_evidence epistemic gate", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-pe-gate-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** src_001/a_001 exist from baseResearch(); add the ones each case needs. */
+  function researchWith(assertions: any[], personEvidence: any[] = []) {
+    const r = baseResearch();
+    r.assertions = [...r.assertions, ...assertions] as any;
+    r.person_evidence = personEvidence as any;
+    return r;
+  }
+  const uncertain = (id: string, recordId: string) => ({
+    ...validAssertion(id),
+    record_id: recordId,
+    fact_type: "name",
+    value: "Father: Thomas Fl[?]nn",
+  });
+  const clean = (id: string, recordId: string) => ({
+    ...validAssertion(id),
+    record_id: recordId,
+    fact_type: "name",
+    value: "Father: Thomas Flynn",
+  });
+  async function write(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const link = (assertionId: string, confidence: string) => ({
+    projectPath: dir,
+    section: "person_evidence",
+    op: "append" as const,
+    entry: {
+      assertion_id: assertionId,
+      person_id: "I1",
+      confidence,
+      rationale: "Names match the subject.",
+      match_score: null,
+      created: "2026-07-18",
+      superseded_by: null,
+    },
+  });
+
+  it("rejects 'confident' on an uncertain reading with no corroborating record", async () => {
+    await write(researchWith([uncertain("a_010", "rec_A")]));
+    const r = await researchAppend(link("a_010", "confident"));
+    expect(r.ok).toBe(false);
+    expect(r.errors?.join(" ")).toMatch(/uncertain reading/i);
+  });
+
+  it("allows 'probable' on the same uncertain, uncorroborated reading", async () => {
+    await write(researchWith([uncertain("a_010", "rec_A")]));
+    const r = await researchAppend(link("a_010", "probable"));
+    expect(r.ok).toBe(true);
+  });
+
+  // The ut_person_evidence_001 shape: a single death certificate that plainly
+  // names its subject. Gating on record-count alone would wrongly reject this.
+  it("allows 'confident' on a single CLEAN record (no [?])", async () => {
+    await write(researchWith([clean("a_011", "rec_A")]));
+    const r = await researchAppend(link("a_011", "confident"));
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows 'confident' on an uncertain reading once a second record corroborates", async () => {
+    await write(
+      researchWith(
+        [uncertain("a_010", "rec_A"), clean("a_012", "rec_B")],
+        [
+          {
+            id: "pe_001",
+            assertion_id: "a_012",
+            person_id: "I1",
+            confidence: "probable",
+            rationale: "Independent record tying the same person.",
+            match_score: null,
+            created: "2026-07-18",
+            superseded_by: null,
+          },
+        ],
+      ),
+    );
+    const r = await researchAppend(link("a_010", "confident"));
+    expect(r.ok).toBe(true);
+  });
+
+  it("does not count a superseded pe row as corroboration", async () => {
+    await write(
+      researchWith(
+        [uncertain("a_010", "rec_A"), clean("a_012", "rec_B")],
+        [
+          {
+            id: "pe_001",
+            assertion_id: "a_012",
+            person_id: "I1",
+            confidence: "probable",
+            rationale: "Superseded link.",
+            match_score: null,
+            created: "2026-07-18",
+            superseded_by: "pe_002",
+          },
+        ],
+      ),
+    );
+    const r = await researchAppend(link("a_010", "confident"));
+    expect(r.ok).toBe(false);
+  });
+
+  it("does not count another record tied to a DIFFERENT person as corroboration", async () => {
+    const r0 = researchWith(
+      [uncertain("a_010", "rec_A"), clean("a_012", "rec_B")],
+      [
+        {
+          id: "pe_001",
+          assertion_id: "a_012",
+          person_id: "I2",
+          confidence: "probable",
+          rationale: "Different person entirely.",
+          match_score: null,
+          created: "2026-07-18",
+          superseded_by: null,
+        },
+      ],
+    );
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify(
+        {
+          ...baseTree,
+          persons: [
+            ...baseTree.persons,
+            { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith" }] },
+          ],
+        },
+        null,
+        2,
+      ),
+    );
+    const r = await researchAppend(link("a_010", "confident"));
+    expect(r.ok).toBe(false);
+  });
+});
+
+// ─── Worked examples (#697) ─────────────────────────────────────────────────
+//
+// The point of the registry is that a rejected append is handed a shape the
+// model can copy. An example that does not itself validate would teach the
+// wrong shape — worse than no example — so every one is round-tripped through
+// the real tool here. This test is the reason to trust the registry.
+
+describe("research_append — worked examples are themselves valid", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-examples-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** A project carrying every id the examples reference as a foreign key. */
+  function exampleFixture() {
+    const r: any = baseResearch();
+    r.log = [
+      {
+        id: "log_004",
+        plan_item_id: null,
+        performed: "2026-07-18",
+        tool: "record_search",
+        query: "Patrick Flynn death 1908 Schuylkill",
+        outcome: "positive",
+        results_examined: 1,
+        results_ref: "results/log_004.json",
+        results_available: 1,
+        notes: null,
+        external_site: null,
+      },
+    ];
+    r.sources = [validSource("src_001"), { ...validSource("src_004") }];
+    r.assertions = [
+      validAssertion("a_001"),
+      { ...validAssertion("a_013", "src_004"), record_id: "ark:/61903/1:1:MDEF" },
+      { ...validAssertion("a_025", "src_004"), record_id: "ark:/61903/1:1:MDEF" },
+    ];
+    r.questions = [
+      {
+        id: "q_002",
+        question: "Who were the parents of Patrick Flynn?",
+        rationale: "Seed question for the example fixture.",
+        selection_basis: "objective_decomposition",
+        priority: "high",
+        status: "open",
+        depends_on: [],
+        unblocks: [],
+        created: "2026-07-18",
+        resolved: null,
+        resolution_assertion_ids: [],
+        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+      },
+      {
+        id: "q_003",
+        question: "Where was Patrick Flynn born in Ireland?",
+        rationale: "Spare question with no active plan, for the `plans` example.",
+        selection_basis: "objective_decomposition",
+        priority: "medium",
+        status: "open",
+        depends_on: [],
+        unblocks: [],
+        created: "2026-07-18",
+        resolved: null,
+        resolution_assertion_ids: [],
+        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+      },
+    ];
+    r.plans = [{ id: "pl_001", question_id: "q_002", status: "active", created: "2026-07-18", items: [] }];
+    r.conflicts = [
+      {
+        id: "c_001",
+        conflict_type: "fact",
+        description: "Seed conflict for the example fixture.",
+        disputed_attribute: "birth_year",
+        identity_question: null,
+        competing_assertion_ids: ["a_013", "a_025"],
+        independence_analysis: "Independent sources.",
+        weighing_analysis: "Weighed.",
+        preferred_assertion_id: "a_013",
+        resolution_rationale: "Resolved for the fixture.",
+        status: "resolved",
+        blocks_question_ids: [],
+      },
+    ];
+    return r;
+  }
+
+  /** Staged search results for log_004 — the assertions example names it as its
+   *  log_entry_id, and the #699 staging gate requires the sidecar to exist. */
+  const sidecar = {
+    log_id: "log_004",
+    tool: "record_search",
+    retrieved: "2026-07-18T14:00:00Z",
+    returned_count: 1,
+    payload: {
+      results: [
+        {
+          recordId: "ark:/61903/1:1:MDEF",
+          primaryId: "p1",
+          gedcomx: { persons: [{ id: "p1" }] },
+        },
+      ],
+    },
+  };
+
+  const SECTIONS_WITH_EXAMPLES = [
+    "sources",
+    "assertions",
+    "person_evidence",
+    "questions",
+    "plans",
+    "plan_items",
+    "conflicts",
+    "hypotheses",
+    "timelines",
+    "proof_summaries",
+    "evaluations",
+    "known_holdings",
+  ];
+
+  it.each(SECTIONS_WITH_EXAMPLES)("the '%s' example validates", async (section) => {
+    // A fresh project per case so examples never depend on each other.
+    await writeFile(join(dir, "research.json"), JSON.stringify(exampleFixture(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
+
+    const entry = JSON.parse(__testing.EXAMPLES[section]);
+    // `plans` already has an active plan for q_002 in the fixture (the
+    // one-active-plan invariant); point the example at a fresh question.
+    if (section === "plans") entry.question_id = "q_003";
+    const r = await researchAppend({
+      projectPath: dir,
+      section,
+      op: "append",
+      entry,
+      ...(section === "plan_items" ? { planId: "pl_001" } : {}),
+      ...(section === "sources"
+        ? {
+            sourceDescription: {
+              title: "Pennsylvania Death Certificate — Patrick Flynn (1908)",
+              author: "Pennsylvania Department of Health",
+              url: "https://www.familysearch.org/ark:/61903/1:1:MDEF",
+            },
+          }
+        : {}),
+    } as any);
+    expect(r.errors ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("attaches the section's worked example to a rejection", async () => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(exampleFixture(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+    // The exact shape the closing report saw 4+ times: the verdict body
+    // appended instead of the pointer entry.
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "evaluations",
+      op: "append",
+      entry: {
+        focus: "conclusion-readiness",
+        target_id: "q_002",
+        target_type: "question",
+        verdict: "consider_addressing",
+        strengths: ["well sourced"],
+        must_address: ["no parents named"],
+      },
+    } as any);
+    expect(r.ok).toBe(false);
+    const joined = (r.errors ?? []).join("\n");
+    expect(joined).toMatch(/worked example for 'evaluations'/);
+    expect(joined).toMatch(/file_path/);
   });
 });
