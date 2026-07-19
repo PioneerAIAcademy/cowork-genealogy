@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_record_extraction_020",
+    "skill": "record-extraction",
+    "name": "Household children dedup when the subject is a parent — no duplicate personas across censuses",
+    "type": "positive",
+    "description": "The tree already holds George Tanner (subject/parent), wife Martha, and two children (Anna, Samuel) from a prior census. Extracting a LATER census that repeats Anna and Samuel and adds Ruth and Henry must place the household's children via tree_edit add_household_children (which matches the in-tree parents and skips children already present), NOT via per-child add_person + add_relationship (which does no dedup and spawns duplicate personas across censuses). Expected: George ends with exactly four children (Anna, Samuel, Ruth, Henry) — no duplicate Anna/Samuel. From the reese-children e2e run, where the subject-is-parent case fell back to add_person and created duplicate children (Selia/Delia, Whisfield/Whitager).",
+    "tags": [
+      "census",
+      "household",
+      "dedup",
+      "children",
+      "add_household_children",
+      "subject-parent"
+    ]
+  },
+  "input": {
+    "user_message": "Extract assertions from this 1920 U.S. Census household into the project. The subject George Tanner (I1) is the head of household; Martha Tanner (I2) is his wife; both are already in the tree, as are their children Anna (I3) and Samuel (I4).\n\n1920 U.S. Census, Justice Precinct 3, Falls County, Texas — George Tanner household:\n- George Tanner, head, male, age 44, born Texas, farmer\n- Martha Tanner, wife, female, age 41, born Texas\n- Anna Tanner, daughter, female, age 16, born Texas\n- Samuel Tanner, son, male, age 14, born Texas\n- Ruth Tanner, daughter, female, age 9, born Texas\n- Henry Tanner, son, male, age 6, born Texas",
+    "scenario": "household-children-dedup"
+  },
+  "judge_context": [
+    "The tree already contains the subject George Tanner (I1) as the PARENT / head of household, his wife Martha (I2), and two of their children — Anna (I3) and Samuel (I4) — recovered from a prior census. The subject is the parent here, NOT a child.",
+    "This 1920 census repeats Anna and Samuel (already in the tree) and adds two NEW children, Ruth and Henry.",
+    "PASS: the agent places the household's children via ONE tree_edit add_household_children call (parents = George + Martha, children = the full roster Anna/Samuel/Ruth/Henry). The tool matches the in-tree parents, SKIPS Anna and Samuel (already present), and creates only Ruth and Henry. George must end with exactly FOUR children (Anna, Samuel, Ruth, Henry) and no duplicates.",
+    "FAIL: the agent creates duplicate personas for Anna or Samuel (e.g. a second 'Anna Tanner' via add_person + add_relationship), leaving George with five or six child edges; or it places the children with per-child add_person / add_relationship instead of add_household_children (the path that does no cross-record dedup and spawns duplicates across censuses).",
+    "This guards household-children dedup when the SUBJECT IS A PARENT — the reese-children e2e failure mode. Do not require exhaustive extraction of every census fact; the focus is that repeated children are deduped, not duplicated."
+  ],
+  "execution": {
+    "max_turns": 60,
+    "max_wall_clock_seconds": 1500,
+    "sdk_message_silence_seconds": 600
+  }
+}

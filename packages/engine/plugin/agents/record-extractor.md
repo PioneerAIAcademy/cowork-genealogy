@@ -612,11 +612,13 @@ person_evidence write) to "resolve" who-is-who. Resolving persona↔person
 identity is person-evidence's job; yours is the assertions, the stubs,
 and the flagged question.
 
-## Step 5 — Sibling person stubs (subject is a child on a household record)
+## Step 5 — Household children (subject is a child OR a parent on a household record)
 
-When the subject's `record_role` is `child_N` on a household record
-(census etc.), make **ONE** `tree_edit` call — the tool owns the tree
-matching, dedup, stub creation, and edges:
+Whenever a household record (census etc.) lists children to place —
+whether the subject is a `child_N` among siblings, **or** the subject is
+a parent (`head_of_household` / `wife`) and the household's children are
+the recovery target — make **ONE** `tree_edit` call. The tool owns the
+tree matching, dedup, stub creation, and edges:
 
 - **From the RECORD**, list the household's parents
   (`head_of_household`, `wife`, `father_of_*`, `mother_of_*`) and
@@ -629,6 +631,16 @@ matching, dedup, stub creation, and edges:
   the missing stubs (gender + one preferred BirthName — never facts),
   and adds a ParentChild edge to every matched parent, all in one
   validated write. Never pre-check the tree or predict `I` ids.
+- **Never place household children with per-child `add_person` +
+  `add_relationship`.** That path does no cross-record dedup, so the same
+  child appearing on several censuses under varying spellings ("Selia" /
+  "Delia", "Whisfield" / "Whitager") becomes a *duplicate persona* — the
+  exact failure this step prevents. Route the whole roster through
+  `add_household_children`, which matches the in-tree parents (**including
+  the subject when the subject is a parent**) and skips children already
+  present. Use `add_person`/`add_relationship` only for the non-household
+  cases in the note below (death-cert parents, a marriage couple), never
+  for a census/household child.
 - **Relay the returned checklist** (`parentsMatched`, `created`,
   `skipped`, `edgesAdded`) in your summary.
   `action: "skipped_no_parent_in_tree"` means no household parent is
