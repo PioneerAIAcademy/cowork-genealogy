@@ -51,29 +51,71 @@ after it clearer.
 Click **+ New research session**. The agent opens by asking what you'd like to
 research.
 
-### Put everything in your first reply
+### Choosing what to work on
 
-The setup runs in **one pass** — it won't interview you question by question. So
-your first message should carry everything you already know:
+**Don't hand it your hardest brick wall.** You're a professional; the walls you
+haven't broken in twenty years are almost certainly beyond it, and a failure there
+tells us nothing we can act on — only that a hard problem is hard.
 
-- **Who you're researching.** A FamilySearch person ID (PID) is best. A name
-  with dates and places works too. If the person isn't on FamilySearch at all,
-  just describe them — the agent builds a local tree from what you type.
-- **Everything you already have.** Names, dates, places, relationships, what
-  family members have told you, what you've already searched and ruled out.
+What we need instead is a **research objective that tests a specific ability** and
+whose answer you can already judge. Something with a knowable answer, two or three
+records deep, where you'd recognise sloppy reasoning instantly. There are two ways
+to set one up, and they behave differently — **pick one deliberately**.
+
+#### Path A — your own research, not on FamilySearch
+
+Use this when the answer lives in your files rather than in the FamilySearch tree.
+You supply the starting point and the target, and the agent builds a local tree
+from what you type.
+
+In your first message, give it:
+
+- **The starting point** — names, dates, places, and relationships you're confident
+  in. This is what it reasons *from*.
+- **The objective** — the specific question to answer. "Identify Mary Corrigan's
+  parents"; "establish whether the John Byrne in the 1880 census is the same man as
+  the one in the 1885 land record".
+- **What you've already ruled out**, and why.
+
+You know the answer; the agent has no way to look it up in the tree. That makes
+this the cleanest test of whether it can actually *research*.
+
+#### Path B — a FamilySearch person, with something removed
+
+Use this when the case you want to test is already well documented on FamilySearch.
+Give it a **PID**, and tell it **what to forget**:
+
+> "Research PID KWZX-1AB. Forget who his parents were and see if you can find them
+> from records."
+
+It removes that information from the project's copy of the tree, shows you a count
+of what went, and researches from what's left. Three things to know:
+
+- **Check the count before you say go.** Removing a *person* also removes their
+  other links — forgetting a father can cut the siblings attached to him. Look at
+  what would go before agreeing.
+- **It won't be listed back to you.** The agent deliberately doesn't repeat what it
+  removed; that would put the answer straight back in front of it. Confirm the gap
+  in the viewer instead.
+- **Live FamilySearch still holds the answer**, so it's also instructed not to look
+  it up. That rule holds because it follows it, not because anything enforces it.
+  If you catch it peeking, **that's a great piece of feedback.**
+
+If you give a PID and remove *nothing*, the agent will often just read the answer
+off the tree and you'll learn very little.
+
+### Also tell it about you
+
+Whichever path you take, include these two — the setup runs in **one pass**, so it
+won't come back and ask:
+
 - **Your experience level** — just starting out / some research / experienced /
   professional.
 - **Your subscriptions** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
   GenealogyBank, FindAGrave-Plus, or none.
 
-If you skip the last two it will quietly assume "intermediate" and "none", which
-changes how much it explains as it works. You can correct it later, but it's
-easier to say up front.
-
-**Pick a real brick wall.** The best test is a question you genuinely haven't
-answered. If you pick someone whose tree is already complete on FamilySearch, the
-agent may simply read the answer off the tree and you'll learn very little about
-whether it can research.
+Skip them and it quietly assumes "intermediate" and "none", which changes how much
+it explains as it works. You can correct it later, but it's easier up front.
 
 ### Bringing in a document
 
@@ -83,26 +125,6 @@ in the project and the agent reads it.
 
 You'll need this for anything **not** on FamilySearch. FamilySearch's own record
 images the agent fetches by itself; you don't need to upload those.
-
-### Practising on a question you've already solved
-
-If you want to test the agent against an answer you already know, ask it to
-**forget** what's in the tree and work it out again:
-
-> "Forget who John's parents were and see if you can find them from records."
-
-It will remove that information from the project's copy of the tree, show you a
-count of what went, and then research it. Two things to know:
-
-- **Check the count before you say go.** Removing a *person* also removes their
-  other links. Forgetting a father can also cut the siblings attached to him.
-  The agent will show you what would go; look before agreeing.
-- **It won't be listed back to you.** The agent deliberately doesn't repeat what
-  it removed — that would put the answer straight back in front of it. Confirm
-  the gap in the viewer instead.
-- Live FamilySearch still holds the answer, so the agent is also instructed not
-  to look it up. That rule holds because it follows it, not because anything
-  enforces it. If you catch it peeking, **that's a great piece of feedback.**
 
 ### Watching it work
 
@@ -163,7 +185,6 @@ Being straight with you, so you don't waste time:
   give a PID.
 - **The cost figure restarts when you reload the page.** It's per page-load, not
   per session.
-- **Only one model.** No model picker during the alpha.
 - **You can't reset a project.** To start over, create a new session.
 - **Living people:** please don't enter information about anyone living. Nothing
   is encrypted at rest yet.
@@ -179,7 +200,6 @@ Being straight with you, so you don't waste time:
 | The agent says it can't reach FamilySearch | Its access may have gone stale on an older session. Start a new session; tell us if it keeps happening. |
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
-| A wiki page lookup fails | Known; tell us what you were doing. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
 | Something looks wrong genealogically | **That's the point — submit feedback.** |
 
