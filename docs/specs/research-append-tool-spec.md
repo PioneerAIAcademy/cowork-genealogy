@@ -658,10 +658,31 @@ runs; an omission alone is not).
 told its caller had authorized overriding its convention, then instructed to
 call `Write` and `ToolSearch`, reported both as *absent from its toolset* rather
 than rejected at call time — the control `Read` succeeded. Anthropic's subagent
-docs extend this to MCP tools explicitly. **Open:** whether Cowork honors
-`tools:`/`disallowedTools` for plugin agents is undocumented, and Cowork is known
-to honor agent `model:` while ignoring skill `model:`, so parity is not assumed.
-The unit harness and hosted SDK paths do enforce.
+docs extend this to MCP tools explicitly.
+
+**Cowork enforces the mechanism, but our tool names do not currently bind there.**
+Observed in a live Cowork session (2026-07-18): the `image-reader` subagent fails
+because it "looks for `mcp__genealogy__image_transcribe` but the tool here is
+named `mcp__remote-devices__Genealogy_Research__image_transcribe`". That failure
+is itself the proof — if Cowork ignored `tools:`, the subagent would inherit the
+session toolset, resolve the tool under its real name, and work. Only a
+restrictive allow-list can be *broken* by a name that matches nothing. So the
+denial mechanism this section depends on is real in Cowork.
+
+What does not hold is the **naming**. Every agent's `tools:` is written
+`mcp__genealogy__*`, which is correct for the unit and e2e harnesses and appears
+to be wrong for Cowork. Consequences, and they cut opposite ways from
+over-permissioning: an agent is *under*-permissioned to nothing (already true of
+`image-reader` in production), and a `disallowedTools` entry naming a tool that
+does not resolve denies nothing. This is a **pre-existing, repo-wide** issue
+affecting all three agents, not one introduced here, and it is tracked
+separately — see `docs/TODOs.md`. Until it is resolved, treat this section's
+guarantee as holding in the harnesses and the hosted SDK path, and as *pending*
+in Cowork.
+
+Note this also falsifies `CLAUDE.md`'s claim that qualified names make an agent
+"behave identically across Cowork, the e2e harness, the unit harness, and the
+hosted web SDK path." That sentence should be corrected by the naming fix.
 
 ### 11.2 The gate
 

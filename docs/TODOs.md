@@ -438,14 +438,40 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   `record-extraction/SKILL.md`. The instrument if it recurs is a
   `context_policy` PreToolUse rule keyed on `agent_id` — eval-only, so it
   would not cover Cowork or the hosted path.
-- **Cowork honoring of agent `tools:` / `disallowedTools` is unverified** —
-  the #695 denial is probe-verified for Claude Code subagents and documented
-  for the SDK, but Anthropic's plugin docs are silent on whether Cowork
-  enforces either field for plugin-shipped agents (they explicitly state
-  `hooks`, `mcpServers`, and `permissionMode` are *not* honored). We already
-  know Cowork honors agent `model:` while ignoring skill `model:`, so parity
-  is not assumed. Needs a Cowork spot-check: delegate to `record-extractor`
-  and instruct it to call `research_append`.
+- **MCP tool-name prefix differs between Cowork and the harnesses — agent
+  `tools:` lists do not bind in Cowork.** Every plugin agent declares
+  `mcp__genealogy__*`, correct for the unit + e2e harnesses. A live Cowork
+  session (2026-07-18) shows the tools surfaced as
+  `mcp__remote-devices__Genealogy_Research__*`, and `image-reader` **failing in
+  production** because it "looks for `mcp__genealogy__image_transcribe` but the
+  tool here is named `mcp__remote-devices__Genealogy_Research__image_transcribe`".
+  Two consequences, both the opposite of over-permissioning: an agent is scoped
+  to a list matching nothing (under-permissioned to zero tools), and a
+  `disallowedTools` entry naming an unresolvable tool denies nothing — so #695's
+  belt-and-braces layer is inert in Cowork.
+  That same failure is the proof Cowork *does* enforce `tools:` restrictively:
+  an ignored allow-list could not break a subagent by name mismatch. So the
+  mechanism is sound and only the names are wrong.
+  Affects all three agents (`gps-mentor` 7 tools, `record-extractor` 9,
+  `image-reader` 1) — pre-existing, not introduced by #695.
+  **Open questions the fix must answer:** is the prefix deployment-dependent
+  (remote/bridged MCP vs a local `.mcpb` install)? If so, no hardcoded string is
+  right everywhere — is a server-level pattern (`mcp__<server>` /
+  `mcp__<server>__*`) viable, or bare names (CLAUDE.md says bare names left the
+  subagent toolless in the unit-harness SDK path, so neither form is currently
+  known-good in both)? The fix must also correct `CLAUDE.md`'s claim that
+  qualified names make an agent "behave identically across Cowork, the e2e
+  harness, the unit harness, and the hosted web SDK path" — that is false.
+- **The router substitutes for a denied subagent tool — observed in production.**
+  In the same Cowork session the `record-extraction` router correctly recited
+  that it "cannot call ... `research_append` ... or `image_transcribe`/`image_read`
+  directly", then in the next breath: "I'm falling back to `image_read` to pull
+  the scan inline so I can see it directly." This is the exact substitution
+  #695's spec §11.4 names as out of scope, and the same tool
+  `eval/harness/harness/context_policy.py` was built for — but that hook is
+  eval-only, so nothing covers Cowork or the hosted path. Closing a lane on a
+  subagent raises pressure on the router doing the job itself; any real fix has
+  to bind the main thread too.
 - **`match_score` remains fabricable by person-evidence** — it is not
   derivable at the tool boundary (`same_person`'s tree side is a hand-curated
   record-sized slice; a local stub returns a degenerate near-zero score the
