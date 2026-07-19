@@ -471,3 +471,20 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
 - ~~`/v1` public REST chat API~~ — **shipped** (#294) as a control-plane
   WS-client to the in-sandbox server; bearer auth, sync + SSE, DB-backed turn
   lock. Spec: `docs/plan/public-rest-api.md`.
+- **`forget-and-rederive/scripts/forget.py` has no automated coverage** — the
+  selector resolution, the relationship cascade, and the restore-file write are
+  all untested. The skill is exempt from the runlog gate
+  (`RUNLOG_GATE_EXEMPT_SKILLS`) because a tree-stripping utility has no
+  genealogical output for a judge to grade, so the right coverage is
+  script-level tests, not a skill eval suite. Highest-value cases: the cascade
+  when `person:` removes someone with relationships in both directions, and the
+  `matched nothing` error paths.
+- **`forget.py` overwrites its restore file on every non-dry-run** — 
+  `.tree-before-forget.gedcomx.json` is written unconditionally
+  (`forget.py:332-333`, no existence check), so it always holds the tree as of
+  the most recent run. After a second forget pass the original tree is
+  unrecoverable: pass 1's removals are already baked into the backup. This may
+  be intended (incremental forgetting wants the immediately-prior state), which
+  is why it was documented in the skill's Re-invocation section rather than
+  changed. Decide: keep and document, or refuse to overwrite an existing
+  backup / write per-run timestamped restore files.

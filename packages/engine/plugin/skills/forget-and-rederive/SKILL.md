@@ -108,22 +108,28 @@ The researcher will compare it against what they know.
 
 ## Re-invocation behavior
 
-**Writes:** `tree.gedcomx.json` — removes the persons, relationships, and facts
-named by the `--forget` selectors, plus everything that cascades from them — and
-`.tree-before-forget.gedcomx.json`, the pre-run snapshot. It writes nothing to
-`research.json` and nothing to the `results/` sidecars. `--dry-run` writes
-neither file.
+**Writes** `tree.gedcomx.json` only — `scripts/forget.py` removes the persons,
+relationships, and facts named by the `--forget` selectors, plus everything that
+cascades from them. It writes nothing to `research.json`, the `log`, or the
+`results/` sidecars. It also writes the restore file
+`.tree-before-forget.gedcomx.json` next to the tree. `--dry-run` writes neither
+file.
 
-**Re-running against existing state:** removals are cumulative, not idempotent.
-A second invocation strips a further slice from the already-stripped tree.
-Re-running the *same* selector is a safe no-op — the ids are already gone, and
-the dry-run reporting zero removals is the signal it was already applied.
+**On re-invocation,** forgetting is additive: a second invocation strips a
+further slice from the already-stripped tree. Re-running a selector whose target
+is already gone is an **error, not a no-op** — the script raises
+`"<selector> matched nothing"` (or an unknown-id error, if a previous `person:`
+run removed the person the selector names), exits non-zero, and writes nothing.
+That is a safe failure, with no partial edit, and it is reported the same way
+under `--dry-run`; read it as "this was already forgotten", not as a problem to
+route around. Dry-run first every time regardless: the cascade depends on the
+tree's *current* shape, so the second run's blast radius is not the first run's.
 
-**The backup is overwritten on every non-dry-run invocation.** It is a snapshot
-of the tree as it was at the start of *that* run, not of the original tree. So a
-second forget replaces the pristine snapshot with the already-forgotten tree,
-and the first slice is no longer recoverable from it. Before forgetting a second
-slice, either confirm the researcher no longer needs the original restore point,
-or have them copy `.tree-before-forget.gedcomx.json` aside first. Decide this by
-asking them — never by reading either file, which would put the forgotten
-information straight back into your context.
+**The restore file is overwritten on every non-dry-run invocation.** It is a
+snapshot of the tree as it was at the start of *that* run, not of the original.
+So a second forget replaces the pristine snapshot with the already-forgotten
+tree, and the first slice is no longer recoverable from it. Before forgetting a
+second slice, either confirm the researcher no longer needs the original restore
+point, or have them copy `.tree-before-forget.gedcomx.json` aside first. Decide
+this by asking them — never by reading either file, which would put the
+forgotten information straight back into your context.
