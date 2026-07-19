@@ -25,9 +25,11 @@ export interface AppAPI {
     userPrompt: string
     agentDid: string
     agentShouldHave: string
+    correctAnswer?: string
     notes?: string
   }) => Promise<{ ok: true; filename?: string }>
   readSidecar: (logId: string) => Promise<{ raw: string; mtime: number } | null>
+  readImage: (filename: string) => Promise<string | null>
 }
 
 declare global {

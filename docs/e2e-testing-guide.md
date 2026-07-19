@@ -155,12 +155,6 @@ Before running any e2e test:
 
 ## Creating a new e2e test
 
-> **External (alpha) senior genealogist authoring on Windows?** Follow the
-> friendly start-to-PR click-path in
-> [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — it wraps the
-> steps in this section in a single walkthrough (author → validate → watch a
-> live run → open the fixture PR). The material below is the reference behind it.
-
 > **Where these skills live.** `author-e2e-fixture`, `interpret-e2e-result`, and
 > `grade-e2e-run` are repo-local dev tooling under `.claude/skills/` (alongside
 > `compare-state`, `draft-unit-test`, and `mine-unit-test`), **not** part of the shipped Cowork plugin. Claude Code
@@ -1087,14 +1081,8 @@ correction of the judge's own labels.
 - [`docs/skill-lifecycle.md`](skill-lifecycle.md) — the full authoring →
   test → improve → release loop the unit-test half plugs into
 - the `skill-improver` and `rubric-critic` agents — `.claude/agents/`
-- [`docs/plan/e2e-annotation-calibration.md`](plan/e2e-annotation-calibration.md)
-  — the per-run annotation calibration design (annotation shape, grade-blind
-  flow, loader classification rules)
 - [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md) — the
   authoritative test format and harness contract
-- [`docs/specs/gps-test-spec.md`](specs/gps-test-spec.md) —
-  alternate "tests derived from published GPS proof statements"
-  approach, held for future work
 - [`docs/specs/research-schema-spec.md`](specs/research-schema-spec.md)
   — `research.json` schema, relevant when authoring
   `starting-research.json`
@@ -1103,7 +1091,9 @@ correction of the judge's own labels.
   `starting-tree.gedcomx.json`
 - [`eval/CLAUDE.md`](../eval/CLAUDE.md) — eval framework
   conventions (unit tests; e2e shares the runlog discipline)
-- [`eval/ALPHA-WALKTHROUGH.md`](../eval/ALPHA-WALKTHROUGH.md) — start-to-PR
-  walkthrough for external (alpha) senior genealogists authoring fixtures
+- [`docs/alpha-user-guide.md`](alpha-user-guide.md) — what alpha testers do
+  (research in the hosted web app; they do not author fixtures)
+- [`docs/alpha-feedback-example.md`](alpha-feedback-example.md) — one alpha
+  report followed end to end into a committed regression test
 - [`packages/engine/plugin/skills/research/SKILL.md`](../packages/engine/plugin/skills/research/SKILL.md)
   — the `/research` skill that e2e tests invoke

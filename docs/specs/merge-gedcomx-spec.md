@@ -8,6 +8,17 @@
 > `research.json`, validate, and persist atomically. Rev. 2 decisions (Dallan +
 > Richard, PR #254 / Issue #250) are in §4; #2 is amended there. The old §11
 > "remaining clarification" is now resolved.
+>
+> **Update (2026-07-18, tree-materialization #701):** the Mode-1 write tool
+> `merge_record_into_tree` has been **retired** (0 live calls; superseded by
+> `materialize_facts` — see `tree-materialization-spec.md` §9). The pure core
+> and **both** modes are unchanged. **Mode 1 (cross-document) is now reached only
+> by `merge_warnings`**, which folds the candidate in memory for its dry-run
+> coherence checks and never writes; it independently exercises
+> `sanitizeCandidate` / `validateCandidateGedcomx`, so those and Mode 1 stay.
+> Only **Mode 2** (`merge_tree_persons`) retains a write tool. Sections below
+> that describe `merge_record_into_tree` as a live tool are historical — read
+> "the Mode-1 fold path" as `merge_warnings`'s in-memory merge.
 
 A deterministic merge of two GedcomX documents (or of two persons within one
 document), given an explicit list of person-id pairs to collapse. For each pair

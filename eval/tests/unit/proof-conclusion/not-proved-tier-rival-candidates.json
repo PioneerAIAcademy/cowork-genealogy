@@ -16,7 +16,7 @@
     "Should present the conclusion as a Proof Argument (not a Statement or Summary): competing candidates with only indirect evidence and a failed elimination require the reader to follow the full chain of reasoning",
     "Should present BOTH candidate households and explain why each cannot be confirmed — the 1860 boarder record and the blank death-certificate father field do not bridge to either",
     "Should incorporate the negative evidence (the baptism search returned nothing; the death certificate did not name a father)",
-    "Must NOT update tree.gedcomx.json — `not_proved` is below the probable write-back threshold; no ParentChild relationship is written"
+    "Must NOT set a `primary`/concluded value in tree.gedcomx.json — at `not_proved` the skill reaches no conclusion, so during its run it marks no fact `primary` and writes no concluded ParentChild edge (proof-conclusion sets `primary` only at probable+)"
   ],
   "judge_reads_files": true,
   "execution": {

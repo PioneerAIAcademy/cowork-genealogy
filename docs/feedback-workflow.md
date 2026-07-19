@@ -285,7 +285,7 @@ the setup script first, then `cd` into the resulting directory.
 **`/compare-state` says feedback.json has empty `<field>`.**
 The user's submission was missing a required field. Ask them to
 resubmit — that field is required by the submission format
-(`cowork-genealogy-ui/docs/feedback-json-spec.md`).
+(`apps/electron/docs/feedback-json-spec.md`).
 
 **`/draft-unit-test` can't identify the failing skill.**
 Run it as `/draft-unit-test --skill <name>` and pick the skill you

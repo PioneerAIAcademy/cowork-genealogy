@@ -7,6 +7,7 @@ import icon from '../../resources/icon.png?asset'
 import { setupMenu } from './menu'
 import { startWatching, stopWatching, getCurrentState } from './watcher'
 import { readSidecar } from './sidecar'
+import { readSourceImage } from './image'
 import { walkProject, readSessionLog, buildFeedbackZip } from './feedback'
 
 let mainWindow: BrowserWindow | null = null
@@ -116,6 +117,7 @@ function setupIPC(): void {
         userPrompt: string
         agentDid: string
         agentShouldHave: string
+        correctAnswer?: string
         notes?: string
       }
     ) => {
@@ -133,6 +135,7 @@ function setupIPC(): void {
           userPrompt: payload.userPrompt,
           agentDid: payload.agentDid,
           agentShouldHave: payload.agentShouldHave,
+          correctAnswer: payload.correctAnswer,
           notes: payload.notes
         },
         viewerVersion: app.getVersion() + (app.isPackaged ? '' : '-dev')
@@ -183,6 +186,10 @@ function setupIPC(): void {
 
   ipcMain.handle('project:read-sidecar', async (_e, logId: unknown) => {
     return readSidecar(logId, getCurrentState().folderPath)
+  })
+
+  ipcMain.handle('project:read-image', async (_e, filename: unknown) => {
+    return readSourceImage(filename, getCurrentState().folderPath)
   })
 
   ipcMain.handle('project:select-folder', async () => {

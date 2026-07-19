@@ -55,6 +55,15 @@ read out of `git log`, and it keeps personal email addresses out of the repo.
 Don't "fix" it by adding an address. Claude/AI co-authors don't satisfy the
 check — the whole point is recording the human you worked with.
 
+The local hook fires at commit time on stderr, which is easy to miss (and
+invisible when commits are made through a wrapper). So a CI counterpart,
+`.github/workflows/check-coauthor.yml`, re-emits the same nudge as a **warning
+annotation on the PR** when *none* of the PR's commits carry a human
+`Co-authored-by:` trailer. It uses the identical "human" definition and, like
+the hook, only warns — it never blocks merge. It's a per-PR check (not
+per-commit) because the squash-merge folds every commit's trailers together, so
+credit survives as long as one commit records it.
+
 ## Smoke-test tools against live APIs
 
 Bypass the MCP harness to debug a tool in isolation:
@@ -110,21 +119,24 @@ The `mcp-tool-scaffolder` and `cowork-skill-builder` subagents (under
 
 ## How to test a new tool end-to-end
 
-For non-trivial tools, write a testing guide at
-`docs/testing-guides/<tool>-tool-testing-guide.md` modeled on
-`docs/testing-guides/oauth-tool-testing-guide.md` and
-`docs/testing-guides/wikipedia-tool-testing-guide.md`. Four layers:
+**Do not write a per-tool testing guide.** That convention is retired —
+it produced a dozen playbooks that went stale while every tool shipped
+since mid-2026 was verified without one. Verification is automated:
 
-1. **MCP Inspector** — verifies the tool registers and behaves with
+1. **`dev/try-<tool>.ts`** — a one-shot smoke script that invokes the
+   tool directly against the live API, with no MCP harness. This is the
+   fastest way to debug a tool in isolation.
+2. **MCP Inspector** — verifies the tool registers and behaves with
    no/dummy/real input.
-2. **Claude Code** — verifies the tool description is good enough that
-   the LLM picks it from natural language.
-3. **Cowork via WSL2** — verifies the WSL2 → Claude Desktop bridge.
-4. **Cowork via native Windows** — verifies the install path real
-   users will take.
+3. **The eval harness** (`make test`, `eval/tests/e2e/`) — verifies the
+   tool description is good enough that the LLM picks it from natural
+   language, and that the skills using it still pass.
 
-Both Layer 3 sub-layers are required for ship-readiness regardless of
-which is your dev environment.
+Three guides survive in `docs/testing-guides/`, covering setup paths the
+harness cannot reach: `oauth-tool-testing-guide.md` (how to get a
+FamilySearch token), `mcpb-install-testing-guide.md` (the Claude Desktop
+install path, also driven by `scripts/verify-mcpb.sh`), and
+`gps-mentor-agent-testing-guide.md`.
 
 After building and installing both artifacts in Claude Desktop,
 exercise the tool from inside a Cowork session — for example, ask

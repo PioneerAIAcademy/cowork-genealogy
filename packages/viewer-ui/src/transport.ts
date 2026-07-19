@@ -12,6 +12,9 @@ export interface FeedbackPayload {
   userPrompt: string
   agentDid: string
   agentShouldHave: string
+  /** Ground truth — the right answer plus its evidence — when the agent reached a
+   *  wrong *conclusion*. Optional: most feedback is about process, not answers. */
+  correctAnswer?: string
   notes?: string
 }
 
@@ -85,4 +88,12 @@ export interface ResearchTransport {
    * file-list preview. Optional: when absent the dialog hides the preview.
    */
   getFeedbackContext?(): Promise<FeedbackContext>
+
+  /**
+   * Read a saved source page-scan (`images/<key>.jpg`) as a `data:` URL for
+   * display beside its transcription. `null` when the file is absent. Optional —
+   * the web client may not expose the project filesystem, so callers must treat
+   * it as optional (no scan shown when absent).
+   */
+  getSourceImage?(filename: string): Promise<string | null>
 }

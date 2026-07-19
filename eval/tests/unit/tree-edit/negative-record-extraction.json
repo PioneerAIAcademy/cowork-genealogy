@@ -4,7 +4,7 @@
     "skill": "tree-edit",
     "name": "Record extraction request should not trigger tree-edit",
     "type": "negative",
-    "description": "User asks to add facts from a newly-found record. That's record-extraction (writes to assertions + sources in research.json), not tree-edit (writes to tree.gedcomx.json). tree.gedcomx.json is updated from proof-conclusions, not directly from raw records.",
+    "description": "User asks to add facts from a newly-found record. Extracting a raw record's facts is record-extraction (writes classified assertions + the source S-entry to research.json), not an ad-hoc tree-edit write. The record must be extracted into assertions first; person-evidence then materializes those sourced facts onto the tree person at identity-link time. tree-edit does not bulk-write facts straight from a raw record.",
     "tags": ["near-miss", "tree-edit-vs-extraction", "boundary"]
   },
   "input": {
@@ -13,7 +13,7 @@
   },
   "negative": {
     "correct_skill": ["record-extraction"],
-    "explanation": "Facts from a newly-found record should be extracted as assertions in research.json (record-extraction's job), not written directly to tree.gedcomx.json. The tree is updated via proof-conclusion once an assertion is part of a `probable`-tier conclusion — not directly from extraction. Skipping that path would put unverified facts into the deliverable file."
+    "explanation": "Facts from a newly-found record should be extracted as classified assertions in research.json (record-extraction's job), not written ad-hoc to tree.gedcomx.json. Those sourced facts reach the tree through person-evidence's materialize_facts at identity-link time (record-extraction is assertion-only — it writes no tree persons, facts, or edges). Skipping the extract-then-materialize pipeline would put unclassified, unsourced facts straight into the deliverable file."
   },
   "judge_context": [
     "Should route to record-extraction rather than write 1880 census facts directly to tree.gedcomx.json",

@@ -23,7 +23,7 @@ SCRIPT = REPO_ROOT / "scripts" / "setup-feedback-case.sh"
 
 def _build_minimal_zip(zip_path: Path, slug: str) -> None:
     """Build a feedback zip matching the shape in
-    cowork-genealogy-ui/docs/feedback-json-spec.md §3."""
+    apps/electron/docs/feedback-json-spec.md §3."""
     feedback = {
         "schema_version": 1,
         "submitted_at": "2026-05-25T18:22:31Z",

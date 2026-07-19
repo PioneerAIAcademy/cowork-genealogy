@@ -15,7 +15,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from harness.allowed_tools import compute_allowed_tools, load_skill_frontmatter
+from harness.allowed_tools import (
+    compute_allowed_tools,
+    declared_skill_tools,
+    load_skill_frontmatter,
+)
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
 from harness.diff import diff_research_json, diff_tree_gedcomx
@@ -407,6 +411,7 @@ async def _execute_single_run(
             "skill_frontmatter": skill_frontmatter,
         },
         tool_calls=result.tool_calls,
+        blocked_context_calls=result.blocked_context_calls,
         skill_frontmatter=skill_frontmatter,
         test={
             **spec.raw.get("test", {}),
@@ -636,6 +641,12 @@ async def _execute_skill_with_retry(
                     ),
                     allowed_tools_override=skill_baseline,
                     routing_short_circuit_skills=routing_short_circuit_skills,
+                    # The skill's OWN declaration, not skill_baseline (which
+                    # unions in its subagents' tools). The gap between the two
+                    # is what the per-context policy guards.
+                    declared_tools=declared_skill_tools(
+                        spec.skill, paths.skills_dir
+                    ),
                 )
                 after_snapshot = snapshot_files(workspace)
             finally:
@@ -846,7 +857,7 @@ def _compute_outcome(
         # may harm state, and the validator is what enforces that. The
         # invariant must be backed by a tag-gated validator that actually
         # runs; a `grade_on_invariant` test with no such validator passes
-        # vacuously (see docs/plan/invariant-grading.md).
+        # vacuously (see docs/specs/unit-test-spec.md).
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in

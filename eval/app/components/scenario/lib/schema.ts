@@ -1,4 +1,4 @@
-// TypeScript types mirroring docs/research-schema-spec.md and docs/simplified-gedcomx-spec.md
+// TypeScript types mirroring docs/specs/research-schema-spec.md and docs/specs/simplified-gedcomx-spec.md
 
 // ============================================================
 // research.json enums

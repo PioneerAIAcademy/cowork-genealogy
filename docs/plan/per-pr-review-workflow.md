@@ -2,7 +2,7 @@
 
 **Status:** Draft for senior-engineer review (v3 — simplified).
 **Date:** 2026-05-15
-**Scope:** Eval pipeline workflow redesign — touches `unit-test-spec.md`, `eval-crud-ui-spec.md`, `skill-mcp-testing-plan.md`, `eval/CLAUDE.md`, `eval-rollout.md`, the harness, the CRUD UI, plus one new GitHub Action.
+**Scope:** Eval pipeline workflow redesign — touches `unit-test-spec.md`, `eval-crud-ui-spec.md`, `skill-mcp-testing-plan.md`, `eval/CLAUDE.md`, the harness, the CRUD UI, plus one new GitHub Action.
 
 This plan captures a deliberate shift in how skill evaluation is reviewed. Nothing is implemented yet — this document is the artifact for review and approval before doc rewrites and code begin.
 
@@ -10,7 +10,7 @@ This plan captures a deliberate shift in how skill evaluation is reviewed. Nothi
 
 ## 1. Context
 
-The current eval workflow (defined across `docs/specs/unit-test-spec.md` §10, `docs/gps/skill-mcp-testing-plan.md` Appendix A–B, and `docs/specs/eval-crud-ui-spec.md` §6) assumes a scatter-gather pattern:
+The current eval workflow (defined across `docs/specs/unit-test-spec.md` §10, `docs/skill-mcp-testing-plan.md` Appendix A–B, and `docs/specs/eval-crud-ui-spec.md` §6) assumes a scatter-gather pattern:
 
 - Tests are authored continuously via the CRUD UI.
 - Each run log can accumulate **multiple** `.ann.<username>.json` files (one per junior reviewer).
@@ -20,7 +20,7 @@ The current eval workflow (defined across `docs/specs/unit-test-spec.md` §10, `
 
 This plan replaces that with a **per-PR per-skill iteration model**:
 
-1. A team (2 junior devs + 2 junior genealogists, per `eval-rollout.md` Round 1) picks a skill.
+1. A team (2 junior devs + 2 junior genealogists, per the Round 1 rollout) picks a skill.
 2. The team authors/updates unit tests (CRUD UI), edits the skill prompt (text editor), runs the harness, and corrects LLM grades (CRUD UI).
 3. The team submits one PR containing: updated skill prompt + added/updated/deleted tests + one run log + one `.ann` file (per skill touched).
 4. A senior genealogist reviews via standard GitHub PR diff view + the CRUD UI. PR comments capture all feedback (skill prompt edits, test changes, grade corrections).
@@ -134,7 +134,7 @@ This is a one-time activity per applicant. Ongoing calibration drift is caught v
 
 **Why no floor:** Adds complexity for a failure mode the team isn't worried about. If weak juniors do get through, PR comments surface the problem quickly and the team can act.
 
-**Doc impact:** `skill-mcp-testing-plan.md` Appendix B (full rewrite — selection task, not gate); `eval-rollout.md` bootstrap deliverables (replace 50-trace calibration line with onboarding-task description).
+**Doc impact:** `skill-mcp-testing-plan.md` Appendix B (full rewrite — selection task, not gate).
 
 ### 2.6 Monthly judge-prompt review
 
@@ -143,11 +143,11 @@ This is a one-time activity per applicant. Ongoing calibration drift is caught v
 1. Aggregate `(llm_score - corrected_score)` deltas grouped by `(dimension_source, dimension_name)` across all `.ann` files from the month.
 2. Dimensions with systematic deltas (e.g., LLM grades 0.5+ levels higher than humans across 5+ PRs) trigger a `judge/prompt.md` edit.
 3. The edit increments `judge_prompt_hash` (already tracked per run log).
-4. Log the cycle in `eval-rollout.md` calibration log: sample size, agreement rates per dimension, action taken, hash diff.
+4. Log the cycle in the calibration log: sample size, agreement rates per dimension, action taken, hash diff.
 
 The corrected_score is the *final* human verdict after senior PR review. If a junior over-corrected and the senior restored the original, the final delta is zero and the entry naturally contributes nothing to drift — no special handling needed.
 
-**Doc impact:** `eval-rollout.md` (new calibration log template + recurring calendar entry); `skill-mcp-testing-plan.md` senior responsibilities.
+**Doc impact:** `skill-mcp-testing-plan.md` senior responsibilities (new calibration log template + recurring calendar entry).
 
 ### 2.7 Cross-skill PRs
 
@@ -155,7 +155,7 @@ The corrected_score is the *final* human verdict after senior PR review. If a ju
 
 **Why no cap:** Forcing a multi-skill refactor into multiple PRs adds partial-landing risk (first PR breaks because the second hasn't landed yet) without saving senior time. The total review burden is the same either way; better to keep it atomic.
 
-**Doc impact:** `unit-test-spec.md` §10 (run-log location convention); `eval-rollout.md` PR-cadence section.
+**Doc impact:** `unit-test-spec.md` §10 (run-log location convention).
 
 ### 2.8 GitHub Action: runlog discipline
 
@@ -175,7 +175,7 @@ Failure messages tell the team how to fix (delete extra run logs from the branch
 
 Pre-commit hooks aren't used — juniors may not install them; CI enforcement is the only reliable mechanism.
 
-**Doc impact:** New file (`.github/workflows/check-runlogs.yml`); `eval-rollout.md` Open Blockers (add as one-time deliverable); brief reference in `eval/CLAUDE.md`.
+**Doc impact:** New file (`.github/workflows/check-runlogs.yml`); brief reference in `eval/CLAUDE.md`.
 
 ### 2.9 Senior escalation + hiring trigger
 
@@ -223,7 +223,7 @@ When body-optimizer runs produce a candidate SKILL.md edit, that edit goes throu
 
 ### 2.12 Junior workflow sequence
 
-**Decision:** Document the procedure as a copy-pasteable numbered list in `eval-rollout.md` and `eval/CLAUDE.md`:
+**Decision:** Document the procedure as a copy-pasteable numbered list in `eval/CLAUDE.md`:
 
 > 1. Pull latest main. Edit `packages/engine/plugin/skills/<skill>/SKILL.md` and/or tests via the CRUD UI.
 > 2. Run the harness for the skill:
@@ -239,7 +239,7 @@ When body-optimizer runs produce a candidate SKILL.md edit, that edit goes throu
 
 Most PRs land in 1-2 review rounds. 3+ rounds is a signal to escalate — the skill may be in unusual flux or the team may be struggling; flag it to a senior engineer.
 
-**Doc impact:** `eval-rollout.md` "How juniors use this" section; `eval/CLAUDE.md` step-by-step.
+**Doc impact:** `eval/CLAUDE.md` step-by-step.
 
 ### 2.13 Judge-crash handling + start-fresh on run logs
 
@@ -248,7 +248,7 @@ Most PRs land in 1-2 review rounds. 3+ rounds is a signal to escalate — the sk
 - **Judge crashes → re-run before annotation.** When the LLM judge fails entirely on any test in the run (missing API key, transient API error, parse failure after the harness's built-in retries), the resulting run log has dimensions with no `llm_score`. The CRUD UI refuses to open such a run log for annotation, displaying a clear message that the team must re-run the harness first. Persistent crashes (re-runs keep failing) escalate to the senior engineer rather than landing partial PRs. Judge crashes are expected to be rare given the harness's existing retry-with-backoff.
 - **Existing run logs:** Start fresh. Historical run logs under `eval/runlogs/unit/` from before this workflow lands remain on disk for archeology but do not feed cross-PR comparison.
 
-**Doc impact:** `unit-test-spec.md` §7 (judge-crash → re-run requirement); `eval-crud-ui-spec.md` §6 (annotation view refuses partial-judge run logs); `eval-rollout.md` Open Blockers (start-fresh note).
+**Doc impact:** `unit-test-spec.md` §7 (judge-crash → re-run requirement); `eval-crud-ui-spec.md` §6 (annotation view refuses partial-judge run logs).
 
 ---
 
@@ -258,9 +258,8 @@ Most PRs land in 1-2 review rounds. 3+ rounds is a signal to escalate — the sk
 |---|---|---|
 | `docs/specs/unit-test-spec.md` | §7 (1-3 grading, judge-crash decision), §10 (run log: `test_content_hash` per test, `.ann` schema, run-log-per-skill rule, optimizer dir) | Substantial |
 | `docs/specs/eval-crud-ui-spec.md` | §3 (edit flow with hash-change warning, default corrected_score = llm_score), §6 Results section (numeric per-dimension annotation, comparison view with side-by-side weighted mean + histograms + 0.3-delta within-variance marker + hash-change markers, annotation view refuses partial-judge run logs), §6 Adjudication view (delete) | Substantial |
-| `docs/gps/skill-mcp-testing-plan.md` | Appendix A (drop escalation taxonomy), Appendix B (onboarding selection task, full rewrite), Appendix C (optimizer output location), Team Structure (volunteer pool concept), §4 Senior review (drop sampling math) | Substantial |
+| `docs/skill-mcp-testing-plan.md` | Appendix A (drop escalation taxonomy), Appendix B (onboarding selection task, full rewrite), Appendix C (optimizer output location), Team Structure (volunteer pool concept), §4 Senior review (drop sampling math) | Substantial |
 | `eval/CLAUDE.md` | `.ann` per-PR convention, drop `.adj` convention, junior workflow sequence (§2.12), CI-enforcement note | Small-medium |
-| `docs/eval-rollout.md` | Bootstrap deliverables (onboarding selection task), Round 1 plan (single-annotation, workflow sequence), Open Blockers (1-day escalation + GitHub Action + start-fresh note), monthly judge-prompt-review calendar entry, calibration log template | Substantial |
 | `eval/harness/harness/runlog.py` | Add `test_content_hash` per run (covers test JSON + resolved scenario + referenced fixtures) | Small |
 | `.github/workflows/check-runlogs.yml` | New workflow | New |
 
@@ -301,7 +300,7 @@ Honest about what we're giving up:
 
 ## 6. Implementation order
 
-1. **Land doc changes first** — `unit-test-spec.md`, `skill-mcp-testing-plan.md`, `eval-rollout.md`, `eval/CLAUDE.md`, `eval-crud-ui-spec.md`. ~1-2 days.
+1. **Land doc changes first** — `unit-test-spec.md`, `skill-mcp-testing-plan.md`, `eval/CLAUDE.md`, `eval-crud-ui-spec.md`. ~1-2 days.
 2. **GitHub Action** (`check-runlogs.yml`). Independent of CRUD UI; protects from day one.
 3. **Harness change**: add `test_content_hash` field per test in run logs. Small.
 4. **CRUD UI rewrites**: numeric annotation view, side-by-side comparison view (weighted mean + histogram + hash-change markers), adjudication view deletion. This is the biggest implementation cost.
@@ -320,7 +319,7 @@ Trigger conditions that force a return to this plan:
 - **If seniors routinely complain "I can't tell signal from noise in the comparison view"**, add a noise-band gate (deferred from this plan).
 - **If monthly judge-prompt review never triggers an edit for 3 consecutive months**, either the judge is fully calibrated (good) or the procedure isn't surfacing real drift (bad — investigate by sampling).
 
-Each trigger gets logged as a decision-log entry in `eval-rollout.md` when fired, with the resulting plan change recorded.
+Each trigger gets logged as a decision-log entry when fired, with the resulting plan change recorded.
 
 ---
 

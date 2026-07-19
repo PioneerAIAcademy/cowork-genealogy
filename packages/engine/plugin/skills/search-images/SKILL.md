@@ -8,8 +8,9 @@ description: Invoke for browsing FamilySearch digitized image volumes
   record set is digitized but NOT indexed and NOT full-text searchable, so the
   only way in is to open the volume and read images one at a time.
   volume_search finds which image groups cover a place and date range,
-  image_search lists the image IDs inside one group, and image_read views a
-  page. FamilySearch digitized images only. Exclude indexed name/date/place
+  image_search lists the image IDs inside one group, and each page is read by
+  delegating to the image-reader subagent. FamilySearch digitized images only.
+  Exclude indexed name/date/place
   search (use search-records), full-text transcript search (use
   search-full-text), external repositories like Ancestry (use
   search-external-sites), planning what to browse (use research-plan), and
@@ -17,7 +18,6 @@ description: Invoke for browsing FamilySearch digitized image volumes
 allowed-tools:
   - volume_search
   - image_search
-  - image_read
   - research_log_append
   - research_append
 ---
@@ -54,8 +54,8 @@ nothing), do NOT look for a matching plan item to execute. Just redirect and sto
   007936749_00058 — add it as a source / extract the assertions / pull out the
   facts"): say "You already have the image — please use record-extraction to add
   it as a source and pull out the facts," and stop. The user is past browsing; do
-  NOT call `image_read`, do NOT hunt for the page, do NOT look for workarounds if
-  a tool seems unavailable. Extraction is record-extraction's job — hand it off
+  NOT browse, do NOT hunt for the page, do NOT look for workarounds if a tool
+  seems unavailable. Extraction is record-extraction's job — hand it off
   and stop. **Scope check:** this fires only when extraction is the *whole*
   request. If the user also asks to browse, page through, or find images — even
   while naming an image ID or a range, and even if they say "transcribe what you
@@ -88,15 +88,17 @@ transcribed use search-full-text (both are faster than reading pages).
 |----------|-------|---------|
 | `volume_search` | `standardPlace`, year range | Find image groups covering a place/period; returns `imageGroupNumber`, `imageCount`, `recordSearchablePercent`, `fulltextSearchable`, `coverages[]` |
 | `image_search` | `imageGroupNumber` (a volume id) | List every image ID inside ONE group |
-| `image_read` | `imageId` (one image from the list) | View a single page |
 
-**The two image tools take DIFFERENT inputs — do not confuse them.** An
-`imageId` (e.g. `007936749_00058`) goes ONLY to `image_read`. Never call
-`image_search({ imageId })` — that is the single most common mistake; to view
-a page you want `image_read`. `image_search` lists the **whole** group in one
-call — it has no `offset`, `limit`, `imageIndex`, or `imageId` parameter, so
-never re-query to "get more," and if `image_read` returns no viewable content,
-note that and move on to log the browse rather than looping.
+Viewing a page is **not** a tool call you make — it is delegated to the
+`image-reader` subagent (step 4). You have exactly two image tools:
+`volume_search` (find the volume) and `image_search` (list its pages).
+
+**`image_search` takes an `imageGroupNumber`, never an `imageId`.** Passing an
+`imageId` (e.g. `007936749_00058`) to `image_search` is the single most common
+mistake — an `imageId` names one page and goes to the image-reader subagent, not
+to `image_search`. `image_search` lists the **whole** group in one call — it has
+no `offset`, `limit`, `imageIndex`, or `imageId` parameter, so never re-query to
+"get more."
 
 ## Steps
 
@@ -158,21 +160,40 @@ An empty `imageIds` array means the group has no images yet — treat it as a
 nil result (step 6). A large volume returns hundreds of IDs; do not dump the
 full list to the user.
 
-### 4. Browse with `image_read`
+### 4. Browse via the `image-reader` subagent
 
-Pass an `imageId` to `image_read` to view a page. Browsing is manual: open a
-likely page, read it, and step forward or back through the sequence (the
-trailing 5-digit number is page order). For an indexed-but-image-only volume
-with a register or table of contents, read that first to jump to the right
-range instead of reading every page.
+**Do not call `image_read` yourself** — you don't have it. To view a page,
+delegate its `imageId` to the **`image-reader` subagent** (`@plugin:image-reader`),
+once per page. It reads the scan in an isolated context and returns a **full text
+transcription** plus an extracted-facts list; the raw image never enters your
+context. This matters: `image_read` returns the page as inline base64, and a
+volume browse means many pages — read them yourself and the accumulated base64
+overflows the transport's ~1 MiB buffer and **crashes the run** (two scans already
+risk it). Delegating keeps the base64 in the subagent's throwaway context.
+
+Browsing is manual: delegate a likely page, triage the returned transcription,
+and step forward or back by delegating the next page (the trailing 5-digit number
+is page order). For a volume with a register or table of contents, delegate that
+first to jump to the right range. Hand the subagent only the `imageId` (optionally
+a short `looking_for` pointer for *who/what* to locate — never an assertion of
+what the page says). If it returns `NOT READ`, do not fabricate the page — note it
+and move on.
+
+**Listing a volume's images IS a completed browse — log it (step 6) before you
+present anything or defer reading.** The `image_search` call is the browse event
+this skill exists to record; log it once you have the image list, whether you go
+on to delegate pages now, hand the list to the user to page through, or the pages
+come back `NOT READ`. Deferring the read to the user **never** defers the log — an
+unlogged browse is an incomplete browse, even when the images were listed
+perfectly.
 
 ### 5. Triage what you find
 
-For each page examined, judge whether the target record appears and whether
-the place and approximate date are consistent. Present the promising images
-to the user with the image ID and what each shows; let the user confirm
-which to examine in detail. Never fabricate the contents of an image you did
-not read.
+For each page's returned transcription, judge whether the target record appears
+and whether the place and approximate date are consistent. Present the promising
+images to the user with the image ID and what each shows; let the user confirm
+which to examine in detail. Never fabricate the contents of a page — report only
+what the image-reader transcription actually returned.
 
 ### 6. Log the browse
 
@@ -254,8 +275,11 @@ browse was nil — try search-records, search-full-text, or another repository.
 
 - **`imageGroupNumber` comes from `volume_search`** (or the user) — pass it
   through verbatim, split natural-group name or bare number.
-- **Never fabricate image contents.** Report only what you actually read via
-  `image_read`.
+- **No image reading in this context — `@plugin:image-reader` only.** Never call
+  `image_read` yourself; delegating is what keeps the base64 out of your context
+  (step 4). You do not have `image_read` in your tools.
+- **Never fabricate image contents.** Report only what the image-reader
+  subagent's transcription actually returned.
 - **Stay in your lane.** Don't write to `sources` or `assertions` (hand found
   images to record-extraction), and don't add fields to plan items beyond
   `status`.

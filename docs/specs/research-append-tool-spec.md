@@ -117,6 +117,12 @@ research_append({
   // call's single sources append op and stamp its gedcomx_source_description_id.
   sourceDescription?: { title: string, author?: string, url?: string },
 
+  // Composite persist (§3.4.2): the structured verdict body for an
+  // `evaluations` append. The tool writes it to
+  // evaluations/<focus>-<target_id>-<short_iso>.json and stamps the entry's
+  // file_path. Rejected alongside an explicit file_path, or on any other section.
+  verdict?: Record<string, unknown>,
+
   // §3.6: default true — resolve standard_place for assertion appends that
   // carry a `place` but omit `standard_place` (sidecar copy first, then
   // geocoding). false skips only the geocoding lookup.
@@ -193,7 +199,7 @@ research_append({
 Semantics — heterogeneous ops chosen over a homogeneous `entries` array because the
 skills' natural unit of work (one record / household / plan) spans multiple sections,
 and the single-call form already dispatches per-op on `section`, so heterogeneity is
-no more expensive (decision: `docs/plan/e2e-research-runtime-speedup-plan.md` §6 Q1):
+no more expensive (decision from the e2e research-runtime speedup review, §6 Q1):
 
 - **All-or-nothing.** Every op is applied to one in-memory `research`, the **whole
   document is validated once**, and `research.json` is written **once**. Any op's
@@ -247,8 +253,9 @@ same tolerance to its `ops` and single-op nested objects (and to
 
 The record-extraction unit of work is one record = one tree `S` entry + one
 research source + N assertions. The composite makes that ONE call — the tool, not
-the model, owns every id and every cross-file link (decision D1,
-`docs/plan/record-extraction-consolidation-plan.md` §3).
+the model, owns every id and every cross-file link (decision D1 of the
+record-extraction consolidation; see
+`docs/plan/record-extraction-consolidation-closing-report.md`).
 
 - **`sourceDescription: { title, author?, url? }`** (camelCase param; the payload
   keys are exactly the simplified-GedcomX `S`-entry fields). When present, the call
@@ -277,6 +284,14 @@ the model, owns every id and every cross-file link (decision D1,
   supplied `source_id` always wins (rare multi-source batches). Calls with zero or
   2+ sources append ops auto-stamp nothing: assertion `source_id` requirements are
   exactly as before.
+- **Scope: `S` entry only, never tree facts.** The composite's tree write is
+  limited to the source-description `S` entry — `research_append` **owns S-entry
+  creation** but never writes person facts, names, or relationships into
+  `tree.gedcomx.json`. Evidence facts materialize onto tree persons separately, at
+  identity-link time, via **`materialize_facts`** (the fact writer), which reads
+  the assertions this call persisted and stamps each fact with a provenance ref
+  that resolves through the `S` id created here. See `research-schema-spec.md` §8,
+  "tree.gedcomx.json update timing" (the two-layer rule).
 
 ### 3.4.1 Source-reuse auto-detection
 
@@ -330,6 +345,36 @@ call is a research-only write (`filesWritten: ["research.json"]`, no
 `sourceDescriptionId`). The §3.4 reuse-or-create precondition still backstops
 path 2: a stamped `S` id must exist in the tree or the batch is rejected
 op-indexed.
+
+### 3.4.2 Composite persist (`verdict`) — evaluations sidecar
+
+`evaluations[].file_path` is the same design as `log[].results_ref`: research.json
+holds a pointer, and the payload lives in a sidecar only the host writes
+(`results-staging.ts` is the precedent). The verdict body is large, structured, and
+would bloat every whole-file read of research.json — which is exactly what the
+orchestrator state diet is trying to shrink — so it does not go inline the way
+`proof_summaries.narrative_markdown` does.
+
+On an `evaluations` append carrying a top-level `verdict`, the tool:
+
+1. derives `evaluations/<focus>-<target_id>-<short_iso>.json` from the entry's
+   `focus`, `target_id` and `timestamp` (colons replaced for filesystem safety),
+2. stamps that path onto the entry as `file_path`,
+3. writes the sidecar **after** whole-document validation passes and **before** the
+   research.json commit, creating `evaluations/` as needed.
+
+Ordering matters in both directions: a rejected call leaves no orphan verdict file,
+and a persisted pointer never names a file that does not exist. Doing it in one call
+is what makes a dangling `file_path` structurally impossible rather than merely
+unlikely — the failure mode the agent-writes-it-itself design could not rule out.
+
+Rejected: `verdict` together with an explicit `entry.file_path` (ambiguous
+ownership), `verdict` on any section other than `evaluations`, `verdict` spanning
+more than one evaluations append in a batch, and an entry missing the `focus` /
+`target_id` the filename is derived from.
+
+The consumer is the `gps-mentor` agent, which holds no filesystem write tool; see
+`docs/specs/gps-mentor-agent-spec.md` §8.
 
 ### 3.5 Persona/record-id enforcement matrix — D2
 
@@ -480,6 +525,7 @@ audit's recommendation #5):
 | `plans` append | at most **one active plan per question** — a second `active` plan for the same `question_id` is rejected | audit; `research-schema-spec.md:265` |
 | `person_evidence` revision | revision is an `append` of the new entry **plus** an `update` setting `superseded_by` on the old one; never a field-overwrite-in-place that loses the prior link | `research-schema-spec.md:427–431` |
 | `project` update → `status: "completed"` | **no unresolved blocking conflict** — reject while any `conflicts[]` entry has `status: "unresolved"` AND (`identity_question: true` OR non-empty `blocks_question_ids`). `resolved` and `moot` both settle a conflict; an unresolved fact-type conflict with empty `blocks_question_ids` and no identity flag does not block. Tool precondition on the transition only — an already-completed document with such a conflict still loads (not a document-validity rule) | wilkins-death-kentucky e2e finding 2026-07-15: agent logged an unresolved identity conflict (wrong-person certificate, 43-year birth mismatch) and completed anyway; GPS Component 4 |
+| `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
@@ -604,7 +650,9 @@ dispatch in `src/index.ts`, name in `manifest.json` (packaging drift test enforc
 parity). Reuses `atomicWriteJson` + `validateParsed`; share the per-prefix max-id
 helper with `tree_edit`/the merge core (lift `maxIdNum` to a shared util).
 
-Consumers — the skills whose hand-written section writes it replaces:
+Consumers — the skills whose hand-written section writes it replaces
+(`record-extraction` reaches this machinery through `extraction_append`, §11,
+not through `research_append` itself):
 `record-extraction` (sources + assertions + classification field updates —
 classification merged from the former assertion-classification skill,
 2026-07-11), `person-evidence` (`pe_` links + supersede), `conflict-resolution`
@@ -613,3 +661,128 @@ classification merged from the former assertion-classification skill,
 plan-items), `proof-conclusion` (question resolution). Their SKILL.md rewrites are a
 follow-up (companion to `skill-rewrites-for-persistence-tools-spec.md`), not part of
 this tool's landing.
+
+---
+
+## 11. `extraction_append` — the lane-scoped variant
+
+`extraction_append` is this tool restricted to the two sections the
+`record-extractor` agent owns: **`sources` and `assertions`**. Same
+implementation, same input surface, same validate-once/write-once semantics; the
+other eleven sections are simply not reachable through it.
+
+### 11.1 Why a second tool and not a parameter
+
+In the birkeland re-run (`record-extraction-consolidation-closing-report.md`
+§3.1) the router's delegation message instructed the extractor to write
+`person_evidence` entries at `confident` — against the agent body's prose lane
+rule — and the agent complied, fabricating a `0.92` `match_score` no tool had
+computed.
+
+Three ways to express a lane, and only one holds:
+
+| Expression | Holds? |
+|---|---|
+| Prose in the agent body | **No** — a caller that prompts against it wins; this is the observed failure |
+| A parameter on the tool input | **No** — the caller supplies the input, so it can widen its own lane |
+| Tool identity | **Yes** — the agent's `tools:` frontmatter omits the broad writer, so there is no call it can emit |
+
+The lane is therefore the *tool*, and the extractor's frontmatter omits
+`research_append` and additionally names it in `disallowedTools` (a deny is
+enforced even under `permission_mode="bypassPermissions"`, which the hosted path
+runs; an omission alone is not).
+
+**Enforcement evidence.** A subagent declared `tools: Read, Grep, Glob, Bash`,
+told its caller had authorized overriding its convention, then instructed to
+call `Write` and `ToolSearch`, reported both as *absent from its toolset* rather
+than rejected at call time — the control `Read` succeeded. Anthropic's subagent
+docs extend this to MCP tools explicitly.
+
+**Cowork enforces the mechanism, but our tool names do not currently bind there.**
+Observed in a live Cowork session (2026-07-18): the `image-reader` subagent fails
+because it "looks for `mcp__genealogy__image_transcribe` but the tool here is
+named `mcp__remote-devices__Genealogy_Research__image_transcribe`". That failure
+is itself the proof — if Cowork ignored `tools:`, the subagent would inherit the
+session toolset, resolve the tool under its real name, and work. Only a
+restrictive allow-list can be *broken* by a name that matches nothing. So the
+denial mechanism this section depends on is real in Cowork.
+
+**The naming has since been fixed (2026-07-18).** The prefix is
+deployment-dependent: `mcp__genealogy__*` is the arbitrary `mcp_servers` dict
+key the harnesses, `.mcp.json`, and the hosted web control plane chose, while
+Cowork reaches the host-installed `.mcpb` through a remote-device *bridge* and
+exposes it as `mcp__remote-devices__Genealogy_Research__*` (after
+`manifest.json`'s `display_name`). No single spelling resolves everywhere, so
+every agent now lists each MCP tool under **both** — in `tools:` and in
+`disallowedTools:` alike. The latter matters most here: a deny naming only the
+unresolvable spelling denies nothing, which would have left this section's
+belt-and-braces layer inert in Cowork exactly where `bypassPermissions` makes
+it load-bearing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
+
+With that in place, this section's guarantee holds in all four environments.
+`CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
+"behave identically" across them has been corrected accordingly. One residual
+assumption is tracked in `docs/TODOs.md`: that the runtime refuses a spawn only
+when *every* entry is unrecognized, rather than on any one of them.
+
+### 11.2 The gate
+
+Lane scoping is a **second function parameter** on `researchAppend`, never a
+field on `ResearchAppendInput`:
+
+```ts
+researchAppend(input, { allowedSections, toolName })
+```
+
+Two properties follow, and both are load-bearing:
+
+- **Unforgeable.** `index.ts` dispatches `researchAppend(args)` with a single
+  argument built from `request.params.arguments`. An extra JSON key on the tool
+  input lands on `input`, never on the options object. (Note that tool
+  `inputSchema` `enum`s are *documentation*, not a gate — `index.ts` casts
+  arguments and the MCP SDK validates only the request envelope.)
+- **Visible to the eval harness.** `eval/harness/harness/mock_mcp.py` imports
+  these exported functions directly and never routes through `index.ts`. A gate
+  in the dispatch layer would be invisible to every eval run, so it lives in the
+  module.
+
+The check runs **after ops are resolved and before `prepareOps`**, which does
+live Places-API resolution and mutates the tree in memory: a call that was always
+going to be rejected must not burn network round-trips first.
+
+### 11.3 Error contract
+
+A lane rejection names **only** the calling tool and the sections it *does*
+write:
+
+```
+section 'person_evidence' is not writable by extraction_append
+(it writes only: sources, assertions). Another skill owns that section —
+surface the finding in your summary instead.
+```
+
+It must **not** name the tool that would accept the section, nor enumerate the
+denied sections. Either string is a routing map — precisely what a model needs to
+work around the lane. (`applyOne`'s generic "not supported by research_append
+(supported: …)" message is reached only for a genuinely unknown section under
+`research_append` itself; the lane gate intercepts first for a scoped caller.)
+
+Batch form prefixes the failing index as usual (`ops[1]: section '…' is not
+writable by …`), and the batch stays all-or-nothing: nothing is written.
+
+### 11.4 What this does *not* fix
+
+The router (main thread) is unrestrained in production — e2e grants
+`mcp__genealogy` wholesale and the hosted path runs `bypassPermissions` with no
+allowlist — so nothing stops the *router* from writing `person_evidence` itself,
+and there is precedent for a router doing directly what a subagent was denied
+(`eval/harness/harness/context_policy.py` was built after the router was observed
+calling `image_read` directly). The mitigation is prose in
+`record-extraction/SKILL.md` forbidding delegations that order identity writes;
+the instrument if it recurs is a `context_policy` PreToolUse rule keyed on
+`agent_id`, which is eval-only.
+
+`match_score` also remains fabricable by `person-evidence` itself. It is not
+derivable at the tool boundary: `same_person`'s tree side is a hand-curated
+"record-sized" slice, and a local stub returns a degenerate near-zero score the
+skill must interpret as *no score*. The lever there is eval/rubric, not tooling.

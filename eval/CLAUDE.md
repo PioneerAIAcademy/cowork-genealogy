@@ -20,6 +20,7 @@ eval/
   Setup.bat              One-time Windows setup (uv, npm, API key)
   Start.bat              Launch the Next.js CRUD UI
   RunTests.bat           Execute the Python test harness
+  GateSkill.bat          Gate a candidate SKILL.md edit against its pre-edit baseline
   app/                   Next.js CRUD UI (test authoring + annotation + comparison)
   harness/               Python test runner (Claude Agent SDK)
     harness/             Implementation modules (snapshot, versioning, runlog, …)
@@ -80,7 +81,7 @@ This eval framework is one of three complementary testing layers:
 
 1. **Vitest** (`packages/engine/mcp-server/tests/`) — Tests whether MCP tool code works correctly. Developers maintain these.
 2. **Skill evals** (this framework) — Tests whether Claude performs genealogy tasks well when using skills, including tool usage. Genealogists create, run, and grade these.
-3. **Prompt optimizers** (automated) — Description and grading-prompt optimizers consume eval results to improve prompts. Both run unattended. See `docs/gps/skill-mcp-testing-plan.md` Appendix C.
+3. **Prompt optimizers** (automated) — Description and grading-prompt optimizers consume eval results to improve prompts. Both run unattended. See `docs/skill-mcp-testing-plan.md` Appendix C.
 
 Skill evals include tool-usage rubric dimensions, so there is no separate MCP tool eval suite for genealogists to maintain.
 
@@ -170,12 +171,13 @@ The same workflow also runs `eval/harness/scripts/check_tool_coverage.py` (warn-
 
 ### E2E checks (`check-e2e-fixtures.yml`)
 
-A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` with two checks:
+A **separate** workflow, triggered on `eval/tests/e2e/**`, `eval/runlogs/e2e/**`, and its own script, runs `check_e2e_fixtures.py` — one blocking check:
 
 | Check | Severity | What |
 |---|---|---|
 | Grading gate | **block** | Every `run-<ts>.json` **added in the PR** that produced a final tree (`run-<ts>.final-tree.gedcomx.json` present) must ship its `run-<ts>.ann.json` sibling in the same PR. Grading is same-PR. Treeless runs (crash/skip before a tree) are exempt. Scoped to PR-added logs via `git diff --diff-filter=A` (`BASE_SHA`/`HEAD_SHA`); presence only — content validity is the maintainer's `calibrate_judge --dry-run`, not CI. |
-| Fixture validity | warn | Every fixture under `eval/tests/e2e/<slug>/` should have a committed `run-*.json` with `verdict=pass` (spec §14). Advisory so draft/PID-less fixtures can land with the validity run still owed; `--strict` hard-fails locally. |
+
+**Fixture validity is not CI-gated.** Whether a fixture has a committed *passing* run log (proof it is solvable from live FamilySearch — spec §14) is a recommended authoring practice surfaced in the docs, not a check. A fixture can land without one (draft/PID-less fixtures routinely do). This used to be an advisory warning; it was removed because it re-flagged every un-run fixture in the repo on every e2e PR — pure noise.
 
 The e2e `.ann.json` is written by the `/grade-e2e-run` skill (blind grading), **not** the CRUD UI — see the "never hand-write" note above, which is scoped to *unit* annotations.
 
@@ -190,7 +192,7 @@ Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — pro
 ## What This Framework Does NOT Cover
 
 - MCP tool code correctness (use Vitest in `packages/engine/mcp-server/tests/`)
-- Description optimization (automated, see `docs/gps/skill-mcp-testing-plan.md` Appendix C)
+- Description optimization (automated, see `docs/skill-mcp-testing-plan.md` Appendix C)
 - Grading prompt optimization (automated, see same)
 - Network/integration testing of MCP tools (use `packages/engine/mcp-server/dev/try-*.ts`)
 

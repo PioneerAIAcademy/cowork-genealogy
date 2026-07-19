@@ -4,7 +4,7 @@
     "skill": "search-images",
     "name": "Browse an unindexed Schuylkill probate volume image-by-image",
     "type": "positive",
-    "description": "The Schuylkill County probate volume is digitized but not indexed and not full-text searchable, so the only way in is to browse the images. Tests the core volume_search -> image_search browse workflow plus logging the browse. (image_read returns no content in the harness, so the gradeable browse is: find the volume, list its images, log the browse.)",
+    "description": "The Schuylkill County probate volume is digitized but not indexed and not full-text searchable, so the only way in is to browse the images. Tests the core volume_search -> image_search browse workflow plus logging the browse. (Page reads are delegated to the image-reader subagent, which returns no content in the harness, so the gradeable browse is: find the volume, list its images, log the browse.)",
     "tags": ["browse", "unindexed", "probate"]
   },
   "input": {
@@ -17,7 +17,7 @@
   },
   "judge_context": [
     "Should call volume_search for Schuylkill, recognize image group 007936749 as the unindexed probate volume (recordSearchablePercent 0, fulltextSearchable false), then call image_search to list its image IDs.",
-    "CRITICAL HARNESS LIMITATION: image_read cannot return any image content in the eval harness, so the skill CANNOT view pages, page through the volume, or recover the will's text. The complete, gradeable browse here is: find the volume, list its images, and log the browse. Judges MUST NOT score partial or fail on the grounds that the skill did not view images, did not page through all 15 images, 'abandoned' the browse, or did not find the will — none of that is possible in the mock.",
+    "CRITICAL HARNESS LIMITATION: page viewing is delegated to the image-reader subagent (@plugin:image-reader) — the skill must NOT call image_read directly (it has no such tool; delegating keeps the page's base64 out of the browse context). The subagent returns no image content in the eval harness (it reports NOT READ), so the skill CANNOT view pages, page through the volume, or recover the will's text. The complete, gradeable browse here is: find the volume, list its images, and log the browse. Judges MUST NOT score partial or fail on the grounds that the skill did not view images, did not page through all 15 images, 'abandoned' the browse, or did not find the will — none of that is possible in the mock.",
     "image_search returns the whole 15-image volume in one call. The skill should NOT retry image_search with offset/limit/imageId/index parameters (those do not exist) — doing so is a Tool Arguments fault, not thoroughness.",
     "Should append a research_log_append entry naming the image group, place, and record type; no results/ sidecar is expected because image_search does not stage results."
   ]

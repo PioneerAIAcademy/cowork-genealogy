@@ -510,9 +510,9 @@ normally has the tool) and keep the list minimal — blocking a tool the
 answer does NOT leak through just handicaps the benchmark.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
-recoverable *from records alone*. The fixture-validity gate (§14) proves
-this — a real run can only pass with these tools blocked, so an
-answer reachable only via the tree will fail and the fixture can't land.
+recoverable *from records alone*. A real validity run (§14) proves
+this — a run can only pass with these tools blocked, so an
+answer reachable only via the tree will fail and the fixture won't validate.
 
 ### 6.2 Provided documents (bundled external evidence)
 
@@ -826,11 +826,11 @@ acting.
 
 - Mocking MCP for e2e tests — live calls only
 - Full GPS-proof grading with human verification — the proof-quality
-  axis (§7) is a single rubric-graded score, not the multi-layer
-  human-verified grading of `gps-test-spec.md`
+  axis (§7) is a single rubric-graded score, not a multi-layer
+  human-verified grade
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (Cheap artifact checks do run in CI — a blocking grading gate plus an
-  advisory fixture-validity report; see §14.)
+  PRs. (One cheap artifact check runs in CI — a blocking grading gate;
+  fixture validity is a non-CI authoring practice, see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -849,14 +849,13 @@ acting.
 | Spec | Relationship |
 |------|--------------|
 | `unit-test-spec.md` | Complementary: unit tests cover skills in isolation with mocked MCP; e2e covers the full autonomous flow with live MCP |
-| `gps-test-spec.md` | Different testing approach for the same goal: tests derived from published GPS proof statements, with multi-layer grading and human verification. Held for future work; not active in v1 |
 | `research-schema-spec.md` | Defines the shape of `starting-research.json` |
 | `simplified-gedcomx-spec.md` | Defines the shape of `starting-tree.gedcomx.json` |
 | `eval/CLAUDE.md` | Eval-framework conventions; this spec is the e2e layer |
 
 ---
 
-## 14. Fixture Validity Gate
+## 14. Fixture Validity (recommended, not CI-gated)
 
 A fixture that the agent can never solve is worthless: every failure is
 a false negative on agent capability. Stripping completeness (the
@@ -870,23 +869,21 @@ log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
 fixture that is *entirely* negative findings (`polarity: "avoid"`),
 "pass" still means the agent behaved correctly — it declined the wrong
 candidates — so the same standard holds. This is the bar for a fixture to
-count as solvable; it is **not** a CI merge blocker (see below), so a
-draft fixture can land with its validity run still owed.
+count as solvable; it is a **recommended authoring practice, not a CI
+merge blocker**, so a draft fixture can land with its validity run still
+owed.
 
-This is surfaced two ways:
+It is a **documentation requirement**, not a CI check: the author runs the
+fixture for real and commits the passing run log alongside it (testing guide
+§5, first-time-setup step 6). PID-less fixtures authored without FamilySearch
+access (`author-e2e-fixture`'s PID-less path) can only be validated later on
+an FS-enabled host, and land unvalidated in the meantime. CI does **not**
+flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
+warning was removed because it re-flagged every un-run fixture in the repo on
+every e2e PR (pure noise).
 
-- **Documentation requirement** — the author runs the fixture for real
-  and commits the passing run log alongside it (testing guide §5,
-  first-time-setup step 6).
-- **CI artifact report** (cheap, no live run) — the `check-e2e-fixtures`
-  workflow runs two checks. Its **fixture-validity** check is **advisory /
-  non-blocking**: it flags any committed `eval/tests/e2e/<slug>/` lacking a
-  committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
-  warning annotation, so a draft fixture can land with its validity run still
-  owed — notably PID-less fixtures authored without FamilySearch access
-  (`author-e2e-fixture`'s PID-less path) whose validity run can only happen on an
-  FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
-  workflow also runs a blocking grading gate** (§7.4): a run log *added in the
-  PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same
-  PR (a treeless crash/skip run is exempt). Both checks read only committed
-  files and do **not** trigger a live e2e run (those stay out of CI per §12).
+The `check-e2e-fixtures` workflow instead runs only the **blocking grading
+gate** (§7.4): a run log *added in the PR* that produced a final tree must
+ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
+exempt). It reads only committed files and does **not** trigger a live e2e
+run (those stay out of CI per §12).

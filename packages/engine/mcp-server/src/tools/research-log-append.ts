@@ -313,8 +313,8 @@ export const researchLogAppendSchema = {
         type: "string",
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
-          "'fulltext_search', 'image_search', 'person_read', or 'external_site'. " +
-          "Must match the staged file's tool when stagedResultsRef is given.",
+          "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
+          "'external_site'. Must match the staged file's tool when stagedResultsRef is given.",
       },
       query: {
         type: "object",
