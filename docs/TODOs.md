@@ -471,6 +471,69 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
 - ~~`/v1` public REST chat API~~ — **shipped** (#294) as a control-plane
   WS-client to the in-sandbox server; bearer auth, sync + SSE, DB-backed turn
   lock. Spec: `docs/plan/public-rest-api.md`.
+- **Router-side (main-thread) lane enforcement** — `extraction_append` (#695)
+  makes the record-extractor structurally unable to write `person_evidence`,
+  but nothing restrains the *router*: e2e grants `mcp__genealogy` wholesale
+  (`eval/harness/e2e/orchestrator.py`) and the hosted path runs
+  `permission_mode="bypassPermissions"` with no allowlist
+  (`apps/server/app/agent/real_agent.py`). Precedent that this matters:
+  `eval/harness/harness/context_policy.py` exists because the router was
+  observed calling `image_read` directly after the same class of lane was
+  closed on the agent. Current mitigation is prose in
+  `record-extraction/SKILL.md`. The instrument if it recurs is a
+  `context_policy` PreToolUse rule keyed on `agent_id` — eval-only, so it
+  would not cover Cowork or the hosted path.
+- **MCP tool-name prefix differs between Cowork and the harnesses — agent
+  `tools:` lists do not bind in Cowork.** Every plugin agent declares
+  `mcp__genealogy__*`, correct for the unit + e2e harnesses. A live Cowork
+  session (2026-07-18) shows the tools surfaced as
+  `mcp__remote-devices__Genealogy_Research__*`, and `image-reader` **failing in
+  production** because it "looks for `mcp__genealogy__image_transcribe` but the
+  tool here is named `mcp__remote-devices__Genealogy_Research__image_transcribe`".
+  Two consequences, both the opposite of over-permissioning: an agent is scoped
+  to a list matching nothing (under-permissioned to zero tools), and a
+  `disallowedTools` entry naming an unresolvable tool denies nothing — so #695's
+  belt-and-braces layer is inert in Cowork.
+  That same failure is the proof Cowork *does* enforce `tools:` restrictively:
+  an ignored allow-list could not break a subagent by name mismatch. So the
+  mechanism is sound and only the names are wrong.
+  Affects all three agents (`gps-mentor` 7 tools, `record-extractor` 9,
+  `image-reader` 1) — pre-existing, not introduced by #695.
+  **Open questions the fix must answer:** is the prefix deployment-dependent
+  (remote/bridged MCP vs a local `.mcpb` install)? If so, no hardcoded string is
+  right everywhere — is a server-level pattern (`mcp__<server>` /
+  `mcp__<server>__*`) viable, or bare names (CLAUDE.md says bare names left the
+  subagent toolless in the unit-harness SDK path, so neither form is currently
+  known-good in both)? The fix must also correct `CLAUDE.md`'s claim that
+  qualified names make an agent "behave identically across Cowork, the e2e
+  harness, the unit harness, and the hosted web SDK path" — that is false.
+- **The router substitutes for a denied subagent tool — observed in production.**
+  In the same Cowork session the `record-extraction` router correctly recited
+  that it "cannot call ... `research_append` ... or `image_transcribe`/`image_read`
+  directly", then in the next breath: "I'm falling back to `image_read` to pull
+  the scan inline so I can see it directly." This is the exact substitution
+  #695's spec §11.4 names as out of scope, and the same tool
+  `eval/harness/harness/context_policy.py` was built for — but that hook is
+  eval-only, so nothing covers Cowork or the hosted path. Closing a lane on a
+  subagent raises pressure on the router doing the job itself; any real fix has
+  to bind the main thread too.
+- **`match_score` remains fabricable by person-evidence** — it is not
+  derivable at the tool boundary (`same_person`'s tree side is a hand-curated
+  record-sized slice; a local stub returns a degenerate near-zero score the
+  skill must read as *no score*), so the lever is eval/rubric, not tooling.
+  A provenance guard was designed and cut in #695: zero observed true
+  positives across all 15 `eval/tests/unit/person-evidence/` cases, against a
+  real false-positive class.
+- **`_make_research_append_handler` duplicates `_make_compiled_tool_handler`** —
+  in `eval/harness/harness/mock_mcp.py` the two are now byte-equivalent modulo
+  the parameterized names; the `ops`-shape fallback that justified the bespoke
+  copy is gone. `extraction_append` (#695) uses the generic builder. Collapse
+  `research_append` onto it too and delete the bespoke handler.
+- **README tool catalog is stale** — `README.md` says "33 tools" in one place
+  and "31 MCP tools" in another; `manifest.json` lists 45. `research_append`,
+  `tree_edit`, `materialize_facts`, and `extraction_append` appear in no README
+  tool table, and `docs/specs/mcpb-package-spec.md` still tells a manual tester
+  to assert 21 tools. No CI reads either, so nothing reds.
 - **`forget-and-rederive/scripts/forget.py` has no automated coverage** — the
   selector resolution, the relationship cascade, and the restore-file write are
   all untested. The skill is exempt from the runlog gate

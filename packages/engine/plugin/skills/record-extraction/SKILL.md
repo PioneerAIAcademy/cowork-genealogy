@@ -164,10 +164,18 @@ Frame delegations neutrally — describe the record and the project state;
 NEVER frame the task as "fix" or "correct" the existing tree (corrective
 framing has induced destructive edits).
 
+**Never instruct the agent to create `person_evidence` links or to assign
+an identity confidence** — "link this persona to I3", "confidence should
+be confident". Identity resolution is person-evidence's lane, and a
+delegation that ordered it produced a fabricated link carrying a match
+score no tool had computed. When a record poses an identity question,
+describe the question neutrally and let the agent surface it in its
+return summary; the linking happens later, in person-evidence.
+
 One record per invocation; several records = several invocations, each
 carrying its own content. The agent extracts every assertion (including
 relationship-type assertions), writes the source + assertions in one
-composite `research_append`, and returns a ≤10-line summary. It is
+composite `extraction_append`, and returns a ≤10-line summary. It is
 **assertion-only** — it does not write tree persons or edges; the
 household skeleton (member stubs + parent-child edges) is minted by
 person-evidence at link time via `materialize_facts`.
