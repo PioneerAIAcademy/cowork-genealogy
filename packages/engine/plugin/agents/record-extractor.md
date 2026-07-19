@@ -15,6 +15,16 @@ description: >-
   citations.
 model: claude-sonnet-4-6
 tools:
+  # Every MCP tool appears under BOTH server spellings: `genealogy` (the key
+  # .mcp.json, both harnesses, and the hosted web control plane register the
+  # server under) and the `remote-devices` bridge namespace Cowork exposes the
+  # host-installed .mcpb under (`Genealogy_Research` is manifest.json's
+  # display_name, spaces → underscores). Entries are matched EXACTLY with no
+  # prefix fallback, and the server name is chosen by whoever registers it —
+  # the VM-side plugin cannot control it — so no single spelling resolves
+  # everywhere. Unrecognized entries are ignored as long as one resolves; when
+  # ALL of them miss, the runtime refuses to spawn the agent at all.
+  # Guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__project_context
   - mcp__genealogy__record_read
   - mcp__genealogy__place_search
@@ -23,12 +33,27 @@ tools:
   - mcp__genealogy__research_log_append
   - mcp__genealogy__record_person_matches
   - mcp__genealogy__record_record_matches
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__remote-devices__Genealogy_Research__record_read
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__remote-devices__Genealogy_Research__place_search_all
+  - mcp__remote-devices__Genealogy_Research__extraction_append
+  - mcp__remote-devices__Genealogy_Research__research_log_append
+  - mcp__remote-devices__Genealogy_Research__record_person_matches
+  - mcp__remote-devices__Genealogy_Research__record_record_matches
 # `extraction_append` writes only `sources` + `assertions`. The broad
 # `research_append` is denied both by omission above and explicitly here:
 # a `disallowedTools` deny is enforced even under `bypassPermissions`,
 # which the hosted path runs (issue #695).
+#
+# The deny MUST carry both spellings for the same reason the allow-list does.
+# A deny that names only `mcp__genealogy__research_append` silently fails to
+# bind wherever the server is registered under another name — which is exactly
+# the environment where it matters most, since the deny is the only thing
+# standing between this agent and the broad writer under bypassPermissions.
 disallowedTools:
   - mcp__genealogy__research_append
+  - mcp__remote-devices__Genealogy_Research__research_append
 ---
 
 # Record Extractor
@@ -581,8 +606,10 @@ copy first; check the echoed `resolvedPlaces`), validates once, and
 writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
-net. If a persistence tool shows as deferred, load it via ToolSearch with
-the fully-qualified name (`mcp__genealogy__extraction_append`) first.
+net. If a persistence tool shows as deferred, load it via ToolSearch
+first — search by **bare** tool name (`query: "+extraction_append"`),
+never by a hardcoded fully-qualified name, since the MCP server prefix
+differs per deployment.
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same

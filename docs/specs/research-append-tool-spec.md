@@ -706,20 +706,23 @@ session toolset, resolve the tool under its real name, and work. Only a
 restrictive allow-list can be *broken* by a name that matches nothing. So the
 denial mechanism this section depends on is real in Cowork.
 
-What does not hold is the **naming**. Every agent's `tools:` is written
-`mcp__genealogy__*`, which is correct for the unit and e2e harnesses and appears
-to be wrong for Cowork. Consequences, and they cut opposite ways from
-over-permissioning: an agent is *under*-permissioned to nothing (already true of
-`image-reader` in production), and a `disallowedTools` entry naming a tool that
-does not resolve denies nothing. This is a **pre-existing, repo-wide** issue
-affecting all three agents, not one introduced here, and it is tracked
-separately — see `docs/TODOs.md`. Until it is resolved, treat this section's
-guarantee as holding in the harnesses and the hosted SDK path, and as *pending*
-in Cowork.
+**The naming has since been fixed (2026-07-18).** The prefix is
+deployment-dependent: `mcp__genealogy__*` is the arbitrary `mcp_servers` dict
+key the harnesses, `.mcp.json`, and the hosted web control plane chose, while
+Cowork reaches the host-installed `.mcpb` through a remote-device *bridge* and
+exposes it as `mcp__remote-devices__Genealogy_Research__*` (after
+`manifest.json`'s `display_name`). No single spelling resolves everywhere, so
+every agent now lists each MCP tool under **both** — in `tools:` and in
+`disallowedTools:` alike. The latter matters most here: a deny naming only the
+unresolvable spelling denies nothing, which would have left this section's
+belt-and-braces layer inert in Cowork exactly where `bypassPermissions` makes
+it load-bearing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
 
-Note this also falsifies `CLAUDE.md`'s claim that qualified names make an agent
-"behave identically across Cowork, the e2e harness, the unit harness, and the
-hosted web SDK path." That sentence should be corrected by the naming fix.
+With that in place, this section's guarantee holds in all four environments.
+`CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
+"behave identically" across them has been corrected accordingly. One residual
+assumption is tracked in `docs/TODOs.md`: that the runtime refuses a spawn only
+when *every* entry is unrecognized, rather than on any one of them.
 
 ### 11.2 The gate
 
