@@ -484,7 +484,7 @@ What's shipped:
 Once per clone (not once per branch), run:
 
 ```bash
-make install-hooks
+make install-hooks          # Windows: double-click eval\InstallHooks.bat
 ```
 
 This installs two hooks: `post-checkout` auto-links shared gitignored files
@@ -494,8 +494,6 @@ This installs two hooks: `post-checkout` auto-links shared gitignored files
 clobbering a hook it didn't write. Details in
 [DEVELOPMENT.md → Git hooks](./DEVELOPMENT.md#git-hooks).
 
-Windows has no one-click equivalent yet, and the hooks are opt-in — the
-`commit-msg` one only warns and never blocks — so nothing is gated on this.
 
 ### Where to read next
 
