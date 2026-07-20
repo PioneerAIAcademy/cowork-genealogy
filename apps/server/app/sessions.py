@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, 
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
-from . import fs_oauth
+from . import agent_secrets, fs_oauth
 from .auth import get_current_user
 from .config import get_settings
 from .db import get_session
@@ -182,6 +182,10 @@ async def create_project(
         await fs_oauth.write_config(
             sandbox, {"openRouterApiKey": settings.openrouter_api_key}
         )
+    # The Anthropic key the Agent SDK runs on. Written here AND on every connect
+    # (the env copy injected at create() can never be updated afterwards, so it
+    # goes stale the moment the key is rotated). See app/agent_secrets.py.
+    await agent_secrets.write_secrets(sandbox)
     if sample:
         await seed_sample_project(sandbox)
 
@@ -423,6 +427,9 @@ async def connect_session(
     subprocess); each returns its own wss:// or ws:// URL."""
     project = _owned(session, user, session_id)
     sandbox = await provider.resume(project.sandbox_id)
+    # Refresh the operator secrets BEFORE the agent can be handed a turn, so a
+    # rotated Anthropic key reaches sandboxes created under the old one.
+    await agent_secrets.write_secrets(sandbox)
     conn = await sandbox.expose_port(SANDBOX_WS_PORT)
     token = mint_token(project.sandbox_id)
     project.last_active = utcnow()
