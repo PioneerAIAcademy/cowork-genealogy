@@ -21,6 +21,7 @@ from ..config import get_settings
 from ..ws_token import sandbox_secret
 from .base import (
     PROJECT_DIR,
+    SECRETS_PATH,
     ConnectURL,
     DirEntry,
     ExecResult,
@@ -172,6 +173,11 @@ class LocalProvider(SandboxProvider):
         # The in-sandbox WS server per sandbox (the unified transport): (proc, port).
         self._servers: dict[str, tuple[subprocess.Popen, int]] = {}
 
+    def _abs_secrets(self, sandbox_id: str) -> Path:
+        """Host path that LocalSandbox.write_file(SECRETS_PATH) lands on — the
+        same `root / <path minus leading slash>` mapping LocalSandbox._abs uses."""
+        return self._root(sandbox_id) / _sandbox_rel(SECRETS_PATH)
+
     # ── in-sandbox WS server (unified transport) ──────────────────
     def live_server(self, sandbox_id: str) -> tuple[subprocess.Popen, int] | None:
         entry = self._servers.get(sandbox_id)
@@ -201,6 +207,12 @@ class LocalProvider(SandboxProvider):
             "AGENT_MODE": settings.agent_mode,
             "MODEL": model,
             "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
+            # LocalProvider maps sandbox-absolute paths under a per-sandbox dir
+            # on the dev host, so the agent can't read the literal SECRETS_PATH
+            # (/run/secrets/... belongs to the real machine). Point it at where
+            # write_file actually put the file. E2B needs no override — there
+            # the path is real inside the microVM.
+            "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
         }
         if settings.anthropic_api_key:
             env["ANTHROPIC_API_KEY"] = settings.anthropic_api_key

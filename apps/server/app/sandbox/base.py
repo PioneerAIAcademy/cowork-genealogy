@@ -17,6 +17,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 PROJECT_DIR = "/project"
+# Operator secrets the agent re-reads each turn, rewritten by the control plane
+# on every connect (app/agent_secrets.py writes it; app/agent/real_agent.py
+# reads it). This is the channel for credentials that ROTATE — create-time env
+# cannot be updated on a sandbox that already exists. Under /run deliberately:
+# on a tmpfs it never enters an E2B pause snapshot, and it is rewritten before
+# any turn regardless.
 SECRETS_PATH = "/run/secrets/session.json"
 # Sandbox-absolute HOME for the agent process. The FamilySearch token lands at
 # {HOME_DIR}/.familysearch-mcp/tokens.json (spec §5.2 option a — file on the
