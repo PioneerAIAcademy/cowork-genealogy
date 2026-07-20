@@ -126,6 +126,12 @@ in the project and the agent reads it.
 You'll need this for anything **not** on FamilySearch. FamilySearch's own record
 images the agent fetches by itself; you don't need to upload those.
 
+> ⚠️ **Uploaded files are not included in feedback unless you ask for them.**
+> The feedback form has an **"Include media files"** checkbox that is **off by
+> default**, so anything you uploaded stays on your machine. If you later report
+> a problem involving one of these documents, tick that box — otherwise we get
+> your report without the thing it's about.
+
 ### Watching it work
 
 The viewer fills in live beside the chat — research log, sources, assertions,
