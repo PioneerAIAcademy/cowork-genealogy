@@ -46,21 +46,14 @@ This skill uses one search tool:
 
 FTS and indexed search are completely different systems:
 
-| | Indexed (`record_search`) | Full-text (`fulltext_search`) |
-|---|---|---|
-| What's searched | Structured fields (name, date, place) | Raw transcript text of document images |
-| Fuzzy matching | Auto-applies nicknames, phonetic variants, Soundex | **None.** Exact text matching only. |
-| Abbreviation expansion | Wm→William, Jno→John automatic | **Not expanded.** Must search Wm and William separately. |
-| Operators | `q.*` parameters with `.exact=on` modifier | `+` (require), `-` (exclude), `"…"` (phrase), `?`/`*` (wildcards) |
-| Default behavior | Fuzzy matching on all terms | **OR** — at least one term must appear |
-| Unique strength | Finding indexed principals | Finding non-principal mentions (witnesses, neighbors, heirs) |
-| Source type | Structured index (derivative) | AI transcript of document images (also derivative) |
+- **What's searched:** Raw transcript text, not structured name/date/place fields.
+- **No fuzzy matching.** Exact text only — no nicknames, phonetic variants, or Soundex.
+- **No abbreviation expansion.** Must search Wm and William separately.
+- **Default is OR** — at least one term must appear. Always use `+` to require terms.
+- **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
 
-### Critical: FTS results are derivative sources
-
-Chain: original → image → AI transcript → textDocument. Each step can
-introduce errors (~10% observed). **Always verify against the
-original image** (linked from each result).
+FTS results are derivative sources (original → image → AI transcript →
+textDocument, ~10% error rate). **Always verify against the original image.**
 
 ## Steps
 
@@ -71,47 +64,33 @@ Read `research.json` `plans[]` and find the next plan item with
 specifies a particular search, match it to a plan item or create
 an ad-hoc search (with `plan_item_id: null` in the log).
 
-### 2. Evaluate the target database
+### 2. Evaluate coverage and choose search philosophy
 
-Before constructing any query, verify FTS covers the target. Read
-`references/online-search-literacy.md` for the evaluation checklist.
-
-- **Coverage:** ~6,665 searchable collections as of mid-2026. Not
-  all FamilySearch collections are FTS-searchable.
-- **Collection scope:** Read the description — titles mislead about
-  geographic/temporal coverage.
-- **Error rate:** ~10% observed. Plan for transcription variants.
-
-### 3. Choose a search philosophy
-
-**Default to "less is more" for FTS.** No fuzzy matching means every
-extra required term risks missing transcription variants.
+Before constructing any query, verify FTS covers the target.
+Read `references/online-search-literacy.md` for the evaluation
+checklist (~6,665 searchable collections; ~10% transcription error
+rate). **Default to "less is more"** — no fuzzy matching means every
+extra required term risks missing transcription variants:
 
 - **Uncommon surname** → `+Surname` only, filter after
 - **Common surname** → `+Surname +Associate` or `+Surname +Keyword`
-- **Very common surname (Smith, Jones)** → multiple required terms
-  or phrase search ("kitchen sink")
+- **Very common surname** → multiple required terms or phrase search
 
-See `references/online-search-literacy.md` for the full framework.
+### 3. Determine the search strategy
 
-### 4. Determine the search strategy
-
-Read `references/search-strategies.md` for the full strategy
-catalog. Key decision: what kind of FTS search is this?
+Read `references/search-strategies.md` for the full strategy catalog.
 
 | Research goal | Query approach |
 |---|---|
 | Find person as witness/appraiser/heir | `+Surname` in Name field, place filter after |
-| Find person in narrative records (deeds, probate, court) | `+GivenName +Surname` in Keywords, place filter after |
+| Find person in narrative records | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
-| Parents of someone with a compound surname (Iberian / Latin-American `Paterno Materno`) | Decompose the compound: `+PaternalSurname +MaternalSurname` co-occurrence in Keywords — **never** as one phrase (see critical rules) |
+| Compound surname parentage (Iberian `Paterno Materno`) | `+PaternalSurname +MaternalSurname` co-occurrence — **never** as one phrase (see step 4 rules) |
 | Kinship determination | `+Surname +"daughter of"` or `+Surname +"my beloved wife"` |
-| Migration tracing | `+Surname` with successive place filters |
-| Enslaved persons | Enslaver surname + slavery keywords (see strategies reference) |
 
-### 5. Construct the search query
+### 4. Construct the search query
 
-Read `references/query-syntax.md` for operator rules.
+Read `references/query-syntax.md` for operator details and wildcards.
 
 **Critical rules:**
 - **Always use `+` to require terms.** Default is OR, which returns
@@ -124,91 +103,49 @@ Read `references/query-syntax.md` for operator rules.
   a `collectionId` guessed from `record_search` (or from a collections
   survey) frequently does **not** contain the FTS volume that holds the
   answer, so scoping silently drops it. Search the whole corpus first;
-  narrow with the `recordPlace*` / `recordType` / year filters (or a
-  known `imageGroupNumber`) only after you have hits. (Real failure: a
-  Cantabrian baptism was found by an unscoped `+Naveda +Somarriba` but
-  returned **zero** when the same query was scoped to the Diocese-of-
-  Santander indexed collection — the record lived in a different FTS
-  collection.)
+  narrow with `recordPlace*` / `recordType` / year filters (or a
+  known `imageGroupNumber`) only after you have hits.
 - **Decompose a compound surname into co-occurrence, not a phrase.**
   For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
-  "Francisco **Naveda Somarriba**"), a parent-finding search must
-  require the two surnames as separate terms — `+Naveda +Somarriba` —
-  **never** the adjacent phrase `+"Naveda Somarriba"`. In the parents'
-  own records (the child's baptism, a parent's burial/marriage) the
-  father carries the paternal surname and the mother the maternal
-  surname, so the two words appear on **different people and are not
-  adjacent** — the phrase form only matches where the child's own
-  compound name is written out, missing exactly the parentage records
-  you are after. Also try the mother's fuller form as a phrase paired
-  with the father's surname (`+"Somarriba González" +Naveda`) to cut
-  noise once you know it.
+  "Francisco **Naveda Somarriba**"), require the two surnames as
+  separate terms — `+Naveda +Somarriba` — **never** `+"Naveda
+  Somarriba"`. The parents' own records name the father with the
+  paternal surname and the mother with the maternal, so the words are
+  on **different people and not adjacent**. See `references/query-syntax.md`
+  for escalation once the mother's fuller form is known.
 - **Abbreviations must be searched explicitly.** FTS does not
-  auto-expand. If searching for William, also search Wm. If
-  searching for Thomas, also search Thos.
+  auto-expand (Wm/William, Thos/Thomas). Run separate queries.
 - **Mine prior records for known surname variants before querying.**
   Scan existing `research.json` assertions and log entries for the
-  target surname. If prior records show a transcription variant
-  (e.g., a "Flinn" assertion or log entry when searching "Flynn"),
-  include the variant in your initial query set. FTS does not
-  auto-expand spelling variants — the work has already been done
-  upstream, and ignoring it wastes queries on the wrong spelling.
-- **Phrases tolerate one intervening word.** `"Ezekiel Pearce"`
-  also matches "Ezekiel John Pearce."
-- **Wildcards:** `?` (one char), `*` (zero or more). Cannot appear
-  inside quotes or as first character. Minimum 3 literal characters.
+  target surname. If prior records show a transcription variant,
+  include it in your initial query set.
 
 **Example queries:**
 
 ```
-# Basic person search (require both terms). Pass projectPath so the
-# host stages results and returns a staged.resultsRef for step 8.
+# Require both terms; always pass projectPath for result staging
 fulltext_search({ keywords: "+Patrick +Flynn", projectPath })
 
-# Phrase search
-fulltext_search({ keywords: '+"Patrick Flynn"' })
-
-# Person + boilerplate phrase (will search)
-fulltext_search({ keywords: '+"Thomas Flynn" +"Last Will and Testament"' })
-
-# FAN cluster (target + associate)
-fulltext_search({ keywords: "+Flynn +Brennan" })
-
-# Compound-surname parentage: co-occurrence of the two surnames,
-# UNSCOPED (no collectionId) — the two surnames sit on the mother and
-# father separately, so they are not adjacent. Do NOT write it as the
-# phrase +"Naveda Somarriba".
+# Compound-surname parentage: co-occurrence, UNSCOPED (no collectionId)
 fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })
-fulltext_search({ keywords: '+"Somarriba González" +Naveda', projectPath })
+
+# Natural language search / tree person ID
+fulltext_search({ nlQuery: "KD96-TV2" })
 
 # Wildcard for HTR errors
 fulltext_search({ keywords: "+Fl?nn +Patrick" })
-
-# Abbreviation variant (separate query)
-fulltext_search({ keywords: "+Wm +Flynn" })
-
-# Natural language search
-fulltext_search({ nlQuery: "Search for John Doe born in Austria" })
-
-# Search by tree person ID
-fulltext_search({ nlQuery: "KD96-TV2" })
-
-# Search within a specific volume
-fulltext_search({ imageGroupNumber: "4057677" })
 ```
 
-**When searching a specific volume:** Use the Image Group Number field to restrict to one digitized volume, then add keywords.
-
-### 6. Execute and iterate
+### 5. Execute and iterate
 
 Call `fulltext_search` with the constructed query. This skill **logs
 every search**, so `projectPath` (the absolute path to the project
 folder) is **mandatory on every call** — never omit it. When supplied,
 the host stages the raw results and the response gains a
-`staged.resultsRef` handle you hand to `research_log_append` in step 8
+`staged.resultsRef` handle you hand to `research_log_append` in step 7
 to retain them — you never serialize the payload yourself.
 
-**Always log the search (step 8) — that is unconditional; never skip it.**
+**Always log the search (step 7) — that is unconditional; never skip it.**
 `projectPath` on the call is what earns the log entry its results sidecar: the
 response comes back with a `staged.resultsRef` you hand to `research_log_append`.
 If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`,
@@ -223,207 +160,132 @@ search correctly has no `staged.resultsRef` — nothing was found to retain; tha
 is expected.)
 
 **Decision rules by hit count:**
-- **0 results** → See step 10 (handle nil results)
-- **1–50 results** → Review all
-- **50–500 results** → Add Year/RecordType filter
-- **>500 results** → Add a second required term (`+associate`,
-  `+occupation`, `+landmark`) or add place filter
+- **0 results** → See step 9 (handle nil results)
+- **1-50 results** → Review all
+- **50-500 results** → Add Year/RecordType filter
+- **>500 results** → Add a second required term or place filter
 
-**If searching a collection-specific quirk:** Read
-`references/transcription-quirks.md` for HTR error patterns,
-era-specific handwriting issues, and coverage gaps.
+Read `references/transcription-quirks.md` for HTR error patterns.
 
-### 7. Triage results
+### 6. Triage results
 
 For each result, evaluate match quality:
-
-**Quick triage:**
 - Does the target name appear in the textDocument?
-- Is the name in the right context (witness signature, will clause,
-  deed party) or a false positive (cross-column alignment, place
-  name matching)?
+- Is the name in the right context (witness, will clause, deed party)
+  or a false positive (cross-column alignment, place name matching)?
 - Is the place and approximate date consistent?
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether
 each record is already attached to a tree person.
-- **Attached to the target person** → deprioritize for extraction
-  unless the user wants to re-examine it.
-- **Attached to a different person** → flag as potentially relevant
-  (could be a family member or duplicate).
+- **Attached to the target person** → deprioritize for extraction.
+- **Attached to a different person** → flag as potentially relevant.
 - **Unattached** → prioritize for extraction — this is new evidence.
 
-**Present triage to the user:** List the top results with match
-quality, context (what role the person plays in the document), and
-attachment status. Let the user confirm which records to examine in
-detail.
+Present triage to the user with match quality, document role, and
+attachment status. Let the user confirm which records to examine.
 
-### 8. Retain results and write the log entry
+### 7. Retain results and write the log entry
 
-**Every search gets a log entry and retains its results — no
-exceptions.** Call `research_log_append` once per search. The tool
-assigns the log id and `performed` timestamp, finalizes the staged
-results into the `results/<log_id>.json` sidecar (recomputing the
-count), and validates-before-persist — you supply only the judgment
-(outcome, counts, notes) and the staged handle:
+**Every search gets a log entry — no exceptions.** Call
+`research_log_append` once per search:
 
 ```
 research_log_append({
   projectPath,
-  planItemId: "pli_010",          // null for an ad-hoc search
+  planItemId: "pli_010",          // null for ad-hoc
   tool: "fulltext_search",
-  query: {
-    keywords: "+Flynn +\"Last Will and Testament\"",
-    recordPlace1: "Pennsylvania",
-    recordPlace2: "Schuylkill",
-    yearFrom: 1870,
-    yearTo: 1890
-  },
-  outcome: "positive",            // your judgment: positive/negative/partial/error
+  query: { keywords: "+Flynn +\"Last Will and Testament\"",
+           recordPlace1: "Pennsylvania", yearFrom: 1870, yearTo: 1890 },
+  outcome: "positive",
   resultsExamined: 5,
-  resultsAvailable: 47,           // upstream totalResults, or null
-  notes: "47 Schuylkill will hits 1870–1890; 5 examined. Thomas Flynn's will (1881) names wife Mary and children Patrick, John, Margaret; Flynn also appears as a witness on two unrelated wills.",
+  resultsAvailable: 47,
+  notes: "47 Schuylkill will hits 1870-1890; 5 examined.",
   stagedResultsRef: staged.resultsRef   // omit for a nil search
 })
 ```
 
-`notes` is a one-line human summary of what the search returned. For a
-**nil** search, omit `stagedResultsRef` entirely (no sidecar is
-written) and set `resultsExamined: 0`.
+For a **nil** search, omit `stagedResultsRef` and set
+`resultsExamined: 0`. If `staged.resultsRef` has expired, re-run the
+`fulltext_search` with `projectPath` to re-stage.
 
-**Recovery.** If the search response is stale or the
-`staged.resultsRef` handle has expired (the host's staging TTL lapsed),
-re-run the `fulltext_search` (with `projectPath`) to re-stage — it is
-cheap. If `research_log_append` returns `{ ok: false, errors }`, surface
-the errors to the user rather than retrying blindly.
+### 8. Update plan item status
 
-### 9. Update plan item status
-
-Route the plan-item `status` mutation through `research_append`
-(it validates-before-persist and writes nothing on `{ ok: false }`):
+Route the plan-item `status` mutation through `research_append`:
 
 ```
 research_append({
   projectPath,
   section: "plan_items",
   op: "update",
-  planId: "pl_003",        // the parent plan's pl_ id
-  entryId: "pli_010",      // the plan item's pli_ id
+  planId: "pl_003",
+  entryId: "pli_010",
   fields: { status: "completed" }
 })
 ```
 
-Set `status` to:
-- `completed`: Search executed regardless of outcome
-- `skipped`: The search was determined to be unnecessary (e.g., the
-  question was already answered by a prior search)
+Set `completed` (search executed) or `skipped` (unnecessary).
 
-### 10. Handle nil results
+### 9. Handle nil results
 
 When a search returns no results:
 
 1. Log the nil result via `research_log_append` with `outcome:
-   "negative"`, `resultsExamined: 0`, and **no** `stagedResultsRef`
-   (a nil search retains no sidecar). **The `notes` field on a negative log entry must explicitly state the collection class searched, the place filters and date range applied, the spelling/variant forms queried, and the count of variants tried before declaring negative** (for example: "Searched FamilySearch FTS, FamilySearch Probate collections, Schuylkill County, Pennsylvania, 1870–1890; 5 variants tried (+'Patrick Flynn', +Patrick +Flynn, +Patrick +Flinn, +Patrick +Flunn, +Flynn surname-only); 0 results — FTS coverage gap probable; recommend indexed search-records or volume browse"). A bare "no results" note is insufficient for the GPS exhaustive-search audit trail; the future reader must be able to see the search scope without re-deriving it from the query payload.
+   "negative"`, `resultsExamined: 0`, and **no** `stagedResultsRef`.
+   **The `notes` field must explicitly state the collection class
+   searched, place filters and date range applied, spelling/variant
+   forms queried, and count of variants tried before declaring
+   negative.** A bare "no results" note is insufficient for the GPS
+   exhaustive-search audit trail.
 2. **Iterate through variants before declaring negative — but cap
    total queries (initial + retries) at 5 per plan item.** Pick the
    most promising 4 variants from `references/search-strategies.md`
-   (decision tree) and `references/online-search-literacy.md`
-   (nil-result checklist) for the specific record class and locality;
-   do not exhaustively walk the full variant catalogue. Log each
-   retry separately. Once you have logged 5 nil queries for the same
-   subject, stop and declare a coverage gap — additional retries
-   produce diminishing returns and inflate the tool-call budget
-   without changing the answer.
+   and `references/online-search-literacy.md`; log each retry
+   separately. After 5 nil queries, declare a coverage gap.
 3. **Verify coverage exists.** A nil result may mean the record was
    never transcribed — not that it doesn't exist.
-4. **Assess whether absence is meaningful** (negative evidence) —
-   only when coverage is known to be good for that locality/period.
+4. Assess whether absence is meaningful (negative evidence) — only
+   when coverage is known to be good for that locality/period.
 5. Check for fallback plan items or suggest search-records/re-plan.
-6. **Do NOT execute unrelated diagnostic queries to "test" the FTS
-   index.** When a long string of variant queries returns zeros, the
-   right next step is to declare a coverage gap and log the negative
-   finding — not to query a common surname (`+Smith`, `+Jones`) to
-   see whether the tool is "broken." The tool's response is
-   authoritative. Diagnostic probes both inflate Tool Arguments cost
-   on unrelated subjects and rationalize away genuine negative
-   findings as "must be a test environment issue."
+6. **Do NOT execute diagnostic queries** (`+Smith`, `+Jones`) to
+   "test" the FTS index. The tool's response is authoritative.
 
-### 11. Queue cross-reference searches
+### 10. Queue cross-reference searches
 
-When reading FTS results, automatically queue sub-searches for:
-- Every named non-target person (witnesses, executors, appraisers,
-  heirs, neighbors)
-- Distinctive landmarks or property descriptions
-- Slaveholder ↔ enslaved name pairs
-- Powers of attorney → search the named agent in the other county
-- Marginal annotations referencing later transactions
+Suggest sub-searches for named non-target persons (witnesses,
+executors, appraisers), distinctive landmarks, and slaveholder-enslaved
+name pairs. See `references/search-strategies.md` for triggers.
 
-Present these as suggestions: "This deed names John Brennan as a
-witness. Would you like me to search for other documents mentioning
-Brennan in this county?"
-
-### 12. Pass records to extraction
+### 11. Pass records to extraction
 
 For each promising record, invoke record-extraction to process it.
 FTS results include transcript text — pass this context along.
 
-### 13. Present results
+### 12. Present results
 
-After completing a search (or a batch of searches from the plan):
-- Summarize what was searched and what was found
-- Highlight non-principal mentions (witnesses, neighbors) — these
-  are FTS's unique value
-- Show the log entries created
-- Show plan progress
-- Suggest next steps:
-  - More plan items → "Shall I continue with the next search?"
-  - Cross-reference opportunities → "I found 3 witnesses. Search
-    for them?"
-  - All plan items done → "All planned searches are complete."
-  - No results → "No matches in FTS. Would you like to try indexed
-    search (search-records) or re-plan?"
+Summarize what was searched and found, highlighting non-principal
+mentions (FTS's unique value). Show log entries, plan progress, and
+suggest next steps (more plan items, cross-references, or re-plan).
 
 ## Important rules
 
-- **Always use `+` to require terms.** Default is OR (millions of
-  irrelevant results).
-- **Search name first, filter place after.** Place in the query
-  causes metadata false positives.
-- **FTS results are derivative sources.** Always verify against the
-  original image.
-- **A nil result does not prove absence.** Try variants before
-  declaring negative; log exact parameters for reproducibility.
-- **Log every search.** Including nil results. The log is the GPS
-  audit trail.
-- **Let the user confirm before extraction.** Never fabricate
-  results.
 - **Do NOT write to `sources` or `assertions`.** This skill only
   writes to `log` and `plans` (status updates). Creating source
-  entries and extracting assertions is record-extraction's job —
-  pass promising records there instead.
+  entries and extracting assertions is record-extraction's job.
 - **Do NOT add extra fields to plan items.** Plan items have a
   fixed schema (`id`, `sequence`, `record_type`, `jurisdiction`,
   `date_range`, `repository`, `rationale`, `fallback_for`,
-  `status`). Do not add `completion_note`, `notes`, or any other
-  fields — the schema enforces `additionalProperties: false`.
+  `status`). The schema enforces `additionalProperties: false`.
 - **Always use `keywords` for queries.** Do not fall back to
   `nlQuery` when `keywords` queries return few or no results.
   Use `nlQuery` only when the user explicitly asks for a natural
   language search or provides a tree person ID.
+- **Log every search** including nil results — the log is the GPS
+  audit trail.
 
 ## Re-invocation behavior
 
-**Writes:** via `research_log_append`, a new entry in the `log` section
-of `research.json` (append-only) plus its `results/log_NNN.json`
-sidecar (the tool finalizes the staged payload); and, via
-`research_append`, the `status` field on the corresponding plan item.
-
-**On repeat invocation:** always appends a new `log_` entry — re-running
-the search is itself a logged event. Updates the plan item's `status`
-if applicable.
-
-**Do not duplicate:** the log is append-only and `research_log_append`
-only appends (no update or delete), so prior `log_` entries and their
-sidecars are never touched. Two consecutive runs of the same query
-produce two log entries and two sidecars; that's correct.
+**Writes:** `research_log_append` appends to `log[]` plus its
+`results/log_NNN.json` sidecar; `research_append` updates the plan
+item `status`. On repeat invocation, always appends a new `log_`
+entry. Prior entries and sidecars are never touched.
