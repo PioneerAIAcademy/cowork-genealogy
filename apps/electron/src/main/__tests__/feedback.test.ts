@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import JSZip from 'jszip'
 import {
   buildFeedbackZip,
+  capSessionLog,
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
   type FeedbackOptions
@@ -121,5 +122,80 @@ describe('buildFeedbackZip — feedback.json', () => {
     const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
     expect(zip.file('FEEDBACK.md')).not.toBeNull()
     expect(zip.file('_feedback/feedback.json')).not.toBeNull()
+  })
+})
+
+describe('buildFeedbackZip — size budgets follow the server convention', () => {
+  let folder: string
+
+  beforeEach(async () => {
+    folder = await mkdtemp(join(tmpdir(), 'feedback-size-'))
+    await writeFile(join(folder, 'research.json'), '{}', 'utf8')
+  })
+
+  afterEach(async () => {
+    await rm(folder, { recursive: true, force: true })
+  })
+
+  // Incompressible payload: DEFLATE would otherwise shrink repetitive filler
+  // far below the cap and the budget logic would never engage.
+  function noise(bytes: number): Buffer {
+    const buf = Buffer.allocUnsafe(bytes)
+    let x = 123456789
+    for (let i = 0; i < bytes; i++) {
+      x = (x * 1103515245 + 12345) & 0x7fffffff
+      buf[i] = x & 0xff
+    }
+    return buf
+  }
+
+  it('drops the largest files instead of throwing when over the archive budget', async () => {
+    // 3 x 15 MB = 45 MB against a 35 MB budget: the biggest must go, and the
+    // send must still succeed. Previously this threw and produced nothing.
+    await writeFile(join(folder, 'big-a.bin'), noise(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-b.bin'), noise(15 * 1024 * 1024))
+    await writeFile(join(folder, 'big-c.bin'), noise(15 * 1024 * 1024))
+
+    const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
+
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    const kept = Object.keys(zip.files).filter((n) => n.endsWith('.bin'))
+    expect(kept.length).toBe(2)
+
+    const markdown = await zip.file('FEEDBACK.md')!.async('string')
+    expect(markdown).toContain('archive size limit')
+
+    // research.json — the file that actually matters — always survives.
+    expect(zip.file('research.json')).not.toBeNull()
+  })
+
+  it('keeps a bundle that fits entirely intact', async () => {
+    await writeFile(join(folder, 'small.bin'), noise(1024))
+    const result = await buildFeedbackZip({ ...makeOptions(folder), includeMedia: true })
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    expect(zip.file('small.bin')).not.toBeNull()
+    expect(zip.file('research.json')).not.toBeNull()
+  })
+})
+
+describe('capSessionLog', () => {
+  it('passes a small log through unchanged', () => {
+    const out = capSessionLog([{ a: 1 }, { b: 2 }])
+    expect(out).toBe('{"a":1}\n{"b":2}\n')
+  })
+
+  it('keeps the NEWEST entries and prepends a truncation note when over cap', () => {
+    // ~600 KB per entry x 64 = ~38 MB against the 20 MB session-log budget.
+    const entries = Array.from({ length: 64 }, (_, i) => ({ i, pad: 'x'.repeat(600_000) }))
+    const lines = capSessionLog(entries).trimEnd().split('\n')
+
+    const note = JSON.parse(lines[0])
+    expect(note.type).toBe('_truncation_note')
+    expect(note.dropped_leading_entries).toBeGreaterThan(0)
+
+    // The tail is what matters — the end of a session is where it went wrong.
+    const last = JSON.parse(lines[lines.length - 1])
+    expect(last.i).toBe(63)
+    expect(note.dropped_leading_entries + (lines.length - 1)).toBe(64)
   })
 })

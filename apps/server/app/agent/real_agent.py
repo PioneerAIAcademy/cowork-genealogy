@@ -20,10 +20,19 @@ Config (build_options) — two load-bearing choices: do NOT set skills="all" (th
 SDK turns it into `--allowedTools Skill`, restricting to only the Skill tool);
 append the project path via system_prompt so the agent reads research.json from
 cwd, not HOME.
+
+The Anthropic key comes from the per-connect secrets file, NOT from this
+process's env (see current_api_key + app/agent_secrets.py). A sandbox's env is
+fixed at create() and can never be updated, so an env-sourced key goes stale the
+moment the operator rotates it — the persistent client above then holds the dead
+key for the sandbox's whole life. Hence _ensure_client re-reads the file each
+turn and rebuilds the client when it changes.
 """
 from __future__ import annotations
 
+import json
 import os
+import sys
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -31,13 +40,43 @@ from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _MCP_BUILD = os.environ.get("ENGINE_MCP_BUILD", str(_REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"))
 _PLUGIN_DIR = os.environ.get("ENGINE_PLUGIN_DIR", str(_REPO_ROOT / "packages" / "engine" / "plugin"))
+# Per-connect secrets, rewritten by the control plane on every connect (see
+# app/agent_secrets.py). Must equal sandbox.base.SECRETS_PATH — asserted by
+# tests/test_agent_secrets.py, since this module cannot import from the control
+# plane package (it also runs as a loose script in the baked E2B image).
+# AGENT_SECRETS_PATH overrides it for LocalProvider, whose sandbox-absolute
+# paths are mapped under a per-sandbox dir on the dev host.
+_SECRETS_PATH = os.environ.get("AGENT_SECRETS_PATH", "/run/secrets/session.json")
 
 
 def _event(kind: str, **kw) -> dict:
     return {"kind": kind, **kw}
 
 
-def build_options(project_dir: Path, resume: str | None = None):
+def _log(msg: str) -> None:
+    """Diagnostics go to STDERR — stdout is the runner's JSON-lines protocol and
+    a stray line there desynchronizes the pump. Lands in /tmp/agent.log."""
+    print(msg, file=sys.stderr, flush=True)
+
+
+def current_api_key() -> str:
+    """The operator's Anthropic key for the next turn.
+
+    Prefers the per-connect secrets file so a rotated key reaches a long-lived
+    sandbox whose create-time env is frozen (the whole point of the file
+    channel). Falls back to the env var when the file is missing, unreadable, or
+    carries no key — local dev, and any sandbox created before this existed.
+    """
+    env_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    try:
+        doc = json.loads(Path(_SECRETS_PATH).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return env_key
+    key = doc.get("anthropic_api_key") if isinstance(doc, dict) else None
+    return key if isinstance(key, str) and key else env_key
+
+
+def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None):
     from claude_agent_sdk import ClaudeAgentOptions
 
     project_note = (
@@ -59,13 +98,19 @@ def build_options(project_dir: Path, resume: str | None = None):
         mcp_servers={
             "genealogy": {"type": "stdio", "command": "node", "args": [_MCP_BUILD]},
         },
+        # Stream partial assistant content. Without it a block reaches the UI only
+        # when its whole message completes, so a long turn — a record-extraction
+        # subagent reasoning before its next tool call — shows nothing at all for
+        # minutes. The deltas are also what keeps the socket's data frames flowing
+        # through the sandbox's edge proxy during that stretch.
+        include_partial_messages=True,
         # ENABLE_TOOL_SEARCH=true eager-loads the genealogy MCP tool schemas
         # instead of deferring them above the bundled CLI's token threshold
         # (the ~38-tool server trips it), which otherwise forces repeated
         # ToolSearch re-discovery mid-session. See speedup plan §3a — kept in
         # sync with the e2e orchestrator so hosted-web users get the same win.
         env={
-            "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", ""),
+            "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
             "ENABLE_TOOL_SEARCH": "true",
         },
     )
@@ -74,9 +119,31 @@ def build_options(project_dir: Path, resume: str | None = None):
     return ClaudeAgentOptions(**kwargs)
 
 
-def map_message(message, tool_names: dict[str, str]) -> list[dict]:
+def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | None = None) -> list[dict]:
+    """SDK message → the wire events the UI consumes.
+
+    Two things here are easy to miss:
+
+    **Subagent turns arrive on this same stream**, tagged with
+    ``parent_tool_use_id`` rather than nested. Without reading it, a
+    record-extractor's text/thinking/tool calls are indistinguishable from the
+    main agent's — they land in the same chat bubble and read as if the
+    orchestrator did the work itself. Every event carries an ``agent`` label when
+    it came from a subagent, resolved through ``tasks`` (tool_use_id → the Task's
+    description, learned from task_started).
+
+    **Delta events are transient.** ``*_delta`` and ``task_progress`` are for live
+    display only — the pump must not put them in the replay transcript, or a
+    single streamed turn would evict the whole conversation from it. The
+    canonical, recorded ``text``/``thinking`` block still follows every delta run;
+    the client shows deltas as a preview and commits on the block.
+    """
     from claude_agent_sdk import (
         AssistantMessage,
+        StreamEvent,
+        TaskNotificationMessage,
+        TaskProgressMessage,
+        TaskStartedMessage,
         TextBlock,
         ThinkingBlock,
         ToolResultBlock,
@@ -84,24 +151,72 @@ def map_message(message, tool_names: dict[str, str]) -> list[dict]:
         UserMessage,
     )
 
+    tasks = tasks if tasks is not None else {}
+
+    def _event_for(msg, kind: str, **kw) -> dict:
+        """Attach the originating subagent's label, when there is one."""
+        agent = tasks.get(getattr(msg, "parent_tool_use_id", None) or "")
+        return _event(kind, **kw, **({"agent": agent} if agent else {}))
+
     out: list[dict] = []
-    if isinstance(message, AssistantMessage):
+    if isinstance(message, TaskStartedMessage):
+        label = message.description or message.task_type or "subagent"
+        if message.tool_use_id:
+            tasks[message.tool_use_id] = label
+        out.append(_event("task_started", agent=label, task_id=message.task_id))
+    elif isinstance(message, TaskProgressMessage):
+        usage = message.usage or {}
+        out.append(_event(
+            "task_progress",
+            agent=message.description or tasks.get(message.tool_use_id or "", "subagent"),
+            task_id=message.task_id,
+            last_tool=message.last_tool_name or "",
+            tool_uses=usage.get("tool_uses"),
+            total_tokens=usage.get("total_tokens"),
+            duration_ms=usage.get("duration_ms"),
+        ))
+    elif isinstance(message, TaskNotificationMessage):
+        out.append(_event(
+            "task_done",
+            agent=tasks.pop(message.tool_use_id or "", "subagent"),
+            task_id=message.task_id,
+            status=message.status,
+            summary=str(message.summary or "")[:160],
+        ))
+    elif isinstance(message, StreamEvent):
+        # Raw Anthropic stream event. Only the incremental content deltas are
+        # useful here; block start/stop is implied by the canonical block event.
+        ev = message.event or {}
+        delta = ev.get("delta") or {}
+        if ev.get("type") == "content_block_delta":
+            if delta.get("type") == "text_delta" and delta.get("text"):
+                out.append(_event_for(message, "text_delta", text=delta["text"]))
+            elif delta.get("type") == "thinking_delta" and delta.get("thinking"):
+                out.append(_event_for(message, "thinking_delta", text=delta["thinking"]))
+    elif isinstance(message, AssistantMessage):
         for block in message.content:
             if isinstance(block, TextBlock):
-                out.append(_event("text", text=block.text))
+                out.append(_event_for(message, "text", text=block.text))
             elif isinstance(block, ThinkingBlock):
-                out.append(_event("thinking", text=getattr(block, "thinking", "")))
+                out.append(_event_for(message, "thinking", text=getattr(block, "thinking", "")))
             elif isinstance(block, ToolUseBlock):
                 tool_names[getattr(block, "id", "")] = block.name  # for the matching tool_result
-                out.append(_event("tool_use", tool=block.name, summary=_tool_summary(getattr(block, "input", None))))
+                out.append(_event_for(message, "tool_use", tool=block.name,
+                                      summary=_tool_summary(getattr(block, "input", None))))
     elif isinstance(message, UserMessage):
         # Tool results come back as a UserMessage of ToolResultBlock(s); tag each
         # with the originating tool's name so the UI can mark that chip done.
         for block in (message.content if isinstance(message.content, list) else []):
             if isinstance(block, ToolResultBlock):
                 name = tool_names.get(getattr(block, "tool_use_id", ""), "tool")
-                out.append(_event("tool_result", tool=name, summary=_result_summary(getattr(block, "content", None))))
+                out.append(_event_for(message, "tool_result", tool=name,
+                                      summary=_result_summary(getattr(block, "content", None))))
     return out
+
+
+# Live-only event kinds: shown as they stream, never written to the replay
+# transcript (see map_message's docstring). Shared with sandbox_server's pump.
+TRANSIENT_KINDS = frozenset({"text_delta", "thinking_delta", "task_progress"})
 
 
 def _tool_summary(inp: object) -> str:
@@ -125,9 +240,15 @@ class RealAgent:
     def __init__(self, project_dir: Path):
         self.dir = project_dir
         self._client = None
+        # The API key the live client was built with. The SDK reads
+        # ANTHROPIC_API_KEY once, when its subprocess starts, so a client is
+        # pinned to whatever key was current then — we compare against this to
+        # notice a rotation and rebuild (see _ensure_client).
+        self._client_key: str | None = None
         self._session_file = project_dir / ".agent_session"
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
+        self._tasks: dict[str, str] = {}  # Task tool_use_id → subagent label, for attribution
         # Running cumulative cost/usage last seen from the SDK, so we can emit
         # per-turn deltas (see _usage_delta). The SDK's ResultMessage reports
         # session totals, not per-turn values.
@@ -140,14 +261,37 @@ class RealAgent:
             except OSError:
                 self._resume_id = None
 
+    async def _close_client(self) -> None:
+        """Drop the live client. State is cleared FIRST so a disconnect that
+        throws can't leave a half-dead client cached for the next turn."""
+        client, self._client, self._client_key = self._client, None, None
+        if client is None:
+            return
+        try:
+            await client.disconnect()
+        except Exception as exc:  # best-effort teardown; we're replacing it anyway
+            _log(f"[agent] client disconnect failed (ignored): {exc}")
+
     async def _ensure_client(self):
+        key = current_api_key()
+        if self._client is not None and key != self._client_key:
+            # The operator rotated the key under a live client. Rebuild so the
+            # new one takes effect without waiting for the sandbox to be
+            # recreated. Conversation survives: the rebuild passes
+            # resume=<session id>, the same path a runner restart takes.
+            _log("[agent] Anthropic key rotated — rebuilding the SDK client")
+            await self._close_client()
         if self._client is None:
             from claude_agent_sdk import ClaudeSDKClient
 
-            self._client = ClaudeSDKClient(
-                options=build_options(self.dir, resume=self._resume_id)
+            client = ClaudeSDKClient(
+                options=build_options(self.dir, resume=self._resume_id, api_key=key)
             )
-            await self._client.connect()
+            # Assign only after a successful connect, so a failed start is
+            # retried next turn instead of caching a client that never opened.
+            await client.connect()
+            self._client = client
+            self._client_key = key
         return self._client
 
     def _usage_delta(self, cost, in_tok, out_tok):
@@ -181,6 +325,18 @@ class RealAgent:
             except OSError:
                 pass
 
+    async def interrupt(self) -> bool:
+        """Abort the in-flight turn via the SDK's control channel. The current
+        receive_response() stream then ends on its own, so handle_turn completes
+        and the runner emits turn_done — no task cancellation needed (returning
+        True tells the runner not to cancel). The persistent client stays
+        connected and is reused for the next turn. No live client → nothing to
+        stop, and returning False lets the runner cancel as a fallback."""
+        if self._client is None:
+            return False
+        await self._client.interrupt()
+        return True
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
             from claude_agent_sdk import ResultMessage
@@ -195,7 +351,7 @@ class RealAgent:
         try:
             await client.query(text)
             async for message in client.receive_response():
-                for ev in map_message(message, self._tool_names):
+                for ev in map_message(message, self._tool_names, self._tasks):
                     yield ev
                 if isinstance(message, ResultMessage):
                     self._remember_session(message)  # persist for resume on relaunch

@@ -1,13 +1,24 @@
 # Build-context hygiene for deploy/Dockerfile (context = repo root) and the E2B
 # sandbox image. The multi-stage builds install deps and compile fresh, so local
 # installs and build outputs are noise — excluding them shrinks the context that
-# gets uploaded to the (remote) builder from ~1.5 GB to a few MB.
+# gets uploaded to the (remote) builder from ~2.5 GB to a few MB.
 #
 # NOTE: dist/ is built INSIDE the image (stage `web`) and copied via --from=web,
 # so excluding the host's local dist/ is correct — it is never the source.
 
 **/node_modules
 .git
+# Claude Code local state. .claude/worktrees holds full repo checkouts, which
+# `fly deploy` was uploading on every deploy (906 MB of a 915 MB context — and
+# since **/build is deliberately NOT excluded below, every worktree's engine
+# build/ went too). Nothing in the images comes from here; the plugin skills that
+# DO ship live in packages/engine/plugin, not .claude/skills.
+#
+# This matters for the Fly deploy only. The E2B v2 CLI does NOT upload a
+# whole-directory context — it uploads just the paths e2b.Dockerfile COPYs
+# (verified: it logs one upload line per COPY path), so `make sandbox-image` was
+# never carrying this weight.
+.claude
 **/.venv
 **/__pycache__
 **/*.pyc

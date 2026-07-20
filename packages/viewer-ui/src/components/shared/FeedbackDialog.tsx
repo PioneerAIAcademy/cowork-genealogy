@@ -32,7 +32,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   const [sessionLogSize, setSessionLogSize] = useState(0)
   const [hasSessionLog, setHasSessionLog] = useState(false)
 
-  const [includeMedia, setIncludeMedia] = useState(false)
+  // On by default: a report about an uploaded document is useless without it,
+  // and when the project has no media the flag is a no-op (the checkbox is
+  // disabled at mediaCount === 0). Oversize bundles are handled downstream —
+  // the web path drops the largest files and reports them.
+  const [includeMedia, setIncludeMedia] = useState(true)
   const [includeSessionLog, setIncludeSessionLog] = useState(true)
   const [showFileList, setShowFileList] = useState(false)
 
@@ -334,10 +338,11 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
 
           <div className={styles.privacy}>
             Send packages your project folder as a zip and uploads it to a private Google Drive
-            folder accessible only to the Pioneer Academy team. Audio and image files are excluded
-            unless you check &ldquo;Include media.&rdquo; The session log includes your prompts,
-            Claude&apos;s replies and internal reasoning, and every tool call with its results —
-            the reasoning is what lets us diagnose why the agent did what it did.
+            folder accessible only to the Pioneer Academy team. Documents and images you uploaded
+            are included &mdash; untick &ldquo;Include media files&rdquo; to leave them out. The
+            session log includes your prompts, Claude&apos;s replies and internal reasoning, and
+            every tool call with its results &mdash; the reasoning is what lets us diagnose why the
+            agent did what it did.
           </div>
         </div>
 
