@@ -506,9 +506,12 @@ after death, a child born after a parent died — via `person_warnings`
 FamilySearch ID, silently skipped for synthetic `I` ids. Its pre-step
 routing guard matters: a *disagreement between two sources* is a conflict,
 not a warning, and gets handed to `conflict-resolution` silently as the
-first and only action. It counts before it reports — two or more errors on
-one person opens with a cluster verdict ("two people merged into one
-profile") rather than a list of independent findings. `person-evidence`,
+first and only action — no preamble, no analysis, no tool calls of its
+own. It counts before it reports: two or more `error`-severity warnings
+on one person opens with a cluster verdict — that this is "a strong
+signal that records from two different individuals have been merged into
+one profile" — with the individual warnings listed *under* it rather than
+above it. `person-evidence`,
 `record-extraction`, and `tree-edit` all hand off here after writing.
 
 ### tree-edit
@@ -522,8 +525,10 @@ proof-conclusion, and this skill exists for genuine corrections, not for
 bypassing GPS. Two shape rules cause most errors: couple-event facts
 (Marriage, Divorce) belong on the `Couple` relationship's `facts` array,
 not as a person fact; and `remove` never removes a person. Merges happen
-only after `proof-conclusion` confirms identity, and `merge_tree_persons`
-repoints every `research.json` reference to the collapsed id. An
+only after `proof-conclusion` confirms identity at `probable` or higher,
+and `merge_tree_persons` repoints every `research.json` reference **off
+the collapsed id onto the survivor** — `project.subject_person_ids`,
+`person_evidence[].person_id`, and `timelines[].person_ids`. An
 anti-fabrication rule runs throughout: actually call the tool, and narrate
 only from the returned `ok: true` summary.
 
@@ -562,10 +567,14 @@ Quaker numbered months, double-dated years. The model owns the judgment
 (which calendar regime was in force in which jurisdiction and era) and
 `convert_calendar` does only the arithmetic; on `{ ok: false }` it surfaces
 the error and never falls back to hand arithmetic. Its useful heuristic
-travels to other skills: a discrepancy of exactly 10–13 days, or exactly
-one year for a January–March date, is a calendar difference rather than a
-conflict — which is why `conflict-resolution` and `historical-context` both
-route here before treating such a gap as disagreement.
+travels: a discrepancy of exactly 10–13 days, or exactly one year for a
+January–March date, is almost certainly a calendar difference rather than
+a true conflict. `historical-context` applies that test and suggests this
+skill for the actual conversion; `conflict-resolution` carries
+`convert_calendar` in its own allowed-tools and applies the correction
+inline rather than routing here. The handoff runs the other way — when a
+gap matches *no* expected offset, or both records share a jurisdiction and
+calendar, this skill hands off to `conflict-resolution`.
 
 ---
 
