@@ -106,6 +106,10 @@ export class WsSessionConnection implements SessionConnection {
     )
   }
 
+  private emitConn(state: 'open' | 'reconnecting'): void {
+    for (const l of [...this.listeners]) l({ type: 'conn_state', state })
+  }
+
   private scheduleRetry(): void {
     this.attempts += 1
     if (this.attempts > MAX_RETRIES) {
@@ -127,6 +131,10 @@ export class WsSessionConnection implements SessionConnection {
       this.attempts = 0
       for (const m of this.outbox) ws.send(m)
       this.outbox = []
+      // Synthetic, client-only. Lets the UI tell "the agent is working" apart
+      // from "the socket dropped and we're retrying" — otherwise a silent
+      // reconnect looks identical to a busy agent (the 2026-07-20 confusion).
+      this.emitConn('open')
     }
     ws.onmessage = (ev) => {
       let msg: WsMessage
@@ -145,6 +153,7 @@ export class WsSessionConnection implements SessionConnection {
       // paused sandbox, billing compute for a tab nobody is viewing. onVisibility
       // reconnects when the tab is focused again.
       if (this.hidden) return
+      this.emitConn('reconnecting')
       this.scheduleRetry()
     }
     ws.onerror = () => {

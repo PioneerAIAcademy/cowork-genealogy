@@ -63,6 +63,7 @@ export default function ChatPane({
   const [elapsed, setElapsed] = useState(0)
   const turnStartRef = useRef(0)
   const [activity, setActivity] = useState<AgentActivity | null>(null)
+  const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
 
   // Append agent_event content onto the last assistant message (the streaming one).
   const applyEvent = (ev: Record<string, unknown>): void => {
@@ -153,8 +154,16 @@ export default function ChatPane({
         // during history replay; live input is added locally in send().
         setMessages((prev) => [...prev, { role: 'user', text: String(msg.text ?? ''), tools: [] }])
       else if (msg.type === 'status' && msg.state === 'chat_ready') setReady(true)
+      // A turn was already running when we (re)connected — a reload mid-turn, or
+      // a second tab. Without this the indicator is idle while the agent works,
+      // because busy is otherwise set only locally in send(). turn_done clears it.
+      else if (msg.type === 'status' && msg.state === 'turn_active') setBusy(true)
+      else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)
+        // Reconnect attempts are over — stop the "Reconnecting…" spinner so the
+        // error message below carries the state instead of a stuck indicator.
+        setConnState('open')
         applyEvent({ kind: 'error', text: `Chat unavailable: ${msg.message ?? 'unknown error'}` })
         applyEvent({ kind: 'turn_done' })
       }
@@ -186,6 +195,14 @@ export default function ChatPane({
     conn.send({ type: 'user_msg', text: trimmed })
     setBusy(true)
     setInput('')
+  }
+
+  // Ask the agent to abort the running turn. The runner forwards this to the SDK
+  // (or cancels the mock); either way the turn ends with turn_done, which clears
+  // busy. Fire-and-forget — the button reflects intent, turn_done confirms it.
+  const stop = (): void => {
+    if (!busy) return
+    conn.send({ type: 'interrupt' })
   }
 
   // Upload a document/image, then tell the agent where it landed. The upload
@@ -262,16 +279,24 @@ export default function ChatPane({
             )}
           </div>
         ))}
-        {busy && (
-          <div className="typing">
-            ●●●{' '}
-            {activity
-              ? `${activity.agent}${activity.lastTool ? ` · ${activity.lastTool}` : ''}${
-                  activity.toolUses ? ` · ${activity.toolUses} tools` : ''
-                }`
-              : 'working…'}{' '}
-            {elapsed}s
-          </div>
+        {/* One status line, three distinct states. Reconnecting is shown even
+            when a turn wasn't running, because a dropped socket is worth knowing
+            about; it takes priority over "working" so a stall never masquerades
+            as progress (the failure mode that hid the 2026-07-20 disconnect). */}
+        {connState === 'reconnecting' ? (
+          <div className="typing">●●● Reconnecting…</div>
+        ) : (
+          busy && (
+            <div className="typing">
+              ●●●{' '}
+              {activity
+                ? `${activity.agent}${activity.lastTool ? ` · ${activity.lastTool}` : ''}${
+                    activity.toolUses ? ` · ${activity.toolUses} tools` : ''
+                  }`
+                : 'working…'}{' '}
+              {elapsed}s
+            </div>
+          )
         )}
       </div>
 
@@ -316,9 +341,17 @@ export default function ChatPane({
             }
           }}
         />
-        <button className="chatSend" type="submit" disabled={busy || !input.trim()}>
-          Send
-        </button>
+        {/* While a turn runs, Send becomes Stop — the only escape from a long
+            turn used to be a page reload (interrupt was a no-op end to end). */}
+        {busy ? (
+          <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
+            Stop
+          </button>
+        ) : (
+          <button className="chatSend" type="submit" disabled={!input.trim()}>
+            Send
+          </button>
+        )}
       </form>
     </div>
   )

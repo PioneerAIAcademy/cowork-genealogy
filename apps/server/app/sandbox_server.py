@@ -89,6 +89,13 @@ class Hub:
         # connection so a page reload rebuilds the chat (the agent's own memory
         # persists in the sandbox; this restores the *UI* history). Capped.
         self._history: list[dict] = []
+        # Whether a turn is running right now. The client's "working" state is
+        # otherwise purely local to the browser that hit Send, so a reload mid-turn
+        # loses it and the UI looks idle while the agent is still working (the
+        # 2026-07-20 report). This is the Hub — it outlives any one connection — so
+        # a reconnect can be told the turn is still going. Set when a user_msg is
+        # forwarded, cleared on turn_done (and on agent exit).
+        self._turn_active = False
         # Rejection-log throttle (see _REJECT_LOG_INTERVAL / _note_rejection).
         self._rej_count = 0
         self._rej_last = 0.0
@@ -197,6 +204,8 @@ class Hub:
                 else:
                     detail = ""
                 print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
+            if kind == "turn_done":
+                self._turn_active = False
             await self.broadcast(msg)
             # Deltas and task_progress are live-only. Recording them would evict
             # the real conversation from the capped replay buffer within a single
@@ -209,6 +218,7 @@ class Hub:
         # a turn that will never finish. A new message re-spawns it (send_input).
         if proc is self._proc:
             self._proc = None
+            self._turn_active = False  # the turn can't finish; unstick reconnects too
             await self.broadcast({"type": "agent_event", "event": {"kind": "error",
                 "text": f"The agent process exited unexpectedly (code {code}). "
                         "Send another message to restart it."}})
@@ -334,6 +344,11 @@ class Hub:
             # (agent already alive → ensure_started returns early) would sit on
             # "Connecting to the agent…" forever (ChatPane gates on chat_ready).
             await self.send_one(ws, {"type": "status", "state": "chat_ready"})
+            # A turn already running when this client connects (a reload mid-turn,
+            # or a second tab) — tell it so, so it shows "working" instead of idle.
+            # turn_done, replayed above and re-broadcast live, clears it.
+            if self._turn_active:
+                await self.send_one(ws, {"type": "status", "state": "turn_active"})
             async for raw in ws:
                 try:
                     msg = json.loads(raw)
@@ -341,6 +356,7 @@ class Hub:
                     continue
                 if msg.get("type") == "user_msg":
                     self._record({"type": "user_msg", "text": msg.get("text", "")})
+                    self._turn_active = True  # a turn is about to run (see connect note)
                     await self.send_input(raw)
                 elif msg.get("type") == "interrupt":
                     await self.send_input(raw)

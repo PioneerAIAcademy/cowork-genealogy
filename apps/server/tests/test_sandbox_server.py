@@ -187,6 +187,76 @@ def test_token_ttl_outlives_the_sandbox_timeout():
     assert DEFAULT_TTL_SECONDS > _RUNNING_TIMEOUT_S
 
 
+def test_reconnect_is_told_when_a_turn_is_still_running(monkeypatch):
+    """The fix for the 2026-07-20 "no working indicator" report: busy is otherwise
+    local to the browser that hit Send, so a reload mid-turn shows idle while the
+    agent works. The Hub outlives the connection and announces an in-flight turn
+    to every (re)connect; when nothing is running it stays quiet.
+    """
+    import app.sandbox_server as ss
+
+    monkeypatch.setattr(ss, "SECRET", "")  # auth disabled → handshake passes
+
+    sent: list[dict] = []
+
+    class FakeReq:
+        path = "/?token=x"
+
+    class FakeWS:
+        request = FakeReq()
+
+        async def send(self, payload):
+            sent.append(json.loads(payload))
+
+        async def close(self, *a):
+            pass
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise StopAsyncIteration  # no client→server messages; connection ends
+
+    async def noop(*a, **k):
+        pass
+
+    def states():
+        return [m.get("state") for m in sent if m.get("type") == "status"]
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    monkeypatch.setattr(hub, "ensure_started", noop)
+    monkeypatch.setattr(hub, "send_snapshot", noop)
+    asyncio.run(hub.handle(FakeWS()))
+    assert "chat_ready" in states() and "turn_active" in states()
+
+    sent.clear()
+    idle = ss.Hub()  # nothing running
+    monkeypatch.setattr(idle, "ensure_started", noop)
+    monkeypatch.setattr(idle, "send_snapshot", noop)
+    asyncio.run(idle.handle(FakeWS()))
+    assert "chat_ready" in states() and "turn_active" not in states()
+
+
+def test_turn_active_clears_when_the_turn_finishes():
+    """turn_done in the agent stream ends the in-flight state, so a reconnect
+    after the turn completes is not falsely told a turn is running."""
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(json.dumps({"type": "agent_event", "event": {"kind": "turn_done"}}))
+    q.put_nowait(None)
+    # proc is not hub._proc, so the crash path is skipped.
+    asyncio.run(hub._pump(q, FakeProc()))
+    assert hub._turn_active is False
+
+
 def test_rejection_log_is_throttled_to_protect_the_timeline():
     """A token-locked client reconnects in a tight loop; without throttling its
     rejections fill the 20 KB /logs window and evict the agent activity timeline
