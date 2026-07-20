@@ -20,10 +20,19 @@ Config (build_options) — two load-bearing choices: do NOT set skills="all" (th
 SDK turns it into `--allowedTools Skill`, restricting to only the Skill tool);
 append the project path via system_prompt so the agent reads research.json from
 cwd, not HOME.
+
+The Anthropic key comes from the per-connect secrets file, NOT from this
+process's env (see current_api_key + app/agent_secrets.py). A sandbox's env is
+fixed at create() and can never be updated, so an env-sourced key goes stale the
+moment the operator rotates it — the persistent client above then holds the dead
+key for the sandbox's whole life. Hence _ensure_client re-reads the file each
+turn and rebuilds the client when it changes.
 """
 from __future__ import annotations
 
+import json
 import os
+import sys
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -31,13 +40,43 @@ from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _MCP_BUILD = os.environ.get("ENGINE_MCP_BUILD", str(_REPO_ROOT / "packages" / "engine" / "mcp-server" / "build" / "index.js"))
 _PLUGIN_DIR = os.environ.get("ENGINE_PLUGIN_DIR", str(_REPO_ROOT / "packages" / "engine" / "plugin"))
+# Per-connect secrets, rewritten by the control plane on every connect (see
+# app/agent_secrets.py). Must equal sandbox.base.SECRETS_PATH — asserted by
+# tests/test_agent_secrets.py, since this module cannot import from the control
+# plane package (it also runs as a loose script in the baked E2B image).
+# AGENT_SECRETS_PATH overrides it for LocalProvider, whose sandbox-absolute
+# paths are mapped under a per-sandbox dir on the dev host.
+_SECRETS_PATH = os.environ.get("AGENT_SECRETS_PATH", "/run/secrets/session.json")
 
 
 def _event(kind: str, **kw) -> dict:
     return {"kind": kind, **kw}
 
 
-def build_options(project_dir: Path, resume: str | None = None):
+def _log(msg: str) -> None:
+    """Diagnostics go to STDERR — stdout is the runner's JSON-lines protocol and
+    a stray line there desynchronizes the pump. Lands in /tmp/agent.log."""
+    print(msg, file=sys.stderr, flush=True)
+
+
+def current_api_key() -> str:
+    """The operator's Anthropic key for the next turn.
+
+    Prefers the per-connect secrets file so a rotated key reaches a long-lived
+    sandbox whose create-time env is frozen (the whole point of the file
+    channel). Falls back to the env var when the file is missing, unreadable, or
+    carries no key — local dev, and any sandbox created before this existed.
+    """
+    env_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    try:
+        doc = json.loads(Path(_SECRETS_PATH).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return env_key
+    key = doc.get("anthropic_api_key") if isinstance(doc, dict) else None
+    return key if isinstance(key, str) and key else env_key
+
+
+def build_options(project_dir: Path, resume: str | None = None, api_key: str | None = None):
     from claude_agent_sdk import ClaudeAgentOptions
 
     project_note = (
@@ -65,7 +104,7 @@ def build_options(project_dir: Path, resume: str | None = None):
         # ToolSearch re-discovery mid-session. See speedup plan §3a — kept in
         # sync with the e2e orchestrator so hosted-web users get the same win.
         env={
-            "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", ""),
+            "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
             "ENABLE_TOOL_SEARCH": "true",
         },
     )
@@ -125,6 +164,11 @@ class RealAgent:
     def __init__(self, project_dir: Path):
         self.dir = project_dir
         self._client = None
+        # The API key the live client was built with. The SDK reads
+        # ANTHROPIC_API_KEY once, when its subprocess starts, so a client is
+        # pinned to whatever key was current then — we compare against this to
+        # notice a rotation and rebuild (see _ensure_client).
+        self._client_key: str | None = None
         self._session_file = project_dir / ".agent_session"
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
@@ -140,14 +184,37 @@ class RealAgent:
             except OSError:
                 self._resume_id = None
 
+    async def _close_client(self) -> None:
+        """Drop the live client. State is cleared FIRST so a disconnect that
+        throws can't leave a half-dead client cached for the next turn."""
+        client, self._client, self._client_key = self._client, None, None
+        if client is None:
+            return
+        try:
+            await client.disconnect()
+        except Exception as exc:  # best-effort teardown; we're replacing it anyway
+            _log(f"[agent] client disconnect failed (ignored): {exc}")
+
     async def _ensure_client(self):
+        key = current_api_key()
+        if self._client is not None and key != self._client_key:
+            # The operator rotated the key under a live client. Rebuild so the
+            # new one takes effect without waiting for the sandbox to be
+            # recreated. Conversation survives: the rebuild passes
+            # resume=<session id>, the same path a runner restart takes.
+            _log("[agent] Anthropic key rotated — rebuilding the SDK client")
+            await self._close_client()
         if self._client is None:
             from claude_agent_sdk import ClaudeSDKClient
 
-            self._client = ClaudeSDKClient(
-                options=build_options(self.dir, resume=self._resume_id)
+            client = ClaudeSDKClient(
+                options=build_options(self.dir, resume=self._resume_id, api_key=key)
             )
-            await self._client.connect()
+            # Assign only after a successful connect, so a failed start is
+            # retried next turn instead of caching a client that never opened.
+            await client.connect()
+            self._client = client
+            self._client_key = key
         return self._client
 
     def _usage_delta(self, cost, in_tok, out_tok):

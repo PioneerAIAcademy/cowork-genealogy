@@ -48,6 +48,20 @@ recorded so it can be re-examined rather than re-derived.
   start in prod (e.g. when `PUBLIC_URL` is https, or behind an explicit flag) if
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
+- [ ] **Operator misconfiguration reaches the user as a raw SDK error string** —
+  when the Agent SDK's first call fails auth, `real_agent.handle_turn` wraps the
+  exception verbatim (`_event("error", text=f"Agent error: {exc}")`) and
+  `ChatPane` renders it as-is, so an alpha tester saw *"Failed to authenticate.
+  API Error: 401 API key is invalid."* after ~90s of waiting — a message about
+  the operator's Anthropic key, phrased as if it were about the tester's own
+  login. Two testers each reported it as a FamilySearch problem, which is the
+  real cost: it sends people to debug the wrong credential. Wanted: classify the
+  failure in `handle_turn` and emit an operator-vs-user framing — 401/403 from
+  the SDK → "This service is misconfigured; the administrator has been notified"
+  (plus a server-side log loud enough to page), while genuinely user-actionable
+  failures (an expired FamilySearch token) keep their current specific wording.
+  Surfaced by the 2026-07-20 outage; the credential-freeze half of that bug is
+  fixed (`app/agent_secrets.py`), this half is not.
 
 ## Engine — image transcription
 - [ ] **User-invoked Opus transcription (`image_transcribe` Flow 2)** — brainstormed,

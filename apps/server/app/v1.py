@@ -39,6 +39,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import update as sa_update
 from sqlmodel import Session
 
+from . import agent_secrets
 from .auth import get_api_client
 from .config import get_settings
 from .db import get_engine, get_session
@@ -142,6 +143,7 @@ async def _open_ws(provider: SandboxProvider, sandbox_id: str):
     yet — the browser path connects a moment later over the network, but we connect
     in-process immediately — so retry the TCP connect briefly until it is up."""
     sandbox = await provider.resume(sandbox_id)
+    await agent_secrets.write_secrets(sandbox)  # same refresh the browser /connect does
     conn = await sandbox.expose_port(SANDBOX_WS_PORT)
     token = mint_token(sandbox_id)
     url = f"{conn.url}/?token={token}"
