@@ -134,8 +134,11 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 28 skills covering the full GPS research cycle. Skills
+The plugin ships 27 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
+For a developer-facing walkthrough of how `/research` routes between
+them — including what each skill writes and what it must not touch —
+see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 ### Starting and resuming
 
@@ -144,6 +147,7 @@ are listed in roughly the order you'd use them in a research project.
 | **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
 | **project-status** | Summarizes project progress with GPS state + conversational narrative. Recommends the next step. | "Where are we?" / "What's next?" / "Status" |
 | **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" above. | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
+| **forget-and-rederive** | Sets up a practice run: strips information you already have out of the project tree so it has to be re-derived from records. Always dry-runs first and reports only redacted counts. Requires you to also not look the answer back up — the FamilySearch tree still has it, so the FS tree-reading tools are off-limits for those people afterward. | "Forget what you know about Patrick's parents and find them again" / "Hide his parents and see if you can re-derive them" |
 
 ### Planning the research
 
@@ -225,14 +229,16 @@ Code in this checkout), alongside the other dev skills `compare-state` and
 
 ## Agents
 
-The plugin ships one Cowork agent. Unlike skills, an agent runs in
-fresh context and is invoked by the Cowork orchestrator — or by
-`/research` at GPS checkpoints — when its description matches; you
+The plugin ships three Cowork agents. Unlike skills, an agent runs in
+fresh context and is invoked by the Cowork orchestrator, by `/research`
+at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
 
 | Agent | What it does | Say this |
 |-------|-------------|----------|
-| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it automatically before the exhaustiveness gate, before the proof conclusion, and after a conclusion is written. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
+| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
+| **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
+| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription. Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 
 ## Recommended workflow
 
