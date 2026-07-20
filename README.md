@@ -136,9 +136,9 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 The plugin ships 27 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
-For a developer-facing walkthrough of how `/research` routes between
-them — including what each skill writes and what it must not touch —
-see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
+For a plain-language account of the research method itself — the GPS
+cycle, the judgment made at each stage, and what to expect from a
+session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 
 ### Starting and resuming
 
