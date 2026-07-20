@@ -31,6 +31,8 @@ from pathlib import Path
 
 from websockets.asyncio.server import serve
 
+from .agent.real_agent import TRANSIENT_KINDS
+
 PORT = int(os.environ.get("WS_PORT", "8080"))
 SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", "/project"))
@@ -178,21 +180,29 @@ class Hub:
                 continue
             # Activity timeline → ws.log so the Logs panel shows WHAT the agent did
             # and where it stalls. Skip per-token text (it streams to the UI; too
-            # noisy for the log).
+            # noisy for the log) and the transient streaming kinds for the same
+            # reason — at delta granularity they would bury the timeline.
             ev = msg.get("event") or {}
             kind = ev.get("kind")
-            if kind and kind != "text":
+            transient = kind in TRANSIENT_KINDS
+            if kind and kind != "text" and not transient:
                 if kind == "thinking":
                     detail = str(ev.get("text", "")).replace("\n", " ")[:200]
                 elif kind in ("tool_use", "tool_result"):
                     detail = f"{ev.get('tool', '')}: {str(ev.get('summary', ''))[:140]}".strip()
+                elif kind in ("task_started", "task_done"):
+                    detail = f"{ev.get('agent', '')}: {str(ev.get('summary', ev.get('status', '')))[:140]}".strip()
                 elif kind == "error":
                     detail = str(ev.get("text", ""))[:200]
                 else:
                     detail = ""
                 print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
             await self.broadcast(msg)
-            self._record(msg)
+            # Deltas and task_progress are live-only. Recording them would evict
+            # the real conversation from the capped replay buffer within a single
+            # streamed turn, so a reconnect would rebuild an empty chat.
+            if not transient:
+                self._record(msg)
         code = proc.poll()
         print(f"{_ts()} [ws] agent_runner exited (code={code})", flush=True)
         # The live agent died — surface it + unstick the UI instead of hanging on
