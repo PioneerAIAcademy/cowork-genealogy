@@ -36,14 +36,15 @@ SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", "/project"))
 _WATCH_INTERVAL = 0.7
 _HISTORY_MAX = 1000  # transcript events kept for replay-on-reconnect
-
-
-def _make_token(ttl_seconds: int = 3600) -> str:
-    """Mint a token (used by the control plane via mint_session_token). Format:
-    '<exp>.<hex hmac-sha256(secret, exp)>'."""
-    exp = str(int(time.time()) + ttl_seconds)
-    sig = hmac.new(SECRET.encode(), exp.encode(), hashlib.sha256).hexdigest()
-    return f"{exp}.{sig}"
+# Seconds between keepalive frames (see _heartbeat_loop). Env-overridable so the
+# test can assert the behaviour without a 15s sleep.
+_HEARTBEAT_INTERVAL = float(os.environ.get("WS_HEARTBEAT_INTERVAL", "15"))
+# A token-locked client reconnects on a tight loop (and re-arms on every tab
+# focus), so a naive "one line per rejection" fills the 20 KB /logs window with
+# identical lines and evicts the agent activity timeline — which is exactly what
+# happened in the 2026-07-20 hang and left the Logs panel useless. Collapse
+# rejections to at most one line per this interval, carrying a suppressed count.
+_REJECT_LOG_INTERVAL = 10.0
 
 
 def verify_token(token: str | None) -> bool:
@@ -81,15 +82,32 @@ class Hub:
         self._clients: set = set()
         self._proc: subprocess.Popen | None = None
         self._watch_started = False
+        self._heartbeat_started = False
         # Recent transcript (user_msg + agent_event), replayed to each new
         # connection so a page reload rebuilds the chat (the agent's own memory
         # persists in the sandbox; this restores the *UI* history). Capped.
         self._history: list[dict] = []
+        # Rejection-log throttle (see _REJECT_LOG_INTERVAL / _note_rejection).
+        self._rej_count = 0
+        self._rej_last = 0.0
 
     def _record(self, msg: dict) -> None:
         self._history.append(msg)
         if len(self._history) > _HISTORY_MAX:
             del self._history[: len(self._history) - _HISTORY_MAX]
+
+    def _note_rejection(self, now: float) -> int | None:
+        """Throttle the rejection log. Returns the number of rejections to report
+        on this line (>=1) when enough time has passed to log again, else None
+        (this one is suppressed and folded into the next reported count). The
+        first rejection always logs — ``_rej_last`` starts at 0."""
+        self._rej_count += 1
+        if now - self._rej_last >= _REJECT_LOG_INTERVAL:
+            n = self._rej_count
+            self._rej_count = 0
+            self._rej_last = now
+            return n
+        return None
 
     # ── outbound fan-out ─────────────────────────────────────────
     async def broadcast(self, msg: dict) -> None:
@@ -113,6 +131,10 @@ class Hub:
         if not self._watch_started:
             self._watch_started = True
             loop.create_task(self._watch_loop())
+        # Transport keepalive → the socket survives a long, silent turn. Start once.
+        if not self._heartbeat_started:
+            self._heartbeat_started = True
+            loop.create_task(self._heartbeat_loop())
         # Agent already alive? nothing to do.
         if self._proc is not None and self._proc.poll() is None:
             return
@@ -190,6 +212,29 @@ class Hub:
             await asyncio.to_thread(self._proc.stdin.write, raw.rstrip("\n") + "\n")
             await asyncio.to_thread(self._proc.stdin.flush)
 
+    # ── transport keepalive ──────────────────────────────────────
+    async def _heartbeat_loop(self) -> None:
+        """Emit a frame every _HEARTBEAT_INTERVAL so an idle-looking socket stays
+        open through the edge proxy the browser reaches this server through.
+
+        A turn can be silent for minutes — a record-extraction subagent runs long
+        and, because `include_partial_messages` is off, its blocks only reach the
+        pump when each assistant message completes. Protocol-level pings are not
+        reliably counted as activity by the proxy, so without an application frame
+        the socket is dropped mid-turn and the client has to reconnect to receive
+        the rest of it.
+
+        Deliberately NOT passed through _record: this is transport liveness, not
+        transcript, and recording it would evict real events from the replay
+        buffer. Unknown `type`s are ignored by both client consumers (ChatPane
+        handles agent_event/user_msg/status; WsResearchTransport the viewer
+        deltas), so no client change is needed to accept it.
+        """
+        while True:
+            await asyncio.sleep(_HEARTBEAT_INTERVAL)
+            if self._clients:
+                await self.broadcast({"type": "ping", "ts": int(time.time())})
+
     # ── /project watch (poll) ────────────────────────────────────
     async def _watch_loop(self) -> None:
         seen: dict[str, float] = {}
@@ -260,7 +305,10 @@ class Hub:
         if "token=" in path:
             token = path.split("token=", 1)[1].split("&", 1)[0]
         if not verify_token(token):
-            print("[ws] rejected connection: bad/expired token", flush=True)
+            n = self._note_rejection(time.time())
+            if n is not None:
+                extra = f" (x{n} since the last line)" if n > 1 else ""
+                print(f"[ws] rejected connection: bad/expired token{extra}", flush=True)
             await ws.close(4401, "unauthorized")
             return
         self._clients.add(ws)
