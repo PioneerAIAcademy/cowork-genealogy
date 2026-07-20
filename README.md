@@ -485,17 +485,40 @@ What's shipped:
 
 ## Developer and contributor docs
 
+### First, install the git hooks
+
+Once per clone (not once per branch), run:
+
+```bash
+make install-hooks          # Windows: double-click eval\InstallHooks.bat
+```
+
+This installs two hooks: `post-checkout` auto-links shared gitignored files
+(`node_modules`, `eval/.env`, `apps/server/.env`) into new worktrees, and
+`commit-msg` warns — never blocks — when a commit is missing a human
+`Co-authored-by:` trailer. It's safe to re-run, and refuses rather than
+clobbering a hook it didn't write. Details in
+[DEVELOPMENT.md → Git hooks](./DEVELOPMENT.md#git-hooks).
+
+
+### Where to read next
+
 - [DEVELOPMENT.md](./DEVELOPMENT.md) — building, testing, smoke-tests,
   adding tools and skills, running the eval harness.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — what kinds of contributions
   are welcome, constraints, and how to submit.
 - [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
   when editing the code.
-- [docs/feedback-workflow.md](./docs/feedback-workflow.md) — how to
+- [docs/alpha-feedback-guide.md](./docs/alpha-feedback-guide.md) — how to
   triage a user feedback submission, fix the bug, and lock it in
-  with a regression test. Start here when a feedback zip lands.
+  with a regression test. Start here when a feedback zip lands;
+  [docs/alpha-feedback-example.md](./docs/alpha-feedback-example.md) walks
+  the same flow as one worked story.
+- [docs/skill-lifecycle.md](./docs/skill-lifecycle.md) — the shared loop
+  every fix goes through: mine a test, run it, annotate, improve, gate,
+  release.
 - [eval/README.md](./eval/README.md) — eval harness for skill
   regression testing: how to run it, add cases, and interpret results.
-- [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — end-to-end
-  testing playbook covering the full plugin + MCP server flow.
+- [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — authoring and
+  running the end-to-end research benchmark.
 
