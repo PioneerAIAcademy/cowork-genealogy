@@ -13,14 +13,11 @@ description: Creates, reviews, and revises a sequenced research plan (in researc
   empty — to judge whether research is done ("are we done", "what's the next step" →
   research-exhaustiveness or project-status).
 allowed-tools:
-  - wiki_search
+  - collections_search
+  - volume_search
+  - external_links_search
   - place_search
   - place_search_all
-  - collections_search
-  - place_population
-  - external_links_search
-  - volume_search
-  - wiki_place_page
   - research_append
 ---
 
@@ -45,15 +42,24 @@ record-type selection by research goal.
 
 ## MCP tools used
 
+research-plan does **not** learn *how* to search a place — the facts and
+strategy (jurisdictional history, boundary changes, naming conventions,
+indexing quirks) come from `locality-guide` (Step 2). What research-plan
+does itself is **discover which records exist** and **write the plan**:
+
 | Tool | Purpose |
 |------|---------|
-| `wiki_search` | FamilySearch wiki articles about record availability for the jurisdiction |
-| `place_search` | Place ID, jurisdictional hierarchy, boundary changes |
-| `collections_search` | FamilySearch record collections covering this place |
-| `place_population` | Population statistics to understand community size |
-| `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives, wiki pages) for this place and period |
-| `volume_search` | Digitized volumes (image groups) covering this place and period — reveals browse-only films not in indexed collections |
-| `wiki_place_page` | Country research strategies (`section: "research_tips"`) and online record sources (`section: "online_records"`) |
+| `collections_search` | Which FamilySearch record collections cover this place — the records to consider planning |
+| `volume_search` | Digitized volumes (image groups) for this place/period — browse-only films not in indexed collections |
+| `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives) for this place/period |
+| `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
+| `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
+| `research_append` | Write `plans` / `plan_items` (assigns ids, validates, enforces the one-active-plan invariant) |
+
+The *how-to-search* knowledge — wiki research pages, population context,
+quirks, boundary strategy — comes from `locality-guide` (which owns
+`wiki_search`, `wiki_place_page`, `place_population`), read back from the
+`localities` section. research-plan does not call those.
 
 ## Steps
 
@@ -112,40 +118,43 @@ the plan" (review) or "make a plan" (add/supersede), default to review
 if an active plan has unfinished items — a duplicate plan alongside a
 usable one is the worse mistake.
 
-### 2. Conduct a locality survey
+### 2. Survey the locality — know-how from locality-guide, records you find yourself
 
-Determine what records exist for the target jurisdiction and period.
+Two different things go into a plan, and they come from two different
+places: **(a) how to search this place** — its jurisdictional history,
+boundary changes, naming conventions, indexing quirks — and **(b) which
+records actually exist** there.
 
-**Invoke locality-guide or read the persisted one?** Check for a
-`localities` entry covering this jurisdiction (via `project_context`).
-No entry yet → invoke `locality-guide` first (it persists one `loc_`
-entry to `localities`, so the survey survives for later questions), then
-return and read it back. Entry exists → read it from `project_context`
-and supplement with targeted MCP calls only for gaps — don't re-survey a
-place the guide already covers. Quick survey of a familiar jurisdiction
-with no persisted entry → call MCP tools directly:
+**(a) The know-how + facts come from `locality-guide`, not from you.**
+Check for a `localities` entry covering this jurisdiction (read
+`research.json`). If one exists, read it. If not → **invoke
+`locality-guide`** for the jurisdiction, then read back the entry it
+persisted. locality-guide owns the wiki/place tools and writes one
+`loc_` entry (jurisdictions, quirks, guide) so the know-how survives for
+later questions. **Do this for every new place you plan** — a first
+plan, a fallback jurisdiction, a FAN-cluster place — before planning it.
+You have no wiki/place-fact tools of your own; the guide is your source
+for *how* to search.
+
+**(b) Then discover which records exist**, with your own tools, applying
+that know-how:
 
 ```
-place_search({ placeName: "Schuylkill County, Pennsylvania" })
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
-external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
-wiki_search({ query: "Pennsylvania probate records genealogy" })
-wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "research_tips" })
-wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "online_records" })
+external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
+place_search({ placeName: "Schuylkill County, Pennsylvania" })   // resolve the standardPlace you write on plan items
 ```
 
-Pass the target period to `external_links_search` as `startYear`/`endYear`.
-It returns a flat list of curated URLs across third-party sites; use
-`linkText` and the URL host to identify each, and dedupe by URL before
-adding items.
+`volume_search` surfaces browse-only image groups (digitized microfilm,
+book scans) that `collections_search` won't — plan them when the question
+may need unindexed records. `external_links_search` returns a flat list
+of curated third-party URLs; use `linkText` + the URL host to identify
+each and dedupe by URL. Let the guide's quirks steer this — e.g. if it
+says the parish is indexed only at county level, weight the county
+collection, not the exact-parish one.
 
-Use `volume_search` to find browse-only image groups (digitized
-microfilm, book scans) — many records exist only as unindexed images
-that `collections_search` won't show. Include these as plan items when
-the question may need unindexed records.
-
-**What the survey must answer for planning purposes:**
+**What you need in hand before writing the plan:**
 - Which record types exist for this place and period
 - Whether records survive (fires, floods, wartime destruction)
 - Where records are held and how to access them (indexed, images-only,
@@ -375,10 +384,11 @@ re-issue it first. Then present the plan:
 **Question:** q_003 — "Did Thomas Flynn leave a will in Schuylkill
 County naming Patrick as a son?"
 
-**Survey:** `place_search` (county formed 1811) → `collections_search`
-(FamilySearch "Pennsylvania Probate Records, 1683-1994", indexed) →
-`wiki_search` (probate = county Register of Wills: wills,
-administrations, guardianships).
+**Survey:** invoke `locality-guide` for Schuylkill County for the
+know-how + facts (county formed 1811; probate = county Register of
+Wills; naming/indexing quirks) — it persists `loc_001`. Then
+`collections_search` finds the records to plan (FamilySearch
+"Pennsylvania Probate Records, 1683-1994", indexed).
 
 **Plan:** pl_003 — three items: probate on FamilySearch, probate on
 Ancestry (fallback), land records (fallback).
