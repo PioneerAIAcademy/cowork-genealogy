@@ -18,7 +18,14 @@ const MEDIA_EXTS = new Set([
 const TEXT_EXTS = new Set(['.json', '.md', '.txt', '.csv', '.tsv', '.yaml', '.yml'])
 
 const INDIVIDUAL_FILE_CAP_BYTES = 25 * 1024 * 1024
+// Project-file budget. Mirrors apps/server/app/feedback.py `_ZIP_CAP_BYTES`:
+// when the selection exceeds it we drop the largest files until it fits rather
+// than failing the send. Applied to uncompressed bytes, as the server does.
 const ZIP_CAP_BYTES = 35 * 1024 * 1024
+// Session-log budget, separate from the file budget (again matching the
+// server's `_SESSION_LOG_CAP_BYTES`): over cap we keep the newest entries and
+// prepend a truncation note rather than dropping the log.
+const SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 
 export const MAX_FIELD_CHARS = 10_000
 export const FEEDBACK_SCHEMA_VERSION = 1
@@ -159,6 +166,38 @@ function normalizeAndValidate(report: FeedbackReport): NormalizedFields {
   return fields
 }
 
+/**
+ * Serialize session-log entries, capped at SESSION_LOG_CAP_BYTES.
+ *
+ * Mirrors `_filter_transcript`'s tail behavior in apps/server/app/feedback.py:
+ * over cap we keep the NEWEST entries that fit and prepend a `_truncation_note`
+ * line. The note is valid JSON so the downstream user/assistant filters skip it
+ * harmlessly, and it records how many leading entries went -- silent truncation
+ * would make a short log indistinguishable from a short session.
+ */
+export function capSessionLog(entries: unknown[]): string {
+  const lines = entries.map((e) => JSON.stringify(e))
+  const total = lines.reduce((n, l) => n + Buffer.byteLength(l) + 1, 0)
+  if (total <= SESSION_LOG_CAP_BYTES) return lines.join('\n') + '\n'
+
+  const tail: string[] = []
+  let size = 0
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const cost = Buffer.byteLength(lines[i]) + 1
+    if (size + cost > SESSION_LOG_CAP_BYTES) break
+    tail.push(lines[i])
+    size += cost
+  }
+  tail.reverse()
+
+  const note = JSON.stringify({
+    type: '_truncation_note',
+    dropped_leading_entries: lines.length - tail.length,
+    reason: `session log exceeded ${SESSION_LOG_CAP_BYTES} bytes; kept newest ${tail.length} entries`
+  })
+  return [note, ...tail].join('\n') + '\n'
+}
+
 export async function buildFeedbackZip(options: FeedbackOptions): Promise<FeedbackResult> {
   const { folderPath, includeMedia, includeSessionLog, report, viewerVersion } = options
   const folderResolved = path.resolve(folderPath)
@@ -169,9 +208,8 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
   const zip = new JSZip()
   const files = await walkProject(folderResolved)
 
-  let uncompressedBytes = 0
-  let fileCount = 0
   const skipped: string[] = []
+  const selected: { relativePath: string; buf: Buffer }[] = []
 
   for (const f of files) {
     if (f.isMedia && !includeMedia) continue
@@ -187,22 +225,40 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     }
 
     try {
-      const buf = await fs.readFile(full)
-      zip.file(f.relativePath, buf)
-      uncompressedBytes += buf.length
-      fileCount++
+      selected.push({ relativePath: f.relativePath, buf: await fs.readFile(full) })
     } catch {
       skipped.push(`${f.relativePath} (read failed)`)
     }
   }
+
+  // Over budget: drop the largest files until the selection fits. Same rule as
+  // the server, so a bundle built here and one built in the hosted app contain
+  // the same thing. Dropping beats throwing -- a too-big project should still
+  // produce a usable report, minus its heaviest attachments.
+  let uncompressedBytes = selected.reduce((n, s) => n + s.buf.length, 0)
+  if (uncompressedBytes > ZIP_CAP_BYTES) {
+    const bySizeDesc = [...selected].sort((a, b) => b.buf.length - a.buf.length)
+    const dropped = new Set<string>()
+    for (const s of bySizeDesc) {
+      if (uncompressedBytes <= ZIP_CAP_BYTES) break
+      dropped.add(s.relativePath)
+      uncompressedBytes -= s.buf.length
+      skipped.push(`${s.relativePath} (dropped — archive size limit)`)
+    }
+    for (let i = selected.length - 1; i >= 0; i--) {
+      if (dropped.has(selected[i].relativePath)) selected.splice(i, 1)
+    }
+  }
+
+  for (const s of selected) zip.file(s.relativePath, s.buf)
+  const fileCount = selected.length
 
   const timestamp = new Date().toISOString()
   let sessionLogIncluded = false
   if (includeSessionLog) {
     const sessionLog = await readSessionLog(folderResolved)
     if (sessionLog.entries.length > 0) {
-      const jsonl = sessionLog.entries.map((e) => JSON.stringify(e)).join('\n') + '\n'
-      zip.file('_feedback/session-log.jsonl', jsonl)
+      zip.file('_feedback/session-log.jsonl', capSessionLog(sessionLog.entries))
       sessionLogIncluded = true
     }
   }
@@ -234,13 +290,6 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
     compression: 'DEFLATE',
     compressionOptions: { level: 6 }
   })
-
-  if (buf.length > ZIP_CAP_BYTES) {
-    const mb = (buf.length / (1024 * 1024)).toFixed(1)
-    throw new Error(
-      `Feedback archive is ${mb} MB, which exceeds the 35 MB limit. Try unchecking media files.`
-    )
-  }
 
   const safeTimestamp = timestamp.replace(/[:.]/g, '-')
   const filename = `feedback-${safeTimestamp}.zip`

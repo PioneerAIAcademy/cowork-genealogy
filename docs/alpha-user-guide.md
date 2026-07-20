@@ -126,11 +126,9 @@ in the project and the agent reads it.
 You'll need this for anything **not** on FamilySearch. FamilySearch's own record
 images the agent fetches by itself; you don't need to upload those.
 
-> ⚠️ **Uploaded files are not included in feedback unless you ask for them.**
-> The feedback form has an **"Include media files"** checkbox that is **off by
-> default**, so anything you uploaded stays on your machine. If you later report
-> a problem involving one of these documents, tick that box — otherwise we get
-> your report without the thing it's about.
+Anything you upload travels with your feedback by default, so a report about a
+document arrives with the document attached. You can untick **"Include media
+files"** on the feedback form if you'd rather not send it.
 
 ### Watching it work
 
@@ -178,9 +176,10 @@ bundle captures that project's state, which is how we reproduce it.
 >   the agent's replies and its internal reasoning, and every tool call with its
 >   results. The reasoning is the single most useful part for diagnosing *why* it
 >   went wrong. Untick it if a session contains anything you'd rather not share.
-> - **"Include media files"** — **unticked by default.** Any documents or images
->   you uploaded stay behind unless you tick it. If your report is *about* a
->   document you supplied, tick this or we won't be able to see what you saw.
+> - **"Include media files"** — **ticked by default.** Documents and images you
+>   uploaded, so a report about a document arrives with the document. Untick it
+>   to leave them out. Very large bundles are trimmed automatically, largest
+>   files first.
 >
 > Everything goes to a private Drive folder only the Pioneer Academy team can
 > read.
