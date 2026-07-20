@@ -48,6 +48,34 @@ recorded so it can be re-examined rather than re-derived.
   start in prod (e.g. when `PUBLIC_URL` is https, or behind an explicit flag) if
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
+- [ ] **`WS_TOKEN_SECRET` is still create-time env** — the last instance of the
+  anti-pattern #762 removed for the Anthropic key ("a sandbox's environment is
+  fixed at `create()`"). `E2BProvider.create` bakes
+  `HMAC(ws_signing_key, sandbox_id)` into the WS server's process env
+  (`sandbox/e2b.py`), and that server is deliberately never restarted across
+  pause/resume, so rotating `ws_signing_key` orphans every existing sandbox: the
+  CP mints against the new key, the sandbox verifies against the old one, and
+  every handshake fails `bad/expired token` with no recovery but a new session.
+  It cannot use the decision-#2 secrets *file* — the WS server reads its secret
+  once at boot, not per turn — so the fix is either a restart-on-connect when the
+  derived secret has changed, or a key-id in the token so the sandbox can verify
+  against the key that minted it. Not urgent: rotation is rare and the alpha hang
+  was TTL expiry, not rotation.
+- [ ] **A rejected handshake floods `/tmp/ws.log` and evicts the evidence** —
+  `sandbox_server.handle` prints one line per rejection, and
+  `GET /sessions/{id}/logs` returns only the last 20 KB. During the 2026-07-20
+  hang the reconnect loop pushed the entire agent activity timeline out of that
+  window, so the Logs panel showed hundreds of identical rejection lines and
+  nothing about what the agent was actually doing — the diagnostic destroyed its
+  own evidence exactly when it was needed. Rate-limit the line (one per N seconds,
+  or a count-and-collapse) so a stuck client can't erase the timeline.
+- [ ] **`working… <N>s` does not distinguish working from disconnected** —
+  the timer is entirely client-side (`ChatPane.tsx`): `send()` starts it and only
+  `turn_done` stops it, so a socket that is closed, retrying, or being rejected
+  looks identical to an agent that is busy. In the 2026-07-20 hang it read
+  "working… 612s" while no socket was open at all, which is what sent the
+  investigation after the agent instead of the transport. `SessionConnection`
+  already knows its state; surface it so the indicator can say "Reconnecting…".
 - [ ] **Operator misconfiguration reaches the user as a raw SDK error string** —
   when the Agent SDK's first call fails auth, `real_agent.handle_turn` wraps the
   exception verbatim (`_event("error", text=f"Agent error: {exc}")`) and

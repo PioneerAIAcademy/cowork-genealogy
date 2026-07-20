@@ -36,14 +36,9 @@ SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 PROJECT_DIR = Path(os.environ.get("PROJECT_DIR", "/project"))
 _WATCH_INTERVAL = 0.7
 _HISTORY_MAX = 1000  # transcript events kept for replay-on-reconnect
-
-
-def _make_token(ttl_seconds: int = 3600) -> str:
-    """Mint a token (used by the control plane via mint_session_token). Format:
-    '<exp>.<hex hmac-sha256(secret, exp)>'."""
-    exp = str(int(time.time()) + ttl_seconds)
-    sig = hmac.new(SECRET.encode(), exp.encode(), hashlib.sha256).hexdigest()
-    return f"{exp}.{sig}"
+# Seconds between keepalive frames (see _heartbeat_loop). Env-overridable so the
+# test can assert the behaviour without a 15s sleep.
+_HEARTBEAT_INTERVAL = float(os.environ.get("WS_HEARTBEAT_INTERVAL", "15"))
 
 
 def verify_token(token: str | None) -> bool:
@@ -81,6 +76,7 @@ class Hub:
         self._clients: set = set()
         self._proc: subprocess.Popen | None = None
         self._watch_started = False
+        self._heartbeat_started = False
         # Recent transcript (user_msg + agent_event), replayed to each new
         # connection so a page reload rebuilds the chat (the agent's own memory
         # persists in the sandbox; this restores the *UI* history). Capped.
@@ -113,6 +109,10 @@ class Hub:
         if not self._watch_started:
             self._watch_started = True
             loop.create_task(self._watch_loop())
+        # Transport keepalive → the socket survives a long, silent turn. Start once.
+        if not self._heartbeat_started:
+            self._heartbeat_started = True
+            loop.create_task(self._heartbeat_loop())
         # Agent already alive? nothing to do.
         if self._proc is not None and self._proc.poll() is None:
             return
@@ -189,6 +189,29 @@ class Hub:
         if self._proc and self._proc.stdin:
             await asyncio.to_thread(self._proc.stdin.write, raw.rstrip("\n") + "\n")
             await asyncio.to_thread(self._proc.stdin.flush)
+
+    # ── transport keepalive ──────────────────────────────────────
+    async def _heartbeat_loop(self) -> None:
+        """Emit a frame every _HEARTBEAT_INTERVAL so an idle-looking socket stays
+        open through the edge proxy the browser reaches this server through.
+
+        A turn can be silent for minutes — a record-extraction subagent runs long
+        and, because `include_partial_messages` is off, its blocks only reach the
+        pump when each assistant message completes. Protocol-level pings are not
+        reliably counted as activity by the proxy, so without an application frame
+        the socket is dropped mid-turn and the client has to reconnect to receive
+        the rest of it.
+
+        Deliberately NOT passed through _record: this is transport liveness, not
+        transcript, and recording it would evict real events from the replay
+        buffer. Unknown `type`s are ignored by both client consumers (ChatPane
+        handles agent_event/user_msg/status; WsResearchTransport the viewer
+        deltas), so no client change is needed to accept it.
+        """
+        while True:
+            await asyncio.sleep(_HEARTBEAT_INTERVAL)
+            if self._clients:
+                await self.broadcast({"type": "ping", "ts": int(time.time())})
 
     # ── /project watch (poll) ────────────────────────────────────
     async def _watch_loop(self) -> None:
