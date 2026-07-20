@@ -1,0 +1,238 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Reconstruct the household and siblings of Patrick Flynn (b. ~1845, Ireland; resident Schuylkill County, Pennsylvania) via his father Thomas Flynn's household records",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-06",
+    "updated": "2026-05-06"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the members of Thomas Flynn's household in the 1850 census?",
+      "rationale": "The 1850 census enumerates Thomas Flynn's household. Building out the household (Patrick's siblings and the parent-child edges) extends the family group and can corroborate the parentage.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-05-06",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-05-06",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Schuylkill County, Pennsylvania",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "The 1850 census places Thomas Flynn's household and enumerates his children.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-05-06T10:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Flynn",
+        "given": "Thomas",
+        "collection": "1850 Census",
+        "residence_place": "Schuylkill County, Pennsylvania"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "notes": "1850 census household of Thomas Flynn, Branch Township, Schuylkill County. Head Thomas plus two children (John age 8, Bridget age 6), all born Ireland. Patrick is not enumerated in this household.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, Branch Township, Thomas Flynn household; digital image, FamilySearch.org, accessed 6 May 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Bureau",
+        "what": "1850 U.S. Federal Census, population schedule",
+        "when_created": "1850",
+        "when_accessed": "2026-05-06",
+        "where": "FamilySearch.org",
+        "where_within": "Branch Township, Schuylkill County, Thomas Flynn household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-05-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_001"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "record_role": "head_of_household",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Thomas Flynn",
+      "structured_value": { "given": "Thomas", "surname": "Flynn" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (likely Thomas Flynn himself) reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "John Flynn",
+      "structured_value": { "given": "John", "surname": "Flynn" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 8",
+      "structured_value": { "year": 1842, "place": "Ireland" },
+      "date": "~1842",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown — most likely a household member, possibly a neighbor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "record_role": "child_1",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Listed in household of Thomas Flynn (head), position and age consistent with child",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — no explicit informant for relationships in the 1850 census",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "The 1850 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "name",
+      "value": "Bridget Flynn",
+      "structured_value": { "given": "Bridget", "surname": "Flynn" },
+      "information_quality": "indeterminate",
+      "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to the census enumerator",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "birth",
+      "value": "age 6",
+      "structured_value": { "year": 1844, "place": "Ireland" },
+      "date": "~1844",
+      "date_certainty": "estimated",
+      "place": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "Unknown — most likely a household member, possibly a neighbor",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MQ7X-8KP",
+      "record_role": "child_2",
+      "record_persona_id": null,
+      "fact_type": "relationship",
+      "value": "Listed in household of Thomas Flynn (head), position and age consistent with child",
+      "structured_value": { "relationship_type": "child_inferred", "related_person_role": "head_of_household" },
+      "date": "1850",
+      "date_certainty": "exact",
+      "place": "Schuylkill County, Pennsylvania",
+      "information_quality": "indeterminate",
+      "informant": "Inferred from household structure — no explicit informant for relationships in the 1850 census",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "The 1850 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
+      "evidence_type": "indirect",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": ["q_001"]
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "The 1850 household head 'Thomas Flynn' matches the in-tree Thomas Flynn (I2) by name and Schuylkill County residence, and his age is consistent with being the father of the household's children. Matched as the household anchor.",
+      "match_score": null,
+      "created": "2026-05-06",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

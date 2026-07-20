@@ -164,11 +164,21 @@ Frame delegations neutrally — describe the record and the project state;
 NEVER frame the task as "fix" or "correct" the existing tree (corrective
 framing has induced destructive edits).
 
+**Never instruct the agent to create `person_evidence` links or to assign
+an identity confidence** — "link this persona to I3", "confidence should
+be confident". Identity resolution is person-evidence's lane, and a
+delegation that ordered it produced a fabricated link carrying a match
+score no tool had computed. When a record poses an identity question,
+describe the question neutrally and let the agent surface it in its
+return summary; the linking happens later, in person-evidence.
+
 One record per invocation; several records = several invocations, each
-carrying its own content. The agent extracts every assertion, writes the
-source + assertions in one composite `research_append`, creates sibling
-person stubs when the subject is a child on a household record, and
-returns a ≤10-line summary.
+carrying its own content. The agent extracts every assertion (including
+relationship-type assertions), writes the source + assertions in one
+composite `extraction_append`, and returns a ≤10-line summary. It is
+**assertion-only** — it does not write tree persons or edges; the
+household skeleton (member stubs + parent-child edges) is minted by
+person-evidence at link time via `materialize_facts`.
 
 **Match checks belong to the extractor, not you.** When the user asks
 to check FamilySearch matches, relay it as the flag above — never call
@@ -200,10 +210,13 @@ failure — the summary is a progress marker, not a stopping point.
 ## Tool availability
 
 **If `record_read`, `volume_search`, or `research_log_append` are not
-immediately available** (e.g., shown as deferred), call ToolSearch first
-with the fully-qualified names, e.g.
-`query: "select:mcp__genealogy__record_read,mcp__genealogy__volume_search,mcp__genealogy__research_log_append"`
-(adjust the server prefix if yours differs), then proceed. **Never fall
+immediately available** (e.g., shown as deferred), call ToolSearch first.
+**Search by bare tool name, never by a fully-qualified `select:` list** —
+the MCP server prefix differs per deployment (`mcp__genealogy__…` under
+the harnesses, `mcp__remote-devices__Genealogy_Research__…` under Cowork),
+so a hardcoded qualified name resolves to nothing in some environments.
+Use one keyword search per tool, e.g. `query: "+record_read"`, which
+matches whatever prefix this session actually exposes. **Never fall
 back to writing `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass schema validation, id allocation, and the `.bak`
 safety net; persistence belongs to the record-extractor agent's tools.

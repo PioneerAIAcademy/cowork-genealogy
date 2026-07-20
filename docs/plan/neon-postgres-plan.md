@@ -1,7 +1,7 @@
 # Neon Postgres on Fly, SQLite locally — DB backend plan
 
 **Date:** 2026-06-06. **Branch:** `hosted-web-workbench`. **Read with:**
-`fly-deploy-plan.md` (the deploy this amends), `hosted-web-workbench-POC-status.md`
+`fly-deploy-plan.md` (the deploy this amends), `realtime-rearch-status.md`
 (current state). **Touches:** `apps/server/app/{config,db,models,main}.py`,
 `apps/server/pyproject.toml`, `deploy/fly.toml`.
 

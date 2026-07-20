@@ -15,8 +15,11 @@ user's full project folder at the moment of failure plus a structured
 description of what they asked, what the agent did, and what it should
 have done. Submissions land in a Google Drive folder accessible to
 the dev team. The submission format is specified in
-`cowork-genealogy-ui/docs/feedback-json-spec.md`, which lives in the sibling
-`cowork-genealogy-ui` repo (the viewer is what implements the contract).
+`apps/electron/docs/feedback-json-spec.md` (the viewer implements the
+contract; the former sibling `cowork-genealogy-ui` repo is now
+`apps/electron/` in this monorepo). The **hosted web app** implements the
+same contract in `apps/server/app/feedback.py`, so a web case and a
+desktop case unzip to the same shape.
 
 This document specifies the **iteration workflow** a dev or
 genealogist follows to turn one of those submissions into a fix plus
@@ -455,7 +458,7 @@ serves as the comparison target:
    `--against=what-went-wrong`, `agent_should_have` for
    `--against=desired`) is present and non-empty. On any failure,
    abort with a message that names the specific field and points
-   you at `cowork-genealogy-ui/docs/feedback-json-spec.md` §3. The skill is
+   you at `apps/electron/docs/feedback-json-spec.md` §3. The skill is
    the first command you run; surfacing a bad case fixture
    here is much better than a downstream LLM call producing
    nonsense.
@@ -674,7 +677,7 @@ already contain partial or incorrect work from the original failure.
 
 This is irreducible — we cannot synthesize pre-failure state from
 the zip alone. A viewer-side workaround (continuous pre-action
-snapshots) was considered and rejected; see `cowork-genealogy-ui/docs/feedback-json-spec.md`
+snapshots) was considered and rejected; see `apps/electron/docs/feedback-json-spec.md`
 §7.1 for the analysis.
 
 The mitigation is a **skill contract**: every SKILL.md in
@@ -778,7 +781,7 @@ not produce a perfect reproduction of the user's original
 experience.
 
 A viewer-side enhancement (continuous pre-action snapshots) was
-considered and rejected; see `cowork-genealogy-ui/docs/feedback-json-spec.md` §7.1.
+considered and rejected; see `apps/electron/docs/feedback-json-spec.md` §7.1.
 
 ---
 
@@ -826,7 +829,7 @@ directory no longer exists.
 
 1. **`feedback.json` emission in `cowork-genealogy-ui`.** Cross-repo
    change; gating dependency for every other step. Spec:
-   `cowork-genealogy-ui/docs/feedback-json-spec.md` (in the sibling repo).
+   `apps/electron/docs/feedback-json-spec.md`.
 2. **Setup helper script.** `scripts/setup-feedback-case.sh
    <zip-path>` — unzip, git init, symlink plugin skills. Full
    contract in §11.
@@ -908,7 +911,7 @@ lands in both files in the same commit.
   timestamp plus `git log` is the answer. If this proves
   insufficient, the lowest-friction fix is for `init-project` to
   write `runtime_versions` into `research.json`; see
-  `cowork-genealogy-ui/docs/feedback-json-spec.md` §7.2.
+  `apps/electron/docs/feedback-json-spec.md` §7.2.
 
 ---
 
@@ -928,7 +931,7 @@ Behavior:
 1. Resolve `<dest-dir>` (default: `~/feedback/<slug>/`, where
    `<slug>` is the zip basename with `.zip` stripped and any
    timestamp suffix kept verbatim — uniqueness is guaranteed by
-   the viewer's submission filename per `cowork-genealogy-ui/docs/feedback-json-spec.md`
+   the viewer's submission filename per `apps/electron/docs/feedback-json-spec.md`
    discussions).
 2. Refuse to overwrite an existing non-empty `<dest-dir>` unless
    `--force` is given. Print the existing path so you can
@@ -1000,7 +1003,7 @@ Behavior:
    The script may shell out to `jq` if available; if not, a
    minimal pure-bash JSON read (anchored on the `"user_prompt":`
    key) is acceptable since `feedback.json` is small and
-   pretty-printed (per `cowork-genealogy-ui/docs/feedback-json-spec.md` §3).
+   pretty-printed (per `apps/electron/docs/feedback-json-spec.md` §3).
 
 **Determining `<repo-root>`.** The script is invoked from a known
 location inside this repo, so it can derive its own repo root via
@@ -1010,7 +1013,7 @@ caller has cd'd elsewhere, the script still finds the right repo.
 **What the script does not do.**
 
 - Does **not** download the zip from Drive. You do that in
-  a browser; per §6.3 of `cowork-genealogy-ui/docs/feedback-json-spec.md` and the
+  a browser; per §6.3 of `apps/electron/docs/feedback-json-spec.md` and the
   workflow's expected volume, automating Drive access is not
   worth the per-user auth setup.
 - Does **not** register the MCP server. That's a one-time setup

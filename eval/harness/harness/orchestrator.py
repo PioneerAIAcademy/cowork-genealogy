@@ -857,7 +857,7 @@ def _compute_outcome(
         # may harm state, and the validator is what enforces that. The
         # invariant must be backed by a tag-gated validator that actually
         # runs; a `grade_on_invariant` test with no such validator passes
-        # vacuously (see docs/plan/invariant-grading.md).
+        # vacuously (see docs/specs/unit-test-spec.md).
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in

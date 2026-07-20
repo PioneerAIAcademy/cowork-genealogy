@@ -82,7 +82,7 @@ instance); end users do not need to set this for normal operation.
 ### Hosted web workbench (monorepo overlay)
 
 This repo is also a **pnpm + turborepo monorepo** for the hosted web product
-(POC; see `docs/plan/hosted-web-workbench-POC-status.md`). The engine
+(see `DEVELOPMENT.md` and `docs/plan/realtime-rearch-status.md`). The engine
 (`packages/engine/{mcp-server,plugin}`) is deliberately **kept out of the pnpm
 workspace** via the `!packages/engine/**` negation in `pnpm-workspace.yaml`,
 and stays npm-managed, so the `.mcpb`/plugin release pipeline and CI are unchanged.
@@ -107,12 +107,21 @@ Memorable commands live in the **`Makefile`** (`make install`, `make server`,
 `make web`, `make test`, `make mcpb`, `make plugin`). The POC runs fully on
 mocks (no E2B/Anthropic/OAuth needed).
 
-- `docs/plan/` — Implementation plans for tools (how we intend to build).
+- `docs/plan/` — Implementation plans for work that is **not yet built**.
+  A plan is deleted once the work ships: the spec, the code, and any
+  `docs/TODOs.md` entries become the record. Do not keep shipped plans
+  as historical artifacts — if a plan's rationale is worth preserving,
+  fold it into the spec instead.
 - `docs/specs/` — Finalized specs (what the tool must do). Specs are the
   source of truth the `spec-review` agent checks implementations against.
-- `docs/*-testing-guide.md` — Layered manual testing playbooks
-  (Inspector → Claude Code → Cowork). Used to verify each new tool
-  end-to-end before shipping.
+  This is the durable tier; a live tool must have a live spec.
+- **Verification is automated, not a manual playbook.** New tools are
+  verified by the eval harness (`eval/`, `make test`, `eval/tests/e2e/`)
+  and by `packages/engine/mcp-server/dev/try-*.ts` smoke scripts — **not**
+  by writing a per-tool testing guide. The three surviving guides in
+  `docs/testing-guides/` cover setup paths the harness can't
+  (`oauth-tool-testing-guide.md`, `mcpb-install-testing-guide.md`,
+  `gps-mentor-agent-testing-guide.md`). Do not add new ones.
 
 ## Tools and skills
 
@@ -125,10 +134,8 @@ Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their sche
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
 source of truth for the advertised tool list); `src/index.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
-`docs/specs/<tool>-tool-spec.md` — a spec can land before the tool
-does (e.g. `merge_gedcomx`, specced in `docs/specs/merge-gedcomx-spec.md`,
-is not yet implemented). Implementation plans and design notes are in
-`docs/plan/`.
+`docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
+does. Implementation plans for unbuilt work are in `docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
 skill uses `person_search` to find a person in the FamilySearch tree
 when the user doesn't have a FamilySearch ID to provide.
@@ -151,15 +158,52 @@ orchestrator auto-delegates to the agent. Agents run in fresh context
 explicitly specced otherwise. The first such agent is `gps-mentor`
 (spec: `docs/specs/gps-mentor-agent-spec.md`).
 
-**Qualified tool names.** In the `tools:` frontmatter, MCP tools **must**
-be listed under their fully-qualified `mcp__genealogy__*` names, never the
-bare tool name. A bare name leaves the subagent toolless in the
-unit-harness SDK path (only the e2e harness tolerated bare names, via its
-ToolSearch prefix allowlist); qualifying makes an agent behave identically
-across Cowork, the e2e harness, the unit harness, and the hosted web SDK
-path. Built-in Cowork tools that are not MCP tools — `Read` — stay bare.
-All three current agents follow this (`gps-mentor`, `image-reader`,
-`record-extractor`).
+**Dual-spelled tool names.** In `tools:` — and in `disallowedTools:` —
+every MCP tool **must** be listed twice, once under each server spelling:
+
+    - mcp__genealogy__record_read
+    - mcp__remote-devices__Genealogy_Research__record_read
+
+Bare names do not work (they leave the subagent toolless in the
+unit-harness SDK path), but neither does a single qualified name. The MCP
+server's name is chosen by whoever registers it, and the plugin — which
+ships into the VM — cannot control that choice. `.mcp.json`, both
+harnesses, and the hosted web control plane register it under the key
+`genealogy`; Cowork reaches the host-installed `.mcpb` through a
+remote-device bridge that namespaces it by `manifest.json`'s
+`display_name`. No single spelling resolves everywhere.
+
+Entries are matched **exactly** — no prefix fallback, no inherit-on-miss.
+When every `tools:` entry misses, the runtime refuses to spawn the agent at
+all ("would be spawned with zero tools — refusing"). That is how #650/#698
+broke all three agents in Cowork while CI stayed green: they were qualified
+against the *harness's* arbitrary dict key rather than the product's name.
+Listing both spellings is safe because unrecognized entries are ignored so
+long as at least one resolves.
+
+`disallowedTools:` matters more, not less. A deny binds even under
+`bypassPermissions` (the hosted path, issue #695), so it is the last line
+of defence keeping `record-extractor` off the broad `research_append` — and
+a deny naming one spelling silently fails to bind under the other.
+
+Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
+that namespace also carries `device_bash`, `device_commit_files`, and
+`project_memory_write`, so it would hand a read-only agent shell access to
+the host.
+
+Built-in Cowork tools that are not MCP tools — `Read` — stay bare. Skills'
+`allowed-tools` frontmatter also stays **bare** (it is not an exact-match
+spawn filter); only agent `tools:`/`disallowedTools:` are dual-spelled.
+Enforced by `tests/packaging/agent-tool-names.test.ts`, which derives the
+bridge prefix from `display_name` so renaming the extension fails loudly in
+CI instead of silently in production.
+
+**Never hardcode a qualified name in a ToolSearch query.** Cowork defers
+the ~40 genealogy tool schemas (both harnesses set `ENABLE_TOOL_SEARCH=true`
+to avoid this; Cowork offers no such control), so ToolSearch is the real
+load path there. Search by bare tool name — `query: "+research_append"` —
+which matches whatever prefix the session exposes. The same packaging test
+fails any `select:mcp__…` in a plugin body.
 
 ## Handling user feedback submissions
 

@@ -4,8 +4,7 @@ description: >-
   Extracts ALL assertions from ONE genealogical record into research.json
   and tree.gedcomx.json — the source entry, atomic per-fact assertions
   carrying first-AND-final GPS three-layer classifications (source /
-  information / evidence; no downstream refinement pass exists), sibling
-  person stubs when the subject is a child on a household record, and
+  information / evidence; no downstream refinement pass exists), and
   negative evidence. Invoked by the record-extraction skill once per
   record with a delegation message carrying recordId + record content (or
   resultsRef) + logId + projectPath. Also handles re-invocation on a
@@ -16,15 +15,45 @@ description: >-
   citations.
 model: claude-sonnet-4-6
 tools:
+  # Every MCP tool appears under BOTH server spellings: `genealogy` (the key
+  # .mcp.json, both harnesses, and the hosted web control plane register the
+  # server under) and the `remote-devices` bridge namespace Cowork exposes the
+  # host-installed .mcpb under (`Genealogy_Research` is manifest.json's
+  # display_name, spaces → underscores). Entries are matched EXACTLY with no
+  # prefix fallback, and the server name is chosen by whoever registers it —
+  # the VM-side plugin cannot control it — so no single spelling resolves
+  # everywhere. Unrecognized entries are ignored as long as one resolves; when
+  # ALL of them miss, the runtime refuses to spawn the agent at all.
+  # Guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__project_context
   - mcp__genealogy__record_read
   - mcp__genealogy__place_search
   - mcp__genealogy__place_search_all
-  - mcp__genealogy__research_append
+  - mcp__genealogy__extraction_append
   - mcp__genealogy__research_log_append
-  - mcp__genealogy__tree_edit
   - mcp__genealogy__record_person_matches
   - mcp__genealogy__record_record_matches
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__remote-devices__Genealogy_Research__record_read
+  - mcp__remote-devices__Genealogy_Research__place_search
+  - mcp__remote-devices__Genealogy_Research__place_search_all
+  - mcp__remote-devices__Genealogy_Research__extraction_append
+  - mcp__remote-devices__Genealogy_Research__research_log_append
+  - mcp__remote-devices__Genealogy_Research__record_person_matches
+  - mcp__remote-devices__Genealogy_Research__record_record_matches
+# `extraction_append` writes only `sources` + `assertions`. The broad
+# `research_append` is denied both by omission above and explicitly here:
+# a `disallowedTools` deny is enforced even under `bypassPermissions`,
+# which the hosted path runs (issue #695).
+#
+# The deny MUST carry both spellings for the same reason the allow-list does.
+# A deny that names only `mcp__genealogy__research_append` silently fails to
+# bind wherever the server is registered under another name — which is exactly
+# the environment where it matters most, since the deny is the only thing
+# standing between this agent and the broad writer under bypassPermissions.
+disallowedTools:
+  - mcp__genealogy__research_append
+  - mcp__remote-devices__Genealogy_Research__research_append
 ---
 
 # Record Extractor
@@ -236,7 +265,7 @@ name.
 **Required:** `record_id`, `record_role`, `fact_type`, `value`,
 `information_quality`, `informant`, `informant_proximity`,
 `evidence_type`, `extracted_for_question_ids` (empty array if none), and
-`source_id` — though in the Step-5 batch the tool auto-stamps `source_id`
+`source_id` — though in the Step-4 batch the tool auto-stamps `source_id`
 from the batch's source op, so omit it there; supply it only outside that
 batch (e.g. a later standalone negative). **Optional:**
 `record_persona_id` (tool-enforced from the sidecar), `structured_value`,
@@ -250,7 +279,7 @@ invent fields — `notes` is a source field, not an assertion field.
 
 **`record_id`** — copy the caller's recordId; any ARK form is accepted
 (URL, bare `ark:/61903/1:1:<id>`, or entity id) — for sidecar-backed
-assertions `research_append` canonicalizes it to the sidecar's stored
+assertions `extraction_append` canonicalizes it to the sidecar's stored
 form. Non-FamilySearch sources use `ancestry:<collection>:<id>` or
 `capture:<descriptive>`. Same `record_id` on every assertion from one
 record.
@@ -266,7 +295,7 @@ assertion** from that record — **explicitly including the focus
 persona**: the searched person's id is the result's `primaryId`. Do NOT
 treat the primary as implied and set it only on the others — that is the
 known failure mode. Non-focus household members/witnesses take the
-matching `gedcomx.persons[]` id. `research_append` verifies every
+matching `gedcomx.persons[]` id. `extraction_append` verifies every
 supplied id (and auto-fills the searched persona as a safety net — do
 not rely on it; supply the id yourself). No sidecar (`record_read`,
 image, PDF, full-text) → leave it out on every assertion — supplying one
@@ -306,7 +335,7 @@ parent-child links are always inferred: `relationship_type:
 "spouse_inferred"`, `"child_inferred"`, `"parent_inferred"`, never the
 bare `"spouse"`/`"child"`.
 
-**`standard_place`** — leave it out: `research_append` resolves it at
+**`standard_place`** — leave it out: `extraction_append` resolves it at
 persist time (sidecar copy first, else geocoding) and echoes every
 resolution in `resolvedPlaces` — sanity-check those. Supply a value only
 when you already hold the correct standard form (e.g. from a
@@ -397,7 +426,12 @@ the "who answered" record that would justify it.
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
   duration of illness. Proximity `official_duty` — the medical
-  certification is the physician's attestation.
+  certification is the physician's attestation. **Duration of last
+  illness is part of the physician's cause-of-death certification, not a
+  separate claim by the personal informant** — fold it into the
+  `cause_of_death` assertion's `value` rather than minting a second
+  `cause_of_death` assertion, and never attribute it to the family
+  informant at `family_not_present`.
 - **Personal informant** (named on the cert, often spouse or family):
   informant for the decedent's biographical facts — name, **age**, birth
   date/place, parents' names, **occupation**, and **marital status** —
@@ -498,12 +532,30 @@ rule above), **both** are `indirect` — never one `direct` + one
 `indirect`. If you catch yourself marking any pre-1880 household
 relationship `direct`, that is the error.
 
-**Subject-identifying name stays `direct` — hard rule.** A subject's
-`name` assertion is `direct` for where/when questions about that subject
-— finding the subject in a dated, located record answers directly. A
-null/empty `place` on the name assertion is expected (location lives on
-sibling residence/event assertions) and is never grounds to classify or
-re-classify it `indirect`.
+**Subject-identifying name stays `direct` — hard rule.** The **record
+subject's** `name` assertion is `direct` for where/when questions about
+that subject — finding the subject in a dated, located record answers
+directly. A null/empty `place` on the name assertion is expected
+(location lives on sibling residence/event assertions) and is never
+grounds to classify or re-classify it `indirect`.
+
+**Scope — `name` assertions only, and only the record subject's.** Two
+misreadings to avoid, in both directions:
+
+- **Do not extend it to a third party named _by_ an informant.** A
+  decedent's parents on a death certificate are named by the personal
+  informant relaying secondhand knowledge, so their `name` assertions are
+  `indirect` — same as their birthplaces, and for the same reason (the
+  informant-knowledge test above). Marking a `father_of_deceased` or
+  `mother_of_deceased` name `direct` because "a name assertion is always
+  direct" is one error this paragraph exists to prevent.
+- **Do not extend it to the subject's _other_ facts.** Being the record
+  subject makes the subject's `name` direct; it does nothing for their
+  age, birth date, birthplace, or parents. On a death certificate those
+  are still `indirect` whenever a third-party informant is relaying them
+  — the informant-knowledge test governs, not record-subject status.
+  Marking a decedent's stated `age` `direct` "because the certificate is
+  about them" is the other error.
 
 **Evidence independence (GPS Standard 4):** when two or more assertions
 share the SAME informant — even across different sources — they form one
@@ -538,16 +590,13 @@ question is only whether the transcriber read it right — that is not an
 inference). Express the uncertainty where it belongs: drop
 `information_quality` to `secondary`/`indeterminate` (a distrusted index
 reading is not `primary`), keep `source_classification: derivative` (an
-index/transcript can mis-read), carry the `[?]` in `value`, put the
-caller's reason and the resolving step in `informant_bias_notes`, and
-**defer or `[?]`-flag any tree stub — never write a clean, confident
-father into the tree**. Name original-image (or independent-record)
-confirmation as the outstanding step in your summary. The signal to
-confirm, not to conclude — a suspect required identifier is a lead. When a required-identifier name carries
-`[?]`, the doubt must propagate to any tree stub built from it: carry
-the `[?]` in the stub's name, or defer the stub entirely — never write
-a clean, confident name into the tree from a doubted reading — and name
-original-image confirmation as the outstanding step in your summary.
+index/transcript can mis-read), carry the `[?]` in `value`, and put the
+caller's reason and the resolving step in `informant_bias_notes`. Name
+original-image (or independent-record) confirmation as the outstanding
+step in your summary — the signal is to confirm, not to conclude; a
+suspect required identifier is a lead. The `[?]` rides the assertion;
+whether a doubted reading becomes a tree stub (and how the doubt shows on
+it) is person-evidence's call at link time, not extraction's.
 
 **`log_entry_id`** — the delegation's `logId`, on the source and every
 assertion. The log is append-only — never modify entries; you normally
@@ -559,12 +608,12 @@ record (then use its returned `logId`).
 bears on (the caller may name them; otherwise use `project_context`'s
 `openQuestions`); empty array for opportunistic extraction.
 
-## Step 4 — Persist: ONE `research_append` call per record
+## Step 4 — Persist: ONE `extraction_append` call per record
 
 **Call the tool before narrating anything.** The transcript must show the
-actual `research_append` invocation, not text claiming you made it.
+actual `extraction_append` invocation, not text claiming you made it.
 
-Make **one** `research_append` call with top-level `sourceDescription:
+Make **one** `extraction_append` call with top-level `sourceDescription:
 { title, author?, url? }` (omit inapplicable fields entirely — never
 `null`, never an `id`) and `ops` = one `sources` append (leave
 `gedcomx_source_description_id` out — tool-stamped) followed by one
@@ -580,8 +629,10 @@ copy first; check the echoed `resolvedPlaces`), validates once, and
 writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
-net. If a persistence tool shows as deferred, load it via ToolSearch with
-the fully-qualified name (`mcp__genealogy__research_append`) first.
+net. If a persistence tool shows as deferred, load it via ToolSearch
+first — search by **bare** tool name (`query: "+extraction_append"`),
+never by a hardcoded fully-qualified name, since the MCP server prefix
+differs per deployment.
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same
@@ -596,81 +647,31 @@ resubmit the whole batch. **Check `opsReceived` against the op count you
 sent** — fewer means the batch arrived truncated; resend it whole. Never
 retry blindly and never drop unnamed ops.
 
+**Correcting an already-persisted assertion** — a typo you catch after a
+successful write — is a follow-up call with
+`{ section: "assertions", op: "update", entryId: "a_002", fields: { … } }`.
+The values in `fields` are the **same scalar shapes as on append**: `date`
+is a plain string (`"2021-03-14"`) or `null`, never an object — do not
+invent a `{ value, iso }` wrapper. An id created in the current batch
+cannot be updated in that same batch; make the correction in the next call.
+
 **No post-write re-validation.** The writer tools validate-on-write and
 keep a one-deep `.bak`; a successful return is proof the write is valid.
 Do not re-read the files to "sanity check" a success.
 
-**Never write the `person_evidence` section** — identity assessments
-(record persona = tree person) go in your return summary only; the
-person-evidence skill owns that section. This holds **even when the
-record poses an identity puzzle** — a household head whose surname
-differs from the subject's, a persona that might be an existing tree
-person, a same-name candidate. That ambiguity is *exactly* what tempts a
-`person_evidence` link; resist it. Surface the identity question in your
-return summary and STOP — do NOT create a `pe_` entry (or any
-person_evidence write) to "resolve" who-is-who. Resolving persona↔person
-identity is person-evidence's job; yours is the assertions, the stubs,
-and the flagged question.
+**You cannot write the `person_evidence` section.** `extraction_append`
+writes `sources` and `assertions` and rejects every other section, so
+there is no `pe_` entry you can create — not even if a delegation message
+asks you to. That is deliberate: a delegation once argued a prose version
+of this rule down and produced a fabricated identity link carrying a
+match score no tool had computed.
 
-## Step 5 — Household children (subject is a child OR a parent on a household record)
-
-Whenever a household record (census etc.) lists children to place —
-whether the subject is a `child_N` among siblings, **or** the subject is
-a parent (`head_of_household` / `wife`) and the household's children are
-the recovery target — make **ONE** `tree_edit` call. The tool owns the
-tree matching, dedup, stub creation, and edges:
-
-- **From the RECORD**, list the household's parents
-  (`head_of_household`, `wife`, `father_of_*`, `mother_of_*`) and
-  children (every `child_N`, the subject included) — name + gender for
-  each, as the record states them.
-- Call `tree_edit({ projectPath, operation: "add_household_children",
-  parents: [{given, surname, gender}, …], children: [{given, surname,
-  gender}, …] })`. The tool matches parents against the tree (tolerant
-  of Wm/William-class variants), skips children already there, creates
-  the missing stubs (gender + one preferred BirthName — never facts),
-  and adds a ParentChild edge to every matched parent, all in one
-  validated write. Never pre-check the tree or predict `I` ids.
-- **Never place household children with per-child `add_person` +
-  `add_relationship`.** That path does no cross-record dedup, so the same
-  child appearing on several censuses under varying spellings ("Selia" /
-  "Delia", "Whisfield" / "Whitager") becomes a *duplicate persona* — the
-  exact failure this step prevents. Route the whole roster through
-  `add_household_children`, which matches the in-tree parents (**including
-  the subject when the subject is a parent**) and skips children already
-  present. Use `add_person`/`add_relationship` only for the non-household
-  cases in the note below (death-cert parents, a marriage couple), never
-  for a census/household child.
-- **Relay the returned checklist** (`parentsMatched`, `created`,
-  `skipped`, `edgesAdded`) in your summary.
-  `action: "skipped_no_parent_in_tree"` means no household parent is
-  in the tree — surface that gap instead. On `skipped_no_parent_in_tree`:
-  surface the gap in your summary and STOP — never `add_person` the
-  missing parents or hand-draw their edges; parents enter the tree via
-  person-evidence/proof-conclusion, not extraction.
-- **Identity contradictions are yours to flag.** When the tool's
-  skipped/created pattern conflicts with the record — e.g. the tree
-  holds children this household record does not list, or a `skipped`
-  entry's tree identity looks like a different person — surface the
-  discrepancy as an identity question in your summary. **Never**
-  rename or rewrite existing tree persons: `update_name`,
-  `update_person`, and `remove` are identity-resolution acts that live
-  in the `tree_correct` tool, which is not in your tool set, and the
-  eval suite's validator fails any run that emits them.
-- **Alternate names:** when you judge a record persona to BE an
-  existing tree person under a different name — e.g.
-  `project_context.persons[].sourceRefs` shows that person already
-  cites this record's `S` — record the record's spelling as an
-  alternate name (`tree_edit add_name`, `preferred` omitted) and say
-  so in the summary.
-
-The subject's own person and edges are out of scope — person-evidence
-writes those. The source `S` entry was already created by Step 4; the
-household call carries no source op.
-
-Raw relationship ops (non-household cases — death-cert parents, marriage
-couples): `ParentChild` takes `{ type: "ParentChild", parent: "<I id>",
-child: "<I id>" }`; `Couple` takes `{ type: "Couple", person1, person2 }`.
+Identity assessments (record persona = tree person) go in your **return
+summary**. When the record poses an identity puzzle — a household head
+whose surname differs from the subject's, a persona that might be an
+existing tree person, a same-name candidate — describe it there and stop.
+Resolving persona↔person identity is person-evidence's job; yours is the
+assertions and the flagged question.
 
 ## Negative evidence
 
@@ -746,8 +747,6 @@ classification rationale — that lives in the persisted artifact. Return
 - source id (`src_` + `S`) and the echoed `sourceReuse` action
   (created / updated_existing / new_source_reused_s)
 - assertion count grouped by `record_role`
-- tree changes (the household checklist: stubs created with `I` ids,
-  skipped, edges added), or none
 - key findings: gaps, conflicts, negative evidence, shared-informant
   units, any tentative/`[?]` identity flag, and any **"original not
   examined"** limitation

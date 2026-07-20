@@ -413,8 +413,7 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
 	# tokens, read from the unit re-run the edit already forces — no e2e run.
 	# Diff leads with "concision" (both-active tests); tests going to 0 output
-	# are activation/abort changes, not concision, and are excluded. See
-	# docs/plan/research-latency-baseline-2026-07-05.md.
+	# are activation/abort changes, not concision, and are excluded.
 	cd eval/harness && uv run python -m skill_latency_report \
 		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
@@ -436,6 +435,16 @@ eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Ne
 .PHONY: eval-ui-test
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
+
+.PHONY: feedback-case
+feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]
+	# Wraps scripts/setup-feedback-case.sh (contract: docs/specs/feedback-case-spec.md
+	# §11). Unzips the bundle, git-inits it, writes .feedback-repo-root back to this
+	# checkout, and symlinks the plugin + repo skills in — so the result is a live
+	# research project you open in Claude Code and continue, not an archive.
+	# Windows: run scripts\setup-feedback-case.bat instead.
+	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-case ZIP=~/Downloads/feedback-2026-07-21T09-14-22Z.zip" >&2; exit 1; }
+	scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
@@ -494,4 +503,7 @@ deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server i
 	# until init_db moves to a release_command (docs/TODOS.md). Secrets +
 	# `fly apps create` are one-time (DEVELOPMENT.md § Deploy to Fly.io).
 	# NOTE: apps/web/dist is baked at build time — redeploy to ship UI changes.
-	fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
+	# GIT_SHA/BUILD_DATE are stamped into feedback bundles (apps/server/app/config.py).
+	fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false \
+	  --build-arg GIT_SHA=$$(git rev-parse --short HEAD) \
+	  --build-arg BUILD_DATE=$$(date -u +%Y-%m-%d)

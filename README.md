@@ -23,7 +23,7 @@ has to live in the server.
 > runs under the Claude Agent SDK in a per-user sandbox; the viewer is shared
 > with the Electron app via `packages/viewer-ui`). It runs fully on mocks with
 > `make install && make server-mock && make web-dev` — no E2B/Anthropic/OAuth needed.
-> See **`docs/plan/hosted-web-workbench-POC-status.md`** for the run guide,
+> See **`DEVELOPMENT.md`** and **`docs/plan/realtime-rearch-status.md`** for the run guide,
 > what-works table, and provisioning checklist, and `make help` for commands.
 
 The plugin manages two project files:

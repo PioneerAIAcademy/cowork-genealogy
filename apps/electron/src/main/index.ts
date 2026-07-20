@@ -117,6 +117,7 @@ function setupIPC(): void {
         userPrompt: string
         agentDid: string
         agentShouldHave: string
+        correctAnswer?: string
         notes?: string
       }
     ) => {
@@ -134,6 +135,7 @@ function setupIPC(): void {
           userPrompt: payload.userPrompt,
           agentDid: payload.agentDid,
           agentShouldHave: payload.agentShouldHave,
+          correctAnswer: payload.correctAnswer,
           notes: payload.notes
         },
         viewerVersion: app.getVersion() + (app.isPackaged ? '' : '-dev')

@@ -3,7 +3,12 @@ name: image-reader
 description: Reads ONE FamilySearch image scan and returns ONLY a full text transcription. Call this whenever you need the content of a page scan (a `3:1:.../$dist` image ARK or a `dgs:{DGS}_{IMAGE}/dist.jpg` Image Group Number) — e.g. "transcribe this register page", "read this image", "OCR this scan", "what does image 004022578_00190 say". It OCRs the scan cheaply and fast via a hosted model (Qwen3-VL) and returns text. Reads exactly one image per invocation; invoke it once per image. Do NOT use for indexed records (use record_read / record_search), PDFs (read them directly), or to search for which image to read (use image_search / volume_search first, then hand this agent the specific imageId).
 model: claude-sonnet-4-6
 tools:
+  # Listed under both the `genealogy` server key (harnesses, .mcp.json,
+  # hosted web) and the `remote-devices` bridge namespace Cowork exposes the
+  # installed .mcpb under. See record-extractor.md for the full rationale;
+  # guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__image_transcribe
+  - mcp__remote-devices__Genealogy_Research__image_transcribe
 ---
 
 # Image Reader

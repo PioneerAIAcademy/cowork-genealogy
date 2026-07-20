@@ -19,11 +19,13 @@ The full match + merge chain against live FamilySearch, end to end:
    `same_person`, runs the cross-person consistency check, and **always-pairs**
    every persona — matching the head/spouse/known-children to the tree and
    **stubbing the one child who is in the census but missing from the tree**.
-3. `proof-conclusion` runs the **coherence gate** (`merge_warnings`) on the
-   proposed merges, sees it clean, confirms at the plan level, and folds the
-   census in with `merge_record_into_tree`.
-4. Post-merge: the missing child is added **once**, and the head/spouse/known
-   children gain the census residence facts.
+3. `person-evidence` runs the **coherence gate** (`merge_warnings`) on the
+   proposed merges, sees it clean, confirms at the plan level, and **materializes
+   each linked persona** with `materialize_facts` (create-or-enrich mints the
+   missing child *with* her facts; census facts land on the head/spouse/known
+   children, each carrying a provenance ref). `proof-conclusion` then concludes.
+4. Post-materialization: the missing child is added **once**, and the
+   head/spouse/known children gain the census residence facts.
 
 This is the **happy** path (gate clean). The gate's *blocking* behavior is
 already covered deterministically by the unit + integration tests
