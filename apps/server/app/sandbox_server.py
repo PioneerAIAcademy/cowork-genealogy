@@ -41,6 +41,12 @@ _HISTORY_MAX = 1000  # transcript events kept for replay-on-reconnect
 # Seconds between keepalive frames (see _heartbeat_loop). Env-overridable so the
 # test can assert the behaviour without a 15s sleep.
 _HEARTBEAT_INTERVAL = float(os.environ.get("WS_HEARTBEAT_INTERVAL", "15"))
+# A token-locked client reconnects on a tight loop (and re-arms on every tab
+# focus), so a naive "one line per rejection" fills the 20 KB /logs window with
+# identical lines and evicts the agent activity timeline — which is exactly what
+# happened in the 2026-07-20 hang and left the Logs panel useless. Collapse
+# rejections to at most one line per this interval, carrying a suppressed count.
+_REJECT_LOG_INTERVAL = 10.0
 
 
 def verify_token(token: str | None) -> bool:
@@ -83,11 +89,27 @@ class Hub:
         # connection so a page reload rebuilds the chat (the agent's own memory
         # persists in the sandbox; this restores the *UI* history). Capped.
         self._history: list[dict] = []
+        # Rejection-log throttle (see _REJECT_LOG_INTERVAL / _note_rejection).
+        self._rej_count = 0
+        self._rej_last = 0.0
 
     def _record(self, msg: dict) -> None:
         self._history.append(msg)
         if len(self._history) > _HISTORY_MAX:
             del self._history[: len(self._history) - _HISTORY_MAX]
+
+    def _note_rejection(self, now: float) -> int | None:
+        """Throttle the rejection log. Returns the number of rejections to report
+        on this line (>=1) when enough time has passed to log again, else None
+        (this one is suppressed and folded into the next reported count). The
+        first rejection always logs — ``_rej_last`` starts at 0."""
+        self._rej_count += 1
+        if now - self._rej_last >= _REJECT_LOG_INTERVAL:
+            n = self._rej_count
+            self._rej_count = 0
+            self._rej_last = now
+            return n
+        return None
 
     # ── outbound fan-out ─────────────────────────────────────────
     async def broadcast(self, msg: dict) -> None:
@@ -293,7 +315,10 @@ class Hub:
         if "token=" in path:
             token = path.split("token=", 1)[1].split("&", 1)[0]
         if not verify_token(token):
-            print("[ws] rejected connection: bad/expired token", flush=True)
+            n = self._note_rejection(time.time())
+            if n is not None:
+                extra = f" (x{n} since the last line)" if n > 1 else ""
+                print(f"[ws] rejected connection: bad/expired token{extra}", flush=True)
             await ws.close(4401, "unauthorized")
             return
         self._clients.add(ws)
