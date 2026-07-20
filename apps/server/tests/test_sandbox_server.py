@@ -187,6 +187,26 @@ def test_token_ttl_outlives_the_sandbox_timeout():
     assert DEFAULT_TTL_SECONDS > _RUNNING_TIMEOUT_S
 
 
+def test_rejection_log_is_throttled_to_protect_the_timeline():
+    """A token-locked client reconnects in a tight loop; without throttling its
+    rejections fill the 20 KB /logs window and evict the agent activity timeline
+    (the 2026-07-20 failure). At most one line per interval, with a count of the
+    ones it stands in for.
+    """
+    import app.sandbox_server as ss
+
+    hub = ss.Hub()
+    t = 1000.0
+    # First rejection always logs, reporting itself.
+    assert hub._note_rejection(t) == 1
+    # A flood inside the window is suppressed...
+    for _ in range(50):
+        t += 0.1
+        assert hub._note_rejection(t) is None
+    # ...then the next rejection past the window reports every one it swallowed.
+    assert hub._note_rejection(t + ss._REJECT_LOG_INTERVAL) == 51
+
+
 @pytest.mark.parametrize("ws_server", [{"WS_HEARTBEAT_INTERVAL": "0.5"}], indirect=True)
 def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
     """A silent turn must still put frames on the wire — the edge proxy in front

@@ -61,14 +61,6 @@ recorded so it can be re-examined rather than re-derived.
   derived secret has changed, or a key-id in the token so the sandbox can verify
   against the key that minted it. Not urgent: rotation is rare and the alpha hang
   was TTL expiry, not rotation.
-- [ ] **A rejected handshake floods `/tmp/ws.log` and evicts the evidence** —
-  `sandbox_server.handle` prints one line per rejection, and
-  `GET /sessions/{id}/logs` returns only the last 20 KB. During the 2026-07-20
-  hang the reconnect loop pushed the entire agent activity timeline out of that
-  window, so the Logs panel showed hundreds of identical rejection lines and
-  nothing about what the agent was actually doing — the diagnostic destroyed its
-  own evidence exactly when it was needed. Rate-limit the line (one per N seconds,
-  or a count-and-collapse) so a stuck client can't erase the timeline.
 - [ ] **`working… <N>s` does not distinguish working from disconnected** —
   the timer is entirely client-side (`ChatPane.tsx`): `send()` starts it and only
   `turn_done` stops it, so a socket that is closed, retrying, or being rejected
