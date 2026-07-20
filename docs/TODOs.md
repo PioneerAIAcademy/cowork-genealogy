@@ -61,13 +61,13 @@ recorded so it can be re-examined rather than re-derived.
   derived secret has changed, or a key-id in the token so the sandbox can verify
   against the key that minted it. Not urgent: rotation is rare and the alpha hang
   was TTL expiry, not rotation.
-- [ ] **`working… <N>s` does not distinguish working from disconnected** —
-  the timer is entirely client-side (`ChatPane.tsx`): `send()` starts it and only
-  `turn_done` stops it, so a socket that is closed, retrying, or being rejected
-  looks identical to an agent that is busy. In the 2026-07-20 hang it read
-  "working… 612s" while no socket was open at all, which is what sent the
-  investigation after the agent instead of the transport. `SessionConnection`
-  already knows its state; surface it so the indicator can say "Reconnecting…".
+- [ ] **`tool_result` is correlated to its chip by tool NAME, not id** —
+  `real_agent.map_message` resolves `tool_use_id → name` correctly, then
+  `ChatPane` re-matches with `findIndex((t) => t.tool === ev.tool && !t.done)`.
+  Parallel calls to the same tool (several `mcp__genealogy__*` searches at once,
+  or two subagents both running `Bash`) mark the wrong chip done. The id is
+  available at the boundary and is discarded; carry it into the event and match
+  on it. Cosmetic today, but it misreports which call is still running.
 - [ ] **Operator misconfiguration reaches the user as a raw SDK error string** —
   when the Agent SDK's first call fails auth, `real_agent.handle_turn` wraps the
   exception verbatim (`_event("error", text=f"Agent error: {exc}")`) and

@@ -325,6 +325,18 @@ class RealAgent:
             except OSError:
                 pass
 
+    async def interrupt(self) -> bool:
+        """Abort the in-flight turn via the SDK's control channel. The current
+        receive_response() stream then ends on its own, so handle_turn completes
+        and the runner emits turn_done — no task cancellation needed (returning
+        True tells the runner not to cancel). The persistent client stays
+        connected and is reused for the next turn. No live client → nothing to
+        stop, and returning False lets the runner cancel as a fallback."""
+        if self._client is None:
+            return False
+        await self._client.interrupt()
+        return True
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
             from claude_agent_sdk import ResultMessage

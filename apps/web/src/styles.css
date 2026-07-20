@@ -627,6 +627,23 @@ button {
 .chatSend:disabled {
   opacity: 0.5;
 }
+/* Replaces Send while a turn is running (interrupt). Muted rather than accented
+   so it reads as a secondary "abort", not the primary action. */
+.chatStop {
+  align-self: stretch;
+  background: var(--bg-card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.chatStop:hover {
+  border-color: var(--accent-soft);
+  color: var(--accent);
+}
 /* Attach a document/image for the agent to read (uploads/ in the project). */
 .chatAttach {
   align-self: stretch;
