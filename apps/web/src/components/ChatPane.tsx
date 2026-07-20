@@ -10,6 +10,7 @@ interface ToolChip {
   tool: string
   summary: string
   done: boolean
+  agent?: string // set when a subagent, not the main agent, made the call
 }
 
 interface ChatMessage {
@@ -17,7 +18,19 @@ interface ChatMessage {
   text: string
   tools: ToolChip[]
   thinking?: string
+  // Partial content streaming in ahead of its canonical block. Held separately
+  // so committing the block can't double-render what the deltas already showed.
+  streamText?: string
+  streamThinking?: string
   error?: boolean
+}
+
+// What a running subagent is doing right now, from the SDK's task lifecycle
+// messages. Live-only — never part of the transcript.
+interface AgentActivity {
+  agent: string
+  lastTool: string
+  toolUses: number | null
 }
 
 export interface UsageDelta {
@@ -49,12 +62,29 @@ export default function ChatPane({
   const startedRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
   const turnStartRef = useRef(0)
+  const [activity, setActivity] = useState<AgentActivity | null>(null)
 
   // Append agent_event content onto the last assistant message (the streaming one).
   const applyEvent = (ev: Record<string, unknown>): void => {
     const kind = ev.kind as string
     if (kind === 'turn_done') {
       setBusy(false)
+      setActivity(null)
+      return
+    }
+    // Subagent lifecycle. Not chat content — this drives the status line, so a
+    // long delegation reads as "record-extractor · person_read · 12 tools"
+    // instead of an unattributed spinner.
+    if (kind === 'task_started' || kind === 'task_progress') {
+      setActivity({
+        agent: String(ev.agent ?? 'subagent'),
+        lastTool: String(ev.last_tool ?? ''),
+        toolUses: typeof ev.tool_uses === 'number' ? ev.tool_uses : null
+      })
+      return
+    }
+    if (kind === 'task_done') {
+      setActivity(null)
       return
     }
     if (kind === 'usage') {
@@ -79,18 +109,37 @@ export default function ChatPane({
         next[next.length - 1] = last
       }
       if (kind === 'text') {
+        // The canonical block covers everything its deltas already previewed —
+        // commit it and drop the preview rather than appending both.
         last.text += (ev.text as string) ?? ''
+        last.streamText = ''
+      } else if (kind === 'text_delta') {
+        last.streamText = (last.streamText ?? '') + ((ev.text as string) ?? '')
       } else if (kind === 'thinking') {
         last.thinking = (last.thinking ?? '') + ((ev.text as string) ?? '')
+        last.streamThinking = ''
+      } else if (kind === 'thinking_delta') {
+        last.streamThinking = (last.streamThinking ?? '') + ((ev.text as string) ?? '')
       } else if (kind === 'error') {
         last.text += (ev.text as string) ?? 'Error'
         last.error = true
       } else if (kind === 'tool_use') {
-        last.tools.push({ tool: ev.tool as string, summary: ev.summary as string, done: false })
+        last.tools.push({
+          tool: ev.tool as string,
+          summary: ev.summary as string,
+          done: false,
+          agent: typeof ev.agent === 'string' ? ev.agent : undefined
+        })
       } else if (kind === 'tool_result') {
         const idx = last.tools.findIndex((t) => t.tool === ev.tool && !t.done)
         if (idx >= 0) last.tools[idx] = { ...last.tools[idx], done: true, summary: ev.summary as string }
-        else last.tools.push({ tool: ev.tool as string, summary: ev.summary as string, done: true })
+        else
+          last.tools.push({
+            tool: ev.tool as string,
+            summary: ev.summary as string,
+            done: true,
+            agent: typeof ev.agent === 'string' ? ev.agent : undefined
+          })
       }
       return next
     })
@@ -183,16 +232,18 @@ export default function ChatPane({
               <div className="toolChips">
                 {m.tools.map((t, j) => (
                   <span key={j} className={`toolChip ${t.done ? 'toolDone' : 'toolRunning'}`}>
-                    {t.done ? '✓' : '⟳'} {t.tool}: {t.summary}
+                    {t.done ? '✓' : '⟳'} {t.agent ? `${t.agent} · ` : ''}
+                    {t.tool}: {t.summary}
                   </span>
                 ))}
               </div>
             )}
-            {m.thinking && (
+            {(m.thinking || m.streamThinking) && (
               <details className="thinkingBlock" style={{ margin: '4px 0' }}>
                 <summary className="muted small" style={{ cursor: 'pointer' }}>💭 Thinking</summary>
                 <div className="muted small" style={{ whiteSpace: 'pre-wrap', marginTop: 4 }}>
                   {m.thinking}
+                  {m.streamThinking}
                 </div>
               </details>
             )}
@@ -201,9 +252,27 @@ export default function ChatPane({
                 <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
               </div>
             )}
+            {/* In-flight text, rendered as plain preformatted text: markdown is
+                routinely mid-token at delta granularity, and re-parsing a partial
+                document every frame makes list/code blocks flicker as they close. */}
+            {m.streamText && (
+              <div className={`msgText ${m.error ? 'msgError' : ''}`} style={{ whiteSpace: 'pre-wrap' }}>
+                {m.streamText}
+              </div>
+            )}
           </div>
         ))}
-        {busy && <div className="typing">●●● working… {elapsed}s</div>}
+        {busy && (
+          <div className="typing">
+            ●●●{' '}
+            {activity
+              ? `${activity.agent}${activity.lastTool ? ` · ${activity.lastTool}` : ''}${
+                  activity.toolUses ? ` · ${activity.toolUses} tools` : ''
+                }`
+              : 'working…'}{' '}
+            {elapsed}s
+          </div>
+        )}
       </div>
 
       {uploadError && <div className="chatUploadError">{uploadError}</div>}

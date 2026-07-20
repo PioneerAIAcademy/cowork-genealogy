@@ -69,6 +69,22 @@ recorded so it can be re-examined rather than re-derived.
   nothing about what the agent was actually doing — the diagnostic destroyed its
   own evidence exactly when it was needed. Rate-limit the line (one per N seconds,
   or a count-and-collapse) so a stuck client can't erase the timeline.
+- [ ] **`interrupt` is a no-op, so a long turn cannot be cancelled** — the client
+  can send `{"type":"interrupt"}` and `sandbox_server` relays it, but
+  `runner.py` drops everything that is not a `user_msg`
+  (`# interrupt/other types: handled in a later pass`). No web component sends
+  one either, and Send is disabled while busy, so the only escape from a turn the
+  user no longer wants is a page reload. This got sharper once subagent progress
+  became visible: seeing "record-extractor · 40 tools · 11m" is exactly when
+  someone wants a stop button. Wants both halves — a runner that forwards the
+  SDK's interrupt, and a control in `ChatPane`.
+- [ ] **`tool_result` is correlated to its chip by tool NAME, not id** —
+  `real_agent.map_message` resolves `tool_use_id → name` correctly, then
+  `ChatPane` re-matches with `findIndex((t) => t.tool === ev.tool && !t.done)`.
+  Parallel calls to the same tool (several `mcp__genealogy__*` searches at once,
+  or two subagents both running `Bash`) mark the wrong chip done. The id is
+  available at the boundary and is discarded; carry it into the event and match
+  on it. Cosmetic today, but it misreports which call is still running.
 - [ ] **`working… <N>s` does not distinguish working from disconnected** —
   the timer is entirely client-side (`ChatPane.tsx`): `send()` starts it and only
   `turn_done` stops it, so a socket that is closed, retrying, or being rejected
