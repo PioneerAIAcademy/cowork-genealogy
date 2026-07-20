@@ -144,10 +144,10 @@ surprises you. (It counts from when the page loaded, so a refresh restarts it.)
 
 ## Sending feedback
 
-Click **Submit feedback** in the viewer. It bundles the project state and your
-notes and sends them to us privately.
+Click **Send Feedback** in the viewer header. It bundles the project state and
+your notes and sends them to us privately.
 
-The form asks four things, and the middle two are what make a report usable:
+Four of the boxes matter, and the middle two are what make a report usable:
 
 1. **What you asked the agent to do.**
 2. **What the agent did.** What actually happened.
@@ -159,15 +159,25 @@ The form asks four things, and the middle two are what make a report usable:
    to ask you. Leave it blank when the problem was how it worked, not what it
    concluded.
 
+There's also your email, and a free-text **Notes** box for anything that
+doesn't fit the four.
+
 **Send feedback while it's fresh**, in the session where it happened — the
 bundle captures that project's state, which is how we reproduce it.
 
-> **What gets sent:** your project files, and (if you leave the box ticked) the
-> session transcript — your prompts, the agent's replies and its internal
-> reasoning, and every tool call with its results. The reasoning is the single
-> most useful part for diagnosing *why* it went wrong. It goes to a private
-> Drive folder only the Pioneer Academy team can read. Untick the box if a
-> session contains anything you'd rather not share.
+> **What gets sent**, and the two checkboxes at the bottom of the form:
+>
+> - **Your project files** — always.
+> - **"Include Claude Code session log"** — **ticked by default.** Your prompts,
+>   the agent's replies and its internal reasoning, and every tool call with its
+>   results. The reasoning is the single most useful part for diagnosing *why* it
+>   went wrong. Untick it if a session contains anything you'd rather not share.
+> - **"Include media files"** — **unticked by default.** Any documents or images
+>   you uploaded stay behind unless you tick it. If your report is *about* a
+>   document you supplied, tick this or we won't be able to see what you saw.
+>
+> Everything goes to a private Drive folder only the Pioneer Academy team can
+> read.
 
 ### What makes a report we can act on
 
@@ -215,6 +225,6 @@ where you left off** to watch the same thing happen. Then we fix the cause and
 write a regression test so it can't come back silently. That test is the durable
 result of your report — which is why "what it should have done" matters so much.
 
-The developer-facing version of that loop is
-[`e2e-testing-guide.md`](e2e-testing-guide.md); a worked example of one report
-becoming a fix is [`alpha-feedback-example.md`](alpha-feedback-example.md).
+If you're curious what happens on our side, one report is followed end to end
+in [`alpha-feedback-example.md`](alpha-feedback-example.md) — written for our
+developers, but readable, and the case it follows is a genealogical one.

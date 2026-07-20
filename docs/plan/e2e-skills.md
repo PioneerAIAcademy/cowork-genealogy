@@ -4,7 +4,7 @@
 > and `interpret-e2e-result`, and treating them as a distinct class from the
 > Cowork research skills. Companion docs: the usage playbook
 > [`docs/e2e-testing-guide.md`](../e2e-testing-guide.md) and the test-format
-> spec [`docs/specs/e2e-test-spec.md`](specs/e2e-test-spec.md).
+> spec [`docs/specs/e2e-test-spec.md`](../specs/e2e-test-spec.md).
 
 ## What these skills are
 

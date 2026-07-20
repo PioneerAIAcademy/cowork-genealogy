@@ -3,9 +3,8 @@
 **Who this is for:** a genealogist + developer pair going through the
 skill-improvement loop for the first time. It walks **one real-feeling example**
 end to end and, at every step, tells you **which of three places you're working
-in**. For the terse reference version of these steps, see
-[`e2e-testing-guide.md` → "From a noticed issue to a fix"](e2e-testing-guide.md#from-a-noticed-issue-to-a-fix-the-skill-improvement-loop);
-for the whole authoring→release lifecycle, see
+in**. For the terse reference version of these steps — and the whole
+authoring → test → improve → release lifecycle they sit inside — see
 [`skill-lifecycle.md`](skill-lifecycle.md).
 
 > **The roles, names, and slug here are just for the story.** "Ana" (genealogist)
@@ -25,7 +24,7 @@ the whole trick:
 | Icon | Place | What it is | You use it to… |
 |---|---|---|---|
 | 🖥️ | **Cowork** | The genealogy app where research actually happens (the plugin + skills run here). | *Notice* the problem, and later *confirm* it's fixed. |
-| 🤖 | **Claude Code** | A `claude` session opened at your **worktree** root (the Code tab of the desktop app, or `claude` in a terminal) — see "Where to work" below. You type requests and Claude runs the developer skills/agents. | *Classify*, *capture the test*, *improve the skill*. |
+| 🤖 | **Claude Code** | A `claude` session opened at your **repo root** (the Code tab of the desktop app, or `claude` in a terminal) — see "Where to work" below. You type requests and Claude runs the developer skills/agents. | *Classify*, *capture the test*, *improve the skill*. |
 | ⌨️ | **Terminal** | A plain shell where you type `make …` commands (Windows: double-click the matching `.bat` in `eval\`). | *Seed* a project, *run tests*, *gate*, *open the PR*. One `make` command (`make eval-ui`) also opens a **browser** tab — the grading UI. |
 
 Rule of thumb: **Claude Code = you ask Claude to do something. Terminal = you run a
@@ -36,30 +35,25 @@ which renders the research log, assertions, conflicts and sources of whichever
 project folder you point it at. It's how you *see* what the agent wrote, so open
 it whenever you open a project in Cowork.
 
-### Where to work: make a worktree first
+### Where to work: make a branch first
 
-**Everything below happens on a branch, in a worktree — never in the main
-checkout.** Do this once, before Step 1, from your normal repo:
+**Everything below happens on a branch — never straight on `main`.** Do this once,
+before Step 1:
 
 ```
-make install-hooks                       # once per clone, not once per branch
-git worktree add .claude/worktrees/citation-locator -b citation-locator origin/main
+git checkout -b citation-locator
 ```
 
-The `install-hooks` step matters: its `post-checkout` hook auto-links the shared
-gitignored files (`node_modules`, `eval/.env`, `apps/server/.env`) into every new
-worktree, so the new one can build and run tests immediately. Without it you'll
-get a worktree that can't run anything.
+**Windows (GitHub Desktop):** Current Branch dropdown → **New branch…** → name it
+`citation-locator`, base it on `main` → **Create branch**.
 
-Then, for the rest of this walkthrough:
+Then, for the rest of this walkthrough, everything happens in that one checkout:
 
-- **Terminal `make …` commands** run from the **worktree root**
-  (`.claude/worktrees/citation-locator/`), not the main checkout — that's where
-  your skill edit lives, and `make eval-skill` / `make gate-skill` test the
-  working tree.
-- **Claude Code** opens at the **same worktree root**. `mine-unit-test` writes
-  into `eval/` relative to wherever you started it, so starting it in the main
-  checkout would drop your new test on the wrong branch.
+- **Terminal `make …` commands** (Windows: the `.bat` files in `eval\`) run from
+  the **repo root** — that's where your skill edit lives, and `make eval-skill` /
+  `make gate-skill` test the working tree.
+- **Claude Code** opens at the **same repo root**. `mine-unit-test` writes into
+  `eval/` relative to wherever you started it.
 - The one exception is the **project folder** you research in (Step 1) — that's a
   seeded scratch project under `eval/e2e-project/<slug>/`, not repo source.
 
@@ -78,7 +72,8 @@ permanent fix.
 > **Before you start (one-time setup).** Two things gate this loop; skip them and the
 > steps below silently do nothing.
 > - **Cowork steps (1 and 7)** need the genealogy tools installed *into Cowork*: log in
->   to FamilySearch (`make e2e-login`, once a day), then `make mcpb` and `make plugin`.
+>   to FamilySearch (`make e2e-login` / `eval\Login.bat`, once a day), then
+>   `make mcpb` and `make plugin` (Windows: `eval\BuildMcpb.bat`, `eval\BuildPlugin.bat`).
 >   Plain `make engine-build` wires only the Claude Code side — in Cowork the project
 >   would open with no tools and there'd be nothing to notice or confirm.
 > - **Grading steps (4 and 6)** call the LLM judge, which needs an Anthropic API key in
@@ -126,7 +121,7 @@ produces all day. Keep it.
 ### Step 2 — Is it even the skill's fault? 🤖 Claude Code
 
 Not every problem is the skill's. Ben opens a **Claude Code** session at the
-**worktree root** he made above and they check the project's `results/` files —
+**repo root** on the branch he made above and they check the project's `results/` files —
 the actual data the tools returned:
 
 - If the census tool **did** return the page/line and the skill dropped it → it's a
@@ -183,7 +178,7 @@ make eval-ui                                 # Windows: eval\Start.bat
 
 The batch files do the same thing, prompting for the skill name instead of taking
 `SKILL=`; both rebuild the MCP server first. Run them from `eval\` in your
-worktree, not the main checkout.
+checkout, on your branch.
 
 He finds the new test, sees which quality dimension it failed, and pastes **Ana's
 Did/Should/Gap note** into that dimension's comment. This matters: the improver in
@@ -194,12 +189,29 @@ comment like this. Ana already wrote it in Step 1 — now it's on the record.
 
 Back in **Claude Code**, first a quick health check of the grading itself:
 
-> *"audit the rubric for citation"* — runs the **rubric-critic** agent (read-only).
-> Do this once so you're not chasing a broken grade.
+```
+/audit-rubric citation
+```
+
+That runs the **rubric-critic** agent (read-only). Do it once per skill so
+you're not chasing a broken grade — an improver tuned toward a weak rubric
+hill-climbs noise.
 
 Then the improvement itself:
 
-> *"improve citation from its eval results"* — runs the **skill-improver** agent.
+```
+/improve-skill citation
+```
+
+That runs the **skill-improver** agent.
+
+> **Type the commands; don't ask in prose.** Both agents are read-only by
+> construction — they propose, you apply. Phrasing it as a request
+> (*"improve citation from its eval results"*) relies on description
+> matching, and a miss doesn't fail loudly: you get ordinary Claude, which
+> *does* have Edit and Write, doing the job instead. The 3-edit budget and
+> the you-apply-them gate quietly vanish. The commands also check you're at
+> the repo root and warn when hold-outs or annotations are missing.
 
 It reads the test + Ana's comment and proposes **at most 3** small, plain-English
 edits to the skill's instructions — e.g. *"every citation must include a locator
@@ -303,20 +315,40 @@ skill the PR touches, not just the first. What you should not do is bundle two
 
 | Step | What you do | Where |
 |---|---|---|
-| 0 Branch | `make install-hooks`, then `git worktree add .claude/worktrees/<branch> -b <branch> origin/main`; open Claude Code + all terminals **there** | ⌨️ Terminal |
+| 0 Branch | `git checkout -b <branch>` (Windows: GitHub Desktop → New branch…) | ⌨️ Terminal |
 | 1 Notice | research; spot the problem; write Did/Should/Gap | 🖥️ Cowork + Viewer |
 | 2 Classify | skill's fault, or a tool/grading fault? | 🤖 Claude Code |
 | 3 Capture | make a unit test that shows the bug | 🤖 Claude Code |
 | 4 Run + mark | run the test; paste the note on the failing dimension | ⌨️ Terminal → 🌐 browser |
-| 5 Audit + improve | rubric-critic (once), then skill-improver; you apply the edits | 🤖 Claude Code |
+| 5 Audit + improve | `/audit-rubric citation` (once), then `/improve-skill citation`; you apply the edits | 🤖 Claude Code |
 | 6 Gate | check the fix helps and breaks nothing | ⌨️ Terminal |
 | 7 Verify | rebuild + re-upload the plugin; redo the research; see it fixed | 🖥️ Cowork + Viewer |
 | 8 PR | submit for review | ⌨️ Terminal / GitHub |
 
+### Windows equivalents
+
+Every `make` target above has a batch file. Double-click it, or run it from
+`eval\`; each prompts for what it needs instead of taking `SKILL=`-style
+arguments, and rebuilds the MCP server first where that matters.
+
+| Instead of | Double-click |
+|---|---|
+| `make e2e-project TEST=<slug>` | `eval\SeedProject.bat` |
+| `make eval-skill SKILL=<skill>` | `eval\RunTests.bat` |
+| `make eval-ui` | `eval\Start.bat` |
+| `make gate-skill SKILL=… TEST=…` | `eval\GateSkill.bat` |
+| `make electron` | `eval\Viewer.bat` |
+| `make e2e-login` | `eval\Login.bat` |
+| `make plugin` / `make mcpb` | `eval\BuildPlugin.bat` / `eval\BuildMcpb.bat` |
+| `git checkout -b <branch>` | GitHub Desktop → Current Branch → **New branch…** |
+
+The `/`-commands (`/audit-rubric`, `/improve-skill`) are typed into Claude Code
+and are the same on every platform.
+
 ## Go deeper
 
 - The reference version of these steps (exact commands, preconditions, what's still
-  being built): [`e2e-testing-guide.md` → "From a noticed issue to a fix"](e2e-testing-guide.md#from-a-noticed-issue-to-a-fix-the-skill-improvement-loop).
+  being built): [`skill-lifecycle.md`](skill-lifecycle.md).
 - The design behind the gate + edit budget:
   [`docs/plan/gated-skill-improvement-slice.md`](plan/gated-skill-improvement-slice.md).
 - The whole authoring → test → improve → release lifecycle:

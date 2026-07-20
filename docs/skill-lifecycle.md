@@ -198,6 +198,36 @@ statistical bake-off:
   — a binary a single run answers — not "did the weighted mean rise by
   X."
 
+**`make gate-skill` answers that binary for you.** After applying the
+improver's edits:
+
+```
+make gate-skill SKILL=<name> TEST=<test-id>    # Windows: eval\GateSkill.bat
+```
+
+It runs the named test plus the skill's hold-out set against your edited
+skill and compares to the **annotated** scores from your pre-edit run — so
+you're measuring against human ground truth, not judge-versus-judge. It
+prints one of:
+
+- **LOOKS GOOD** — the failing dimension passes and nothing regressed.
+- **NEEDS YOUR EYES** — the fix didn't land, or a hold-out dropped. Adjust
+  and re-run.
+- **INCONCLUSIVE** — the bug never reproduced on the *old* skill, so nothing
+  was proven either way. Usually a too-weak test; grading isn't deterministic,
+  so re-run once before re-mining.
+
+It's advice, not a verdict — you still decide. Two things to know: it needs a
+pre-edit annotated run to compare against, and **it writes no run logs**,
+which is why it's cheap enough to iterate on and why the release run in step 7
+still has to happen.
+
+> **Why not just re-run `make eval-skill` and diff the scores?** A re-run
+> costs a full suite twice and grades judge against judge. And a score diff
+> can't distinguish "the fix didn't work" from "the bug never reproduced" —
+> it shows two passing runs and you conclude, wrongly, that you're done.
+> `INCONCLUSIVE` is the value the gate adds.
+
 ### 7. Release
 
 **Senior blesses, developer ships.** Each full run you commit is a
@@ -304,18 +334,26 @@ Every step has tooling in place:
 - **Author** — the authoring guide + a blocking frontmatter lint in CI.
 - **Test** — `make eval-skill SKILL=<name>` (or `cd eval/harness && uv run python run_tests.py --skill <name>`).
 - **Review** — the CRUD UI (`make eval-ui`, or `cd eval/app && npm run dev`) + the holdout toggle.
-- **Audit** — the `rubric-critic` agent.
-- **Improve** — the `skill-improver` agent (report-only: it proposes
-  evidence-cited SKILL.md edits and routes non-body causes elsewhere; the
-  pair applies, re-runs, and commits — it never edits files itself).
+- **Audit** — `/audit-rubric <name>` (the `rubric-critic` agent).
+- **Improve** — `/improve-skill <name>` (the `skill-improver` agent —
+  report-only: it proposes evidence-cited SKILL.md edits and routes non-body
+  causes elsewhere; the pair applies, re-runs, and commits — it never edits
+  files itself).
+- **Gate** — `make gate-skill SKILL=<name> TEST=<id>` (Windows:
+  `eval\GateSkill.bat`).
 - **Optimize** — `make optimize-skill SKILL=<name>` (on-demand; manual commands in step 8).
 
-**To run the skill-improver on skill `X`:** it needs an *active*,
-*annotated* run-log. So run the harness on current code (`make eval-skill
-SKILL=X`, or `cd eval/harness && uv run python run_tests.py --skill X`),
-annotate the candidate in the CRUD UI, then ask Claude Code to "improve `X`
-from its eval results". Against a stale or unannotated run-log it proposes
+**To run the improver on skill `X`:** it needs an *active*, *annotated*
+run-log. So run the harness on current code (`make eval-skill SKILL=X`;
+Windows `eval\RunTests.bat`), annotate the candidate in the CRUD UI, then
+type `/improve-skill X`. Against a stale or unannotated run-log it proposes
 nothing and asks you to re-run — that's correct, not a failure.
+
+**Type the commands rather than asking in prose.** Both agents are read-only
+by construction — they propose, you apply. Phrasing it as a request relies on
+description matching, and a miss doesn't fail loudly: you get ordinary Claude,
+which *does* have Edit and Write, doing the job instead, and the 3-edit budget
+and the you-apply-them gate quietly disappear.
 
 ## Doc index
 
@@ -325,8 +363,8 @@ Everyday docs:
 |---|---|
 | Write a SKILL.md well | [`docs/skill-authoring-guide.md`](skill-authoring-guide.md) |
 | Run the harness / read a run-log | [`eval/README.md`](../eval/README.md) |
-| Audit a skill's rubric quality | the `rubric-critic` agent — `.claude/agents/rubric-critic.md` |
-| Improve a SKILL.md body from eval results | the `skill-improver` agent — `.claude/agents/skill-improver.md` |
+| Audit a skill's rubric quality | `/audit-rubric <name>` — the `rubric-critic` agent |
+| Improve a SKILL.md body from eval results | `/improve-skill <name>` — the `skill-improver` agent |
 | Do your first PR (genealogist / senior) | [`eval/JUNIOR-WALKTHROUGH.md`](../eval/JUNIOR-WALKTHROUGH.md), [`eval/SENIOR-WALKTHROUGH.md`](../eval/SENIOR-WALKTHROUGH.md) |
 
 **Go deeper only if you're changing the machinery itself** — you don't need
@@ -338,4 +376,4 @@ these to follow the flow above:
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
 | Per-PR review + run-log release/active/candidate mechanics | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
-| Triaging an actual user feedback zip (per-platform setup + click-paths) | [`docs/feedback-workflow.md`](feedback-workflow.md) — superseded as the canonical flow by this doc |
+| Triaging an actual user feedback zip (per-platform setup + click-paths) | [`docs/alpha-feedback-guide.md`](alpha-feedback-guide.md), walked through in [`docs/alpha-feedback-example.md`](alpha-feedback-example.md) |
