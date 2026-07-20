@@ -617,3 +617,18 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   fixed; the missing guard is not. Options: give init-project a writer tool for
   the seed write, or have the validator treat an absent `before_state` as a diff
   against empty rather than a skip.
+
+- **`max_cost_usd` does not cap anything in the e2e harness** — `cost_cap` is
+  applied inside the `ResultMessage` branch of `orchestrator.py`, and that
+  message only arrives once the run has already finished, so the "cap" is a
+  post-hoc label on a completed run. All five `cost_cap` runs in the corpus
+  ended with the SDK's own `end_turn` and `is_error: false` — spend ran to
+  $15.86–$20.84 against a $15 cap with nothing interrupted. Real enforcement
+  needs two pieces the harness lacks: a per-model price table for *agent*
+  models (`judge.py::JUDGE_PRICING` covers judge models only, and a run spans
+  the parent plus each subagent on its own `.md` pin), and a way to see
+  subagent tokens — they never appear in the main SDK message stream, so an
+  in-flight estimate built only from streamed usage under-counts by a margin
+  consistent with the unattributed portion of a real run's cost. Deliberately
+  not half-built: a cap that silently fires late is worse than a documented
+  reporting threshold. The spec (`e2e-test-spec.md` §5) now says so explicitly.
