@@ -288,6 +288,36 @@ function checkRefExists(
   }
 }
 
+/**
+ * Scalar-typed fields declared `["string", "null"]` in research.schema.json.
+ *
+ * `checkAllowedKeys` only checks that a KEY is permitted, never that its value
+ * has the declared type, so an object handed to a scalar field slipped through
+ * both here and through the writer tools' validate-before-persist. Observed:
+ * record-extraction ut_017 (2026-07-19) corrected a typo'd assertion date via
+ * an `extraction_append` update op carrying
+ * `date: { value: "March 14, 2021", iso: "2021-03-14" }`, which persisted and
+ * only failed later against the JSON Schema.
+ */
+function checkStringOrNull(
+  obj: any,
+  fields: string[],
+  path: string,
+  report: ValidationReport
+): void {
+  for (const field of fields) {
+    if (!(field in obj)) continue;
+    const v = obj[field];
+    if (v !== null && typeof v !== "string") {
+      addError(
+        report,
+        path,
+        `'${field}' must be a string or null (got ${Array.isArray(v) ? "array" : typeof v})`
+      );
+    }
+  }
+}
+
 interface ResearchIds {
   questions: Set<string>;
   plans: Set<string>;
@@ -723,6 +753,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       "evidence_type", "extracted_for_question_ids",
     ], ap, report, NULLABLE_FIELDS);
     checkAllowedKeys(a, RESEARCH_SHAPES.assertion, "assertions", ap, report);
+    checkStringOrNull(
+      a,
+      ["date", "place", "standard_place", "record_persona_id", "informant_bias_notes"],
+      ap,
+      report
+    );
     if ("id" in a) {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
       ids.assertions.add(a.id);

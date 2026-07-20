@@ -472,7 +472,7 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"Run-log root not found: {args.runlog_root}\n"
             "Run a fixture and grade it (see docs/e2e-testing-guide.md -> "
-            "Judge calibration).",
+            "Grading a run).",
             file=sys.stderr,
         )
         return 2
