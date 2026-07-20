@@ -1,18 +1,17 @@
-# Feedback case workflow — how to triage a submission
+# Alpha feedback guide — how to triage a submission
 
-> **Superseded by [`docs/skill-lifecycle.md`](skill-lifecycle.md)** as the
-> canonical create → test → improve flow. This page remains the detailed
-> click-path for one specific on-ramp: triaging a **user-submitted feedback
-> zip** end to end (the per-platform setup, state reset, and commit steps).
-> The *discipline* it teaches — reproduce the bug live first, reset both the
-> conversation and the case data between attempts, and promote the fix into
-> a regression test — is summarized in the lifecycle doc's step 5; come here
-> for the actual zip-triage mechanics.
+You have a user feedback zip and you need to fix the bug and lock the fix
+in with a regression test. This page is the step-by-step for the part
+that's specific to a **feedback zip**: unpacking it, reproducing the bug,
+and iterating on a fix against the user's own project state.
 
-You have a user feedback zip and you need to fix the bug and lock the
-fix in with a regression test. This page is the step-by-step. The
-spec at `docs/specs/feedback-case-spec.md` carries the rationale and
-contracts — read that only when you need the *why*.
+**Three companion docs, and when to reach for each:**
+
+| Doc | What it gives you |
+|---|---|
+| [`alpha-feedback-example.md`](alpha-feedback-example.md) | The same flow as one **worked story**, start to finish. Read this first if you've never done it. |
+| [`skill-lifecycle.md`](skill-lifecycle.md) | What happens **after** you have a fix: mine the test, run it, annotate, improve, gate, release. Shared with every other on-ramp — this page hands off to it at step 4. |
+| [`specs/feedback-case-spec.md`](specs/feedback-case-spec.md) | The **why**: rationale, contracts, lints. Read only when changing the workflow itself. |
 
 ## Who does what
 
@@ -48,12 +47,27 @@ Already done? Skip ahead.
 
 ### 1. Set up the case directory
 
-Download the feedback zip from the dev Drive folder. Then run the
-setup helper for your platform:
+**Make your branch first.** The setup script stamps a marker with your
+checkout *as it is when you run it*, and the test you mine later lands on
+whichever branch is checked out then. Run setup while still on `main` and
+your test ends up on `main`.
+
+```bash
+cd ~/cowork-genealogy && git checkout -b feedback/2026-05-25T18-22-31
+```
+
+Windows (GitHub Desktop): Current Branch → **New branch…** → base it on
+`main` → **Create branch**.
+
+Then download the feedback zip from the dev Drive folder and run the setup
+helper for your platform:
 
 **macOS / Linux (Terminal):**
 
 ```bash
+make feedback-case ZIP=~/Downloads/feedback-2026-05-25T18-22-31.zip
+
+# or call the script directly:
 ~/cowork-genealogy/scripts/setup-feedback-case.sh \
     ~/Downloads/feedback-2026-05-25T18-22-31.zip
 ```
@@ -163,7 +177,7 @@ Repeat until `/compare-state --against=desired` says `matches`:
 Each cycle is a fresh session and a fresh state baseline — no
 contamination between attempts.
 
-### 4. Promote: scaffold the unit test
+### 4. Promote the fix into a regression test
 
 When the verdict is `matches`:
 
@@ -171,46 +185,38 @@ When the verdict is `matches`:
 /draft-unit-test
 ```
 
-The skill writes a test, a scenario directory, and MCP fixtures into
-the main repo (not your case directory). It prints the absolute paths
-of every file it wrote and the exact command to run the test next —
-copy that command.
+The skill writes a test, a scenario directory, and MCP fixtures into the
+**main repo** (not your case directory — it finds the repo via the
+`.feedback-repo-root` marker). It prints the absolute paths of every file it
+wrote and the exact command to run the test next — copy that command.
 
-### 5. Edit the draft
+> **Scrub the scenario for PII before you commit it.** This is the one step
+> unique to feedback cases and the reason they can't be treated like any
+> other test source: the scenario is carved from a **real person's research**.
+> The auto-scrub is best-effort. Open the scenario and generalize anything
+> that slipped through — names → `Person A`, exact dates → the decade,
+> specific places → the county. A committed test lives in the repo forever.
 
-```bash
-cd ~/cowork-genealogy/eval/app && npm run dev
-```
+### 5. From here, follow the standard loop
 
-Open the URL the dev server prints. Find the new test in the list
-(a first cut — the files are schema-clean, so they run as-is). Refine it:
+Everything after this point is the same regardless of where the bug came
+from, so it lives in one place:
 
-- **Tighten the `judge_context` bullets** so they're specific
-  assertions, not vague hopes.
-- **Prune the scenario** to the minimum that exhibits the bug.
-- **Refine the MCP fixture** `args` predicates and `response`
-  placeholders if the auto-extracted values look off.
-- **Review the scenario for PII** before committing — the auto-scrub is
-  best-effort, so generalize anything that slipped through (names →
-  `Person A`, exact dates → decade, specific places → county).
+**→ [`skill-lifecycle.md`](skill-lifecycle.md)**
 
-### 6. Run the test
+It covers: refining the draft in the CRUD UI, running the skill's tests,
+annotating the failing dimension, auditing the rubric, improving the
+`SKILL.md` body, gating the edit, and producing the release run the PR
+needs. Two things there are easy to skip and will fail CI if you do —
+grading **every** dimension, and doing a **full run after** your skill edit
+so the committed run log matches the edited skill.
 
-The exact command was printed by `/draft-unit-test`. It looks like:
+Come back here for step 6 when the PR is ready.
 
-```bash
-cd ~/cowork-genealogy/eval/harness
-uv run python run_tests.py --test ut_record_search_004
-```
+### 6. Commit on your branch
 
-It should pass. If it fails, ask a developer to look at the error
-together — the diagnosis is usually a fixture-args mismatch or a
-judge-context phrasing the LLM rejected.
-
-### 7. Commit on a feature branch
-
-Don't commit to `main`. Work on a feature branch — a developer will
-push it and open the PR when you pair in step 8.
+Don't commit to `main`. If you didn't already make a branch in step 1, make
+one now.
 
 **macOS / Linux (Terminal):**
 
@@ -220,51 +226,43 @@ git checkout -b feedback/2026-05-25T18-22-31    # use your case's timestamp
 git add packages/engine/plugin/skills/<name>/ \
         eval/tests/unit/<name>/ \
         eval/fixtures/scenarios/<slug>/ \
-        eval/fixtures/mcp/...
+        eval/fixtures/mcp/ \
+        eval/runlogs/unit/<name>/
 git commit -m "fix: <one-line summary of the bug>"
 ```
 
 **Windows (GitHub Desktop):**
 
-1. In GitHub Desktop, use the top-left repository picker to switch
-   to **cowork-genealogy** (not the case directory).
-2. Make sure "Current Branch" reads `main`. Then click the
-   Current Branch dropdown → **New branch…** → name it
-   `feedback/2026-05-25T18-22-31` (use your case's timestamp) →
-   base it on `main` → **Create branch**. The Current Branch
-   indicator now shows your new branch.
-3. The **Changes** tab lists every file you edited *plus* every
-   file `/draft-unit-test` created.
+1. Use the top-left repository picker to switch to **cowork-genealogy**
+   (not the case directory).
+2. Current Branch dropdown → **New branch…** → name it
+   `feedback/2026-05-25T18-22-31` (use your case's timestamp) → base it on
+   `main` → **Create branch**.
+3. The **Changes** tab lists every file you edited *plus* everything
+   `/draft-unit-test` and the test run created.
 4. Tick **only** these and untick anything else:
-   - `packages/engine/plugin/skills/<name>/…` (the SKILL.md you edited)
-   - `eval/tests/unit/<name>/…` (the new test JSON)
-   - `eval/fixtures/scenarios/<slug>/…` (the new scenario directory)
-   - `eval/fixtures/mcp/<tool>/<slug>/…` (the new MCP fixtures)
-5. In the **Summary** box at the bottom-left, type:
-   `fix: <one-line summary of the bug>`
-6. Click **Commit to feedback/...**.
-7. **Do not click "Push origin"** yet. The developer pushes and
-   opens the PR in step 8.
+   - `packages/engine/plugin/skills/<name>/…` — the SKILL.md you edited
+   - `eval/tests/unit/<name>/…` — the new test JSON
+   - `eval/fixtures/scenarios/<slug>/…` — the new scenario directory
+   - `eval/fixtures/mcp/<tool>/<slug>/…` — the new MCP fixtures
+   - `eval/runlogs/unit/<name>/…` — the run log **and** its `.ann.json`
+5. In the **Summary** box, type: `fix: <one-line summary of the bug>`
+6. Click **Commit to feedback/…**.
+7. **Do not click "Push origin"** yet — a developer pushes and opens the PR
+   with you in step 7.
 
-The commit message *is* the lesson — explain what went wrong and
-what changed. There's no separate lesson file by design.
+The commit message *is* the lesson — explain what went wrong and what
+changed. There's no separate lesson file by design.
 
-### 8. Pair with a developer for the PR
+### 7. Pair with a developer for the PR
 
-Ping a developer when you're ready. Together you'll:
+Ping a developer when you're ready. Together you'll open the PR and confirm
+the fix holds. If you want to see it working in the real product first, the
+worked example shows how — replay the case folder against your edited skill
+and check it with `/compare-state --against=desired`
+([`alpha-feedback-example.md`](alpha-feedback-example.md) step 8).
 
-- Build the plugin `.zip` (`scripts/package-plugin.sh`).
-- Re-install it into Cowork (see DEVELOPMENT.md
-  § "Deploying a code change to Claude Desktop" — covers both
-  macOS and Windows).
-- Open the original feedback zip into a *fresh* folder, separate
-  from your iteration directory, so Cowork sees the user's
-  pristine state.
-- Open that fresh folder in Cowork and re-issue the user prompt.
-  Confirm the fix holds.
-- The developer opens the PR.
-
-The senior genealogist takes it from there.
+The senior genealogist reviews and merges.
 
 ### 9. Clean up
 

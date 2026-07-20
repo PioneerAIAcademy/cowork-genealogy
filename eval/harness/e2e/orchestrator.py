@@ -404,6 +404,79 @@ def _summarize_tool_response(content: Any) -> str:
     return text
 
 
+_USAGE_FIELDS = (
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+)
+
+
+def _accumulate_usage(acc: dict[str, dict[str, int]], message: Any) -> None:
+    """Record one AssistantMessage's usage, keyed by its message id.
+
+    Do NOT sum on arrival. The SDK re-emits the same assistant message once
+    per content block, and every copy carries the SAME cumulative usage for
+    that message — so adding each time multiplies the totals (verified by
+    replaying a real run: naive summing reported 358,610 output tokens
+    against a true 106,661, and 226 messages against 87 distinct ones).
+    Keying by message id and letting the last write win reproduces the
+    ResultMessage token totals exactly.
+
+    Best-effort by design: the SDK types `usage` loosely (a dict on the
+    observed path, an object on some versions) and a malformed or absent
+    block must never take down a run.
+    """
+    msg_id = getattr(message, "message_id", None)
+    # No id to dedupe on — count it once under a synthetic key rather than
+    # dropping it or letting it collide with another anonymous message.
+    key = msg_id if msg_id else f"__anon_{len(acc)}"
+    usage = getattr(message, "usage", None)
+
+    def _get(field: str) -> int:
+        if usage is None:
+            return 0
+        raw = usage.get(field) if isinstance(usage, dict) else getattr(usage, field, 0)
+        return raw if isinstance(raw, int) else 0
+
+    acc[key] = {field: _get(field) for field in _USAGE_FIELDS}
+
+
+def _fallback_usage(acc: dict[str, dict[str, int]], elapsed_ms: int) -> dict[str, Any]:
+    """Usage block reconstructed from the stream when no ResultMessage came.
+
+    Two fields are deliberately left null rather than synthesized:
+
+    `total_cost_usd` — a run spans several models (the parent plus each
+    subagent on its own `.md` pin), so one price lookup would be wrong, and a
+    plausible-but-wrong dollar figure is worse than a null here: it would be
+    silently compared against real costs from clean runs. Token counts are
+    exact, so cost stays derivable later from a per-model breakdown.
+
+    `num_turns` — the SDK counts turns differently from distinct assistant
+    messages (118 vs 87 on the replayed run), and `latency_report` divides
+    output tokens by it. Publishing the smaller number under the same name
+    would inflate tokens-per-turn by ~1.4x in exactly the metric the latency
+    work depends on. The exact count we DO have is reported separately as
+    `assistant_messages`.
+
+    `duration_api_ms` is absent for the same reason: only the SDK knows the
+    API/local split, and a monotonic clock can't recover it.
+    """
+    return {
+        "duration_ms": elapsed_ms,
+        "duration_api_ms": None,
+        "num_turns": None,
+        "assistant_messages": len(acc),
+        "is_error": True,
+        "stop_reason": None,
+        "total_cost_usd": None,
+        "usage": {
+            field: sum(m[field] for m in acc.values()) for field in _USAGE_FIELDS
+        },
+    }
+
+
 async def _run_agent(
     *,
     fixture: Fixture,
@@ -470,6 +543,17 @@ async def _run_agent(
     cli_version: dict[str, str | None] = {"v": None}
     resumes = {"n": 0}  # how many times we resumed after a stall (capped)
     MAX_RESUME = 2
+
+    # Streamed usage accumulator. The SDK's ResultMessage carries the
+    # authoritative duration/turns/cost, but it only arrives on a CLEAN end —
+    # a wall-clock timeout, an inactivity abort or a no-progress stall cuts the
+    # stream before it, so `usage` stayed {} and the run landed in the runlog
+    # with no turns, no duration and no tokens at all. That silently blinded
+    # every `timeout` run (9 of 9 in the corpus as of 2026-07-20) — exactly the
+    # runs whose cost and turn count you most want to see. Accumulating per
+    # AssistantMessage gives a fallback that is always available. See
+    # _fallback_usage below for what is and isn't recoverable this way.
+    streamed: dict[str, dict[str, int]] = {}
 
     def _emit(line: str) -> None:
         """Live progress to stderr so a long, otherwise-silent run shows
@@ -747,6 +831,9 @@ async def _run_agent(
                             elif block.name.startswith("mcp__"):
                                 _emit(f"   - {_bare_tool_name(block.name)}")
                             progressed = True
+                    # Record before the timeline append so a message that
+                    # arrives moments before a timeout still counts.
+                    _accumulate_usage(streamed, message)
                     timeline.append([round(now - run_started, 1), "assistant"])
                 elif isinstance(message, UserMessage):
                     # Tool results return as UserMessages with ToolResultBlock content.
@@ -858,8 +945,21 @@ async def _run_agent(
         aborted_reason = "max_tool_calls"
         error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
 
+    # A ResultMessage populates `usage` with the SDK's authoritative numbers.
+    # Every abort path (wall-clock timeout, inactivity silence, no-progress
+    # stall) cuts the stream before it, leaving `usage` empty — so fall back to
+    # what the stream already told us. `usage_source` marks which one you're
+    # reading: a fallback block has exact token counts but a null cost, and
+    # must not be compared against a clean run's `total_cost_usd`.
+    result_message_seen = "num_turns" in usage
+    if not result_message_seen:
+        usage = _fallback_usage(
+            streamed, int((time.monotonic() - run_started) * 1000)
+        )
+
     usage = {
         **usage,
+        "usage_source": "result_message" if result_message_seen else "streamed_fallback",
         "continue_nudges": continue_nudges["n"],
         # Stall-resume + forensics (added with the progress watchdog). `timeline`
         # is [elapsed_seconds, kind] per SDK message — split structural vs stall

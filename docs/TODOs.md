@@ -48,6 +48,20 @@ recorded so it can be re-examined rather than re-derived.
   start in prod (e.g. when `PUBLIC_URL` is https, or behind an explicit flag) if
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
+- [ ] **Operator misconfiguration reaches the user as a raw SDK error string** —
+  when the Agent SDK's first call fails auth, `real_agent.handle_turn` wraps the
+  exception verbatim (`_event("error", text=f"Agent error: {exc}")`) and
+  `ChatPane` renders it as-is, so an alpha tester saw *"Failed to authenticate.
+  API Error: 401 API key is invalid."* after ~90s of waiting — a message about
+  the operator's Anthropic key, phrased as if it were about the tester's own
+  login. Two testers each reported it as a FamilySearch problem, which is the
+  real cost: it sends people to debug the wrong credential. Wanted: classify the
+  failure in `handle_turn` and emit an operator-vs-user framing — 401/403 from
+  the SDK → "This service is misconfigured; the administrator has been notified"
+  (plus a server-side log loud enough to page), while genuinely user-actionable
+  failures (an expired FamilySearch token) keep their current specific wording.
+  Surfaced by the 2026-07-20 outage; the credential-freeze half of that bug is
+  fixed (`app/agent_secrets.py`), this half is not.
 
 ## Engine — image transcription
 - [ ] **User-invoked Opus transcription (`image_transcribe` Flow 2)** — brainstormed,
@@ -617,3 +631,18 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   fixed; the missing guard is not. Options: give init-project a writer tool for
   the seed write, or have the validator treat an absent `before_state` as a diff
   against empty rather than a skip.
+
+- **`max_cost_usd` does not cap anything in the e2e harness** — `cost_cap` is
+  applied inside the `ResultMessage` branch of `orchestrator.py`, and that
+  message only arrives once the run has already finished, so the "cap" is a
+  post-hoc label on a completed run. All five `cost_cap` runs in the corpus
+  ended with the SDK's own `end_turn` and `is_error: false` — spend ran to
+  $15.86–$20.84 against a $15 cap with nothing interrupted. Real enforcement
+  needs two pieces the harness lacks: a per-model price table for *agent*
+  models (`judge.py::JUDGE_PRICING` covers judge models only, and a run spans
+  the parent plus each subagent on its own `.md` pin), and a way to see
+  subagent tokens — they never appear in the main SDK message stream, so an
+  in-flight estimate built only from streamed usage under-counts by a margin
+  consistent with the unattributed portion of a real run's cost. Deliberately
+  not half-built: a cap that silently fires late is worse than a documented
+  reporting threshold. The spec (`e2e-test-spec.md` §5) now says so explicitly.

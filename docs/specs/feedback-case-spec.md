@@ -884,7 +884,7 @@ directory no longer exists.
    right balance.
 
 The how-to for runners — what to do step-by-step without the
-rationale or contract layer — lives at `docs/feedback-workflow.md`.
+rationale or contract layer — lives at `docs/alpha-feedback-guide.md`.
 This spec is the normative reference (contracts, lints,
 rejected alternatives, edge cases); the workflow doc is the
 junior-targeted walk-through. Earlier drafts of this spec argued

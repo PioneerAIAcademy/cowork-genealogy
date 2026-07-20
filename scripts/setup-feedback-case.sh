@@ -150,4 +150,4 @@ fi
 echo
 echo "Then: /compare-state --against=what-went-wrong"
 echo
-echo "Full workflow: docs/specs/feedback-case-spec.md §3"
+echo "Full workflow: docs/alpha-feedback-guide.md"

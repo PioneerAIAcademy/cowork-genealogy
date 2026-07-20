@@ -2,10 +2,7 @@
 
 > **For our alpha testers** — the senior genealogists trying the workbench on
 > real research. You do your own research in a browser, and when something goes
-> wrong you tell us. That's the whole job. Nothing to install, no repository, no
-> command line.
->
-> Keep this open for your first couple of sessions.
+> wrong you tell us.
 
 **Where it lives:** <https://genealogy-workbench.fly.dev>
 
@@ -27,40 +24,27 @@ you can find**, because those are what would quietly corrupt a real tree.
 
 Sign in with your **FamilySearch account**. That one sign-in does two jobs: it
 gets you into the app, and it gives the agent the FamilySearch access it needs to
-search records on your behalf. There's no second "connect" step.
+search records on your behalf. 
 
-> ⚠️ **We allowlist the email on your FamilySearch account** — which is often
-> *not* the email you gave us. If you get a page saying your address isn't
-> permitted, it will name the address it saw. Send us that address and we'll add
-> it.
-
----
-
-## Start here: open the sample project
-
-Before spending anything, click **Open a sample project**. It loads a finished
-research project (the Patrick Flynn case) into the viewer so you can see how the
-workbench lays out a research log, assertions, conflicts, sources and a proof
-summary. Nothing runs; it costs nothing. Five minutes here makes everything
-after it clearer.
+> ⚠️ **We allowlist the email on your FamilySearch account.** 
+> If you get a page saying your address isn't permitted, 
+> it will name the address it saw. Send us that address and we'll add it. 
+> If you get a page saying FamilySearch did not return an email for your account,
+> please go into your FamilySearch account and add your email.
 
 ---
 
-## Your first real session
+## Your first session
 
 Click **+ New research session**. The agent opens by asking what you'd like to
 research.
 
 ### Choosing what to work on
 
-**Don't hand it your hardest brick wall.** You're a professional; the walls you
-haven't broken in twenty years are almost certainly beyond it, and a failure there
-tells us nothing we can act on — only that a hard problem is hard.
-
+Don't hand it your hardest brick wall. 
 What we need instead is a **research objective that tests a specific ability** and
-whose answer you can already judge. Something with a knowable answer, two or three
-records deep, where you'd recognise sloppy reasoning instantly. There are two ways
-to set one up, and they behave differently — **pick one deliberately**.
+whose answer is available by accessing FamilySearch records, full-text, or images.
+There are two ways to set one up, and they behave differently.
 
 #### Path A — your own research, not on FamilySearch
 
@@ -88,8 +72,8 @@ Give it a **PID**, and tell it **what to forget**:
 > "Research PID KWZX-1AB. Forget who his parents were and see if you can find them
 > from records."
 
-It removes that information from the project's copy of the tree, shows you a count
-of what went, and researches from what's left. Three things to know:
+It removes that information from the project's copy of the tree, shows you how many records 
+were removed from the project's copy, and researches from what's left. Three things to know:
 
 - **Check the count before you say go.** Removing a *person* also removes their
   other links — forgetting a father can cut the siblings attached to him. Look at
@@ -126,6 +110,10 @@ in the project and the agent reads it.
 You'll need this for anything **not** on FamilySearch. FamilySearch's own record
 images the agent fetches by itself; you don't need to upload those.
 
+Anything you upload travels with your feedback by default, so a report about a
+document arrives with the document attached. You can untick **"Include media
+files"** on the feedback form if you'd rather not send it.
+
 ### Watching it work
 
 The viewer fills in live beside the chat — research log, sources, assertions,
@@ -144,10 +132,8 @@ surprises you. (It counts from when the page loaded, so a refresh restarts it.)
 
 ## Sending feedback
 
-Click **Submit feedback** in the viewer. It bundles the project state and your
-notes and sends them to us privately.
-
-The form asks four things, and the middle two are what make a report usable:
+Click **Send Feedback** in the viewer header. It bundles the project state and
+your notes and sends them to us privately.
 
 1. **What you asked the agent to do.**
 2. **What the agent did.** What actually happened.
@@ -159,15 +145,26 @@ The form asks four things, and the middle two are what make a report usable:
    to ask you. Leave it blank when the problem was how it worked, not what it
    concluded.
 
+There's also your email, and a free-text **Notes** box for anything that
+doesn't fit the four.
+
 **Send feedback while it's fresh**, in the session where it happened — the
 bundle captures that project's state, which is how we reproduce it.
 
-> **What gets sent:** your project files, and (if you leave the box ticked) the
-> session transcript — your prompts, the agent's replies and its internal
-> reasoning, and every tool call with its results. The reasoning is the single
-> most useful part for diagnosing *why* it went wrong. It goes to a private
-> Drive folder only the Pioneer Academy team can read. Untick the box if a
-> session contains anything you'd rather not share.
+> **What gets sent**, and the two checkboxes at the bottom of the form:
+>
+> - **Your project files** — always.
+> - **"Include Claude Code session log"** — **ticked by default.** Your prompts,
+>   the agent's replies and its internal reasoning, and every tool call with its
+>   results. The reasoning is the single most useful part for diagnosing *why* it
+>   went wrong. Untick it if a session contains anything you'd rather not share.
+> - **"Include media files"** — **ticked by default.** Documents and images you
+>   uploaded, so a report about a document arrives with the document. Untick it
+>   to leave them out. Very large bundles are trimmed automatically, largest
+>   files first.
+>
+> Everything goes to a private Drive folder only the Pioneer Academy team can
+> read.
 
 ### What makes a report we can act on
 
@@ -181,14 +178,12 @@ are weak." One problem per submission.
 
 Being straight with you, so you don't waste time:
 
-- **No GEDCOM import.** You can't upload a tree file. Type what you know, or
-  give a PID.
 - **The cost figure restarts when you reload the page.** It's per page-load, not
   per session.
 - **You can't reset a project.** To start over, create a new session.
 - **Living people:** please don't enter information about anyone living. Nothing
-  is encrypted at rest yet.
-- **Sessions are private to you.** No sharing or collaboration yet.
+  is encrypted yet.
+- **Sessions are private to you.** No sharing or collaboration.
 
 ---
 
@@ -211,10 +206,11 @@ wrong report.
 ## What happens to your feedback
 
 We unpack your case, open your project, and **continue the research from exactly
-where you left off** to watch the same thing happen. Then we fix the cause and
+where you submitted the feedback** so we can watch the same thing happen. 
+Then we fix the cause and
 write a regression test so it can't come back silently. That test is the durable
 result of your report — which is why "what it should have done" matters so much.
 
-The developer-facing version of that loop is
-[`e2e-testing-guide.md`](e2e-testing-guide.md); a worked example of one report
-becoming a fix is [`alpha-feedback-example.md`](alpha-feedback-example.md).
+If you're curious what happens on our side, one report is followed end to end
+in [`alpha-feedback-example.md`](alpha-feedback-example.md) — written for our
+developers, but readable, and the case it follows is a genealogical one.

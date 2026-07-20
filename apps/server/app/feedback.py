@@ -3,7 +3,7 @@ conversation transcript into a zip and POSTs it to the **same Google Apps Script
 -> Drive endpoint the Electron viewer uses** (config.feedback_url / FEEDBACK_URL).
 No local-disk write, so the control plane scales to >1 instance. The zip structure
 + feedback.json schema match the Electron flow so the existing feedback-case
-triage workflow (docs/feedback-workflow.md) consumes it unchanged.
+triage workflow (docs/alpha-feedback-guide.md) consumes it unchanged.
 
 The transcript is the Claude Code session JSONL the Agent SDK writes inside the
 sandbox; it carries the narration, full tool I/O, and the agent's reasoning that

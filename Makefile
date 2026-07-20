@@ -507,3 +507,12 @@ deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server i
 	fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false \
 	  --build-arg GIT_SHA=$$(git rev-parse --short HEAD) \
 	  --build-arg BUILD_DATE=$$(date -u +%Y-%m-%d)
+
+# Public host of the deployed control plane — keep in sync with PUBLIC_URL /
+# WEB_ORIGIN in deploy/fly.toml. Override for a differently-named app:
+#   make deploy-status DEPLOY_URL=https://my-app.fly.dev
+DEPLOY_URL := https://genealogy-workbench.fly.dev
+
+.PHONY: deploy-status
+deploy-status: ## Health-check the deployed control plane (expect "db":"postgres")
+	curl -s $(DEPLOY_URL)/api/health | jq
