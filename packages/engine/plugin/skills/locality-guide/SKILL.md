@@ -124,12 +124,14 @@ research_append({
     place: "Pennsylvania, United States",          // the jurisdiction the guide covers
     for_place: "Schuylkill County, Pennsylvania",  // the specific place of interest, if narrower
     time_period: "1840-1880",
-    jurisdictions: [ /* from place_search_all: { name, date_range } — border/name succession */ ],
+    jurisdictions: [ /* from place_search_all — EACH entry is exactly { name, date_range }, no other keys */ ],
     collections: [ /* from collections_search: { id, title, date_range } */ ],
     quirks: [
       // short, actionable gotchas a searcher must know — distilled from the wiki
-      // research-tips / online-records pages, e.g.:
-      "Parish records indexed only at the county level — search the county, not the exact parish."
+      // research-tips / online-records pages. This is ALSO where any border/name
+      // succession advice goes — a sentence, not a jurisdiction field, e.g.:
+      "Parish records indexed only at the county level — search the county, not the exact parish.",
+      "Lackawanna County records before 1878 were filed under Luzerne County — search Luzerne first."
     ],
     guide_markdown: "<the guide you just presented, in markdown>",
     pages_read: [
@@ -147,6 +149,15 @@ The tool assigns the `loc_` id and stamps `created`. **`pages_read` must list al
 sections** (each with its `found` outcome) — this is how read-coverage is audited.
 Do not put the applied per-search decision here; that goes in a plan item's
 `rationale` when `research-plan` uses this entry.
+
+**Stay inside the allowed fields — a stray key fails the whole write.** Each
+`jurisdictions[]` entry has exactly two keys, `name` and `date_range`; each
+`collections[]` entry exactly `id`, `title`, `date_range`. Do **not** add any
+other key (no `note`, `comment`, `records`, etc.) to these objects. When you have
+a sentence of searcher advice — a boundary/name succession like "records before
+1878 were filed under the predecessor county", an indexing gotcha, a language
+warning — that is a **quirk**: add it to the `quirks[]` list, never as an extra
+field on a jurisdiction or collection.
 
 ## Decision rules
 
