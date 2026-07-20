@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
+import { api, ApiError } from '../api'
 
 const OPENING_TURN = "Let's start a new genealogy research project."
 
@@ -28,16 +29,21 @@ export interface UsageDelta {
 
 export default function ChatPane({
   conn,
+  sessionId,
   isNew,
   onUsage
 }: {
   conn: SessionConnection
+  sessionId: string
   isNew: boolean
   onUsage?: (delta: UsageDelta) => void
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [ready, setReady] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const startedRef = useRef(false)
@@ -133,6 +139,25 @@ export default function ChatPane({
     setInput('')
   }
 
+  // Upload a document/image, then tell the agent where it landed. The upload
+  // alone is invisible to the agent — it only learns about the file from a turn,
+  // so the two steps are deliberately coupled here.
+  const handleFile = async (file: File): Promise<void> => {
+    setUploadError('')
+    setUploading(true)
+    try {
+      const { path } = await api.uploadSessionFile(sessionId, file)
+      send(
+        `I've uploaded a file to \`${path}\`. Please read it and use it in this research.`
+      )
+    } catch (err) {
+      setUploadError(err instanceof ApiError ? err.message : `Upload failed: ${String(err)}`)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   // New session: auto-send the opening turn so init-project runs conversationally.
   useEffect(() => {
     if (isNew && !startedRef.current) {
@@ -181,6 +206,8 @@ export default function ChatPane({
         {busy && <div className="typing">●●● working… {elapsed}s</div>}
       </div>
 
+      {uploadError && <div className="chatUploadError">{uploadError}</div>}
+
       <form
         className="chatInputBar"
         onSubmit={(e) => {
@@ -188,6 +215,25 @@ export default function ChatPane({
           send(input)
         }}
       >
+        <input
+          ref={fileInputRef}
+          type="file"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) void handleFile(f)
+          }}
+        />
+        <button
+          type="button"
+          className="chatAttach"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={busy || uploading || !ready}
+          title="Attach a document or image for the agent to read"
+          aria-label="Attach a document or image"
+        >
+          {uploading ? '…' : '📎'}
+        </button>
         <textarea
           className="chatTextarea"
           placeholder={ready ? 'Message the agent…' : 'Connecting…'}

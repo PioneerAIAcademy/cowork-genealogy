@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_ferber_death",
+    "objective": "When and where did William Hubert Ferber die?",
+    "subject_person_ids": [
+      "G7JB-YH6"
+    ],
+    "status": "active",
+    "created": "2026-07-15",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

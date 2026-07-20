@@ -147,7 +147,7 @@ Do NOT call data "unsourced" — it IS sourced to the FamilySearch tree. `qualit
 
 **Simplified GedcomX rules:** gender as flat string (`Male`/`Female`/`Unknown`); names with `given`, `surname`, optional `preferred: true`; facts with PascalCase `type`; ParentChild uses `parent`/`child`; Couple uses `person1`/`person2`; `preferred`/`primary` omit-when-false.
 
-**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, create a stub for that woman's father using only the surname. **Omit the `given` key entirely — do NOT write `given: ""`.** A name needs only `id` and `surname`.
+**No placeholder unknown-person stubs.** Create stubs only for people with at least one concrete identifying detail. A known surname alone qualifies — when a maiden name is stated, create a stub for that woman's father using only the surname. **Spell the unknown given name as `given: ""` — do NOT omit the key.** `given` is required on every name; a surname-only stub is `{"id": "N1", "preferred": true, "given": "", "surname": "Donovan"}`.
 
 **Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's father.
 
@@ -156,7 +156,7 @@ Worked example: "the maternal grandmother of Sarah Hennessy; Sarah's mother's ma
 **DO create:**
 - **Sarah Hennessy** — named by the user.
 - **Mary Donovan** — named (full name stated).
-- **Mary Donovan's father** — surname `Donovan`, given omitted. Maiden name fixes father's surname.
+- **Mary Donovan's father** — surname `Donovan`, `given: ""`. Maiden name fixes father's surname.
 
 **Do NOT create:**
 - Sarah's father — never mentioned, surname not implied.

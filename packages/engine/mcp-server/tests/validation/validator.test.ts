@@ -227,6 +227,57 @@ describe("Project Validator", () => {
         result.errors.some((e) => e.message.includes("should start with 'q_'"))
       ).toBe(true);
     });
+
+    it("reports a non-pli_ log entry plan_item_id (drift with the JSON Schema)", async () => {
+      // A question id (or any non-pli_ value) stuffed into a log entry's
+      // plan_item_id must fail here, matching the JSON-Schema ^pli_ constraint.
+      // Previously validate_research_schema skipped this field, so a q_ id
+      // passed here but hard-failed the JSON-Schema validator downstream.
+      const research = {
+        ...minimalResearch,
+        log: [
+          {
+            id: "log_001",
+            plan_item_id: "q_001",
+            performed: "2026-01-01T00:00:00.000Z",
+            tool: "record_search",
+            query: {},
+            outcome: "negative",
+            results_examined: 0,
+            external_site: null,
+            results_ref: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("should start with 'pli_'"))
+      ).toBe(true);
+    });
+
+    it("accepts a null log entry plan_item_id (opportunistic search)", async () => {
+      const research = {
+        ...minimalResearch,
+        log: [
+          {
+            id: "log_001",
+            plan_item_id: null,
+            performed: "2026-01-01T00:00:00.000Z",
+            tool: "record_search",
+            query: {},
+            outcome: "negative",
+            results_examined: 0,
+            external_site: null,
+            results_ref: null,
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe("Enum validation", () => {

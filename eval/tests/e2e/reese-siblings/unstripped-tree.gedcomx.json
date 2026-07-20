@@ -1,0 +1,1443 @@
+{
+  "persons": [
+    {
+      "id": "LVF8-NQJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Lewis Joseph",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1847 ",
+          "standard_date": "1847",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "27 October 1912 ",
+          "standard_date": "27 Oct 1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ab29fab8-47dd-4348-9fc6-b4e21f04ed6c",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "8b569e9a-fb92-4ae1-94e7-c3c396165993",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "b25e45f9-25fe-4fc4-8529-e5757decb604",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "44653e1b-4d1e-4b25-9771-1fed694572f3",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c32f4b3b-55bb-44aa-acb7-6007e9dfe658",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "693046f5-19e7-4dcd-9b53-de6c39bb1a6f",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brooklyn Ward 16, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "87d8d5b1-c71e-4dc3-8f96-cd6ef27c9ed5",
+          "type": "Residence",
+          "date": "1912",
+          "standard_date": "1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c129d667-9e9f-4101-a0c9-b3eb171954e5",
+          "type": "Occupation",
+          "date": "1912",
+          "standard_date": "1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "value": "Reverend "
+        },
+        {
+          "id": "cc74c8b6-75d6-4070-a1b6-fa682bd699ec",
+          "type": "Burial",
+          "date": "30 October 1912",
+          "standard_date": "30 Oct 1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "L1ML-DX3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Elizabeth Jane",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e1e79801-a524-4b33-a42d-e35da484697e",
+          "type": "Birth",
+          "date": "28 October 1875",
+          "standard_date": "28 Oct 1875",
+          "place": "Brooklyn, New York City, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "86bf6cad-38ed-4e5c-9dd3-b34d54667ad8",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "f41ffb06-19b0-4334-9709-6a9cb2ed25dd",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "d03ed6bf-6a16-4b24-a962-ebe20e436184",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "f150e77e-aaf1-4ab1-b90b-22834677d564",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago (Districts 0251-0500), Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "4015dafb-46d4-447b-bb5a-7a64aedca219",
+          "type": "Death",
+          "date": "27 January 1959",
+          "standard_date": "27 Jan 1959",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "38f47581-0453-4056-aac8-1b57d8f0868d",
+          "type": "Burial",
+          "date": "30 January 1959",
+          "standard_date": "30 Jan 1959",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "bca8534a-173d-4d26-a54e-79a3c7870ca6",
+          "type": "Residence",
+          "date": "1959",
+          "standard_date": "1959",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        }
+      ]
+    },
+    {
+      "id": "L15S-ZZ1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Elizabeth Jane",
+          "surname": "Ritchie"
+        }
+      ],
+      "facts": [
+        {
+          "id": "af0f0840-468b-49f8-8bfd-0a1a84bdf525",
+          "type": "Birth",
+          "date": "May 1824",
+          "standard_date": "May 1824",
+          "place": "Manhattan, New York City, New York, United States",
+          "standard_place": "Manhattan, New York City, New York, United States"
+        },
+        {
+          "id": "71b2c0f5-1c87-4cfc-a654-01a721a6c967",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "New York City, ward 8, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "b1b62da5-44f5-4987-9abb-35c2c316f9f2",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c9d0b5f9-b57a-40f9-a8df-b3a6175943da",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "53fc20d2-627a-4bac-a895-71d858c31c55",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "7da091a8-99f1-4375-8ee3-bdeda72423b6",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Borough of Brooklyn, Election District 7 New York City Ward 16, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "16d298be-323e-455b-914b-386902eedd89",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ced1c3c1-a09e-4b80-b9f6-7ff2a94e674f",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, A.D. 15, E.D. 10, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "246c76ce-068d-4101-9493-e8e20dca87ee",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brooklyn Ward 16, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "9c947edb-ed53-4858-847a-84f820354bab",
+          "type": "Death",
+          "date": "11 Feb 1920",
+          "standard_date": "11 Feb 1920",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "6bd19eb4-f9b5-4f7d-8529-39f1c799b3ac",
+          "type": "Burial",
+          "date": "14 Feb 1920",
+          "standard_date": "14 Feb 1920",
+          "place": "NY",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "6a6c4d12-db1f-4362-8196-9b554b72b698",
+          "type": "Residence",
+          "place": "245 Kosciosko St."
+        }
+      ]
+    },
+    {
+      "id": "L6JB-YHG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Laura Amelia",
+          "surname": "Scott"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ed80a414-cfca-4f65-88c2-6e2987904c72",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Bushwick, Kings, New York, United States",
+          "standard_place": "Bushwick, Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-dup1",
+          "type": "Birth",
+          "date": "October 1850",
+          "standard_date": "Oct 1850",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c910cb5e-07d5-40d7-9d19-1ba1ed7e1f2f",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "1st District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "e83eb25a-f217-453f-b7e2-ed75010a7418",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "New York City, New York County, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "b1ae5b71-1cbe-43d2-87e7-4a8346bb3cc2",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "d9643794-6a9e-4505-95a6-b4ac8c6f1cad",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0-dup2",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L15S-NBF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Lewis Moses",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1f0cc24d-54ff-4999-97cd-b237a5a84c7d",
+          "type": "Birth",
+          "date": "1826",
+          "standard_date": "1826",
+          "place": "Pennsylvania, United States",
+          "standard_place": "Pennsylvania, United States"
+        },
+        {
+          "id": "0e35775d-26c4-486a-9bb3-88db31b0b88d",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "2nd District 14th Ward Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c5ed3466-4bce-4d63-9a7d-a280e7bcd8e5",
+          "type": "Residence",
+          "date": "1875",
+          "standard_date": "1875",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ce841fb2-3175-4622-bdba-dbac15ac0bc6",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c6eb20ce-a4b0-4e89-8b77-a8fff9b1750c",
+          "type": "Death",
+          "date": "18 Dec 1890",
+          "standard_date": "18 Dec 1890",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "0017b3ca-7359-4049-ac36-abbd6ef19a98",
+          "type": "Burial",
+          "date": "21 Dec 1890",
+          "standard_date": "21 Dec 1890"
+        },
+        {
+          "id": "2ea337f5-ed52-401d-b4a5-df0a07010060",
+          "type": "Residence",
+          "place": "Brooklyn, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "L136-W7R",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Lewis",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "15d53cdd-411a-475a-b04d-53c72a5b7bbc",
+          "type": "Birth",
+          "date": "7 October 1878",
+          "standard_date": "7 Oct 1878",
+          "place": "Queens, New York City, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States"
+        },
+        {
+          "id": "43f38fc4-8dd0-4193-afef-d3ecd95bb6a3",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "bd7df5f8-b70c-40dc-9985-a1537d269fd9",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "00ce3aa8-8579-4526-9604-bc6b1790e5ef",
+          "type": "MilitaryService",
+          "date": "8 Nov 1897",
+          "standard_date": "8 Nov 1897",
+          "place": "St. Louis, Missouri, United States",
+          "standard_place": "St. Louis, Missouri, United States"
+        },
+        {
+          "id": "e08d41f4-a915-4404-94c7-cc8bf84f3ca0",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "bdcca50b-70f0-4cac-be3a-cdc92dff6bd6",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brooklyn Ward 5, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "0b134086-bde3-459e-b961-6eeb9ed8430d",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "4c1076cd-d11c-41c8-9c7f-882d6b1cb33f",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "New York City no 77, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "64fbc842-b022-4003-8792-2b94550a5552",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Brooklyn Assembly District 20, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "1a6527c2-94be-480f-86f7-939ec7fe515b",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Queens (Districts 0501-0750), Queens, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States"
+        },
+        {
+          "id": "0407646e-7455-4547-ae5a-a434b6b8a0bf",
+          "type": "Death",
+          "date": "22 December 1939",
+          "standard_date": "22 Dec 1939",
+          "place": "New York City, Queens, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States"
+        },
+        {
+          "id": "785cb8cb-0615-45fb-8f29-9e547b3abee3",
+          "type": "Burial",
+          "date": "26 December 1939",
+          "standard_date": "26 Dec 1939",
+          "place": "Queens, New York City, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States"
+        },
+        {
+          "id": "d4b41590-9295-49af-bfec-99509011d0bf",
+          "type": "Occupation",
+          "place": "Queens, New York City, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States",
+          "value": "Truck Driver "
+        },
+        {
+          "id": "4dcf48b0-2d2a-49d2-9a3b-a76c4e60b99a",
+          "type": "Residence",
+          "place": "Queens",
+          "standard_place": "Queens, New York City, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "G9VV-B66",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Jenny",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "75429610-51e8-42cc-a590-062c0fdce6f5",
+          "type": "Birth",
+          "date": "1887",
+          "standard_date": "1887",
+          "place": "Brooklyn, New York City, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "9c52621d-a62c-48ee-9e56-c98e38c79cee",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ebb65e79-0473-4e8c-b821-6b6ae076da5d",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "73563bc7-e5a3-4428-bf48-87eb3d0476e9",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L15S-JB2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Clarence",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9f186cc7-f85b-4d76-ac73-7e120a553b98",
+          "type": "Burial",
+          "date": "16 Feb"
+        },
+        {
+          "id": "54906493-4ecc-4f2d-88c8-dbdf467350e8",
+          "type": "Birth",
+          "date": "1869",
+          "standard_date": "1869",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "3daaedbc-251d-4991-bf38-a21db684adb7",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "a2d9adca-4439-47c8-a2ac-ba272a1e2dc6",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "745b55a8-b707-4f5e-a725-488adc1b49d7",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "0693e524-04a6-4c32-b13a-95cf2fd0187a",
+          "type": "Death",
+          "date": "14 Feb 1912",
+          "standard_date": "14 Feb 1912",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "df5b510e-7c6d-42b4-8ad2-082bc6e3a644",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Cicero, Cicero, Onondaga, New York, United States",
+          "standard_place": "Cicero, Cicero, Onondaga, New York, United States"
+        },
+        {
+          "id": "2b1f3ece-6d59-44d3-9c9c-4b08b678606e",
+          "type": "Residence",
+          "place": "545 Court St."
+        },
+        {
+          "id": "158913fd-6008-4d2f-b216-c04623854560",
+          "type": "Marital Status",
+          "value": "Married"
+        }
+      ]
+    },
+    {
+      "id": "G9VV-GBP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Lora A",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8525c062-e95f-43c5-8d6a-38809ad25e6a",
+          "type": "Birth",
+          "date": "1883",
+          "standard_date": "1883",
+          "place": "Brooklyn, New York City, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "f9aaa7c7-bfcb-45f5-b159-1f702423ed51",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "01ddb1bb-b891-4f20-9df3-908a18433443",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ff48da58-d673-424a-a4ef-1704ed74c31c",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G9VJ-54P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Martin Joseph",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1c16e227-677e-4f68-bd4f-5b13e00a5161",
+          "type": "Birth",
+          "date": "15 August 1885",
+          "standard_date": "15 Aug 1885",
+          "place": "Brooklyn, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "6b72b54f-99ea-484e-9473-4f1ac41d6e47",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c12884b2-e415-44f2-99b2-19ddfdb7eb5a",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "891eca4e-8d5e-4aca-865a-64665f9bb946",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Borough of Brooklyn, Election District 20 New York City Ward 21, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "b524914f-a8f9-4e04-9535-9e94db414357",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "a08a1f32-09fb-4357-b467-c6cb062ecfb1",
+          "type": "Residence",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Brooklyn, A.D. 08, E.D. 09, Kings, New York",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "1b01e2ed-7382-4c41-b8a9-d775c986f899",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York, Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "678ce08f-2baf-4819-9c62-f49b66ba01e4",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "0adb08ff-6123-4963-8392-674968592c07",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "d728163d-e546-472e-95a0-95a8d59353d4",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Brooklyn Assembly District 12, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "0af35764-665c-4d6f-885b-8569c156d5d7",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Brooklyn (Districts 0251-0500), Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "5fa1bcf9-7be8-4863-8164-f0386a28e3c0",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "49c8094d-a518-4b62-b89e-1d9d39ecfd8b",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Assembly District 5, Brooklyn, New York City, Kings, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "6ec4e843-4bf5-4433-851a-55fbb0ddb9fc",
+          "type": "Burial",
+          "date": "1941",
+          "standard_date": "1941",
+          "place": "Holy Cross Cemetery, Brooklyn, Kings (Brooklyn), New York, United States of America",
+          "standard_place": "Holy Cross Cemetery, Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "2d7f7c57-25bb-45c2-898d-734daa25ca7b",
+          "type": "Death",
+          "date": "07 Sep 1941",
+          "standard_date": "7 Sep 1941",
+          "place": "New York City, Queens, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States"
+        },
+        {
+          "id": "92d71680-3abc-4431-a623-6697d262eb71",
+          "type": "Social Program Claim",
+          "date": "24 Oct 1941",
+          "standard_date": "24 Oct 1941"
+        },
+        {
+          "id": "ca3a0580-deae-473a-bf7f-1a2f669598fe",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "456df0a6-d61b-480a-8d7d-8a3b66669aea",
+          "type": "Citizenship",
+          "place": "United States Of America",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "G9VJ-BDS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Richard",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c6d4ebca-18ee-4e2d-8d5d-e3d9bbd739f3",
+          "type": "Birth",
+          "date": "1890",
+          "standard_date": "1890",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "c895eddb-0491-4645-8b1e-2fd02a844d35",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "910933a2-23ce-41f5-aada-66adf121cc00",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Industrial School & Home for Destitute Children New York City Ward 9, Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "145b7051-d5fc-4453-b4ff-3ae36c0ca930",
+          "type": "Death",
+          "date": "1969",
+          "standard_date": "1969"
+        }
+      ]
+    },
+    {
+      "id": "G9VJ-1WS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Mary",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7c266c96-0366-4659-a3a6-fdefdb8ab2a9",
+          "type": "Birth",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "U.S.",
+          "standard_place": "United States"
+        },
+        {
+          "id": "36bfcec1-69e0-4dc4-887c-9bb0b79f6ec2",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "New York, New York, New York, United States",
+          "standard_place": "New York City, New York County, New York, United States"
+        },
+        {
+          "id": "b3f6e45d-3d03-41c1-affa-26632ca2d203",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "75cb72e4-11f0-41d3-8b97-abd36dbe8d53",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ca519c0f-8f30-44ae-b77e-264dd6e04aab",
+          "type": "Marriage",
+          "date": "14 Oct 1898",
+          "standard_date": "14 Oct 1898",
+          "place": "Queens, New York, United States",
+          "standard_place": "Queens, New York, United States"
+        },
+        {
+          "id": "bbc16193-c1ef-4184-a09b-f5f42c915734",
+          "type": "Death",
+          "date": "22 Jun 1933",
+          "standard_date": "22 Jun 1933",
+          "place": "New York City, Queens, New York, United States",
+          "standard_place": "Queens, New York City, New York, United States"
+        },
+        {
+          "id": "792889ed-881f-41c8-abba-e0e6071a43a8",
+          "type": "Burial",
+          "date": "26 Jun 1933",
+          "standard_date": "26 Jun 1933"
+        },
+        {
+          "id": "77235f30-e84e-4b7d-844d-c9626cc427c2",
+          "type": "Residence",
+          "place": "58-08 58th Ave."
+        }
+      ]
+    },
+    {
+      "id": "G9VV-TRM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Fanny",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9ed68799-23ca-4da5-9ea0-8c950a8379f8",
+          "type": "Birth",
+          "date": "2 July 1888",
+          "standard_date": "2 Jul 1888",
+          "place": "Brooklyn, New York City, New York, United States",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        },
+        {
+          "id": "d572026f-1b28-4947-9fbd-e1c35aefb645",
+          "type": "Residence",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28, Kings, New York",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "f529b142-22f3-4762-8d2a-501efac92558",
+          "type": "Event Type",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Brooklyn, Ward 18, E.D. 28",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "5808cf4b-ee67-464b-836f-b33045616131",
+          "type": "Immigration",
+          "date": "1902",
+          "standard_date": "1902"
+        },
+        {
+          "id": "97c07f87-3e42-4943-a5cc-f1220b1c8f20",
+          "type": "Immigration",
+          "date": "1903",
+          "standard_date": "1903"
+        },
+        {
+          "id": "ee62e1a4-3b65-4c88-bf82-d1d210f7fe97",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ed5732b1-9858-4973-acab-e06e2c7a7ae8",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Albion, Oswego, New York, United States",
+          "standard_place": "Albion, Oswego, New York, United States"
+        },
+        {
+          "id": "7d79df7a-d518-4cdb-b81f-582221a86a2c",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "9f178e21-4085-40e4-b219-0c4b3e20497b",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Brooklyn Assembly District 15, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "cf963323-67b6-4fec-917f-9cfa58781dfe",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Brooklyn Assembly District 23, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "865fc4da-1a0f-49ea-b2af-ec8b75aca08a",
+          "type": "Death",
+          "date": "4 July 1966",
+          "standard_date": "4 Jul 1966",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "6eb1977a-e2c1-45e3-b293-aec4fbc31bc4",
+          "type": "Residence",
+          "place": "Brooklyn, New York City, New York, Vereinigte Staaten",
+          "standard_place": "Brooklyn, New York City, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "9VMJ-BLS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Emily Florence",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e229f37b-0930-415f-9299-63fe3704ca1a",
+          "type": "Birth",
+          "date": "28 March 1892",
+          "standard_date": "28 Mar 1892",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "dbe07898-d8a8-43e1-9947-8fa6aea82c79",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Industrial School & Home for Destitute Children New York City Ward 9, Kings, New York, United States",
+          "standard_place": "Kings, New York, United States"
+        },
+        {
+          "id": "8a3afb95-0b67-470a-ae0f-9cfbb504d394",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Janesville, Rock, Wisconsin, United States",
+          "standard_place": "Janesville, Rock, Wisconsin, United States"
+        },
+        {
+          "id": "5e0706b7-0fc9-4b8f-8cad-ca9476518793",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Fulton, Rock, Wisconsin, United States",
+          "standard_place": "Fulton, Rock, Wisconsin, United States"
+        },
+        {
+          "id": "74fbad24-5d0b-45ea-8b72-187e00635168",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Fulton, Rock, Wisconsin, United States",
+          "standard_place": "Fulton, Rock, Wisconsin, United States"
+        },
+        {
+          "id": "1bd73a24-4a2d-4515-8bcf-90c99dc21acb",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Milton Town, Rock, Wisconsin, United States",
+          "standard_place": "Milton, Rock, Wisconsin, United States"
+        },
+        {
+          "id": "d1dd8244-fcbf-4472-96da-aa15f4f2bd3a",
+          "type": "Residence",
+          "date": "7 April 1950",
+          "standard_date": "7 Apr 1950",
+          "place": "Milton, Rock, Wisconsin, United States",
+          "standard_place": "Milton, Rock, Wisconsin, United States"
+        },
+        {
+          "id": "7218093b-927d-4a69-b029-42c5b03127a3",
+          "type": "Residence",
+          "date": "1986",
+          "standard_date": "1986",
+          "place": "Milton, Rock, Wisconsin, United States",
+          "standard_place": "Milton, Rock, Wisconsin, United States"
+        },
+        {
+          "id": "875fed76-891f-4fcd-91fe-37b4709ef21d",
+          "type": "Burial",
+          "date": "November 1986",
+          "standard_date": "Nov 1986",
+          "place": "Milton, Rock, Wisconsin, United States",
+          "standard_place": "Milton, Rock, Wisconsin, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "21 November 1986",
+          "standard_date": "21 Nov 1986",
+          "place": "Fulton, Rock, Wisconsin, United States",
+          "standard_place": "Fulton, Rock, Wisconsin, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LVF8-NQJ",
+      "person2": "L6JB-YHG"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L15S-NBF",
+      "person2": "L15S-ZZ1",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "3 AUG 1846",
+          "standard_date": "3 Aug 1846",
+          "place": "New York City,,NY",
+          "standard_place": "New York City, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L15S-NBF",
+      "child": "LVF8-NQJ"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L15S-ZZ1",
+      "child": "LVF8-NQJ"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "L15S-JB2"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "L15S-JB2"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "L1ML-DX3"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "L1ML-DX3"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "L136-W7R"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "L136-W7R"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "G9VJ-1WS"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "G9VJ-1WS"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "G9VV-GBP"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "G9VV-GBP"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "G9VJ-54P"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "G9VJ-54P"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "G9VV-B66"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "G9VV-B66"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "G9VV-TRM"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "G9VV-TRM"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "G9VJ-BDS"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "G9VJ-BDS"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "LVF8-NQJ",
+      "child": "9VMJ-BLS"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "L6JB-YHG",
+      "child": "9VMJ-BLS"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QQFM-G5G",
+      "title": "Louis Reese, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CK-6VXN : Fri Mar 28 04:57:53 UTC 2025), Entry for Frederick Weitzel, Jr and Jeanette West, 9 July 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CK-6VFV"
+    },
+    {
+      "id": "ST9L-FQ8",
+      "title": "Louis, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CV-TDKT : Sat Mar 29 02:27:10 UTC 2025), Entry for William Peter Friedman and Fannie Reese, 22 February 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CV-TD5Y"
+    },
+    {
+      "id": "S4FX-58L",
+      "title": "Joseph Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WN4-LL4 : Thu Mar 27 00:05:10 UTC 2025), Entry for Joseph Reese and Richard Reese, 27 Oct 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WN4-LL4"
+    },
+    {
+      "id": "S4XD-TGJ",
+      "title": "Lewis Reise, \"New York, State Census, 1892\"",
+      "citation": "\"New York, State Census, 1892\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQSM-LXC : Tue Dec 17 02:38:15 UTC 2024), Entry for Lewis Reise, 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQSM-LXC"
+    },
+    {
+      "id": "S4XZ-434",
+      "title": "Joseph L Reese, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M53W-HCH : Wed Aug 13 18:08:33 UTC 2025), Entry for Joseph L Reese, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M53W-HCH"
+    },
+    {
+      "id": "S4XC-Y68",
+      "title": "Lewis Reese, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CX-S23P : Sun Mar 10 17:48:17 UTC 2024), Entry for Joseph Whelan and May Reese, 14 October 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CX-S2Q6"
+    },
+    {
+      "id": "S4XC-LB7",
+      "title": "Lewis Reese, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CX-SKJL : Sat Mar 09 11:59:00 UTC 2024), Entry for Joseph Whelan and May Reese, 14 October 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CX-SKVH"
+    },
+    {
+      "id": "S4XC-VBV",
+      "title": "Louis Reese, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9N-FWXM : Wed Oct 15 07:29:08 UTC 2025), Entry for Elizabeth Jane Masten and Louis Reese, 27 Jan 1959.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9N-FWX9"
+    },
+    {
+      "id": "S4XC-VZG",
+      "title": "Joseph M Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WN7-W8B : Thu Mar 27 00:02:32 UTC 2025), Entry for Clarence Reese and Joseph M Reese, 14 Feb 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WN7-W81"
+    },
+    {
+      "id": "S4XC-NK4",
+      "title": "Lewis Reese, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CV-XFWG : Thu Apr 03 01:30:30 UTC 2025), Entry for William K Masten and Elizabeth J Reese, 7 July 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CV-XF42"
+    },
+    {
+      "id": "S4XC-66V",
+      "title": "Joseph Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WLQ-KT1 : Thu Mar 27 02:01:06 UTC 2025), Entry for Martin J. Reese and Joseph Reese, 7 Sep 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WLQ-KYM"
+    },
+    {
+      "id": "S4X3-35G",
+      "title": "Lewis Reese, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CV-64HP : Wed Apr 02 12:19:45 UTC 2025), Entry for Lewis Reese and Susan A Smith, 26 March 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CV-64C9"
+    },
+    {
+      "id": "S9WW-HM9",
+      "title": "Lewis J Reese, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC7G-PG2 : Mon Jul 08 14:01:21 UTC 2024), Entry for Lewis M Reese and Eliza J Reese, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC7G-PGG"
+    },
+    {
+      "id": "S9WW-MHV",
+      "title": "Louis Reese, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZDM-ZHZ : Tue Jan 21 11:17:09 UTC 2025), Entry for Louis Reese and Eliza J. Reese, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZDM-ZHD"
+    },
+    {
+      "id": "S9W7-G9M",
+      "title": "Louis Reese, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ6Q-1XV : Mon Jan 20 10:01:11 UTC 2025), Entry for Louis Reese and Laura Reese, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZ6Q-1XV"
+    },
+    {
+      "id": "S9W7-VWP",
+      "title": "Louis Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W2W-NTL : Wed Mar 26 20:29:44 UTC 2025), Entry for Mary Brooks and Louis Reese, 22 Jun 1933.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2W2W-NTG"
+    },
+    {
+      "id": "91MM-Z8Z",
+      "title": "Lewis Reese, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W24-KT5 : Thu Mar 27 01:41:13 UTC 2025), Entry for Lewis Reese and Lewis Reese, 22 Dec 1939.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2W24-KTR"
+    },
+    {
+      "id": "9B11-GQG",
+      "title": "Lewis Reese, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W7S-XCY : Wed Mar 12 01:13:46 UTC 2025), Entry for Emily Reese and Lewis Reese, 28 Mar 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2W7S-XCR"
+    }
+  ]
+}

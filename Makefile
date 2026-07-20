@@ -104,22 +104,40 @@ reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from 
 worktree-link: ## Symlink shared gitignored files (secrets, node_modules) from the primary worktree into this one
 	@scripts/link-worktree.sh
 
-# Symlink our post-checkout hook into the shared .git/hooks (covers every
-# worktree of this clone). Opt-in and per-clone: it touches only local .git
-# state, never core.hooksPath, so it can't disable husky/other hook tooling and
-# is invisible to teammates who don't run it. Refuses to clobber a pre-existing
-# non-symlink hook.
+# Install our shared git hooks into the shared .git/hooks (covers every worktree
+# of this clone): post-checkout auto-links shared files into new worktrees;
+# commit-msg warns when a commit has no human Co-authored-by trailer. Opt-in and
+# per-clone: it touches only local .git state, never core.hooksPath, so it can't
+# disable husky/other hook tooling and is invisible to teammates who don't run
+# it. Refuses to clobber a hook that isn't ours.
+#
+# We copy scripts/git-hooks/shim.sh (a stub that re-execs the tracked hook)
+# rather than symlink the hook itself, so InstallHooks.bat can do the identical
+# thing on Windows, where file symlinks need admin rights. See shim.sh for why.
+# Keep the two installers in step.
+#
+# The `rm -f` before `cp` is load-bearing, not tidiness: upgrading from the old
+# symlink install, `cp` would follow the symlink and write the shim straight into
+# the tracked scripts/git-hooks/<hook> it points at.
 .PHONY: install-hooks
-install-hooks: ## Install the post-checkout hook so new worktrees auto-link shared files (opt-in, per-clone)
+install-hooks: ## Install shared git hooks (post-checkout, commit-msg) — opt-in, per-clone
 	@common=$$(git rev-parse --path-format=absolute --git-common-dir); \
 	 main=$$(dirname "$$common"); \
-	 dst="$$common/hooks/post-checkout"; \
-	 if [ -e "$$dst" ] && [ ! -L "$$dst" ]; then \
-	   echo "install-hooks: $$dst already exists and is not a symlink — not overwriting. Merge manually." >&2; exit 1; \
-	 fi; \
+	 shim="$$main/scripts/git-hooks/shim.sh"; \
+	 [ -f "$$shim" ] || { echo "install-hooks: $$shim not found — check out a branch that has it." >&2; exit 1; }; \
 	 mkdir -p "$$common/hooks"; \
-	 ln -sfn "$$main/scripts/git-hooks/post-checkout" "$$dst"; \
-	 echo "✓ installed post-checkout hook -> $$dst"
+	 for hook in post-checkout commit-msg; do \
+	   dst="$$common/hooks/$$hook"; \
+	   if [ -e "$$dst" ] || [ -L "$$dst" ]; then \
+	     if [ ! -L "$$dst" ] && ! grep -q 'cowork-genealogy managed hook shim' "$$dst" 2>/dev/null; then \
+	       echo "install-hooks: $$dst already exists and is not ours — not overwriting. Merge manually." >&2; exit 1; \
+	     fi; \
+	     rm -f "$$dst"; \
+	   fi; \
+	   cp "$$shim" "$$dst"; \
+	   chmod +x "$$dst"; \
+	   echo "✓ installed $$hook hook -> $$dst"; \
+	 done
 
 # ── Dev (the POC: run a server + a web client in two terminals) ──
 # See DEVELOPMENT.md for the full matrix. The web target must match the server's
@@ -269,6 +287,21 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
+.PHONY: gate-skill
+gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test + holdout (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
+	# Component A of the E->A->B loop (docs/plan/gated-skill-improvement-slice.md).
+	# Runs the mined motivating test + the skill's holdout tests on your working-tree
+	# candidate (one side, mock-backed) and compares to the incumbent scores from the
+	# skill's most recent run-log — the pre-edit `make eval-skill` run you did at
+	# step 4, with human .ann corrections overlaid. Prints a per-dimension comparison
+	# + a LOOKS GOOD / NEEDS YOUR EYES / INCONCLUSIVE signal. Measurement only — a
+	# person adopts. Writes no run-logs, needs no git, never mutates the tree. Apply
+	# the improver's edits to the working-tree SKILL.md FIRST, then gate; DIMENSION
+	# names the failing dimension the edit targets (optional).
+	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007" >&2; exit 1; }
+	@test -n "$(TEST)" || { echo "ERROR: set TEST (the mined test id), e.g. make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007" >&2; exit 1; }
+	cd eval/harness && uv run python skill_gate.py --skill $(SKILL) --test $(TEST) $(if $(DIMENSION),--dimension "$(DIMENSION)",)
+
 .PHONY: eval-timings
 eval-timings: ## Weekly timing review: scan the latest run log per skill, rank the slowest tests + flag why (LONG/RETRY/LOCAL?). Read-only. [TOP=20]
 	# Reads the timing instrumentation already in the run logs — does NOT
@@ -302,6 +335,15 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
 
+.PHONY: e2e-thinking-probe
+e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in ~1 min (needs ANTHROPIC_API_KEY)
+	# Replays the exact delegation message that froze the frederick-munson run
+	# against sonnet-5 under three thinking configs (32k / off / 4k) with a
+	# stubbed tool loop, and reports which RAN AWAY vs ACTED. A one-turn API
+	# probe instead of a 15-min e2e run — settles the thinking-vs-model question.
+	# No MCP/FamilySearch calls; the API key comes from the shell or eval/.env.
+	cd eval/harness && uv run python -m e2e.try_record_extractor_thinking $(if $(MODEL),--model $(MODEL),)
+
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
@@ -310,8 +352,16 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
+	# Reasoning is pinned so runs are reproducible (see the runlog's usage block:
+	# agent_model / subagent_model_override / effort_level / max_output_tokens / cli_version).
+	# Override:
+	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
+	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
+	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
+	# A/B these to find what clears a runaway-thinking subagent freeze
+	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
@@ -363,8 +413,7 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 	# The cheap 2a feedback loop: a SKILL.md edit's effect on generated output
 	# tokens, read from the unit re-run the edit already forces — no e2e run.
 	# Diff leads with "concision" (both-active tests); tests going to 0 output
-	# are activation/abort changes, not concision, and are excluded. See
-	# docs/plan/research-latency-baseline-2026-07-05.md.
+	# are activation/abort changes, not concision, and are excluded.
 	cd eval/harness && uv run python -m skill_latency_report \
 		$(if $(and $(BEFORE),$(AFTER)),--before $(BEFORE) --after $(AFTER),) \
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
@@ -386,6 +435,16 @@ eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Ne
 .PHONY: eval-ui-test
 eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
 	cd eval/app && npm test
+
+.PHONY: feedback-case
+feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]
+	# Wraps scripts/setup-feedback-case.sh (contract: docs/specs/feedback-case-spec.md
+	# §11). Unzips the bundle, git-inits it, writes .feedback-repo-root back to this
+	# checkout, and symlinks the plugin + repo skills in — so the result is a live
+	# research project you open in Claude Code and continue, not an archive.
+	# Windows: run scripts\setup-feedback-case.bat instead.
+	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-case ZIP=~/Downloads/feedback-2026-07-21T09-14-22Z.zip" >&2; exit 1; }
+	scripts/setup-feedback-case.sh $(ZIP) $(DEST) $(if $(FORCE),--force,)
 
 # ── Artifacts (the existing Cowork/desktop deliverables) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
@@ -444,4 +503,7 @@ deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server i
 	# until init_db moves to a release_command (docs/TODOS.md). Secrets +
 	# `fly apps create` are one-time (DEVELOPMENT.md § Deploy to Fly.io).
 	# NOTE: apps/web/dist is baked at build time — redeploy to ship UI changes.
-	fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
+	# GIT_SHA/BUILD_DATE are stamped into feedback bundles (apps/server/app/config.py).
+	fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false \
+	  --build-arg GIT_SHA=$$(git rev-parse --short HEAD) \
+	  --build-arg BUILD_DATE=$$(date -u +%Y-%m-%d)

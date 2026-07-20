@@ -10,8 +10,7 @@ It is the read half of the search/read pair `collections_search` /
 `collection_read`, mirroring `record_search` / `record_read` and
 `person_search` / `person_read`. It was split out of the detail-by-`id`
 mode of the former `place_collections` tool (now `collections_search`) (see
-`docs/specs/collections-search-tool-spec.md` and
-`docs/specs/naming-cleanup-spec.md` §4); `collections_search` now lists
+`docs/specs/collections-search-tool-spec.md`); `collections_search` now lists
 collections for a place (list mode only), and `collection_read` fetches one.
 
 ```

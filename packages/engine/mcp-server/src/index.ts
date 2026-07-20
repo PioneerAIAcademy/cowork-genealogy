@@ -21,6 +21,12 @@ import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js"
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
+import { imageTranscribeTool } from "./tools/image-transcribe.js";
+import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import {
+  configureOpenRouterTool,
+  type ConfigureOpenRouterInput,
+} from "./tools/configure-openrouter.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
@@ -63,10 +69,6 @@ import type { MergeWarningsInput } from "./types/merge-warnings.js";
 import { volumeSearchTool } from "./tools/volume-search.js";
 import type { VolumeSearchInput } from "./types/volume-search.js";
 import {
-  mergeRecordIntoTree,
-  type MergeRecordIntoTreeInput,
-} from "./tools/merge-record-into-tree.js";
-import {
   mergeTreePersons,
   type MergeTreePersonsInput,
 } from "./tools/merge-tree-persons.js";
@@ -90,6 +92,9 @@ import {
   projectContext,
   type ProjectContextInput,
 } from "./tools/project-context.js";
+import { extractionAppend } from "./tools/extraction-append.js";
+import { materializeFacts } from "./tools/materialize-facts.js";
+import type { MaterializeFactsInput } from "./types/materialize-facts.js";
 import { allToolSchemas } from "./tool-schemas.js";
 
 const server = new Server(
@@ -291,6 +296,37 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           { type: "image", data: imageData, mimeType: metadata.mimeType },
           { type: "text", text: JSON.stringify(metadata, null, 2) },
         ],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
+    }
+  }
+  if (request.params.name === "image_transcribe") {
+    try {
+      const args = request.params.arguments as unknown as ImageTranscribeInput;
+      const result = await imageTranscribeTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+        isError: true,
+      };
+    }
+  }
+  if (request.params.name === "configure_openrouter") {
+    try {
+      const args = request.params
+        .arguments as unknown as ConfigureOpenRouterInput;
+      const result = await configureOpenRouterTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -560,20 +596,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
-  if (request.params.name === "merge_record_into_tree") {
+  if (request.params.name === "merge_tree_persons") {
     try {
-      const args = request.params.arguments as unknown as MergeRecordIntoTreeInput;
-      const result = await mergeRecordIntoTree(args);
+      const args = request.params.arguments as unknown as MergeTreePersonsInput;
+      const result = await mergeTreePersons(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
     }
   }
-  if (request.params.name === "merge_tree_persons") {
+  if (request.params.name === "materialize_facts") {
     try {
-      const args = request.params.arguments as unknown as MergeTreePersonsInput;
-      const result = await mergeTreePersons(args);
+      const args = request.params.arguments as unknown as MaterializeFactsInput;
+      const result = await materializeFacts(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -614,6 +650,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as TreeCorrectInput;
       const result = await treeCorrect(args);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "extraction_append") {
+    try {
+      // Lane scoping lives inside extractionAppend, not here — see
+      // ResearchAppendOptions. Dispatch passes only the tool arguments.
+      const args = request.params.arguments as unknown as ResearchAppendInput;
+      const result = await extractionAppend(args);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

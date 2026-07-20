@@ -6,8 +6,7 @@
 > #651 (extractor state diet). This report is the evidence check the
 > plan promised: the five previously-worst e2e scenarios re-run on the
 > post-window architecture (9 runs total), diffed against the July
-> audit's 15 themes (27-scenario baseline,
-> `docs/plan/record-extraction-consolidation-plan.md`). Runs are
+> audit's 15 themes (27-scenario baseline). Runs are
 > ungraded by decision; every status below is grounded in transcripts
 > and tool calls, not judge scores.
 

@@ -373,6 +373,7 @@
         "url_archived": { "type": ["string", "null"] },
         "notes": { "type": ["string", "null"] },
         "transcription": { "type": ["string", "null"] },
+        "image_filename": { "type": ["string", "null"] },
         "log_entry_id": {
           "anyOf": [
             { "type": "string", "pattern": "^log_" },

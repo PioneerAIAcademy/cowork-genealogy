@@ -126,9 +126,13 @@ For skill `<X>` (paths relative to repo root):
    explain-the-why prose — never a new all-caps MUST. Apply the
    **generalization test**: does it read as a *general principle*, or a
    patch to the one failing case? Reject case-patches; an edit that only
-   helps the Flynn scenario is a regression in disguise. Prefer reframing
-   over constriction, and prefer subtraction where an instruction caused
-   wasted work — net length should trend flat or down.
+   helps the Flynn scenario is a regression in disguise. **Rank the
+   qualifying edits by expected impact and propose at most 3 per round** —
+   small rounds stay reviewable and attributable, and each becomes a clean,
+   gate-able (`make gate-skill`) step; list anything beyond the top 3 under
+   "Deferred to next round." Prefer reframing over constriction, and prefer
+   subtraction where an instruction caused wasted work — net length should
+   trend flat or down.
 
 6. **Say how to verify.** Recommend re-running only the affected tests
    (`--test <id>`) while iterating, then the hold-out tests for
@@ -151,7 +155,7 @@ Per failing/partial dimension: test_ids, judge score + rationale, human
 corrected_score + comment, validator failures. Note agreed vs
 judge-disagreed.
 
-## Proposed edits
+## Proposed edits (at most 3, ranked by expected impact)
 For each, an evidence-cited block:
 
 > **Edit (SKILL.md §<section>):** <the proposed prose change, as a diff or
@@ -165,6 +169,11 @@ For each, an evidence-cited block:
 judge-only, a triggering problem (→ description optimizer), a test/scenario
 data gap or fixture/tool-choice issue (→ test author), a rubric/judge issue
 (→ judge-prompt review).>
+
+## Deferred to next round
+<qualifying edits beyond the top 3 — one line each. The per-round cap keeps
+each round small and gate-able; nothing is lost, these are next round's
+candidates.>
 
 ## How to verify
 <which tests to re-run; the hold-out generalization check; the pass/fail
@@ -188,6 +197,11 @@ gate to apply>
 
 - **You never edit files in this mode.** Your tools are Read/Grep/Glob/Bash
   by design. Propose; the pair approves and applies.
+- **At most 3 edits per round.** Rank qualifying edits by expected impact and
+  propose the top ≤3; put the rest under "Deferred to next round." A round
+  should stay small enough that the gate (`make gate-skill`) can attribute a
+  score move to one edit — this is the edit budget (component B of the
+  E→A→B loop, `docs/plan/gated-skill-improvement-slice.md`).
 - **Write surface, when enabled, is `SKILL.md` (+ its `references/`,
   `templates/`, `scripts/`) only** — never `rubric.md`, never the judge
   prompt, never another skill.

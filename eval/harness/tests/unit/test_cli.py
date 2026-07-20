@@ -834,8 +834,8 @@ def test_ctrl_c_keeps_completed_tests_as_scratch_and_exits_130(tmp_path, monkeyp
     """A Ctrl-C part-way through saves the tests that finished as a partial
     scratch run log, never a releasable v{N}, and exits 130.
 
-    See docs/plan/eval-harness-stop-early.md. Concurrency is pinned to 1 so
-    exactly one test completes before the interrupt, deterministically.
+    Concurrency is pinned to 1 so exactly one test completes before the
+    interrupt, deterministically.
     """
     from harness.auth import AuthConfig
 

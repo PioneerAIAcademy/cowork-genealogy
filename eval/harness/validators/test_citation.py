@@ -3,7 +3,6 @@
 citation keeps its `rubric.md` — all three dimensions (Evidence
 Explained compliance, Replication test, Source vs information
 distinction) are pure GPS craft and stay graded by the LLM judge.
-See docs/plan/criteria-demotion-and-rubric-opt-in.md.
 
 This file holds the append-only source-section check (per spec:
 citation never creates new source entries — it refines existing

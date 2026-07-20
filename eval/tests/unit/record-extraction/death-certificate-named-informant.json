@@ -17,15 +17,15 @@
     "scenario": "empty-project-just-created"
   },
   "expected_classifications": [
-    { "record_role": "deceased", "fact_type": "death", "evidence_type": "direct", "informant_proximity": "official_duty" },
+    { "record_role": "deceased", "fact_type": "death", "evidence_type": "direct", "informant_proximity": ["official_duty", "witness"] },
     { "record_role": "deceased", "fact_type": "cause_of_death", "evidence_type": "direct", "informant_proximity": "official_duty" },
     { "record_role": "deceased", "fact_type": "age", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "deceased", "fact_type": "birth", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "deceased", "fact_type": "birthplace", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "father_of_deceased", "fact_type": "name", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "father_of_deceased", "fact_type": "birthplace", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "mother_of_deceased", "fact_type": "name", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
-    { "record_role": "mother_of_deceased", "fact_type": "birthplace", "evidence_type": "indirect", "informant_proximity": "family_not_present" }
+    { "record_role": "deceased", "fact_type": "birth", "attribute": "date", "optional": true, "evidence_type": "indirect", "informant_proximity": ["family_not_present", "researcher"] },
+    { "record_role": "deceased", "fact_type": "birth", "attribute": "place", "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "father_of_deceased", "fact_type": "name", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "father_of_deceased", "fact_type": "birth", "attribute": "place", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "mother_of_deceased", "fact_type": "name", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" },
+    { "record_role": "mother_of_deceased", "fact_type": "birth", "attribute": "place", "optional": true, "evidence_type": "indirect", "informant_proximity": "family_not_present" }
   ],
   "judge_context": [
     "The death certificate names Mary Flynn (wife) as the informant — this should appear in the informant field for facts she reported, not 'unknown'",

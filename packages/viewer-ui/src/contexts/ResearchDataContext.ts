@@ -45,6 +45,9 @@ export interface ResearchDataState {
   submitFeedback: (payload: FeedbackPayload) => Promise<FeedbackResult>
   /** Present only when the transport can describe the feedback bundle. */
   getFeedbackContext?: () => Promise<FeedbackContext>
+  /** Fetch a saved source page-scan as a `data:` URL (Electron). Absent in the
+   *  web client, so treat as optional (no scan shown). */
+  getSourceImage?: (filename: string) => Promise<string | null>
 }
 
 export const ResearchDataContext = createContext<ResearchDataState | null>(null)

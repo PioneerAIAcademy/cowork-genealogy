@@ -8,14 +8,14 @@
     "tags": ["tree-edit", "add-person", "parentchild-relationship", "proof-authorized", "synthetic-id"]
   },
   "input": {
-    "user_message": "tree-edit: add a relationship. Per ps_003 (probable tier), Mary Flynn is Thomas's daughter. Create Mary in the tree with the next synthetic I-prefix id (gender Female, name 'Mary Flynn' as the preferred BirthName) and add a ParentChild relationship from Thomas (I2) to Mary with S1 as the source (page 'dwelling 84, family 91'). Do NOT add any facts to Mary's person record (no Birth fact, no Residence, nothing) — facts come through record-extraction → proof-conclusion. This call creates only the person stub + the ParentChild relationship.",
+    "user_message": "tree-edit: add a relationship. Per ps_003 (probable tier), Mary Flynn is Thomas's daughter. Create Mary in the tree with the next synthetic I-prefix id (gender Female, name 'Mary Flynn' as the preferred BirthName) and add a ParentChild relationship from Thomas (I2) to Mary with S1 as the source (page 'dwelling 84, family 91'). Do NOT add any facts to Mary's person record (no Birth fact, no Residence, nothing) — sourced facts are materialized onto the tree person by person-evidence's materialize_facts (record-extraction is assertion-only), not invented here. This call creates only the person stub + the ParentChild relationship.",
     "scenario": "mid-research-flynn-merge-pending"
   },
   "judge_context": [
     "Should create a new person with the next available I-prefix id. The merge-pending scenario currently has I1, I2, I3, I4 — so the next is I5. Use I5 for Mary",
     "Mary's person record needs: id 'I5', gender 'Female', names (a single BirthName with the next N-prefix id — N6, given 'Mary', surname 'Flynn', preferred: true). Per simplified-gedcomx schema, preferred must be `true` (not `false`) on the one preferred name; secondary names omit the field. No facts required on the person itself — the supporting birth context lives in research.json (a_016)",
     "Should add a ParentChild relationship with the next available R-prefix id (R2 — the scenario currently has R1 only). type 'ParentChild', parent 'I2', child 'I5', sources [{ ref: 'S1', page: 'dwelling 84, family 91' }]",
-    "Should NOT add a Birth fact to Mary directly from raw census data — that's record-extraction's job, not tree-edit's. tree-edit creates the person+relationship; assertions in research.json remain the source of truth for facts",
+    "Should NOT add a Birth fact to Mary directly from raw census data — materializing sourced facts onto a tree person is person-evidence's materialize_facts (record-extraction is assertion-only), not this ad-hoc tree-edit call. tree-edit creates the person stub + the sourced relationship edge; assertions in research.json remain the source of truth for facts",
     "Edit-minimality: no existing person, relationship, fact, or source is modified. I3, I4, and the merge-pending state stay intact (this test does not perform the pending merge)",
     "Should reference ps_003 as the proof authorization in the response — relationship-accuracy.md requires the threshold to be met before writing a relationship",
     "Should call validate_research_schema after the edit to confirm both files remain valid"

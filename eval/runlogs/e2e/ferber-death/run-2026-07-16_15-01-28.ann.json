@@ -1,0 +1,12 @@
+{
+  "annotator": "francis",
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Fully recovered: final tree Death = 11 Mar 1903, Cincinnati, Hamilton, Ohio, sourced from the Ohio county death record (the authoritative original, which names the parents and locks identity). The agent also correctly RESISTED the deliberate distractor — it never reported the widow Emma's 1948 Kentucky death for William (no Kentucky/1948 anywhere in the research). Clean pass on the required finding; proof reached 'proved' defensibly on an original county death register.",
+    "f2": "Bonus burial (Spring Grove Cemetery) not recovered — no Burial fact in the final tree. Expected: the specific cemetery name is off-FamilySearch, so this was authored as bonus."
+  }
+}

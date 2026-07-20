@@ -166,6 +166,82 @@ def test_build_workspace_stages_plugin_agents(tmp_path: Path):
     assert "name: gps-mentor" in staged.read_text(encoding="utf-8")
 
 
+def test_build_workspace_writes_project_effort_level(tmp_path: Path):
+    """effort_level writes a project-level setting the CLI honors (env var doesn't)."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir, effort_level="medium")
+
+    settings = workspace / ".claude" / "settings.json"
+    assert settings.exists()
+    assert json.loads(settings.read_text(encoding="utf-8")) == {"effortLevel": "medium"}
+
+
+def test_build_workspace_no_settings_when_effort_level_unset(tmp_path: Path):
+    """Default (None) writes no settings.json — preserves the CLI default effort."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir)
+
+    assert not (workspace / ".claude" / "settings.json").exists()
+
+
+def test_agent_model_override_rewrites_staged_subagent_pin(tmp_path: Path):
+    """--agent-model rewrites each staged subagent's `model:` frontmatter."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "record-extractor.md").write_text(
+        "---\nname: record-extractor\nmodel: claude-sonnet-5\ntools: []\n---\nbody",
+        encoding="utf-8",
+    )
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(
+        fixture, workspace, skills_dir, agents_dir=agents_dir,
+        agent_model="claude-sonnet-4-6",
+    )
+
+    staged = (workspace / ".claude" / "agents" / "record-extractor.md").read_text(encoding="utf-8")
+    assert "model: claude-sonnet-4-6" in staged
+    assert "claude-sonnet-5" not in staged
+
+
+def test_agent_model_none_leaves_subagent_pin_intact(tmp_path: Path):
+    """Default (None) copies the agent verbatim — its own pin is kept."""
+    fixture = load_fixture(_make_fixture_dir(tmp_path))
+    skills_dir = tmp_path / "skills"
+    skills_dir.mkdir()
+    agents_dir = tmp_path / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "record-extractor.md").write_text(
+        "---\nname: record-extractor\nmodel: claude-sonnet-5\n---\nbody", encoding="utf-8"
+    )
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    build_workspace(fixture, workspace, skills_dir, agents_dir=agents_dir)
+
+    staged = (workspace / ".claude" / "agents" / "record-extractor.md").read_text(encoding="utf-8")
+    assert "model: claude-sonnet-5" in staged
+
+
+def test_override_agent_model_inserts_pin_when_absent():
+    from e2e.orchestrator import _override_agent_model
+
+    out = _override_agent_model("---\nname: x\n---\nbody", "claude-sonnet-4-6")
+    assert "model: claude-sonnet-4-6" in out
+    # unchanged when there is no frontmatter to pin into
+    assert _override_agent_model("no frontmatter", "claude-sonnet-4-6") == "no frontmatter"
+
+
 def test_build_workspace_default_agents_dir_includes_gps_mentor(tmp_path: Path):
     """The default agents_dir points at the real plugin agents/, so the
     shipped gps-mentor agent lands in the workspace with no extra wiring."""

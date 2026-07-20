@@ -21,6 +21,10 @@ before_state/after_state.**
       {"tool": "mcp__server__tool", "args": dict, "matched": {...},
        "response_fixture": str|None, "response": dict}
   - `skill_frontmatter` (dict): convenience copy of before_state's value
+  - `blocked_context_calls` (list): main-thread calls to subagent-only
+      tools that the PreToolUse hook denied, with shape
+      {"tool": "image_read", "args": dict}. Empty = healthy. These calls
+      were blocked, so they never appear in `tool_calls`.
 
 A validator can take any subset of these. Functions are plain pytest
 test functions (raise AssertionError on failure). pytest.skip("...") is
@@ -305,27 +309,37 @@ def test_id_references_resolve(after_state):
 # tree-edit applies user-directed changes; proof-conclusion promotes
 # research → tree when a proof summary reaches `probable` or higher
 # (see research-schema-spec.md §8 "tree.gedcomx.json update timing").
-# person-evidence may also add `persons` — it mints a stub person when a
-# newly discovered persona matches no one in the tree, then links the
-# assertion to it (SKILL.md Step 5; research-schema-spec.md §8 line 656:
-# "Person stubs may be created by person-evidence when a newly discovered
-# person doesn't yet exist in the GedcomX file").
-# record-extraction may also add `persons` AND `relationships` — when the
-# subject appears as a child on a household record (e.g., census), §5d of
-# the record-extraction skill creates minimal person stubs for the
-# subject's siblings (preferred name + gender only, no facts) and the
-# `ParentChild` edges linking each new sibling to the household's existing
-# in-tree parent. This is the upstream half of the warnings-architecture
-# chain — sibling stubs in the tree are what `buildParentMob` discovers
-# and what makes `relativesChildBirthRange40` and `person-evidence` work
-# end-to-end. The skill never adds non-sibling persons, never updates an
-# existing person, and never writes relationships other than ParentChild
-# from an in-tree parent to a new sibling.
+# person-evidence owns the household skeleton in the tree — it may add both
+# `persons` AND `relationships`. When a newly discovered persona matches no
+# one in the tree, it mints the person via `materialize_facts`
+# create-or-enrich carrying the SOURCED evidence facts (not a name-only
+# stub), then links the assertion to it (SKILL.md Step 5;
+# research-schema-spec.md §8 line 656: "Person stubs may be created by
+# person-evidence when a newly discovered person doesn't yet exist in the
+# GedcomX file"). For a household record (e.g., census) it likewise mints
+# each member — the subject's siblings included — with their sourced facts,
+# and writes the parent-child / spouse `relationships` edges via `tree_edit`
+# add_relationship, each edge carrying a source-ref resolved from the
+# relationship assertion's `source_id` (pre-1880 census parent-child edges
+# are indirect → lower ref quality). A `merge_warnings` dry-run coherence
+# gate runs before the household materialization commits. These sibling
+# stubs + edges are the upstream half of the warnings-architecture chain —
+# what `buildParentMob` discovers and what makes `relativesChildBirthRange40`
+# work end-to-end.
+# record-extraction is assertion-only for tree persons and relationships: it
+# writes the S-entry / GedcomX source description and per-persona assertions
+# (including inferred relationship-type assertions) but never mints tree
+# persons, names, or `relationships` edges — which is why it is removed from
+# `persons` and `relationships` below and kept only under `sources`. When the
+# subject appears as a child on a household record it flags the
+# record-vs-tree children discrepancy as an identity question rather than
+# minting a stub. (The retired `add_household_children` op it used to call is
+# gone; the household skeleton is now person-evidence's.)
 TREE_OWNERSHIP_TABLE: dict[str, set[str]] = {
     "persons": {"init-project", "tree-edit", "proof-conclusion",
-                "person-evidence", "record-extraction"},
+                "person-evidence"},
     "relationships": {"init-project", "tree-edit", "proof-conclusion",
-                      "record-extraction"},
+                      "person-evidence"},
     "sources": {"init-project", "tree-edit", "proof-conclusion",
                 "record-extraction"},
 }
@@ -548,10 +562,11 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test):
 # (mcp__genealogy__research_append → research_append).
 PROJECT_WRITER_TOOLS = {
     "research_append",
+    "extraction_append",
     "research_log_append",
     "tree_edit",
     "tree_correct",
-    "merge_record_into_tree",
+    "materialize_facts",
     "merge_tree_persons",
 }
 
@@ -610,4 +625,36 @@ def test_project_file_changes_route_through_writer_tools(
         f"call — direct file writes bypass validation/id-allocation/.bak; "
         f"route through the writer tools "
         f"({', '.join(sorted(PROJECT_WRITER_TOOLS))})"
+    )
+
+
+def test_no_main_thread_subagent_only_calls(blocked_context_calls):
+    """No subagent-only tool was called from the main session.
+
+    `image_read` returns inline base64; in the router's context the bytes
+    accumulate and overflow the transport's ~1 MiB per-turn buffer, crashing
+    the run. Image reads must be delegated to the image-reader subagent, which
+    absorbs the base64 in a throwaway context and returns text.
+
+    This is the deterministic half of what the LLM judge used to grade by
+    transcript inference — badly: across the 2026-07-16 runs it caught the
+    violation roughly 1-in-8, and a run could pass while violating. The
+    PreToolUse hook denies the call and records it here, so the check is
+    mechanical. Same spirit as `expected_classifications`
+    (unit-test-spec.md §5.10): grade deterministically what is unambiguous,
+    leave the judge the genuinely fuzzy parts.
+
+    Rationale + probe evidence: docs/plan/image-read-context-policy.md.
+    """
+    if not blocked_context_calls:
+        return
+
+    offenders = ", ".join(
+        sorted({c.get("tool", "?") for c in blocked_context_calls})
+    )
+    raise AssertionError(
+        f"subagent-only tool(s) called from the main session: {offenders} "
+        f"({len(blocked_context_calls)} call(s), denied by the hook). "
+        f"Delegate to the owning subagent (image reads → @plugin:image-reader) "
+        f"so the base64 never enters the router's context."
     )

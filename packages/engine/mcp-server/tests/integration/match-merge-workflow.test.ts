@@ -1,7 +1,7 @@
 // Integration test for the match + merge workflow (spec §3, §13).
 //
 // Exercises the full deterministic chain at the tool layer:
-//   coherence gate (merge_warnings) -> merge (merge_record_into_tree)
+//   coherence gate (merge_warnings) -> materialize (materialize_facts, per persona)
 // on the canonical census-household scenario, plus a planted-impossibility
 // variant that the gate must block. No network — fully controlled inputs.
 
@@ -11,7 +11,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
-import { mergeRecordIntoTree } from "../../src/tools/merge-record-into-tree.js";
+import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 
 // Tree: John (I1) + Susan (I2, spouse) + William (I3, child), plus the stub
@@ -119,12 +119,76 @@ const minimalResearch = {
 };
 
 // The always-paired merge set (Mary's stub I4 is the survivor for census Mary).
+// This is the pair-set the coherence gate (merge_warnings) reads; the
+// materialization step keys the same pairing by recordRole (below).
 const merges: Array<[string, string]> = [
   ["I1", "C1"],
   ["I2", "C2"],
   ["I3", "C3"],
   ["I4", "C4"],
 ];
+
+// ─── materialization inputs (research.json assertions + tree S-entry) ─────────
+// After the coherence gate clears, person-evidence materializes each linked
+// persona via materialize_facts, which reads the persona's assertions from
+// research.json (NOT a hand-assembled candidate) and resolves each fact's
+// provenance ref through the census S-entry record-extraction persisted.
+
+const RECORD_ID = "CENSUS-1880";
+
+// One census assertion per persona (Mary also links to her stub I4). Shape
+// mirrors research.schema.json's assertion; fact_type/record_role are open
+// (recommended) enums, so `census` + free-form roles validate.
+const censusAssertion = (id: string, role: string) => ({
+  id,
+  source_id: "src_census",
+  record_id: RECORD_ID,
+  record_role: role,
+  record_persona_id: null,
+  fact_type: "census",
+  value: "",
+  date: "1880",
+  place: null,
+  standard_place: null,
+  information_quality: "primary",
+  informant: "unknown",
+  informant_proximity: "official_duty",
+  evidence_type: "direct",
+  extracted_for_question_ids: [] as string[],
+});
+
+const censusSource = {
+  id: "src_census",
+  gedcomx_source_description_id: "S1",
+  citation: "United States Census, 1880",
+  citation_detail: { who: "", what: "", when_created: "", when_accessed: "", where: "", where_within: "" },
+  source_classification: "original",
+  repository: "NARA",
+  access_date: "2026-01-01",
+};
+
+// Each tree person ↔ its census persona role — the pair-set, keyed for
+// materialize_facts by recordRole instead of the candidate persona id.
+const personaRoles: Array<[string, string]> = [
+  ["I1", "head"],
+  ["I2", "spouse"],
+  ["I3", "child-bill"],
+  ["I4", "child-mary"],
+];
+
+// Post-extraction project state: research.json now carries the personas'
+// assertions + the census source, and the tree carries the census S-entry (S1)
+// research_append's composite created. (The tree the gate ran on had no census
+// source yet — the gate is a what-if on the candidate, which brings its own S1.)
+const materializedResearch = {
+  ...minimalResearch,
+  sources: [censusSource],
+  assertions: personaRoles.map(([, role], i) => censusAssertion(`a_${i}`, role)),
+};
+const treeWithSource: SimplifiedGedcomX = {
+  ...startingTree,
+  sources: [{ id: "S1", title: "United States Census, 1880" }],
+};
 
 describe("match + merge workflow (integration)", () => {
   let dir: string;
@@ -142,44 +206,59 @@ describe("match + merge workflow (integration)", () => {
   const readTree = async (): Promise<SimplifiedGedcomX> =>
     JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
 
-  it("clean household: gate passes, then the merge adds Mary once and updates John/Susan/William", async () => {
+  it("clean household: gate passes, then materialization adds Mary once and updates John/Susan/William", async () => {
     await writeProject(startingTree);
 
     // 1. Coherence gate (dry-run) — no blocking errors on a coherent household.
+    //    person-evidence owns this gate now: it runs on the pre-materialization
+    //    tree, BEFORE it commits the household's materialization.
     const gate = await mergeWarnings({ projectPath: dir, candidateGedcomx: censusCandidate, merges });
     expect(gate.ok).toBe(true);
     if (!gate.ok) return;
     expect(gate.warnings.filter((w) => w.severity === "error")).toEqual([]);
 
-    // 2. Execute the same merge.
-    const result = await mergeRecordIntoTree({
-      projectPath: dir,
-      candidateGedcomx: censusCandidate,
-      merges,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    // 2. With the gate clean, person-evidence materializes each linked persona.
+    //    record-extraction has persisted the personas' assertions + the census
+    //    S-entry; materialize_facts reads the assertions (never a hand-assembled
+    //    candidate) and carries the provenance ref onto every fact it writes.
+    await writeFile(join(dir, "research.json"), JSON.stringify(materializedResearch, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeWithSource, null, 2));
+
+    for (const [treeId, role] of personaRoles) {
+      const result = await materializeFacts({
+        projectPath: dir,
+        personId: treeId,
+        recordId: RECORD_ID,
+        recordRole: role,
+      });
+      expect(result.ok).toBe(true);
+    }
 
     const tree = await readTree();
     const byId = new Map((tree.persons ?? []).map((p) => [p.id, p]));
 
-    // Mary appears exactly once (her stub I4 received the census facts — not a
-    // duplicate new person).
+    // Mary appears exactly once (her stub I4 received the census fact via
+    // create-or-enrich — not a duplicate new person).
     const marys = (tree.persons ?? []).filter((p) =>
       (p.names ?? []).some((n) => n.given === "Mary"),
     );
     expect(marys).toHaveLength(1);
     expect(marys[0].id).toBe("I4");
     expect((marys[0].facts ?? []).some((f) => f.type === "Census")).toBe(true);
+    // Every fact materialize_facts authored carries a non-null provenance ref
+    // (inverts the cruz "0/13 facts carried a ref" leak).
+    expect((marys[0].facts ?? []).every((f) => (f.sources ?? []).some((s) => s.ref != null))).toBe(true);
 
-    // John / Susan / William each gained the census fact (survivors updated).
+    // John / Susan / William each gained the sourced census fact (persons enriched).
     for (const id of ["I1", "I2", "I3"]) {
       const facts = byId.get(id)?.facts ?? [];
-      expect(facts.some((f) => f.type === "Census" && f.standard_date === "1880")).toBe(true);
+      const census = facts.find((f) => f.type === "Census" && f.date === "1880");
+      expect(census).toBeTruthy();
+      expect((census?.sources ?? []).some((s) => s.ref != null)).toBe(true);
     }
 
     // No census persona carried in as a stray new person — person count is the
-    // original 4 (the four pairs all folded into existing tree persons).
+    // original 4 (each persona materialized onto an existing tree person).
     expect((tree.persons ?? []).length).toBe(4);
   });
 

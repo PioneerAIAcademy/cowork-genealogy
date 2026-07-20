@@ -30,4 +30,6 @@ export interface AppConfig {
   popStatsUrl?: string;
   learningCenterDir?: string;
   libraryDir?: string;
+  openRouterApiKey?: string;
+  openRouterModel?: string;
 }

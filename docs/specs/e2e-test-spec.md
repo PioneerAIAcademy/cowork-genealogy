@@ -510,9 +510,9 @@ normally has the tool) and keep the list minimal — blocking a tool the
 answer does NOT leak through just handicaps the benchmark.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
-recoverable *from records alone*. The fixture-validity gate (§14) proves
-this — a real run can only pass with these tools blocked, so an
-answer reachable only via the tree will fail and the fixture can't land.
+recoverable *from records alone*. A real validity run (§14) proves
+this — a run can only pass with these tools blocked, so an
+answer reachable only via the tree will fail and the fixture won't validate.
 
 ### 6.2 Provided documents (bundled external evidence)
 
@@ -651,6 +651,43 @@ Single run per test. Pass rates will jitter run-to-run from LLM
 non-determinism; do not over-interpret small deltas in aggregate
 trends.
 
+Two variance sources hide behind that sentence. The **agent run** is the
+dominant one — long-horizon research against live FamilySearch, different
+every time. The **judge** contributes separately, and is the one we can
+actually measure, because `calibrate_judge` replays fixed recorded inputs
+(the committed `final-tree` / `final-research` siblings), so anything that
+moves between two sweeps is the judge alone.
+
+**Measured judge noise floor** — 2026-07-16, 41 annotations / 107 findings,
+`claude-opus-4-8`, two back-to-back sweeps over identical inputs:
+
+| | Sweep A | Sweep B |
+|---|---|---|
+| Per-finding agreement (gating) | 86% (92/107) | 85% (91/107) |
+| Proof-quality (advisory) | 62% (21/34) | 68% (23/34) |
+| Verdict | MEETS | MEETS |
+
+Two findings out of 107 changed judge label, both borderline `true`/`partial`
+calls. Practical reading: **treat per-finding agreement deltas of ≲2 points as
+noise**, and treat the advisory proof-quality axis as noisy enough (6 points
+across two sweeps at n=34, where one finding is worth ~3) that only large
+moves carry signal. The gate holds 5–6 points of margin over the ≥80% target,
+so this jitter does not threaten the verdict. Caveat: two sweeps give a point
+estimate of the noise, not a bound — re-measure before trusting a small delta
+to justify a decision.
+
+**The e2e judge is deliberately not temperature-pinned, and cannot be.**
+Sampling parameters are removed on the Opus 4.7/4.8 family: sending
+`temperature` returns a 400 (`` `temperature` is deprecated for this model ``).
+Pinning would mean freezing this judge on a 4.5/4.6-era model, and the
+measurement above is why that trade isn't worth taking — 1 point of judge
+self-inconsistency sits an order of magnitude below the ~20 points of human
+inter-rater disagreement the ≥80% target is itself set to approximate
+(`calibrate_judge.py::PER_FINDING_TARGET`), and it lands on exactly the
+borderline calls where humans disagree with each other too. The *unit* judge is
+pinned (`harness/judge.py::JUDGE_TEMPERATURE`); its model still accepts the
+parameter.
+
 Before the suite grows beyond the first fixture, sanity-check the
 judge prompt against the first run trace: if the judge's verdict
 diverges from what eyeballing the transcript would say, fix the
@@ -718,7 +755,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 
 | File | Content |
 |------|---------|
-| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics |
+| `run-<timestamp>.json` | Structured result: `verdict`, `stop_reason`, `judge_output`, `usage`, a `tool_calls` array — each entry `{ tool, args, response_summary }` — and `blocked_tree_reads` (denied live-tree reads; see §6.1). `usage` carries tokens / cost; `wall_clock_seconds` (active/monotonic — see §6 "Clocks") plus `real_clock_seconds`, `slept_seconds`, and `judge_seconds`; `resumes` + `session_id` (see §6 "Stall-detect + resume"); the **reasoning config actually used** — `agent_model` (effective parent model), `subagent_model_override` (non-null when `--agent-model` forced every staged subagent off its own `.md` pin, e.g. running the sonnet-5 record-extractor under sonnet-4-6; null = each subagent used its pin), `effort_level` (pinned via a project setting, default `high`), `max_output_tokens` (via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`, null = CLI default), and `cli_version` — so an A/B across model × effort × output-budget is self-describing and a harness-vs-Cowork gap can be checked against a CLI-version delta; and a per-message `timeline` (`[elapsed_seconds, kind]`) + the `caps` used, so a run is self-describing for forensics. Also a `subagents` array — one compact summary per plugin subagent (`record-extractor`, `image-reader`, …) captured from the SDK's ephemeral subagent cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and a `runaway_thinking` flag (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog otherwise stores no subagent transcript, so this makes a subagent freeze diagnosable from the committed runlog rather than only from the local cache (`subagent_capture.py`) |
 | `run-<timestamp>.transcript.md` | Human-readable transcript of the agent's turns |
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
@@ -789,11 +826,11 @@ acting.
 
 - Mocking MCP for e2e tests — live calls only
 - Full GPS-proof grading with human verification — the proof-quality
-  axis (§7) is a single rubric-graded score, not the multi-layer
-  human-verified grading of `gps-test-spec.md`
+  axis (§7) is a single rubric-graded score, not a multi-layer
+  human-verified grade
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (Cheap artifact checks do run in CI — a blocking grading gate plus an
-  advisory fixture-validity report; see §14.)
+  PRs. (One cheap artifact check runs in CI — a blocking grading gate;
+  fixture validity is a non-CI authoring practice, see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
   issues" call, not a permanent one.** Because N=1 + live-FS drift
@@ -812,14 +849,13 @@ acting.
 | Spec | Relationship |
 |------|--------------|
 | `unit-test-spec.md` | Complementary: unit tests cover skills in isolation with mocked MCP; e2e covers the full autonomous flow with live MCP |
-| `gps-test-spec.md` | Different testing approach for the same goal: tests derived from published GPS proof statements, with multi-layer grading and human verification. Held for future work; not active in v1 |
 | `research-schema-spec.md` | Defines the shape of `starting-research.json` |
 | `simplified-gedcomx-spec.md` | Defines the shape of `starting-tree.gedcomx.json` |
 | `eval/CLAUDE.md` | Eval-framework conventions; this spec is the e2e layer |
 
 ---
 
-## 14. Fixture Validity Gate
+## 14. Fixture Validity (recommended, not CI-gated)
 
 A fixture that the agent can never solve is worthless: every failure is
 a false negative on agent capability. Stripping completeness (the
@@ -833,23 +869,21 @@ log under `eval/runlogs/e2e/<slug>/` has `verdict: pass` for it.** For a
 fixture that is *entirely* negative findings (`polarity: "avoid"`),
 "pass" still means the agent behaved correctly — it declined the wrong
 candidates — so the same standard holds. This is the bar for a fixture to
-count as solvable; it is **not** a CI merge blocker (see below), so a
-draft fixture can land with its validity run still owed.
+count as solvable; it is a **recommended authoring practice, not a CI
+merge blocker**, so a draft fixture can land with its validity run still
+owed.
 
-This is surfaced two ways:
+It is a **documentation requirement**, not a CI check: the author runs the
+fixture for real and commits the passing run log alongside it (testing guide
+§5, first-time-setup step 6). PID-less fixtures authored without FamilySearch
+access (`author-e2e-fixture`'s PID-less path) can only be validated later on
+an FS-enabled host, and land unvalidated in the meantime. CI does **not**
+flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
+warning was removed because it re-flagged every un-run fixture in the repo on
+every e2e PR (pure noise).
 
-- **Documentation requirement** — the author runs the fixture for real
-  and commits the passing run log alongside it (testing guide §5,
-  first-time-setup step 6).
-- **CI artifact report** (cheap, no live run) — the `check-e2e-fixtures`
-  workflow runs two checks. Its **fixture-validity** check is **advisory /
-  non-blocking**: it flags any committed `eval/tests/e2e/<slug>/` lacking a
-  committed `eval/runlogs/e2e/<slug>/run-*.json` with `verdict: pass`, as a
-  warning annotation, so a draft fixture can land with its validity run still
-  owed — notably PID-less fixtures authored without FamilySearch access
-  (`author-e2e-fixture`'s PID-less path) whose validity run can only happen on an
-  FS-enabled host. Run it with `--strict` for a hard exit locally. The **same
-  workflow also runs a blocking grading gate** (§7.4): a run log *added in the
-  PR* that produced a final tree must ship its `run-<ts>.ann.json` in the same
-  PR (a treeless crash/skip run is exempt). Both checks read only committed
-  files and do **not** trigger a live e2e run (those stay out of CI per §12).
+The `check-e2e-fixtures` workflow instead runs only the **blocking grading
+gate** (§7.4): a run log *added in the PR* that produced a final tree must
+ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
+exempt). It reads only committed files and does **not** trigger a live e2e
+run (those stay out of CI per §12).

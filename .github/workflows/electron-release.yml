@@ -42,7 +42,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # pnpm BEFORE setup-node so the npm-cache step can find it. Version is read
       # from the root package.json `packageManager` field.

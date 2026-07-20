@@ -2,7 +2,7 @@
 
 **Status:** DEFERRED (recommend *not* doing it as a quick fix; see Recommendation).
 **Date:** 2026-06-21.
-**Context:** [`research-latency-quick-wins-spec.md`](../specs/research-latency-quick-wins-spec.md) §"Out of scope" deferred this; this doc is the captured analysis so it does not have to be re-derived. Cited line numbers are point-in-time (verified 2026-06-21) — confirm against current files before acting.
+**Context:** the research-latency quick-wins work deferred this as out of scope; this doc is the captured analysis so it does not have to be re-derived. Cited line numbers are point-in-time (verified 2026-06-21) — confirm against current files before acting.
 
 ---
 
@@ -41,7 +41,6 @@ Adding an enum **value** is the opposite: validation is allow-list membership (`
 
 Plus **semantic prose that must be hand-written, not just appended to a list**: the §5.6 "Negative evidence / dog not barking" paragraph (`research-schema-spec.md:370`) is the *only* place the negative-family values are disambiguated; it ties `negative` to `record_role:"absent"` + a real `source_id`. A `no_evidence` value needs prose drawing the line between `negative` (meaningful expected-but-absent finding) and `no_evidence` (present but irrelevant), and stating its `record_role`/`source_id` expectations.
 
-Stale-risk duplicate (not runtime): `apps/electron/docs/research-schema-spec.md:59,276,294`.
 
 > **Meta-finding (fixed in this PR):** CLAUDE.md's "three places" rule (the `research_profile`/schema-extension paragraph) was **inaccurate for an enum-value change** — it named `research.schema.json` (wrong file — the enum lives in `enums.schema.json` via `$ref`) and omitted the `packages/schema` copy + the `EvidenceType` TS union. It has been corrected into two checklists (new-field vs. enum-value).
 
@@ -91,7 +90,6 @@ Fixtures don't break (value widening). But:
 - [ ] `packages/schema/src/index.ts` `EvidenceType` union
 - [ ] `packages/engine/mcp-server/src/validation/validator.ts` `CLOSED_ENUMS.evidence_type` Set (+ rebuild `build/`)
 - [ ] `docs/specs/research-schema-spec.md` §4 table (`:69`), §5.6 field row (`:390`), §5.6 negative-evidence prose (`:370` — add the negative-vs-no_evidence distinction + role/source convention)
-- [ ] `apps/electron/docs/research-schema-spec.md` duplicate prose (`:59,294,276`)
 - [ ] Reverse the guards: `record-extraction/SKILL.md`, `assertion-classification/SKILL.md`, `three-layer-model.md`
 - [ ] Add exclusion rules: `proof-conclusion`, `conflict-resolution`, `timeline`, `hypothesis-tracking`
 - [ ] Eval: `record-extraction`/`assertion-classification` `rubric.md`, the two negative-control tests, Python goldens, + a new positive-coverage fixture & validator

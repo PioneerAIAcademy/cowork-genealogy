@@ -66,11 +66,11 @@ Record data arrives in one of four ways:
 4. **Image** — a FamilySearch image ARK (`3:1:.../$dist`) or Image Group
    Number (an imageId like `004022578_00190`). **Do not call `image_read`
    yourself** — delegate to the **`image-reader` subagent** by invoking
-   `@plugin:image-reader`, once per image (it reads exactly one). It
-   absorbs the base64 scan in an isolated context and returns a full
-   text transcription plus an extracted-facts list; the raw image never
-   enters your context (accumulated base64 overflows the transport's
-   ~1 MiB buffer and crashes the run).
+   `@plugin:image-reader`, once per image (it reads exactly one). By
+   default it OCRs the scan cheaply and fast (a hosted Qwen model) and
+   returns a full text transcription plus an extracted-facts list — the
+   raw image never enters your context (accumulated base64 overflows the
+   transport's ~1 MiB buffer and crashes the run).
 
    **`looking_for` is a search key, not the answer.** Phrase it as *who
    or what* to locate — "the christening entry for a Christina born ~Jan
@@ -83,10 +83,20 @@ Record data arrives in one of four ways:
    extraction delegation so it lands in the source's `transcription`
    field.
 
-   **If the reader returns `NOT READ`** (unreachable ARK, image over the
-   transport-safety floor), it includes the verbatim error and a pivot
-   recommendation. Do not treat NOT READ as evidence and do not retry
-   the image — pivot to **indexes** that carry the same facts: the
+   **Pass `project_path` so the scan is saved for the source.** Include
+   `project_path: <your working folder>` in the delegation; the reader's
+   default read then saves the JPEG and reports `Saved image:
+   images/<key>.jpg`. Set the source's **`image_filename`** to that path
+   (alongside `transcription`) in the append, so the viewer can show the
+   scan. Only images a retained source cites are kept — an uncited scan is
+   swept — so there is no cleanup to do.
+
+   **If the reader returns `NOT READ`** (unreachable image, or no OpenRouter
+   key configured for the OCR model), it includes the verbatim error and a
+   pivot recommendation. If the cause is a **missing/rejected OpenRouter
+   key**, that is fixable — set one with `configure_openrouter` and retry,
+   rather than pivoting away. Otherwise do not treat NOT READ as evidence and
+   do not retry the image — pivot to **indexes** that carry the same facts: the
    record's own indexed persona fields (`record_read`), a broader
    `record_search` / `search-full-text`, a Find A Grave entry, or
    related persons' indexed records. Never fill the gap with an assumed
@@ -106,7 +116,8 @@ Record data arrives in one of four ways:
    other record corroborates), treat the indexed value as a lead: route
    to the original register image (`volume_search` +
    `@plugin:image-reader`) to confirm the spelling before it is recorded
-   as established. If the image is unreachable, tell the extractor to
+   as established (the original scan usually settles a suspect index
+   reading). If the image is unreachable, tell the extractor to
    record the name **tentative** — `[?]` in `value`, the doubt in the
    bias notes, original-image confirmation named as the outstanding
    step. (This is how an index OCR slip — "Aadnesen" read as "Nadnesen"
@@ -153,11 +164,21 @@ Frame delegations neutrally — describe the record and the project state;
 NEVER frame the task as "fix" or "correct" the existing tree (corrective
 framing has induced destructive edits).
 
+**Never instruct the agent to create `person_evidence` links or to assign
+an identity confidence** — "link this persona to I3", "confidence should
+be confident". Identity resolution is person-evidence's lane, and a
+delegation that ordered it produced a fabricated link carrying a match
+score no tool had computed. When a record poses an identity question,
+describe the question neutrally and let the agent surface it in its
+return summary; the linking happens later, in person-evidence.
+
 One record per invocation; several records = several invocations, each
-carrying its own content. The agent extracts every assertion, writes the
-source + assertions in one composite `research_append`, creates sibling
-person stubs when the subject is a child on a household record, and
-returns a ≤10-line summary.
+carrying its own content. The agent extracts every assertion (including
+relationship-type assertions), writes the source + assertions in one
+composite `extraction_append`, and returns a ≤10-line summary. It is
+**assertion-only** — it does not write tree persons or edges; the
+household skeleton (member stubs + parent-child edges) is minted by
+person-evidence at link time via `materialize_facts`.
 
 **Match checks belong to the extractor, not you.** When the user asks
 to check FamilySearch matches, relay it as the flag above — never call
@@ -189,10 +210,13 @@ failure — the summary is a progress marker, not a stopping point.
 ## Tool availability
 
 **If `record_read`, `volume_search`, or `research_log_append` are not
-immediately available** (e.g., shown as deferred), call ToolSearch first
-with the fully-qualified names, e.g.
-`query: "select:mcp__genealogy__record_read,mcp__genealogy__volume_search,mcp__genealogy__research_log_append"`
-(adjust the server prefix if yours differs), then proceed. **Never fall
+immediately available** (e.g., shown as deferred), call ToolSearch first.
+**Search by bare tool name, never by a fully-qualified `select:` list** —
+the MCP server prefix differs per deployment (`mcp__genealogy__…` under
+the harnesses, `mcp__remote-devices__Genealogy_Research__…` under Cowork),
+so a hardcoded qualified name resolves to nothing in some environments.
+Use one keyword search per tool, e.g. `query: "+record_read"`, which
+matches whatever prefix this session actually exposes. **Never fall
 back to writing `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass schema validation, id allocation, and the `.bak`
 safety net; persistence belongs to the record-extractor agent's tools.
