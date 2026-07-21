@@ -1,0 +1,26 @@
+{
+  "project": {
+    "id": "rp_william_ferber_parents",
+    "objective": "Who were William H. Ferber's parents?",
+    "subject_person_ids": ["G7JB-YH6"],
+    "status": "active",
+    "created": "2026-07-21",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
