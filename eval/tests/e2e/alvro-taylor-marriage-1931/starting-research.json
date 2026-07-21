@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_alvro_taylor_marriage_1931",
+    "objective": "Whom did Alvro Bair Taylor marry, and when and where did the marriage take place?",
+    "subject_person_ids": [
+      "KWJZ-ZNT"
+    ],
+    "status": "active",
+    "created": "2026-07-13",
+    "updated": "2026-07-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
