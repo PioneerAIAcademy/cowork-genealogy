@@ -98,6 +98,12 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         mcp_servers={
             "genealogy": {"type": "stdio", "command": "node", "args": [_MCP_BUILD]},
         },
+        # Stream partial assistant content. Without it a block reaches the UI only
+        # when its whole message completes, so a long turn — a record-extraction
+        # subagent reasoning before its next tool call — shows nothing at all for
+        # minutes. The deltas are also what keeps the socket's data frames flowing
+        # through the sandbox's edge proxy during that stretch.
+        include_partial_messages=True,
         # ENABLE_TOOL_SEARCH=true eager-loads the genealogy MCP tool schemas
         # instead of deferring them above the bundled CLI's token threshold
         # (the ~38-tool server trips it), which otherwise forces repeated
@@ -113,9 +119,31 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
     return ClaudeAgentOptions(**kwargs)
 
 
-def map_message(message, tool_names: dict[str, str]) -> list[dict]:
+def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | None = None) -> list[dict]:
+    """SDK message → the wire events the UI consumes.
+
+    Two things here are easy to miss:
+
+    **Subagent turns arrive on this same stream**, tagged with
+    ``parent_tool_use_id`` rather than nested. Without reading it, a
+    record-extractor's text/thinking/tool calls are indistinguishable from the
+    main agent's — they land in the same chat bubble and read as if the
+    orchestrator did the work itself. Every event carries an ``agent`` label when
+    it came from a subagent, resolved through ``tasks`` (tool_use_id → the Task's
+    description, learned from task_started).
+
+    **Delta events are transient.** ``*_delta`` and ``task_progress`` are for live
+    display only — the pump must not put them in the replay transcript, or a
+    single streamed turn would evict the whole conversation from it. The
+    canonical, recorded ``text``/``thinking`` block still follows every delta run;
+    the client shows deltas as a preview and commits on the block.
+    """
     from claude_agent_sdk import (
         AssistantMessage,
+        StreamEvent,
+        TaskNotificationMessage,
+        TaskProgressMessage,
+        TaskStartedMessage,
         TextBlock,
         ThinkingBlock,
         ToolResultBlock,
@@ -123,24 +151,72 @@ def map_message(message, tool_names: dict[str, str]) -> list[dict]:
         UserMessage,
     )
 
+    tasks = tasks if tasks is not None else {}
+
+    def _event_for(msg, kind: str, **kw) -> dict:
+        """Attach the originating subagent's label, when there is one."""
+        agent = tasks.get(getattr(msg, "parent_tool_use_id", None) or "")
+        return _event(kind, **kw, **({"agent": agent} if agent else {}))
+
     out: list[dict] = []
-    if isinstance(message, AssistantMessage):
+    if isinstance(message, TaskStartedMessage):
+        label = message.description or message.task_type or "subagent"
+        if message.tool_use_id:
+            tasks[message.tool_use_id] = label
+        out.append(_event("task_started", agent=label, task_id=message.task_id))
+    elif isinstance(message, TaskProgressMessage):
+        usage = message.usage or {}
+        out.append(_event(
+            "task_progress",
+            agent=message.description or tasks.get(message.tool_use_id or "", "subagent"),
+            task_id=message.task_id,
+            last_tool=message.last_tool_name or "",
+            tool_uses=usage.get("tool_uses"),
+            total_tokens=usage.get("total_tokens"),
+            duration_ms=usage.get("duration_ms"),
+        ))
+    elif isinstance(message, TaskNotificationMessage):
+        out.append(_event(
+            "task_done",
+            agent=tasks.pop(message.tool_use_id or "", "subagent"),
+            task_id=message.task_id,
+            status=message.status,
+            summary=str(message.summary or "")[:160],
+        ))
+    elif isinstance(message, StreamEvent):
+        # Raw Anthropic stream event. Only the incremental content deltas are
+        # useful here; block start/stop is implied by the canonical block event.
+        ev = message.event or {}
+        delta = ev.get("delta") or {}
+        if ev.get("type") == "content_block_delta":
+            if delta.get("type") == "text_delta" and delta.get("text"):
+                out.append(_event_for(message, "text_delta", text=delta["text"]))
+            elif delta.get("type") == "thinking_delta" and delta.get("thinking"):
+                out.append(_event_for(message, "thinking_delta", text=delta["thinking"]))
+    elif isinstance(message, AssistantMessage):
         for block in message.content:
             if isinstance(block, TextBlock):
-                out.append(_event("text", text=block.text))
+                out.append(_event_for(message, "text", text=block.text))
             elif isinstance(block, ThinkingBlock):
-                out.append(_event("thinking", text=getattr(block, "thinking", "")))
+                out.append(_event_for(message, "thinking", text=getattr(block, "thinking", "")))
             elif isinstance(block, ToolUseBlock):
                 tool_names[getattr(block, "id", "")] = block.name  # for the matching tool_result
-                out.append(_event("tool_use", tool=block.name, summary=_tool_summary(getattr(block, "input", None))))
+                out.append(_event_for(message, "tool_use", tool=block.name,
+                                      summary=_tool_summary(getattr(block, "input", None))))
     elif isinstance(message, UserMessage):
         # Tool results come back as a UserMessage of ToolResultBlock(s); tag each
         # with the originating tool's name so the UI can mark that chip done.
         for block in (message.content if isinstance(message.content, list) else []):
             if isinstance(block, ToolResultBlock):
                 name = tool_names.get(getattr(block, "tool_use_id", ""), "tool")
-                out.append(_event("tool_result", tool=name, summary=_result_summary(getattr(block, "content", None))))
+                out.append(_event_for(message, "tool_result", tool=name,
+                                      summary=_result_summary(getattr(block, "content", None))))
     return out
+
+
+# Live-only event kinds: shown as they stream, never written to the replay
+# transcript (see map_message's docstring). Shared with sandbox_server's pump.
+TRANSIENT_KINDS = frozenset({"text_delta", "thinking_delta", "task_progress"})
 
 
 def _tool_summary(inp: object) -> str:
@@ -172,6 +248,7 @@ class RealAgent:
         self._session_file = project_dir / ".agent_session"
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
+        self._tasks: dict[str, str] = {}  # Task tool_use_id → subagent label, for attribution
         # Running cumulative cost/usage last seen from the SDK, so we can emit
         # per-turn deltas (see _usage_delta). The SDK's ResultMessage reports
         # session totals, not per-turn values.
@@ -248,6 +325,18 @@ class RealAgent:
             except OSError:
                 pass
 
+    async def interrupt(self) -> bool:
+        """Abort the in-flight turn via the SDK's control channel. The current
+        receive_response() stream then ends on its own, so handle_turn completes
+        and the runner emits turn_done — no task cancellation needed (returning
+        True tells the runner not to cancel). The persistent client stays
+        connected and is reused for the next turn. No live client → nothing to
+        stop, and returning False lets the runner cancel as a fallback."""
+        if self._client is None:
+            return False
+        await self._client.interrupt()
+        return True
+
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         try:
             from claude_agent_sdk import ResultMessage
@@ -262,7 +351,7 @@ class RealAgent:
         try:
             await client.query(text)
             async for message in client.receive_response():
-                for ev in map_message(message, self._tool_names):
+                for ev in map_message(message, self._tool_names, self._tasks):
                     yield ev
                 if isinstance(message, ResultMessage):
                     self._remember_session(message)  # persist for resume on relaunch
