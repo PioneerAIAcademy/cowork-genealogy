@@ -819,18 +819,6 @@
           "date_range": "pre-1811"
         }
       ],
-      "collections": [
-        {
-          "id": "1919699",
-          "title": "Pennsylvania, Probate Records, 1683-1994",
-          "date_range": "1811-1994"
-        },
-        {
-          "id": "1417683",
-          "title": "United States Census, 1880",
-          "date_range": "1880"
-        }
-      ],
       "quirks": [
         "Schuylkill County was formed in 1811 from Berks and Northampton counties; pre-1811 records are filed under the parent counties.",
         "Probate records (wills, administrations) are held by the county Register of Wills, available from 1811 - a primary parentage source naming heirs.",
