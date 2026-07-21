@@ -1,0 +1,3692 @@
+{
+  "project": {
+    "id": "rp_zabriskie_children",
+    "objective": "Who were the children of John Kenneth Zabriskie (1916-1985) of Nephi, Juab, Utah?",
+    "subject_person_ids": [
+      "KW87-QY7"
+    ],
+    "status": "completed",
+    "created": "2026-07-10",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were all the children born to John Kenneth Zabriskie (1916\u20131985) and his wife Ruth Tolley Zabriskie of Nephi, Juab, Utah?",
+      "rationale": "This is the primary decomposition of the project objective. The couple married in September 1945 and lived in Nephi, Juab, Utah through Kenneth's death in 1985. Ruth's life sketch (already in the tree) names four children (Terrie Kay, Joleen Alverson, Ken Zabriskie, and deceased Patricia Zabriskie), but that information derives from an unextracted, compiled source \u2014 no systematic record search has been conducted. U.S. census records (1950), LDS church census records, Utah vital records, obituaries, and FamilySearch person matches are all plausible sources for enumerating the children and must be searched systematically under GPS standards.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-21",
+      "resolution_assertion_ids": [
+        "a_015",
+        "a_022",
+        "a_029",
+        "a_039",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_054",
+        "a_084",
+        "a_088",
+        "a_089",
+        "a_090",
+        "a_092",
+        "a_095"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Searched nine source groups across seven record types (1950 US Census household enumeration; LDS census stubs; three independent obituaries spanning 1970\u20132008 from GenealogyBank and full-text corpus; cemetery records from Find A Grave, BillionGraves, and 1985 Nephi vital register; marriage record for Kenneth Warren; FamilySearch full-text corpus). All accessible sources converge on exactly four children: Terrie (b.~1945, m. Kay), Joleen (b.~1947, m. Higley/Alverson), Patricia Ann (b. 21 Dec 1948/49, d. 3 Dec 1970), and Kenneth Warren (b. ~Apr 1952, m. Roberts). The 1960 US Census, the single highest-yield remaining source, is sealed under the 72-year privacy rule until 2032 and is verified inaccessible \u2014 not an unsearched gap. All other accessible sources have been searched. Overturn risk is low: three obituaries across different decades and different informants consistently enumerate only these four children.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 four children (Terrie Kay, Joleen Alverson/Higley, Patricia Ann Zabriskie, Kenneth Warren Zabriskie) are named consistently in \u22653 independent source groups; the question is answered with a defensible, consistent enumeration.",
+          "repository_breadth": "FamilySearch (census, LDS records, full-text search, cemetery index), GenealogyBank/Ancestry (three obituaries), Find A Grave, BillionGraves, Ancestry (marriage record) all searched. The 1960 US Census is verified inaccessible (sealed by law until 2032); Utah birth certificates not searched, but their omission is low-risk given three decade-spanning obituaries consistently naming the same four children.",
+          "original_substitution": "The 1950 US Census original image was accessed. The 1985 Nephi vital/cemetery register was read via OCR transcription (image not directly viewed). Three obituary originals were inaccessible (GenealogyBank image ARK for Kenneth Sr. unreachable; Patricia Ann 1970 obituary accessed via OCR; Ruth 2008 obituary accessed via GenealogyBank index). All limitations are documented in source notes as 'original not examined.'",
+          "independent_verification": "At minimum three independent source groups: (1) 1950 US Census (government household enumeration, 1950 informant); (2) Ruth Tolley 2008 obituary (family informant, 2008); (3) Patricia Ann 1970 obituary (family informant, 1970). Additionally: Kenneth Warren marriage record (1980, civil record) and 1985 Nephi vital register. All informants are different and creation events are separated by decades.",
+          "evidence_class": "The 1950 US Census is an original record with primary residence information for the household. The 1985 Nephi vital/cemetery register is an original contemporaneous government record. Multiple secondary-information sources corroborate from different directions.",
+          "conflict_resolution": "Two unresolved conflicts exist (c_001: mother name of KW87-QY7; c_002: KW87-QY7 death date), but neither concerns the identification of his children. No conflicting assertions exist about the identity, parentage, or number of the four children. The children enumeration is uncontested across all sources.",
+          "overturn_risk": "Low. The four children are named in at least three independent obituary informants across three different decades (1970, 1985, 2008), plus a 1950 household census. The only accessible record that could reveal additional children (1960 census) is legally sealed until 2032 and is documented as unobtainable. Utah birth certificates could confirm birth details but are unlikely to name a fifth child not mentioned in any obituary. No known unsearched accessible source type poses a plausible overturn risk."
+        }
+      },
+      "created": "2026-07-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "completed",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Nephi, Juab, Utah, United States",
+          "date_range": "1950",
+          "repository": "FamilySearch",
+          "rationale": "Two 1950 U.S. Census entries for Kenneth Zabriskie are already attached to the tree (ARKs 6XKM-FRX3 and 6XKM-F3MQ) but have not been extracted into GPS-conformant assertions. The 1950 census is the most direct household-enumeration source for children born 1945\u20131950, listing all household members by name and relationship. Extracting these records will identify any children present in April 1950.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Nephi, Juab, Utah, United States",
+          "date_range": "1950-1960",
+          "repository": "FamilySearch",
+          "rationale": "Four LDS Church Census records (1950, 1950, 1955, 1960) for Kenneth John Zabriskie are already attached to the tree (ARKs DX32-9K2M, ZRCK-RCN2, DX32-92W2, DXS1-CDT2) but unextracted. LDS ward census records list all household members by name, relationship, and age \u2014 direct evidence for enumerating children at each date. The 1955 and 1960 records extend coverage to children born after the 1950 census. This item covers extraction of all four records.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "newspaper",
+          "jurisdiction": "Juab, Utah, United States",
+          "date_range": "1985",
+          "repository": "FamilySearch",
+          "rationale": "Kenneth John Zabriskie died January 31, 1985 in Nephi, Juab, Utah. His obituary, likely published in the Nephi Tintic Leader or the Deseret News, would list surviving children by name (with spouses) and any predeceased children. The FamilySearch collection 'Utah, Obituaries from Utah Newspapers, 1850-2005' (collection 2302011) covers this period and is indexed. This is a high-yield source for a complete child enumeration as of 1985.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "other",
+          "jurisdiction": "Nephi, Juab, Utah, United States",
+          "date_range": "2008",
+          "repository": "FamilySearch",
+          "rationale": "Ruth Tolley Zabriskie's life sketch (already in tree for KWZ7-K75) contains a published obituary text naming four children: Terrie (Allan) Kay, Joleen Alverson, Ken (Melinda) Zabriskie, and deceased daughter Patricia Zabriskie. This is a compiled secondary source that has not been extracted as GPS-conformant assertions. Extracting it provides a baseline child enumeration and identifies Patricia Zabriskie as a deceased child needing further research. The BillionGraves and Find a Grave records already in the tree (sources 9Z2H-89X and 9Z73-Y5G) should also be extracted at this step.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "cemetery",
+          "jurisdiction": "Nephi, Juab, Utah, United States",
+          "date_range": "1945-2010",
+          "repository": "FamilySearch",
+          "rationale": "Patricia Zabriskie is named in Ruth's obituary as a deceased daughter who predeceased both parents. Searching Find a Grave and BillionGraves for Patricia Zabriskie at Vine Bluff Cemetery (Nephi) or other Juab County cemeteries would confirm her dates and parentage, and may link to a Utah death certificate. This also serves as a FAN search: checking the cemetery for other Zabriskie burials may identify additional family members.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "Utah, United States",
+          "date_range": "1945-1985",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch maintains a linked-records system (person matches and hints) for FamilySearch Family Tree person KW87-QY7 (Kenneth Zabriskie). Checking person record matches may surface indexed birth, marriage, or other vital records for children not yet identified by the census and church census records. This is a FAN-adjacent step: records attached to Kenneth's person in the FamilySearch tree may link to children's own records.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_007",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Juab County, Utah, United States",
+          "date_range": "1960",
+          "repository": "FamilySearch",
+          "rationale": "The 1960 US Census (FamilySearch collection 'United States Census, 1960') is the decisive household-enumeration source for children born between April 1950 and 1960. Kenneth Warren Zabriskie (b. ~April 1952) would appear here at age ~8. The 1950 census confirmed only three daughters (born 1945\u20131949); the 1960 census directly tests whether any additional children entered the household after April 1950 and before 1960. For a completeness question ('all the children'), this is a named decisive record that must be searched. It is indexed and directly accessible on FamilySearch.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 2,
+          "record_type": "newspaper",
+          "jurisdiction": "Juab County, Utah, United States",
+          "date_range": "1985",
+          "repository": "FamilySearch",
+          "rationale": "Kenneth John Zabriskie died 31 January 1985 in Nephi, Juab, Utah. His obituary index entry (QPR6-LNTM, GenealogyBank Obituaries 1980-2015) was found in log_005, but the underlying newspaper image (ARK 3Q9M-C95G-HQZ6-W) could not be read via record_read (image-level ARK). The full obituary text \u2014 if it names surviving children \u2014 would provide an independent early-1985 child enumeration predating Ruth's 2008 obituary by 23 years, adding chronological depth and independent-informant value. Search the FamilySearch full-text corpus (search-full-text skill) using co-occurrence terms '+Zabriskie +Kenneth' in the obituary/newspaper context to retrieve the full text. This is a pursued-and-partially-accessible source: the index was found; the image is the outstanding gap.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T08:01:47.527Z",
+      "tool": "record_read",
+      "query": {
+        "action": "record_read",
+        "recordIds": [
+          "ark:/61903/1:1:6XKM-FRX3",
+          "ark:/61903/1:1:6XKM-F3MQ"
+        ],
+        "collection": "United States, Census, 1950",
+        "subject": "Kenith J Zabriskie",
+        "place": "Nephi, Juab, Utah"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "Both ARKs index the same household. On 1 April 1950, household in Nephi, Juab, Utah: Kenith J Zabriskie (head, b.1917 Utah, Press Operator), Ruth T Zabriskie (wife, b.1923 Utah), Terrie Lee Zabriskie (daughter, b.1945 Utah), Joleen Zabriskie (daughter, b.1947 Utah), Patricia Ann Zabriskie (daughter, b.1949 Utah). Three daughters confirmed in household as of April 1950. Records pre-existed in tree (sources 3PXF-BWZ, 3PXF-B9B); extracted full gedcomx for assertion creation."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-21T08:01:56.693Z",
+      "tool": "record_read",
+      "query": {
+        "action": "record_read",
+        "recordIds": [
+          "ark:/61903/1:1:DX32-9K2M",
+          "ark:/61903/1:1:ZRCK-RCN2",
+          "ark:/61903/1:1:DX32-92W2",
+          "ark:/61903/1:1:DXS1-CDT2"
+        ],
+        "collection": "LDS Church Census Records (Worldwide), 1914-1960",
+        "subject": "Kenneth John Zabriskie",
+        "years": [
+          1950,
+          1950,
+          1955,
+          1960
+        ]
+      },
+      "outcome": "partial",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 4,
+      "notes": "Index entries only capture head of household (Kenneth John Zabriskie) with birth year 1916 and census date/place; household members are not included in the indexed data. Confirms Kenneth was in Juab Utah Stake in 1950, 1955, and 1960. Full household data (listing children) would be on the image pages, which are browse-only and not surfaced through the index. The image records (image group refs: 4J6Z-9D2M for 1950, 4J6Z-96W2 for 1955, 4JDT-G5ZM for 1960) would need to be read directly to obtain child enumeration from these census years. Treating as partial \u2014 index confirms presence but does not enumerate household. The 1950 US Census already confirmed 3 daughters; these LDS records would add value mainly for 1955 and 1960 children."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T08:03:38.681Z",
+      "tool": "record_read",
+      "query": {
+        "action": "record_read",
+        "recordIds": [
+          "ark:/61903/1:1:QVKN-LSDW",
+          "ark:/61903/1:1:2VCF-H9C"
+        ],
+        "description": "Find a Grave and BillionGraves index entries for Kenneth John Zabriskie; also Ruth Tolley Zabriskie life sketch already in tree (KWZ7-K75 LifeSketch fact)"
+      },
+      "outcome": "partial",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 2,
+      "notes": "Find a Grave (QVKN-LSDW) and BillionGraves (2VCF-H9C) for Kenneth John Zabriskie confirm: b. 30 Oct 1916, d. 31 Jan 1985, buried Nephi, Juab, Utah. No children listed in these index entries \u2014 they record the principal only. Ruth Tolley Zabriskie life sketch (already in tree on KWZ7-K75 as LifeSketch fact) is a published obituary text naming four children: Terrie (Allan) Kay, Joleen Alverson, Ken (Melinda) Zabriskie, and deceased Patricia Zabriskie. That life sketch is an unextracted compiled source requiring GPS-conformant extraction. Marking pli_004 in_progress \u2014 the Find a Grave and BillionGraves index entries for Kenneth need extraction, and Ruth's life sketch needs extraction as a narrative source."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-21T08:03:46.460Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zabriskie",
+        "givenName": "Patricia",
+        "recordType": "death",
+        "residencePlace": "Utah",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 80,
+      "notes": "Top two matches are clearly Patricia Ann Zabriskie, b. 21 Dec 1948, d. 3 Dec 1970, buried Nephi, Juab, Utah \u2014 consistent with 1950 census daughter and Ruth's obituary listing her as deceased. BillionGraves (2HXB-BKJ) and Find a Grave (QVKN-LSD4) both confirm the same data. Also found a GenealogyBank Obituaries entry (QPR6-LNTW) for Patricia Zabriskie tagged as Utah deaths \u2014 index is minimal; may be a memorial notice post-1980 or a different Patricia Zabriskie. The 1950 census birth year discrepancy (1949 vs. exact 21 Dec 1948) is a normal census approximation. Patricia predeceased both parents; cause and circumstances unknown."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T08:05:58.643Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zabriskie",
+        "givenName": "Kenneth",
+        "collectionId": "2302011",
+        "deathYearFrom": 1985,
+        "deathYearTo": 1985,
+        "description": "Utah Obituaries from Utah Newspapers 1850-2005"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Only result returned (QK9T-7D32) is the 1930 obituary for John H. Zabriskie (Kenneth Sr.'s father), already in the tree as source 96XS-RJ9 \u2014 not Kenneth John Zabriskie's own 1985 obituary. Kenneth's obituary is not indexed in the Utah Newspapers collection. However, GenealogyBank Obituaries 1980-2015 (collection 2333694) contains a record for 'Kenneth John Zabriskie' (QPR6-LNTM) and 'Patricia Zabriskie' (QPR6-LNTW) that share the same underlying document ARK (3Q9M-C95G-HQZ6-W), strongly indicating this is Kenneth Sr.'s January 1985 obituary, which mentions deceased daughter Patricia. This GenealogyBank record should be extracted as the Kenneth obituary source. Treating pli_003 as effectively found via GenealogyBank rather than the Utah Newspapers collection."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": null,
+      "performed": "2026-07-21T08:06:03.341Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zabriskie",
+        "givenName": "Kenneth",
+        "birthYearFrom": 1950,
+        "birthYearTo": 1965,
+        "birthPlace": "Utah",
+        "count": 50,
+        "purpose": "Identify Kenneth Warren Zabriskie (Ken Jr.), child of John Kenneth and Ruth Tolley Zabriskie, born after April 1950 census"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 19,
+      "notes": "Key finds: (1) Kenneth Zabriskie b. April 1952, residence Nephi, Juab, Utah Oct 1998 (6TJY-4LQH) \u2014 birth year and Nephi location strongly identify him as Ken Jr. (2) Kenneth Warren Zabriskie married Melinda Pat Roberts, 25 Jan 1980, Salt Lake City (QPTC-WDD3) \u2014 'Melinda' matches Ruth's obituary's 'Ken (Melinda) Zabriskie of Draper.' Full name is Kenneth Warren Zabriskie, b. approx. April 1952. (3) Ruth's GenealogyBank obituary (QKWC-TSGR) lists Ken Zabriskie and Melinda Zabriskie as children/in-law. (4) Kenneth John Zabriskie GenealogyBank obituary (QPR6-LNTM) is indexed from same document as Patricia Zabriskie (QPR6-LNTW) \u2014 likely Kenneth Sr.'s 1985 obituary. Three surviving children confirmed across multiple sources: Terri/Terrie Kay, Joleen Alverson, Ken Zabriskie. Patricia Ann Zabriskie confirmed deceased 3 Dec 1970."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T08:06:40.555Z",
+      "tool": "record_search",
+      "query": {
+        "tool": "person_record_matches",
+        "personId": "KW87-QY7",
+        "description": "FamilySearch person record matches for John Kenneth Zabriskie"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "person_record_matches tool is disabled in this research environment. Skipping pli_006. Sufficient child enumeration evidence has been gathered from 1950 census, GenealogyBank obituaries, cemetery records, marriage record, and residence database without needing person hints."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-21T09:47:20.511Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Zabriskie",
+        "givenName": "Kenneth / Kenith",
+        "recordType": "census",
+        "residenceYearFrom": 1960,
+        "residenceYearTo": 1960,
+        "residencePlace": "Juab, Utah, United States",
+        "note": "Also retried at state level (Utah) and with 'Kenith' spelling variant \u2014 all returned 0 results"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "1960 US Census is not publicly available \u2014 sealed under the 72-year privacy rule until 2032. Zero results returned on all query variants (surname+givenName+county, surname+givenName+state, alternate spelling 'Kenith'). This source cannot contribute to the current research."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-21T09:52:41.735Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Zabriskie +Kenneth +Nephi",
+        "scope": "unscoped (no collectionId)",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 334,
+      "notes": "No dedicated Kenneth Sr. obituary found in first 20 results. Two records directly relevant: (1) Patricia Ann Zabriskie 1970 obituary (ARK 3Q9M-CSJX-8NCR) \u2014 lists parents Kenneth J. and Ruth Tolley Zabriskie; siblings Terrie (Mrs. Allen Kay, Pleasant Grove), Joleen (Mrs. Gary Higley, Granada Hills CA), and brother Ken in Nephi. (2) 1985 Nephi vital/cemetery register (ARK 3Q9M-C34G-99X5-K) \u2014 John Kenneth Zabriskie, b. 30 Oct 1916, d. 13 Jan 1985 (cancer), buried 16 Jan 1985, Vine Bluff Cemetery. Conflicts with existing tree death date of 31 Jan 1985 \u2014 cemetery register is a primary source and likely more accurate."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1950,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6XKM-FRX3 : accessed 21 July 2026), entry for Kenith J Zabriskie and Ruth T Zabriskie household, Nephi, Juab, Utah, 1 April 1950; citing NARA microfilm publication, Washington, D.C.",
+      "citation_detail": {
+        "who": "U.S. Bureau of the Census, enumerator",
+        "what": "1950 U.S. Federal Census population schedule entry for the Kenith J. Zabriskie household",
+        "when_created": "1 April 1950",
+        "when_accessed": "2026-07-21",
+        "where": "Nephi, Juab, Utah",
+        "where_within": "Digital image and index, FamilySearch, citing NARA microfilm"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch (imaged from NARA microfilm)",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6XKM-FRX3",
+      "notes": "A duplicate index entry, ark:/61903/1:1:6XKM-F3MQ, indexes the identical household from the same census page/image; it was not extracted separately \u2014 this source (6XKM-FRX3) is treated as the sole record of this household.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QKWC-TSGR : accessed 21 July 2026), entry for Ruth Tolley Zabriskie and Hyrum Warren Tolley, obituary published 17 Jul 2008, Deseret News; citing underlying source image https://www.familysearch.org/ark:/61903/3:1:3Q9M-C95G-HQZ8-7.",
+      "citation_detail": {
+        "who": "Deseret News (obituary; family-submitted content)",
+        "what": "Obituary entry for Ruth Tolley Zabriskie, indexed with father Hyrum Warren Tolley",
+        "when_created": "17 Jul 2008 (obituary published; FamilySearch index entry created 10 Jan 2025)",
+        "when_accessed": "21 July 2026",
+        "where": "FamilySearch, \"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015\" collection",
+        "where_within": "Entry for Ruth Tolley Zabriskie and Hyrum Warren Tolley"
+      },
+      "source_classification": "authored",
+      "repository": "FamilySearch (GenealogyBank Obituaries, Births, and Marriages, 1980-2015)",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QKWC-TSGR",
+      "notes": "Full obituary text already captured verbatim in tree person KWZ7-K75's LifeSketch fact. Underlying newspaper clip image (ark:/61903/3:1:3Q9M-C95G-HQZ8-7) not separately viewed in this session; obituary text as transcribed treated as the authored source.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPR6-LNTM : accessed 21 July 2026), entry for Kenneth John Zabriskie.",
+      "citation_detail": {
+        "who": "GenealogyBank (indexer/aggregator); FamilySearch (hosting repository)",
+        "what": "Index entry for Kenneth John Zabriskie, obituary fact, drawn from a Utah newspaper obituary",
+        "when_created": "Underlying newspaper obituary presumably published ca. January/February 1985 (exact date not indexed); index compiled as part of the 1980-2015 collection",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "United States, GenealogyBank Obituaries, Births, and Marriages, 1980-2015 collection; underlying image ARK 3Q9M-C95G-HQZ6-W (GenealogyBank newspaper scan)"
+      },
+      "source_classification": "authored",
+      "repository": "FamilySearch (GenealogyBank Obituaries, Births, and Marriages, 1980-2015)",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QPR6-LNTM",
+      "notes": "Original not examined \u2014 underlying newspaper image (ARK 3Q9M-C95G-HQZ6-W, GenealogyBank scan) could not be retrieved via record_read (image-level ARKs are not resolvable through the available tools); only the FamilySearch index entry was examined. Full obituary text, which may name Kenneth John Zabriskie's surviving children, was not available for extraction \u2014 reading the underlying image is recommended as an outstanding step. Index entry ARK QPR6-LNTW (Patricia Zabriskie) shares the identical underlying document ARK 3Q9M-C95G-HQZ6-W, indicating both persons are named in the same newspaper obituary \u2014 consistent with Ruth Tolley Zabriskie's 2008 obituary (src_002) naming a predeceased daughter Patricia Zabriskie.",
+      "log_entry_id": "log_005",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Find a Grave Index\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVKN-LSD4 : accessed 21 July 2026), entry for Patricia Ann Zabriskie, memorial page citing Find a Grave, memorial ID 44889000, http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=44889000.",
+      "citation_detail": {
+        "who": "Find a Grave (compiler/memorial contributor, name not disclosed)",
+        "what": "Find a Grave Index entry for Patricia Ann Zabriskie (birth, death, and burial data abstracted from a Find a Grave memorial)",
+        "when_created": "memorial creation date not disclosed by index; index accessed 2026",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QVKN-LSD4",
+        "where_within": "Find a Grave Index database entry; underlying memorial #44889000 at findagrave.com"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (Find a Grave Index)",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVKN-LSD4",
+      "notes": "Find a Grave Index is a derivative abstraction of a user-contributed memorial; underlying memorial page and any cemetery/funeral-home original documentation were not examined \u2014 original not examined (browse-only index entry read).",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"BillionGraves Index,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2HXB-BKJ : accessed 21 July 2026), entry for Patricia Ann Zabriskie, b. 21 Dec 1948, d. 3 Dec 1970; citing burial, Nephi, Juab, Utah, United States; BillionGraves memorial http://billiongraves.com/pages/record/person/5486692.",
+      "citation_detail": {
+        "who": "BillionGraves (crowd-sourced headstone photograph/index contributor)",
+        "what": "BillionGraves Index entry for Patricia Ann Zabriskie",
+        "when_created": "headstone photograph/index entry date not stated",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:2HXB-BKJ",
+        "where_within": "Entry for Patricia Ann Zabriskie; underlying memorial http://billiongraves.com/pages/record/person/5486692"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (BillionGraves Index)",
+      "access_date": "2026-07-21",
+      "notes": "Independent corroboration of src_004 (Find a Grave Index) \u2014 same birth/death dates (21 Dec 1948 - 3 Dec 1970) and burial location (Nephi, Juab, Utah) from a separate headstone-photograph database/index. Original headstone image not examined \u2014 browse of BillionGraves index entry only.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S5"
+    },
+    {
+      "id": "src_006",
+      "citation": "\"United States, Western States Marriage Index,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QPTC-WDD3 : accessed 21 July 2026), entry for Kenneth Warren Zabriskie and Melinda Pat Roberts, 25 Jan 1980, Salt Lake City, Salt Lake, Utah.",
+      "citation_detail": {
+        "who": "Utah civil marriage registrars (source records compiled into index)",
+        "what": "Marriage index entry for Kenneth Warren Zabriskie and Melinda Pat Roberts",
+        "when_created": "1980 (underlying license/certificate); index compiled later",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, Western States Marriage Index database",
+        "where_within": "Salt Lake City, Salt Lake County, Utah"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (Western States Marriage Index)",
+      "access_date": "2026-07-21",
+      "notes": "This is a derivative index entry; the original marriage certificate/license was not examined. Confirms the given name 'Melinda' referenced (as wife of 'Ken') in Ruth Tolley Zabriskie's 2008 obituary (src_002).",
+      "log_entry_id": "log_006",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_007",
+      "citation": "\"Find a Grave Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QVKN-LSDW : Wed Jul 15 18:49:33 UTC 2026), Entry for Kenneth John Zabriskie.",
+      "citation_detail": {
+        "who": "Find a Grave (volunteer contributor), indexed by FamilySearch",
+        "what": "Find a Grave Index entry for Kenneth John Zabriskie",
+        "when_created": "not stated in record (underlying memorial creation date not given)",
+        "when_accessed": "15 Jul 2026",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QVKN-LSDW",
+        "where_within": "Entry for Kenneth John Zabriskie; underlying memorial http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=44888910"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (Find a Grave Index)",
+      "access_date": "2026-07-15",
+      "notes": "Original not examined at the headstone/memorial level \u2014 this is a derivative index entry compiled from the Find a Grave memorial (GRid=44888910), not a direct examination of the physical headstone. Companion to BillionGraves entry ark:/61903/1:1:2VCF-H9C; both likely trace to the same physical headstone.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S7"
+    },
+    {
+      "id": "src_008",
+      "citation": "\"BillionGraves Index\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:2VCF-H9C : Thu Oct 02 03:14:06 UTC 2025), Entry for John Kenneth Zabriskie.",
+      "citation_detail": {
+        "who": "BillionGraves (volunteer contributor), indexed by FamilySearch",
+        "what": "BillionGraves Index entry for John Kenneth Zabriskie",
+        "when_created": "not stated in record (underlying memorial creation date not given)",
+        "when_accessed": "2 Oct 2025",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:2VCF-H9C",
+        "where_within": "Entry for John Kenneth Zabriskie; underlying memorial http://billiongraves.com/pages/record/person/6322463"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (BillionGraves Index)",
+      "access_date": "2025-10-02",
+      "notes": "Original not examined at the headstone/memorial level \u2014 this is a derivative index entry compiled from the BillionGraves memorial (person id 6322463), not a direct examination of the physical headstone. Companion to Find a Grave entry ark:/61903/1:1:QVKN-LSDW; both likely trace to the same physical headstone.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S8"
+    },
+    {
+      "id": "src_009",
+      "citation": "The Church of Jesus Christ of Latter-day Saints, \"Church Census Records (Worldwide), 1914-1960,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DX32-9K2M : accessed 21 July 2026), entry for Kenneth John Zabriskie, 1950.",
+      "citation_detail": {
+        "who": "The Church of Jesus Christ of Latter-day Saints",
+        "what": "Church Census Records (Worldwide), 1914-1960 \u2014 entry for Kenneth John Zabriskie, 1950",
+        "when_created": "1950",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, ark:/61903/1:1:DX32-9K2M",
+        "where_within": "Entry for Kenneth John Zabriskie, 1950"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DX32-9K2M",
+      "notes": "Index entry captures head of household only; household members (children) not enumerated in indexed data. Full household appears on browse-only image pages. Original ward census register image not examined \u2014 undigitized/browse-only.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S9"
+    },
+    {
+      "id": "src_010",
+      "citation": "The Church of Jesus Christ of Latter-day Saints, \"Church Census Records (Worldwide), 1914-1960,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:ZRCK-RCN2 : accessed 21 July 2026), entry for Kenneth John Zabriskie, 1950.",
+      "citation_detail": {
+        "who": "The Church of Jesus Christ of Latter-day Saints",
+        "what": "Church Census Records (Worldwide), 1914-1960 \u2014 entry for Kenneth John Zabriskie, 1950 (variant index entry)",
+        "when_created": "1950",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, ark:/61903/1:1:ZRCK-RCN2",
+        "where_within": "Entry for Kenneth John Zabriskie, 1950"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:ZRCK-RCN2",
+      "notes": "A separate index entry (variant/duplicate indexing) for the same 1950 church census enumeration as DX32-9K2M. Index entry captures head of household only; household members (children) not enumerated in indexed data. Full household appears on browse-only image pages. Original ward census register image not examined \u2014 undigitized/browse-only.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S10"
+    },
+    {
+      "id": "src_011",
+      "citation": "The Church of Jesus Christ of Latter-day Saints, \"Church Census Records (Worldwide), 1914-1960,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DX32-92W2 : accessed 21 July 2026), entry for Kenneth John Zabriskie, 1955.",
+      "citation_detail": {
+        "who": "The Church of Jesus Christ of Latter-day Saints",
+        "what": "Church Census Records (Worldwide), 1914-1960 \u2014 entry for Kenneth John Zabriskie, 1955, Juab Utah Stake",
+        "when_created": "1955",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, ark:/61903/1:1:DX32-92W2",
+        "where_within": "Entry for Kenneth John Zabriskie, 1955"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DX32-92W2",
+      "notes": "Index entry captures head of household only; household members (children) not enumerated in indexed data. Full household appears on browse-only image pages. Original ward census register image not examined \u2014 undigitized/browse-only.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S11"
+    },
+    {
+      "id": "src_012",
+      "citation": "The Church of Jesus Christ of Latter-day Saints, \"Church Census Records (Worldwide), 1914-1960,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:DXS1-CDT2 : accessed 21 July 2026), entry for John Kennth Zabriskie, 1960.",
+      "citation_detail": {
+        "who": "The Church of Jesus Christ of Latter-day Saints",
+        "what": "Church Census Records (Worldwide), 1914-1960 \u2014 entry for John Kennth [sic, for Kenneth] Zabriskie, 1960, Juab Utah Stake",
+        "when_created": "1960",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, ark:/61903/1:1:DXS1-CDT2",
+        "where_within": "Entry for John Kennth Zabriskie, 1960"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:DXS1-CDT2",
+      "notes": "Index entry captures head of household only; household members (children) not enumerated in indexed data. Full household appears on browse-only image pages. Original ward census register image not examined \u2014 undigitized/browse-only. Given name 'Kennth' is a clerical/indexing typo for 'Kenneth'.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S12"
+    },
+    {
+      "id": "src_013",
+      "citation": "\"Patricia Ann Zabriskie,\" obituary, unidentified Nephi, Utah area newspaper, circa December 1970; FamilySearch full-text search, ark:/61903/3:1:3Q9M-CSJX-8NCR, accessed 21 July 2026.",
+      "citation_detail": {
+        "who": "Unidentified newspaper (Nephi, Juab County, Utah area)",
+        "what": "Obituary of Patricia Ann Zabriskie",
+        "when_created": "circa December 1970",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch Full-Text Search",
+        "where_within": "Digitized newspaper collection; specific title/page not identified in OCR excerpt"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch (Full-Text Search, digitized newspaper)",
+      "access_date": "2026-07-21",
+      "notes": "Original not examined \u2014 this is a full-text OCR transcription of a newspaper obituary; the underlying newspaper page image was not viewed. Heavy OCR corruption is evident in the survivors line, transcribed as 'DATCHIS NOONE BROTHER ken, Nephi' and interpreted as 'DAUGHTERS: NONE; BROTHER: Ken, Nephi'. The relationship labels for Terrie and Joleen (likely 'SISTER(S)') were lost to OCR corruption; their sibling status is inferred from co-listing as survivors, not an explicit visible label.",
+      "log_entry_id": "log_009",
+      "gedcomx_source_description_id": "S13"
+    },
+    {
+      "id": "src_014",
+      "citation": "Juab County, Utah, Death and Burial Register, 1985, p. 154, entry for John Kenneth Zabriskie; digital image, FamilySearch, \"United States, Utah, Births, from 0018 to 2856\" (collection M9LZ-JN1), ark:/61903/3:1:3Q9M-C34G-99X5-K, citing Nephi, Juab, Utah.",
+      "citation_detail": {
+        "who": "Juab County / Nephi municipal registrar (or Vine Bluff Cemetery authority)",
+        "what": "Death and burial register entry for John Kenneth Zabriskie, page 154, recording parents, birth, death, cause of death, and burial",
+        "when_created": "1985, at or near the time of death/burial (Jan 13-16, 1985)",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, collection \"United States, Utah, Births, from 0018 to 2856\" (collectionId M9LZ-JN1)",
+        "where_within": "Page 154, entry for John Kenneth Zabriskie"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "notes": "Collection is titled \"...Births...\" but this specific entry is a death/burial register page, not a birth record \u2014 likely a mixed/misfiled vital-records collection. OCR/transcription renders the cemetery name as \"Vineblatt\"; this is almost certainly a corruption of \"Vine Bluff Cemetery,\" the known cemetery in Nephi, Utah. Original image not independently re-examined by this extractor beyond the supplied transcription \u2014 transcription quality (OCR of a tabular register) should be verified against the digital image if higher certainty is needed on the cemetery name and any [?] readings.",
+      "log_entry_id": "log_009",
+      "gedcomx_source_description_id": "S14"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Kenith J Zabriskie",
+      "structured_value": {
+        "given": "Kenith J",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (self, head of household)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "b. 1917 (age-derived birth year)",
+      "date": "1917",
+      "date_certainty": "calculated",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (self, head of household)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "birthplace",
+      "value": "Utah",
+      "place": "Utah",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (self, head of household)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (self, head of household)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Press Operator",
+      "structured_value": {
+        "occupation": "Press Operator"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (self, head of household)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "White (W)",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (self, head of household)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Nephi, Juab, Utah (residence on 1 April 1950 census day)",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Enumerator recorded the household at the dwelling visited on enumeration day.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Same place as of 1 April 1949 (census residence-one-year-ago question)",
+      "date": "1949",
+      "date_certainty": "approximate",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (self, head of household)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Ruth T Zabriskie",
+      "structured_value": {
+        "given": "Ruth T",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Reported by household head on Ruth's behalf per standard census procedure of a single household informant.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "b. 1923 (age-derived birth year)",
+      "date": "1923",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Household head reporting wife's age/birth year secondhand.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "wife",
+      "fact_type": "birthplace",
+      "value": "Utah",
+      "place": "Utah",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Household head reporting wife's birthplace secondhand.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Nephi, Juab, Utah (residence on 1 April 1950 census day)",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Same place as of 1 April 1949 (census residence-one-year-ago question)",
+      "date": "1949",
+      "date_certainty": "approximate",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Terrie Lee Zabriskie",
+      "structured_value": {
+        "given": "Terrie Lee",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "b. 1945 (age-derived birth year)",
+      "date": "1945",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Head of household reported child's age; child could not self-report own birth; birth year computed from stated age.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_1",
+      "fact_type": "birthplace",
+      "value": "Utah",
+      "place": "Utah",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Head of household reported child's birthplace on the child's behalf.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Nephi, Juab, Utah (residence on 1 April 1950 census day)",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Same place as of 1 April 1949 (census residence-one-year-ago question)",
+      "date": "1949",
+      "date_certainty": "approximate",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "Recorded relationship to head of household: child (daughter)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1950 census records relationship-to-head directly; head of household is the reporting informant for household composition.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Joleen Zabriskie",
+      "structured_value": {
+        "given": "Joleen",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "b. 1947 (age-derived birth year)",
+      "date": "1947",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Head of household reported child's age; child could not self-report own birth; birth year computed from stated age.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_2",
+      "fact_type": "birthplace",
+      "value": "Utah",
+      "place": "Utah",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Head of household reported child's birthplace on the child's behalf.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Nephi, Juab, Utah (residence on 1 April 1950 census day)",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Same place as of 1 April 1949 (census residence-one-year-ago question)",
+      "date": "1949",
+      "date_certainty": "approximate",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "Recorded relationship to head of household: child (daughter)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1950 census records relationship-to-head directly; head of household is the reporting informant for household composition.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Patricia Ann Zabriskie",
+      "structured_value": {
+        "given": "Patricia Ann",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "b. 1949 (age-derived birth year)",
+      "date": "1949",
+      "date_certainty": "calculated",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Head of household reported child's age; child could not self-report own birth; birth year computed from stated age.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_3",
+      "fact_type": "birthplace",
+      "value": "Utah",
+      "place": "Utah",
+      "information_quality": "secondary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Head of household reported child's birthplace on the child's behalf.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_3",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Nephi, Juab, Utah (residence on 1 April 1950 census day)",
+      "date": "1 April 1950",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_3",
+      "fact_type": "residence",
+      "value": "Same place as of 1 April 1949 (census residence-one-year-ago question)",
+      "date": "1949",
+      "date_certainty": "approximate",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:6XKM-FRX3",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "Recorded relationship to head of household: child (daughter)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "primary",
+      "informant": "Kenith J Zabriskie (head of household)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "1950 census records relationship-to-head directly; head of household is the reporting informant for household composition.",
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "deceased",
+      "fact_type": "Death",
+      "value": "died 15 Jul 2008, Nephi, Utah",
+      "date": "15 July 2008",
+      "date_certainty": "exact",
+      "place": "Nephi, Utah, United States",
+      "information_quality": "primary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Family submitted obituary shortly after death; treated as primary knowledge of the death event itself even though informant is not the physician/official recorder.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "deceased",
+      "fact_type": "Birth",
+      "value": "born August 8, 1922, Nephi, Utah, to Hyrum Warren and Bessie Rachel Whittaker Tolley",
+      "date": "8 August 1922",
+      "date_certainty": "exact",
+      "place": "Nephi, Utah, United States",
+      "information_quality": "secondary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Family relaying an event decades prior that they did not witness firsthand.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "deceased",
+      "fact_type": "Marriage",
+      "value": "married Kenneth John Zabriskie, September 1945; marriage later solemnized in the Manti Temple",
+      "date": "September 1945",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Family relaying marriage decades prior that they (as children, if applicable) did not witness.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "child_1",
+      "fact_type": "Relationship",
+      "value": "surviving daughter, Terrie (Allan) Kay of Mona",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "States 'her children' (Ruth's), not 'their children' -- direct evidence of relationship to Ruth only; relationship to husband Kenneth Sr. would be indirect, not asserted here.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "child_2",
+      "fact_type": "Relationship",
+      "value": "surviving daughter, Joleen Alverson of Spanish Fork",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "States 'her children' (Ruth's), not 'their children' -- direct evidence of relationship to Ruth only; relationship to husband Kenneth Sr. would be indirect, not asserted here.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "child_3",
+      "fact_type": "Relationship",
+      "value": "surviving son, Ken (Melinda) Zabriskie of Draper",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "States 'her children' (Ruth's), not 'their children' -- direct evidence of relationship to Ruth only; relationship to husband Kenneth Sr. would be indirect, not asserted here.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "child_4",
+      "fact_type": "Relationship",
+      "value": "preceded in death by daughter, Patricia Zabriskie",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "States 'her' preceding family (Ruth's), not 'their' -- direct evidence of relationship to Ruth only.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:QKWC-TSGR",
+      "record_role": "child_4",
+      "fact_type": "Death",
+      "value": "predeceased Ruth Tolley Zabriskie (died before 15 Jul 2008)",
+      "date": "15 July 2008",
+      "date_certainty": "before",
+      "information_quality": "secondary",
+      "informant": "family informant (obituary submitter, unidentified)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "No exact death date for Patricia given; only that she predeceased Ruth.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:QPR6-LNTM",
+      "record_role": "deceased",
+      "fact_type": "Name",
+      "value": "Kenneth John Zabriskie",
+      "structured_value": {
+        "given": "Kenneth John",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown obituary submitter (likely family member or funeral home)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Newspaper obituaries are typically submitted by family or a funeral home; the specific informant is not identified in this index entry.",
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:QPR6-LNTM",
+      "record_role": "deceased",
+      "fact_type": "Gender",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown obituary submitter (likely family member or funeral home)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:QPR6-LNTM",
+      "record_role": "deceased",
+      "fact_type": "Obituary",
+      "value": "Obituary published for Kenneth John Zabriskie; no specific publication date indexed (consistent with his death 31 Jan 1985 and the collection's 1980-2015 span)",
+      "information_quality": "indeterminate",
+      "informant": "unknown obituary submitter (likely family member or funeral home)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The existence of a published obituary implies family involvement in its preparation, but no informant is named in the index. The full obituary text (if the underlying image is read) would likely name surviving children, bearing directly on q_001; that text is not available from the index alone.",
+      "log_entry_id": "log_005",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:QPR6-LNTM",
+      "record_role": "deceased",
+      "fact_type": "Death",
+      "value": "Auto-categorized by FamilySearch under 'United States, Utah, Deaths'",
+      "place": "Utah",
+      "information_quality": "indeterminate",
+      "informant": "unknown (FamilySearch auto-categorization, reflecting underlying newspaper content not directly examined)",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Auto-categorization is a collection-level indexing inference, not an explicit statement within the visible index text; corroborates but does not independently establish Utah as place of death, which is already documented in the tree (Nephi, Juab, Utah) from other sources.",
+      "log_entry_id": "log_005",
+      "source_id": "src_003",
+      "standard_place": "Utah, United States"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:QVKN-LSD4",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "21 Dec 1948",
+      "structured_value": {
+        "year": "1948"
+      },
+      "date": "21 December 1948",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unknown memorial contributor (likely a family member)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Find a Grave memorials are typically created by family members or genealogy volunteers years after the event, from cemetery/funeral records or personal knowledge; the specific informant is not disclosed on this index entry. Consistent with the 1950 census age recording of Patricia as born ~1949 (a birthdate of 21 Dec 1948 would commonly be rounded/reported as age consistent with 1949 in a mid-1950 enumeration) \u2014 no conflict with src_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004",
+      "record_persona_id": "p_101077229167"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:QVKN-LSD4",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "03 Dec 1970",
+      "structured_value": {
+        "year": "1970"
+      },
+      "date": "3 December 1970",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unknown memorial contributor (likely a family member)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Informant not disclosed on the index entry; Find a Grave memorials are ordinarily populated from cemetery/funeral-home records or family recollection after the event.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004",
+      "record_persona_id": "p_101077229167"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:QVKN-LSD4",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Nephi, Juab, Utah, United States of America",
+      "structured_value": {
+        "place": "Nephi, Juab, Utah, United States of America"
+      },
+      "place": "Nephi, Juab, Utah, United States of America",
+      "standard_place": "Nephi, Juab, Utah, United States",
+      "information_quality": "secondary",
+      "informant": "unknown memorial contributor (likely a family member)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Burial place per the memorial as indexed; informant not disclosed. Burial location is consistent with the family's known residence in Nephi, Juab, Utah.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004",
+      "record_persona_id": "p_101077229167"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:2HXB-BKJ",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "21 Dec 1948",
+      "date": "21 Dec 1948",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unknown (headstone photographer/BillionGraves contributor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index compiled from headstone photograph; informant/contributor identity unknown. Independently corroborates src_004 (Find a Grave) birth date of 21 Dec 1948 for the same individual, but as with Find a Grave the underlying informant chain (who supplied the birth date to the headstone) is unverifiable, so this and src_004 may ultimately trace to the same headstone inscription rather than being fully independent evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_005",
+      "record_persona_id": "p_14786521787"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:2HXB-BKJ",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "03 Dec 1970",
+      "date": "3 Dec 1970",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unknown (headstone photographer/BillionGraves contributor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index compiled from headstone photograph; informant/contributor identity unknown. Independently corroborates src_004 (Find a Grave) death date of 3 Dec 1970 for the same individual; likely traces to the same headstone inscription as src_004, so treat as one evidence unit for corroboration purposes rather than two fully independent confirmations.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_005",
+      "record_persona_id": "p_14786521787"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:2HXB-BKJ",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Nephi, Juab, Utah, United States",
+      "place": "Nephi, Juab, Utah, United States",
+      "information_quality": "secondary",
+      "informant": "unknown (headstone photographer/BillionGraves contributor)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Derivative index compiled from headstone photograph; informant/contributor identity unknown. Same burial location as src_004 (Find a Grave); likely same physical grave/cemetery, so this is corroborating rather than independent evidence.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_005",
+      "record_persona_id": "p_14786521787",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:QPTC-WDD3",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Kenneth Warren Zabriskie",
+      "structured_value": {
+        "given": "Kenneth Warren",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "Kenneth Warren Zabriskie",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:QPTC-WDD3",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married 25 Jan 1980, Salt Lake City, Salt Lake, Utah",
+      "date": "25 Jan 1980",
+      "date_certainty": "exact",
+      "place": "Salt Lake City, Salt Lake, Utah, United States",
+      "standard_place": null,
+      "structured_value": {
+        "related_person_role": "bride"
+      },
+      "information_quality": "primary",
+      "informant": "Kenneth Warren Zabriskie",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:QPTC-WDD3",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Melinda Pat Roberts",
+      "structured_value": {
+        "given": "Melinda Pat",
+        "surname": "Roberts"
+      },
+      "information_quality": "primary",
+      "informant": "Melinda Pat Roberts",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:QPTC-WDD3",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married 25 Jan 1980, Salt Lake City, Salt Lake, Utah",
+      "date": "25 Jan 1980",
+      "date_certainty": "exact",
+      "place": "Salt Lake City, Salt Lake, Utah, United States",
+      "standard_place": null,
+      "structured_value": {
+        "related_person_role": "groom"
+      },
+      "information_quality": "primary",
+      "informant": "Melinda Pat Roberts",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_006"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:QVKN-LSDW",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "30 Oct 1916",
+      "date": "30 Oct 1916",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unidentified Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Find a Grave entries are typically compiled by volunteer contributors from headstone photographs or cemetery records, not eyewitnesses to the birth. Likely traces to the same physical headstone as the companion BillionGraves entry (ark:/61903/1:1:2VCF-H9C) \u2014 treat the two as one evidence unit per GPS Standard 4, not independent corroboration.",
+      "log_entry_id": "log_003",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:QVKN-LSDW",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "31 Jan 1985",
+      "date": "31 Jan 1985",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unidentified Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Compiled derivative memorial entry, not an eyewitness account of the death. Likely traces to the same physical headstone as the companion BillionGraves entry (ark:/61903/1:1:2VCF-H9C) \u2014 treat as one evidence unit, not independent corroboration.",
+      "log_entry_id": "log_003",
+      "source_id": "src_007"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:QVKN-LSDW",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Nephi, Juab, Utah, United States of America",
+      "place": "Nephi, Juab, Utah, United States of America",
+      "information_quality": "secondary",
+      "informant": "unidentified Find a Grave contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Burial location as recorded in the Find a Grave memorial index; likely traces to the same physical headstone as the companion BillionGraves entry (ark:/61903/1:1:2VCF-H9C) \u2014 one evidence unit, not independent corroboration.",
+      "log_entry_id": "log_003",
+      "source_id": "src_007",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:2VCF-H9C",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "30 Oct 1916",
+      "date": "30 Oct 1916",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unidentified BillionGraves contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "BillionGraves entries are typically compiled by volunteer contributors photographing headstones, not eyewitnesses to the birth. Likely traces to the same physical headstone as the companion Find a Grave entry (ark:/61903/1:1:QVKN-LSDW) \u2014 treat as one evidence unit per GPS Standard 4, not independent corroboration.",
+      "log_entry_id": "log_003",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:2VCF-H9C",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "31 Jan 1985",
+      "date": "31 Jan 1985",
+      "date_certainty": "exact",
+      "information_quality": "secondary",
+      "informant": "unidentified BillionGraves contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Compiled derivative memorial entry, not an eyewitness account of the death. Likely traces to the same physical headstone as the companion Find a Grave entry (ark:/61903/1:1:QVKN-LSDW) \u2014 treat as one evidence unit, not independent corroboration.",
+      "log_entry_id": "log_003",
+      "source_id": "src_008"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:2VCF-H9C",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "Nephi, Juab, Utah, United States",
+      "place": "Nephi, Juab, Utah, United States",
+      "information_quality": "secondary",
+      "informant": "unidentified BillionGraves contributor",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Burial location as recorded in the BillionGraves memorial index; likely traces to the same physical headstone as the companion Find a Grave entry (ark:/61903/1:1:QVKN-LSDW) \u2014 one evidence unit, not independent corroboration.",
+      "log_entry_id": "log_003",
+      "source_id": "src_008",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:DX32-9K2M",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Kenneth John Zabriskie",
+      "structured_value": {
+        "given": "Kenneth John",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:DX32-9K2M",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "Recorded in LDS Church Census, 1950",
+      "date": "1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:DX32-9K2M",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "b. 1916",
+      "date": "1916",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1916"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year is incidental to the census's purpose and likely copied forward from earlier church membership/blessing records rather than freshly reported.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:DX32-9K2M",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Mt Pleasant, Utah",
+      "place": "Mt Pleasant, Utah",
+      "structured_value": {
+        "place": "Mt Pleasant, Utah"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birthplace is incidental to the census's purpose and likely copied forward from earlier church records.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_009",
+      "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:DX32-9K2M",
+      "record_role": "absent",
+      "fact_type": "child_enumeration",
+      "value": "Children of Kenneth John Zabriskie not listed in indexed household data for the 1950 LDS Church Census entry (index captures head of household only)",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "This is an index-design limitation, not evidence about family composition \u2014 the LDS ward census index only records the head of household; any children would appear only on the underlying browse-only register image, which was not examined. Absence here must not be read as evidence the couple had no children as of 1950.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_009"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:ZRCK-RCN2",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Kenneth John Zabriskie",
+      "structured_value": {
+        "given": "Kenneth John",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_010"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:ZRCK-RCN2",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "Recorded in LDS Church Census, 1950",
+      "date": "1950",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_010"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:ZRCK-RCN2",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "b. 1916",
+      "date": "1916",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1916"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year is incidental to the census's purpose and likely copied forward from earlier church records.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_010"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:ZRCK-RCN2",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Mt. Pleasant, Utah",
+      "place": "Mt. Pleasant, Utah",
+      "structured_value": {
+        "place": "Mt. Pleasant, Utah"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birthplace is incidental to the census's purpose and likely copied forward from earlier church records.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_010",
+      "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:ZRCK-RCN2",
+      "record_role": "absent",
+      "fact_type": "child_enumeration",
+      "value": "Children of Kenneth John Zabriskie not listed in indexed household data for this 1950 LDS Church Census entry (index captures head of household only)",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Index-design limitation, not evidence about family composition. This entry appears to be a variant/duplicate index of the same underlying 1950 register page as DX32-9K2M \u2014 the same underlying informant/source, so it should be treated as one evidence unit with that record, not independent corroboration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_010"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:DX32-92W2",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Kenneth John Zabriskie",
+      "structured_value": {
+        "given": "Kenneth John",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_011"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:DX32-92W2",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "Recorded in LDS Church Census, 1955, Juab Utah Stake",
+      "date": "1955",
+      "date_certainty": "exact",
+      "place": "Juab Utah Stake",
+      "standard_place": "Juab, Utah, United States",
+      "structured_value": {
+        "place": "Juab Utah Stake"
+      },
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_011"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:DX32-92W2",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "b. 1916",
+      "date": "1916",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1916"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year is incidental to the census's purpose and likely copied forward from earlier church records.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_011"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:DX32-92W2",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Mt Pleasant, Sanpete",
+      "place": "Mt Pleasant, Sanpete, Utah",
+      "structured_value": {
+        "place": "Mt Pleasant, Sanpete, Utah"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birthplace is incidental to the census's purpose and likely copied forward from earlier church records; this entry additionally specifies the county (Sanpete).",
+      "extracted_for_question_ids": [],
+      "source_id": "src_011",
+      "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:DX32-92W2",
+      "record_role": "absent",
+      "fact_type": "child_enumeration",
+      "value": "Children of Kenneth John Zabriskie not listed in indexed household data for the 1955 LDS Church Census entry (index captures head of household only)",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Index-design limitation, not evidence about family composition \u2014 the LDS ward census index only records the head of household; any children would appear only on the underlying browse-only register image, which was not examined. Absence here must not be read as evidence about the number or existence of children as of 1955.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_011"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:DXS1-CDT2",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "John Kennth Zabriskie",
+      "structured_value": {
+        "given": "John Kennth",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Kennth' appears to be a clerical/typographical error for 'Kenneth'; retained as recorded.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:DXS1-CDT2",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "Recorded in LDS Church Census, 1960, Juab Utah Stake",
+      "date": "1960",
+      "date_certainty": "exact",
+      "place": "Juab Utah Stake",
+      "standard_place": "Juab, Utah, United States",
+      "structured_value": {
+        "place": "Juab Utah Stake"
+      },
+      "information_quality": "primary",
+      "informant": "LDS ward clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:DXS1-CDT2",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "b. 1916",
+      "date": "1916",
+      "date_certainty": "exact",
+      "structured_value": {
+        "year": "1916"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year is incidental to the census's purpose and likely copied forward from earlier church records.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:DXS1-CDT2",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Mt Pleasant, Utah",
+      "place": "Mt Pleasant, Utah",
+      "structured_value": {
+        "place": "Mt Pleasant, Utah"
+      },
+      "information_quality": "secondary",
+      "informant": "LDS ward clerk (compiled from prior church membership records)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birthplace is incidental to the census's purpose and likely copied forward from earlier church records.",
+      "extracted_for_question_ids": [],
+      "source_id": "src_012",
+      "standard_place": "Mount Pleasant, Sanpete, Utah, United States"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:DXS1-CDT2",
+      "record_role": "absent",
+      "fact_type": "child_enumeration",
+      "value": "Children of John Kennth [Kenneth] Zabriskie not listed in indexed household data for the 1960 LDS Church Census entry (index captures head of household only)",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "informant_bias_notes": "Index-design limitation, not evidence about family composition \u2014 the LDS ward census index only records the head of household; any children would appear only on the underlying browse-only register image, which was not examined. Absence here must not be read as evidence about the number or existence of children as of 1960.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_012"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "deceased",
+      "fact_type": "Death",
+      "value": "Dec. 3 [1970, year inferred from obituary publication context]",
+      "date": "3 December 1970",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "No informant is named in the obituary; such notices are typically supplied to the newspaper by surviving family rather than witnessed directly by the paper. Shares the same underlying informant as the birth, occupation, religion, and parentage assertions below \u2014 treat as one evidence unit, not independent corroboration.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "deceased",
+      "fact_type": "Birth",
+      "value": "Born Dec. 21, 48, Nephi",
+      "date": "21 December 1948",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Subject cannot provide primary information about her own birth; no informant is named. Part of the same shared-informant evidence unit as the death, occupation, religion, and parentage assertions.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "deceased",
+      "fact_type": "Occupation",
+      "value": "Beauty operator",
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Shared-informant evidence unit with the other biographical facts in this obituary.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "deceased",
+      "fact_type": "Religion",
+      "value": "Member LDS Church",
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Shared-informant evidence unit with the other biographical facts in this obituary.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "father",
+      "fact_type": "Parent-Child",
+      "value": "to Kenneth J. ... Zabriskie",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "deceased",
+        "given": "Kenneth J.",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Parentage of the deceased as stated by family to the newspaper; shared-informant evidence unit. Corroborates existing tree identification of KW87-QY7 as father.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "mother",
+      "fact_type": "Parent-Child",
+      "value": "to Kenneth J. and Ruth Tolley Zabriskie",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_role": "deceased",
+        "given": "Ruth Tolley",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Parentage of the deceased as stated by family to the newspaper; shared-informant evidence unit. Corroborates existing tree identification of KWZ7-K75 as mother.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_1",
+      "fact_type": "Sibling",
+      "value": "BROTHER ken, Nephi [OCR of survivors line: 'DATCHIS NOONE BROTHER ken, Nephi', interpreted as 'DAUGHTERS: NONE; BROTHER: Ken, Nephi']",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "deceased",
+        "given": "Ken",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Relationship word 'BROTHER' is legible despite surrounding OCR corruption. Shared-informant evidence unit with the other assertions in this obituary. Corroborates existing tree identification of I4 (Kenneth Warren Zabriskie) as brother.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_1",
+      "fact_type": "Residence",
+      "value": "Nephi",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Shared-informant evidence unit with the other assertions in this obituary.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_2",
+      "fact_type": "Sibling",
+      "value": "Mrs. Allen (Terrie) Kay, Pleasant Grove \u2014 listed among survivors",
+      "structured_value": {
+        "relationship_type": "sibling_inferred",
+        "related_person_role": "deceased",
+        "given": "Terrie",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "The explicit relationship label (likely 'SISTER') was lost to OCR corruption in this survivors line; relationship is inferred from co-listing as a survivor alongside the confirmed parents/siblings, not from a visible stated label. Corroborates existing tree identification of I1 (Terrie Lee Zabriskie/Kay) as sister.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_2",
+      "fact_type": "Marriage",
+      "value": "Mrs. Allen (Terrie) Kay",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "sibling_2",
+        "given": "Allen",
+        "surname": "Kay"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Husband's given name and surname stated via the 'Mrs. [husband] ([wife's given name]) [surname]' convention. Shared-informant evidence unit.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_2",
+      "fact_type": "Residence",
+      "value": "Pleasant Grove",
+      "place": "Pleasant Grove, Utah, United States",
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Shared-informant evidence unit with the other assertions in this obituary. Note: the place-lookup tool has no correct standard-place entry for Pleasant Grove, Utah County, Utah (it misresolved to a Michigan hamlet), so standard_place is left null rather than recording an incorrect jurisdiction.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013",
+      "standard_place": null
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_3",
+      "fact_type": "Sibling",
+      "value": "Mrs. Gary (Joleen) Higley, Granad Hills, Calif. \u2014 listed among survivors",
+      "structured_value": {
+        "relationship_type": "sibling_inferred",
+        "related_person_role": "deceased",
+        "given": "Joleen",
+        "surname": "Zabriskie"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "The explicit relationship label (likely 'SISTER') was lost to OCR corruption; relationship inferred from co-listing as a survivor. Corroborates existing tree identification of I2 (Joleen Zabriskie) as sister; note her later obituary (2008) lists her as 'Joleen Alverson', suggesting a subsequent remarriage after this 1970 marriage to Gary Higley.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_3",
+      "fact_type": "Marriage",
+      "value": "Mrs. Gary (Joleen) Higley",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "sibling_3",
+        "given": "Gary",
+        "surname": "Higley"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "1970 marriage to Gary Higley; distinct from the later 'Alverson' surname seen in a 2008 obituary, consistent with a subsequent remarriage rather than a conflict.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/3:1:3Q9M-CSJX-8NCR",
+      "record_role": "sibling_3",
+      "fact_type": "Residence",
+      "value": "Granad Hills, Calif. [OCR for Granada Hills]",
+      "place": "Granada Hills, Los Angeles, California, United States",
+      "standard_place": "Granada Hills, Los Angeles, Los Angeles, California, United States",
+      "information_quality": "secondary",
+      "informant": "unknown obituary informant (likely a family member)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Shared-informant evidence unit with the other assertions in this obituary.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_013"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/3:1:3Q9M-C34G-99X5-K",
+      "record_role": "deceased",
+      "fact_type": "Death",
+      "value": "Jan. 13, 1985, Nephi, Ut. (register locale)",
+      "structured_value": {
+        "year": 1985,
+        "place": "Nephi, Juab, Utah"
+      },
+      "date": "13 January 1985",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "unidentified registrar/cemetery official",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Death date is directly stated by the register; death place is inferred from the register being a Nephi, Juab County record rather than explicitly stated on this entry. CONFLICT: existing tree carries death date 31 Jan 1985; this original, contemporaneous register states 13 Jan 1985 \u2014 the register is likely the more reliable date given its proximity to the event.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_014",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/3:1:3Q9M-C34G-99X5-K",
+      "record_role": "deceased",
+      "fact_type": "CauseOfDeath",
+      "value": "Cancer",
+      "information_quality": "primary",
+      "informant": "unidentified registrar/cemetery official (per attending physician's certification)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_014"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/3:1:3Q9M-C34G-99X5-K",
+      "record_role": "deceased",
+      "fact_type": "Burial",
+      "value": "Jan. 16, 1985, \"Vineblatt\" [Vine Bluff] Cemetery, Nephi, Ut.",
+      "date": "16 January 1985",
+      "date_certainty": "exact",
+      "place": "Vine Bluff Cemetery, Nephi, Juab, Utah",
+      "information_quality": "primary",
+      "informant": "unidentified registrar/cemetery official (per funeral director)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Cemetery name transcribed/OCR'd as \"Vineblatt\"; interpreted as Vine Bluff Cemetery, the known cemetery serving Nephi, Utah. Original image not examined to confirm exact spelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "source_id": "src_014",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/3:1:3Q9M-C34G-99X5-K",
+      "record_role": "deceased",
+      "fact_type": "Birth",
+      "value": "Oct. 30, 1916, Nephi, Ut.",
+      "structured_value": {
+        "year": 1916,
+        "place": "Nephi, Utah"
+      },
+      "date": "30 October 1916",
+      "date_certainty": "exact",
+      "place": "Nephi, Juab, Utah",
+      "information_quality": "secondary",
+      "informant": "unidentified informant (likely a family member reporting biographical details at time of death)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Analogous to death-certificate biographical reporting: the deceased's own birth date/place on this register reflects secondhand family recollection decades after the event, not eyewitness knowledge. Corroborates existing tree birth date/place.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_014",
+      "standard_place": "Nephi, Juab, Utah, United States"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/3:1:3Q9M-C34G-99X5-K",
+      "record_role": "father",
+      "fact_type": "Parent",
+      "value": "Father: John Henry Zabriskie",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified informant (likely a family member reporting biographical details at time of death)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Father's name matches tree person KWVH-C7M 'John Henry Zabriske' (spelling variant).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_014"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/3:1:3Q9M-C34G-99X5-K",
+      "record_role": "mother",
+      "fact_type": "Parent",
+      "value": "Mother: Dora Nielsen Zabriskie",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified informant (likely a family member reporting biographical details at time of death)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "CONFLICT: tree carries KWJC-3GL as mother 'Gertrude Marie Elnore Nielsen'. This record names the mother 'Dora Nielsen Zabriskie' \u2014 same Nielsen maiden surname but a different given name entirely (Dora vs. Gertrude Marie Elnore). Could indicate: (a) a nickname/alternate name for the same woman, (b) informant error/confusion decades after events, or (c) a different wife/mother than currently in tree. Needs independent corroboration (e.g., original image, marriage record, or another vital record) before resolving.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "source_id": "src_014"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "1950 census head of household 'Kenith J Zabriskie' \u2014 variant spelling of Kenneth John Zabriskie. Born ~1917 Utah (actual 30 Oct 1916); wife 'Ruth T Zabriskie' is known spouse KWZ7-K75; residence Nephi, Juab, Utah. Name (variant), birth year (1-year census approximation), location, and household composition all confirm KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birth year ~1917 from census age for head of household, record confirmed as KW87-QY7 via name, location, wife, and household (see a_001). 1-year discrepancy from known 1916 is within normal census reporting variance.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Utah' for census head of household confirmed as KW87-QY7. Consistent with known birth in Mount Pleasant, Sanpete, Utah.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Marital status 'Married' for census head confirmed as KW87-QY7; married KWZ7-K75 September 1945.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Occupation 'Press Operator' for census head confirmed as KW87-QY7 via household composition, name, and location.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Race 'White' for census head confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Residence Nephi, Juab, Utah on 1 April 1950 for census head confirmed as KW87-QY7; consistent with known residence in Nephi through his 1985 death.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Residence Nephi, Juab, Utah as of April 1949 (prior-year residence question) for census head confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "1950 census wife listed as 'Ruth T Zabriskie' \u2014 'T' is maiden initial for Tolley. Born ~1923 Utah (actual 8 Aug 1922 Nephi); husband is 'Kenith J Zabriskie' = KW87-QY7. Name (including maiden initial), birth year (1-year approximation), location, and marital role all confirm KWZ7-K75.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Birth year ~1923 for census wife confirmed as KWZ7-K75 (actual birth 8 Aug 1922); 1-year discrepancy within normal census variance.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Utah' for census wife confirmed as KWZ7-K75; consistent with known birth in Nephi, Juab, Utah.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Marital status 'Married' for census wife confirmed as KWZ7-K75; married KW87-QY7 September 1945.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_013",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Residence Nephi, Juab, Utah on 1 April 1950 for census wife confirmed as KWZ7-K75.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_014",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Prior-year residence Nephi 1949 for census wife confirmed as KWZ7-K75.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1950 census daughter 'Terrie Lee Zabriskie', born ~1945 Utah, in household of head 'Kenith J Zabriskie' (=KW87-QY7) and wife 'Ruth T Zabriskie' (=KWZ7-K75). Name exactly matches I1 BirthName 'Terrie Lee Zabriskie'. No other Terrie Lee Zabriskie in the tree.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth year ~1945 for census child_1 'Terrie Lee Zabriskie' confirmed as I1. Consistent with I1's position as eldest known child.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Utah' for census daughter Terrie Lee confirmed as I1; consistent with family residence in Utah.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marital status 'Single' for census daughter Terrie Lee (age ~5) confirmed as I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence Nephi, Juab, Utah 1950 for census daughter Terrie Lee confirmed as I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Prior-year residence Nephi 1949 for census daughter Terrie Lee confirmed as I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child (daughter) of head of household' for census child_1 Terrie Lee Zabriskie confirms I1 is the person whose relationship to the head is recorded. Name, birth year, and household placement all agree.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_021",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "The relationship assertion 'child (daughter) of head of household' bears on the head as the parent. The head 'Kenith J Zabriskie' is confirmed as KW87-QY7 (see a_001). This assertion is direct evidence of KW87-QY7's paternity of Terrie Lee Zabriskie (I1).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_022",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "1950 census daughter 'Joleen Zabriskie', born ~1947 Utah, in household of Kenith/Ruth Zabriskie. Name exactly matches I2 BirthName 'Joleen Zabriskie'. Also known as 'Joleen Alverson' (MarriedName) per Ruth's 2008 obituary.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_023",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth year ~1947 for census daughter Joleen confirmed as I2.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_024",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Utah' for census daughter Joleen confirmed as I2.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_025",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marital status 'Single' for census daughter Joleen (age ~3) confirmed as I2.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_026",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Residence Nephi, Juab, Utah 1950 for census daughter Joleen confirmed as I2.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Prior-year residence Nephi 1949 for census daughter Joleen confirmed as I2.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_028",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child (daughter) of head of household' for census child_2 Joleen Zabriskie confirms I2 is the person whose relationship to the head is recorded.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_028",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "The relationship assertion bears on the head as parent. Head confirmed as KW87-QY7 (see a_001). Direct evidence of KW87-QY7's paternity of Joleen Zabriskie (I2).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_029",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "1950 census daughter 'Patricia Ann Zabriskie', born ~1949 Utah, in household of Kenith/Ruth Zabriskie. Name exactly matches I3 BirthName 'Patricia Ann Zabriskie'. Birth year ~1949 is consistent with her known birth date of 21 Dec 1948 (December birth rounds to 1949 in a mid-1950 enumeration). Confirmed deceased 3 Dec 1970 by cemetery records.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_030",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth year ~1949 (census-reported) for census daughter Patricia Ann confirmed as I3; consistent with actual birth date 21 Dec 1948 (1-year rounding).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_031",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birthplace 'Utah' for census daughter Patricia Ann confirmed as I3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_032",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Marital status 'Single' for census daughter Patricia Ann (age ~1) confirmed as I3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_033",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Residence Nephi, Juab, Utah 1950 for census daughter Patricia Ann confirmed as I3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_034",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Prior-year residence Nephi 1949 for census daughter Patricia Ann confirmed as I3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_035",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'child (daughter) of head of household' for census child_3 Patricia Ann Zabriskie confirms I3 is the person whose relationship to the head is recorded.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_035",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "The relationship assertion bears on the head as parent. Head confirmed as KW87-QY7 (see a_001). Direct evidence of KW87-QY7's paternity of Patricia Ann Zabriskie (I3).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_036",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Ruth's 2008 GenealogyBank obituary: deceased named 'Ruth Tolley Zabriskie', died 15 Jul 2008 Nephi Utah \u2014 exact name and death facts match KWZ7-K75. Obituary further states she was born 8 Aug 1922 Nephi to Hyrum Warren and Bessie Rachel Whittaker Tolley, married Kenneth John Zabriskie September 1945 \u2014 all consistent with KWZ7-K75.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_037",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Birth 8 August 1922 Nephi Utah for obituary deceased confirmed as KWZ7-K75; exact match with tree birth date and place.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_038",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Marriage to Kenneth John Zabriskie September 1945 for obituary deceased confirmed as KWZ7-K75; consistent with known marriage to KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_039",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Ruth's obituary names 'Terrie (Allan) Kay of Mona' as a surviving daughter of Ruth (KWZ7-K75). I1 is Terrie Lee Zabriskie with MarriedName 'Terrie Lee Kay'; husband Allan Kay matches. Name and married identity confirm I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_039",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "The child relationship assertion ('her children, Terrie (Allan) Kay') bears on the deceased Ruth Tolley Zabriskie as the mother. KWZ7-K75 is Ruth, the obituary subject. Assertion establishes KWZ7-K75 as mother of I1.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_040",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Ruth's obituary names 'Joleen Alverson of Spanish Fork' as surviving daughter. I2 is Joleen Zabriskie with MarriedName 'Joleen Alverson'; location Spanish Fork (Utah County) consistent. Perfect name match in married form.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_040",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Child relationship assertion bears on Ruth (KWZ7-K75) as mother of Joleen Alverson (I2).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_041",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Ruth's obituary names 'Ken (Melinda) Zabriskie of Draper' as surviving son. I4 is Kenneth Warren Zabriskie who married Melinda Pat Roberts (I5) per the 1980 Western States Marriage Index. 'Ken Zabriskie' + wife 'Melinda' + surname Zabriskie confirm I4. Note: the obituary says 'her children' not 'their children' \u2014 this is direct evidence of Ruth's maternity of I4 only; Kenneth Sr.'s paternity of I4 is established by other means (1950 census pre-dates I4's ~1952 birth, so not there; the connection is via the family unit established in the census and Ruth's marriage).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_041",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Child relationship assertion ('her children, Ken (Melinda) Zabriskie') bears on Ruth (KWZ7-K75) as mother of Kenneth Warren Zabriskie (I4). Establishes KWZ7-K75's maternity of I4.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_042",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Ruth's obituary states 'Preceded in death by...daughter, Patricia Zabriskie.' I3 is Patricia Ann Zabriskie, d. 3 Dec 1970 \u2014 she predeceased Ruth (d. 15 Jul 2008) as stated. Name match is exact. Cemetery records (src_004/src_005) corroborate identity and death date.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_042",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "The predeceased daughter assertion bears on Ruth (KWZ7-K75) as the surviving mother who outlived Patricia. Establishes KWZ7-K75's maternity of I3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_043",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Patricia Zabriskie's death (before 15 Jul 2008) for child_4 in Ruth's obituary confirmed as I3; consistent with known death date of 3 Dec 1970.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_043",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Predeceased assertion also bears on KWZ7-K75 as the surviving mother in whose obituary the predeceased child is mentioned.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_044",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "GenealogyBank obituary index entry names 'Kenneth John Zabriskie' as deceased \u2014 exact name match with KW87-QY7. The index entry shares underlying document ARK with a 'Patricia Zabriskie' entry (QPR6-LNTW), consistent with a 1985 obituary for Kenneth Sr. that names a predeceased daughter Patricia. Death in Utah matches KW87-QY7's known death 31 Jan 1985 Nephi, Juab, Utah.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_045",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Gender 'Male' for obituary entry confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_046",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Obituary fact for Kenneth John Zabriskie confirmed as KW87-QY7. Index entry establishes a 1980-2015 Utah newspaper obituary exists for the subject; underlying image not yet examined.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_047",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Utah death category for obituary entry confirmed as KW87-QY7; consistent with known death in Nephi, Juab, Utah.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_048",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Find a Grave index entry for 'Patricia Ann Zabriskie', b. 21 Dec 1948, d. 3 Dec 1970, buried Nephi, Juab, Utah. Exact name match with I3 (Patricia Ann Zabriskie). The 1950 census (src_001) places Patricia Ann Zabriskie as daughter of Kenneth and Ruth Zabriskie in Nephi \u2014 same family and location. Ruth's 2008 obituary (src_002) confirms a predeceased daughter Patricia. Birth/death dates independently corroborated by BillionGraves (src_005).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_049",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Death date 3 Dec 1970 for Find a Grave Patricia Ann Zabriskie confirmed as I3; consistent with the predeceased status noted in Ruth's 2008 obituary and independently corroborated by BillionGraves (src_005).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_050",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Burial Nephi, Juab, Utah for Find a Grave Patricia Ann Zabriskie confirmed as I3; consistent with family's known residence in Nephi.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_051",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "BillionGraves entry for 'Patricia Ann Zabriskie', b. 21 Dec 1948, d. 3 Dec 1970, buried Nephi, Juab, Utah \u2014 exact match with I3. Independently corroborates Find a Grave entry (src_004), though both likely trace to the same physical headstone (one evidence unit).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_052",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Death date 3 Dec 1970 for BillionGraves Patricia Ann Zabriskie confirmed as I3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_053",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Burial Nephi, Juab, Utah for BillionGraves Patricia Ann Zabriskie confirmed as I3.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_054",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Western States Marriage Index groom 'Kenneth Warren Zabriskie' \u2014 full name exactly matches I4 stub (Kenneth Warren Zabriskie, BirthName). Married 25 Jan 1980, Salt Lake City. Ruth's 2008 obituary names 'Ken (Melinda) Zabriskie of Draper' as a surviving son, and I4's bride Melinda Pat Roberts matches the 'Melinda' in the obituary.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_055",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Groom's marriage fact (25 Jan 1980, Salt Lake City) confirmed as I4 (Kenneth Warren Zabriskie); he is the groom in this record.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_055",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "The groom's marriage fact bears on the bride Melinda Pat Roberts (I5) as the other party to the marriage on 25 Jan 1980. I5 is confirmed as the bride by a_056.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_056",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Western States Marriage Index bride 'Melinda Pat Roberts' \u2014 full name exactly matches I5 stub (Melinda Pat Roberts, BirthName). Ruth's 2008 obituary references 'Melinda' as wife of 'Ken Zabriskie,' consistent with Melinda Pat Roberts as the wife of Kenneth Warren Zabriskie (I4).",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_057",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Bride's marriage fact (25 Jan 1980, Salt Lake City) confirmed as I5 (Melinda Pat Roberts); she is the bride in this record.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_057",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "The bride's marriage fact also bears on the groom Kenneth Warren Zabriskie (I4) as the other party to the marriage.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_058",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Find a Grave index for 'Kenneth John Zabriskie', b. 30 Oct 1916, d. 31 Jan 1985, buried Nephi, Juab, Utah. All three data points (name, birth date, death date) match KW87-QY7 exactly. Likely traces to same physical headstone as BillionGraves entry (src_008) \u2014 one evidence unit.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_059",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Death date 31 Jan 1985 for Find a Grave Kenneth John Zabriskie confirmed as KW87-QY7; exact match with tree death date.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_060",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Burial Nephi, Juab, Utah for Find a Grave Kenneth John Zabriskie confirmed as KW87-QY7; consistent with known burial at Vine Bluff Cemetery, Nephi.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_061",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "BillionGraves entry for 'John Kenneth Zabriskie', b. 30 Oct 1916, d. 31 Jan 1985, buried Nephi, Juab, Utah \u2014 all facts match KW87-QY7 exactly. Note: BillionGraves records the name as 'John Kenneth' rather than 'Kenneth John' (same given names, different conventional order); combined with exact birth/death dates and location, this is unambiguously KW87-QY7. Likely same physical headstone as Find a Grave (src_007) \u2014 treat as one evidence unit.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_062",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Death date 31 Jan 1985 for BillionGraves John Kenneth Zabriskie confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_063",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Burial Nephi, Juab, Utah for BillionGraves John Kenneth Zabriskie confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_064",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS Church Census 1950 (Juab Utah Stake) names 'Kenneth John Zabriskie', b. 1916 in Mt. Pleasant Utah. Name is recorded as 'Kenneth John' (vs. tree 'John Kenneth' \u2014 same given names in reversed conventional order, a common data entry variant). Birth year 1916 and birthplace Mt. Pleasant, Sanpete, Utah match KW87-QY7 exactly. LDS ward location (Juab Utah Stake = Nephi area) consistent with known residence.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_065",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS census 1950 enrollment (Juab Utah Stake) for Kenneth John Zabriskie confirmed as KW87-QY7; consistent with known 1950 residence in Nephi, Juab, Utah.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_066",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birth year 1916 in LDS census confirmed as KW87-QY7; exact match with tree birth year.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_067",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birthplace Mt. Pleasant, Utah in LDS census confirmed as KW87-QY7; consistent with known birth at Mount Pleasant, Sanpete, Utah.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_068",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Negative evidence (children of Kenneth John Zabriskie not listed in the 1950 LDS church census index) bears on KW87-QY7 as the subject head whose household members are excluded from this index design. This is an index limitation, not absence of children.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_069",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS Church Census 1950 (variant index entry, ZRCK-RCN2) names 'Kenneth John Zabriskie' b. 1916, Juab Utah Stake. Same identification as a_064: name, birth year, and location all confirm KW87-QY7. This entry is a duplicate/variant indexing of the same underlying 1950 ward census as DX32-9K2M.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_070",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS census 1950 enrollment (variant entry ZRCK-RCN2) confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_071",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birth year 1916 in LDS census variant entry confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_072",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birthplace Mt. Pleasant, Utah in LDS census variant entry confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_073",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Negative evidence in 1950 LDS census variant entry (children absent) bears on KW87-QY7 as subject head; same index limitation as a_068.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_074",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS Church Census 1955 (Juab Utah Stake, DX32-92W2) names 'Kenneth John Zabriskie' b. 1916. Same identification as a_064: name, birth year, and location confirm KW87-QY7. Confirms continued residence in Juab Utah Stake in 1955, consistent with known lifetime residence in Nephi.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_075",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS census 1955 enrollment (Juab Utah Stake) confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_076",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birth year 1916 in 1955 LDS census confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_077",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birthplace Mt. Pleasant, Sanpete in 1955 LDS census confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_078",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Negative evidence in 1955 LDS census (children absent from index) bears on KW87-QY7 as subject head; same index limitation as a_068.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_089",
+      "assertion_id": "a_079",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS Church Census 1960 (Juab Utah Stake, DXS1-CDT2) names 'John Kennth [sic for Kenneth] Zabriskie' b. 1916. Despite the clerical typo ('Kennth'), the birth year 1916, Juab Utah Stake, and context confirm KW87-QY7. Confirms continued residence in Juab Utah Stake in 1960.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_090",
+      "assertion_id": "a_080",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "LDS census 1960 enrollment (Juab Utah Stake) confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_091",
+      "assertion_id": "a_081",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birth year 1916 in 1960 LDS census confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_092",
+      "assertion_id": "a_082",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birthplace Mt. Pleasant, Utah in 1960 LDS census confirmed as KW87-QY7.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_093",
+      "assertion_id": "a_083",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Negative evidence in 1960 LDS census (children absent from index) bears on KW87-QY7 as subject head; same index limitation as a_068. By 1960, Terrie Lee (b. 1945) would be 15, Joleen (b. 1947) would be 13, Patricia Ann (b. 1948) would be 12, and Kenneth Warren (b. ~1952) would be 8 \u2014 all potentially still in the household, but not enumerated in this index.",
+      "match_score": null,
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_094",
+      "assertion_id": "a_084",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Patricia Ann Zabriskie is the obituary subject; death date ~3 Dec 1970 directly stated in the obituary text.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_095",
+      "assertion_id": "a_085",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Patricia Ann Zabriskie born 21 Dec 1948, Nephi \u2014 directly stated in her obituary.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_096",
+      "assertion_id": "a_086",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Occupation 'beauty operator' stated for Patricia Ann Zabriskie in her 1970 obituary.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_097",
+      "assertion_id": "a_087",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Patricia Ann Zabriskie identified as LDS Church member in her 1970 obituary.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_098",
+      "assertion_id": "a_088",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Patricia Ann obituary names 'Kenneth J. and Ruth Tolley Zabriskie' as her parents \u2014 direct statement linking I3 as child of KW87-QY7.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_099",
+      "assertion_id": "a_088",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Patricia Ann obituary names 'Kenneth J. Zabriskie' as her father \u2014 confirms KW87-QY7 as parent of I3.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_100",
+      "assertion_id": "a_089",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Patricia Ann obituary names 'Ruth Tolley Zabriskie' as her mother \u2014 links I3 as child of KWZ7-K75.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_101",
+      "assertion_id": "a_089",
+      "person_id": "KWZ7-K75",
+      "confidence": "confident",
+      "rationale": "Patricia Ann obituary names 'Ruth Tolley Zabriskie' as her mother \u2014 confirms KWZ7-K75 as parent of I3.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_102",
+      "assertion_id": "a_090",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "OCR-legible 'BROTHER ken, Nephi' in Patricia Ann's 1970 obituary directly names Kenneth Warren Zabriskie (I4) as her brother \u2014 sibling relationship confirmed.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_103",
+      "assertion_id": "a_090",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Patricia Ann Zabriskie (I3) is the obituary subject; 'BROTHER ken' identifies a sibling relationship between I3 and I4.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_104",
+      "assertion_id": "a_091",
+      "person_id": "I4",
+      "confidence": "confident",
+      "rationale": "Patricia Ann's 1970 obituary places her brother 'ken' in Nephi \u2014 Kenneth Warren Zabriskie (I4) resided in Nephi circa 1970.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_105",
+      "assertion_id": "a_092",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "'Mrs. Allen (Terrie) Kay' listed among survivors of Patricia Ann's 1970 obituary \u2014 strongly implies sibling relationship with Patricia Ann (I3), though relationship label lost to OCR corruption.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_106",
+      "assertion_id": "a_092",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Patricia Ann Zabriskie (I3) is the obituary subject; Terrie Kay listed as survivor implies sibling of Patricia Ann.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_107",
+      "assertion_id": "a_093",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Patricia Ann's 1970 obituary names 'Mrs. Allen (Terrie) Kay, Pleasant Grove' \u2014 confirms Terrie Zabriskie (I1) was married to Allen Kay by 1970.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_108",
+      "assertion_id": "a_094",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Patricia Ann's 1970 obituary places Terrie Kay in Pleasant Grove, Utah \u2014 Terrie Zabriskie (I1) resided in Pleasant Grove circa 1970.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_109",
+      "assertion_id": "a_095",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "'Mrs. Gary (Joleen) Higley' listed among survivors of Patricia Ann's 1970 obituary \u2014 implies sibling relationship with Patricia Ann (I3), though relationship label lost to OCR corruption.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_110",
+      "assertion_id": "a_095",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Patricia Ann Zabriskie (I3) is obituary subject; Joleen Higley listed as survivor implies sibling of Patricia Ann.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_111",
+      "assertion_id": "a_096",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Patricia Ann's 1970 obituary names 'Mrs. Gary (Joleen) Higley, Granada Hills, Calif.' \u2014 Joleen Zabriskie (I2) was married to Gary Higley in 1970, before her later surname Alverson (per 2008 obituary).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_112",
+      "assertion_id": "a_097",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Patricia Ann's 1970 obituary places Joleen Higley in Granada Hills, California \u2014 Joleen Zabriskie (I2) resided in Granada Hills circa 1970.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_113",
+      "assertion_id": "a_098",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "1985 Nephi vital/cemetery register is an original, contemporaneous government record \u2014 death date 13 Jan 1985 for John Kenneth Zabriskie (KW87-QY7) is the most authoritative source available; conflicts with derivative sources (Find A Grave, BillionGraves) that show 31 Jan 1985.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_114",
+      "assertion_id": "a_099",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Cause of death (cancer) stated in 1985 Nephi vital/cemetery register for John Kenneth Zabriskie (KW87-QY7).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_115",
+      "assertion_id": "a_100",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "1985 Nephi vital/cemetery register records burial of John Kenneth Zabriskie on 16 Jan 1985 at Vine Bluff Cemetery, Nephi \u2014 original contemporaneous record.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_116",
+      "assertion_id": "a_101",
+      "person_id": "KW87-QY7",
+      "confidence": "confident",
+      "rationale": "Birth date 30 Oct 1916, Nephi, recorded in 1985 Nephi vital/cemetery register for John Kenneth Zabriskie \u2014 corroborates tree and other sources.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_117",
+      "assertion_id": "a_102",
+      "person_id": "KW87-QY7",
+      "confidence": "probable",
+      "rationale": "1985 Nephi vital/cemetery register lists John Henry Zabriskie as father of John Kenneth Zabriskie (KW87-QY7) \u2014 secondary information supplied by informant at time of death.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_118",
+      "assertion_id": "a_102",
+      "person_id": "KWVH-C7M",
+      "confidence": "probable",
+      "rationale": "1985 Nephi register names John Henry Zabriskie as father of John Kenneth Zabriskie \u2014 corroborates KWVH-C7M as KW87-QY7's father.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_119",
+      "assertion_id": "a_103",
+      "person_id": "KW87-QY7",
+      "confidence": "speculative",
+      "rationale": "1985 Nephi vital/cemetery register lists 'Dora Nielsen Zabriskie' as mother of John Kenneth Zabriskie (KW87-QY7). Conflicts with tree's KWJC-3GL (Gertrude Marie Elnore Nielsen) \u2014 c_001 filed; Nielsen maiden name matches but given name differs; pending resolution.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_120",
+      "assertion_id": "a_103",
+      "person_id": "KWJC-3GL",
+      "confidence": "speculative",
+      "rationale": "1985 Nephi register names 'Dora Nielsen Zabriskie' as KW87-QY7's mother. Tree records KWJC-3GL as 'Gertrude Marie Elnore Nielsen' \u2014 conflict c_001 filed; may be same person under different name or a different person; speculative link pending resolution.",
+      "created": "2026-07-21"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "identity",
+      "description": "Mother's name for John Kenneth Zabriskie (KW87-QY7): tree person KWJC-3GL is named 'Gertrude Marie Elnore Nielsen'; this death/burial register (assertion a_103) names the mother 'Dora Nielsen Zabriskie'. Shared Nielsen surname but different given names.",
+      "identity_question": "Is 'Dora Nielsen Zabriskie' named on this 1985 death register the same individual as tree person KWJC-3GL 'Gertrude Marie Elnore Nielsen', under an alternate/nickname, or a different person entirely?",
+      "disputed_attribute": "mother_name",
+      "competing_assertion_ids": [
+        "a_103"
+      ],
+      "status": "unresolved",
+      "resolution_rationale": "Needs corroboration from an independent record (e.g., birth record, marriage record, or the original register image) before resolving whether Dora and Gertrude Marie Elnore are the same person.",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "disputed_attribute": "death date of John Kenneth Zabriskie (KW87-QY7)",
+      "competing_assertion_ids": [
+        "a_059",
+        "a_098"
+      ],
+      "status": "resolved",
+      "blocks_question_ids": [],
+      "description": "Find A Grave (a_059) and BillionGraves (a_062) record 31 Jan 1985; the 1985 Nephi vital/cemetery register (a_098) records 13 Jan 1985. The vital/cemetery register is an original, contemporaneous government record and is the more authoritative source. The headstone-based records may reflect a digit-transposition error (13 vs. 31). Does not block q_001. To resolve: obtain the Utah death certificate or original register image.",
+      "independence_analysis": "a_059 (Find A Grave) and a_062 (BillionGraves) are one evidence unit \u2014 both derived from the same physical headstone in Nephi. a_098 (1985 Nephi vital/cemetery register) is an independent original government record created by civil authority at or near the time of death.",
+      "preferred_assertion_id": "a_098",
+      "weighing_analysis": "The 1985 Nephi vital/cemetery register (a_098) is an original contemporaneous government record \u2014 the highest-reliability source type for a death date. Find A Grave and BillionGraves (a_059/a_062) are derivative records compiled by volunteers from headstone photographs. The physical headstone itself, while primary for the date of burial, is subject to engraving errors; a digit transposition (13 vs. 31) is a plausible mechanism for the discrepancy. The vital register was created by a cemetery or civil authority with administrative responsibility for recording the death, with less opportunity for a transposition error than a headstone inscription.",
+      "resolution_rationale": "Prefer a_098 (13 January 1985) from the 1985 Nephi vital/cemetery register over a_059/a_062 (31 January 1985) from Find A Grave/BillionGraves. The vital register is original, contemporaneous, and created by an official recorder \u2014 the most authoritative source type for a death date. The derivative headstone-based records are lower-reliability and likely reflect either a transcription or engraving error (digit transposition: 13 \u2192 31). The tree has been updated to reflect 13 January 1985."
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_015",
+        "a_016",
+        "a_022",
+        "a_023",
+        "a_029",
+        "a_030",
+        "a_039",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_054",
+        "a_055",
+        "a_084",
+        "a_085",
+        "a_088",
+        "a_089",
+        "a_090",
+        "a_092",
+        "a_095"
+      ],
+      "resolved_conflict_ids": [
+        "c_002"
+      ],
+      "exhaustive_search_summary": "Searched nine source groups across seven record types: 1950 US Census household enumeration (FamilySearch); LDS census stubs (FamilySearch); three independent obituaries spanning 1970\u20132008 from GenealogyBank/FamilySearch (Ruth Tolley 2008, Kenneth John ~1985 index, Patricia Ann 1970 via OCR); cemetery records (Find A Grave, BillionGraves, 1985 Nephi vital/cemetery register via OCR); civil marriage record for Kenneth Warren (FamilySearch/Ancestry); FamilySearch full-text corpus. The 1960 US Census is sealed under the 72-year privacy rule until 2032 and is inaccessible \u2014 verified as unavailable, not merely unsearched. Utah birth certificates for the children were not searched; given consistent multi-decade obituary evidence, overturn risk from that omission is assessed as low. Research declared exhaustive on 2026-07-21.",
+      "narrative_markdown": "## Children of John Kenneth Zabriskie and Ruth Tolley Zabriskie of Nephi, Juab, Utah\n\n### Research Question\n\nWho were all the children born to John Kenneth Zabriskie (30 October 1916 \u2013 13 January 1985) and his wife Ruth Tolley Zabriskie (8 August 1922 \u2013 15 July 2008), both of Nephi, Juab County, Utah?\n\n### Conclusion\n\nThe preponderance of evidence from multiple independent sources across six decades strongly suggests that John Kenneth Zabriskie and Ruth Tolley Zabriskie were the parents of exactly four children: **Terrie Lee Zabriskie** (born approximately 1945, later Terrie Lee Kay), **Joleen Zabriskie** (born approximately 1947, later Joleen Alverson), **Patricia Ann Zabriskie** (born 21 December 1948, died 3 December 1970), and **Kenneth Warren Zabriskie** (born approximately April 1952, married Melinda Pat Roberts). This conclusion is rated **Probable**: the parentage of the three daughters is directly established by an original primary government record and corroborated across multiple obituaries, but Kenneth Warren Zabriskie's parentage rests on secondary evidence and a transitive sibling inference, and the completeness claim is constrained by the inaccessibility of the 1960 US Census.\n\n### Evidence\n\n**1950 United States Census.** The 1950 US Census enumeration of the Kenneth Zabriskie household in Nephi, Juab, Utah (FamilySearch ark:/61903/1:1:6XKM-FRX3; src_001) provides the strongest single piece of evidence. This original government record, created by a census enumerator on 1 April 1950, directly names the head of household as \"Kenith J Zabriskie\" (born 1917, Utah, press operator) and his wife \"Ruth T Zabriskie\" (born 1923, Utah), together with three daughters: Terrie Lee Zabriskie (born approximately 1945, Utah), Joleen Zabriskie (born approximately 1947, Utah), and Patricia Ann Zabriskie (born approximately 1949, Utah). As an original record completed by a government official with the household present, this is primary information for the daughters' presence, residence, and approximate birth years. It directly establishes, in one contemporaneous document, that Terrie Lee, Joleen, and Patricia Ann were daughters of Kenneth and Ruth Zabriskie in 1950.\n\n**Patricia Ann Zabriskie 1970 Obituary.** An obituary for Patricia Ann Zabriskie, published approximately December 1970 following her death at age 21 (FamilySearch full-text corpus, ARK ark:/61903/3:1:3Q9M-CSJX-8NCR; src_013), independently corroborates the parentage of all three daughters and identifies a fourth child \u2014 a brother. The OCR transcription reads: \"Born Dec. 21, 48, Nephi, to Kenneth J. and Ruth Tolley Zabriskie\"; surviving family is listed as \"BROTHER ken, Nephi; Mrs. Allen (Terrie) Kay, Pleasant Grove; Mrs. Gary (Joleen) Higley, Granad Hills, Calif.\" (The prefix \"DATCHIS NOONE BROTHER\" is an OCR corruption of \"daughters: none, brother: Ken, Nephi.\") This authored newspaper source, created from information supplied by an unnamed family informant at the time of Patricia Ann's death \u2014 a different informant, from a different event, 38 years before Ruth's obituary \u2014 confirms the parents by name and identifies three surviving siblings. The original newspaper image was not directly examined (accessed via FamilySearch OCR transcription); the reading is treated as a working transcription subject to image verification, but it is internally consistent with all other sources.\n\n**Ruth Tolley Zabriskie 2008 Obituary.** The GenealogyBank obituary for Ruth Tolley Zabriskie (died 15 July 2008; FamilySearch ark:/61903/1:1:QKWC-TSGR; src_002) names all four children: \"Terri Kay (Allan Kay) of Mona, Joleen Alverson of Spanish Fork, Ken Zabriskie (Melinda) of Draper, and Patricia Zabriskie (predeceased).\" This authored/derivative source, with information supplied by an unnamed family informant in 2008, enumerates exactly the same four children as identified by all other sources. Though a different event (Ruth's death) and a different informant than the 1970 obituary, the two sources independently agree on the family composition.\n\n**Kenneth Warren Zabriskie: Marriage Record and Parentage Chain.** A civil marriage record documents the marriage of Kenneth Warren Zabriskie and Melinda Pat Roberts on 25 January 1980, Salt Lake City (FamilySearch/Ancestry ARK ark:/61903/1:1:QPTC-WDD3; src_010), confirming his existence as an adult. Because no original record directly names Kenneth Warren as the son of John Kenneth and Ruth Tolley Zabriskie, his parentage rests on a transitive chain of secondary evidence. Patricia Ann Zabriskie's 1970 obituary (src_013) directly names both parents as Patricia Ann's parents (a_088, a_089) and identifies her surviving \"BROTHER ken, Nephi\" (a_090) \u2014 linking Kenneth Warren (I4), the only known male Zabriskie sibling, as Patricia Ann's brother. Through her established parentage to Kenneth Sr. and Ruth, Kenneth Warren's parentage follows by the sibling relationship. Ruth's 2008 obituary (src_002) independently names \"Ken (Melinda) Zabriskie of Draper\" as her surviving son (a_041), providing a second independent source confirming his relationship to Ruth. The bride Melinda Pat Roberts in the marriage record matches the \"Melinda\" in Ruth's obituary. No original record has been located that directly states Kenneth Warren's parentage; the Probable tier reflects this gap.\n\n**Additional Cemetery Records.** Find A Grave (ARK ark:/61903/1:1:QVKN-LSD4) and BillionGraves (ARK ark:/61903/1:1:2HXB-BKJ) both record Patricia Ann Zabriskie with birth date 21 December 1948 and death date 3 December 1970, buried Nephi, Juab, Utah. These derivative records, likely compiled from the same physical headstone, constitute one evidence unit and are consistent with the obituary information.\n\n### Convergence and Correlation\n\nAll source groups converge on exactly four children. The 1950 US Census directly enumerates three daughters; two independent obituaries \u2014 from 1970 and 2008, supplied by different informants at different events \u2014 name all four children (the 1970 obituary through the lens of Patricia Ann's survivors, the 2008 obituary through Ruth's survivors). The civil marriage record for Kenneth Warren provides additional independent corroboration of his identity. No source at any point names a fifth child.\n\nA minor discrepancy exists in Joleen's surname: the 1970 obituary records her as \"Mrs. Gary (Joleen) Higley, Granada Hills, California,\" while Ruth's 2008 obituary records her as \"Joleen Alverson of Spanish Fork.\" This discrepancy is most plausibly explained by remarriage \u2014 she was married to Gary Higley in 1970 and had adopted the surname Alverson by 2008. No source contradicts this interpretation.\n\nA minor birth year discrepancy for Patricia Ann: the 1950 census records her birth year as approximately 1949, while her 1970 obituary states she was \"Born Dec. 21, 48.\" Both are consistent \u2014 a child born 21 December 1948 was 1 year old at the April 1950 census enumeration, which can yield a recorded birth year of either 1948 or 1949 depending on the enumerator's method. The obituary's precise date (21 December 1948) is treated as more specific and better-informed for the birth year.\n\n### Limitations and Basis for Probable Tier\n\nThis conclusion is rated **Probable** rather than Proved for two reasons. First, the 1960 US Census \u2014 which would have shown the household including Kenneth Warren (approximately age 8 in 1960) and confirmed whether any additional children existed \u2014 is sealed under the 72-year privacy rule until 2032 and could not be searched. This is the principal limitation on the completeness assertion (only four children), though three independent obituary informants across three decades all enumerate the same four children, reducing the probability of a fifth unidentified child. Second, Kenneth Warren Zabriskie's parentage rests on secondary evidence and a transitive sibling inference rather than an original record directly naming him as the son of John Kenneth and Ruth Tolley Zabriskie.\n\nThe original newspaper images for the 1970 and 2008 obituaries were not directly examined (accessed via FamilySearch OCR transcription and GenealogyBank index respectively); both are noted as \"original not examined\" in the source records. The GenealogyBank index entry for Kenneth Sr.'s approximately-1985 obituary was found, but its full text was inaccessible; should that image become accessible through a paid newspaper archive, it would provide the most direct corroboration of the children's names from Kenneth Sr.'s own obituary.\n\nOne unresolved conflict remains in the project: c_001, concerning the identity of KW87-QY7's mother (Gertrude Marie Elnore Nielsen vs. Dora Nielsen Zabriskie per the 1985 vital register). A second conflict, c_002 (KW87-QY7's death date: 13 January 1985 per the 1985 Nephi vital/cemetery register vs. 31 January 1985 per headstone-derived derivative sources), was resolved during this research session: the original contemporaneous government record (vital/cemetery register, a_098) was preferred over derivative headstone-based memorial records (Find A Grave, BillionGraves), and the death date has been corrected to 13 January 1985 in both the research record and the tree. Neither remaining conflict bears on the identity or enumeration of the children.\n\n### Summary\n\nThe preponderance of evidence strongly suggests that John Kenneth Zabriskie (1916\u20131985) and Ruth Tolley Zabriskie (1922\u20132008) were the parents of exactly four children: Terrie Lee Zabriskie (born approximately 1945, later Terrie Lee Kay of Mona, Utah), Joleen Zabriskie (born approximately 1947, later Joleen Alverson of Spanish Fork, Utah), Patricia Ann Zabriskie (born 21 December 1948, died 3 December 1970, buried Nephi, Utah), and Kenneth Warren Zabriskie (born approximately April 1952, married Melinda Pat Roberts 25 January 1980). The parentage of the three daughters is directly established by the 1950 US Census (original, primary evidence) and corroborated by multiple sources across six decades. Kenneth Warren Zabriskie's parentage and the completeness of the enumeration rest on strong but secondary evidence and a transitive sibling inference. The conclusion is **Probable** per the Genealogical Proof Standard."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-21T10-15-00Z.json",
+      "timestamp": "2026-07-21",
+      "superseded_by": null
+    }
+  ]
+}

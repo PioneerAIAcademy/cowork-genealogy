@@ -1,0 +1,11 @@
+{
+  "annotator": "israel",
+  "per_finding": {
+    "f1": "partial",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Right person + ParentChild edge to both parents, but birth recorded as ~1947 (expected 1 May 1946, Payson) and death/burial (23 May 2020, Vine Bluff) not recovered. Agent used a census estimate and declined the tree-only date as leads-only, so vitals are incomplete — partial rather than full."
+  }
+}
