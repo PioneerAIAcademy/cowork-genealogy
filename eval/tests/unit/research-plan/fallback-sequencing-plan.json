@@ -5,11 +5,19 @@
     "name": "Plan includes explicit fallback_for chain for church record search",
     "type": "positive",
     "description": "The skill proposes a new plan for q_001 after prior census searches are exhausted. Church records are a logical next source, but Catholic parish records in Schuylkill County (Diocese of Scranton, 1868+) may not be digitized — so the plan must include a FamilySearch item as primary and a county-level diocesan archive as fallback_for it. Tests the Sequencing logic rubric dimension: fallback chains must appear in the plan when a primary source is likely to be unavailable.",
-    "tags": ["planning", "fallback-chain", "sequencing", "church-records", "parentage", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+    "tags": [
+      "planning",
+      "fallback-chain",
+      "sequencing",
+      "church-records",
+      "parentage",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status"
+    ]
   },
   "input": {
     "user_message": "Create the next research plan for q_001. We've already done censuses — focus on what comes next, especially church and probate records.",
-    "scenario": "flynn-census-exhausted"
+    "scenario": "flynn-census-exhausted-surveyed"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
