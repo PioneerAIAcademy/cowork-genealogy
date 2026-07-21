@@ -10,13 +10,13 @@ description: Direct edits to tree.gedcomx.json — add fact, correct value,
   "fix this fact", "add a relationship", "verify the tree reflects
   this", "check the tree", "make sure the tree shows", "confirm this
   fact is in the tree", "what records are attached", "what hints does
-  FamilySearch have", "check record matches", "find possible
-  duplicates", "check for merge candidates". Do NOT use to search
+  FamilySearch have", "check record matches". Do NOT use to search
   records (search-records), write a conclusion (proof-conclusion), link
-  assertions to persons (person-evidence), or extract facts from a
-  newly-found record (record-extraction — sourced facts materialize onto
-  tree persons via person-evidence, then proof-conclusion sets the
-  concluded value).
+  assertions to persons or build out a household from a record's
+  assertions (person-evidence), or extract facts from a newly-found
+  record (record-extraction — sourced facts materialize onto tree
+  persons via person-evidence, then proof-conclusion sets the concluded
+  value).
 allowed-tools:
   - place_search
   - place_search_all
