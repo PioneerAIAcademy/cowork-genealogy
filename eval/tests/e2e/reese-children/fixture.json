@@ -1,0 +1,19 @@
+{
+  "id": "reese-children",
+  "name": "Benjamin Franklin Reese",
+  "genre": "strip",
+  "source_pid": "L4X1-2RB",
+  "captured": "2026-07-16",
+  "researcher_question": "Who were the children of Benjamin Franklin Reese (1878-1938) of Navarro and Hill Counties, Texas?",
+  "tags": {
+    "question_type": "children",
+    "era": "1910s",
+    "geography": "US-TX"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Benjamin (L4X1-2RB), m. Mallie Shue 1905, had 11 children in the FS tree, all deceased (births 1906-1930). Fixture strips all 11 children plus the birth/christening sources that name them; the 1910/1920/1930 TX census sources on Benjamin are kept as the recovery path. 5 children required, 6 bonus. NOTE: FS returned duplicate legacy fact-ids (birth/burial/death UUIDs reused across persons); de-duped in the snapshot to satisfy strip's uniqueness gate (content unchanged, only duplicate id labels)."
+}
