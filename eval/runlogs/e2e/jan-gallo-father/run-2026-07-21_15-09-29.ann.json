@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Recovered — Jan Gallo (b. 1893 Šútovo, Turany parish) is linked to father Andrej Gallo (I1) (and mother Katarina Križko). Matches the required finding (son of Andrej/Ondrej Gallo). Proof tier proved.",
+    "f2": "Recovered — Ondrej Gallo (I3, christening 1895 Turany) is linked as a child of Andrej Gallo + Katarina Križko, i.e. Jan's younger brother christened in the same Turany parish after 1893. Bonus finding satisfied."
+  },
+  "annotator": "ernest"
+}
