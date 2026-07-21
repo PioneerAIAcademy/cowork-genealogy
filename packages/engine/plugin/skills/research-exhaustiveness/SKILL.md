@@ -60,6 +60,16 @@ threshold questions, run two checks over the assertions tied to this question
   and recommend `person-evidence`. Unlinked *fact* and *negative* assertions
   about an already-identified person are advisory, not blockers — note them and
   continue.
+- **Tentative-value sweep (hard block).** Collect every assertion linked to this
+  question whose value is marked tentative (contains "[?]", "[tentative]", or
+  whose informant_bias_notes flags an unresolved OCR or transcription ambiguity).
+  For each, ask explicitly: does the uncertainty stem from (a) genuine source
+  inaccessibility — the one source that would resolve it cannot be reached by any
+  available tool — or (b) a single source's data quality issue that a *different*
+  record type might independently resolve? If (b), do not declare exhaustive.
+  Route to research-plan with a specific new plan item targeting the alternative
+  record type. The inaccessibility exception in Step 4 applies only when (a) is
+  confirmed.
 
 Do not declare exhaustive while a blocking check fails.
 
@@ -117,7 +127,14 @@ Write a 1-2 sentence assessment for each:
     `status: "exhaustive_declared"` (note the limitation in a `stop_criteria`
     note + `overturn_risk`) and route to `proof-conclusion`, which sets the
     honest tier the available (often indirect) evidence supports. Documenting
-    an unobtainable source is exhaustive research; re-searching it is not.
+    an unobtainable source is exhaustive research; re-searching it is not. This
+    exception applies only when the inaccessible source is the **only known
+    avenue** to the fact in question. If a different record type could
+    independently resolve the same uncertainty — for example, premarital census
+    or vital records to verify a bride's maiden surname when the marriage
+    certificate image is unreadable — the exception does not apply. That
+    alternative avenue is unsearched, not unavailable, and must be planned before
+    declaration.
 - **Early termination** — valid for resource limits or no further known
   sources, but the declaration must honestly state `declared: false`.
   **Do not change `status`** — leave it `"in_progress"`.
