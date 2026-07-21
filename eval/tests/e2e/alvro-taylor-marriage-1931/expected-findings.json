@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Alvro Bair Taylor married Mildred Martha Misner; the agent should recover her as his spouse and add the couple relationship to the tree.",
+      "details": {
+        "subject_person": "Alvro Bair Taylor (KWJZ-ZNT)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Mildred Martha Misner",
+          "birth": "28 November 1911, Rusk, Wisconsin, United States"
+        }
+      },
+      "supporting_sources": [
+        "1940 U.S. Census (Clatskanie Election Precinct 2, Columbia, Oregon) enumerates Al B Taylor with his wife.",
+        "1940 obituaries and the Find A Grave memorial name the surviving widow."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The marriage of Alvro Bair Taylor and Mildred Martha Misner took place on 25 April 1931 at Tillamook, Tillamook County, Oregon.",
+      "details": {
+        "subject_person": "Alvro Bair Taylor (KWJZ-ZNT)",
+        "fact_type": "Marriage",
+        "date": "25 April 1931",
+        "place": "Tillamook, Tillamook, Oregon, United States",
+        "target_person": {
+          "name": "Mildred Martha Misner"
+        }
+      },
+      "supporting_sources": [
+        "Oregon county marriage record / index for Tillamook County, 1931."
+      ],
+      "required": true
+    }
+  ]
+}
