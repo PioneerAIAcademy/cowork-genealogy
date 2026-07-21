@@ -288,6 +288,50 @@ describe("recordReadTool", () => {
   });
 });
 
+// ─── Document-image ARK guard (routes 3:1:/3:2: to image_read) ─────────────
+
+describe("recordReadTool — document-image ARK guard", () => {
+  it("rejects a full 3:1: document-image ARK with image_read guidance, before any fetch", async () => {
+    await expect(
+      recordReadTool({ recordId: "ark:/61903/3:1:3Q9M-C95G-HQZ6-W" }),
+    ).rejects.toThrow(/document-image ARK.*use the image_read tool/s);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a full 3:2: document-image ARK", async () => {
+    await expect(
+      recordReadTool({ recordId: "ark:/61903/3:2:3QS7-89LB-SDS" }),
+    ).rejects.toThrow(/image_read/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a BARE 3:1: id (normalized via toArk before matching)", async () => {
+    await expect(
+      recordReadTool({ recordId: "3:1:3Q9M-C95G-HQZ6-W" }),
+    ).rejects.toThrow(/image_read/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("routes a 3:1: ARK to image_read even when resultsRef is given (guard precedes the sidecar branch)", async () => {
+    await expect(
+      recordReadTool({
+        recordId: "ark:/61903/3:1:3Q9M-C95G-HQZ6-W",
+        resultsRef: "results/.staging/x.json",
+        projectPath: "/tmp/anything",
+      }),
+    ).rejects.toThrow(/image_read/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("does NOT trigger the guard for a 1:1: record persona (still fetches normally)", async () => {
+    mockOk(MINIMAL_RECORD);
+    await recordReadTool({ recordId: "ark:/61903/1:1:QVS9-DHDB" });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const calledUrl = String(mockFetch.mock.calls[0][0]);
+    expect(calledUrl).toContain("QVS9-DHDB");
+  });
+});
+
 // ─── Sidecar mode (resultsRef) — no network ────────────────────────────────
 
 describe("recordReadTool — sidecar mode (resultsRef)", () => {

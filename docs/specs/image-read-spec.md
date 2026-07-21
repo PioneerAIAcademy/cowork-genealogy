@@ -59,6 +59,30 @@ returns an HTML shell, not the image — so `ark` only accepts `3:1:`/
 `3:2:` document-image ARKs; other ARK types are rejected with
 `"Unrecognized ark"` rather than silently attempted.
 
+### The `record_read` ↔ `image_read` ARK boundary (reciprocal)
+
+The two tools split the ARK space by class and each **rejects** the
+other's class rather than silently attempting it:
+
+- `image_read` owns document images (`3:1:`/`3:2:`) and rejects record
+  personas with `"Unrecognized ark"` (above).
+- `record_read` owns record personas (`1:1:`/`1:2:`) and, symmetrically,
+  rejects a `3:1:`/`3:2:` document-image ARK **before any fetch**,
+  routing the caller to `image_read`. This guard exists because
+  `record_read` would otherwise strip the ARK to a bare id and fetch the
+  record recapi, which 404s/403s — a silent-attempt failure that led an
+  agent to wrongly conclude "image-level ARKs are not resolvable through
+  the available tools" (zabriskie-children e2e, 2026-07-21).
+
+The shared `3:[12]:` matcher is `DOCUMENT_IMAGE_ARK_PATTERN` in
+`src/utils/ark.ts`, consumed by both tools; `record_read` tests its
+input through `toArk()` first so a bare `3:1:…`/`3:2:…` id is caught too.
+`record_read`'s rejection error (pinned LLM-instruction contract):
+
+> `'<ark>' is a document-image ARK (3:1:/3:2:), not a record persona.
+> record_read reads record personas (1:1:); use the image_read tool with
+> this ARK to fetch the image.`
+
 Fetching requires a valid FamilySearch bearer token.
 
 ## Output

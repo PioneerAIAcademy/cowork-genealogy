@@ -17,6 +17,15 @@ const BARE_PREFIXED_RE = /^\d:\d:[A-Za-z0-9.-]+$/;
 
 const FS_URL_PREFIX_RE = /^https?:\/\/(?:www\.)?familysearch\.org\//i;
 
+// A canonical document-image ARK (`3:1:`/`3:2:`), the class `image_read` owns
+// and `record_read` (which owns `1:1:`/`1:2:` record personas) must reject.
+// Test the output of `toArk(value)`, never a raw input, so a bare `3:1:…`/`3:2:…`
+// id is normalized to the full form before matching. Anchored and narrowed to
+// `3:[12]` — do NOT reuse the broader `ARK_CORE_RE`/`BARE_PREFIXED_RE` for this
+// boundary check (they also match `1:1:` personas).
+export const DOCUMENT_IMAGE_ARK_PATTERN =
+  /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
+
 /**
  * Normalize any form of a FamilySearch ARK to the canonical `ark:/61903/...`
  * form: a resolver URL, an already-bare ARK, or a type-prefixed id like

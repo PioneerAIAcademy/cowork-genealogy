@@ -1,6 +1,7 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
+import { toArk, DOCUMENT_IMAGE_ARK_PATTERN } from "../utils/ark.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
@@ -27,7 +28,10 @@ export const recordReadSchema = {
         description:
           "FamilySearch record-persona ARK like " +
           '"ark:/61903/1:1:QVS9-DHDB" (feed record_search\'s `recordId` ' +
-          'directly). A bare entity ID like "QVS9-DHDB" is also accepted. Required.',
+          'directly). A bare entity ID like "QVS9-DHDB" is also accepted. ' +
+          "For a document-image ARK (3:1:/3:2:, e.g. fulltext_search's `id`), " +
+          "use the image_read tool instead — this tool reads record personas, " +
+          "not images. Required.",
       },
       resultsRef: {
         type: "string",
@@ -63,6 +67,24 @@ export async function recordReadTool(
     throw new Error(
       'The record_read tool requires a non-empty recordId string ' +
         '(e.g., "QVS9-DHDB" or "ark:/61903/1:1:QVS9-DHDB").',
+    );
+  }
+
+  // Document-image ARK guard. record_read owns record personas (1:1:/1:2:); a
+  // 3:1:/3:2: ARK is a document image and belongs to image_read. Without this
+  // guard `extractEntityId` would strip it to a bare id and fetch the record
+  // recapi, which 404s/403s — the silent-attempt failure that led an agent to
+  // wrongly conclude "image-level ARKs are not resolvable through the available
+  // tools." Route to image_read with an actionable error instead. Normalize with
+  // toArk() first so a bare `3:1:…`/`3:2:…` id is caught too, and place this
+  // BEFORE the resultsRef branch so sidecar callers are routed as well (an image
+  // ARK is never a 1:1: sidecar key). Mirrors image_read's own "Unrecognized ark"
+  // rejection of un-owned classes (image-read.ts).
+  if (DOCUMENT_IMAGE_ARK_PATTERN.test(toArk(recordId.trim()))) {
+    throw new Error(
+      `'${recordId.trim()}' is a document-image ARK (3:1:/3:2:), not a record ` +
+        "persona. record_read reads record personas (1:1:); use the image_read " +
+        "tool with this ARK to fetch the image.",
     );
   }
 

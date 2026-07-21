@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { toArk, arkToUrl } from "../utils/ark.js";
+import { toArk, arkToUrl, DOCUMENT_IMAGE_ARK_PATTERN } from "../utils/ark.js";
 
 // An imageId is a digitized-image identifier of the form NUMBER_NUMBER
 // (an image group number, an underscore, and an image sequence number,
@@ -18,7 +18,8 @@ const IMAGE_ID_PATTERN = /^\d+_\d+$/;
 const ARK_PATTERN = /^https:\/\/sg30p0\.familysearch\.org\/.+\/\$dist$/;
 const DGS_URL_PATTERN =
   /^https:\/\/(www\.)?familysearch\.org\/das\/v2\/dgs:[^/]+\/dist\.jpg$/;
-const DOCUMENT_IMAGE_ARK_PATTERN = /^ark:\/61903\/3:[12]:[A-Za-z0-9.-]+$/;
+// `DOCUMENT_IMAGE_ARK_PATTERN` (the 3:1:/3:2: shape) is shared with record_read's
+// boundary guard — imported from ../utils/ark.js so both tools use one definition.
 
 // FLOOR on the raw image bytes we base64-encode inline. This is NOT the
 // primary defense against overflow — it only stops a SINGLE image whose
