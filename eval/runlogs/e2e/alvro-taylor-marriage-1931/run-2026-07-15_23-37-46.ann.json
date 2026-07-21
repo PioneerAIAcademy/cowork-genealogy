@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f2": "Marriage recovered with exact date (25 April 1931); place recorded at county level (Tillamook County, Oregon) vs the fixture's town 'Tillamook' — not a material divergence. The tree marriage fact on R5 carries no linked source, though the proof summary cites the original Tillamook County marriage certificate (no. 44). Graded true."
+  },
+  "annotator": "genealogist"
+}

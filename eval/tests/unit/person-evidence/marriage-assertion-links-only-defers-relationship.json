@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_person_evidence_022",
+    "skill": "person-evidence",
+    "name": "A marriage relationship assertion is linked via pe_ entries only — the Couple relationship and its marriage fact are deferred to the pipeline",
+    "type": "positive",
+    "description": "Guards the lane boundary the wilkins-marriage e2e run crossed. In that run, person-evidence created the subject's Couple relationship AND wrote the marriage as a person-level fact, leaving the relationship factless. Per the harness ownership model (TREE_OWNERSHIP_TABLE) and SKILL.md §5/§7, person-evidence owns stub `persons` and `pe_` links only; the `relationships` section (Couple relationships and their Marriage/Divorce facts) is written by proof-conclusion → tree-edit. The flynn-spouse-stub-marriage tree holds Patrick (I1) and his father Thomas (I2) but NOT the bride. Marriage assertion a_005 (source S5 / src_005) documents Thomas Flynn's marriage to Mary Doyle. The correct person-evidence behavior is: create Mary as a stub person, and create a `pe_` link for BOTH parties (Thomas and the new Mary stub) — WITHOUT creating the Couple relationship or writing any Marriage fact. Guards the SKILL.md §7 clarification that 'link' means the pe_ entries, not a tree relationship.",
+    "tags": ["person-evidence", "stub-creation", "lane-boundary", "relationship-assertion", "ownership", "a_005"]
+  },
+  "input": {
+    "user_message": "person-evidence: assertion a_005 documents the marriage of Thomas Flynn (I2) to Mary Doyle — 12 May 1843 at St. Patrick's Church, Schuylkill County, Pennsylvania (source src_005 / tree source S5). Mary Doyle is not yet in the tree. Link this marriage assertion to the right persons.",
+    "scenario": "flynn-spouse-stub-marriage"
+  },
+  "judge_context": [
+    "The core behavior under test is LANE DISCIPLINE: person-evidence resolves identity and records pe_ links; it does NOT create tree relationships or couple-event facts. Grade Correctness primarily on that.",
+    "Mary Doyle matches no existing person (the tree holds only Patrick I1 and Thomas I2), so person-evidence must CREATE A NEW STUB for her — a synthetic id such as I3, gender Female, a name with surname Doyle (the maiden name the marriage register gives). Creating a stub person is within person-evidence's ownership (the `persons` section).",
+    "person-evidence must create person_evidence (pe_) entries linking a_005 to BOTH parties (Thomas I2 and the new Mary stub), since a relationship assertion bears on both persons named in it.",
+    "It is WRONG for person-evidence to create the Couple relationship between Thomas and Mary, and WRONG to write a Marriage fact anywhere (neither on a person via add_fact nor on a relationship). Those belong to proof-conclusion → tree-edit, which own the `relationships` section. A run that adds a Couple relationship or any Marriage fact should fail Correctness — the skill should explicitly DEFER the relationship and event to the downstream pipeline.",
+    "a_005 is a marriage record whose record_persona_id is null, so same_person cannot run and the new person_evidence entries' match_score must be null — the links rest on correlation (the register names Thomas Flynn and Mary Doyle as the marrying couple).",
+    "The new Mary stub rests on the single marriage record with no independent corroboration yet, so her person_evidence link is probable at most — confident would over-claim.",
+    "The stub should be minimal (gender + a name); person-evidence should NOT populate Mary's birth/marriage facts — SKILL.md §5 notes proof-conclusion populates stub facts later.",
+    "COMPLETENESS GRADING NOTE for the judge: score Completeness on whether person-evidence created the Mary stub and both pe_ links and correctly deferred the relationship/event — not on any downstream step (proof-conclusion, tree-edit, check-warnings) that is out of this skill's lane and unavailable in the unit harness."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 600
+  }
+}
