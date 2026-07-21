@@ -125,16 +125,19 @@ places: **(a) how to search this place** — its jurisdictional history,
 boundary changes, naming conventions, indexing quirks — and **(b) which
 records actually exist** there.
 
-**(a) The know-how + facts come from `locality-guide`, not from you.**
-Check for a `localities` entry covering this jurisdiction (read
-`research.json`). If one exists, read it. If not → **invoke
-`locality-guide`** for the jurisdiction, then read back the entry it
-persisted. locality-guide owns the wiki/place tools and writes one
-`loc_` entry (jurisdictions, quirks, guide) so the know-how survives for
-later questions. **Do this for every new place you plan** — a first
-plan, a fallback jurisdiction, a FAN-cluster place — before planning it.
-You have no wiki/place-fact tools of your own; the guide is your source
-for *how* to search.
+**(a) The know-how + facts come from the `localities` entry — you read
+it, you do not invoke `locality-guide`.** The orchestrator runs
+`locality-guide` before handing off to you when a jurisdiction hasn't
+been surveyed, so by the time you plan, `research.json` should already
+hold a `localities` entry for the target place (`jurisdictions`,
+`quirks`, `guide`). **Read it.** If it is **missing** for a place you
+need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
+place — do **not** survey it yourself and do **not** invoke
+locality-guide. **Stop and return to the orchestrator, noting that the
+jurisdiction needs a locality survey**; the orchestrator will run
+`locality-guide` and then re-invoke you. You have no wiki/place-fact
+tools of your own; the `localities` entry is your source for *how* to
+search.
 
 **(b) Then discover which records exist**, with your own tools, applying
 that know-how:
@@ -384,11 +387,12 @@ re-issue it first. Then present the plan:
 **Question:** q_003 — "Did Thomas Flynn leave a will in Schuylkill
 County naming Patrick as a son?"
 
-**Survey:** invoke `locality-guide` for Schuylkill County for the
-know-how + facts (county formed 1811; probate = county Register of
-Wills; naming/indexing quirks) — it persists `loc_001`. Then
-`collections_search` finds the records to plan (FamilySearch
-"Pennsylvania Probate Records, 1683-1994", indexed).
+**Survey:** read the `localities` entry `loc_001` — the orchestrator ran
+`locality-guide` for Schuylkill County before handing off, so the
+know-how + facts are already there (county formed 1811; probate = county
+Register of Wills; naming/indexing quirks). Then `collections_search`
+finds the records to plan (FamilySearch "Pennsylvania Probate Records,
+1683-1994", indexed).
 
 **Plan:** pl_003 — three items: probate on FamilySearch, probate on
 Ancestry (fallback), land records (fallback).
@@ -397,7 +401,7 @@ Ancestry (fallback), land records (fallback).
 
 | Situation | Action |
 |-----------|--------|
-| No `localities` entry exists for this jurisdiction | Invoke `locality-guide` first (it persists a `loc_` entry), then return and read it back |
+| No `localities` entry exists for the jurisdiction you need to plan | Stop and return to the orchestrator noting the jurisdiction needs a locality survey — do **not** invoke `locality-guide` yourself. The orchestrator runs it, then re-invokes you |
 | Question is too vague to plan for | Return to `question-selection` to refine it |
 | All plan items exhausted, question unresolved | Set plan to `exhausted`; invoke `research-exhaustiveness` to evaluate the question against the GPS stop criteria. If it returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
 | User says "start searching" | Hand off to `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
