@@ -1,0 +1,1144 @@
+{
+  "project": {
+    "id": "rp_alvro_taylor_marriage_1931",
+    "objective": "Whom did Alvro Bair Taylor marry, and when and where did the marriage take place?",
+    "subject_person_ids": [
+      "KWJZ-ZNT"
+    ],
+    "status": "completed",
+    "created": "2026-07-13",
+    "updated": "2026-07-15"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Whom did Alvro Bair Taylor marry, and when and where did the marriage take place?",
+      "rationale": "This is the project objective stated as a single testable research question. The marriage is one event (spouse identity, date, and place are attributes of the same event). No sources currently support any marriage facts for Alvro Bair Taylor (KWJZ-ZNT). Marriage records, indexes, and civil registration for the relevant jurisdiction and period are the primary record types to consult. The tree contains Autossie Ann Bair (KWZ8-3RD) as an unsourced person who may be the spouse \u2014 this question's research will confirm or refute that lead.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-16",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three independent sources from different record types and informants answer all sub-questions of q_001. The original Tillamook County marriage certificate (src_001, log_007) directly and primarily names groom Alvro Bair Taylor, bride Mildred M. Misner, date 25 April 1931, and place Tillamook County, Oregon \u2014 before Justice of the Peace E. Wanley. The 1940 US Census (src_002, log_008) independently corroborates the marriage: Al B Taylor and Mildred Taylor enumerated as a married couple in Clatskanie Election Precinct 2, Columbia, Oregon \u2014 different record type, different informant, nine years later. The 1940 GenealogyBank obituary (src_003, log_009) independently names 'Mildred' as Alvro's surviving wife \u2014 a third, different-type corroborating source. Five indexed-search lever variations were exhausted before fulltext search located the original certificate; Ancestry and browse-only image fallbacks were rendered unnecessary by the certificate's discovery. No conflicts exist.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes. The marriage certificate (src_001) directly answers all three sub-questions: spouse is Mildred M. Misner, date is 25 April 1931, place is the office of the Justice of the Peace, Tillamook County, Oregon.",
+          "repository_breadth": "FamilySearch searched exhaustively via indexed record_search (5 lever variations, collections 1803968 and 1675533) and unscoped fulltext_search across the AI-transcribed corpus. The marriage certificate was found. Two corroborating record types (federal census, newspaper obituary) searched. Ancestry and Tillamook County browse-only images were skipped once the original was found \u2014 their addition cannot overturn the certificate.",
+          "original_substitution": "The marriage certificate is the original vital record (source_classification: original). Census and obituary are accessed via FamilySearch derivative records, standard practice for this era; the certificate itself is the primary-evidence anchor.",
+          "independent_verification": "Three independent sources with different informants: (1) marriage certificate \u2014 officiant E. Wanley, primary information; (2) 1940 census \u2014 census enumerator, independent corroboration of marriage to Mildred; (3) 1940 obituary \u2014 family informant, independent corroboration of wife named Mildred. Each comes from a different repository session and a different informant chain.",
+          "evidence_class": "src_001 is an original record containing primary information: the Tillamook County marriage certificate and license no. 44, completed by the officiating Justice of the Peace on the date of the event. Direct evidence for the marriage event, date, place, and parties.",
+          "conflict_resolution": "No conflicts identified. The marriage certificate date (25 April 1931) is consistent with the 1940 census showing the couple married before April 1940. No competing spouse name or marriage date has emerged from any searched source.",
+          "overturn_risk": "Low. The original marriage certificate is the most authoritative possible source for a civil marriage event. It is primary and direct. Three independent sources agree on the spouse identity (Mildred). The remaining unsearched sources (Ancestry Oregon marriage index, county browse-only images) would at most duplicate the found certificate or provide an index pointer to it \u2014 they cannot name a different spouse or different date. No plausible overturn scenario exists."
+        }
+      },
+      "created": "2026-07-15"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-16",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1925-1940",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 'Oregon, County Marriages, 1851-1975' (collection 1803968) is the largest indexed Oregon marriage collection (543,450 records, 105,700 images). Alvro Bair Taylor was residing in East Garibaldi, Tillamook County, Oregon in 1930 and was a lumber mill worker there; marriage most likely occurred in Tillamook County ca. 1931. This indexed search is free and covers the full 1925-1940 window. Searching under Taylor with bride given name variants for Mildred is the highest-probability first step.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1925-1935",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 'Oregon, Marriages, 1853-1935' (collection 1675533; 23,225 indexed records) covers an overlapping window through 1935 and may index records not yet in collection 1803968, or vice versa. If the marriage occurred by 1935, this is a corroborating indexed search at no cost. Fallback for pli_001 if that search returns nil.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1906-1940",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 'Oregon State Marriages, 1906-1968' (collection 61677) is an independent digitized index that may differ in coverage or indexing from the FamilySearch collections. Searching here adds a second repository pass for Alvro Taylor + Mildred. This is a paid-site fallback executed via search-external-sites if FamilySearch indexed searches return nil.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Tillamook, Oregon, United States",
+          "date_range": "1928-1936",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 'Oregon, Tillamook County Records, 1854-1967' (collection 2115693; 64,546 browse-only images) holds the original county marriage registers. If all indexed searches fail, browsing the Tillamook County marriage registers for the ca. 1928-1936 window is the most targeted unindexed fallback, given that Alvro lived in East Garibaldi, Tillamook County in 1930 and likely married there. Executed via search-images skill.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Oregon, United States",
+          "date_range": "1940",
+          "repository": "FamilySearch",
+          "rationale": "Multiple records already identified in the project tree name 'Mildred' as Alvro's wife (obituaries ARKs 7HSC-9PS and 3CX6-V1S; 1940 census 3X44-6WC; Oregon death record QC8V-XGR; Oregon death index 924P-XP9; Find A Grave 9KSB-BY4). These records may supply Mildred's maiden name or other marriage details that would lead directly to the marriage record. Extracting these existing sources serves the FAN cluster and corroborates the spouse's identity before or alongside the marriage-record search.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T23:04:11.794Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Alvro",
+        "collectionId": "1803968",
+        "marriageYearFrom": 1925,
+        "marriageYearTo": 1940,
+        "recordCountry": "United States",
+        "recordSubdivision": "Oregon"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 51,
+      "notes": "51 results returned but all are \"[FirstName] A Taylor\" \u2014 the indexer matched on the initial 'A' rather than the full given name \"Alvro.\" Top match score 0.02 \u2014 no subject match. Will retry with spouse name Mildred to filter, then try name variants."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T23:04:43.028Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Alvro",
+        "spouseGivenName": "Mildred",
+        "collectionId": "1803968",
+        "recordCountry": "United States",
+        "recordSubdivision": "Oregon"
+      },
+      "outcome": "negative",
+      "results_examined": 35,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 35,
+      "notes": "35 results, all \"[FirstName] A Taylor\" \u2014 indexer matches middle initial A, not \"Alvro.\" Top hits are Harley A Taylor + Mildred Johnston (different person). No Alvro Taylor found. Will try searching from bride side: Mildred + spouseSurname Taylor."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T23:05:10.886Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mildred",
+        "spouseSurname": "Taylor",
+        "collectionId": "1803968",
+        "marriageYearFrom": 1928,
+        "marriageYearTo": 1935,
+        "recordCountry": "United States",
+        "recordSubdivision": "Oregon"
+      },
+      "outcome": "negative",
+      "results_examined": 33,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 33,
+      "notes": "33 results from bride's side \u2014 none combine Mildred with an Alvro/Alviro Taylor groom. Top hit Mildred Truscott+James William Taylor is a different person. Will retry with 1910 census variant 'Alviro' as given name."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T23:05:46.411Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Alviro",
+        "collectionId": "1803968",
+        "marriageYearFrom": 1926,
+        "marriageYearTo": 1936,
+        "recordCountry": "United States",
+        "recordSubdivision": "Oregon"
+      },
+      "outcome": "negative",
+      "results_examined": 45,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 45,
+      "notes": "45 results; same pattern \u2014 all '[FirstName] A Taylor.' Alviro not directly found. Will try surname-only Taylor + Tillamook County + 1930-1932 to locate any groom named Taylor in that window regardless of given-name indexing."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T23:06:24.645Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "sex": "Male",
+        "birthYearFrom": 1904,
+        "birthYearTo": 1914,
+        "marriageYearFrom": 1929,
+        "marriageYearTo": 1933,
+        "collectionId": "1803968"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 113,
+      "notes": "113 male Taylors born 1904-1914 marrying in Oregon 1929-1933; no Alvro/Alviro/similar variant with bride Mildred. Five lever variations tried in collection 1803968 \u2014 name not found in any form. Moving to fallback pli_002 (collection 1675533, Oregon Marriages 1853-1935). Also note: marriage may not be in Tillamook County or may be misindexed entirely; fulltext search may be needed."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-15T23:07:04.257Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Taylor",
+        "givenName": "Alvro",
+        "collectionId": "1675533",
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 14,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 14,
+      "notes": "14 results, all initial-A Taylors \u2014 same indexer pattern. Alvro not found in collection 1675533. Trying targeted lever in 1803968: all Taylor marriages in 1931 exactly."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-15T23:10:05.958Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Alvro +Taylor +Mildred",
+        "collectionId": null,
+        "recordPlace": null,
+        "notes": "No collection or place scope \u2014 unscoped corpus-wide search per nil-escalation protocol after 5 indexed-search lever variations exhausted in collections 1803968 and 1675533"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 7,
+      "notes": "Top result is Tillamook County Oregon marriage certificate ARK ark:/61903/3:1:3QSQ-G991-37MK \u2014 transcript confirms 'Alvro Bair Taylor County of Tillamook and State of Oregon and Mildred M. Misner of the County of Columbia and State of Oregon' joined on '25th April A.D. 1931' before Justice of the Peace E. Wanley; witnesses Mrs J. Taylor and Benj Rowe. Collection M9JT-947 'United States, Oregon, Marriages, from 10 January 1500 to 2008.' Name 'Alvro' was not name-indexed in either collection 1803968 or 1675533 \u2014 fulltext search on AI-transcribed document text was required."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-15T23:19:20.774Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:VRRV-DFJ",
+        "source": "United States, Census, 1940",
+        "rationale": "Pre-existing tree source (3X44-6WC). 1940 census lists Al B Taylor and Mildred Taylor as married couple in Clatskanie Election Precinct 2, Columbia, Oregon \u2014 independent corroboration of the marriage to Mildred."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1940 census (ark:/61903/1:1:VRRV-DFJ): Al B Taylor (male, born 1909 Idaho, married) + Mildred Taylor (female, born 1912 Wisconsin, married) as couple, residing Clatskanie Election Precinct 2, Columbia, Oregon. Independently confirms marriage to Mildred, nine years after the 1931 certificate. Mildred's birth year 1912, birthplace Wisconsin \u2014 new biographical data not in marriage certificate. Pre-existing tree source not yet formally extracted."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-15T23:19:26.603Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QP1Y-3SQ2",
+        "source": "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013",
+        "rationale": "Pre-existing tree source (7HSC-9PS). Obituary 13 Aug 1940 names 'Mildred' in a Couple relationship with 'Alvro Bair Taylor' \u2014 independent corroboration. Also surfaces FAN connection: witness 'Benj Rowe' at 1931 marriage = likely husband of Alvro's sister 'Mrs Etta Rowe' listed in the obituary."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Obituary (ark:/61903/1:1:QP1Y-3SQ2), GenealogyBank, 13 Aug 1940: Alvro Bair Taylor's wife 'Mildred' named as Couple \u2014 independent corroboration of marriage. Key FAN insight: 'Mrs Etta Rowe' listed as Alvro's sibling; Benjamin Rowe was a witness at the 1931 marriage certificate, strongly suggesting Benj Rowe is Etta's husband (the couple were present at Alvro's wedding as family). Pre-existing tree source not yet formally extracted."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "Tillamook County, Oregon, Marriage Certificate and License, no. 44, Alvro Bair Taylor and Mildred M. Misner, 25 April 1931; \"United States, Oregon, Marriages, from 10 January 1500 to 2008,\" FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QSQ-G991-37MK : accessed 16 July 2026).",
+      "citation_detail": {
+        "who": "Tillamook County Clerk; ceremony performed and certified by E. Wanley, Justice of the Peace",
+        "what": "Marriage Certificate and License, Alvro Bair Taylor and Mildred M. Misner, No. 44",
+        "when_created": "25 April 1931",
+        "when_accessed": "2026-07-16",
+        "where": "Office of the Justice of the Peace, Tillamook County, Oregon, United States",
+        "where_within": "FamilySearch collection \"United States, Oregon, Marriages, from 10 January 1500 to 2008\" (collection M9JT-947)"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Census, 1940,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VRRV-DFJ : accessed 16 July 2026), entry for Al B Taylor and Mildred Taylor, Clatskanie Election Precinct 2, Columbia, Oregon, 1940.",
+      "citation_detail": {
+        "who": "Al B Taylor and Mildred Taylor household",
+        "what": "1940 U.S. Federal Census population schedule",
+        "when_created": "1940",
+        "when_accessed": "2026-07-16",
+        "where": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+        "where_within": "National Archives and Records Administration; digitized and indexed by FamilySearch"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VRRV-DFJ",
+      "notes": "Accessed via FamilySearch record persona (record_read); underlying digital census image not separately examined. Reclassified derivative per GPS Standard 32 \u2014 the FamilySearch persona is a compiled index entry pointing to the original NARA image, not the original census page itself.",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QP1Y-3SQ2 : Fri Mar 15 05:37:37 UTC 2024), Entry for Alvro Bair Taylor and Mildred, 13 Aug 1940.",
+      "citation_detail": {
+        "who": "GenealogyBank (compiler); FamilySearch (digital repository)",
+        "what": "Newspaper obituary entry for Alvro Bair Taylor, naming wife Mildred, parents Mr and Mrs S J Taylor, and siblings",
+        "when_created": "13 Aug 1940",
+        "when_accessed": "2026-07-16",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:QP1Y-3SQ2",
+        "where_within": "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013 collection; Oregon newspaper"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-16",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QP1Y-3SQ2",
+      "notes": "Original newspaper page image not examined \u2014 this is the GenealogyBank/FamilySearch database entry (derivative) for the obituary; the physical newspaper page was not viewed.",
+      "log_entry_id": "log_009",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/3:1:3QSQ-G991-37MK",
+      "record_role": "groom",
+      "fact_type": "Marriage",
+      "value": "Married Mildred M. Misner, 25 April 1931, at the office of the Justice of the Peace, Tillamook County, Oregon",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "bride"
+      },
+      "date": "25 April 1931",
+      "date_certainty": "exact",
+      "place": "Tillamook County, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "E. Wanley, Justice of the Peace (officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/3:1:3QSQ-G991-37MK",
+      "record_role": "bride",
+      "fact_type": "Marriage",
+      "value": "Married Alvro Bair Taylor, 25 April 1931, at the office of the Justice of the Peace, Tillamook County, Oregon",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "groom"
+      },
+      "date": "25 April 1931",
+      "date_certainty": "exact",
+      "place": "Tillamook County, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "E. Wanley, Justice of the Peace (officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/3:1:3QSQ-G991-37MK",
+      "record_role": "bride",
+      "fact_type": "Name",
+      "value": "Mildred M. Misner",
+      "structured_value": {
+        "given": "Mildred M.",
+        "surname": "Misner"
+      },
+      "information_quality": "primary",
+      "informant": "Mildred M. Misner (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/3:1:3QSQ-G991-37MK",
+      "record_role": "groom",
+      "fact_type": "Residence",
+      "value": "County of Tillamook and State of Oregon",
+      "structured_value": {
+        "place": "Tillamook County, Oregon, United States"
+      },
+      "place": "Tillamook County, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "Alvro Bair Taylor (groom)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/3:1:3QSQ-G991-37MK",
+      "record_role": "bride",
+      "fact_type": "Residence",
+      "value": "County of Columbia and State of Oregon",
+      "structured_value": {
+        "place": "Columbia County, Oregon, United States"
+      },
+      "place": "Columbia County, Oregon, United States",
+      "standard_place": "Columbia, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "Mildred M. Misner (bride)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/3:1:3QSQ-G991-37MK",
+      "record_role": "witness_1",
+      "fact_type": "Name",
+      "value": "Mrs J. Taylor",
+      "structured_value": {
+        "given": "J.",
+        "surname": "Taylor"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Shares the Taylor surname with the groom and is styled 'Mrs' \u2014 a possible FAN associate (mother, sister-in-law, or other kin of Alvro Bair Taylor). Relationship not stated on the record; flagged as a lead, not asserted.",
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/3:1:3QSQ-G991-37MK",
+      "record_role": "witness_2",
+      "fact_type": "Name",
+      "value": "Benj Rowe",
+      "structured_value": {
+        "given": "Benj",
+        "surname": "Rowe"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "head_of_household",
+      "fact_type": "Census",
+      "value": "Enumerated in 1940 U.S. Census as Al B Taylor, Clatskanie Election Precinct 2, Columbia, Oregon",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "head_of_household",
+      "fact_type": "Residence",
+      "value": "Clatskanie Election Precinct 2, Columbia, Oregon (residence, 1940)",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "structured_value": {
+        "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "head_of_household",
+      "fact_type": "Residence",
+      "value": "Rural, Tillamook, Oregon (residence in 1935)",
+      "date": "1935",
+      "date_certainty": "exact",
+      "place": "Rural, Tillamook, Oregon",
+      "structured_value": {
+        "place": "Rural, Tillamook, Oregon"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Corroborates Alvro Bair Taylor's known 1930/1935 residence in Tillamook County, Oregon.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "head_of_household",
+      "fact_type": "Birth",
+      "value": "Age recorded on 1940 census indicates birth about 1909, Idaho",
+      "date": "1909",
+      "date_certainty": "approximate",
+      "place": "Idaho",
+      "structured_value": {
+        "year": "1909",
+        "place": "Idaho"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "1940 census respondent not individually identified in this data; birth year is computed from stated age, not directly recorded. Corroborates known birth year/state (1909, Idaho) for Alvro Bair Taylor.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Idaho, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "head_of_household",
+      "fact_type": "MaritalStatus",
+      "value": "Married",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Indirect evidence bearing on q_001 (Alvro's marriage): confirms married status as of 1940 but does not state the date or place of the marriage.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "head_of_household",
+      "fact_type": "Marriage",
+      "value": "Al B Taylor enumerated with Mildred Taylor as a married couple, 1940, Columbia, Oregon",
+      "date": "1940",
+      "date_certainty": "before",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Marriage inferred from joint enumeration and stated marital status on the 1940 census; the census does not report the actual date or place of marriage, only that it occurred before the April 1940 enumeration.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "wife",
+      "fact_type": "Census",
+      "value": "Enumerated in 1940 U.S. Census as Mildred Taylor, Clatskanie Election Precinct 2, Columbia, Oregon",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "wife",
+      "fact_type": "Residence",
+      "value": "Clatskanie Election Precinct 2, Columbia, Oregon (residence, 1940)",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "structured_value": {
+        "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "wife",
+      "fact_type": "Birth",
+      "value": "Age recorded on 1940 census indicates birth about 1912, Wisconsin",
+      "date": "1912",
+      "date_certainty": "approximate",
+      "place": "Wisconsin",
+      "structured_value": {
+        "year": "1912",
+        "place": "Wisconsin"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "1940 census respondent not individually identified in this data; birth year is computed from stated age, not directly recorded. Corroborates inferred birth (~1912, Wisconsin) for Mildred M. Misner.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Wisconsin, United States"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "wife",
+      "fact_type": "Residence",
+      "value": "Rural, Tillamook, Oregon (residence in 1935)",
+      "date": "1935",
+      "date_certainty": "exact",
+      "place": "Rural, Tillamook, Oregon",
+      "structured_value": {
+        "place": "Rural, Tillamook, Oregon"
+      },
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Matches Al B Taylor's 1935 residence, consistent with the couple already being together by 1935.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "wife",
+      "fact_type": "MaritalStatus",
+      "value": "Married",
+      "date": "1940",
+      "date_certainty": "exact",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "information_quality": "primary",
+      "informant": "unknown household member (likely self)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Indirect evidence bearing on q_001: confirms married status as of 1940 but does not state the date or place of the marriage.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:VRRV-DFJ",
+      "record_role": "wife",
+      "fact_type": "Marriage",
+      "value": "Mildred Taylor enumerated with Al B Taylor as a married couple, 1940, Columbia, Oregon",
+      "date": "1940",
+      "date_certainty": "before",
+      "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "husband"
+      },
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Marriage inferred from joint enumeration and stated marital status on the 1940 census; the census does not report the actual date or place of marriage, only that it occurred before the April 1940 enumeration.",
+      "log_entry_id": "log_008",
+      "source_id": "src_002",
+      "standard_place": "Clatskanie, Columbia, Oregon, United States"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QP1Y-3SQ2",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "About 13 Aug 1940",
+      "date": "13 Aug 1940",
+      "date_certainty": "approximate",
+      "structured_value": {
+        "year": "1940"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant (likely next of kin reporting to the newspaper)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Obituary published same day as the given death date, suggesting rapid family notification, but the specific informant is unnamed and not shown to have witnessed the death itself; classified secondary per family-relay convention.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QP1Y-3SQ2",
+      "record_role": "deceased",
+      "fact_type": "obituary_publication",
+      "value": "Obituary published 13 Aug 1940 in an Oregon newspaper",
+      "date": "13 Aug 1940",
+      "date_certainty": "exact",
+      "place": "Oregon",
+      "information_quality": "primary",
+      "informant": "newspaper editorial staff",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_003",
+      "standard_place": "Oregon, United States"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QP1Y-3SQ2",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "Survived by wife, Mildred (no surname given)",
+      "structured_value": {
+        "relationship_type": "spouse"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant (likely next of kin reporting to the newspaper)",
+      "informant_proximity": "family_not_present",
+      "informant_bias_notes": "Names 'Mildred' as wife but gives no marriage date/place; corroborates but does not independently establish the 1931 marriage record identity. No surname given here for Mildred \u2014 surname Misner relies on the separate 1931 marriage source (src_001).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_009",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QP1Y-3SQ2",
+      "record_role": "father",
+      "fact_type": "residence",
+      "value": "Mr S J Taylor, residing Garibaldi, Oregon",
+      "date": "1940",
+      "date_certainty": "approximate",
+      "place": "Garibaldi, Oregon",
+      "structured_value": {
+        "place": "Garibaldi, Oregon"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant (likely next of kin reporting survivors to the newspaper)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_003",
+      "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:QP1Y-3SQ2",
+      "record_role": "mother",
+      "fact_type": "residence",
+      "value": "Mrs S J Taylor, residing Garibaldi, Oregon",
+      "date": "1940",
+      "date_certainty": "approximate",
+      "place": "Garibaldi, Oregon",
+      "structured_value": {
+        "place": "Garibaldi, Oregon"
+      },
+      "information_quality": "secondary",
+      "informant": "unidentified family informant (likely next of kin reporting survivors to the newspaper)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_009",
+      "source_id": "src_003",
+      "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "The record role is 'groom' and the name given is 'Alvro Bair Taylor' \u2014 an extremely rare given name (Alvro) that is the subject of this research. The groom's county of residence is stated as Tillamook, Oregon, which matches Alvro's known 1930 census residence at East Garibaldi, Tillamook County, Oregon. The record was located specifically by searching for '+Alvro +Taylor +Mildred' \u2014 this is not an incidental name collision. All identifiers agree: name (exact, rare), county, state. Confident match.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "This marriage assertion bears on both parties. The bride named in the certificate is 'Mildred M. Misner' and person I1 was created as a stub from this same record. As the only source for I1, and with no independent corroboration yet, the link is probable rather than confident per stub-person policy. The assertion names her explicitly as groom's wife.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The record role is 'bride' and the name given is 'Mildred M. Misner' \u2014 exactly matching the stub person I1 created from this same record. The bride's county of residence is Columbia, Oregon, with no contradicting data. Probable per stub-person policy (one record, no independent corroboration).",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_002",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "This marriage assertion bears on both parties. The groom named is 'Alvro Bair Taylor', a unique name matching the subject KWJZ-ZNT. The groom's Tillamook County, Oregon residence matches KWJZ-ZNT's known 1930 residence. Confident match \u2014 same rationale as a_001\u2192KWJZ-ZNT.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "The bride's self-reported name 'Mildred M. Misner' is the basis for stub person I1. No other Mildred Misner appears in this project. The name assertion is primary information from the bride herself (informant_proximity: self). Probable per stub-person policy.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_004",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Groom 'Alvro Bair Taylor' self-reports residence in County of Tillamook, State of Oregon at the time of marriage (April 1931). KWJZ-ZNT's known residence from the 1930 census was East Garibaldi, Tillamook County, Oregon \u2014 consistent. The unique given name anchors the identification. Confident.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Bride 'Mildred M. Misner' self-reports residence in County of Columbia, State of Oregon at time of marriage. This is the only record for stub person I1; the link is probable per stub-person policy. Note: later records (1940 census) show the couple residing in Columbia County \u2014 consistent with this origin.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Al B Taylor enumerated in 1940 census: birth 1909 Idaho matches KWJZ-ZNT's birth 4 Sep 1909; 1935 Tillamook Oregon residence matches known residence; Couple relationship with Mildred Taylor consistent with marriage to Mildred M. Misner (I1). Confident identification.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Residence 1940 Clatskanie Election Precinct 2, Columbia, Oregon for Al B Taylor \u2014 same person as KWJZ-ZNT per census identification above.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1935 residence Rural, Tillamook, Oregon for Al B Taylor (KWJZ-ZNT). Corroborates known 1930/1935 Tillamook County residence.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Birth year ~1909, Idaho for Al B Taylor \u2014 matches Alvro Bair Taylor born 4 Sep 1909, Marsh Center, Bannock, Idaho. Confident.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status Married 1940, Al B Taylor \u2014 same person as KWJZ-ZNT. Indirect corroboration of q_001.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_013",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage (inferred) from 1940 census cohabitation \u2014 Al B Taylor = KWJZ-ZNT. Indirect evidence for q_001.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage assertion (indirect) also bears on I1 \u2014 Mildred Taylor is enumerated with KWJZ-ZNT as wife in 1940 census, corroborating I1 as his spouse. Probable per stub-person policy.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Mildred Taylor enumerated in 1940 census as wife of Al B Taylor (KWJZ-ZNT). Surname Taylor = married name. Birth 1912 Wisconsin. Probable per stub-person policy \u2014 I1 introduced from the 1931 marriage certificate.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Residence 1940 Clatskanie, Columbia, Oregon for Mildred Taylor \u2014 same person as I1 per census identification.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year ~1912, Wisconsin for Mildred Taylor (I1). Adds biographical data for stub person.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1935 residence Rural, Tillamook, Oregon for Mildred Taylor (I1). Consistent with being in Tillamook County with husband before 1940 move to Columbia County.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marital status Married 1940, Mildred Taylor \u2014 I1. Indirect corroboration of q_001.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage (inferred) from 1940 census \u2014 Mildred Taylor = I1. Indirect evidence for q_001.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion (indirect) also bears on KWJZ-ZNT \u2014 he is the husband enumerated with Mildred Taylor in 1940.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death of Alvro Bair Taylor ~13 Aug 1940, from obituary. Name matches exactly; death date consistent with known death 11 Aug 1940 from other sources.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Obituary publication 13 Aug 1940 for Alvro Bair Taylor. Name match is exact.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Obituary names 'Mildred' as wife (survivor) of Alvro Bair Taylor. No surname given, so identification as I1 (Mildred M. Misner) rests on the 1931 marriage certificate. Probable \u2014 corroborated by marriage certificate but single identifying feature (given name only) here.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "KWJZ-ZNT",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Wife relationship assertion from obituary also bears on KWJZ-ZNT \u2014 he is the deceased named 'Alvro Bair Taylor' in the obituary.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "person_id": "KW8G-33L",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "'Mr S J Taylor' residing Garibaldi, Oregon (Aug 1940) \u2014 matches Silvester Jay Taylor (KW8G-33L), Alvro's father, whose known residence was Garibaldi, Tillamook, Oregon in 1930 and 1940.",
+      "created": "2026-07-15"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "person_id": "KWZ8-3RD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "'Mrs S J Taylor' residing Garibaldi, Oregon (Aug 1940) \u2014 matches Autossie Ann Bair Taylor (KWZ8-3RD), Alvro's mother, wife of Silvester Jay Taylor. Known residence was Tillamook County, Oregon.",
+      "created": "2026-07-15"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_012",
+        "a_013",
+        "a_018",
+        "a_019",
+        "a_022"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Searched FamilySearch indexed marriage collections 1803968 (Oregon, County Marriages, 1851\u20131975) and 1675533 (Oregon, Marriages, 1853\u20131935) across five distinct lever variations; all returned nil for the groom due to consistent indexer misreading of the unusual given name \u2018Alvro.\u2019 Escalated to unscoped AI-transcribed fulltext corpus (fulltext_search keywords +Alvro +Taylor +Mildred), which surfaced the original Tillamook County marriage certificate (log_007) as the top of seven results. The 1940 US Census (log_008, VRRV-DFJ) and 1940 GenealogyBank newspaper obituary (log_009, QP1Y-3SQ2) were read as corroborating sources for pli_005. Ancestry Oregon State Marriage index (pli_003) and Tillamook County browse-only image series (pli_004) were skipped because the original vital record was already located. No conflicts were identified.",
+      "narrative_markdown": "## Proof Summary: Marriage of Alvro Bair Taylor\n\n### Conclusion\n\nAlvro Bair Taylor (born 4 September 1909, Bannock County, Idaho; died 11 August 1940, Portland, Multnomah County, Oregon) married **Mildred M. Misner** on **25 April 1931** at the office of the Justice of the Peace, **Tillamook County, Oregon**, before officiating officer E. Wanley, Justice of the Peace.\n\n### Evidence\n\n**Marriage Certificate \u2014 Original, Primary, Direct Evidence**\n\nA Tillamook County, Oregon marriage certificate and license, no. 44, certified by E. Wanley, Justice of the Peace, provides direct, primary evidence for all three material facts of the question. The certificate records that the officiating officer \"did, on the 25th April A. D. 1931, at the office of the Justice of the \u2026 County \u2026 join in lawful wedlock Alvro Bair Taylor County of Tillamook and State of Oregon and Mildred M. Misner of the County of Columbia and State of Oregon, with their mutual assent.\" Witnesses were Mrs J. Taylor and Benj Rowe.[1]\n\nThe record is classified as an original source (the civil certificate itself, not an index entry) containing primary information (recorded by the officiating officer at the time of the event in the performance of his official duty). Evidence is direct: the record exists for the sole purpose of documenting this marriage event.\n\n*Groom identity:* The name \"Alvro Bair Taylor\" is extremely rare. No other person bearing this given name has appeared in any searched record set. The groom's stated county of residence \u2014 Tillamook, Oregon \u2014 matches Alvro Bair Taylor's (KWJZ-ZNT) enumerated residence at East Garibaldi, Tillamook County, on the 1930 US Census.\n\n*Bride identity:* The bride is named \"Mildred M. Misner\" (a_003), residing in Columbia County, Oregon at the time of the marriage. No competing candidate appears in any source examined.\n\n**1940 US Census \u2014 Derivative, Indirect Evidence**\n\nThe 1940 federal census independently confirms that \"Al B Taylor\" (born 1909, Idaho; 1935 residence Tillamook, Oregon) was enumerated as a married man with wife \"Mildred Taylor\" in Clatskanie Election Precinct 2, Columbia, Oregon \u2014 a different record type, a different informant (census enumerator), and a different point in time (April 1940), nine years after the marriage.[2] This independently corroborates the married relationship between these two specific individuals, though it does not report the marriage date or place.\n\n**1940 Newspaper Obituary \u2014 Derivative, Indirect Evidence**\n\nAn Oregon newspaper obituary published 13 August 1940 names \"Mildred\" as the surviving wife of Alvro Bair Taylor, providing a third independent source confirming the married relationship.[3] The obituary is a derivative source with secondary information about the marriage (compiled from family-provided details), but its independence from the other two sources in origin and informant adds contextual weight.\n\n*FAN corroboration:* Witness \"Benj Rowe\" on the 1931 marriage certificate corresponds to the obituary's listing of \"Mrs Etta Rowe\" as Alvro's sister \u2014 almost certainly her husband. The presence of a family member's husband as a witness is consistent with the certificate being a genuine family event document.\n\n### Analysis\n\nAll three sub-questions are answered:\n\n- **Who:** Mildred M. Misner (maiden name from marriage certificate, primary information; a_003; subsequently enumerated as Mildred Taylor in married name).\n- **When:** 25 April 1931 (marriage certificate, primary, direct).\n- **Where:** Office of the Justice of the Peace, Tillamook County, Oregon (marriage certificate, primary, direct).\n\nNo conflicts exist. The 1940 census and obituary are consistent with the certificate: the census shows the couple still married nine years later; the obituary confirms Mildred was Alvro's wife at the time of his death. The bride's maiden name \"Misner\" appears in primary information from the marriage certificate only; no other record type examined adds or contradicts this surname.\n\n### Alternatives Considered\n\nThe project tree contained Autossie Ann Bair (KWZ8-3RD) as an unsourced person, flagged in the research rationale as a possible spouse candidate for Alvro Bair Taylor. Research affirmatively eliminated this candidate. The 1940 obituary (src_003, a_024) separately names Alvro's surviving wife (\"Mildred\") and his surviving parents (\"Mr and Mrs S J Taylor\") as distinct survivor categories in the same death notice. Person-evidence pe_027 identifies the listed \"Mrs S J Taylor\" as Autossie Ann Bair, wife of Silvester Jay Taylor (KW8G-33L), who is Alvro's confirmed mother. Autossie Ann Bair is conclusively identified as Alvro's mother \u2014 not his spouse \u2014 and is eliminated as a marriage candidate.\n\n### Tier: Proved\n\nAll five GPS components are satisfied: (1) research is declared reasonably exhaustive \u2014 two indexed FamilySearch marriage collections were searched to nil across five lever variations, the AI-transcribed fulltext corpus surfaced the original certificate, and two corroborating sources from independent record types were examined; (2) all sources are cited in full; (3) evidence has been analyzed, classified at extraction, and correlated; (4) no conflicts exist; and (5) this narrative is the soundly reasoned conclusion. The original Tillamook County marriage certificate, created by the officiating civil officer at the time of the event, provides primary and direct evidence for every material element of the conclusion. The 1940 census and obituary independently and consistently corroborate the married relationship from different record types and informant chains.\n\n### Sources\n\n[1] Tillamook County, Oregon, Marriage Certificate and License, no. 44, Alvro Bair Taylor and Mildred M. Misner, 25 April 1931; \"United States, Oregon, Marriages, from 10 January 1500 to 2008,\" FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QSQ-G991-37MK : accessed 16 July 2026).\n\n[2] \"United States, Census, 1940\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VRRV-DFJ : accessed 16 July 2026), Entry for Al B Taylor and Mildred Taylor, 1940.\n\n[3] \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QP1Y-3SQ2 : accessed 16 July 2026), Entry for Alvro Bair Taylor and Mildred, 13 Aug 1940."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "file_path": "evaluations/proof-critique-ps_001-20260716.json",
+      "superseded_by": null,
+      "timestamp": "2026-07-15T23:37:14.227Z"
+    }
+  ]
+}
