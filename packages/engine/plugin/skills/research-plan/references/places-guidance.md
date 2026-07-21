@@ -37,12 +37,14 @@ records were created and are now held.
 The place tools all take a `standardPlace` name (not an ID) and resolve it
 internally — pass the `standardPlace` you got from `place_search`:
 
-- `place_population({ standardPlace, ... })`
-- `external_links_search({ standardPlace, ... })`
 - `collections_search({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally, returned as `scope`)
-- `place_distance({ standardPlace1, standardPlace2 })`
-- `wiki_place_page({ standardPlace, section })` — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`
 - `volume_search({ standardPlace, ... })`
+- `external_links_search({ standardPlace, ... })`
+
+`place_population`, `wiki_place_page`, `wiki_search`, and `place_distance`
+are **locality-guide's** tools, not research-plan's — you receive their
+findings as the facts and quirks in the `localities` entry (Step 2), you do
+not call them here.
 
 For `place_distance`, two events at the **same** `standard_place` are distance 0
 (no call needed); otherwise pass the two names.
@@ -55,12 +57,11 @@ A standardPlace is comma-delimited, most-specific-first
 the text after the first comma** ("Pennsylvania, United States", then
 "United States"). To broaden, drop the leading component and call again.
 
-- **Superseding resources** — `wiki_place_page`, `place_population`. One right
-  answer per place: the most-specific available. If a place has no page / no
-  data, climb to the parent and retry; **stop at the first hit.** A national
-  figure for a village is usually too generic to use — climb only as far as you
-  must.
-- **Additive resources** — `external_links_search`, `collections_search`,
+- **Superseding resources** (locality-guide's — you read these as facts in the
+  `localities` entry, you don't fetch them): a place's wiki research page and
+  population have one right answer per place — the most-specific available.
+  locality-guide climbs to the parent jurisdiction when a place has none.
+- **Additive resources** (yours) — `external_links_search`, `collections_search`,
   `volume_search`. Each level holds *different* records (the county courthouse,
   the state archive, the national index), so fetch the levels your research
   actually needs and combine them. Bias to the specific end; the national level

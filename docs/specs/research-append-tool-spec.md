@@ -4,7 +4,7 @@
 > `research_log_append` (`research-log-editor-spec.md`). That tool owns the one
 > append-only section (`log[]` + its sidecars); this one owns the **other**
 > mutable `research.json` sections — sources, assertions, person_evidence,
-> questions, plans, conflicts, hypotheses, known_holdings, timelines. It is the
+> questions, plans, conflicts, hypotheses, known_holdings, timelines, localities. It is the
 > single largest remaining hand-edited-JSON surface in the skill catalog and the
 > home for the state-coupling invariants the skill-determinism audit surfaced.
 > The log was split out and shipped first because of its two-file atomic write +
@@ -84,7 +84,7 @@ the re-serialize-and-revalidate loop this tool direction exists to kill:
 | Only `log` is append-only; all other sections allow field updates, preserve ids, never delete | `research-schema-spec.md:134, 143, 291` |
 | `person_evidence` revision sets `superseded_by`, never deletes | `research-schema-spec.md:427, 431` |
 | `plans`: re-plan creates a new plan, old one set `superseded`; search skills update only `items[].status` | `research-schema-spec.md:133, 265` |
-| id prefixes per section | `src/validation/validator.ts` `ID_PREFIXES` (`src_/a_/pe_/q_/pl_/pli_/c_/h_/t_/kh_`) |
+| id prefixes per section | `src/validation/validator.ts` `ID_PREFIXES` (`src_/a_/pe_/q_/pl_/pli_/c_/h_/t_/kh_/loc_`) |
 | Coupling invariants already validated post-hoc | `validator.ts:417–424` (exhaustive_declaration), `:607–611` (conflict), `:637–638` (hypothesis) |
 | The shipped append template: id/timestamp assignment, validate-before-persist, atomic write, compact return, camelCase→snake_case | `src/tools/research-log-append.ts`, `research-log-editor-spec.md` |
 | Shared write layer | `src/utils/project-io.ts` (`atomicWriteJson`), `src/validation/validator.ts` (`validateParsed`) |
@@ -100,7 +100,7 @@ research_append({
     | "sources" | "assertions" | "person_evidence"
     | "questions" | "plans" | "plan_items"
     | "conflicts" | "hypotheses" | "known_holdings" | "timelines"
-    | "proof_summaries" | "evaluations" | "project",   // project: update-only singleton, §3.1
+    | "proof_summaries" | "evaluations" | "localities" | "project",   // project: update-only singleton, §3.1
   op: "append" | "update",
 
   // op = "append": a new entry WITHOUT its id (the tool assigns the prefix id).
