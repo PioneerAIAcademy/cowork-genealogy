@@ -1,0 +1,3605 @@
+{
+  "project": {
+    "id": "rp_naveda_spain_origin",
+    "objective": "Where in Spain was Francisco Naveda Somarriba born or baptized, and who were his parents?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "completed",
+    "created": "2026-06-19",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "In which Spanish locality was Francisco Naveda Somarriba born or baptized?",
+      "rationale": "The objective requires identifying Francisco's Spanish origin. His baptismal record would name the parish and location, establishing the jurisdiction for all downstream searches. This is the gatekeeper question: without a locality, we cannot search Spanish diocesan or civil records for parental data. The surname Naveda has regional associations in Cantabria/northern Spain; this question scopes the search space.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_062",
+        "a_063",
+        "a_064",
+        "a_066",
+        "a_067"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Francisco's 1832 baptism in Limpias, Cantabria (src_004, original image confirmed) directly names his parents as Juan de Naveda \u00d7 Mar\u00eda Somarriba Gonz\u00e1lez. Three independent records corroborate this couple in Limpias: the 1833 Valentina baptism (src_002), the 1834 Mar\u00eda Somarriba Gonz\u00e1lez death record (src_003), and the 1843 Juan de Naveda remarriage (src_005). Nationwide indexed collections (Spain Baptisms 1502\u20131940; Diocese of Santander), FTS unscoped corpus, targeted Limpias baptism and marriage volumes, Cantabria passport collection, and consular emigration records were all searched. Fallback searches for Voto, Ampuero, quintas, and PARES were correctly bypassed once the baptism was confirmed. One unresolved name conflict (c_001: I6 'Cruz' vs 'Cossio de Somarriba') is peripheral to q_001 and does not affect the answer.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "YES \u2014 Francisco Alejandro (Naveda Somarriba) baptized 27 Feb 1832, San Pedro Ap\u00f3stol Parish, Limpias, Cantabria. Parents: Juan de Naveda \u00d7 Mar\u00eda Somarriba Gonz\u00e1lez (also known as Mar\u00eda Somarriba y Somarriba per baptism). Paternal grandparents: Luis de Naveda \u00d7 Mar\u00eda [Cruz/Coss\u00edo] Somarriba, Carasa, Voto. Maternal grandparents: Francisco Somarriba \u00d7 Josefa Gonz\u00e1lez Aguirre, Carasa, Voto. The research question is fully answered.",
+          "repository_breadth": "FamilySearch nationwide Spain Baptisms index (log_001), Diocese of Santander collection (log_002), FTS unscoped corpus (log_003, log_006, log_009), FTS targeted to Limpias baptism volume 004383194_002 (log_011), indexed search on same volume (log_012), FTS on Limpias marriage register _008 (log_013), FTS for Luis+Naveda+Somarriba (log_004), Spain Marriages index (log_005), Cantabria passport/consular collections via FTS (log_006). Name variants tried: Naveda/Navedas, with and without Somarriba filter, with father Juan/Luis. PARES and quintas (pli_007, pli_013, pli_014) skipped because baptism found \u2014 residual archives would not change the Limpias conclusion.",
+          "original_substitution": "All four FTS-discovered Limpias records were verified against original parish register images: src_002 (1833 Valentina baptism image), src_003 (1834 death record image), src_004 (1832 Francisco baptism image confirmed by image-reader), src_005 (1843 marriage image confirmed by image-reader). No derivative source is relied upon without original image confirmation.",
+          "independent_verification": "Three independent sources corroborate Francisco's parentage: (1) src_004 \u2014 1832 baptism, primary information from officiating priest; (2) src_002 \u2014 1833 Valentina baptism, same parents Juan de Naveda \u00d7 Mar\u00eda Somarriba Gonz\u00e1lez recorded at same parish; (3) src_003 \u2014 1834 death of Mar\u00eda de Somarriba Gonz\u00e1lez, wife of Juan de Naveda, confirming the couple. All three sources created by different priests at different times; none derives from the others. The 1843 marriage (src_005) adds a fourth independent confirmation naming Juan de Naveda as widower of Mar\u00eda de Somarriba Gonz\u00e1lez.",
+          "evidence_class": "src_004 (1832 baptism) is an original record with primary information: the officiating priest recorded the baptism in the parish register at the time of the ceremony. The baptizand's name, parents' names, grandparents' names, and date are all primary information for this original source.",
+          "conflict_resolution": "One conflict registered (c_001): I6's name appears as 'Mar\u00eda Cruz Somarriba' in src_002 (1833 baptism) and 'Mar\u00eda Cossio de Somarriba' in src_005 (1843 marriage). This does not affect the answer to q_001 \u2014 Francisco's parents (Juan de Naveda \u00d7 Mar\u00eda Somarriba Gonz\u00e1lez) and birth locality (Limpias, Cantabria) are not in dispute. The conflict is about a peripheral grandparent's name form and does not block proof of Francisco's birth locality or parentage.",
+          "overturn_risk": "LOW. The 1832 Limpias baptism directly names Francisco Alejandro as son of Juan de Naveda \u00d7 Mar\u00eda Somarriba Gonz\u00e1lez; three independent records confirm this couple in Limpias. No remaining unsearched record type would plausibly name a different birth locality or different parents. The skipped PARES/quintas entries (pli_007, pli_013, pli_014) would have provided alternative access paths to the baptism, not contradicting evidence. The Voto/Ampuero fallback searches (pli_011\u2013012) were correctly bypassed after the Limpias baptism was confirmed \u2014 there is no competing baptism in those collections. The unresolved I6 name conflict (c_001) carries no overturn risk for q_001's answer."
+        }
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "superseded",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Spain (nationwide)",
+          "date_range": "1750-1820",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1500692 'Spain, Baptisms, 1502-1940' is an indexed nationwide baptism database with 8.6M records. Searching for Francisco Naveda without a known locality requires a nationwide index; this is the fastest first path to finding his baptism record and identifying the parish. Absence here does not rule out the record existing \u2014 only about 8% of the full Catholic record corpus is indexed \u2014 but a hit would resolve the question immediately.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Diocese of Santander (Cantabria), Spain",
+          "date_range": "1750-1820",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 2078544 'Spain, Diocese of Santander, Catholic Church Records, 1538-1985' contains 290,553 records and 2,737,180 persons from Cantabria \u2014 Francisco's most probable diocese given that both compound surnames (Naveda, Somarriba) are toponyms associated with Cantabria and adjacent northern Castile. This diocese-level search narrows the scope to the likely area of origin and complements the nationwide index.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Spain (unindexed corpus, full-text)",
+          "date_range": "1700-1850",
+          "repository": "FamilySearch",
+          "rationale": "A full-text co-occurrence search for 'Naveda' AND 'Somarriba' run unscoped across the FamilySearch full-text corpus (via the search-full-text skill) is the prescribed high-yield tactic for emigrant origin cases where the baptismal record is not individually indexed. The paterno 'Naveda' and materno 'Somarriba' co-occurring on the same page will surface Francisco's baptismal record (which names father [?] Naveda and mother [?] Somarriba), the parents' own marriage entry, or both. Volume search confirms 6,594 full-text-searchable volumes for Cantabria 1700-1870 that are 0% indexed by name \u2014 this is the only way to find them without a pre-known locality.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Spain (nationwide)",
+          "date_range": "1770-1840",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1500693 'Spain, Marriages, 1565-1950' (2.4M records). Francisco's own marriage record \u2014 to Maria Josefa Silvera, or to a prior spouse if he married in Spain before emigrating \u2014 would typically state his place of origin and his parents' names. As a separate event record from his baptism, it constitutes independent corroboration. Even a negative result narrows the hypothesis that he married in Spain.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "other",
+          "jurisdiction": "Cantabria, Spain",
+          "date_range": "1785-1863",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 2000617 'Spain, Cantabria, Passports, 1785-1863' (24,806 images, browse-only). If Francisco emigrated from Cantabria to the Americas, a pasaporte de emigraci\u00f3n would record his home town, physical description, and parents \u2014 the exact facts needed to answer q_001. The collection covers the most probable departure point given the surnames. Must be browsed by image since it is 0% indexed.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "Spain (nationwide)",
+          "date_range": "1808-1870",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch collection 1928310 'Spain, Consular Records of Emigrants, 1808-1960' (105,083 images). Consular registrations recorded Spaniards residing abroad with their province and town of origin. If Francisco appears in a Latin American consulate register, the record would state his Spanish birthplace and parents. Browse-only; search by name not possible, so use as a fallback after locality is narrowed.",
+          "fallback_for": "pli_005",
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "other",
+          "jurisdiction": "Spain (nationwide)",
+          "date_range": "1700-1870",
+          "repository": "other",
+          "rationale": "PARES (Portal de Archivos Espa\u00f1oles, pares.culturaydeporte.gob.es) is Spain's national archive portal and the gateway to records not yet on FamilySearch \u2014 notarial records, diocesan archives, military expedientes, and civil registers. Searching 'Francisco Naveda Somarriba' here via search-external-sites may surface militia records, notarial acts, or ecclesiastical documentation from Cantabrian archives (Archivo Hist\u00f3rico Provincial de Cantabria). Execute after FamilySearch options are exhausted.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Carasa, Voto / Limpias, Cantabria, Spain",
+          "date_range": "1825-1840",
+          "repository": "FamilySearch",
+          "rationale": "The 1833 Limpias baptism (src_002) names the paternal grandparents of Valentina Josefa de Naveda as Luis de Naveda x Mar\u00eda Cruz Somarriba, vecinos of Carasa (municipality of Voto, Cantabria). Francisco Naveda Somarriba (~1830) would fit as either (a) an older sibling of Valentina Josefa (son of Juan de Naveda x Mar\u00eda Somarriba, Limpias) or (b) a son of Luis de Naveda x Mar\u00eda Cruz Somarriba themselves (making Juan de Naveda Francisco's brother, not father). A targeted full-text search on +Luis +Naveda +Somarriba will surface baptismal entries for children of Luis de Naveda x Mar\u00eda Cruz Somarriba in the Carasa/Voto registers and may establish Francisco's baptismal entry or his parentage directly.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_009",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Limpias, Cantabria, Spain",
+          "date_range": "1825-1840",
+          "repository": "FamilySearch",
+          "rationale": "San Pedro Ap\u00f3stol, Limpias holds the baptism register where Valentina Josefa de Naveda (Francisco's probable sibling) was found in December 1833. Volume 004383194_006_M9S7-3KW (222 images, 0% name-indexed, FTS-searchable) covers Bautismos 1798\u20131852 and was not systematically image-browsed in pl_001. FTS searches (+Naveda +Somarriba) have a ~10% transcription error rate and may have missed Francisco's ~1830 entry on a poorly-transcribed page. Direct image-browse of this volume targeting pages dated ~1825\u20131835 is the single most direct action to confirm or exclude Francisco's baptism in Limpias and name his parents. Use image-reader on the 0% indexed volume (004383194_006) after identifying the relevant page range via volume_search.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Limpias, Cantabria, Spain",
+          "date_range": "1820-1840",
+          "repository": "FamilySearch",
+          "rationale": "Per the BCG standard for parentage questions, the marriage of the candidate parents (Juan de Naveda \u00d7 Mar\u00eda de Somarriba Gonz\u00e1lez) is a required plan item. This marriage took place before December 1833 (Valentina's baptism) and likely by ~1828\u20131832. The marriage record would: (a) confirm the couple as a unit; (b) supply both spouses' parents' names, providing independent corroboration of the grandparent names already found in src_002; (c) by its date relative to Francisco's birth (~1830), show whether Francisco could be a pre-marital or post-marital child. Volume 004392831 covers San Pedro Ad Vincula, Se\u00f1a, Limpias \u2014 check also the FamilySearch image group for Limpias matrimonios. The specific 1843 Limpias marriage image (ark:/61903/3:1:S3HY-D13W-4NX, identified in log_003) should be read here as it may record a sibling's or Juan de Naveda's second marriage, naming the parents on both sides. Retry image-reader with a working OpenRouter key.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Voto, Cantabria, Spain",
+          "date_range": "1825-1840",
+          "repository": "FamilySearch",
+          "rationale": "If Francisco Naveda Somarriba is a son of Luis de Naveda \u00d7 Mar\u00eda Cruz Somarriba (hypothesis b) \u2014 vecinos of Carasa, municipality of Voto \u2014 his baptism would be in a Voto parish register, not Limpias. Volume 004392703_001_M9S7-ZHL (San Rom\u00e1n, Voto, Bautismos 1785\u20131837, 90% indexed, FTS-searchable) covers the target period. Additional Voto parishes to check: San Gines (004383239, 0% indexed, not FTS-searchable; browse only), San Miguel de Aras (004388931, mixed, not FTS-searchable), and San Mam\u00e9s de Aras (004383253, 96% indexed). The FTS pli_008 search (+Luis +Naveda +Somarriba) returned 12 hits without finding a Francisco baptism, but the Voto registers have varying FTS coverage. Index-based search on 'Naveda' in Voto collections should be tried; image-browse of the Carasa-area pages as fallback.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Ampuero, Cantabria, Spain",
+          "date_range": "1820-1835",
+          "repository": "FamilySearch",
+          "rationale": "The pli_008 FTS search (+Luis +Naveda +Somarriba) found ark:/61903/3:1:S3HT-DRR9-XZC in Hoz de Marr\u00f3n (San Pedro), municipality of Ampuero, Cantabria \u2014 naming 'Lu\u00eds de Naveda' and 'Mar\u00eda Cruz' as parents of a child baptized there in the early 1820s. This confirms Luis de Naveda \u00d7 Mar\u00eda Cruz were active in the Ampuero municipality as well as Carasa/Voto. The image-reader session on that Hoz de Marr\u00f3n volume produced an OCR hallucination loop; the image should be re-read carefully. A Francisco baptism ~1830 in an Ampuero parish (Hoz de Marr\u00f3n/San Pedro, Ampuero) is plausible if the family attended a church on the Ampuero side. Volume search for Ampuero should be run, and the specific Hoz de Marr\u00f3n volume browsed for 1828\u20131835 pages.",
+          "fallback_for": "pli_011",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 5,
+          "record_type": "military",
+          "jurisdiction": "Cantabria (Santander Province), Spain",
+          "date_range": "1848-1858",
+          "repository": "other",
+          "rationale": "Spain's quintas (military conscription draft) required each municipality to register eligible men. For a man born ~1830 in Cantabria, the relevant quintas rolls would be ~1851\u20131856 (ages 21\u201326). These rolls name the conscript's father's name and home village \u2014 direct parentage evidence. Cantabria quintas rolls for the 1840s\u20131860s are held at the Archivo Hist\u00f3rico Provincial de Cantabria (AHPC) in Santander and some may be accessible via PARES (pares.culturaydeporte.gob.es) or FamilySearch. Search PARES for 'quintas Limpias' and 'quintas Voto' to find records from the candidate municipalities. If Francisco emigrated before his quintas year, an emigration exemption (socorro de emigrado) may name his hometown. This search overlaps with and extends the PARES item (pli_014).",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_014",
+          "sequence": 6,
+          "record_type": "other",
+          "jurisdiction": "Cantabria, Spain (nationwide)",
+          "date_range": "1700-1870",
+          "repository": "other",
+          "rationale": "PARES (Portal de Archivos Espa\u00f1oles, pares.culturaydeporte.gob.es) is Spain\u2019s national archive portal and was identified as pli_007 in pl_001 but skipped. It provides access to the Archivo Hist\u00f3rico Provincial de Cantabria (AHPC) and diocesan archives not yet digitized by FamilySearch \u2014 notarial records, civil court files, military expedientes, padrones, and diocesan registers. A search for 'Francisco Naveda Somarriba' (and variants) and for 'Juan de Naveda' in the AHPC may surface militia records, notarial acts, or ecclesiastical documents from Limpias or Voto that place Francisco in a specific household. Route via search-external-sites skill.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T12:15:42.285Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Spain, Baptisms, 1502-1940 (1500692)",
+        "surname": "Naveda",
+        "givenName": "Francisco",
+        "recordCountry": "Spain",
+        "recordType": "birth",
+        "variants_tried": [
+          "with motherSurname=Somarriba birthYear 1825-1840",
+          "without motherSurname birthYear 1820-1845",
+          "without date range"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 48,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 48,
+      "notes": "48 results returned but none match Francisco Naveda Somarriba ~1830. Top matches scored \u22480 (subject unresolvable). Results are 17th\u201318th century individuals or parents of unrelated Naveda-surnamed persons. The nationwide baptism index covers only ~8% of Spanish Catholic records; Francisco's parish is likely unindexed. Three searches run: (1) with motherSurname=Somarriba + date range 1825-1840 \u2192 0 hits; (2) date range 1820-1845 no mother filter \u2192 0 hits; (3) no date filter \u2192 48 hits, none matching. Proceeding to Diocese of Santander targeted collection."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T12:17:09.220Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "Spain, Diocese of Santander, Catholic Church Records, 1538-1985 (2078544)",
+        "surname": "Naveda",
+        "givenName": "Francisco",
+        "recordCountry": "Spain",
+        "variants": [
+          "with motherSurname=Somarriba birthYear 1820-1845",
+          "without motherSurname birthYear 1820-1845"
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "4 results, none matching. Top result (ark:/61903/1:1:66Z6-6QKV) is a 1780 Colindres baptism for Francisco son of Francisca de Naveda x Joseph Rodr\u00edguez \u2014 wrong person, 50 years too early. Collection indexes only ~290K of 706K available images (roughly 41%); Francisco's parish likely not indexed. Proceeding to full-text co-occurrence search (pli_003)."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T12:20:47.338Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Naveda +Somarriba",
+        "scope": "unscoped (entire FTS corpus)",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 36,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 36,
+      "notes": "36 hits. Key cluster: Limpias, Cantabria, Spain. (1) ark:/61903/3:1:S3HY-D13W-M9W \u2014 baptism ~1833, San Pedro Limpias, names 'Juan Navedas Somarriba', 'Mar\u00eda Somarriba Gonz\u00e1lez', 'Lu\u00eds de Naveda', 'Mar\u00eda Cruz Somarriba' \u2014 child with compound Naveda+Somarriba surname, implying parents Luis de Naveda x Mar\u00eda Cruz de Somarriba; Francisco ~1830 would be an older sibling. (2) ark:/61903/3:1:S3HY-D137-1PP \u2014 death 1830-1834, Limpias, names 'Juan de Naveda', 'Mar\u00eda de Somarriba Gonz\u00e1lez', 'Francisco' \u2014 Francisco co-occurs with probable parents. (3) ark:/61903/3:1:S3HY-D13W-4NX \u2014 marriage 1843, Limpias, names 'Juan de Naveda', 'Mar\u00eda de Somarriba Gonz\u00e1lez', 'Lu\u00eds de Naveda', 'Mar\u00eda Cruz de Somarriba'. (4) ark:/61903/3:1:33SQ-GG89-HSK \u2014 baptism 1877, Papantla Veracruz, names 'Francisco Naveda Somarriba' \u2014 subject confirmed in Mexico. (5) ark:/61903/3:1:3QS7-99XM-VVBC \u2014 passport, Santander, with Naveda and Somarriba surnames. Also Colindres, Cantabria baptism images (San Juan Bautista) show extensive Naveda-Somarriba overlap \u2014 secondary location. Proceeding to record-extraction on Limpias records."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-22T12:35:44.017Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Luis +Naveda +Somarriba",
+        "count": 50,
+        "scope": "unscoped"
+      },
+      "outcome": "partial",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 12,
+      "notes": "12 results. No direct baptism of Francisco Naveda Somarriba (~1830) found under Luis de Naveda \u00d7 Mar\u00eda Cruz Somarriba. Two already-known records confirmed: Limpias baptism 1833 (ark:/61903/3:1:S3HY-D13W-M9W) and Limpias marriage 1843 (ark:/61903/3:1:S3HY-D13W-4NX), both naming Luis de Naveda \u00d7 Mar\u00eda Cruz Somarriba as grandparents/parents. NEW: ark:/61903/3:1:S3HT-DRR9-XZC \u2014 Hoz de Marr\u00f3n (San Pedro), Ampuero, Cantabria, baptisms 1820-1825 \u2014 names 'Lu\u00eds de Naveda' and 'Mar\u00eda Cruz' as parents, with 'Manuela de Naveda' as a child \u2014 confirms Luis de Naveda \u00d7 Mar\u00eda Cruz were active in the Ampuero area in the 1820s. Passport record ark:/61903/3:1:3QS7-99XM-VVBC (Spain Santander Migrations 1785-1863) contains 'Naveda Lu\u00eds Incera' and 'Somarriba' \u2014 may be migration-related. Hypothesis (b) that Francisco is a son of Luis de Naveda \u00d7 Mar\u00eda Cruz Somarriba remains plausible but unconfirmed by this search \u2014 no Francisco baptism found in records naming this couple."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-22T12:39:14.752Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Naveda",
+        "givenName": "Francisco",
+        "recordCountry": "Spain",
+        "recordType": "marriage",
+        "birthYearFrom": 1820,
+        "birthYearTo": 1840
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 12,
+      "notes": "Spain marriage search for Francisco Naveda born ~1820-1840: 12 results, none matching. Top result is 'Francisco Rodr\u00edguez Naveda' (Naveda as maternal surname, not paternal). All others are female (Francisca), different places (Extremadura, Catalonia, Granada), or very low confidence. Second search restricted to Cantabria returned 0 results. Third search for all record types in Cantabria also returned 0 results. No pre-emigration marriage record for Francisco Naveda Somarriba found in indexed Spanish church records. Francisco likely married in Mexico after emigrating ~1856."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-22T12:41:05.215Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Francisco +Naveda +Somarriba",
+        "count": 50,
+        "scope": "unscoped, no year filter"
+      },
+      "outcome": "negative",
+      "results_examined": 24,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 24,
+      "notes": "FTS query '+Francisco +Naveda +Somarriba' (unscoped, no year filter): 24 results. No passport, emigration, or consular record found for Francisco Naveda Somarriba. Records found are: already-extracted Limpias/Papantla cluster; Colindres-area Naveda/Somarriba background records (1700s-1800s); Carasa, Voto child ledger 1751-1753 (ark:/61903/3:1:33S7-9T1J-7CZ) confirming Somarriba family in Carasa; Escalante marriage 1851-1866 naming Naveda and Somarriba families. An earlier year-filtered query (1840-1863) returned 0 results. Covers pli_005 (Cantabria passports) and pli_006 (consular emigration records) \u2014 no Spanish emigration documentation found for the subject."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-22T13:03:31.103Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Francisco",
+        "fatherGivenName": "Juan",
+        "fatherSurname": "Naveda",
+        "recordCountry": "Spain",
+        "birthYearFrom": 1820,
+        "birthYearTo": 1840,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 4,
+      "notes": "Indexed search for Francisco Naveda with father Juan de Naveda, Spain, birth 1820\u20131840. 4 results, all non-matching (wrong surname, wrong locality, wrong gender). Top match score 0.001 (subject not resolvable). Tests hypothesis A (Francisco is son of Juan de Naveda \u00d7 Mar\u00eda Somarriba Gonz\u00e1lez of Limpias). No baptism of Francisco found."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-22T13:04:07.161Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Francisco",
+        "surname": "Naveda",
+        "fatherGivenName": "Luis",
+        "fatherSurname": "Naveda",
+        "recordCountry": "Spain",
+        "birthYearFrom": 1820,
+        "birthYearTo": 1840,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 93,
+      "notes": "Indexed search for Francisco Naveda with father Luis de Naveda (hypothesis B \u2014 son of Luis de Naveda \u00d7 Mar\u00eda Cruz Somarriba of Carasa), Spain, birth 1820\u20131840. 93 results but all from wrong regions (Extremadura, C\u00e1ceres, Valladolid, etc.) \u2014 none from Cantabria/Santander. Subject not resolvable; no baptism of Francisco Naveda Somarriba found via indexed search. Moving to FTS on the 0%-indexed Limpias baptism volume (imageGroupNumber 004383194_006)."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-22T13:06:33.911Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Francisco +Naveda +Somarriba",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 24,
+      "notes": "Unscoped FTS for all three terms together. 24 results: known Limpias 1833 baptism (S3HY-D13W-M9W, Valentina) and 1843 marriage (S3HY-D13W-4NX) already extracted; no new Limpias baptism of Francisco ~1825-1835. Key new find: ark:/61903/3:1:S3HT-DRR9-XZC (Hoz de Marr\u00f3n/Ampuero baptism, names Lu\u00eds de Naveda + Mar\u00eda Cruz + Carasas, dates 1820-1825) \u2014 relevant to pli_012. FTS for imageGroupNumber 004383194_006 returned 0 results (volume not in FTS corpus under that key). Confirmed: FTS does not contain a Francisco Naveda baptism from Limpias in the 1825-1840 window."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-22T13:07:42.300Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Francisco +Naveda",
+        "recordPlace3": "Limpias",
+        "yearFrom": 1820,
+        "yearTo": 1840,
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "FTS scoped to Limpias, 1820-1840, requiring both Francisco and Naveda. Zero results. Confirms that the Limpias baptism register pages from 1820-1840 are not in the FTS corpus (0%-indexed volume is not transcribed for AI text search in this period). Proceeding to direct image browse via image-reader to search the 1798-1852 Limpias volume pages around 1825-1835."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-22T13:15:18.356Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Francisco +Naveda",
+        "imageGroupNumber": "004383194_002_M9S7-3KS",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 5,
+      "notes": "CRITICAL FIND: FTS on the correct Limpias baptism volume (004383194_002, 98% indexed). 5 results. Top hit: ark:/61903/3:1:S3HY-D1QJ-G \u2014 San Pedro Limpias, Baptism, dated 1832. Names Juan de Naveda, Mar\u00eda Somarriba Gonz\u00e1lez (our known parents), Luis de Naveda, Mar\u00eda Cruz Somarriba (grandparents), and 'Francisco Alejandro Zayer'/'Francisco Alejandro' as what appears to be the baptizand. This is a highly probable baptism of Francisco Naveda Somarriba. Image read queued. Prior imageGroupNumber 004383194_006 used in pli_009 was the marriage register (metadata error); 004383194_002 is the correct baptism volume (98% indexed, FTS-searchable)."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-22T13:16:31.498Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Francisco",
+        "surname": "Naveda",
+        "recordType": "birth",
+        "imageGroupNumber": "004383194_002_M9S7-3KS",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 8,
+      "notes": "Indexed record_search on corrected Limpias baptism volume (004383194_002, 98% indexed). 8 results including 'Navedas Somarriba' (male, Carasa) \u2014 likely another Naveda-Somarriba child in the register. Cross-referenced with FTS hit S3HY-D1QJ-G (1832 Francisco Alejandro baptism). Image read by image-reader confirmed: child is Francisco Alejandro, son of Juan de Naveda \u00d7 Mar\u00eda Somarriba Gonz\u00e1lez, paternal grandparents Luis de Naveda \u00d7 Mar\u00eda Somarriba of Carasa, maternal grandparents Francisco Somarriba \u00d7 Josefa Gonz\u00e1lez Aguirre of Carasa."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-22T13:25:48.174Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Naveda +Somarriba",
+        "imageGroupNumber": "004383194_008_M9S7-3KH",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 1,
+      "notes": "FTS on Limpias marriage register volume _008 found ark:/61903/3:1:S3HY-D13W-4NX \u2014 the 1843 marriage record. Confirmed: Juan de Naveda (I1) married Dominga Josefa de la Sierra on 7 Aug 1843 at Limpias, as viudo (widower) of Mar\u00eda de Somarriba Gonz\u00e1lez (I2). His parents listed as D. Luis de Naveda (I5) and D.\u00aa Maria Cossio de Somarriba (I6 \u2014 name variant 'Cossio de Somarriba', NOT 'Cruz de Somarriba' as in earlier records). Conflict flagged. Image successfully read by image-reader (OpenRouter working)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "Parroquia de Papantla (Papantla, Veracruz, Mexico), baptism register, entry 4, approximately 2 April 1877, Maria Edelmira Aludia Valdez; image, FamilySearch (ark:/61903/3:1:33SQ-GG89-HSK), accessed 2026-07-22; image saved at images/ark_61903_3_1_33SQ-GG89-HSK.jpg.",
+      "citation_detail": {
+        "who": "Maria Edelmira Aludia Valdez, daughter of Jose Esteban Valdez y Carmen and Carmen Dominguez y Gutierrez; godfather Francisco Naveda Somarriva",
+        "what": "Baptism register entry \u2014 solemn baptism, hija legitima",
+        "when_created": "2 April 1877 (approximately)",
+        "when_accessed": "2026-07-22",
+        "where": "Parroquia de Papantla, Papantla, Veracruz, Mexico",
+        "where_within": "Entry 4, page recording April 1877 baptisms"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GG89-HSK",
+      "access_date": "2026-07-22",
+      "transcription": "En esta parroquia del Papantla a' do. de Abril de mil ochocientos setenta y siete. Yo el fement\u00e9 de Cura D. Jimoteo Garcia, bautice solemnemente, pues Olio y Grisina a Maria Edelmira, Aludia, del mes dia de nacida, hija legitima de Jose Esteban Valdez y Carmen y de Carmen Dominguez y Gutierrez, vecinos de esta Cabecera. Fueron sus padres Francisco Naveda Somarriva y Candida Garcia, a quienes aduerti sus obligaciones y parentesco espiritual Y para constancia lo firmo Jimoteo Garcia",
+      "notes": "Image examined directly. 'Fueron sus padres' in this context means 'Were her godparents' (padrinos). Francisco Naveda Somarriva is the godfather (padrino), not a biological parent. Spelling 'Somarriva' is a scribal variant of 'Somarriba'. Marginal note dated 30 April 1913 reads 'No. Franco / Edelmira / Aludia' \u2014 a later administrative notation.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "San Pedro Ap\u00f3stol Parish (Limpias, Cantabria, Spain), Baptism Register, entry for Valentina Josefa de Naveda, 17 December 1833; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-M9W : accessed 22 July 2026), citing original register held at the parish.",
+      "citation_detail": {
+        "who": "Valentina Josefa de Naveda (infant baptized)",
+        "what": "Baptism register entry \u2014 San Pedro Ap\u00f3stol Parish, Limpias, Cantabria, Spain",
+        "when_created": "17 December 1833",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-M9W)",
+        "where_within": "Entry 1, 17 December 1833"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-M9W",
+      "notes": "Image of original parish register page. Transcription made from image saved at images/ark_61903_3_1_S3HY-D13W-M9W.jpg. Entry in Spanish; some text partially legible with uncertain readings noted. Original register held at San Pedro Ap\u00f3stol Parish, Limpias.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "Parroquia de Limpias (Cantabria, Spain), 'Libro de Difuntos' (death register), entry 4, 11 October 1834, burial of Mar\u00eda de Somarriba Gonz\u00e1lez; image, ark:/61903/3:1:S3HY-D137-1PP, accessed 22 July 2026; image saved at images/ark_61903_3_1_S3HY-D137-1PP.jpg.",
+      "citation_detail": {
+        "who": "Mar\u00eda de Somarriba Gonz\u00e1lez, deceased; Juan de Naveda, surviving spouse",
+        "what": "Parish death/burial register entry (Libro de Difuntos), Entry 4",
+        "when_created": "11 October 1834",
+        "when_accessed": "2026-07-22",
+        "where": "Parroquia de Limpias, Villa de Limpias, Cantabria (then Santander province), Spain",
+        "where_within": "October 1834 page, Entry 4 (Campo Santo burial)"
+      },
+      "source_classification": "original",
+      "repository": "Parroquia de Limpias, Cantabria, Spain (image via FamilySearch ark:/61903/3:1:S3HY-D137-1PP)",
+      "access_date": "2026-07-22",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D137-1PP",
+      "notes": "Original parish death register image. Entry 4 on the October 1834 page. Officiant: Josef del Rivero. Context on same page: deaths of sailors from Vizcaya aboard 'Quechemaxin Espa\u00f1ol Maria Ignacia,' all dying of cholera \u2014 confirming a cholera epidemic at Limpias in October 1834. The spelling 'Somarriva' appears in the original; 'Gonz\u00e1lez' is abbreviated 'Gonz.' Transcription from image.",
+      "transcription": "En el Campo Santo de la Yg. Parroq. de esta Villa de Limpiar a Once de Octre de mil ochocientos treinta y Cuatro se enterr\u00f3 Dn Maria de Somarriva Gonz. y muri\u00f3 hoy mismo del Colexa morbo de edad de treinta y dos a\u00f1os: Recivi\u00f3 Vslam. el Sacramto de Penitencia. No hizo Testamto. Fue legitima Conxorte de Dn Juan de Naveda, en Cuyo matrimonio tubieron a Juan, y a Valentina: Se le hizo Entierro mayor con Novenario: y a q. Conste lo firmo Jha ut Supra. Josef del Rivero",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Limpias Bautismos,\" entry for Francisco Alejandro, 27 February 1832, Parroquia de San Pedro, Limpias, Cantabria, Spain; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D1QJ-G : accessed 22 July 2026), image of original parish register.",
+      "citation_detail": {
+        "who": "Francisco Alejandro (Naveda Somarriba), baptized child; Juan de Naveda and Mar\u00eda Somarriba y Somarriba, parents",
+        "what": "Baptism register entry, 27 February 1832",
+        "when_created": "27 February 1832",
+        "when_accessed": "22 July 2026",
+        "where": "Parroquia de San Pedro, Limpias, Cantabria, Spain; image held by FamilySearch",
+        "where_within": "Entry of 27 February 1832 (Francisco Alejandro); also entries of 1 March 1832 (Antonio Le\u00f3n Roman) and 10 March 1832 (Francisco Salvador)"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D1QJ-G",
+      "access_date": "2026-07-22",
+      "notes": "Image of original parish baptism register, San Pedro, Limpias. Transcription produced from image ark:/61903/3:1:S3HY-D1QJ-G; image saved locally at images/ark_61903_3_1_S3HY-D1QJ-G.jpg. The string 'Fran. Alejandro Fayer' in the transcription \u2014 'Fayer' appears to be OCR noise for a word in the original (possibly a date phrase or scribal marking), not a surname; the child's surname is Naveda Somarriba per the named parents. Entry 1 (27 Feb 1832) is the target entry for research subject Francisco Naveda Somarriba.",
+      "log_entry_id": "log_011",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "Parroquia de San Pedro Ap\u00f3stol de Limpias, Cantabria, Spain, Libro de Matrimonios, entry dated 7 August 1843 for Juan de Naveda and Dominga Josefa de la Sierra; image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-4NX : accessed 22 July 2026), citing original parish register held at Parroquia de San Pedro Ap\u00f3stol, Limpias, Cantabria.",
+      "citation_detail": {
+        "who": "Juan de Naveda (groom) and Dominga Josefa de la Sierra (bride)",
+        "what": "Parish marriage register entry, Parroquia de San Pedro Ap\u00f3stol, Limpias, Cantabria, Spain",
+        "when_created": "7 August 1843",
+        "when_accessed": "22 July 2026",
+        "where": "FamilySearch, ark:/61903/3:1:S3HY-D13W-4NX",
+        "where_within": "Entry dated 7 August 1843; signed by officiant D. Tomas Dier"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-4NX",
+      "access_date": "2026-07-22",
+      "log_entry_id": "log_013",
+      "notes": "Image of original parish marriage register. Officiant D. Tomas Dier recorded the ceremony. The groom Juan de Naveda signed the record. The document names the groom's mother as 'Maria Cossio de Somarriba', which conflicts with the tree's current entry for I6 ('Mar\u00eda Cruz Somarriba') derived from 1832 and 1833 baptism records. 'Cossio' may be her actual paternal surname (a double surname: Coss\u00edo de Somarriba), while 'Cruz' in the baptism records may be her given name or a different rendering. Requires corroborating records.",
+      "transcription": "En la villa de Limpias \u00e1 siete de Agosto de mil ochocientos cuarenta y tres. Yo D. Tomas Dier, Cura Beneficiado de en la Iglesia Parroquial de Pedro Apostol desta villa Asist\u00ed al matrimonio que por palabras se presento que hicieron verdadero Sacramento contrajeron en facie Ecclesie D. Juan de Naveda, viudo de D.\u00aa Maria de Somarriba Gonzales, hijo legitimo de D. Luis de Naveda y D.\u00aa Maria Cossio de Somarriba, vecino que fue al lugar de Carasa, Junta de Oto, y D.\u00aa Dominga Josefa de la Sierra, hija legitima de D. Gregorio Ramon de la Sierra, y de D.\u00aa Maria Josefa Vega, vecinos de Solorzano, previo el correspondiente aviso, y leida una sola amonestacion, por haber sido dispensadas las otras dos por los S.\u00bas Governadores al Obispado Sede Vacante segun se despacho dado en Santander por el S.\u00ba Cotevon, referenciado por su notario mayor D.\u00ba Antonio Uceta y Coteva, a que no resulto impedimento alguno, como lo certifico, y certifico D. Manuel Forn de la Pena, Cura de Solorzano, que como yo la ley\u00f3 \u00e1 la misa conventual celebrada en ambas Parroquias ayer seis albor: fueron examinados en la doctrina cristiana, en la q. los hall\u00e9 bien instruidos: recibieron el Sacramento de la penitencia: diles las bendiciones nupciales, y les celebre la misa pro Sponso, en la que recibieron la Sagrada comunion: fueron testigos D.\u00ba Francisco Bustillo y D. Gregorio de Somarriba, vecinos de Carasa y D.\u00ba Juan de Hermoso que lo es de esta villa; y por que conste lo firmo hoy dia, mes y a\u00f1o \u2014 Tomas Dier, Juan de Naveda, Franc\u00ba Bustillo, D.\u00ba Juan de Hermoso",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "godfather_1",
+      "fact_type": "name",
+      "value": "Francisco Naveda Somarriva",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Naveda Somarriva"
+      },
+      "information_quality": "primary",
+      "informant": "Francisco Naveda Somarriva (godfather, signatory by presence)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Spelling 'Somarriva' is a scribal variant of 'Somarriba'; equivalent names. The godfather's identity was supplied by his own participation in the ceremony. Name is direct evidence of the subject's identity at this record but does not address his place of origin.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "godfather_1",
+      "fact_type": "godparent",
+      "value": "godfather of Maria Edelmira Aludia Valdez, baptized 2 April 1877, Parroquia de Papantla",
+      "structured_value": {
+        "relationship_type": "godparent",
+        "related_person_role": "baptized_child"
+      },
+      "date": "~2 April 1877",
+      "date_certainty": "approximate",
+      "place": "Parroquia de Papantla, Papantla, Veracruz, Mexico",
+      "information_quality": "primary",
+      "informant": "Jimoteo Garcia (teniente de cura, officiant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The officiant witnessed the ceremony and recorded the godparents in his official capacity. Francisco's presence in Papantla, Veracruz in April 1877 is directly established; this is indirect evidence bearing on q_001 because it confirms he was resident in Mexico at this date, not in Spain \u2014 useful timeline context but does not name his Spanish place of origin.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Papantla, Veracruz, Mexico"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "godfather_1",
+      "fact_type": "residence",
+      "value": "Papantla, Veracruz, Mexico (implied by presence as godfather)",
+      "place": "Papantla, Veracruz, Mexico",
+      "information_quality": "indeterminate",
+      "informant": "Jimoteo Garcia (teniente de cura, officiant)",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The record states godparents were present at the ceremony in Papantla but does not explicitly list Francisco's residence; his presence as godfather implies local residence or at least physical presence. Informant quality is indeterminate because the enumerating cleric recorded presence, not residence. Bears on q_001 as timeline evidence showing Francisco was in Papantla in 1877, consistent with prior 1862 Papantla presence.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Papantla, Veracruz, Mexico"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "godmother_1",
+      "fact_type": "name",
+      "value": "Candida Garcia",
+      "structured_value": {
+        "given": "Candida",
+        "surname": "Garcia"
+      },
+      "information_quality": "primary",
+      "informant": "Candida Garcia (godmother, signatory by presence)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "godmother_1",
+      "fact_type": "godparent",
+      "value": "godmother of Maria Edelmira Aludia Valdez, baptized 2 April 1877, Parroquia de Papantla",
+      "structured_value": {
+        "relationship_type": "godparent",
+        "related_person_role": "baptized_child"
+      },
+      "date": "~2 April 1877",
+      "date_certainty": "approximate",
+      "place": "Parroquia de Papantla, Papantla, Veracruz, Mexico",
+      "information_quality": "primary",
+      "informant": "Jimoteo Garcia (teniente de cura, officiant)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Papantla, Veracruz, Mexico"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "baptized_child",
+      "fact_type": "name",
+      "value": "Maria Edelmira Aludia",
+      "structured_value": {
+        "given": "Maria Edelmira Aludia"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "baptized_child",
+      "fact_type": "christening",
+      "value": "baptized solemnly (con Oleo y Crisma), approximately 2 April 1877, Parroquia de Papantla",
+      "date": "~2 April 1877",
+      "date_certainty": "approximate",
+      "place": "Parroquia de Papantla, Papantla, Veracruz, Mexico",
+      "information_quality": "primary",
+      "informant": "Jimoteo Garcia (teniente de cura, officiant)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Papantla, Veracruz, Mexico"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "baptized_child",
+      "fact_type": "birth",
+      "value": "approximately 1 month old at baptism (~early March 1877)",
+      "date": "~March 1877",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Record states 'del mes dia de nacida' (one month old at baptism on ~2 April 1877), so birth was approximately early March 1877. Date is computed/estimated from stated age.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "baptized_child",
+      "fact_type": "gender",
+      "value": "female",
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "child of Jose Esteban Valdez y Carmen (legitimate)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_baptized"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Record states 'hija legitima' \u2014 legitimate daughter. Relationship stated explicitly, not inferred from position.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "baptized_child",
+      "fact_type": "relationship",
+      "value": "child of Carmen Dominguez y Gutierrez (legitimate)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_baptized"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Record states 'hija legitima' \u2014 legitimate daughter. Mother named alongside father.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "father_of_baptized",
+      "fact_type": "name",
+      "value": "Jose Esteban Valdez y Carmen",
+      "structured_value": {
+        "given": "Jose Esteban",
+        "surname": "Valdez y Carmen"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (self, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "father_of_baptized",
+      "fact_type": "residence",
+      "value": "Cabecera (Papantla town center), Papantla, Veracruz, Mexico",
+      "place": "Papantla, Veracruz, Mexico",
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (self, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Record states parents were 'vecinos de esta Cabecera' \u2014 residents of the town center (cabecera municipal) of Papantla.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Papantla, Veracruz, Mexico"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "mother_of_baptized",
+      "fact_type": "name",
+      "value": "Carmen Dominguez y Gutierrez",
+      "structured_value": {
+        "given": "Carmen",
+        "surname": "Dominguez y Gutierrez"
+      },
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "mother_of_baptized",
+      "fact_type": "residence",
+      "value": "Cabecera (Papantla town center), Papantla, Veracruz, Mexico",
+      "place": "Papantla, Veracruz, Mexico",
+      "information_quality": "primary",
+      "informant": "Jose Esteban Valdez y Carmen (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Record states parents were 'vecinos de esta Cabecera' \u2014 residents of the town center (cabecera municipal) of Papantla.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001",
+      "standard_place": "Papantla, Veracruz, Mexico"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/3:1:33SQ-GG89-HSK",
+      "record_role": "officiant",
+      "fact_type": "name",
+      "value": "Jimoteo Garcia",
+      "structured_value": {
+        "given": "Jimoteo",
+        "surname": "Garcia"
+      },
+      "information_quality": "primary",
+      "informant": "Jimoteo Garcia (self, signatory)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Officiant signed the entry personally ('lo firmo Jimoteo Garcia'). Titled 'teniente de Cura' (assistant parish priest).",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "child_baptized",
+      "fact_type": "name",
+      "value": "Valentina Josefa",
+      "structured_value": {
+        "given": "Valentina Josefa",
+        "surname": "Naveda Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "child_baptized",
+      "fact_type": "gender",
+      "value": "female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "child_baptized",
+      "fact_type": "birth",
+      "value": "born 16 December 1833, Limpias, Cantabria",
+      "date": "16 December 1833",
+      "date_certainty": "exact",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "child_baptized",
+      "fact_type": "christening",
+      "value": "baptized 17 December 1833, San Pedro Ap\u00f3stol, Limpias, Cantabria",
+      "date": "17 December 1833",
+      "date_certainty": "exact",
+      "place": "San Pedro Ap\u00f3stol, Limpias, Cantabria, Spain",
+      "standard_place": "San Pedro, Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Rivera Collado, Cura Beneficiado",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "child_baptized",
+      "fact_type": "relationship",
+      "value": "child of Juan de Naveda",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "child_baptized",
+      "fact_type": "relationship",
+      "value": "child of [Josefa] Mar\u00eda Somarriba",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Juan de Naveda",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "father",
+      "fact_type": "residence",
+      "value": "vecino of Limpias",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of [Josefa] Mar\u00eda Somarriba",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "child of Luis de Naveda",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Paternal grandparents' names are relayed by the presenting parent(s) \u2014 third-party report about another person's identity; not firsthand knowledge of the grandparents themselves.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "child of Mar\u00eda Cruz Somarriba",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Paternal grandparents' names are relayed by the presenting parent(s) \u2014 third-party report about another person's identity; not firsthand knowledge of the grandparents themselves.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "[Josefa] Mar\u00eda Somarriba",
+      "structured_value": {
+        "given": "Mar\u00eda",
+        "surname": "Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Given name partially uncertain \u2014 transcription reads 'Josefa-) Mar\u00eda'; the bracketed 'Josefa' may be a first given name or a scribal feature. Surname Somarriba is clear.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "mother",
+      "fact_type": "residence",
+      "value": "vecina of Limpias",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "child of Francisco Somarriba",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Maternal grandparents' names are relayed by the presenting parent(s) \u2014 third-party report about another person's identity; not firsthand knowledge of the grandparents themselves.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "child of Josefa Gonz\u00e1lez Aguirre",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Maternal grandparents' names are relayed by the presenting parent(s) \u2014 third-party report about another person's identity; not firsthand knowledge of the grandparents themselves.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "paternal_grandfather",
+      "fact_type": "name",
+      "value": "Luis de Naveda",
+      "structured_value": {
+        "given": "Luis",
+        "surname": "Naveda"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Name relayed by presenting parent(s) as paternal grandfather of the baptized child; third-party report.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "paternal_grandfather",
+      "fact_type": "residence",
+      "value": "vecino of Carasa",
+      "place": "Carasa, Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Residence relayed by presenting parent(s); third-party report. Carasa is a village in the municipality of Voto, Cantabria, near Limpias.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "paternal_grandfather",
+      "fact_type": "relationship",
+      "value": "spouse of Mar\u00eda Cruz Somarriba",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Spousal link inferred from their joint listing as paternal grandparents; relayed by presenting parent(s).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "paternal_grandmother",
+      "fact_type": "name",
+      "value": "Mar\u00eda Cruz Somarriba",
+      "structured_value": {
+        "given": "Mar\u00eda Cruz",
+        "surname": "Somarriba"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Name relayed by presenting parent(s) as paternal grandmother of the baptized child; third-party report. Note: the shared Somarriba surname between paternal grandmother (Mar\u00eda Cruz Somarriba) and mother ([Josefa] Mar\u00eda Somarriba) may indicate cousinship between Juan de Naveda and his wife, or simply reflects a common Somarriba lineage in the Limpias/Carasa area \u2014 worth flagging for future correlation.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "paternal_grandmother",
+      "fact_type": "residence",
+      "value": "vecina of Carasa",
+      "place": "Carasa, Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Residence relayed by presenting parent(s); third-party report.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "maternal_grandfather",
+      "fact_type": "name",
+      "value": "Francisco Somarriba",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Somarriba"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Name relayed by presenting parent(s) as maternal grandfather of the baptized child; third-party report.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "maternal_grandfather",
+      "fact_type": "residence",
+      "value": "vecino of Carasa",
+      "place": "Carasa, Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Residence relayed by presenting parent(s); third-party report.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "maternal_grandfather",
+      "fact_type": "relationship",
+      "value": "spouse of Josefa Gonz\u00e1lez Aguirre",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Spousal link inferred from their joint listing as maternal grandparents; relayed by presenting parent(s).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "maternal_grandmother",
+      "fact_type": "name",
+      "value": "Josefa Gonz\u00e1lez Aguirre",
+      "structured_value": {
+        "given": "Josefa",
+        "surname": "Gonz\u00e1lez Aguirre"
+      },
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Name relayed by presenting parent(s) as maternal grandmother of the baptized child; third-party report.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "maternal_grandmother",
+      "fact_type": "residence",
+      "value": "vecina of Carasa",
+      "place": "Carasa, Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Residence relayed by presenting parent(s); third-party report.",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "godfather_1",
+      "fact_type": "name",
+      "value": "Jos\u00e9 Somarriba",
+      "structured_value": {
+        "given": "Jos\u00e9",
+        "surname": "Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Rivera Collado, Cura Beneficiado",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "godfather_1",
+      "fact_type": "residence",
+      "value": "of Carasa",
+      "place": "Carasa, Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Rivera Collado, Cura Beneficiado",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "godmother_1",
+      "fact_type": "name",
+      "value": "Mariana de la Piedra",
+      "structured_value": {
+        "given": "Mariana",
+        "surname": "de la Piedra"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Rivera Collado, Cura Beneficiado",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "godmother_1",
+      "fact_type": "residence",
+      "value": "of Limpias",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Rivera Collado, Cura Beneficiado",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-M9W",
+      "record_role": "officiant",
+      "fact_type": "name",
+      "value": "Jos\u00e9 del Rivera Collado",
+      "structured_value": {
+        "given": "Jos\u00e9",
+        "surname": "del Rivera Collado"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Rivera Collado, Cura Beneficiado",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Mar\u00eda de Somarriba Gonz\u00e1lez (spelled 'Somarriva Gonz.' in original)",
+      "structured_value": {
+        "given": "Mar\u00eda",
+        "surname": "de Somarriba Gonz\u00e1lez"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Josef del Rivero recorded the entry in his official capacity as parish priest. Surname abbreviated 'Gonz.' and first name element spelled 'Somarriva' \u2014 standard orthographic variation for the era. The officiant would have known the deceased as a parishioner.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "Died 11 October 1834 at Villa de Limpias, Cantabria, Spain; buried same day at Campo Santo de la Parroquia de Limpias",
+      "date": "1834-10-11",
+      "date_certainty": "exact",
+      "place": "Campo Santo, Parroquia de Limpias, Villa de Limpias, Cantabria, Spain",
+      "standard_place": null,
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Officiant recorded the death and burial date in his official capacity; 'muri\u00f3 hoy mismo' ('died this very day') confirms death and burial on the same date. Standard place set to null: 'Campo Santo' is a named cemetery within Limpias with no independent geocoded standard form.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "value": "C\u00f3lera morbo (cholera); spelled 'Colexa morbo' in original",
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Cause recorded by the parish priest. Consistent with confirmed cholera epidemic at Limpias in October 1834 (other entries on same page record cholera deaths among sailors). 'Colexa morbo' is a phonetic/orthographic variant of 'C\u00f3lera morbo.'",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "32 years (treinta y dos a\u00f1os)",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Age recorded in the burial entry; it is unknown who supplied this information to the priest \u2014 possibly a family member, neighbor, or the priest's own knowledge. Ages in 19th-century Spanish parish records can be approximate.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born approximately 1802 (calculated from age 32 at death on 11 October 1834)",
+      "date": "~1802",
+      "date_certainty": "estimated",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Birth year computed from stated age of 32 at death on 11 October 1834. Ages in parish burial records of this era are frequently approximate (\u00b11\u20132 years). The underlying informant for the age is unknown.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "deceased",
+      "fact_type": "marital_status",
+      "value": "Legitimate wife (legitima Conxorte) of Juan de Naveda",
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Recorded by the parish priest who would have known the marital status of parishioners. The term 'legitima Conxorte' (legitimate consort/wife) confirms a valid church marriage.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "wife of Juan de Naveda",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "spouse_1"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Spousal relationship explicitly stated in the death entry: 'Fue legitima Conxorte de Dn Juan de Naveda.' Officiant recording in official capacity.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "spouse_1",
+      "fact_type": "name",
+      "value": "Juan de Naveda",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "de Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Named in the burial entry as the surviving spouse of the deceased. Priest would have known parishioners by name. Relevant to q_001 as Juan de Naveda may be the father of Francisco Naveda Somarriba, establishing a Limpias connection.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "spouse_1",
+      "fact_type": "residence",
+      "value": "Villa de Limpias, Cantabria, Spain (October 1834)",
+      "date": "1834-10-11",
+      "date_certainty": "exact",
+      "place": "Villa de Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Implied by the death register entry at Parroquia de Limpias \u2014 the priest records parishioners of his parish. Juan de Naveda is implicitly resident in Limpias at the time of his wife's death.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Juan (de Naveda Somarriba)",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "de Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Named in the burial entry as a child of the marriage of Juan de Naveda and the deceased. Only given name recorded; surname reconstructed by convention (paternal surname Naveda, maternal surname Somarriba/Gonz\u00e1lez).",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Juan de Naveda and Mar\u00eda de Somarriba Gonz\u00e1lez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Explicitly stated: 'en Cuyo matrimonio tubieron a Juan, y a Valentina.' The priest records the children of the marriage.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Valentina (de Naveda Somarriba)",
+      "structured_value": {
+        "given": "Valentina",
+        "surname": "de Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Named in the burial entry as a child of the marriage. Corroborated by baptismal record ark:/61903/3:1:S3HY-D13W-M9W (Record 1) showing Valentina Josefa de Naveda baptized 17 December 1833 \u2014 the same child. Only given name recorded in this death entry; full name supplied by the baptismal record.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "child of Juan de Naveda and Mar\u00eda de Somarriba Gonz\u00e1lez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Explicitly stated: 'en Cuyo matrimonio tubieron a Juan, y a Valentina.' Corroborated by baptismal record (Record 1) for Valentina Josefa, baptized 17 Dec 1833, parents Juan de Naveda \u00d7 Mar\u00eda Somarriba.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "officiant_1",
+      "fact_type": "name",
+      "value": "Josef del Rivero",
+      "structured_value": {
+        "given": "Josef",
+        "surname": "del Rivero"
+      },
+      "information_quality": "primary",
+      "informant": "Josef del Rivero (officiant/parish priest)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "Self-identified as the signing officiant at the end of the entry: 'lo firmo Jha ut Supra. Josef del Rivero.' FAN associate \u2014 the p\u00e1rroco of Parroquia de Limpias in October 1834.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/3:1:S3HY-D137-1PP",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Francisco Naveda Somarriba absent from children named in the death entry of Mar\u00eda de Somarriba Gonz\u00e1lez (wife of Juan de Naveda), 11 October 1834, Limpias \u2014 only Juan and Valentina named as children of the marriage",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "evidence_type": "negative",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "informant_bias_notes": "The entry names only two children \u2014 Juan and Valentina \u2014 of the Juan de Naveda \u00d7 Mar\u00eda de Somarriba Gonz\u00e1lez marriage. Francisco Naveda Somarriba (research subject, born ~1830) is not among them. Possible explanations: (1) Francisco is not the son of this couple and may have a different mother; (2) the scribe omitted Francisco (incomplete enumeration of children in death registers was common); (3) Francisco had already left Limpias by 1834 and was not included; (4) Francisco died before 1834 and was not listed. This silence does not preclude Francisco being a child of this marriage, but it is significant. Independent corroboration \u2014 a baptismal record for Francisco from Parroquia de Limpias \u2014 is required before the parentage can be established.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_of_record",
+      "fact_type": "name",
+      "value": "Francisco Alejandro Naveda Somarriba",
+      "structured_value": {
+        "given": "Francisco Alejandro",
+        "surname": "Naveda Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Divino Collado, officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_of_record",
+      "fact_type": "christening",
+      "value": "Baptized 27 February 1832 at San Pedro, Limpias, Cantabria, Spain",
+      "date": "27 February 1832",
+      "date_certainty": "exact",
+      "place": "San Pedro, Limpias, Cantabria, Spain",
+      "standard_place": "San Pedro, Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Divino Collado, officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_of_record",
+      "fact_type": "birth",
+      "value": "Born shortly before 27 February 1832, Limpias, Cantabria, Spain (baptism date implies recent birth; 'naci\u00f3' stated in record)",
+      "date": "~27 February 1832",
+      "date_certainty": "approximate",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents (presenting at baptism)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_of_record",
+      "fact_type": "residence",
+      "value": "Limpias (parents resident in this town)",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_of_record",
+      "fact_type": "relationship",
+      "value": "child of Juan de Naveda",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_of_record",
+      "fact_type": "relationship",
+      "value": "child of Mar\u00eda Somarriba y Somarriba (Mar\u00eda Somarriba Gonz\u00e1lez)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Juan de Naveda",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "de Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "father",
+      "fact_type": "residence",
+      "value": "Limpias (residentes en este pueblo)",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Mar\u00eda Somarriba y Somarriba",
+      "structured_value": {
+        "given": "Mar\u00eda",
+        "surname": "Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "mother",
+      "fact_type": "residence",
+      "value": "Limpias (residentes en este pueblo)",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "paternal_grandfather",
+      "fact_type": "name",
+      "value": "Luis de Naveda",
+      "structured_value": {
+        "given": "Luis",
+        "surname": "de Naveda"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "paternal_grandfather",
+      "fact_type": "residence",
+      "value": "Carasa, Junta de Voto (vecinos todos a Carasa, Junta a Voto)",
+      "place": "Carasa, Junta de Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "paternal_grandmother",
+      "fact_type": "name",
+      "value": "Mar\u00eda Somarriba (variant of Mar\u00eda Cruz Somarriba, I6)",
+      "structured_value": {
+        "given": "Mar\u00eda",
+        "surname": "Somarriba"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Record gives only 'Mar\u00eda Somarriba' without the middle name 'Cruz'; identified as the same person as I6 (Mar\u00eda Cruz Somarriba) based on context \u2014 her husband Luis de Naveda and residence at Carasa match the tree.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "paternal_grandmother",
+      "fact_type": "residence",
+      "value": "Carasa, Junta de Voto (vecinos todos a Carasa, Junta a Voto)",
+      "place": "Carasa, Junta de Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "maternal_grandfather",
+      "fact_type": "name",
+      "value": "Francisco Somarriba",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Somarriba"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "maternal_grandfather",
+      "fact_type": "residence",
+      "value": "Carasa, Junta de Voto (vecinos todos a Carasa, Junta a Voto)",
+      "place": "Carasa, Junta de Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "maternal_grandmother",
+      "fact_type": "name",
+      "value": "Josefa Gonz\u00e1lez Aguirre",
+      "structured_value": {
+        "given": "Josefa",
+        "surname": "Gonz\u00e1lez Aguirre"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "maternal_grandmother",
+      "fact_type": "residence",
+      "value": "Carasa, Junta de Voto (vecinos todos a Carasa, Junta a Voto)",
+      "place": "Carasa, Junta de Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "secondary",
+      "informant": "Juan de Naveda and Mar\u00eda Somarriba, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "godparent_1",
+      "fact_type": "name",
+      "value": "Francisco Somarriba (t\u00edo del bautizado \u2014 maternal uncle of child; distinct from maternal grandfather I7)",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Divino Collado, officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Record names him as 't\u00edo del bautizado' (uncle of the baptized). He shares the name Francisco Somarriba with maternal grandfather I7 but is identified as uncle (likely a sibling of mother Mar\u00eda Somarriba Gonz\u00e1lez, hence a son of I7 and I8). These are NOT the same person \u2014 grandparent I7 would not be described as 't\u00edo'.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "godparent_1",
+      "fact_type": "relationship",
+      "value": "t\u00edo (maternal uncle) of Francisco Alejandro Naveda Somarriba",
+      "structured_value": {
+        "relationship_type": "uncle",
+        "related_person_role": "nephew"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Divino Collado, officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The record states 't\u00edo y t\u00eda del bautizado' \u2014 uncle and aunt. Given the Somarriba surname matching the mother, he is most likely a maternal uncle (sibling of Mar\u00eda Somarriba Gonz\u00e1lez). The companion Josefa Gonz\u00e1lez shares a name with maternal grandmother I8; she may be a sister or namesake, not the same person.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "godparent_2",
+      "fact_type": "name",
+      "value": "Josefa Gonz\u00e1lez (t\u00eda del bautizado \u2014 maternal aunt of child; distinct from maternal grandmother I8 Josefa Gonz\u00e1lez Aguirre)",
+      "structured_value": {
+        "given": "Josefa",
+        "surname": "Gonz\u00e1lez"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Divino Collado, officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Record names her 'D. Josefa Gonz\u00e1lez, t\u00eda del bautizado'. She shares a name with maternal grandmother I8 (Josefa Gonz\u00e1lez Aguirre) but is described as 't\u00eda' (aunt), not grandmother. She is likely the wife/companion of godfather Francisco Somarriba (the uncle). These are stub persons requiring further research to disambiguate from the grandparental generation.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "godparent_2",
+      "fact_type": "relationship",
+      "value": "t\u00eda (maternal aunt) of Francisco Alejandro Naveda Somarriba",
+      "structured_value": {
+        "relationship_type": "aunt",
+        "related_person_role": "nephew"
+      },
+      "information_quality": "primary",
+      "informant": "Jos\u00e9 del Divino Collado, officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Antonio Le\u00f3n Roman",
+      "structured_value": {
+        "given": "Antonio Le\u00f3n",
+        "surname": "Roman"
+      },
+      "information_quality": "primary",
+      "informant": "Antonio Soto and Juana D\u00edez, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_2",
+      "fact_type": "christening",
+      "value": "Baptized 1 March 1832 at Limpias, Cantabria, Spain; born 28 February 1832",
+      "date": "1 March 1832",
+      "date_certainty": "exact",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Francisco Salvador",
+      "structured_value": {
+        "given": "Francisco Salvador",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Juan Rodr\u00edguez and Catalina de la Hara, parents",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/3:1:S3HY-D1QJ-G",
+      "record_role": "child_3",
+      "fact_type": "christening",
+      "value": "Baptized 10 March 1832 at Limpias, Cantabria, Spain; born 7 March 1832",
+      "date": "10 March 1832",
+      "date_certainty": "exact",
+      "place": "Limpias, Cantabria, Spain",
+      "standard_place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_011",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Juan de Naveda",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "de Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; signed the record)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Dominga Josefa de la Sierra, 7 August 1843, Limpias",
+      "date": "7 August 1843",
+      "date_certainty": "exact",
+      "place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; signed and certified the record)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005",
+      "standard_place": "Limpias, Cantabria, Spain"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "widower of Do\u00f1a Maria de Somarriba Gonzales",
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; stated prior widower status at time of marriage)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "son of D. Luis de Naveda",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; stated his own parentage)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "son of D.\u00aa Maria Cossio de Somarriba",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; stated his own parentage)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The groom names his mother as 'Maria Cossio de Somarriba'. Tree person I6 is currently recorded as 'Mar\u00eda Cruz Somarriba' based on 1832 and 1833 baptism records from Limpias. CONFLICT: 'Cossio' may be her actual paternal surname (a double surname: Coss\u00edo de Somarriba), while 'Cruz' in the baptism records may be her given name or a different rendering. These cannot be silently reconciled. Corroborating records needed.",
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "groom",
+      "fact_type": "residence",
+      "value": "vecino que fue al lugar de Carasa, Junta de Oto [Junta de Voto]",
+      "place": "Carasa, Junta de Voto, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; stated his former residence)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Document reads 'Junta de Oto'; standardized as Junta de Voto, the known administrative division in Cantabria. The phrase 'vecino que fue' (former resident) indicates this was his prior, not current, residence at time of marriage.",
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "deceased_spouse",
+      "fact_type": "name",
+      "value": "Maria de Somarriba Gonzales",
+      "structured_value": {
+        "given": "Maria",
+        "surname": "de Somarriba Gonzales"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; named his deceased first wife)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_095",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "deceased_spouse",
+      "fact_type": "death",
+      "value": "deceased prior to 7 August 1843 (implied by groom's widower status)",
+      "date": "before 7 August 1843",
+      "date_certainty": "before",
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; stated widower status implying prior wife's death)",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Death is implied by the groom's designation as 'viudo' (widower) of Mar\u00eda de Somarriba Gonz\u00e1lez. No direct statement of her death date or place appears in the record.",
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_096",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "D. Luis de Naveda",
+      "structured_value": {
+        "given": "Luis",
+        "surname": "de Naveda"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; stated his father's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_097",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "D.\u00aa Maria Cossio de Somarriba",
+      "structured_value": {
+        "given": "Maria",
+        "surname": "Cossio de Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "Juan de Naveda (groom; stated his mother's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Record states 'Maria Cossio de Somarriba'. Tree person I6 is recorded as 'Mar\u00eda Cruz Somarriba' from 1832 and 1833 baptism records. CONFLICT: 'Cossio' in this record may represent her paternal surname (a double surname: Coss\u00edo de Somarriba), while 'Cruz' in the baptism records may be her given name or a different rendering. These readings cannot be silently reconciled \u2014 requires corroborating records.",
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_098",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Dominga Josefa de la Sierra",
+      "structured_value": {
+        "given": "Dominga Josefa",
+        "surname": "de la Sierra"
+      },
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated her own name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_099",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Juan de Naveda, 7 August 1843, Limpias",
+      "date": "7 August 1843",
+      "date_certainty": "exact",
+      "place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; signed and certified the record)",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005",
+      "standard_place": "Limpias, Cantabria, Spain"
+    },
+    {
+      "id": "a_100",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "daughter of D. Gregorio Ramon de la Sierra",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated her own parentage)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_101",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "daughter of D.\u00aa Maria Josefa Vega",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated her own parentage)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_102",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "bride",
+      "fact_type": "residence",
+      "value": "vecinos de Solorzano",
+      "place": "Solorzano, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated her residence)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Residence of Solorzano attributed to bride and her parents as a group ('vecinos de Solorzano').",
+      "log_entry_id": "log_013",
+      "source_id": "src_005",
+      "standard_place": "Sol\u00f3rzano, Cantabria, Spain"
+    },
+    {
+      "id": "a_103",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "D. Gregorio Ramon de la Sierra",
+      "structured_value": {
+        "given": "Gregorio Ramon",
+        "surname": "de la Sierra"
+      },
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated her father's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_104",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "father_of_bride",
+      "fact_type": "residence",
+      "value": "vecinos de Solorzano",
+      "place": "Solorzano, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated parental residence)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005",
+      "standard_place": "Sol\u00f3rzano, Cantabria, Spain"
+    },
+    {
+      "id": "a_105",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "D.\u00aa Maria Josefa Vega",
+      "structured_value": {
+        "given": "Maria Josefa",
+        "surname": "Vega"
+      },
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated her mother's name)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_106",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "mother_of_bride",
+      "fact_type": "residence",
+      "value": "vecinos de Solorzano",
+      "place": "Solorzano, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "Dominga Josefa de la Sierra (bride; stated parental residence)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005",
+      "standard_place": "Sol\u00f3rzano, Cantabria, Spain"
+    },
+    {
+      "id": "a_107",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "D.\u00ba Francisco Bustillo",
+      "structured_value": {
+        "given": "Francisco",
+        "surname": "Bustillo"
+      },
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; recorded witnesses present at ceremony)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_108",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "witness_1",
+      "fact_type": "residence",
+      "value": "vecino de Carasa",
+      "place": "Carasa, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; recorded witnesses' residences)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_109",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "D. Gregorio de Somarriba",
+      "structured_value": {
+        "given": "Gregorio",
+        "surname": "de Somarriba"
+      },
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; recorded witnesses present at ceremony)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_110",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "witness_2",
+      "fact_type": "residence",
+      "value": "vecino de Carasa",
+      "place": "Carasa, Cantabria, Spain",
+      "standard_place": "Carasa, Voto, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; recorded witnesses' residences)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_111",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "witness_3",
+      "fact_type": "name",
+      "value": "D.\u00ba Juan de Hermoso",
+      "structured_value": {
+        "given": "Juan",
+        "surname": "de Hermoso"
+      },
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; recorded witnesses present at ceremony)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_112",
+      "record_id": "ark:/61903/3:1:S3HY-D13W-4NX",
+      "record_role": "witness_3",
+      "fact_type": "residence",
+      "value": "vecino de Limpias",
+      "place": "Limpias, Cantabria, Spain",
+      "information_quality": "primary",
+      "informant": "D. Tomas Dier (officiating priest; recorded witnesses' residences)",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_005",
+      "standard_place": "Limpias, Cantabria, Spain"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Francisco Naveda Somarriva \u2014 the research subject \u2014 is the godfather named in this 1877 Papantla baptism. The name matches PID-TODO's known full name (scribal variant 'Somarriva' for Somarriba); he participated personally. Corroborated by the BYU Immigrant Ancestors Project entry already in the tree identifying this person active in Papantla in this period.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Same godfather_1 persona as a_001 (Francisco Naveda Somarriva). The godparent event directly places PID-TODO in Papantla, Veracruz, April 1877, consistent with his known 1862 Papantla residence.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Same godfather_1 persona as a_001. Implied residence in Papantla from presence as godfather \u2014 consistent with PID-TODO's established 1862 and 1877 Papantla presence.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_061",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "rationale": "Negative evidence: Francisco Naveda Somarriba (the research subject, born ~1830) is absent from the two children named in the 1834 Limpias death entry of Mar\u00eda de Somarriba Gonz\u00e1lez \u2014 only Juan and Valentina are listed as children of the Juan de Naveda \u00d7 Mar\u00eda Somarriba marriage. The link is speculative because incomplete enumeration of children in death registers was common in this era; the silence neither proves nor disproves Francisco's parentage from this couple. Independent corroboration \u2014 a baptism record for Francisco from this or another parish \u2014 is required before parentage can be established or excluded.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "I3 (Valentina Josefa de Naveda, b. 16 Dec 1833, Limpias) is the child named in this baptism entry. Name 'Valentina Josefa' in the child_baptized role matches I3's known given name in tree.gedcomx.json.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Same child_baptized persona as a_017 \u2014 I3. Gender 'female' is consistent with I3's tree assignment.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Birth date 16 December 1833, Limpias \u2014 matches I3's existing tree birth fact (fact-valentina-birth). Primary evidence from the original parish baptism register.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_020",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Christening date 17 December 1833, San Pedro Ap\u00f3stol, Limpias \u2014 matches I3's existing tree christening fact (fact-valentina-christening). Primary evidence from the officiating priest's register.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_021",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "I3 is named 'child of Juan de Naveda' in the baptism entry (child_baptized role). Direct parentage assertion bearing on I3's identity and parentage from this couple.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is named as the father of Valentina Josefa in this parentage assertion. Cross-link: I1 is the father persona in this same record (a_023\u2013a_027) and is corroborated by the 1834 death entry of his wife (src_003) naming him as her husband.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_022",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "I3 is named 'child of [Josefa] Mar\u00eda Somarriba' in the baptism entry (child_baptized role). Direct parentage assertion bearing on I3's identity.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_022",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "I2 (Mar\u00eda de Somarriba Gonz\u00e1lez) is named as the mother of Valentina Josefa in this assertion. Cross-link: I2 is the mother persona in this same record (a_028\u2013a_031) and is corroborated by src_003 (death entry naming her as wife of Juan de Naveda and mother of Valentina).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is named as father in the 1833 Limpias baptism of Valentina Josefa. Name 'Juan de Naveda,' residence in Limpias, and spousal relationship to Mar\u00eda Somarriba are all corroborated by the 1834 death entry of his wife (src_003, a_054\u2013a_055), which independently names him as her surviving husband in Limpias.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence 'vecino of Limpias' for I1 (Juan de Naveda, father role). Consistent with I1's established Limpias residence, corroborated by src_003 (death entry of his wife also placed at Limpias, October 1834).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is named as spouse of [Josefa] Mar\u00eda Somarriba in the father role. The marital relationship is independently corroborated by src_003 (death entry of Mar\u00eda de Somarriba Gonz\u00e1lez stating she was the 'legitima Conxorte' of Juan de Naveda, a_052\u2013a_053).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_025",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "I2 ([Josefa] Mar\u00eda Somarriba / Mar\u00eda de Somarriba Gonz\u00e1lez) is the wife named in I1's spouse relationship assertion. Cross-link: corroborated by src_003 (death entry naming her as Juan de Naveda's legitimate wife).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "I1 (Juan de Naveda) is named as the son of Luis de Naveda in this secondary assertion relayed by the presenting parents at Valentina's 1833 baptism. Probable because the assertion is secondary (third-party relay) and no independent baptism record for Juan de Naveda has yet been found confirming Luis de Naveda as his father.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_026",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "I5 (Luis de Naveda, vecino of Carasa) is named as the father of Juan de Naveda (I1) at Valentina's 1833 baptism. Probable \u2014 secondary assertion relayed by presenting parents; no independent birth/baptism record for Juan de Naveda yet found. I5's residence in Carasa is consistent with his pre-existing tree fact.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "I1 (Juan de Naveda) is named as the son of Mar\u00eda Cruz Somarriba in this secondary assertion at Valentina's 1833 baptism. Probable \u2014 secondary information about I1's parentage, not yet independently corroborated.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_027",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "I6 (Mar\u00eda Cruz Somarriba, vecina of Carasa) is named as the mother of Juan de Naveda (I1) at Valentina's 1833 baptism. Probable \u2014 secondary assertion relayed by presenting parents; no independent record yet confirms her as Juan's mother. I6's Carasa residence is consistent with her pre-existing tree fact.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_028",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "I2 (Mar\u00eda de Somarriba Gonz\u00e1lez) is the mother persona in the 1833 Limpias baptism. Name '[Josefa] Mar\u00eda Somarriba' matches I2 with the known orthographic variants; surname Somarriba is unambiguous. Corroborated by src_003 which names her in full as 'Mar\u00eda de Somarriba Gonz.' and records her death at Limpias, October 1834.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Residence 'vecina of Limpias' for I2 \u2014 consistent with her known presence in Limpias (place of her child's baptism in December 1833, and place of her own death in October 1834 per src_003).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_030",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "I2 (Mar\u00eda Somarriba) is named as daughter of Francisco Somarriba in this secondary assertion relayed at Valentina's 1833 baptism. Probable \u2014 secondary information about I2's parentage; no independent record yet corroborates Francisco Somarriba as I2's father.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_030",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "I7 (Francisco Somarriba, vecino of Carasa) is named as the father of Mar\u00eda Somarriba (I2) at the 1833 baptism. Probable \u2014 secondary assertion relayed by presenting parents. I7's Carasa residence is consistent with his pre-existing tree fact.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_031",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "I2 (Mar\u00eda Somarriba) is named as daughter of Josefa Gonz\u00e1lez Aguirre in this secondary assertion at the 1833 baptism. Probable \u2014 secondary information about I2's parentage.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_031",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "I8 (Josefa Gonz\u00e1lez Aguirre, vecina of Carasa) is named as the mother of Mar\u00eda Somarriba (I2) at the 1833 baptism. Probable \u2014 secondary assertion relayed by presenting parents. I8's Carasa residence is consistent with her pre-existing tree fact.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_032",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "I5 (Luis de Naveda) is named as paternal grandfather of Valentina Josefa de Naveda in the 1833 Limpias baptism. His name and residence in Carasa, Voto, Cantabria are consistent across assertions in this record. Probable because the record is secondary (grandparents' names relayed by presenting parents).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_033",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Residence 'vecino of Carasa' for I5 (Luis de Naveda) \u2014 consistent with the pre-existing tree fact (Residence, Carasa, Voto, Cantabria, Spain). Secondary because the residence was relayed by presenting parents at the baptism.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_034",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "I5 (Luis de Naveda) is named as spouse of Mar\u00eda Cruz Somarriba (I6) via their joint listing as paternal grandparents at the 1833 baptism. Probable \u2014 indirect spousal link from third-party relay; no independent marriage record for I5 \u00d7 I6 has been found.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_034",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "I6 (Mar\u00eda Cruz Somarriba) is the wife named in I5's spouse relationship assertion. Cross-link: same secondary basis as I5's link to a_034.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_035",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "I6 (Mar\u00eda Cruz Somarriba) is named as paternal grandmother of Valentina Josefa in the 1833 Limpias baptism. Probable \u2014 secondary assertion (grandparents' names relayed by presenting parents at the baptism).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_036",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Residence 'vecina of Carasa' for I6 (Mar\u00eda Cruz Somarriba) \u2014 consistent with pre-existing tree fact (Residence, Carasa, Voto, Cantabria, Spain). Secondary relay.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_037",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "I7 (Francisco Somarriba) is named as maternal grandfather of Valentina Josefa in the 1833 Limpias baptism. Probable \u2014 secondary assertion (third-party relay of grandparents' names).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_038",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Residence 'vecino of Carasa' for I7 (Francisco Somarriba) \u2014 consistent with pre-existing tree fact (Residence, Carasa, Voto, Cantabria, Spain). Secondary relay.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_039",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "I7 (Francisco Somarriba) is named as spouse of Josefa Gonz\u00e1lez Aguirre (I8) via their joint listing as maternal grandparents at the 1833 baptism. Probable \u2014 indirect spousal link from third-party relay.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_039",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "I8 (Josefa Gonz\u00e1lez Aguirre) is the wife named in I7's spouse relationship assertion. Cross-link: same secondary basis as I7's link to a_039.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_040",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "I8 (Josefa Gonz\u00e1lez Aguirre) is named as maternal grandmother of Valentina Josefa in the 1833 Limpias baptism. Probable \u2014 secondary assertion (third-party relay of grandparents' names).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_041",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Residence 'vecina of Carasa' for I8 (Josefa Gonz\u00e1lez Aguirre) \u2014 consistent with pre-existing tree fact (Residence, Carasa, Voto, Cantabria, Spain). Secondary relay.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_047",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "I2 (Mar\u00eda de Somarriba Gonz\u00e1lez) is the deceased named in this death entry as 'Dn Maria de Somarriva Gonz.' \u2014 an orthographic variant of her full name. Her identity is confirmed by the cross-corroboration of multiple attributes: wife of Juan de Naveda (I1), mother of Juan (I4) and Valentina (I3), all independently corroborated by the 1833 Limpias baptism (src_002). Confident.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_048",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Death event for I2 \u2014 11 October 1834, Campo Santo, Parroquia de Limpias. Recorded by the parish priest in his official capacity. Identity is confident through cross-corroboration with src_002.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_049",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Cause of death (C\u00f3lera morbo / cholera) for I2 \u2014 same deceased persona as a_047. Consistent with documented cholera epidemic at Limpias, October 1834.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_050",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Age 32 years at death for I2 (Mar\u00eda de Somarriba Gonz\u00e1lez) \u2014 same deceased persona as a_047. Confident identity.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_051",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Computed birth year ~1802 for I2 \u2014 derived from stated age of 32 at death 11 October 1834. Same deceased persona as a_047. Confident identity.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_052",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marital status 'legitima Conxorte' of Juan de Naveda (I1) for I2 in the death entry. Same deceased persona as a_047. This is also direct evidence of the marital bond, corroborating the spouse relationship recorded in src_002.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_052",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is named as the husband in the marital status assertion of I2's death entry. Cross-link: consistent with I1's role as father and husband in the 1833 Limpias baptism (src_002), corroborated by multiple independent assertions.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_053",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion 'wife of Juan de Naveda' for I2 in her death entry. Same deceased persona as a_047. Explicitly states the marital bond in an original primary-information record.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_053",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is the named spouse in I2's relationship assertion at her death. Cross-link: consistent with all src_002 and src_003 evidence establishing I1 as I2's husband.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_054",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is the surviving spouse named in the death entry of I2. Name 'Juan de Naveda' matches exactly; corroborated by src_002 (1833 Limpias baptism) naming him as father of Valentina Josefa and husband of Mar\u00eda Somarriba.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_055",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Residence Limpias, 11 October 1834, for I1 (Juan de Naveda) \u2014 same spouse_1 persona as a_054 in the death entry. Consistent with his 1833 Limpias residence (src_002).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_056",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "I4 (Juan de Naveda junior, stub) is the child named 'Juan' in the death entry of Mar\u00eda de Somarriba Gonz\u00e1lez: 'en Cuyo matrimonio tubieron a Juan, y a Valentina.' Only two children of the Juan de Naveda \u00d7 Mar\u00eda Somarriba marriage are named; 'Juan' is the older of the two listed. Probable \u2014 no independent baptism record for I4 has been found; identity rests on this single statement by the parish priest.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_057",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Relationship assertion placing Juan junior (I4) as child of Juan de Naveda (I1) \u00d7 Mar\u00eda de Somarriba Gonz\u00e1lez (I2). Probable \u2014 same single-record basis as a_056.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_057",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is named as a parent of Juan junior (I4) in this relationship assertion. Cross-link: consistent with I1's established identity as father of the Limpias family across src_002 and src_003.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_057",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "I2 (Mar\u00eda de Somarriba Gonz\u00e1lez) is named as a parent of Juan junior (I4) in this relationship assertion. Cross-link: she is the deceased in this same record; her parenthood is the primary claim of the entry.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_058",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "I3 (Valentina Josefa de Naveda) is named 'Valentina' as the second child of the marriage in the death entry: 'en Cuyo matrimonio tubieron a Juan, y a Valentina.' Identity is confident: the 1833 Limpias baptism (src_002) independently establishes Valentina Josefa de Naveda as daughter of Juan de Naveda \u00d7 Mar\u00eda Somarriba, baptized at Limpias \u2014 the same child is named in both records. Two independent records corroborate I3's identity.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_059",
+      "person_id": "I3",
+      "confidence": "confident",
+      "rationale": "Relationship assertion naming Valentina (I3) as child of Juan de Naveda (I1) and Mar\u00eda de Somarriba Gonz\u00e1lez (I2) in the death entry. Corroborated by the 1833 baptism of Valentina Josefa (src_002, a_021\u2013a_022). Confident.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_059",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "I1 (Juan de Naveda) is named as a parent of Valentina (I3) in this relationship assertion. Cross-link: consistent with I1's role as father across both src_002 (1833 baptism) and src_003 (1834 death entry).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_059",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "I2 (Mar\u00eda de Somarriba Gonz\u00e1lez) is named as a parent of Valentina (I3) in this relationship assertion. Cross-link: she is the deceased in this same record and the mother confirmed in src_002 (1833 baptism).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_062",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Direct baptism record of Francisco Alejandro Naveda Somarriba, 27 Feb 1832, San Pedro Limpias. Name on the record (Francisco Alejandro Naveda Somarriba) matches the research subject. Parents Juan de Naveda and Mar\u00eda Somarriba Gonz\u00e1lez are our I1 and I2, already confirmed in two prior Limpias records. Date (~1832) consistent with Mexico 1877 residence age estimate. Strong match on name, parentage, and place.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_063",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Christening fact (27 Feb 1832, Limpias) directly from the baptism register entry for Francisco Alejandro Naveda Somarriba. Directly answers q_001: Francisco Naveda Somarriba was baptized at San Pedro, Limpias, Cantabria.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_064",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Birth date derived from baptism record ('naci\u00f3' stated in entry). Born shortly before 27 Feb 1832, Limpias, Cantabria. Consistent with estimated birth ~1830 from Mexico records.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_065",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Parents stated as 'residentes en este pueblo' (Limpias) at time of baptism 1832. Child's residence taken as same as parents' at birth.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_066",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Francisco Alejandro is child of Juan de Naveda (father role in baptism record). Directly establishes I1 as father of PID-TODO.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_066",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Juan de Naveda named as father (padre leg\u00edtimo) in the 1832 Limpias baptism of Francisco Alejandro Naveda Somarriba. Consistent with his prior appearances in the 1833 Valentina baptism and 1834 death entry of Mar\u00eda Somarriba Gonz\u00e1lez. Name, place, and family match I1.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_067",
+      "person_id": "PID-TODO",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Francisco Alejandro is child of Mar\u00eda Somarriba y Somarriba (mother role). Directly establishes I2 as mother of PID-TODO.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_067",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Mar\u00eda Somarriba y Somarriba named as mother (madre leg\u00edtima) in the 1832 baptism. 'Somarriba y Somarriba' reflects her compound surname (father's Somarriba + mother's Somarriba via Gonz\u00e1lez Aguirre). This is I2 (Mar\u00eda Somarriba Gonz\u00e1lez) whose death is recorded at Limpias Oct 1834.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_068",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Father name 'Juan de Naveda' in 1832 baptism. Matches I1 across three Limpias records (Valentina 1833, death 1834, Francisco 1832). Confident identification.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_069",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Juan de Naveda recorded as resident of Limpias at time of Francisco's baptism (1832). Consistent with I1's presence in all other Limpias records.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_070",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Mother named 'Mar\u00eda Somarriba y Somarriba' in 1832 baptism. 'y Somarriba' second element = maternal surname (her mother I8 Josefa Gonz\u00e1lez Aguirre carried Somarriba through her father I7 Francisco Somarriba). This is I2.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_071",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Mar\u00eda Somarriba Gonz\u00e1lez resident at Limpias in 1832, consistent with her death there in October 1834 (src_003).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_072",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Luis de Naveda named as paternal grandfather (nieto paterno de Luis de Naveda) in 1832 baptism. Matches I5 in tree. Corroborates his paternity of Juan de Naveda (I1) \u2014 direct evidence of generational link.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_073",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Luis de Naveda recorded as vecino of Carasa, Junta de Voto. Consistent with all prior records showing the Naveda family in Carasa.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_074",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Paternal grandmother named 'Mar\u00eda Somarriba' (no 'Cruz' middle name). Identified as I6 (Mar\u00eda Cruz Somarriba) by: (a) she is wife of Luis de Naveda (I5), (b) Carasa residence, (c) same person corroborated by the 1833 Valentina baptism where she appears as 'Mar\u00eda Cruz Somarriba'. The middle name 'Cruz' was omitted here \u2014 a common clerical variation.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_075",
+      "person_id": "I6",
+      "confidence": "confident",
+      "rationale": "Mar\u00eda Somarriba (I6) recorded as vecina of Carasa, Junta de Voto. Consistent with prior appearances.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_076",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Francisco Somarriba named as maternal grandfather (nieto materno del Sr. Fran. Somarriba). This is I7, already in tree as maternal grandfather of Francisco via his daughter Mar\u00eda Somarriba Gonz\u00e1lez (I2). Residence Carasa confirms.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_077",
+      "person_id": "I7",
+      "confidence": "confident",
+      "rationale": "Francisco Somarriba (I7) recorded as vecino of Carasa, Junta de Voto. Consistent with 1833 Valentina baptism.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_078",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Josefa Gonz\u00e1lez Aguirre named as maternal grandmother. Name is exact match to I8 already in tree. Residence Carasa confirms. Full name (with 'Aguirre') used here.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_079",
+      "person_id": "I8",
+      "confidence": "confident",
+      "rationale": "Josefa Gonz\u00e1lez Aguirre (I8) recorded as vecina of Carasa, Junta de Voto. Consistent with 1833 Valentina baptism.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_088",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Groom in 1843 Limpias marriage named 'Juan de Naveda' \u2014 name exactly matches I1. Identified as widower of Mar\u00eda Somarriba Gonz\u00e1lez (I2) and son of Luis de Naveda (I5) + Mar\u00eda Cossio de Somarriba (I6). Consistent with I1 across all prior Limpias records.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_089",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage event (7 Aug 1843, Limpias) for Juan de Naveda (I1) \u2014 second marriage after death of first wife I2.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_090",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Juan de Naveda identified as 'viudo de Mar\u00eda de Somarriba Gonz\u00e1lez' \u2014 confirms I1's widower status and corroborates I2's death before 7 Aug 1843.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_091",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship: groom Juan de Naveda is son of Luis de Naveda (I5). Direct statement 'hijo leg\u00edtimo de D. Luis de Naveda'. Third independent source confirming I1's parentage from I5.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_091",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Luis de Naveda (I5) identified as father of groom Juan de Naveda (I1) in 1843 Limpias marriage. Third independent source confirming I5 as father of I1 (after 1832 Francisco baptism and 1833 Valentina baptism).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_092",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship: groom Juan de Naveda is son of Mar\u00eda Cossio de Somarriba (I6 with name conflict). Confidence reduced to probable due to conflict: tree has 'Mar\u00eda Cruz Somarriba' but this record names the mother 'Mar\u00eda Cossio de Somarriba'. Pending resolution of whether Cossio is her paternal surname or a name variant.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_092",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Mother of groom named 'Mar\u00eda Cossio de Somarriba' \u2014 linked to I6 (tree: Mar\u00eda Cruz Somarriba) by process of elimination: she is wife of I5 (Luis de Naveda), Carasa residency. Name 'Cossio' conflicts with 'Cruz' in earlier records. Probable pending conflict resolution.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_093",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Former residence of Juan de Naveda (I1): Carasa, Junta de Voto ('vecino que fue al lugar de Carasa'). Consistent with his parents and grandparents being from Carasa. By 1843 he had moved to Limpias.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_094",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Mar\u00eda de Somarriba Gonz\u00e1lez named as Juan de Naveda's deceased first wife in the 1843 marriage. Exact name match to I2. Confirms I2 was deceased before 7 Aug 1843 (consistent with death record Oct 1834).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_095",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "I2 (Mar\u00eda Somarriba Gonz\u00e1lez) implied deceased by her husband's widower status in 1843. Corroborates death in Oct 1834 per src_003.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_096",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Luis de Naveda named as father of groom in the 1843 marriage record. This is the third independent source confirming I5 as father of I1.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_089",
+      "assertion_id": "a_097",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Mother of groom named 'Mar\u00eda Cossio de Somarriba' in 1843 marriage record. I6 in tree is 'Mar\u00eda Cruz Somarriba'. Confident as to identity (wife of I5, Carasa residence), but name variant creates a conflict requiring resolution. 'Cossio' may be her paternal surname in a double-surname structure (Mar\u00eda [Cruz de] Cossio Somarriba), or 'Cruz' in prior records may be an OCR error for 'Cossio'.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_090",
+      "assertion_id": "a_098",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "Bride named 'Dominga Josefa de la Sierra' \u2014 name directly identifies I9, the newly minted tree stub for this person. Primary information: bride stated her own name. No competing candidate.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_091",
+      "assertion_id": "a_099",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "Marriage fact for I9 (Dominga Josefa de la Sierra): she married Juan de Naveda (I1) on 7 August 1843 in Limpias. Primary information from officiating priest D. Tomas Dier.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_092",
+      "assertion_id": "a_100",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "I9 (Dominga Josefa de la Sierra) is daughter of D. Gregorio Ramon de la Sierra, as stated by the bride herself. Direct parentage statement bearing on I9's identity.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_093",
+      "assertion_id": "a_101",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "I9 (Dominga Josefa de la Sierra) is daughter of D.\u00aa Maria Josefa Vega, as stated by the bride herself. Direct parentage statement bearing on I9's identity.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_094",
+      "assertion_id": "a_102",
+      "person_id": "I9",
+      "confidence": "confident",
+      "rationale": "I9 (Dominga Josefa de la Sierra) and her parents were vecinos de Solorzano at time of her 1843 marriage. Bride's own statement.",
+      "match_score": null,
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "I6's name: the 1833 Limpias baptism (a_035) names her 'Mar\u00eda Cruz Somarriba'; the 1843 Limpias marriage (a_097) names her 'Mar\u00eda Cossio de Somarriba'. Two hypotheses: (A) 'Cossio' is her actual paternal surname \u2014 her full double surname is 'Coss\u00edo Somarriba', with 'Cruz' her first given name and 'Cossio' beginning her compound surname, making the full name 'Mar\u00eda Cruz [de] Coss\u00edo Somarriba'; (B) 'Cruz' in the 1833 baptism index is an OCR transcription error for 'Cossio', graphically plausible in 19th-century Spanish script. The 1832 baptism (a_074) names her only 'Mar\u00eda Somarriba' \u2014 consistent with either reading since both Cruz and Cossio are absent. Resolution requires reading the 1833 baptism original image to confirm the letter form. This conflict is about I6's exact name; it does not alter her identity as wife of Luis de Naveda and paternal grandmother of Francisco.",
+      "disputed_attribute": "name",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_035",
+        "a_097"
+      ],
+      "independence_analysis": "a_035 (1833 baptism) and a_097 (1843 marriage) are independent records created 10 years apart by different priests; neither derives from the other. However both convey secondary information about I6 relayed by third parties (grandparents named at baptism; mother named by son at his own marriage). Independence is real but both are third-party secondary information.",
+      "weighing_analysis": "The 1843 marriage record is closer in time to I6's own generation and names her by her son who would have known her directly; however by 1843 she may have been deceased (Francisco's 1832 baptism already uses past context, and the Junta de Voto death record src_003 c.1830-1834 may concern I2). Both readings are plausible; Cossio is the more distinctive lexeme and less likely to be invented, which slightly favors hypothesis A.",
+      "preferred_assertion_id": null,
+      "resolution_rationale": null,
+      "status": "unresolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_062",
+        "a_063",
+        "a_064",
+        "a_065",
+        "a_066",
+        "a_067",
+        "a_068",
+        "a_070",
+        "a_072",
+        "a_074",
+        "a_076",
+        "a_078",
+        "a_001",
+        "a_002",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_026",
+        "a_035",
+        "a_088",
+        "a_089",
+        "a_090",
+        "a_091",
+        "a_094"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Thirteen searches were conducted across two research plans. Nationwide indexed Spanish baptism (FamilySearch collection 1500692, 8.6M records) and Diocese of Santander collection (2078544, 290K records) were searched without result. Full-text corpus searches \u2014 unscoped and scoped to the Limpias baptism volume (imageGroupNumber 004383194_002, 98% indexed) \u2014 yielded the Francisco baptism directly. Additional FTS searches on the Limpias marriage register volume located the 1843 Juan de Naveda remarriage. Cantabria passport/emigration collections and the Spain marriages index were searched; no pre-emigration document for Francisco was found. Fallback searches for Voto/Ampuero parishes and PARES/quintas rolls were correctly bypassed after the direct baptism was confirmed in Limpias. All four key Limpias records were verified against original parish register images. Research declared reasonably exhaustive.",
+      "narrative_markdown": "## Proof Summary: Birth Locality and Parentage of Francisco Naveda Somarriba\n\n**Conclusion:** The preponderance of evidence establishes that **Francisco Naveda Somarriba** was baptized on **27 February 1832** at the **Parroquia de San Pedro Ap\u00f3stol, Limpias, Cantabria, Spain**. His parents were **Juan de Naveda** and **Mar\u00eda Somarriba Gonz\u00e1lez** (also recorded as Mar\u00eda Somarriba y Somarriba), both residents of Limpias at the time. His paternal grandparents were **Luis de Naveda** and **Mar\u00eda [Cruz/Coss\u00edo de] Somarriba** of Carasa, Junta de Voto; his maternal grandparents were **Francisco Somarriba** and **Josefa Gonz\u00e1lez Aguirre**, also of Carasa.\n\n---\n\n### Primary Evidence: The 1832 Baptism\n\nThe foundational evidence is an original parish baptism register entry at San Pedro Ap\u00f3stol, Limpias, dated **27 February 1832** (src_004; FamilySearch ark:/61903/3:1:S3HY-D1QJ-G; original image examined). The officiating priest Jos\u00e9 del Divino Collado recorded the baptism of **Francisco Alejandro**, naming his parents as **Juan de Naveda** and **Mar\u00eda Somarriba y Somarriba**, \"residentes en este pueblo\" (residents of Limpias). The paternal grandparents are listed as Luis de Naveda and Mar\u00eda Somarriba, vecinos of Carasa, Junta de Voto; the maternal grandparents as Francisco Somarriba and Josefa Gonz\u00e1lez Aguirre, also of Carasa. This is an **original source** with **primary information** recorded by the officiating priest \u2014 the highest evidence class available.\n\n### Corroborating Evidence\n\nThree independent sources confirm the same family unit in Limpias:\n\n**1833 Valentina Josefa baptism** (src_002; FamilySearch ark:/61903/3:1:S3HY-D13W-M9W; original image examined): The 17 December 1833 baptism of Valentina Josefa de Naveda at the same parish names the parents as Juan de Naveda and Mar\u00eda Somarriba Gonz\u00e1lez, with paternal grandparents Luis de Naveda and Mar\u00eda Cruz Somarriba, and maternal grandparents Francisco Somarriba and Josefa Gonz\u00e1lez Aguirre. This original record, created by a different priest eleven months after the Francisco baptism, independently documents the same couple and all four grandparent names.\n\n**1834 Mar\u00eda Somarriba Gonz\u00e1lez death record** (src_003; FamilySearch ark:/61903/3:1:S3HY-D137-1PP; original image examined): An October 1834 burial entry records \u201cMar\u00eda de Somarriba Gonz\u00e1lez\u201d as the lawful wife of Juan de Naveda, deceased of cholera at Limpias at age thirty-two. This original record, created by a third priest at time of burial, independently places the couple in Limpias and confirms the mother\u2019s death.\n\n**1843 Juan de Naveda remarriage** (src_005; FamilySearch ark:/61903/3:1:S3HY-D13W-4NX; original image examined): On 7 August 1843, Juan de Naveda remarried at the same Limpias parish as \u201cviudo de D.\u00aa Mar\u00eda de Somarriba Gonz\u00e1les\u201d (widower of Mar\u00eda de Somarriba Gonz\u00e1lez), his parents listed as D. Luis de Naveda and D.\u00aa Mar\u00eda Cossio de Somarriba. This original record, created twelve years after the Francisco baptism by a different priest, independently corroborates Juan de Naveda\u2019s parentage and widow status.\n\nAll four sources were created by different priests in different years; none derives from the others.\n\n### Identity of the Subject (Spain-Mexico Link)\n\nThe principal GPS limitation on this conclusion is that no document directly bridges the Francisco Alejandro baptized at Limpias in 1832 to the Francisco Naveda Somarriba who appears in Papantla, Veracruz, Mexico in 1877 (src_001; FamilySearch ark:/61903/3:1:33SQ-GG89-HSK). Searches for a Spanish passport, consular emigration record, and pre-emigration Spanish marriage all came back negative (log_005, log_006). The Spain-Mexico identity link therefore rests on circumstantial reasoning:\n\n1. The compound surname Naveda Somarriba is rare and geographically concentrated in the Limpias/Carasa area; it is formed by the father\u2019s paternal surname (Naveda) plus the mother\u2019s paternal surname (Somarriba), producing the distinctive combination only for children of this specific couple.\n2. The baptism date (1832) is consistent with emigration circa 1856 at approximately age 24 and with the 1862 Papantla residence of Francisco Naveda Somarriba documented in the BYU Immigrant Ancestors Project.\n3. No competing baptism for a Francisco with both surnames was identified in the collections searched \u2014 though this negative evidence is qualified: the nationwide Spain Baptisms index covers approximately 8% of the total corpus, and the indexed search of the Limpias volume (log_012) returned an unexamined \u201cNavedas Somarriba\u201d male candidate from Carasa who is probably a sibling but was not individually read. The absence of a confirmed competing candidate is meaningful but not conclusive.\n\nThis circumstantial identification is the actual ceiling on this proof. Even if collateral conflict c_001 (the grandmother\u2019s name) were fully resolved, the absence of a bridging emigration or identity document between the 1832 Limpias baptism and the 1877 Papantla godfather would prevent a Proved conclusion under GPS Component 3 (analysis and correlation of the Spain-Mexico identity).\n\n### Collateral Name Conflict (c_001)\n\nA secondary, collateral discrepancy was registered as c_001. The 1833 Valentina baptism names the paternal grandmother as \u201cMar\u00eda Cruz Somarriba\u201d; the 1843 marriage record names her \u201cMar\u00eda Cossio de Somarriba\u201d; the 1832 Francisco baptism names her only \u201cMar\u00eda Somarriba.\u201d Two hypotheses are plausible: (A) her full name is Mar\u00eda [Cruz de] Coss\u00edo Somarriba, with Coss\u00edo as her paternal surname; (B) \u201cCruz\u201d in the 1833 FamilySearch index is an HTR transcription variant of \u201cCossio.\u201d Resolution requires reading the 1833 baptism original image. This conflict concerns only the paternal grandmother\u2019s name \u2014 a detail that does not dispute Francisco\u2019s birth locality, his parents\u2019 identities, or the concluded relationship. Under GPS Component 4 it constitutes an additional unresolved conflict, though one that is secondary to the identity-link issue above.\n\n### Tier Declaration\n\nThis conclusion is rated **probable**. GPS Components 1 (reasonably exhaustive research, declared 22 July 2026), 2 (complete citations from four original sources), and 5 (soundly reasoned narrative) are fully satisfied. Component 3 is partially satisfied: the Limpias family\u2019s identity is established by four independent original records, but the link between the 1832 Limpias baptism and the Mexico subject remains circumstantial, without a bridging document. Component 4 is not fully met because conflict c_001 remains unresolved. The **primary** barrier to a Proved conclusion is the circumstantial Spain-Mexico identity link; the secondary barrier is c_001. Finding a bridging document (a Mexican marriage, death, or naturalization record naming Limpias as his birthplace; a passport; or a consular registration) would be the most impactful advance."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T00-00-00.json"
+    }
+  ]
+}

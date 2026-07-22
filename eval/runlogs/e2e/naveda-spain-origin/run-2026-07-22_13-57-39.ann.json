@@ -1,0 +1,18 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "true",
+    "f5": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Recovered — Francisco Naveda Somarriba (PID-TODO) has Christening 27 February 1832, San Pedro, Limpias, Cantabria (Santander), Spain, plus birth ~27 Feb 1832 — the stripped Spanish-origin answer. (A stale 'abt 1830' birth also remains, but the concluded 1832 christening is present.)",
+    "f2": "Recovered — father Juan Naveda (I1) linked as parent.",
+    "f3": "Recovered — mother María Somarriba (I2) linked as parent.",
+    "f4": "Recovered (bonus) — sister Valentina Josefa Naveda Somarriba (I3), b. 16 Dec 1833 Limpias, linked to the same parents (Juan + María).",
+    "f5": "Recovered (bonus) — paternal grandparents Luis Naveda (I5) and María Cruz Somarriba (I6) linked as parents of Juan Naveda (I1)."
+  },
+  "annotator": "ernest"
+}

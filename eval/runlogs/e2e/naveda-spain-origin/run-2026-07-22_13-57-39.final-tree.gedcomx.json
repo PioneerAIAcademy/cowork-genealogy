@@ -1,0 +1,794 @@
+{
+  "persons": [
+    {
+      "id": "PID-TODO",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "given": "Francisco",
+          "surname": "Naveda Somarriba",
+          "id": "PID-TODO-name-1"
+        },
+        {
+          "id": "N1",
+          "type": "BirthName",
+          "given": "Francisco",
+          "surname": "Naveda Somarriva",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N14",
+          "type": "BirthName",
+          "given": "Francisco Alejandro",
+          "surname": "Naveda Somarriba",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-francisco-birth",
+          "type": "Birth",
+          "date": "abt 1830",
+          "standard_date": "Abt 1830",
+          "place": "Spain",
+          "standard_place": "Spain"
+        },
+        {
+          "id": "fact-francisco-nationality",
+          "type": "Nationality",
+          "value": "native of Spain"
+        },
+        {
+          "id": "fact-francisco-emigration",
+          "type": "Emigration",
+          "date": "abt 1856",
+          "standard_date": "Abt 1856",
+          "place": "Spain",
+          "standard_place": "Spain"
+        },
+        {
+          "id": "fact-francisco-residence",
+          "type": "Residence",
+          "date": "1862",
+          "standard_date": "1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F1",
+          "type": "Godparent",
+          "date": "~2 April 1877",
+          "place": "Parroquia de Papantla, Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico",
+          "value": "godfather of Maria Edelmira Aludia Valdez, baptized 2 April 1877, Parroquia de Papantla",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Christening",
+          "date": "27 February 1832",
+          "place": "San Pedro, Limpias, Cantabria, Spain",
+          "standard_place": "San Pedro, Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F17",
+          "type": "Birth",
+          "date": "~27 February 1832",
+          "place": "Limpias, Cantabria, Spain",
+          "standard_place": "Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F18",
+          "type": "Residence",
+          "place": "Limpias, Cantabria, Spain",
+          "standard_place": "Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p-spouse",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Maria Josefa",
+          "surname": "Silvera",
+          "id": "p-spouse-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-josefa-residence",
+          "type": "Residence",
+          "date": "1862",
+          "standard_date": "1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "p-child-1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "given": "Maria Valentina Josefa Teofila de Jesus",
+          "surname": "Naveda Silvera",
+          "id": "p-child-1-name-1"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-valentina-birth",
+          "type": "Birth",
+          "date": "8 Jan 1862",
+          "standard_date": "8 Jan 1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico"
+        },
+        {
+          "id": "fact-valentina-christening",
+          "type": "Christening",
+          "date": "18 Jan 1862",
+          "standard_date": "18 Jan 1862",
+          "place": "Papantla, Veracruz, Mexico",
+          "standard_place": "Papantla, Veracruz, Mexico"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N2",
+          "type": "BirthName",
+          "given": "Juan",
+          "surname": "Naveda",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N5",
+          "type": "BirthName",
+          "given": "Juan",
+          "surname": "de Naveda",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Residence",
+          "place": "Limpias, Cantabria, Spain",
+          "standard_place": "Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "date": "1834-10-11"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N3",
+          "type": "BirthName",
+          "given": "Mar\u00eda",
+          "surname": "Somarriba",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N6",
+          "type": "BirthName",
+          "given": "Mar\u00eda",
+          "surname": "de Somarriba Gonz\u00e1lez",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Residence",
+          "place": "Limpias, Cantabria, Spain",
+          "standard_place": "Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Death",
+          "date": "1834-10-11",
+          "place": "Campo Santo, Parroquia de Limpias, Villa de Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "CauseOfDeath",
+          "value": "C\u00f3lera morbo (cholera); spelled 'Colexa morbo' in original",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Birth",
+          "date": "~1802",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "MaritalStatus",
+          "value": "Legitimate wife (legitima Conxorte) of Juan de Naveda",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N4",
+          "type": "BirthName",
+          "given": "Valentina Josefa",
+          "surname": "Naveda Somarriba",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N8",
+          "type": "BirthName",
+          "given": "Valentina",
+          "surname": "de Naveda",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "16 December 1833",
+          "place": "Limpias, Cantabria, Spain",
+          "standard_place": "Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Christening",
+          "date": "17 December 1833",
+          "place": "San Pedro Ap\u00f3stol, Limpias, Cantabria, Spain",
+          "standard_place": "San Pedro, Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N7",
+          "type": "BirthName",
+          "given": "Juan",
+          "surname": "de Naveda",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N9",
+          "type": "BirthName",
+          "given": "Luis",
+          "surname": "Naveda",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F10",
+          "type": "Residence",
+          "place": "Carasa, Voto, Cantabria, Spain",
+          "standard_place": "Carasa, Voto, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N10",
+          "type": "BirthName",
+          "given": "Mar\u00eda Cruz",
+          "surname": "Somarriba",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Residence",
+          "place": "Carasa, Voto, Cantabria, Spain",
+          "standard_place": "Carasa, Voto, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N11",
+          "type": "BirthName",
+          "given": "Francisco",
+          "surname": "Somarriba",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Residence",
+          "place": "Carasa, Voto, Cantabria, Spain",
+          "standard_place": "Carasa, Voto, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N12",
+          "type": "BirthName",
+          "given": "Josefa",
+          "surname": "Gonz\u00e1lez Aguirre",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F13",
+          "type": "Residence",
+          "place": "Carasa, Voto, Cantabria, Spain",
+          "standard_place": "Carasa, Voto, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N13",
+          "type": "BirthName",
+          "given": "Dominga Josefa",
+          "surname": "de la Sierra",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "F14",
+          "type": "Marriage",
+          "date": "7 August 1843",
+          "place": "Limpias, Cantabria, Spain",
+          "standard_place": "Limpias, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "type": "Residence",
+          "place": "Solorzano, Cantabria, Spain",
+          "standard_place": "Sol\u00f3rzano, Cantabria, Spain",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "type": "Couple",
+      "person1": "PID-TODO",
+      "person2": "p-spouse"
+    },
+    {
+      "id": "rel-2",
+      "type": "ParentChild",
+      "parent": "PID-TODO",
+      "child": "p-child-1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "rel-3",
+      "type": "ParentChild",
+      "parent": "p-spouse",
+      "child": "p-child-1",
+      "subtype": "Biological"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S2"
+        },
+        {
+          "ref": "S3"
+        }
+      ],
+      "id": "R1"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R2"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R3"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S3"
+        }
+      ],
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S3"
+        }
+      ],
+      "id": "R5"
+    },
+    {
+      "type": "Couple",
+      "person1": "I5",
+      "person2": "I6",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R8"
+    },
+    {
+      "type": "Couple",
+      "person1": "I7",
+      "person2": "I8",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I7",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I8",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S2"
+        }
+      ],
+      "id": "R11"
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I9",
+      "sources": [
+        {
+          "ref": "S5"
+        }
+      ],
+      "id": "R12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "PID-TODO",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ],
+      "id": "R13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "PID-TODO",
+      "subtype": "Biological",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ],
+      "id": "R14"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-1",
+      "title": "Baptism of Maria Valentina Josefa Teofila de Jesus Naveda Silvera, \"M\u00e9xico, Veracruz, registros parroquiales y diocesanos, 1590-1978,\" Santa Maria, Papantla, Veracruz, database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133 : accessed 5 July 2024), image 20 of 486.",
+      "citation": "Baptism of Maria Valentina Josefa Teofila de Jesus Naveda Silvera, \"M\u00e9xico, Veracruz, registros parroquiales y diocesanos, 1590-1978,\" Santa Maria, Papantla, Veracruz, database with images, FamilySearch (https://familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133 : accessed 5 July 2024), image 20 of 486.",
+      "url": "https://familysearch.org/ark:/61903/3:1:33SQ-GG8M-S133"
+    },
+    {
+      "id": "src-2",
+      "title": "\"Immigrant Ancestors Project,\" online database, Center for Family History and Genealogy, Brigham Young University, entry for Francisco Naveda y [Somarriba], (http://immigrants.byu.edu/search/view_newrecord/836925 : accessed 5 July 2024).",
+      "citation": "\"Immigrant Ancestors Project,\" online database, Center for Family History and Genealogy, Brigham Young University, entry for Francisco Naveda y [Somarriba], (http://immigrants.byu.edu/search/view_newrecord/836925 : accessed 5 July 2024).",
+      "url": "http://immigrants.byu.edu/search/view_newrecord/836925"
+    },
+    {
+      "id": "S1",
+      "title": "Baptism of Maria Edelmira Aludia Valdez, Parroquia de Papantla, Papantla, Veracruz, Mexico, 2 April 1877",
+      "author": "Jimoteo Garcia (teniente de cura)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GG89-HSK"
+    },
+    {
+      "id": "S2",
+      "title": "San Pedro Ap\u00f3stol, Limpias, Cantabria, Spain \u2014 Baptism Register, 17 December 1833 (Valentina Josefa de Naveda)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-M9W"
+    },
+    {
+      "id": "S3",
+      "title": "Parroquia de Limpias, Cantabria, Spain \u2014 Death Register, 11 October 1834, Entry 4: burial of Mar\u00eda de Somarriba Gonz\u00e1lez",
+      "author": "Josef del Rivero (p\u00e1rroco)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D137-1PP"
+    },
+    {
+      "id": "S4",
+      "title": "Parroquia de San Pedro, Limpias, Cantabria, Spain \u2014 Baptism Register, 1832 (image)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D1QJ-G"
+    },
+    {
+      "id": "S5",
+      "title": "Parroquia de San Pedro Ap\u00f3stol de Limpias, Cantabria, Spain \u2014 Libro de Matrimonios, Entry 7 August 1843 (Juan de Naveda & Dominga Josefa de la Sierra)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-D13W-4NX"
+    }
+  ]
+}
