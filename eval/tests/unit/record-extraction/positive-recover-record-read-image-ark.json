@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_record_extraction_017",
+    "skill": "record-extraction",
+    "name": "Recovers from a record_read attempt on a document-image ARK by routing to image_read",
+    "type": "positive",
+    "description": "Regression for the zabriskie-children e2e (2026-07-21): the agent held an obituary reachable only by a document-image ARK (3:1:, as fulltext_search returns), called record_read on it, hit an unhelpful failure, and wrongly concluded 'image-level ARKs are not resolvable through the available tools' — abandoning the scan. The paired tool fix guards record_read to reject 3:1:/3:2: ARKs and redirect to image_read. This test exercises the SKILL-side recovery: given an obituary whose only FamilySearch handle is a 3:1: image ARK, the skill must get the image content through image_read (directly or via the @plugin:image-reader subagent), NOT dead-end. record_read is not a LIVE_TOOL, so the guard's redirect is reproduced by the record-read-image-ark-rejected fixture; if the skill errantly calls record_read on the ARK it receives that actionable redirect and should recover. Distinct from ut_record_extraction_015, which tests happy-path delegation of an image ARK that sits alongside an indexed 1:1: record; here the source is image-only and the failure being guarded against is the record_read dead-end. Image transcription itself is untestable (the mock returns image_read's response as JSON text, not a rendered scan) — grade the routing/recovery and the text extraction only.",
+    "tags": [
+      "extraction",
+      "image-ark",
+      "record-read-guard",
+      "image-reader-delegation",
+      "regression",
+      "positive"
+    ]
+  },
+  "input": {
+    "user_message": "I found John Kenneth Zabriskie's obituary via FamilySearch full-text search. Its FamilySearch reference is ark:/61903/3:1:3Q9M-C95G-HQZ6-W. Please extract the assertions into my project, and pull up the page scan at that reference so I can compare it against what you extract.\n\nObituary text (as indexed):\nJohn Kenneth Zabriskie, 68, of Nephi, Juab, Utah, died 13 January 1985 of cancer. Born 30 October 1916 in Mount Pleasant, Sanpete, Utah, United States, to John Henry Zabriskie and Gertrude Marie Nielsen. He married Ruth Tolley in 1945. Survivors include his wife and children. Buried at Vine Bluff Cemetery, Nephi, Juab, Utah, United States.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "record-read-image-ark-rejected",
+    "image-read-obituary-3Q9M"
+  ],
+  "judge_context": [
+    "This is a valid record-extraction task. The transcript should show atomic assertions extracted from the obituary text — the death (13 January 1985, cancer), the birth (30 October 1916, Mount Pleasant, Utah), the parents (John Henry Zabriskie; Gertrude Marie Nielsen), the marriage to Ruth Tolley (1945), and the burial (Vine Bluff Cemetery, Nephi) — each properly sourced to this obituary and persisted via research_append. Grade the extraction on the usual atomicity / informant / evidence-type expectations. (Under the router+agent shape the extraction may happen inside a record-extractor subagent delegation; its tool calls appear in the transcript and are graded normally.)",
+    "The obituary's only FamilySearch handle is a document-image ARK (ark:/61903/3:1:3Q9M-C95G-HQZ6-W). CORRECT behavior: the skill gets the image content via the image_read tool — directly, or by delegating to the image-reader subagent (an Agent/Task invocation of subagent_type image-reader, or an explicit @plugin:image-reader delegation) — naming that 3:1: ARK. If the skill first calls record_read on the 3:1: ARK, that call returns an actionable redirect ('this is a document-image ARK … use the image_read tool'); RECOVERING by then routing the ARK to image_read / the image-reader subagent is fully CORRECT and is exactly what this test rewards.",
+    "INCORRECT behavior (the regression this test guards): declaring the image ARK unreadable / unresolvable / 'not supported by the available tools' and abandoning the scan without ever routing it to image_read; converting the 3:1: ARK into a bare NUMBER_NUMBER imageId before reading; or looping on record_read after it has already redirected to image_read.",
+    "Do NOT grade the visual content or transcription of the scan. The harness mock returns image_read's response as JSON text rather than a rendered image, so the image-reader cannot actually read the scan and will typically report NOT READ / could-not-render — that outcome is expected and is NOT a failure. What matters: the image ARK reached image_read (directly or via the image-reader subagent) rather than dead-ending, and the obituary-text extraction completed."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

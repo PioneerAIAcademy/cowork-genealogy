@@ -146,9 +146,9 @@ never rediscover it.
 
 List every person mentioned and assign a `record_role`:
 - Naming convention: `head_of_household`, `wife`, `child_1`, `child_2`,
-  `deceased`, `informant`, `father_of_bride`, `mother_of_groom`,
-  `grantee`, `grantor`, `testator`, `heir_1`, `witness_1`, `godparent_1`.
-  Number roles sequentially.
+  `deceased`, `informant`, `father_of_deceased`, `mother_of_deceased`,
+  `father_of_bride`, `mother_of_groom`, `grantee`, `grantor`, `testator`,
+  `heir_1`, `witness_1`, `godparent_1`. Number roles sequentially.
 - Negative evidence uses `absent` — the exact string, lowercase, no
   prefix or qualifier. Never invent variants (`subject_absent`,
   `not_listed`, `missing`): downstream validators and skills key off the
@@ -300,12 +300,21 @@ absence, whatever the record type; the table's
   certification is the physician's attestation.
 - **Personal informant** (named on the cert, often spouse or family):
   informant for the decedent's biographical facts — name, **age**, birth
-  date/place, parents' names, **occupation**, and **marital status** —
-  ALL at proximity `family_not_present`. These enumerated rows are
+  date/place, **occupation**, and **marital status** — ALL at proximity
+  `family_not_present`. These enumerated rows are
   fixed: do not upgrade any of them to `witness` on a "they personally
   observed it" argument — the certificate does not establish
   observation, and occupation/marital status are reported biography,
   not witnessed events.
+- **The named parents are their own personas, not decedent facts.** A
+  death certificate that names the father and/or mother yields separate
+  assertions with `record_role` `father_of_deceased` / `mother_of_deceased`:
+  a `name` assertion for each, plus a `birthplace` assertion whenever the
+  cert states it (same personal informant, proximity `family_not_present`,
+  `indirect`). Never fold a parent onto the decedent as a `father_name` /
+  `mother_name` fact-type — that loses the parent as a discoverable
+  persona. (A blank parent field still produces no assertion — see "Blank
+  columns produce no assertions.")
 - **Funeral director:** informant for burial date/location, proximity
   `official_duty`.
 

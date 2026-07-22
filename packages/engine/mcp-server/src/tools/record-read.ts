@@ -90,9 +90,10 @@ export async function recordReadTool(
 
   // Sidecar mode: resolve the record from a staged/finalized search sidecar
   // instead of a live FS fetch (no network round-trip). The staged gedcomx
-  // carries the same persons, facts, and relationships as a live read (verified);
-  // we re-apply place standardization here (the search stage skips it) so the
-  // result matches a live read. A live read (omit `resultsRef`) additionally
+  // carries the same persons, facts, and relationships as a live read (verified),
+  // and its places are returned as-is — the search result already carries
+  // FamilySearch's standardized places, which we keep (see readFromSidecar for
+  // why we do NOT re-standardize). A live read (omit `resultsRef`) additionally
   // guarantees the authoritative source citation.
   if (resultsRef !== undefined) {
     return await readFromSidecar(recordId.trim(), resultsRef, projectPath);
@@ -158,7 +159,8 @@ export async function recordReadTool(
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 // Resolve one record's gedcomx from a staged/finalized search sidecar by id,
-// re-applying place standardization so the result matches a live record_read.
+// returning the staged places as-is (NOT re-standardized — see the return
+// statement below for why the search result's FS places are the trustworthy ones).
 async function readFromSidecar(
   recordId: string,
   resultsRef: string,

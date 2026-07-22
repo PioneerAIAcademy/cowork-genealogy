@@ -130,8 +130,28 @@ def _normalize_classification_token(s):
     return "".join(ch for ch in str(s or "") if ch.isalnum()).casefold()
 
 
+# A birth/death EVENT and its date-granularity spellings are one fact_type: a
+# year-only birth is still a `Birth` fact carrying a year-granular date, not a
+# distinct `BirthYear` fact. The extractor doctrine deliberately produces
+# year-granular births from death-cert age arithmetic ("a year is enough"), so a
+# doctrine-perfect run may label that fact `BirthYear`/`BirthDate` where a matcher
+# says `birth`. Collapse those to the event token. `birthplace`/`deathplace` are
+# a DIFFERENT fact (place, not the event) and are deliberately NOT in this map.
+_FACT_TYPE_SYNONYMS = {
+    "birthdate": "birth",
+    "birthyear": "birth",
+    "deathdate": "death",
+    "deathyear": "death",
+}
+
+
+def _canonical_fact_type(s):
+    token = _normalize_classification_token(s)
+    return _FACT_TYPE_SYNONYMS.get(token, token)
+
+
 def _fact_type_matches(got, want):
-    return _normalize_classification_token(got) == _normalize_classification_token(want)
+    return _canonical_fact_type(got) == _canonical_fact_type(want)
 
 
 def _record_role_matches(got, want):

@@ -111,6 +111,42 @@ describe("validateParsed", () => {
     });
   });
 
+  describe("log[].plan_item_id must be a pli_ reference or null (drift with research.schema.json)", () => {
+    const withLog = (planItemId: unknown) => ({
+      ...minimalResearch,
+      log: [
+        {
+          id: "log_001",
+          plan_item_id: planItemId,
+          performed: "2026-01-01",
+          tool: "record_search",
+          query: {},
+          outcome: "negative",
+          results_examined: 0,
+          external_site: null,
+        },
+      ],
+    });
+    const prefixError = (r: { errors: Array<{ message: string }> }) =>
+      r.errors.some((e) => /should start with 'pli_'/.test(e.message));
+
+    it("accepts a null plan_item_id (ad-hoc search)", async () => {
+      const r = await validateParsed(withLog(null), minimalTree);
+      expect(prefixError(r)).toBe(false);
+    });
+
+    it("accepts a pli_ plan_item_id", async () => {
+      const r = await validateParsed(withLog("pli_001"), minimalTree);
+      expect(prefixError(r)).toBe(false);
+    });
+
+    it("rejects a question id (q_) in plan_item_id — the ut_record_extraction_002 drift", async () => {
+      const r = await validateParsed(withLog("q_001"), minimalTree);
+      expect(r.valid).toBe(false);
+      expect(prefixError(r)).toBe(true);
+    });
+  });
+
   describe("sidecar pass is gated on projectPath", () => {
     it("reports a sidecar error with projectPath and is inert without it", async () => {
       await writeProject(minimalResearch, minimalTree);

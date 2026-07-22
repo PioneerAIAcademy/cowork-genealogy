@@ -652,6 +652,19 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkIdPrefix(entry.id, ID_PREFIXES.log, lp, report);
       ids.log.add(entry.id);
     }
+    // plan_item_id is nullable, but when present it must reference a plan
+    // item (`pli_`) — never a question (`q_`) or other id. research.schema.json
+    // pins this (`^pli_` | null); the runtime validator must match, or a writer
+    // tool (research_log_append) persists a q_ id that only the JSON-schema
+    // check downstream rejects. (Drift closed 2026-07-21; ut_record_extraction_002.)
+    if ("plan_item_id" in entry && entry.plan_item_id !== null) {
+      checkIdPrefix(
+        entry.plan_item_id,
+        ID_PREFIXES.plan_items,
+        `${lp}/plan_item_id`,
+        report,
+      );
+    }
     if ("outcome" in entry) {
       checkEnum(entry.outcome, "log_outcome", lp, report);
     }

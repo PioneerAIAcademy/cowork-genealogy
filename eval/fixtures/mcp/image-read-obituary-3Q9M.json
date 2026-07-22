@@ -1,0 +1,13 @@
+{
+  "tool": "image_read",
+  "description": "image_read response for the obituary page-scan ARK (3:1:3Q9M-C95G-HQZ6-W) — the CORRECT tool for a document-image ARK. The `ark` predicate substring-matches the distinctive ARK id, so it matches whether the skill passes the bare 3:1: ARK or the canonical ark:/61903/3:1:... form (both accepted by image_read). This is the recovery target: after record_read rejects the image ARK (see record-read-image-ark-rejected), the correct next step is image_read on that same ARK. NOTE: the harness mock serves this as JSON text, not a rendered image, so it exercises tool-routing (was the ARK handed to image_read / the image-reader subagent?), not visual transcription.",
+  "args": { "ark": "~3Q9M-C95G-HQZ6-W" },
+  "response": {
+    "imageData": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "metadata": {
+      "url": "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/dgs:004978231_00417/$dist",
+      "mimeType": "image/png",
+      "sizeBytes": 68
+    }
+  }
+}
