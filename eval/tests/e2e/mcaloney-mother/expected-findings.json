@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "The mother of Charles Kingsley McAloney (b. 1911) is Jessie MacPhee (maiden name also indexed 'McPhee' / 'MacPhie'), born about 1882 in Nova Scotia, Canada. She married Charles Smith McAloney in 1907 and appears as his wife in the family's Massachusetts census households.",
+      "details": {
+        "subject_person": "Charles Kingsley McAloney (99KY-ZQW)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Jessie MacPhee",
+          "birth": "about 1882, Hants County, Nova Scotia, Canada"
+        }
+      },
+      "supporting_sources": [
+        "1920, 1930, and 1940 U.S. Census — Charles/Jessie McAloney household in Somerville and Easton, Massachusetts (Jessie enumerated as wife and mother of the household)",
+        "California Death Index, 1940-1997 — Charles's entry names the mother's maiden name 'Mcphee'",
+        "1911 Massachusetts birth record and the Social Security NUMIDENT file — name the parents"
+      ],
+      "required": true
+    }
+  ]
+}

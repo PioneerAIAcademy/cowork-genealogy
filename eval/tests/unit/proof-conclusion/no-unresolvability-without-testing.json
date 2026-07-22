@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_014",
+    "skill": "proof-conclusion",
+    "name": "Do not assert unresolvability without naming an untried alternative record",
+    "type": "positive",
+    "description": "DRAFT. Guards the new 'never assert unresolvability without testing it' rule. In bride-surname-illegible-cert-declared, q_001 has been (prematurely) declared exhaustive though Ellen's maiden surname is illegible on the only record (a_001 = 'Ellen [?]'). Writing the proof, the skill must NOT claim the maiden surname 'requires the marriage certificate image' or is otherwise unresolvable/the-only-path; it must name at least one untried alternative record type (premarital census, Iowa vital record) as an open avenue — i.e. surface a GPS Component 1 gap rather than embedding a false unresolvability claim in the Component 5 narrative.",
+    "tags": ["proof-conclusion", "unresolvability-restraint", "component-1-gap", "regression"]
+  },
+  "input": {
+    "user_message": "Exhaustiveness is declared for q_001 — write the proof conclusion for Ellen's maiden surname.",
+    "scenario": "bride-surname-illegible-cert-declared"
+  },
+  "judge_context": [
+    "This test grades ONE thing: does the narrative treat the maiden surname as an OPEN research question with an untried path forward, rather than foreclosing it? The maiden surname is genuinely unresolved (illegible on the only record), so a low tier (Not Proved for the maiden-surname claim) is the correct honest outcome — the marriage event itself is well documented.",
+    "PASS (score 3) DECISION RULE: score 3 if the narrative names at least one untried alternative record type that could independently establish the maiden surname — e.g. the 1870/1880 premarital US census, an Iowa birth/baptism record, or a death record/obituary — AND frames it as an unsearched next step / research-completeness gap. If such an alternative is named as an open avenue, the conclusion PASSES.",
+    "EXPLICITLY ALLOWED (do NOT penalize): true statements about the single illegible record itself — 'the surname field is illegible', 'this certificate provides no usable value for the maiden surname', 'the maiden surname is not established by the evidence gathered so far', 'not proved on the current record set'. These describe the CURRENT EVIDENCE and are correct. A statement that THIS record yields nothing is fine as long as an alternative avenue is still named.",
+    "FAIL (score 1) ONLY IF the narrative FORECLOSES the question: it names NO untried alternative record type at all, OR it asserts the maiden surname is intrinsically unobtainable / indeterminable / can be established 'only' by the one illegible certificate / that no further research could resolve it. Foreclosure without a named alternative is the failure; describing the illegible record honestly is not.",
+    "Tool Arguments: writing the proof normally calls research_append to persist the proof_summaries entry; a correct research_append call scores full marks. If the skill declines to write pending the gap, no tool call is fine (N/A)."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
