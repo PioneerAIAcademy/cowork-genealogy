@@ -18,7 +18,7 @@
     {
       "id": "q_001",
       "question": "What does the 1870 U.S. Census reveal about the parents of William H. Ferber, born December 1869 in Ohio and residing in Cincinnati, Hamilton County, Ohio?",
-      "rationale": "William H. Ferber was born December 1869 in Ohio. The 1870 federal census was enumerated in June 1870, when he would have been approximately six months old. As an infant, he would almost certainly appear in his parents' household. The tree already places him in Cincinnati, Hamilton County, Ohio in 1870, giving a clear search target. This is the earliest direct-evidence source likely to name both parents.",
+      "rationale": "William H. Ferber was born December 1869 in Ohio. The 1870 federal census was enumerated in June 1870, when he would have been approximately six months old. As an infant, he would almost certainly appear in his parents' household. The tree already places him in Cincinnati, Hamilton County, Ohio in 1870, giving a clear search target. This is the earliest source likely to place both parents in the same household as William; because the 1870 census has no relationship-to-head-of-household column (that field begins in 1880), it provides inferred rather than direct evidence of parentage.",
       "selection_basis": "objective_decomposition",
       "priority": "high",
       "status": "open",
@@ -539,7 +539,7 @@
       "record_persona_id": "p_332380053",
       "record_role": "wife",
       "fact_type": "relationship",
-      "value": "Eva Faerber listed as wife of head of household Gerhardt Faerber (inferred from household position; 1870 census had no relationship column)",
+      "value": "Eva Faerber is in the household of head Gerhardt Faerber; it is inferred she is his wife (1870 census had no relationship column; inferred from household position)",
       "structured_value": {
         "relationship_type": "spouse_inferred",
         "related_person_role": "head_of_household"
@@ -652,7 +652,7 @@
       "record_persona_id": "p_332380058",
       "record_role": "child_5",
       "fact_type": "relationship",
-      "value": "William Faerber listed as child of head Gerhardt Faerber (inferred from household position; 1870 census had no relationship column)",
+      "value": "William Faerber is the inferred child of head-of-household Gerhardt Faerber (1870 census had no relationship column; parentage inferred from household position)",
       "structured_value": {
         "relationship_type": "child_inferred",
         "related_person_role": "head_of_household"
@@ -674,7 +674,7 @@
       "record_persona_id": "p_332380058",
       "record_role": "child_5",
       "fact_type": "relationship",
-      "value": "William Faerber listed as child of wife Eva Faerber (inferred from household position; 1870 census had no relationship column)",
+      "value": "William Faerber is the inferred child of Eva Faerber, wife of head Gerhardt Faerber (1870 census had no relationship column; parentage inferred from household position)",
       "structured_value": {
         "relationship_type": "child_inferred",
         "related_person_role": "wife"
@@ -1014,7 +1014,7 @@
       "information_quality": "secondary",
       "informant": "unknown (likely wife Emma Ferber)",
       "informant_proximity": "family_not_present",
-      "evidence_type": "direct",
+      "evidence_type": "indirect",
       "informant_bias_notes": "Father's name on 1903 death certificate. Informant reporting from family knowledge. Secondary \u2014 did not witness William's birth. Spelling 'Gerhard Ferber' vs. 'Gerhardt Faerber' (1870 census): German name normalization and ae-umlaut Anglicization over 33 years.",
       "extracted_for_question_ids": [
         "q_001"
@@ -1036,8 +1036,8 @@
       "information_quality": "secondary",
       "informant": "unknown (likely wife Emma Ferber)",
       "informant_proximity": "family_not_present",
-      "evidence_type": "direct",
-      "informant_bias_notes": "Certificate explicitly states father. Secondary because informant did not witness the birth. Direct evidence for parentage \u2014 relationship explicitly stated.",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Certificate names the father, but the parentage is reported secondhand by an informant (likely the widow) who did not witness William's birth, so under the skill's death-certificate rule it is indirect evidence for parentage \u2014 relationship explicitly stated.",
       "extracted_for_question_ids": [
         "q_001"
       ],
@@ -1058,7 +1058,7 @@
       "information_quality": "secondary",
       "informant": "unknown (likely wife Emma Ferber)",
       "informant_proximity": "family_not_present",
-      "evidence_type": "direct",
+      "evidence_type": "indirect",
       "informant_bias_notes": "Mother's name on 1903 death certificate. Informant reporting from family knowledge. Secondary. Given name 'Eva' matches exactly with 1870 census. Surname normalized from 'Faerber' to 'Ferber' over 33 years.",
       "extracted_for_question_ids": [
         "q_001"
@@ -1080,8 +1080,8 @@
       "information_quality": "secondary",
       "informant": "unknown (likely wife Emma Ferber)",
       "informant_proximity": "family_not_present",
-      "evidence_type": "direct",
-      "informant_bias_notes": "Certificate explicitly states mother. Secondary because informant did not witness the birth. Direct evidence for parentage.",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Certificate names the mother, but the parentage is reported secondhand by an informant (likely the widow) who did not witness William's birth, so under the skill's death-certificate rule it is indirect evidence for parentage even when stated outright.",
       "extracted_for_question_ids": [
         "q_001"
       ],
@@ -1384,7 +1384,7 @@
       "person_id": "I1",
       "confidence": "confident",
       "match_score": null,
-      "rationale": "1903 death cert names father as 'Gerhard Ferber.' Matches I1 (Gerhardt Faerber stub) with high confidence: given name Gerhard/Gerhardt (minor variant \u2014 terminal 't' is a German hypocoristic ending), surname Ferber/Faerber (ae-umlaut normalized over 33 years), role as father of William H. Ferber confirmed by BOTH the 1870 census (indirect) and this 1903 death certificate (direct). Two independent sources now converge on the same person: confident.",
+      "rationale": "1903 death cert names father as 'Gerhard Ferber.' Matches I1 (Gerhardt Faerber stub) with high confidence: given name Gerhard/Gerhardt (minor variant \u2014 terminal 't' is a German hypocoristic ending), surname Ferber/Faerber (ae-umlaut normalized over 33 years), role as father of William H. Ferber confirmed by BOTH the 1870 census (indirect) and this 1903 death certificate (indirect). Two independent sources now converge on the same person: confident.",
       "created": "2026-07-21"
     },
     {
@@ -1402,7 +1402,7 @@
       "person_id": "I1",
       "confidence": "confident",
       "match_score": null,
-      "rationale": "Death cert explicitly names 'Gerhard Ferber' as father of Wm. Ferber. Parent side of this assertion links to I1 (Gerhardt/Gerhard Faerber/Ferber). Two independent sources (1870 census indirect, 1903 death cert direct) agree on Gerhard/Gerhardt Faerber/Ferber as William's father. Confident.",
+      "rationale": "Death cert explicitly names 'Gerhard Ferber' as father of Wm. Ferber. Parent side of this assertion links to I1 (Gerhardt/Gerhard Faerber/Ferber). Two independent sources (1870 census indirect, 1903 death cert indirect) agree on Gerhard/Gerhardt Faerber/Ferber as William's father. Confident.",
       "created": "2026-07-21"
     },
     {
