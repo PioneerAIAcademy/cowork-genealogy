@@ -1,0 +1,19 @@
+{
+  "id": "john-richardson-parents",
+  "name": "John Richardson — parents (Thomas Richison & Mary Mallalieu)",
+  "genre": "strip",
+  "source_pid": "LR9N-VGQ",
+  "captured": "2026-07-22",
+  "researcher_question": "Who were the parents of John Richardson, born 24 July 1833 in Preston, Lancashire, England, an LDS pioneer who emigrated via Nauvoo to Utah and died 10 March 1906 in Richmond, Cache County, Utah?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1830s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Ground truth (from the FamilySearch tree): father Thomas 'Thos' Richison (b. 18 Feb 1804 Wigan, Lancashire, England; d. 3 Nov 1886 Richmond, Cache, Utah), mother Mary Mallalieu (married name Richardson; b. 16 Sep 1806 Chorley, Lancashire, England; d. 9 Mar 1846 Nauvoo, Hancock, Illinois). The MOTHER is the hard crux: she died in Nauvoo in 1846, before the family reached Utah, so she appears in NONE of the abundant Utah records (census, militia, death certificate, obituary). Recovering her requires early Nauvoo community records and English parish registers (Chorley chr. 1806). The father is the medium half: he IS in Utah records but under surname spelling variants (Richison/Richeson/Richardsen) and has a tangled marital history (a 'separation from Anna Owen' event, 1855). John's own English christening is recorded under the surname 'Richards' at Ashton-under-Lyne though he was born in Preston — a spelling+place mismatch. Both parents and John share a documented Nauvoo residence (1839-1846) and a joint 1852 emigration, giving a strong migration/FAN correlation once the England-Utah bridge is made."
+}

@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Thomas Richison (also recorded Richardson / Richeson) was the father of John Richardson. Born 18 February 1804 in Wigan, Lancashire, England; died 3 November 1886 in Richmond, Cache County, Utah. Father and son share a documented Nauvoo residence (1839–1846) and a joint 1852 emigration to Utah, which bridges John's English origin to his Utah life.",
+      "details": {
+        "subject_person": {
+          "name": "John Richardson",
+          "pid": "LR9N-VGQ"
+        },
+        "relation": "father",
+        "target_person": {
+          "name": "Thomas Richison",
+          "birth": "18 February 1804, Wigan, Lancashire, England"
+        }
+      },
+      "supporting_sources": [
+        "Nauvoo Community Project (BYU Center for Family History and Genealogy) — the Richardson/Richison family in Nauvoo, Hancock County, Illinois, 1839–1846.",
+        "LDS Church membership and Utah Mormon Pioneer Overland Travel records placing Thomas and John Richardson in the same emigrating household."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Mary Mallalieu (married name Richardson) was the mother of John Richardson. Born 16 September 1806 in Chorley, Lancashire, England; died 9 March 1846 in Nauvoo, Hancock County, Illinois — before the family reached Utah, so she is absent from every later Utah record. Recovering her requires early Nauvoo community records and English (Chorley) parish registers.",
+      "details": {
+        "subject_person": {
+          "name": "John Richardson",
+          "pid": "LR9N-VGQ"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Mary Mallalieu",
+          "birth": "16 September 1806, Chorley, Lancashire, England"
+        }
+      },
+      "supporting_sources": [
+        "Nauvoo Community Project (BYU Center for Family History and Genealogy) — Mary (Mallalieu) Richardson's residence and 1846 death at Nauvoo, Hancock County, Illinois.",
+        "England, Births and Christenings — christening of Mary Mallalieu, Chorley, Lancashire, 1806."
+      ],
+      "required": true
+    }
+  ]
+}

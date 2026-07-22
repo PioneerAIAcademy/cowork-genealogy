@@ -1,0 +1,1749 @@
+{
+  "persons": [
+    {
+      "id": "LR9N-VGQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "John",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4bed1d6e-47ca-460a-9b3c-f18b8e804f66",
+          "type": "Birth",
+          "date": "24 July 1833",
+          "standard_date": "24 Jul 1833",
+          "place": "Preston, Lancashire, England, United Kingdom",
+          "standard_place": "Preston, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "cd551bd5-3507-4030-b5f9-e785116d2cf0",
+          "type": "Death",
+          "date": "10 March 1906",
+          "standard_date": "10 Mar 1906",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "fa26a9c0-1947-44ad-aeb2-b4822c041e2f",
+          "type": "Christening",
+          "date": "25 September 1833",
+          "standard_date": "25 Sep 1833",
+          "place": "Ashton-under-Lyne, Lancashire, England, United Kingdom",
+          "standard_place": "Ashton-under-Lyne, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "e8a576d8-edc2-49e8-a960-b2e823771ea6",
+          "type": "Residence",
+          "date": "from 1839 to 1846",
+          "standard_date": "Bet 1839 and 1846",
+          "place": "Nauvoo, Hancock, Illinois, United States",
+          "standard_place": "Nauvoo, Hancock, Illinois, United States"
+        },
+        {
+          "id": "8ed1c705-3124-4635-8063-a8bd5ee9777d",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Pottawattamie county, Pottawattamie, Iowa, United States",
+          "standard_place": "Pottawattamie, Iowa, United States"
+        },
+        {
+          "id": "1f4dbfc7-345a-477b-8bbb-7325b6ae616f",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851"
+        },
+        {
+          "id": "21ec155e-5004-4421-bb07-1060f8a286ad",
+          "type": "Emigration",
+          "date": "07 Jun 1852",
+          "standard_date": "7 Jun 1852"
+        },
+        {
+          "id": "12e33a20-b7ad-43b2-8a7c-5c76794b1f37",
+          "type": "Immigration",
+          "date": "27 Sep 1852",
+          "standard_date": "27 Sep 1852",
+          "place": "Deseret, United States",
+          "standard_place": "Bountiful, Davis, Utah, United States"
+        },
+        {
+          "id": "63379f45-1fb2-47cc-a57f-4cbbff3e72b9",
+          "type": "MilitaryService",
+          "date": "30 April 1853",
+          "standard_date": "30 Apr 1853",
+          "place": "Davis, Utah, United States",
+          "standard_place": "Davis, Utah, United States"
+        },
+        {
+          "id": "8c6dbf93-7953-4e81-8d5e-940984850729",
+          "type": "MilitaryService",
+          "date": "17 Aug 1857",
+          "standard_date": "17 Aug 1857",
+          "place": "Farmington, Davis, Utah Territory, United States",
+          "standard_place": "Farmington, Davis, Utah, United States"
+        },
+        {
+          "id": "b5b66162-92a5-4e1b-a655-d721df82b5dc",
+          "type": "MilitaryService",
+          "date": "09 Nov 1857",
+          "standard_date": "9 Nov 1857",
+          "place": "Bountiful, Davis, Utah Territory, United States",
+          "standard_place": "Bountiful, Davis, Utah, United States"
+        },
+        {
+          "id": "542b67e6-ae08-4d14-9f90-83de1e755877",
+          "type": "MilitaryService",
+          "date": "11 March 1858",
+          "standard_date": "11 Mar 1858",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "348809ed-02cf-48e5-b405-c07716e89ee4",
+          "type": "MilitaryService",
+          "date": "31 May 1858",
+          "standard_date": "31 May 1858",
+          "place": "Davis, Utah, United States",
+          "standard_place": "Davis, Utah, United States"
+        },
+        {
+          "id": "d3edb8e7-56aa-456f-9eb7-7407e7f8ab0e",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "[Blank], Cache, Utah, United States",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "10f030a5-dca3-4a68-9446-c6fc2a6011e0",
+          "type": "MilitaryService",
+          "date": "16 June 1863",
+          "standard_date": "16 Jun 1863",
+          "place": "Cache, Utah, United States",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "0e0705b2-0788-4b1b-a039-644c1780903c",
+          "type": "MilitaryService",
+          "date": "3 January 1866",
+          "standard_date": "3 Jan 1866",
+          "place": "Sanpete, Utah, United States",
+          "standard_place": "Sanpete, Utah, United States"
+        },
+        {
+          "id": "ccf8f699-b9ce-4cc1-bee8-60ec2ebc9d2e",
+          "type": "MilitaryService",
+          "date": "22 October 1869",
+          "standard_date": "22 Oct 1869",
+          "place": "Salt Lake, Utah, United States",
+          "standard_place": "Salt Lake, Utah, United States"
+        },
+        {
+          "id": "4ae27300-ef9e-40ed-a69c-cb82f41eb1b2",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "b360b373-d76f-4c50-a265-6c4b232bd644",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "52c55d7e-2057-41a5-b970-8e5fca475d20",
+          "type": "Census",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States",
+          "value": "United States"
+        },
+        {
+          "id": "99ff6899-c632-4cc0-8010-293472a8cf8f",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Richmond Precinct Richmond city, Cache, Utah, United States",
+          "standard_place": "Richmond Election Precinct, Cache, Utah, United States"
+        },
+        {
+          "id": "62352b48-4e1d-46b4-bb64-fc0828a7773e",
+          "type": "Burial",
+          "date": "12 March 1906",
+          "standard_date": "12 Mar 1906",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "15b78de6-0129-492a-b681-43af6dda520b",
+          "type": "MilitaryService",
+          "date": "28 August 1908",
+          "standard_date": "28 Aug 1908",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "cd581ac4-5697-4fe9-9836-a29ea5da86cc",
+          "type": "MilitaryService",
+          "date": "1 September 1908",
+          "standard_date": "1 Sep 1908",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "0c8e6c8f-828d-4c11-acfe-6fff0ec27ee6",
+          "type": "Residence",
+          "place": "Preston, Lancashire, England",
+          "standard_place": "Preston, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "0d82e99e-2182-461a-8f72-717854a5b8dc",
+          "type": "Residence",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "a5f52ea4-d381-4122-ae28-bba845999f02",
+          "type": "MilitaryService",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWVC-R3T",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "John",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "24 mar 1870",
+          "standard_date": "24 Mar 1870",
+          "place": "Richmond, Cache, Utah",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "Abt 1872",
+          "standard_date": "Abt 1872"
+        }
+      ]
+    },
+    {
+      "id": "LR9F-1VG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Susanah Vilate",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c4631a6c-c3cb-4360-a2d7-3aa36954396e",
+          "type": "Birth",
+          "date": "28 May 1862",
+          "standard_date": "28 May 1862",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "e0b25995-b835-4f17-8036-d8615b142ed8",
+          "type": "Blessing",
+          "date": "1 Jan 1863",
+          "standard_date": "1 Jan 1863"
+        },
+        {
+          "id": "abb53665-a3b5-424c-9b82-6c8a56850742",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "c9a19dfe-f7c7-49b7-9a62-e6a5b203bb6b",
+          "type": "Baptism",
+          "date": "29 Jul 1876",
+          "standard_date": "29 Jul 1876"
+        },
+        {
+          "id": "400e9e75-e32c-41fc-b374-a9a59054b882",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "World",
+          "standard_place": "World"
+        },
+        {
+          "id": "3053ab6d-f9a1-4060-b117-02f4a48a15e7",
+          "type": "Death",
+          "date": "22 September 1940",
+          "standard_date": "22 Sep 1940",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "5898d8bb-2f73-4a9d-bab5-5c534b01f14f",
+          "type": "Burial",
+          "date": "25 September 1940",
+          "standard_date": "25 Sep 1940",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "182822ad-0a34-44be-b17b-23a54ef985a6",
+          "type": "Membership",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWVC-R3P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Robert",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1874",
+          "standard_date": "1874"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "Abt 1874",
+          "standard_date": "Abt 1874",
+          "place": "Richmond, Cache, UT",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWC2-6MP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Thomas N.",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "22 December 1875",
+          "standard_date": "22 Dec 1875",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "17fab255-d39e-424e-a73e-6f8ec5a19e05",
+          "type": "Blessing",
+          "date": "3 Feb 1876",
+          "standard_date": "3 Feb 1876"
+        },
+        {
+          "id": "ccdc0190-f03a-40da-92db-9f97a6e52c6e",
+          "type": "Baptism",
+          "date": "9 Nov 1884",
+          "standard_date": "9 Nov 1884"
+        },
+        {
+          "id": "68a98572-0a32-47e0-8859-7bc163090592",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Smithfield, Cache, Utah",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "862804bd-57ae-46b5-a456-3939619837a6",
+          "type": "Social Program Claim",
+          "date": "9 Oct 1941",
+          "standard_date": "9 Oct 1941"
+        },
+        {
+          "id": "cee52ece-efcf-4ed1-a837-72e54df1f3df",
+          "type": "Residence",
+          "date": "18 Apr 1950",
+          "standard_date": "18 Apr 1950",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "24 April 1951",
+          "standard_date": "24 Apr 1951",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "27 April 1951",
+          "standard_date": "27 Apr 1951",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "49e3e707-fa81-4339-8d5f-42c93ad3e27f",
+          "type": "LifeSketch",
+          "value": "Son of John Richardson and Lola Ann Amelia Tyler\n\nMarried Florence Speak, 14 Aug 1901, Ogden, Weber, Utah\n\nObituary - Thomas H. Richardson ~ SMITHFIELD, Cache County- Funeral services for Thomas Henry Richardson, 75, who died at his home Tuesday afternoon after a lingering illness, will be conducted Friday at 2 p.m. in Smithfield Third, ward Chapel, Church of Jesus Christ of Latter-day Saints, by R. H. Toolson, bishop.\n\nFriends may call at the Third Ward Relief Society room Friday from 10am to time of services.\n\nBurial will be in Richmond cemetery under Direction of Kenneth Lindquist Mortuary.\n\nHe married Florence Speak at Ogden in 1901 and had been a Smithfield resident 49 years. He was employed at Smithfield Brick Company 25 years and for Keith Meikle eight years.\n\nSurviving are his widow: a son and three daughters, John Ed Richardson and Mrs. Grace Peterson, Smithfield; Mrs. Lola Coley. Lewiston: Mrs. May Larson. Ogden; 15 grandchildren and four great-grandchildren. - Source: The Salt Lake Tribune, Salt Lake City, UT, Thursday, 26 Apr 1951, Pg. 53"
+        },
+        {
+          "id": "28f40617-10fa-426e-9d33-0b903aa5868d",
+          "type": "Membership",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KW81-JDF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Viliva",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "23 January 1866",
+          "standard_date": "23 Jan 1866",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "badb5452-ad49-413a-bd8b-7ba9815dd206",
+          "type": "Blessing",
+          "date": "23 June 1867",
+          "standard_date": "23 Jun 1867"
+        },
+        {
+          "id": "fa53a334-bf81-462d-b68f-6b340c96769c",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States",
+          "value": "U.S. Census"
+        },
+        {
+          "id": "5d7ba242-ecb4-4dac-9f2c-ec84686e851a",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States",
+          "value": "U.S. Census"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "31 May 1895",
+          "standard_date": "31 May 1895",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "2 June 1895",
+          "standard_date": "2 Jun 1895",
+          "place": "Richmond City Cemetery, Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond City Cemetery, Richmond, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWVC-R3L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Grace Roxanne",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7bc245ca-e233-485f-9bec-30fa9aa79919",
+          "type": "Blessing",
+          "date": "4 Dec 1872",
+          "standard_date": "4 Dec 1872"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "18 October 1873",
+          "standard_date": "18 Oct 1873",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "83427a08-ecb2-4594-aa24-2a1fa90f3cf1",
+          "type": "Blessing",
+          "date": "4 Dec 1873",
+          "standard_date": "4 Dec 1873"
+        },
+        {
+          "id": "2a93ad22-03e5-4452-81a7-8e89c59c2924",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "13ded986-2243-43bf-8635-eaa4b288a57f",
+          "type": "Baptism",
+          "date": "6 Sep 1883",
+          "standard_date": "6 Sep 1883"
+        },
+        {
+          "id": "516adcad-c83e-4a45-8ecf-9a6fed636e0b",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Election Districts 7 & 9 Ogden city Ward 2, Weber, Utah, United States",
+          "standard_place": "Weber, Utah, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Ogden Ward 4, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "c73a5f5a-cfd9-47fa-a38d-1e6f40662fb7",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Weber, Utah, United States",
+          "standard_place": "Weber, Utah, United States"
+        },
+        {
+          "id": "c1e9bf86-b5ee-4a63-b264-4b953b019bdb",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Boise, Ada, Idaho, United States",
+          "standard_place": "Boise, Ada, Idaho, United States"
+        },
+        {
+          "id": "ae605c42-d3ab-4e73-939b-3ec9fc48a0a5",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Boise, Idaho",
+          "standard_place": "Boise, Idaho, United States"
+        },
+        {
+          "id": "09f3b328-802d-469b-b55f-2ddb207fb79d",
+          "type": "Residence",
+          "date": "23 Apr 1939",
+          "standard_date": "23 Apr 1939",
+          "place": "Boise, Idaho",
+          "standard_place": "Boise, Idaho, United States"
+        },
+        {
+          "id": "b280bfdc-6a6a-468e-a46e-50b68c294db1",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Franklin Election Precinct, Ada, Idaho, United States",
+          "standard_place": "Franklin Election Precinct, Ada, Idaho, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "9 June 1945",
+          "standard_date": "9 Jun 1945",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "14 June 1945",
+          "standard_date": "14 Jun 1945",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "99d8c87e-28ab-4124-9187-b5227cf66db6",
+          "type": "LDS Sealed as child",
+          "date": "BIC"
+        },
+        {
+          "id": "dd4a04af-6739-4dde-9c40-53b10b7da76f",
+          "type": "Membership",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWVC-R3H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Lola Ann",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "14 Oct 1857",
+          "standard_date": "14 Oct 1857",
+          "place": "Kaysville, Davis, Utah",
+          "standard_place": "Kaysville, Davis, Utah, United States"
+        },
+        {
+          "id": "c1b2ea85-2593-4951-bfee-18d667db45be",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "0bbc57ea-3cd3-4f78-8835-c6c19c5db5cb",
+          "type": "Marriage",
+          "date": "18 Mar 1893",
+          "standard_date": "18 Mar 1893",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "4b05fdaf-17e5-42b1-bfe9-e3f72582b784",
+          "type": "Marriage",
+          "date": "4 Apr 1893",
+          "standard_date": "4 Apr 1893",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "69d77612-2953-4fde-974e-07af75d426c9",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Ogden Ward 5, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "15 Feb 1925",
+          "standard_date": "15 Feb 1925",
+          "place": "Ogden, Weber, Utah",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "40f54e55-558f-46f1-8f3f-8f75e9b43a5c",
+          "type": "Burial",
+          "date": "19 February 1925",
+          "standard_date": "19 Feb 1925",
+          "place": "Ogden City Cemetery, Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden City Cemetery, Ogden, Weber, Utah, United States",
+          "value": "Plot: Annex-18-17-5E"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "19 February 1925",
+          "standard_date": "19 Feb 1925",
+          "place": "Ogden City Cemetery, Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden City Cemetery, Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "2f54e8d5-59be-415b-99c4-730465fd16f2",
+          "type": "Obituary",
+          "date": "20 Feb 1925",
+          "standard_date": "20 Feb 1925",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "366a0164-ea10-4733-9307-c0610a339290",
+          "type": "Residence",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "KWC6-644",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Lucinda",
+          "surname": "Richeson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 January 1859",
+          "standard_date": "11 Jan 1859",
+          "place": "Kaysville, Davis, Utah, United States",
+          "standard_place": "Kaysville, Davis, Utah, United States"
+        },
+        {
+          "id": "1d2fbed7-5212-4322-811f-ecb37d7737b9",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Cache, Utah Territory, USA",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "616d7813-0fa7-46c3-ab9c-5f885200d72a",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Cache, Utah Territory, United States",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "17671fa5-1812-4fbe-bbc3-51dd2aebcee8",
+          "type": "Blessing",
+          "date": "21 July 1861",
+          "standard_date": "21 Jul 1861"
+        },
+        {
+          "id": "91d9eab0-3bb7-48b4-b092-d7ed277df110",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah Territory, USA",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "f89a5c34-e700-4e23-905e-15237e4c1da9",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Coveville, Cache, Utah, USA",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "63cf470f-3afa-4709-9740-5c9d0db5fe3e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Mountain Home, Cache, Utah, USA",
+          "standard_place": "Mountain Home, Duchesne, Utah, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Mountain Home, , Utah",
+          "standard_place": "Mountain Home, Duchesne, Utah, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Mount Home, Cache, Utah, United States",
+          "standard_place": "Mountain Home, Duchesne, Utah, United States"
+        },
+        {
+          "id": "ca334d46-ec1d-4d1b-bb84-d236daa4215b",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Coveville, Cache, Utah, United States",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "10 May 1935",
+          "standard_date": "10 May 1935",
+          "place": "Cove, Cache, Utah, United States",
+          "standard_place": "Cove, Cache, Utah, United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "13 May 1935",
+          "standard_date": "13 May 1935",
+          "place": "Richmond City Cemetery, Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond City Cemetery, Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "428eba23-a0e0-4e6e-b822-24e28074a3f7",
+          "type": "Membership",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWJX-1FF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Lola Ann Amelia",
+          "surname": "Tyler"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "2 October 1839",
+          "standard_date": "2 Oct 1839",
+          "place": "Palermo, Oswego, New York, United States",
+          "standard_place": "Palermo, Oswego, New York, United States"
+        },
+        {
+          "id": "574286ad-4489-47e5-899c-142b16a89141",
+          "type": "Residence",
+          "date": "from 1839 to 1846",
+          "standard_date": "Bet 1839 and 1846",
+          "place": "Nauvoo, Hancock, Illinois, United States",
+          "standard_place": "Nauvoo, Hancock, Illinois, United States"
+        },
+        {
+          "id": "896e8fe8-0805-427b-bb43-48648c98b7f4",
+          "type": "Emigration",
+          "date": "15 June 1850",
+          "standard_date": "15 Jun 1850"
+        },
+        {
+          "id": "38f14987-4b40-463c-a11d-899141a8f026",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Davis, Utah, United States",
+          "standard_place": "Davis, Utah, United States"
+        },
+        {
+          "id": "2d64ac4a-89c9-4971-8683-52479f6bfc2d",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Davis, Utah, United States",
+          "standard_place": "Davis, Utah, United States",
+          "value": "United States"
+        },
+        {
+          "id": "29208285-3cc7-47c9-92d1-fb8a84ee5bfc",
+          "type": "Immigration",
+          "date": "17 September 1850",
+          "standard_date": "17 Sep 1850",
+          "place": "Utah, United States",
+          "standard_place": "Utah, United States"
+        },
+        {
+          "id": "2bfb1069-2407-45f0-a660-224dd0195d58",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Cache, Utah, United States",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "b5b0d509-a24f-49df-85ae-bd21933f222b",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "5067fb1d-10ca-418a-9f58-65b073213e2e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "57a72ac3-840b-4fc1-b3a3-710322c6c5b8",
+          "type": "Occupation",
+          "date": "1880",
+          "standard_date": "1880",
+          "value": "Keeping House"
+        },
+        {
+          "id": "474f966b-fc41-46a2-9f91-998a340a8aa7",
+          "type": "Marital+Status",
+          "date": "1880",
+          "standard_date": "1880",
+          "value": "Married"
+        },
+        {
+          "id": "4de7f377-bb57-4a4a-8ecb-1081c106c2e2",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Richmond Election Precinct, Cache, Utah, United States",
+          "standard_place": "Richmond Election Precinct, Cache, Utah, United States"
+        },
+        {
+          "id": "1e73cb45-18cd-472e-b749-c3a2ae0b27fe",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States",
+          "value": "United States"
+        },
+        {
+          "id": "942b8cd3-4147-49e7-a0a1-81a3174e0040",
+          "type": "Marital+Status",
+          "date": "1900",
+          "standard_date": "1900",
+          "value": "Married"
+        },
+        {
+          "id": "2287f777-0dbf-4208-9819-1a7ae67d47c9",
+          "type": "MilitaryService",
+          "date": "13 June 1908",
+          "standard_date": "13 Jun 1908",
+          "place": "Cache, Utah, United States",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "877ab2e8-e9bc-4eb1-ada9-40b97fc9ab81",
+          "type": "Residence",
+          "date": "13 June 1908",
+          "standard_date": "13 Jun 1908",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "29 April 1910",
+          "standard_date": "29 Apr 1910",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "4bdf79cd-97fd-44f9-8bcf-9abf4a7fdea1",
+          "type": "Burial",
+          "date": "30 April 1910",
+          "standard_date": "30 Apr 1910",
+          "place": "Richmond City Cemetery, Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond City Cemetery, Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "3d73848e-9ed9-4cef-b490-30a706c1dd2a",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Smithfield, Cache, Utah, United States",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "407041c6-5ad0-4a57-b6ab-9f53ef383781",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "98d7e128-4ebb-44ac-9423-d1a2c234c235",
+          "type": "Marital+Status",
+          "date": "1910",
+          "standard_date": "1910",
+          "value": "Widowed"
+        },
+        {
+          "id": "989a4796-d1c5-464c-851d-d12dde1f8a5d",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "4583a9e1-a99e-477a-b8db-5c2b6ae15b02",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "KWCR-7YK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Nellie",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "24 March 1880",
+          "standard_date": "24 Mar 1880",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "b23b2a69-6fc9-4f1f-ac42-847eae662d10",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "ad4d8c97-486e-4411-8d60-d7f1e41f2d98",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 83 Richmond Precinct Richmond city, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Smithfield, , Utah",
+          "standard_place": "Smithfield, Cache, Utah, United States"
+        },
+        {
+          "id": "1a27c26e-9107-4b9a-a041-271552b6806e",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Ogden Ward 2, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Helper, Carbon, Utah",
+          "standard_place": "Helper, Carbon, Utah, United States"
+        },
+        {
+          "id": "8c21345c-20b0-427d-9d75-ddce30d93be0",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "World",
+          "standard_place": "World",
+          "value": "Census"
+        },
+        {
+          "id": "4a25d8ab-9854-478c-9090-a9004769dce4",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Helper, Carbon, Utah",
+          "standard_place": "Helper, Carbon, Utah, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Legislative District 4, Ogden, Ogden City Election Precinct, Weber, Utah, United States",
+          "standard_place": "Ogden City Legislative District 4, Ogden City Election Precinct, Weber, Utah, United States"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "20 July 1944",
+          "standard_date": "20 Jul 1944",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        },
+        {
+          "id": "1ee0812f-6063-4772-a29c-8ff778ba3108",
+          "type": "Residence",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "place": "Ogden, Weber, Utah, United States",
+          "standard_place": "Ogden, Weber, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "KWVC-R36",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Ester",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1869",
+          "standard_date": "1869",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "37bbbf3d-17b6-4a1d-830d-7ef9326e71a5",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1872 AGE 3 YRS",
+          "standard_date": "3 1872"
+        }
+      ]
+    },
+    {
+      "id": "KWNL-Z7K",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N15",
+          "given": "Mary Lodoyskie",
+          "surname": "Richardson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "26 July 1855",
+          "standard_date": "26 Jul 1855",
+          "place": "Kaysville, Davis, Utah, United States",
+          "standard_place": "Kaysville, Davis, Utah, United States"
+        },
+        {
+          "id": "96a70297-7fb2-4554-8a3f-920cc22ea7dd",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Cache, Utah Territory, United States",
+          "standard_place": "Cache, Utah, United States"
+        },
+        {
+          "id": "5f6a3a29-787b-443a-979a-09bce7f882cf",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Richmond, Cache, Utah Territory, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "7dcf1c68-b04b-408c-8377-a3db9587a6a5",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Lewiston, Cache, Utah, United States",
+          "standard_place": "Lewiston, Cache, Utah, United States"
+        },
+        {
+          "id": "c6ccf593-13fd-4944-978c-af674b7a3f25",
+          "type": "Immigration",
+          "date": "1894",
+          "standard_date": "1894"
+        },
+        {
+          "id": "1ba81a62-27c9-4ad4-8421-53664fa786f1",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Alberta, Canada",
+          "standard_place": "Alberta, Canada"
+        },
+        {
+          "id": "ca55b4c2-68d7-4b49-9d99-a78427529b3f",
+          "type": "Residence",
+          "date": "1906",
+          "standard_date": "1906",
+          "place": "4, Alberta, Alberta, Canada",
+          "standard_place": "Cardston Alberta Temple, Cardston, Cardston County, Alberta, Canada"
+        },
+        {
+          "id": "d76b69f4-06b2-4e5f-a104-5b468486c3a4",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Medicine Hat Sub-Districts 1-11, Alberta, Canada",
+          "standard_place": "Medicine Hat, Alberta, Northwest Territories, Canada"
+        },
+        {
+          "id": "3f5d9f24-885c-4dda-808b-44e81c0dfc1d",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Pocatello, Bannock, Idaho",
+          "standard_place": "Pocatello, Bannock, Idaho, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "7 March 1949",
+          "standard_date": "7 Mar 1949",
+          "place": "Pocatello, Bannock, Idaho, United States",
+          "standard_place": "Pocatello, Bannock, Idaho, United States"
+        },
+        {
+          "id": "4bdf79cd-97fd-44f9-8bcf-9abf4a7fdea1",
+          "type": "Burial",
+          "date": "10 March 1949",
+          "standard_date": "10 Mar 1949",
+          "place": "Pocatello, Bannock County, Idaho, United States of America",
+          "standard_place": "Pocatello, Bannock, Idaho, United States"
+        },
+        {
+          "id": "6ae6700e-665c-445b-b556-ded4569bb43d",
+          "type": "Obituary",
+          "date": "1949",
+          "standard_date": "1949",
+          "place": "Idaho, United States",
+          "standard_place": "Idaho, United States"
+        },
+        {
+          "id": "2f54e8d5-59be-415b-99c4-730465fd16f2",
+          "type": "FindAGrave.com",
+          "place": "Mountain View Cemetery, Pocatello, Bannock, Idaho, United States",
+          "standard_place": "Pocatello, Bannock, Idaho, United States",
+          "value": "Memorial ID #43135333"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LR9N-VGQ",
+      "person2": "KWJX-1FF",
+      "facts": [
+        {
+          "id": "fcabc0b8-3964-4ace-b687-1c3b03082eec",
+          "type": "Marriage",
+          "date": "23 February 1854",
+          "standard_date": "23 Feb 1854",
+          "place": "Salt Lake City, Salt Lake, Utah, United States",
+          "standard_place": "Salt Lake City, Salt Lake, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWNL-Z7K",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWNL-Z7K",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWVC-R3H",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWVC-R3H",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWC6-644",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWC6-644",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "LR9F-1VG",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "LR9F-1VG"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KW81-JDF",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KW81-JDF",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWVC-R36",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWVC-R36",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWVC-R3T",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWVC-R3T",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWVC-R3L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWVC-R3L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWVC-R3P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWVC-R3P",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWC2-6MP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWC2-6MP",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "LR9N-VGQ",
+      "child": "KWCR-7YK",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "KWJX-1FF",
+      "child": "KWCR-7YK",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7V4N-7PN",
+      "title": "John, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS8M-KBSL : Thu Mar 26 23:40:11 UTC 2026), Entry for Loise Valeria Richardson and John.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS8M-KBSG"
+    },
+    {
+      "id": "7JMK-HTM",
+      "title": "John Richardson, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSZ1-VX5L : Fri Mar 27 03:13:53 UTC 2026), Entry for Luanda Jane Richardson and John Richardson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSZ1-VX5G"
+    },
+    {
+      "id": "7JMZ-TC6",
+      "title": "John, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS8Q-HYWY : Fri Mar 27 03:08:58 UTC 2026), Entry for Grace Richardson and John.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS8Q-HYWB"
+    },
+    {
+      "id": "7JMZ-RXT",
+      "title": "John Richardson, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS8M-PMZ4 : Fri Mar 27 03:17:50 UTC 2026), Entry for Grace Richardson and C H Monson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS8M-PMZH"
+    },
+    {
+      "id": "7JMZ-PNB",
+      "title": "John Richardson, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSZT-8PLY : Thu Mar 26 23:41:07 UTC 2026), Entry for Thomas H Richardson and C H Monson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSZT-8PLB"
+    },
+    {
+      "id": "7N5X-626",
+      "title": "John Richardson, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSZR-5NL3 : Thu Mar 26 23:39:10 UTC 2026), Entry for Susan V Richardson and C H Monson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSZR-5NLQ"
+    },
+    {
+      "id": "7N5X-6QX",
+      "title": "John, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS89-3HFJ : Thu Mar 26 23:39:00 UTC 2026), Entry for Susan Vilate Richardson and John.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS89-3HFV"
+    },
+    {
+      "id": "7NPP-7QP",
+      "title": "John Richardson, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSZR-5NL4 : Thu Mar 26 19:16:12 UTC 2026), Entry for Loisa P Richardson and C H Monson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSZR-5NLH"
+    },
+    {
+      "id": "Q1CT-MG1",
+      "title": "John Richardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q231-GR4F : Wed Mar 06 10:10:25 UTC 2024), Entry for John Richardson, 30 Apr 1853.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q231-GR4F"
+    },
+    {
+      "id": "Q1CR-GZ7",
+      "title": "John Ritchardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q231-P1ZF : Mon Mar 11 01:21:17 UTC 2024), Entry for John Ritchardson, 03 Jan 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q231-P1ZF"
+    },
+    {
+      "id": "Q1CR-7WQ",
+      "title": "John Richardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q231-5B1L : Tue Aug 27 20:25:51 UTC 2024), Entry for John Richardson, 22 Oct 1869.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q231-5B1L"
+    },
+    {
+      "id": "Q1CR-SQP",
+      "title": "John Richardsen, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q231-PQZ3 : Sat Mar 09 11:27:26 UTC 2024), Entry for John Richardsen, 16 Jun 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q231-PQZ3"
+    },
+    {
+      "id": "Q1C5-GMJ",
+      "title": "John Richardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2LD-W3S5 : Sun Mar 10 15:24:24 UTC 2024), Entry for John Richardson, 31 May 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2LD-W3S5"
+    },
+    {
+      "id": "Q1C5-K95",
+      "title": "John Richardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2LD-7G9N : Thu Mar 07 05:38:52 UTC 2024), Entry for John Richardson, 11 Mar 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2LD-7G9N"
+    },
+    {
+      "id": "Q1C7-TFR",
+      "title": "J Richardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q231-PSKJ : Sat Mar 09 18:28:30 UTC 2024), Entry for J Richardson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q231-PSKJ"
+    },
+    {
+      "id": "Q1CQ-NYD",
+      "title": "John Richardson, \"Utah, Indian War Service Medal Applications, 1905-1912\"",
+      "citation": "\"Utah, Indian War Service Medal Applications, 1905-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKDV-MDB4 : Mon Oct 13 03:23:44 UTC 2025), Entry for Lola Richardson and Norman Day, 13 Jun 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKDV-MDBZ"
+    },
+    {
+      "id": "Q1CQ-FW9",
+      "title": "John Richardson, \"Utah, Indian War Service Medal Applications, 1905-1912\"",
+      "citation": "\"Utah, Indian War Service Medal Applications, 1905-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKDV-M8S2 : Fri Mar 08 13:58:23 UTC 2024), Entry for John Richardson, 01 Sep 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKDV-M8S2"
+    },
+    {
+      "id": "Q1C3-LPT",
+      "title": "John Richardson, \"Utah, Indian War Service Medal Applications, 1905-1912\"",
+      "citation": "\"Utah, Indian War Service Medal Applications, 1905-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKDV-MHPJ : Thu Mar 19 17:52:49 UTC 2026), Entry for John Richardson, 28 Aug 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKDV-MHPJ"
+    },
+    {
+      "id": "Q8Q6-JQK",
+      "title": "John Richardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2LD-WRZK : Fri Mar 08 22:35:10 UTC 2024), Entry for John Richardson, 09 Nov 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2LD-WRZK"
+    },
+    {
+      "id": "Q8Q6-C74",
+      "title": "John Richardson, \"Utah, Territorial Militia Records, 1849-1877\"",
+      "citation": "\"Utah, Territorial Militia Records, 1849-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2LD-3T8Q : Sun Mar 10 05:37:28 UTC 2024), Entry for John Richardson, 17 Aug 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2LD-3T8Q"
+    },
+    {
+      "id": "QH5Z-MHR",
+      "title": "Pottawattamie, Iowa, Census Records 1850",
+      "citation": "\"United States, Census, 1850,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:S3HT-6LJ3-YBK?cc=1401638&wc=95RC-C61%3A1031314401%2C1032057601%2C1032057602 : 9 April 2016), Iowa > Pottawattamie > Pottawattamie county > image 185 of 189; citing NARA microfilm publication M432 (Washington, D.C.: National Archives and Records Administration, n.d.).",
+      "url": "https://familysearch.org/ark:/61903/3:1:S3HT-6LJ3-YBK?view=explore"
+    },
+    {
+      "id": "3HQD-VRX",
+      "title": "John Richarson, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNSJ-V5Y : Wed Jan 22 08:37:48 UTC 2025), Entry for John Richarson and L. Emilie Richarson, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNSJ-V5Y"
+    },
+    {
+      "id": "SV6Z-WT1",
+      "title": "John Richardson, \"Utah, Obituaries from Utah Newspapers, 1850-2005\"",
+      "citation": "\"Utah, Obituaries from Utah Newspapers, 1850-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVSF-NYW6 : Tue Mar 11 14:57:22 UTC 2025), Entry for Mrs Lola Shelton and Thomas Shelton, 20 Feb 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVSF-NYWF"
+    },
+    {
+      "id": "SV6Z-9YS",
+      "title": "John Richardson, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNCT-72P : Thu Oct 23 03:50:09 UTC 2025), Entry for John Richardson and Lola Richardson, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNCT-72P"
+    },
+    {
+      "id": "SH3W-WCR",
+      "title": "1870 United States Federal Census",
+      "citation": "Year: 1870; Census Place: Richmond, Cache, Utah Territory; Roll: M593_1610; Page: 180B; Family History Library Film: 553109",
+      "url": "https://search.ancestry.com/collections/7163/records/5390010"
+    },
+    {
+      "id": "95D1-B3C",
+      "title": "John R. Richardson, \"Utah, Death Certificates, 1904-1966\"",
+      "citation": "\"Utah, Death Certificates, 1904-1966\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZPJ-CMK : Sat Mar 09 22:46:58 UTC 2024), Entry for Grace Roxey Chapman and John R. Richardson, 09 Jun 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZPJ-CM2"
+    },
+    {
+      "id": "9GNY-WRK",
+      "title": "John Richardson, \"Utah Mormon Pioneer Overland Travel Database, 1847-1868\"",
+      "citation": "\"Utah, Mormon Pioneer Overland Travel Database, 1847-1868\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK9B-CH3Z : Wed Feb 19 20:21:15 UTC 2025), Entry for John Richardson, 27 Sep 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK9B-CH3Z"
+    },
+    {
+      "id": "9L5H-4VJ",
+      "title": "John Richardson in entry for Mary L Richardson Talbot, \"Idaho, Southeast Counties Obituaries, 1864-2007\"",
+      "citation": "\"Idaho, Southeast Counties Obituaries, 1864-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVSF-S6YR : Sat Sep 27 21:45:56 UTC 2025), Entry for Mary L Richardson Talbot and John Richardson, 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVSF-S6YT"
+    },
+    {
+      "id": "9L59-668",
+      "title": "John Richardson in entry for Lucinda Jane Richardson Eskelson, \"Utah Death Certificates, 1904-1964\"",
+      "citation": "\"Utah, Death Certificates, 1904-1966\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZGK-9NM : Mon Feb 03 19:25:42 UTC 2025), Entry for Lucinda Jane Richardson Eskelson and John Richardson, 10 May 1936.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZGK-9N9"
+    },
+    {
+      "id": "9KG4-Z8H",
+      "title": "John Richardson, \"BillionGraves Index\"",
+      "citation": "\"BillionGraves Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KSGZ-BM4 : Thu Oct 02 00:44:50 UTC 2025), Entry for John Richardson.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KSGZ-BM4"
+    },
+    {
+      "id": "9KG4-Z97",
+      "title": "John Richardson, \"Find A Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKN-L6HS : Tue Apr 01 15:08:18 UTC 2025), Entry for John Richardson, 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKN-L6HS"
+    },
+    {
+      "id": "MMDS-1X5",
+      "title": "Headstone image of John Richardson from billiongraves.com",
+      "citation": "Transcription of headstone image from billiongraves.com. Image taken at Richmond City Cemetery (Richmond, Cache, Utah, United States) on 08 June 2012",
+      "url": "http://billiongraves.com/pages/record/JohnRichardson/1378291?utm_campaign=treeconnect&utm_source=familysearch.org&utm_medium=sourcelink"
+    },
+    {
+      "id": "MS6D-GF6",
+      "title": "Legacy NFS Source: John Richardson - death: 10 March 1906; Richmond, Cache, Utah, United States",
+      "citation": "Headstone - Utah, Page number: Richmond Cache Utah Cemetery Lot 40"
+    },
+    {
+      "id": "MS6D-GNQ",
+      "title": "Legacy NFS Source: John Richardson - ",
+      "citation": "Ordinance Index (TM), The Church of Jesus Christ of Latter-day Saints, 1 Mar 1993 Edition, Family History Library, 35 N. West Temple Street, Salt Lake City, UT 84150 USA"
+    },
+    {
+      "id": "MS6D-GN5",
+      "title": "Legacy NFS Source: John Richardson - ",
+      "citation": "Ancestral File (TM), The Church of Jesus Christ of Latter-day Saints, June 1998 (c), data as of 5 JAN 1998, Family History Library, 35 N West Temple Street, Salt Lake City, UT 84150  USA"
+    },
+    {
+      "id": "MS6D-GJT",
+      "title": "Legacy NFS Source: John Richardson - Government record: Death record or certificate: burial: 12 March 1906; Richmond, Cache, Utah, United States"
+    },
+    {
+      "id": "9ZF2-V1H",
+      "title": "John Richardson, \"Utah, Death Certificates, 1904-1966\"",
+      "citation": "\"Utah, Death Certificates, 1904-1966\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZPN-84L : Mon Feb 03 19:28:49 UTC 2025), Entry for Nellie Richardson Lemmon and John Richardson, 20 Jul 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZPN-84G"
+    },
+    {
+      "id": "9ZYJ-KV9",
+      "title": "Jno Richardson, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MH27-PVK : Tue Oct 28 18:39:56 UTC 2025), Entry for Jno Richardson and Lola A Richardson, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MH27-PVK"
+    },
+    {
+      "id": "9874-S8C",
+      "title": "John Richardson, \"Idaho, Southeast Counties Obituaries, 1864-2007\"",
+      "citation": "\"Idaho, Southeast Counties Obituaries, 1864-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVSF-S6YB : Sat Sep 27 21:45:57 UTC 2025), Entry for Mary L Richardson Talbot and Mrs Willard Mclaughlin, 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVSF-S6BS"
+    },
+    {
+      "id": "9885-HMM",
+      "title": "John Richardson, \"Utah, Death Certificates, 1904-1966\"",
+      "citation": "\"Utah, Death Certificates, 1904-1966\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZGG-B57 : Mon Feb 03 19:11:29 UTC 2025), Entry for Lola Anna Shelton and John Richardson, 15 Feb 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZGG-B5W"
+    },
+    {
+      "id": "98DX-FCR",
+      "title": "John Richardson, \"Utah, Death Certificates, 1904-1966\"",
+      "citation": "\"Utah, Death Certificates, 1904-1966\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZLT-1BD : Mon Feb 03 19:02:47 UTC 2025), Entry for John Richardson and Thomas Richardson, 10 Mar 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZLT-1BD"
+    },
+    {
+      "id": "9DYJ-T18",
+      "title": "John Richison, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ4J-NQW : Tue Oct 21 15:44:24 UTC 2025), Entry for Thomas Richison and Anna Richison, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZ4J-NQH"
+    },
+    {
+      "id": "9F97-4Y7",
+      "title": "John Richardson, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MMRJ-P2Z : Tue Oct 21 23:49:15 UTC 2025), Entry for John Richardson and Lola Richardson, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MMRJ-P2Z"
+    },
+    {
+      "id": "9F97-FPL",
+      "title": "John Richardson, \"Idaho, Death Certificates, 1938-1961\"",
+      "citation": "\"Idaho, Death Certificates, 1938-1961\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2M1-FKYK : Fri Feb 21 22:43:09 UTC 2025), Entry for Mary L Richardson Talbot and John Richardson, 3 Jul 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2M1-FKBS"
+    },
+    {
+      "id": "9J3Y-FT1",
+      "title": "John Richardson, \"Utah, Death Certificates, 1904-1966\"",
+      "citation": "\"Utah, Death Certificates, 1904-1966\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZ2Z-J55 : Mon Feb 03 19:01:57 UTC 2025), Entry for Thomas Henry Richardson and John Richardson, 24 Apr 1951.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZ2Z-J5R"
+    },
+    {
+      "id": "9NYF-BMY",
+      "title": "U.S., Find A Grave Index, 1600s-Current",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?dbid=60525&h=13563250&indiv=try"
+    }
+  ]
+}
