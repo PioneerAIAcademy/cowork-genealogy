@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_search_records_023",
+    "id": "ut_search_records_024",
     "skill": "search-records",
     "name": "Nil on a browse-only/low-index probate collection pivots to full-text, not a negative finding",
     "type": "positive",
