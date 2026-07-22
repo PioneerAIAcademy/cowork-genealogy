@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "right couple identified via indirect census evidence, but the specific marriage date/place was never found",
+    "f2": "collection searched exhaustively across 27 strategies, source genuinely absent not a search-quality problem."
+  }
+}

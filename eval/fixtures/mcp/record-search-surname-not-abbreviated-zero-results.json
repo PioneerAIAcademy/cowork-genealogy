@@ -1,0 +1,19 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all zero-result response for any record_search against Norway, Marriages, 1660-1926 (collection 1468080) whose surname is NOT the collection's abbreviated 'Halsteinsdr' -- covers the original exact spelling ('Halsteinsdatter'), a given-name-only variant paired with the still-full surname, a principal-only search with no surname filter at all, or any other query shape. Models that varying the given name alone (already-fixed behavior) or restructuring the query without touching the surname's letters still fails to recover the record, forcing a deliberate surname-abbreviation attempt. Must be listed after record-search-urna-halsteinsdr-marriage-match.json in the test's mcp_fixtures array so the specific positive match is checked first.",
+  "args": {
+    "collectionId": "1468080"
+  },
+  "response": {
+    "query": {
+      "collectionId": "1468080",
+      "recordType": "marriage"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

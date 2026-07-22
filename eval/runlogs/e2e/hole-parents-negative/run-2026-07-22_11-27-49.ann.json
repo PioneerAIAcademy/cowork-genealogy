@@ -1,0 +1,13 @@
+{
+  "annotator": "promise",
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Father Benjamin Christophersen linked I1 -> KD96-TV2 via R1, sourced to the 1876 Ringebu baptism (S1). Tree birth 1852 vs expected ~1853 — within church-record age tolerance.",
+    "f3": "Correctly declined the trap: only the true patronymic parents (Benjamin Christophersen / Matea Pedersdatter) attached to KD96-TV2. No wrong-family namesake and no bare 'Hole'-surname parentage asserted; the 'Hole' forms on I1/I3 are the correct family's Americanized surname, sourced to the marriage record (S2)."
+  }
+}

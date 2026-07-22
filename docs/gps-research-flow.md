@@ -207,9 +207,12 @@ paleography first. It is not guessed at.
 
 Extraction records what a document says about a person *in that document*.
 Deciding that this person is the same individual as one in your tree is a
-separate, later, revisable judgment. Keeping the two apart is deliberate: it
-stops an identity assumption made in the first minute of reading a record
-from hardening into tree data.
+separate, later, revisable judgment. Keeping the two apart is deliberate:
+the identity decision is what carries a record's facts onto a person in your
+tree, so it is made once, explicitly, with its reasoning recorded — never
+assumed in the first minute of reading the record. It stays revisable, and
+when later evidence shows a record was attached to the wrong person the
+correction is added rather than the original link quietly erased.
 
 Correlation across name, dates, places, relationships, and associates sets
 one of three confidence levels:
@@ -299,14 +302,18 @@ Two hard limits:
 
 - An unresolved conflict blocks a *proved* conclusion outright.
 - A conflict disputing the concluded fact itself **caps the conclusion at
-  *possible***, which sits below the threshold for writing to the tree. A
-  disputed conclusion never becomes tree data.
+  *possible***, which sits below the threshold for concluding it in the tree.
 
-At *probable* or better, the conclusion is written into the tree — the
-relationship and the fact, carrying their source citations, with the
-concluded fact marked preferred rather than piled on as another alternative.
-A conclusion that never reaches the tree is a result found and then lost, so
-the system verifies the write happened.
+The tree already holds the evidence by this point: each record's facts were
+written onto the people it names when that record was linked to them,
+carrying their source citations, with no value yet marked as the right one.
+Writing the conclusion is what settles that. At *probable* or better, the
+concluded relationship is added and the concluded value is marked preferred
+over the competing ones — not piled on as another alternative. Below that
+threshold the evidence stays in the tree unranked, and nothing is uploaded
+to FamilySearch: only concluded facts leave the working tree. A conclusion
+that never reaches the tree is a result found and then lost, so the system
+verifies the write happened.
 
 ### Critique of the conclusion
 

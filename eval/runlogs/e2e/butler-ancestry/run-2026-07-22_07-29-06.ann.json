@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f3": "Birth year 1881 and place Kilkenny recovered, but exact date 15 April missing — agent used index entry (year only) rather than full birth certificate."
+  },
+  "annotator": "adeyinkaadedayo1024@mail.com"
+}

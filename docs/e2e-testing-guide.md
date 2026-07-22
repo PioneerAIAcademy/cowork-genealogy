@@ -53,7 +53,9 @@ If it flags something:
   **once a day**, not once a run. Preflight warns when it's near expiry. If it
   does expire mid-run, FS calls fail loudly in the transcript — re-login and
   re-run; you won't get a silently bad result.
-- **MCP server not built** — `make engine-build`.
+- **MCP server not built** — `make mcpb` (Windows: `eval\BuildMcpb.bat`). It
+  compiles the server *and* packs the `.mcpb`, which is what you install in
+  Cowork for the live-debugging loop below.
 - **Harness deps** — `cd eval/harness && uv sync`.
 
 ---
@@ -104,18 +106,41 @@ must recover. They have to line up:
 
 Keep it small: one focused question, **1–5 expected findings**, not 30.
 
-### 3. Make sure the answer is findable in records
+### 3. Make sure the answer is findable without reading the tree
 
 Stripping your local copy isn't enough — **live FamilySearch still has the
 answer.** The harness closes that hole by blocking the five tree-reading tools
 (`person_read`, `person_search`, `person_ancestors`, `person_record_matches`,
 `person_person_matches`) for the whole run, so the agent can't read the answer
-back off the tree. It has to do genuine record research.
+back off the tree. It has to do genuine research.
 
-Which means: pick a question whose answer is **recoverable from records**,
+Which means: pick a question whose answer is **recoverable by research**,
 anchored by parents, spouse, children and residences so the agent has a real
-starting point. If the only route to the answer runs through the live tree, the
-fixture can't measure anything and won't land.
+starting point. Any of these routes counts — it does not have to be an indexed
+FamilySearch record:
+
+| Route | How the agent gets there |
+|---|---|
+| **Indexed records** | `record_search` → `record_read`. The default. |
+| **Full text** | `fulltext_search` over unindexed books, deeds, probate, newspapers |
+| **Images** | `image_search` / `image_read` / `image_transcribe` on an unindexed film |
+| **Off-FamilySearch sources** | Ancestry, FindAGrave, MyHeritage, FindMyPast, a county archive — `external_links_search` finds *where* the record lives |
+| **Indirect evidence** | No single source states the answer; the agent assembles it from several (a marriage-record age + a census + a burial) |
+
+One catch on the off-FamilySearch route: **the agent has no web browser during
+a run.** `WebFetch` and `WebSearch` are outside the harness's allow-list, so a
+run that reaches for one gets back *"Permission to use WebFetch has been
+denied"* — which has happened in four committed runs, all of them trying to
+read a Norwegian or Québécois archive site directly. `external_links_search`
+can tell the agent a record exists on FindAGrave and where; it cannot read the
+page. So if the proof genuinely lives off FamilySearch, capture the document
+yourself and bundle it in the fixture's `provided-documents/`. The harness
+drops it into the workspace exactly where an uploaded capture lands and names
+it in the prompt, so the agent reads it with `Read` and the run stays
+reproducible. Spec §6.2.
+
+If the only route to the answer runs through the live tree, the fixture can't
+measure anything and won't land.
 
 ### Author both positive and negative fixtures
 
@@ -155,35 +180,41 @@ Field tables, the hand-authoring path, cascade rules, and `provided-documents/`
 
 ---
 
-## Running tests
+## Debug `/research` live first
 
-```bash
-make e2e-run TEST=<slug>            # Windows: eval\RunE2E.bat
-make e2e-run TAG=parents            # by tag: any tag dimension value
-```
-
-**There's no full-suite flag, deliberately** — every run is explicitly scoped
-to one test or one tag. A 10-fixture sweep is 4–10 hours and $30–100; if you
-genuinely need one, drive it with a shell loop and budget for it.
-
-For the full flag list, ask the tool rather than a doc — the flags change and a
-copied list goes stale:
-
-```bash
-cd eval/harness && uv run python -m e2e.run_e2e --help
-```
-
-### Debugging `/research` by hand
-
-A headless run can't show you *why* the agent stopped or skipped a step. Two
-ways to watch one live:
+A headless run can't show you *why* the agent stopped or skipped a step — and
+it charges you 20–60 minutes to not tell you. Watch a run live, fix what you
+see, and save the headless run for the verdict.
 
 **Cowork + the Research Viewer** (recommended — structured output):
-`make e2e-project TEST=<slug>` (Windows: `eval\SeedProject.bat`) seeds an
-editable project you open in Cowork with the viewer alongside. See
-`eval/README.md` → "Debug a fixture interactively".
 
-**The scratch workspace** (lighter, Claude Code only):
+1. **Build and install both artifacts**, so Cowork has the genealogy tools.
+   This is the step that costs an hour when it's skipped:
+
+   ```bash
+   make mcpb                       # Windows: eval\BuildMcpb.bat
+   make plugin                     # Windows: eval\BuildPlugin.bat
+   ```
+
+   Install the `.mcpb` in Claude Desktop → Settings → Extensions → Advanced
+   Settings → Install extension (straight over the old copy — no uninstall
+   needed). Then **remove any existing Genealogy Research plugin** in Cowork →
+   Customize and upload the new `.zip` via Add → Upload Plugin, from the
+   **Cowork** tab rather than the Code tab — they keep separate plugin lists.
+   **Fully quit and reopen** Claude Desktop. Redo both after any MCP-server or
+   skill change; without them `/research` says things like
+   "validate_research_schema isn't available" and degrades to guessing, which
+   is a missing install, not a `/research` bug.
+2. `make e2e-project TEST=<slug>` (Windows: `eval\SeedProject.bat`) seeds an
+   editable project from the fixture's starting state.
+3. Open that folder in Cowork and run `/research`. Open the **same folder** in
+   the Research Viewer (`make electron`, Windows: `eval\Viewer.bat`) to watch
+   the research log, assertions and conflicts appear live — and ask Claude
+   *"why didn't you search X?"* as it works.
+
+Full walkthrough: `eval/README.md` → "Debug a fixture interactively".
+
+**The scratch workspace** (lighter — Claude Code only, no Cowork install):
 
 ```bash
 make e2e-scratch TEST=<slug>        # Windows: eval\ScratchResearch.bat
@@ -200,17 +231,36 @@ it matches a real run, then drops you into `claude` there. In the session:
 /research <the researcher question>
 ```
 
-Three things that will otherwise cost you an hour:
+**Neither live path blocks the tree-reading tools** the way a benchmark run
+does. Calling them by hand reads the live tree — fine for debugging, but don't
+let a hand-run "pass" that way convince you the fixture is solvable. A real run
+can't do that.
 
-- **Build the MCP server first** (`make engine-build`). Without it `/research`
-  says things like "validate_research_schema isn't available" and degrades to
-  guessing — that's a missing server, not a `/research` bug.
-- **Skills are copied, not symlinked.** Claude Code's loader resolves copies
-  reliably; symlinks are flaky (issue #17741).
-- **The interactive session does NOT block the tree-reading tools** the way a
-  benchmark run does. Calling them by hand reads the live tree — fine for
-  debugging, but don't let a hand-run "pass" that way convince you the fixture
-  is solvable. A real run can't do that.
+---
+
+## Running tests
+
+**Run this last.** `make e2e-run` is the expensive confirmation at the *end* of
+the loop, not a debugging tool. Get `/research` doing the right thing live
+first, land any skill fixes it exposes (see
+[`skill-lifecycle.md`](skill-lifecycle.md)), and only then spend the 20–60
+minutes and $3–10 on a headless verdict.
+
+```bash
+make e2e-run TEST=<slug>            # Windows: eval\RunE2E.bat
+```
+
+**One fixture per run — `TEST=<slug>` and nothing else.** There's no
+full-suite flag and no tag sweep, deliberately: a 10-fixture sweep is 4–10
+hours and $30–100. If you genuinely need one, drive it with a shell loop and
+budget for it.
+
+For the full flag list, ask the tool rather than a doc — the flags change and a
+copied list goes stale:
+
+```bash
+cd eval/harness && uv run python -m e2e.run_e2e --help
+```
 
 ---
 
@@ -238,6 +288,10 @@ If you'd rather read the files yourself, each run writes four:
 | `run-<ts>.transcript.md` | Readable transcript of the agent's turns |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — what the judge graded |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
+
+To page through that final state visually instead of in JSON, `make e2e-view
+TEST=<slug>` (Windows: `eval\ViewE2E.bat`) loads the newest run into the
+Research Viewer (`make electron`, Windows: `eval\Viewer.bat`).
 
 **Verdict:** `pass` (all required findings matched) / `partial` (some) / `fail`
 (none) / `skipped` (the judge never ran).
@@ -319,10 +373,13 @@ it from that folder; each prompts for what it needs instead of taking
 |---|---|
 | `make e2e-preflight` | `eval\CheckSetup.bat` |
 | `make e2e-login` | `eval\Login.bat` |
-| `make e2e-run TEST=<slug>` | `eval\RunE2E.bat` |
+| `make mcpb` | `eval\BuildMcpb.bat` |
+| `make plugin` | `eval\BuildPlugin.bat` |
 | `make e2e-validate TEST=<slug>` | `eval\ValidateFixture.bat` |
 | `make e2e-project TEST=<slug>` | `eval\SeedProject.bat` |
 | `make e2e-scratch TEST=<slug>` | `eval\ScratchResearch.bat` |
+| `make e2e-run TEST=<slug>` | `eval\RunE2E.bat` |
+| `make e2e-view TEST=<slug>` | `eval\ViewE2E.bat` |
 | `make electron` | `eval\Viewer.bat` |
 | `make e2e-calibrate` *(maintainer)* | `eval\RunCalibration.bat` |
 

@@ -34,7 +34,7 @@ Two directories are in play, and mixing them up is the commonest early mistake:
 
 | | Directory | Why |
 |---|---|---|
-| **Terminal** (`make …`) | the **repo root**, on your branch (Step 0) | `make eval-skill` / `make gate-skill` test the working tree, and that's where your skill edit is |
+| **Terminal** (`make …`) | the **repo root**, on your branch (Step 1) | `make eval-skill` / `make gate-skill` test the working tree, and that's where your skill edit is |
 | **Claude Code**, steps 3–5 and 8 | the **case folder** (`~/feedback/<slug>/`) | it *is* the research project; the setup script symlinks the skills in and writes `.feedback-repo-root` pointing back at your checkout, so `mine-unit-test` lands its output in the repo automatically |
 | **Claude Code**, step 7 | the **repo root** | `/improve-skill` reads run logs under `eval/runlogs/`, which exist only in the repo |
 
@@ -70,7 +70,7 @@ didn't look for anything to separate them, and stated the conclusion flatly. It
 might even be right — but it hasn't been *shown*, and a wrong parent silently
 corrupts everything upstream of it.
 
-### Step 1 — Notice it 🌐 The workbench
+### Step 0 — Notice it 🌐 The workbench
 
 Marta clicks **Send Feedback** in the same session and writes:
 
@@ -94,10 +94,9 @@ reasoning, so the third box carries the whole report.
 That three-part note is the most valuable thing produced all day. Everything
 below is mechanics.
 
-### Step 0 — Branch before you touch anything ⌨️ Terminal
+### Step 1 — Branch before you touch anything ⌨️ Terminal
 
-*(Step 1 is numbered first because it happens first — days earlier, and by someone
-else. Sam's work starts here, at Step 0.)*
+*(Step 0 happened days earlier, and by someone else. Sam's work starts here.)*
 
 Sam is going to end up editing a skill and writing test files into `eval/`, so the
 first move is a branch — never work straight on `main`:
@@ -312,13 +311,19 @@ here: Marta's project is a capture of a real person's research, so it can't be
 re-seeded into the workbench.
 
 Instead, replay it. Back in the **case folder**, reset both halves as in Step 3 —
+the data back to the imported baseline, and the conversation with `/clear`:
 
 ```
-git checkout . && git clean -fd          # data back to the imported baseline
+git checkout . && git clean -fd
 ```
 
-— start a **fresh session** (`/clear`), paste Marta's original prompt again, and
-when it finishes ask:
+**Windows (GitHub Desktop):** switch the top-left repository picker to the **case
+directory** first — after Steps 6–7 it's pointing at `cowork-genealogy`, and
+discarding there would throw away the skill edit you just made. Then **Changes →
+⋯ → Discard all changes…**; full click-path in
+[`alpha-feedback-guide.md`](alpha-feedback-guide.md#3-fix-the-bug--iterate).
+
+Then paste Marta's original prompt again, and when it finishes ask:
 
 ```
 /compare-state --against=desired
@@ -381,8 +386,8 @@ reporting, and the reports are the entire point of the alpha.
 
 | Step | What you do | Where |
 |---|---|---|
-| 0 Branch | `git checkout -b <branch>` (Windows: GitHub Desktop → New branch…) | ⌨️ Terminal (repo) |
-| 1 Notice | research; spot it; write Did/Should | 🌐 Workbench |
+| 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
+| 1 Branch | `git checkout -b <branch>` (Windows: GitHub Desktop → New branch…) | ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open on it; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
