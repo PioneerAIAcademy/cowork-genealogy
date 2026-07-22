@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Jens Nielsen's first wife was Dorthe Kirstine Jensen, born about 1820 in Lyngs, Thisted, Denmark, and died there on 4 June 1852. Jens married her in Denmark before emigrating; she never came to the United States, which is why she is absent from all of his American records. (Danish patronymic naming: his Danish-born children carry the surname Jensen, his Utah children Nielson/Nielsen.)",
+      "details": {
+        "subject_person": { "name": "Jens Nielsen" },
+        "relation": "spouse",
+        "target_person": {
+          "name": "Dorthe Kirstine Jensen",
+          "birth": "about 1820, Lyngs, Thisted, Denmark"
+        }
+      },
+      "supporting_sources": [
+        "Denmark, Church Records, 1484-1941 — Lyngs parish marriage register recording the 5 January 1849 marriage of Jens Nielsen and Dorthe Kirstine Jensen.",
+        "1850 Danish census (folketaelling), Lyngs, Thisted, listing the household of Jens Nielsen with his wife Dorthe Kirstine Jensen.",
+        "Lyngs parish christening registers for the couple's children naming Dorthe Kirstine Jensen as the mother."
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Jens Nielsen married his first wife, Dorthe Kirstine Jensen, on 5 January 1849 in Lyngs, Thisted, Denmark. (This is his first, pre-emigration marriage — distinct from his 1858 marriage to Ane Kjerstine Sorensdatter in Ephraim, Utah, which is already known.)",
+      "details": {
+        "subject_person": { "name": "Jens Nielsen" },
+        "target_person": { "name": "Dorthe Kirstine Jensen" },
+        "fact_type": "Marriage",
+        "date": "5 January 1849",
+        "place": "Lyngs, Thisted, Denmark"
+      },
+      "supporting_sources": [
+        "Denmark, Church Records, 1484-1941 — Lyngs parish marriage register, entry for Jens Nielsen and Dorthe Kirstine Jensen, 5 January 1849."
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "relationship",
+      "description": "Dorthe Kirstine Jensen was the mother of Jens Nielsen's Danish-born daughter Ane Cathrine Jensen (born 29 November 1850 in Lyngs, Thisted, Denmark), who remains in the tree linked only to her father. Connecting this daughter to her mother corroborates the identity of the first wife.",
+      "details": {
+        "subject_person": {
+          "name": "Ane Cathrine Jensen",
+          "birth": "29 November 1850, Lyngs, Thisted, Denmark"
+        },
+        "relation": "mother",
+        "target_person": {
+          "name": "Dorthe Kirstine Jensen",
+          "birth": "about 1820, Lyngs, Thisted, Denmark"
+        }
+      },
+      "supporting_sources": [
+        "Lyngs parish christening register for Ane Cathrine Jensen, christened 1 December 1850, naming Dorthe Kirstine Jensen as the mother.",
+        "1850 Danish census (folketaelling), Lyngs, Thisted."
+      ],
+      "required": false
+    }
+  ]
+}

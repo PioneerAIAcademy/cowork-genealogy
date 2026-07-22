@@ -1,0 +1,19 @@
+{
+  "id": "jens-nielsen",
+  "name": "Jens Nielsen",
+  "genre": "strip",
+  "source_pid": "KWVQ-475",
+  "captured": "2026-07-22",
+  "researcher_question": "Jens Nielsen emigrated from Denmark and settled in Ephraim, Sanpete County, Utah, where in 1858 he married Ane Kjerstine Sorensdatter. Family tradition (recorded by a daughter) holds that he had married earlier in Denmark and that his first wife died there before he emigrated. Identify Jens's first wife and their marriage (date and place).",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1840s",
+    "geography": "DK-Thisted"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Well-documented Danish LDS pioneer in Ephraim, Utah. The hard answer (first wife Dorthe Kirstine Jensen, m. 5 Jan 1849 Lyngs, Thisted) lives entirely on the pre-emigration Danish side; she died in Denmark in 1852 and appears in no US record. Requires Danish-language parish/census records (Lyngs, Thisted) and patronymic naming (his Danish children are surnamed Jensen, his Utah children Nielson/Nielsen). Retained anchors that do NOT name the wife or give the marriage: two Danish-born children linked to Jens as father only (Karen Marie Jensen b.1846, Ane Cathrine Jensen b.1850), Jens's own 1850 Danish census residence in Lyngs, and a daughter's LifeSketch noting an earlier wife who died in Denmark (details garbled). Subject is deceased."
+}
