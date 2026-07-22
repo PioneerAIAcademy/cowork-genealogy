@@ -32,7 +32,7 @@ import { sanitizeTree } from "../validation/tree-sanitize.js";
 import type { ValidationError } from "../validation/types.js";
 import { atomicWriteJson, backupIfExists } from "../utils/project-io.js";
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
-import { resolveStandardPlace } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 
 export type TreeEditOperation =
@@ -286,13 +286,30 @@ async function applyOperation(
   // Resolve a fact's standard_place in place when it has a place and no explicit
   // standard_place; best-effort — never fail the edit on a resolution miss.
   const maybeResolvePlace = async (fact: SimplifiedFact, explicitStandardPlace: boolean): Promise<void> => {
-    if (!wantResolve || !fact.place || explicitStandardPlace) return;
-    try {
-      fact.standard_place = (await resolveStandardPlace(fact.place)) ?? undefined;
-      if (fact.standard_place === undefined) delete fact.standard_place;
-    } catch {
-      delete fact.standard_place;
-      warnings.push(`could not resolve standard_place for '${fact.place}' (left unset)`);
+    if (wantResolve && fact.place && !explicitStandardPlace) {
+      try {
+        fact.standard_place = (await resolveStandardPlace(fact.place)) ?? undefined;
+        if (fact.standard_place === undefined) delete fact.standard_place;
+      } catch {
+        delete fact.standard_place;
+        warnings.push(`could not resolve standard_place for '${fact.place}' (left unset)`);
+      }
+    }
+
+    // Country-contradiction guard on whatever standard_place ends up set —
+    // supplied explicitly by the caller OR auto-resolved just above. Mirrors
+    // research_append's countryConsistency guard on assertions (see
+    // place-resolver.ts). tree_edit never fails an edit on a place-resolution
+    // problem (see docs/specs/tree-edit-tool-spec.md), so a contradiction is
+    // nulled + warned here rather than thrown.
+    if (typeof fact.place === "string" && typeof fact.standard_place === "string") {
+      if (countryConsistency(fact.place, fact.standard_place) === "contradiction") {
+        warnings.push(
+          `standard_place '${fact.standard_place}' contradicts place '${fact.place}' — the place text ` +
+            "names a different country; cleared (left unset)",
+        );
+        delete fact.standard_place;
+      }
     }
   };
 

@@ -144,6 +144,18 @@ time, regardless of how directly the request named the destination.
    `information_quality` yourself — conflict-resolution and
    proof-conclusion trust what is recorded.
 
+   **Conflict/hypothesis contract — enforced, not advisory.** Inline
+   elimination of a namesake or other candidate, or inline comparison of
+   two records for possible shared identity, is **forbidden** outside
+   `conflict-resolution` / `hypothesis-tracking` — including mid-critique,
+   when you are revising a proof narrative in response to a mentor
+   verdict. Persist the reasoning first (a `hypotheses` entry for a
+   competing/ruled-out candidate, a `conflicts` entry for two records
+   compared), then cite the resulting `h_`/`c_` id in the narrative — never
+   the reverse. A proof narrative that names an elimination or an identity
+   comparison with no backing `hypotheses`/`conflicts` entry is incomplete,
+   whatever tier it claims.
+
    **Hard rules held in this context** (for any residual inline
    judgment — reading state, weighing routes — never for writing):
 

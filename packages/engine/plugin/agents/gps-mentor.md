@@ -502,6 +502,19 @@ what matters most and stop.
    support; counter-evidence absent from the discussion; "preferred"
    assertion choices that align suspiciously with the conclusion.
 
+6. **Structural backing for identity/conflict reasoning.** If the
+   narrative names a ruled-out namesake or other candidate, or
+   compares two records for possible shared identity, confirm a
+   corresponding `hypotheses` or `conflicts` entry exists and is
+   cited by id — not just described in prose. Reasoning that lives
+   only in `narrative_markdown`, with `hypotheses`/`conflicts` left
+   empty or uncited, is must-address: name the specific elimination
+   or comparison and set `suggested_skill` to `hypothesis-tracking`
+   or `conflict-resolution`. This applies even when the reasoning
+   itself is sound — item 4's "elimination claimed but not
+   performed" is a different failure from this one, where the work
+   was genuinely done but never persisted structurally.
+
 ### on-demand
 
 **What you are evaluating:** whatever the user asked about. This is
