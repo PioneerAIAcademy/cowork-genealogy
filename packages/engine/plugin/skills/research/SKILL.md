@@ -113,7 +113,8 @@ time, regardless of how directly the request named the destination.
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | Objective but no questions | `question-selection` (derive first question) |
-   | A question with no plan | `research-plan` |
+   | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
+   | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
    | Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question | `search-records` (or `search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |

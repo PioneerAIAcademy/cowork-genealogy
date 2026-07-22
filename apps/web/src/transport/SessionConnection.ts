@@ -12,6 +12,11 @@ export interface SessionConnection {
   close(): void
 }
 
+// Credentials for one WS handshake. Fetched fresh per connect attempt — never
+// captured — see the constructor.
+export type SessionCredentials = { wssUrl: string; token: string }
+export type CredentialsProvider = () => Promise<SessionCredentials>
+
 // One WebSocket for both directions, connected directly to the sandbox's WS
 // server at `wssUrl` and authenticated with the per-sandbox handshake `token`
 // (?token=…). `wssUrl` is wss://…e2b.app for E2B, ws://127.0.0.1:port for local.
@@ -41,6 +46,9 @@ export class WsSessionConnection implements SessionConnection {
   // silently billing compute for a tab nobody is viewing. Reconnects pause while
   // hidden and resume on focus.
   private hidden = false
+  // Guards the await window inside connect(): without it a retry firing while
+  // the credentials request is in flight would open a second socket.
+  private connecting = false
 
   private onVisibility = (): void => {
     if (typeof document === 'undefined') return
@@ -60,7 +68,14 @@ export class WsSessionConnection implements SessionConnection {
     }
   }
 
-  constructor(private direct: { wssUrl: string; token: string }) {
+  // `getCredentials` is called PER ATTEMPT, not once. The handshake token has a
+  // finite TTL anchored to the /connect that minted it, so a captured token
+  // eventually expires — and the sandbox pause that forces the reconnect is
+  // exactly the event most likely to happen after it has. Re-minting also
+  // resumes a paused sandbox and refreshes its running-timeout, since those are
+  // what /connect does. It authenticates by session cookie, not by the WS token,
+  // so it stays reachable even when the handshake is being rejected.
+  constructor(private getCredentials: CredentialsProvider) {
     if (typeof document !== 'undefined') {
       this.hidden = document.visibilityState === 'hidden'
       document.addEventListener('visibilitychange', this.onVisibility)
@@ -68,8 +83,47 @@ export class WsSessionConnection implements SessionConnection {
   }
 
   connect(): void {
-    if (this.ws || this.closed) return
-    const url = `${this.direct.wssUrl}/?token=${encodeURIComponent(this.direct.token)}`
+    if (this.ws || this.closed || this.connecting) return
+    this.connecting = true
+    void this.getCredentials().then(
+      (creds) => {
+        this.connecting = false
+        // close() or a racing connect landed while we were awaiting.
+        if (this.closed || this.ws) return
+        // Backgrounded mid-fetch: opening now would auto-resume a paused sandbox
+        // for a tab nobody is watching, which is what the visibility gate exists
+        // to prevent. Drop these credentials; onVisibility reconnects on focus.
+        if (this.hidden) return
+        this.openSocket(creds)
+      },
+      () => {
+        // The control plane is unreachable or the session is gone. Same backoff
+        // as a refused socket, so this can't spin and can't hang silently.
+        this.connecting = false
+        if (this.closed || this.hidden) return
+        this.scheduleRetry()
+      }
+    )
+  }
+
+  private emitConn(state: 'open' | 'reconnecting'): void {
+    for (const l of [...this.listeners]) l({ type: 'conn_state', state })
+  }
+
+  private scheduleRetry(): void {
+    this.attempts += 1
+    if (this.attempts > MAX_RETRIES) {
+      for (const l of [...this.listeners])
+        l({ type: 'status', state: 'chat_error', message: 'Could not reach the agent (connection failed).' })
+      return
+    }
+    this.retryTimer = setTimeout(() => {
+      if (!this.closed && !this.hidden) this.connect()
+    }, retryDelayMs(this.attempts))
+  }
+
+  private openSocket(creds: SessionCredentials): void {
+    const url = `${creds.wssUrl}/?token=${encodeURIComponent(creds.token)}`
     const ws = new WebSocket(url)
     this.ws = ws
     ws.onopen = () => {
@@ -77,6 +131,10 @@ export class WsSessionConnection implements SessionConnection {
       this.attempts = 0
       for (const m of this.outbox) ws.send(m)
       this.outbox = []
+      // Synthetic, client-only. Lets the UI tell "the agent is working" apart
+      // from "the socket dropped and we're retrying" — otherwise a silent
+      // reconnect looks identical to a busy agent (the 2026-07-20 confusion).
+      this.emitConn('open')
     }
     ws.onmessage = (ev) => {
       let msg: WsMessage
@@ -95,15 +153,8 @@ export class WsSessionConnection implements SessionConnection {
       // paused sandbox, billing compute for a tab nobody is viewing. onVisibility
       // reconnects when the tab is focused again.
       if (this.hidden) return
-      this.attempts += 1
-      if (this.attempts > MAX_RETRIES) {
-        for (const l of [...this.listeners])
-          l({ type: 'status', state: 'chat_error', message: 'Could not reach the agent (connection failed).' })
-        return
-      }
-      this.retryTimer = setTimeout(() => {
-        if (!this.closed && !this.hidden) this.connect()
-      }, retryDelayMs(this.attempts))
+      this.emitConn('reconnecting')
+      this.scheduleRetry()
     }
     ws.onerror = () => {
       // A failed connect fires onerror before onclose; close it so the onclose

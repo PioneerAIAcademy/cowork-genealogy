@@ -420,11 +420,14 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
 
 .PHONY: e2e-scratch
-e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
+e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
 	# Seeds the fixture's starting state + plugin skills into a sibling dir
 	# of the repo (reusing the harness's build_workspace, so it matches a
 	# real run byte-for-byte). Prints the /research command to paste in an
 	# interactive `claude` session — the way to debug WHY the agent stops.
+	# Builds the engine first: the scratch .mcp.json forks the COMPILED server,
+	# so without it /research loads with no genealogy tools and degrades to
+	# guessing ("validate_research_schema isn't available") instead of failing.
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
 
@@ -507,3 +510,12 @@ deploy: deploy-preflight ## Deploy the control plane to Fly (builds web+server i
 	fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false \
 	  --build-arg GIT_SHA=$$(git rev-parse --short HEAD) \
 	  --build-arg BUILD_DATE=$$(date -u +%Y-%m-%d)
+
+# Public host of the deployed control plane — keep in sync with PUBLIC_URL /
+# WEB_ORIGIN in deploy/fly.toml. Override for a differently-named app:
+#   make deploy-status DEPLOY_URL=https://my-app.fly.dev
+DEPLOY_URL := https://genealogy-workbench.fly.dev
+
+.PHONY: deploy-status
+deploy-status: ## Health-check the deployed control plane (expect "db":"postgres")
+	curl -s $(DEPLOY_URL)/api/health | jq

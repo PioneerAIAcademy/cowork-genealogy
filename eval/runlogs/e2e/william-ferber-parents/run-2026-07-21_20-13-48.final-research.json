@@ -1,0 +1,1441 @@
+{
+  "project": {
+    "id": "rp_william_ferber_parents",
+    "objective": "Who were William H. Ferber's parents?",
+    "subject_person_ids": [
+      "G7JB-YH6"
+    ],
+    "status": "active",
+    "created": "2026-07-21",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What does the 1870 U.S. Census reveal about the parents of William H. Ferber, born December 1869 in Ohio and residing in Cincinnati, Hamilton County, Ohio?",
+      "rationale": "William H. Ferber was born December 1869 in Ohio. The 1870 federal census was enumerated in June 1870, when he would have been approximately six months old. As an infant, he would almost certainly appear in his parents' household. The tree already places him in Cincinnati, Hamilton County, Ohio in 1870, giving a clear search target. This is the earliest source likely to place both parents in the same household as William; because the 1870 census has no relationship-to-head-of-household column (that field begins in 1880), it provides inferred rather than direct evidence of parentage.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-07-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "The 1870 federal census is the primary target for q_001. William H. Ferber was born December 1869 and was ~6 months old when the census was enumerated (June 1870). As an infant he would appear in his parents' household. The tree already places him in Cincinnati, Hamilton County, Ohio. Searching FamilySearch collection 1438024 (United States, Census, 1870 \u2014 40M+ indexed records) for 'Ferber' in Hamilton County, Ohio should locate the household and reveal both parents' names, ages, and birthplaces.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1870",
+          "repository": "Ancestry",
+          "rationale": "Fallback if FamilySearch returns no match: Ancestry independently indexed the 1870 census and may have resolved surname transcription errors differently. Search with variant spellings (Farber, Ferbar, Ferbert) to catch indexing errors on a German-immigrant surname.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "The 1880 census is a high-value corroborating source: William would be ~10 years old and almost certainly still living with his parents. If the 1870 search is inconclusive, the 1880 census provides an independent path to the same parents. If the 1870 census succeeds, the 1880 census confirms the household identity and adds detail (e.g., father's and mother's birthplaces are explicitly recorded in 1880 \u2014 a field absent in 1870). This item should be executed regardless to strengthen the GPS proof.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Hamilton County, Ohio",
+          "date_range": "1869-1870",
+          "repository": "FamilySearch",
+          "rationale": "Hamilton County, Ohio registered births from 1863. William H. Ferber was born December 1869 \u2014 within the registration period. A birth registration would directly name both parents (father's name and mother's maiden name). Search FamilySearch collection 1932106 (Ohio, County Births, 1841-2003, index and images) for William Ferber born December 1869 in Hamilton County.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+          "date_range": "1865-1912",
+          "repository": "other",
+          "rationale": "Fallback for pli_004: the University of Cincinnati Libraries digitized Cincinnati Health Department birth records 1865-1912 at http://drc2.libraries.uc.edu/handle/123456789/1. These are card-index images for births registered by the city health department \u2014 a parallel registration series from the county probate court records. If the FamilySearch birth search yields nothing, this alternative repository may hold William's birth record.",
+          "fallback_for": "pli_004",
+          "status": "planned"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Cincinnati, Hamilton County, Ohio",
+          "date_range": "1903",
+          "repository": "FamilySearch",
+          "rationale": "William H. Ferber died 11 March 1903 in Cincinnati. Hamilton County death records began in 1881 and Ohio statewide registration began in 1908; however, local county records for this period exist in FamilySearch collection 2128172 (Ohio, County Death Records, 1840-2001). His death certificate, if preserved, may name his parents (an informant would likely know them \u2014 his wife Emma or son Charles). This is secondary evidence but can corroborate census findings.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T19:19:31.345Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferber",
+        "givenName": "William",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1870,
+        "residencePlace": "Hamilton, Ohio",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1870,
+        "collectionId": "1438024",
+        "collection": "United States, Census, 1870"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "Found 1 match: William Faerber (ark:/61903/1:1:M62Z-87H) in Household of Gerhardt Faerber, Cincinnati, Hamilton, Ohio. 'Faerber' is the German \u00e4-umlaut variant of 'Ferber'. Household includes father Gerhardt Faerber (b. 1822, Prussia; ark M62Z-87S; FS person GCD9-9X1) and mother Eva Faerber (b. 1832, Bavaria; ark M62Z-873; FS person G7J1-QF2). Source attachment confirms M62Z-87H is already linked to G7JB-YH6 (our subject). Siblings: Gustave (b.1857 Ohio), Jacob (b.1860 Ohio), Charles (b.1865 Ohio), Margarette (b.1867 Ohio). All born in Ohio, consistent with long-established Cincinnati family. Record passed to record-extraction."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T19:57:36.266Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Faerber",
+        "surnameAlt": "Ferber",
+        "givenName": "William",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1870,
+        "residencePlace": "Hamilton, Ohio",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "collectionId": "1417683",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "No results for William Faerber/Ferber (b. 1869-1870) in 1880 U.S. Census, Hamilton County, Ohio. At age ~10, William would appear in his father's household; the collection is indexed under the head's name. Will retry searching for Gerhardt Faerber as head of household."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T19:57:36.348Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferber",
+        "surnameAlt": "Faerber",
+        "givenName": "William",
+        "birthYearFrom": 1868,
+        "birthYearTo": 1870,
+        "collectionId": "1932106",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 64,
+      "notes": "64 results returned but all 20 examined are records for OTHER children where a man named 'William Faber/Farber/Ferber' is listed as FATHER \u2014 not William H. Ferber's own birth record. Collection indexes both child and parents; search matched on the father field. Will retry with Gerhardt Faerber as fatherGivenName/fatherSurname to find William's own birth entry."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T19:57:36.423Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferber",
+        "givenName": "William",
+        "deathYearFrom": 1902,
+        "deathYearTo": 1904,
+        "deathPlace": "Hamilton, Ohio",
+        "collectionId": "2128172",
+        "recordType": "death"
+      },
+      "outcome": "positive",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 9,
+      "notes": "Top result: 'Wm. Ferber' (ark:/61903/1:1:F66M-8JZ) \u2014 Male, birth 1870 Cincinnati Hamilton Ohio, death 11 March 1903 Cincinnati Hamilton Ohio, Married, White. Exact match for G7JB-YH6. Record ARK: ark:/61903/1:2:MXGX-5SW. Will read full record for parent names on the death certificate."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T20:06:48.022Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Faerber",
+        "surnameAlt": "Ferber",
+        "givenName": "Gerhardt",
+        "givenNameAlt": "Gerhard",
+        "residencePlace": "Hamilton, Ohio",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "collectionId": "1417683",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Second attempt: searched for Gerhardt/Gerhard Faerber/Ferber as head in 1880 U.S. Census, Hamilton County, Ohio. Still 0 results. Surname transcription in the 1880 census may differ significantly from the 1870 ae-umlaut form."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T20:06:53.124Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Ferber",
+        "givenName": "Gerhard",
+        "givenNameAlt": "Gerhardt",
+        "residencePlace": "Hamilton, Ohio",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "collectionId": "1417683",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Third attempt: standard-spelling Ferber + Gerhard/Gerhardt, 1880 census, Hamilton Ohio. Still 0 results. The family surname may be indexed under Farber, Forber, or another variant in 1880."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T20:06:56.938Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Gerhardt",
+        "fatherSurname": "Faerber",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1870,
+        "recordCountry": "United States",
+        "recordSubdivision": "Ohio",
+        "collectionId": "1932106",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Retry with Gerhardt Faerber as father, birth year 1869-1870, Ohio births collection. 0 results. William's birth record is not findable in the FamilySearch collection via father's name search. May not have been indexed, or registration may not have occurred."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-07-21T20:07:00.476Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Faerber",
+        "birthYearFrom": 1869,
+        "birthYearTo": 1870,
+        "birthPlace": "Hamilton, Ohio",
+        "collectionId": "1932106",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 74,
+      "notes": "Broader search: surname Faerber, births 1869-1870, Hamilton County Ohio. 74 results but all 20 examined are births of OTHER Faerber/Faber/Farber family children where a man named William or Jacob Faber is the father. None match William H. Ferber's birth record specifically. William's birth registration not found in this collection."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T20:13:21.048Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Faerber",
+        "collectionId": "1417683",
+        "recordPlace1": "Ohio",
+        "recordPlace2": "Hamilton",
+        "yearFrom": 1880,
+        "yearTo": 1880
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text search for '+Faerber' in 1880 census, Hamilton County, Ohio. Zero results. The surname 'Faerber' (ae-umlaut form) does not appear anywhere in the AI-transcribed 1880 census text for Hamilton County. The family may be indexed under a completely unrecognizable variant (e.g., Forber, Ferebar), or Gerhardt may have died between 1870 and 1880, or the family may have temporarily relocated. The 1880 census for this family is not recoverable through current FamilySearch search infrastructure. Marking pli_003 exhausted."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1870,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MHXJ-Y4S : accessed 21 July 2026), Household of Gerhardt Faerber and Eva Faerber, Cincinnati, Hamilton County, Ohio; Ninth Census of the United States, 1870, National Archives Microfilm Publication M593.",
+      "citation_detail": {
+        "who": "Gerhardt Faerber household (wife Eva Faerber; children Gustave, Jacob, Charles, Margarette, and William Faerber), Cincinnati, Hamilton County, Ohio",
+        "what": "1870 U.S. Federal Census (Ninth Census), population schedule",
+        "when_created": "1870",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, United States, Census, 1870, collection 1438024",
+        "where_within": "Household record ARK ark:/61903/1:2:MHXJ-Y4S; image at https://www.familysearch.org/ark:/61903/3:1:S3HY-6PC7-16X"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MHXJ-Y4S",
+      "notes": "FamilySearch indexed transcription of original 1870 U.S. Census schedule (NARA M593). Household surname transcribed as 'Faerber' \u2014 German ae-umlaut variant of 'Ferber'. Source attachments confirmed: William Faerber (M62Z-87H) linked to G7JB-YH6; Gerhardt (M62Z-87S) to FS GCD9-9X1; Eva (M62Z-873) to FS G7J1-QF2. Original image at https://www.familysearch.org/ark:/61903/3:1:S3HY-6PC7-16X.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S6"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Ohio, County Death Records, 1840-2001,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:F66M-8JZ : accessed 21 July 2026), entry for Wm. Ferber, 11 March 1903; Hamilton County, Ohio.",
+      "citation_detail": {
+        "who": "Wm. Ferber (deceased); Gerhard Ferber (father); Eva Ferber (mother)",
+        "what": "Ohio County Death Record, Hamilton County, 1903",
+        "when_created": "11 March 1903",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch, Ohio, County Death Records, 1840-2001, collection 2128172",
+        "where_within": "Record ARK ark:/61903/1:2:MXGX-5SW; image at https://www.familysearch.org/ark:/61903/3:1:S3HT-66TS-SCS"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MXGX-5SW",
+      "notes": "FamilySearch indexed transcription of Hamilton County, Ohio death record for William H. Ferber, died 11 March 1903. Record explicitly names father as 'Gerhard Ferber' and mother as 'Eva Ferber.' Citation includes both decedent and father: 'Entry for Wm. Ferber and Gerhard Ferber, 11 Mar 1903.' Image at ark:/61903/3:1:S3HT-66TS-SCS.",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S7"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380052",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Gerhardt Faerber",
+      "structured_value": {
+        "given": "Gerhardt",
+        "surname": "Faerber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Gerhardt Faerber or spouse Eva)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Adults in 1870 census typically self-reported or spouse answered. Surname 'Faerber' is the German ae-umlaut spelling of 'Ferber'.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380052",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born about 1822 (index derives birth year from stated age)",
+      "date": "1822",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1822"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Gerhardt Faerber or spouse Eva)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1870 census records stated age; birth year computed by indexer from age.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380052",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "born in Prussia",
+      "place": "Prussia",
+      "standard_place": "Prussia",
+      "structured_value": {
+        "place": "Prussia"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Gerhardt Faerber or spouse Eva)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Gerhardt born ~1822, before German unification. 'Prussia' = Kingdom of Prussia; standard place 'Prussia' (pre-1871 country form) applied.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380052",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Cincinnati, Hamilton, Ohio, United States in 1870",
+      "date": "1870",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "structured_value": {
+        "place": "Cincinnati, Hamilton, Ohio, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380053",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Eva Faerber",
+      "structured_value": {
+        "given": "Eva",
+        "surname": "Faerber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Eva Faerber or spouse Gerhardt)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380053",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born about 1832 (index derives birth year from stated age)",
+      "date": "1832",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1832"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Eva Faerber or spouse Gerhardt)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1870 census records stated age; birth year computed by indexer from age.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380053",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "born in Bavaria",
+      "place": "Bavaria",
+      "standard_place": "Bavaria, Germany",
+      "structured_value": {
+        "place": "Bavaria"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (likely Eva Faerber or spouse Gerhardt)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Eva born ~1832, before German unification. 'Bavaria' = Kingdom of Bavaria; standard place 'Bavaria, Germany' applied as closest FamilySearch standard.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380053",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Cincinnati, Hamilton, Ohio, United States in 1870",
+      "date": "1870",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "structured_value": {
+        "place": "Cincinnati, Hamilton, Ohio, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380053",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "Eva Faerber is in the household of head Gerhardt Faerber; it is inferred she is his wife (1870 census had no relationship column; inferred from household position)",
+      "structured_value": {
+        "relationship_type": "spouse_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1870 U.S. Census had no explicit relationship column. Spousal relationship inferred from listing order (Gerhardt first, Eva second, same surname, appropriate age difference).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380058",
+      "record_role": "child_5",
+      "fact_type": "name",
+      "value": "William Faerber",
+      "structured_value": {
+        "given": "William",
+        "surname": "Faerber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (parent, likely Gerhardt or Eva Faerber)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "informant_bias_notes": "William was an infant (~6 months old at census enumeration, born December 1869). Name provided by a parent. FamilySearch attachment confirms persona M62Z-87H = G7JB-YH6.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380058",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born about 1869-1870 (census index records 1870; tree records December 1869)",
+      "date": "1870",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1870"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Census records stated age; indexer computed birth year as 1870. Infant born December 1869 would be ~6 months old in June 1870. Consistent with tree birth of December 1869.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380058",
+      "record_role": "child_5",
+      "fact_type": "birth",
+      "value": "born in Ohio",
+      "place": "Ohio",
+      "standard_place": "Ohio, United States",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member (parent)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380058",
+      "record_role": "child_5",
+      "fact_type": "residence",
+      "value": "Cincinnati, Hamilton, Ohio, United States in 1870",
+      "date": "1870",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "structured_value": {
+        "place": "Cincinnati, Hamilton, Ohio, United States"
+      },
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380058",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "William Faerber is the inferred child of head-of-household Gerhardt Faerber (1870 census had no relationship column; parentage inferred from household position)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "head_of_household"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1870 census had no relationship column. Child-of-head inferred from position: youngest of five Ohio-born children in household of Prussian-born head (b. ~1822) and Bavarian-born wife (b. ~1832). Age spread consistent with Gerhardt and Eva as parents.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380058",
+      "record_role": "child_5",
+      "fact_type": "relationship",
+      "value": "William Faerber is the inferred child of Eva Faerber, wife of head Gerhardt Faerber (1870 census had no relationship column; parentage inferred from household position)",
+      "structured_value": {
+        "relationship_type": "child_inferred",
+        "related_person_role": "wife"
+      },
+      "information_quality": "indeterminate",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "1870 census had no relationship column. Maternal relationship inferred from household position \u2014 Eva Faerber is wife of head Gerhardt Faerber.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380054",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Gustave Faerber",
+      "structured_value": {
+        "given": "Gustave",
+        "surname": "Faerber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380054",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born about 1857",
+      "date": "1857",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1857"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380054",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born in Ohio",
+      "place": "Ohio",
+      "standard_place": "Ohio, United States",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380055",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Jacob Faerber",
+      "structured_value": {
+        "given": "Jacob",
+        "surname": "Faerber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380055",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born about 1860",
+      "date": "1860",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1860"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380055",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "born in Ohio",
+      "place": "Ohio",
+      "standard_place": "Ohio, United States",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380056",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Charles Faerber",
+      "structured_value": {
+        "given": "Charles",
+        "surname": "Faerber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380056",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born about 1865",
+      "date": "1865",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1865"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380056",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "born in Ohio",
+      "place": "Ohio",
+      "standard_place": "Ohio, United States",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380057",
+      "record_role": "child_4",
+      "fact_type": "name",
+      "value": "Margarette Faerber",
+      "structured_value": {
+        "given": "Margarette",
+        "surname": "Faerber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380057",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born about 1867",
+      "date": "1867",
+      "date_certainty": "estimated",
+      "structured_value": {
+        "year": "1867"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:M62Z-87H",
+      "record_persona_id": "p_332380057",
+      "record_role": "child_4",
+      "fact_type": "birth",
+      "value": "born in Ohio",
+      "place": "Ohio",
+      "standard_place": "Ohio, United States",
+      "structured_value": {
+        "place": "Ohio"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Wm. Ferber",
+      "structured_value": {
+        "given": "Wm.",
+        "surname": "Ferber"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown (likely wife Emma Ferber or attending physician)",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "1903 Ohio death certificate. Informant not identified on this indexed record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "born 1870, Cincinnati, Hamilton, Ohio",
+      "date": "1870",
+      "date_certainty": "estimated",
+      "place": "Cinti., Ham., O.",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "structured_value": {
+        "year": "1870",
+        "place": "Cincinnati, Hamilton, Ohio"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown (likely wife Emma Ferber)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth in December 1869; informant reporting 33 years after the event. Consistent with December 1869 birth date. Secondary regardless of informant identity.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440420",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 11 March 1903, Cincinnati, Hamilton, Ohio",
+      "date": "11 March 1903",
+      "date_certainty": "exact",
+      "place": "Cincinnati, Hamilton, Ohio, United States",
+      "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+      "structured_value": {
+        "date": "11 March 1903",
+        "place": "Cincinnati, Hamilton, Ohio"
+      },
+      "information_quality": "primary",
+      "informant": "unknown (likely attending physician or registrar)",
+      "informant_proximity": "witness",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Death date recorded by an official at or near the event. Primary for death facts; indirect for parentage question q_001.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440421",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Gerhard Ferber",
+      "structured_value": {
+        "given": "Gerhard",
+        "surname": "Ferber"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown (likely wife Emma Ferber)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Father's name on 1903 death certificate. Informant reporting from family knowledge. Secondary \u2014 did not witness William's birth. Spelling 'Gerhard Ferber' vs. 'Gerhardt Faerber' (1870 census): German name normalization and ae-umlaut Anglicization over 33 years.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440421",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "Gerhard Ferber explicitly listed as father of Wm. Ferber on Hamilton County, Ohio death certificate, 11 March 1903",
+      "structured_value": {
+        "relationship_type": "father",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown (likely wife Emma Ferber)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Certificate names the father, but the parentage is reported secondhand by an informant (likely the widow) who did not witness William's birth, so under the skill's death-certificate rule it is indirect evidence for parentage \u2014 relationship explicitly stated.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440422",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Eva Ferber",
+      "structured_value": {
+        "given": "Eva",
+        "surname": "Ferber"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown (likely wife Emma Ferber)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Mother's name on 1903 death certificate. Informant reporting from family knowledge. Secondary. Given name 'Eva' matches exactly with 1870 census. Surname normalized from 'Faerber' to 'Ferber' over 33 years.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:F66M-8JZ",
+      "record_persona_id": "p_11261440422",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "Eva Ferber explicitly listed as mother of Wm. Ferber on Hamilton County, Ohio death certificate, 11 March 1903",
+      "structured_value": {
+        "relationship_type": "mother",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown (likely wife Emma Ferber)",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Certificate names the mother, but the parentage is reported secondhand by an informant (likely the widow) who did not witness William's birth, so under the skill's death-certificate rule it is indirect evidence for parentage even when stated outright.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census, Cincinnati, Hamilton County, Ohio: head of household listed as 'Gerhardt Faerber,' male, born ~1822 in Prussia. Person I1 (Gerhardt Faerber stub) was created from this record as the likely father of William H. Ferber (G7JB-YH6). Name, sex, birth year, and residence are consistent. FamilySearch source attachment links census persona M62Z-87S to FS person GCD9-9X1 (not yet in local tree). Single-record basis; probable per stub-creation policy.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: head's birth year ~1822 (from stated age). Consistent with I1 (Gerhardt Faerber stub, b. ~1822). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: head's birthplace 'Prussia.' Consistent with I1 (Gerhardt Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: head's residence Cincinnati, Hamilton County, Ohio in 1870. Consistent with I1 (Gerhardt Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census, Cincinnati, Hamilton County, Ohio: wife listed as 'Eva Faerber,' female, born ~1832 in Bavaria. Person I2 (Eva Faerber stub) was created from this record as the likely mother of William H. Ferber. FamilySearch source attachment links census persona M62Z-873 to FS person G7J1-QF2 (not yet in local tree). Single-record basis; probable per stub-creation policy.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: wife's birth year ~1832 (from stated age). Consistent with I2 (Eva Faerber stub, b. ~1832). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: wife's birthplace 'Bavaria.' Consistent with I2 (Eva Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: wife's residence Cincinnati, Hamilton County, Ohio in 1870. Consistent with I2 (Eva Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: Eva Faerber listed as wife of head Gerhardt Faerber \u2014 inferred spousal relationship (pre-1880 census, no relationship column). Consistent with I2 (Eva Faerber stub) as Gerhardt's wife. Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1870 U.S. Census, Cincinnati, Hamilton County, Ohio: child_5 listed as 'William Faerber,' male, born ~December 1869 in Ohio. Matches G7JB-YH6 on name (Faerber/Ferber are ae-umlaut variants), sex (male), birth year (December 1869), birthplace (Ohio), and residence (Cincinnati). FamilySearch source attachment independently confirms persona M62Z-87H is already linked to G7JB-YH6 in the FamilySearch tree \u2014 a corroborating second line of evidence. Strong match on all core identifiers.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_5 birth year ~1869-1870. Consistent with G7JB-YH6 (born December 1869). FS source attachment confirms identity.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_5 birthplace Ohio. Matches G7JB-YH6 (born Ohio). FS source attachment confirms identity.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_013",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_5 residence Cincinnati, Hamilton County, Ohio. Matches G7JB-YH6 tree record (residence Cincinnati, Hamilton, Ohio, 1870). FS source attachment confirms identity.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_014",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: relationship assertion \u2014 William Faerber (child_5) inferred as child of head Gerhardt Faerber. Child side of this assertion links to G7JB-YH6 (William H. Ferber). Pre-1880 census; relationship inferred from household position. FS source attachment confirms child_5 persona is G7JB-YH6.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: relationship assertion \u2014 William Faerber (child_5) inferred as child of head Gerhardt Faerber. Parent side of this assertion links to I1 (Gerhardt Faerber). This assertion directly bears on Gerhardt as the implied paternal parent of William H. Ferber (G7JB-YH6). Pre-1880 census; relationship inferred from household position, not an explicit column. Probable (single-record basis, stub).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: relationship assertion \u2014 William Faerber (child_5) inferred as child of wife Eva Faerber. Child side of this assertion links to G7JB-YH6 (William H. Ferber). FS source attachment confirms child_5 persona is G7JB-YH6.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: relationship assertion \u2014 William Faerber (child_5) inferred as child of wife Eva Faerber. Parent side of this assertion links to I2 (Eva Faerber). This assertion directly bears on Eva as the implied maternal parent of William H. Ferber (G7JB-YH6). Pre-1880 census; relationship inferred from household position. Probable (single-record basis, stub).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_1 listed as 'Gustave Faerber,' male, born ~1857 in Ohio. Person I3 (Gustave Faerber stub) was created from this record as William H. Ferber's eldest sibling in the Faerber household. Single-record basis; probable per stub-creation policy.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_1 birth year ~1857. Consistent with I3 (Gustave Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_1 birthplace Ohio. Consistent with I3 (Gustave Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_2 listed as 'Jacob Faerber,' male, born ~1860 in Ohio. Person I4 (Jacob Faerber stub) was created from this record as William H. Ferber's sibling. Single-record basis; probable per stub-creation policy.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_2 birth year ~1860. Consistent with I4 (Jacob Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "I4",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_2 birthplace Ohio. Consistent with I4 (Jacob Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_022",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_3 listed as 'Charles Faerber,' male, born ~1865 in Ohio. Person I5 (Charles Faerber stub) was created from this record. Distinct from G7JB-Y46 (Charles Hubert Ferber, William's son, born 22 June 1891 \u2014 26 years later). I5 is a sibling of William H. Ferber. Single-record basis; probable per stub-creation policy.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_023",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_3 birth year ~1865. Consistent with I5 (Charles Faerber stub, sibling, b.~1865). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_024",
+      "person_id": "I5",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_3 birthplace Ohio. Consistent with I5 (Charles Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_025",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_4 listed as 'Margarette Faerber,' female, born ~1867 in Ohio. Person I6 (Margarette Faerber stub) was created from this record as William H. Ferber's sibling. Single-record basis; probable per stub-creation policy.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_026",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_4 birth year ~1867. Consistent with I6 (Margarette Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_027",
+      "person_id": "I6",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "1870 U.S. Census: child_4 birthplace Ohio. Consistent with I6 (Margarette Faerber stub). Single-record basis.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_028",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1903 Ohio County Death Record: deceased listed as 'Wm. Ferber,' Male, birth 1870 Cincinnati, death 11 March 1903 Cincinnati. All identifiers match G7JB-YH6 exactly: name (Wm. Ferber = William H. Ferber), birth year (1870 consistent with December 1869), birthplace (Cincinnati, Hamilton, Ohio), death date (11 March 1903 \u2014 exact match with tree), death place (Cincinnati, Hamilton, Ohio). Strong match on all core identifiers.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_029",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1903 death cert: birth year 1870, birthplace Cincinnati, Hamilton, Ohio. Consistent with G7JB-YH6 (born December 1869, Ohio). Strong match.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_030",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1903 death cert: death date 11 March 1903, Cincinnati, Hamilton, Ohio. Exact match with G7JB-YH6 tree data. Strong match.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_031",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1903 death cert names father as 'Gerhard Ferber.' Matches I1 (Gerhardt Faerber stub) with high confidence: given name Gerhard/Gerhardt (minor variant \u2014 terminal 't' is a German hypocoristic ending), surname Ferber/Faerber (ae-umlaut normalized over 33 years), role as father of William H. Ferber confirmed by BOTH the 1870 census (indirect) and this 1903 death certificate (indirect). Two independent sources now converge on the same person: confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_032",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death cert relationship assertion: William H. Ferber (Wm. Ferber) is the child whose parents are named. Child side links to G7JB-YH6. Identity confirmed by exact death date/place match.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_032",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death cert explicitly names 'Gerhard Ferber' as father of Wm. Ferber. Parent side of this assertion links to I1 (Gerhardt/Gerhard Faerber/Ferber). Two independent sources (1870 census indirect, 1903 death cert indirect) agree on Gerhard/Gerhardt Faerber/Ferber as William's father. Confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_033",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "1903 death cert names mother as 'Eva Ferber.' Matches I2 (Eva Faerber stub): given name 'Eva' exact match, surname Ferber/Faerber (ae-umlaut normalized), role as mother of William H. Ferber confirmed by BOTH the 1870 census (Eva Faerber, wife) and this death certificate. Two independent sources converge: confident.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_034",
+      "person_id": "G7JB-YH6",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death cert relationship assertion: Eva Ferber listed as mother of Wm. Ferber. Child side links to G7JB-YH6. Identity confirmed by exact death date/place match.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_034",
+      "person_id": "I2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death cert explicitly names 'Eva Ferber' as mother of Wm. Ferber. Parent side of this assertion links to I2 (Eva Faerber/Ferber stub). Two independent sources (1870 census, 1903 death cert) agree on Eva Faerber/Ferber as William's mother. Confident.",
+      "created": "2026-07-21"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

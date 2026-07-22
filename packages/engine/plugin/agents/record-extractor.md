@@ -335,6 +335,25 @@ parent-child links are always inferred: `relationship_type:
 "spouse_inferred"`, `"child_inferred"`, `"parent_inferred"`, never the
 bare `"spouse"`/`"child"`.
 
+**Sex is a non-fact assertion — emit one for EVERY persona whose sex the
+record states.** A persona's sex (the census **Sex** column, a birth or
+death certificate's sex field) is an identity attribute, not an event
+fact: emit it as `fact_type: "sex"`, `value` the stated term
+(`"Male"`/`"Female"`; a bare `"M"`/`"F"` is fine), with no `date`,
+`place`, or `structured_value`. Emit it for the record subject **and
+every co-resident / household member** — one per person, exactly as you
+emit each persona's `name` assertion — never only for the head or
+searched persona and then dropped for the rest (setting it on the first
+persona alone is the known failure mode, the same trap called out for
+`record_persona_id`). It matters because `materialize_facts` reads a
+persona's `sex`/`gender` assertions to set the gender of any tree person
+it mints — omit it and every household member, spouse, or relative that
+person-evidence later mints from this record is silently created
+`gender: "Unknown"`, even when the record states the sex plainly.
+Classify it with the same three layers as that persona's `name` assertion
+on this record (same informant and proximity; `direct` where the record
+states it outright).
+
 **`standard_place`** — leave it out: `extraction_append` resolves it at
 persist time (sidecar copy first, else geocoding) and echoes every
 resolution in `resolvedPlaces` — sanity-check those. Supply a value only
@@ -426,7 +445,12 @@ the "who answered" record that would justify it.
 **Death certificate informants** — typically three, classified by fact:
 - **Attending physician:** informant for death date, death place, cause,
   duration of illness. Proximity `official_duty` — the medical
-  certification is the physician's attestation.
+  certification is the physician's attestation. **Duration of last
+  illness is part of the physician's cause-of-death certification, not a
+  separate claim by the personal informant** — fold it into the
+  `cause_of_death` assertion's `value` rather than minting a second
+  `cause_of_death` assertion, and never attribute it to the family
+  informant at `family_not_present`.
 - **Personal informant** (named on the cert, often spouse or family):
   informant for the decedent's biographical facts — name, **age**, birth
   date/place, parents' names, **occupation**, and **marital status** —
@@ -527,12 +551,30 @@ rule above), **both** are `indirect` — never one `direct` + one
 `indirect`. If you catch yourself marking any pre-1880 household
 relationship `direct`, that is the error.
 
-**Subject-identifying name stays `direct` — hard rule.** A subject's
-`name` assertion is `direct` for where/when questions about that subject
-— finding the subject in a dated, located record answers directly. A
-null/empty `place` on the name assertion is expected (location lives on
-sibling residence/event assertions) and is never grounds to classify or
-re-classify it `indirect`.
+**Subject-identifying name stays `direct` — hard rule.** The **record
+subject's** `name` assertion is `direct` for where/when questions about
+that subject — finding the subject in a dated, located record answers
+directly. A null/empty `place` on the name assertion is expected
+(location lives on sibling residence/event assertions) and is never
+grounds to classify or re-classify it `indirect`.
+
+**Scope — `name` assertions only, and only the record subject's.** Two
+misreadings to avoid, in both directions:
+
+- **Do not extend it to a third party named _by_ an informant.** A
+  decedent's parents on a death certificate are named by the personal
+  informant relaying secondhand knowledge, so their `name` assertions are
+  `indirect` — same as their birthplaces, and for the same reason (the
+  informant-knowledge test above). Marking a `father_of_deceased` or
+  `mother_of_deceased` name `direct` because "a name assertion is always
+  direct" is one error this paragraph exists to prevent.
+- **Do not extend it to the subject's _other_ facts.** Being the record
+  subject makes the subject's `name` direct; it does nothing for their
+  age, birth date, birthplace, or parents. On a death certificate those
+  are still `indirect` whenever a third-party informant is relaying them
+  — the informant-knowledge test governs, not record-subject status.
+  Marking a decedent's stated `age` `direct` "because the certificate is
+  about them" is the other error.
 
 **Evidence independence (GPS Standard 4):** when two or more assertions
 share the SAME informant — even across different sources — they form one
@@ -623,6 +665,14 @@ the ops named in `errors` (`ops[i]: …`), keep the rest identical, and
 resubmit the whole batch. **Check `opsReceived` against the op count you
 sent** — fewer means the batch arrived truncated; resend it whole. Never
 retry blindly and never drop unnamed ops.
+
+**Correcting an already-persisted assertion** — a typo you catch after a
+successful write — is a follow-up call with
+`{ section: "assertions", op: "update", entryId: "a_002", fields: { … } }`.
+The values in `fields` are the **same scalar shapes as on append**: `date`
+is a plain string (`"2021-03-14"`) or `null`, never an object — do not
+invent a `{ value, iso }` wrapper. An id created in the current batch
+cannot be updated in that same batch; make the correction in the next call.
 
 **No post-write re-validation.** The writer tools validate-on-write and
 keep a one-deep `.bak`; a successful return is proof the write is valid.

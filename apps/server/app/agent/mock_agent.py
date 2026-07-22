@@ -80,6 +80,11 @@ class MockAgent:
     def _write_research(self, data: dict) -> None:
         (self.dir / "research.json").write_text(json.dumps(data, indent=2))
 
+    async def interrupt(self) -> bool:
+        """The scripted mock has no external call to abort — it cannot self-stop,
+        so it returns False and the runner cancels the turn task instead."""
+        return False
+
     # ── turn handling ────────────────────────────────────────────
     async def handle_turn(self, text: str) -> AsyncIterator[dict]:
         phase = self.state["phase"]

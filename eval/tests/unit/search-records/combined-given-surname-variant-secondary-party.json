@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_search_records_023",
+    "skill": "search-records",
+    "name": "Vary a secondary party's given name AND surname together, not just the already-fixed given name alone",
+    "type": "positive",
+    "description": "Modeled on a real 2026-07-21 e2e re-run of the anders-monsen-ancestry fixture. The skill correctly retried the bride's given name with spelling variants (Unna -> Urna/Una, the ut_search_records_022 fix) and correctly fell back to a principal-only search when the secondary name was exhausted -- but never tried the collection's other documented quirk: the same index abbreviates her surname to 'Halsteinsdr' (not 'Halsteinsdatter'), and references/collection-quirks.md explicitly says to vary the given name and surname TOGETHER in the same call. The live run never set surname to anything but 'Halsteinsdatter' across 24 record_search calls, so it never recovered the marriage record.",
+    "tags": ["search", "marriage", "name-variation", "surname", "norway", "secondary-party", "regression", "collection-quirks"]
+  },
+
+  "input": {
+    "user_message": "Execute plan item pli_001 — search FamilySearch collection 1468080 ('Norway, Marriages, 1660-1926') for the marriage of Unna Halsteinsdatter (KZHH-VTX, b. May 1745, Hestdal, Meland, Hordaland), using her as the search principal.",
+    "scenario": "anders-unna-marriage-search",
+    "scenario_notes": null
+  },
+
+  "mcp_fixtures": [
+    "record-search-urna-halsteinsdr-marriage-match",
+    "record-search-surname-not-abbreviated-zero-results",
+    "rank-search-matches-anders-unna-marriage"
+  ],
+
+  "judge_context": [
+    "Ground truth: the real marriage record indexes the bride as 'Urna Halsteinsdr' -- both the given name AND the surname are transcription-abbreviated from the tree's 'Unna Halsteinsdatter'. references/collection-quirks.md (Norway section) documents both quirks and instructs varying the given name and surname TOGETHER in the same record_search call, not one at a time across separate calls.",
+    "The mock is rigged so that ONLY a call with surname exactly 'Halsteinsdr' returns the positive match, regardless of which given-name spelling is used in the same call; every other combination -- the original spelling, a given-name-only variant with surname still 'Halsteinsdatter', a principal-only search with no surname filter, or any other query shape -- returns zero results. This means the ONLY way to recover the record is a record_search call with surname: 'Halsteinsdr', proving the skill tried the collection-specific surname abbreviation, not just the already-fixed given-name variant.",
+    "CRITICAL for Correctness: score 1 if the skill retries the given name (e.g. Unna -> Urna) and/or drops filters entirely for a principal-only fallback, but never once sets surname to anything other than 'Halsteinsdatter' or omits it. This reproduces the actual 2026-07-21 e2e miss: the skill correctly applied the given-name-variant fix and the principal-only fallback, and still failed, because it never opened references/collection-quirks.md for this collection's surname-abbreviation note.",
+    "Score 3 if at least one record_search call sets surname to 'Halsteinsdr' (or another letter-level abbreviation of 'Halsteinsdatter', e.g. dropping '-atter') and recovers and correctly attributes the positive match to Anders Monsen (LKFW-9XH) / Unna Halsteinsdatter (KZHH-VTX). Score 2 if the skill stumbles onto the record without a deliberate surname-abbreviation attempt (e.g. by dropping every filter until only collectionId remains and eyeballing an unfiltered dump) -- this technically finds the record but doesn't demonstrate reading and applying the collection-specific reference.",
+    "Tool Arguments: expect a record_search call against collectionId '1468080' whose surname is a letter-level variant of 'Halsteinsdatter' (not the exact string and not merely absent), followed by rank_search_matches with subjectId 'LKFW-9XH'.",
+    "This test isolates the surname half of the same collection-quirks.md 'vary both together' instruction that ut_search_records_022 isolates for the given-name half. Passing 022 does not imply passing this test -- a skill that only ever varies the given name will fail here even though it now passes 022. Do not treat a call that varies ONLY the given name as satisfying this test's ground truth, however many such calls are made.",
+    "Log quality: the negative surname-unvaried attempts and the eventual surname-abbreviated attempt should each produce their own research_log_append entry, not be collapsed into one."
+  ]
+}

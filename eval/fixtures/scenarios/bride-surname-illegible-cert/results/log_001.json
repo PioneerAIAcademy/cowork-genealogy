@@ -1,0 +1,62 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-06-01T09:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Doyle",
+      "givenName": "Michael",
+      "recordType": "marriage",
+      "recordCountry": "United States"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "MDOYLE-1889",
+        "personName": "Michael Doyle",
+        "score": 0.94,
+        "sex": "Male",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MDOYLE-1889",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:MDOYLE-1889",
+        "collectionId": "1803956",
+        "collectionTitle": "Iowa, County Marriages, 1838-1934",
+        "recordTitle": "Michael Doyle and Ellen [surname illegible], 12 June 1889",
+        "treeMatches": [],
+        "primaryId": "GP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "GP1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Michael", "surname": "Doyle", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Marriage", "date": "1889-06-12", "place": "Dubuque, Dubuque County, Iowa, United States" }
+              ]
+            },
+            {
+              "id": "BP1",
+              "gender": "Female",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Ellen", "surname": "[?]", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F2", "type": "Marriage", "date": "1889-06-12", "place": "Dubuque, Dubuque County, Iowa, United States" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "GP1", "person2": "BP1" }
+          ]
+        }
+      }
+    ]
+  }
+}

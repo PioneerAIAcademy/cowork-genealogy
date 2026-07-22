@@ -3,19 +3,19 @@ name: person-evidence
 model: claude-sonnet-4-6
 description: >-
   Links assertions to GedcomX persons — identity resolution. Evaluates whether
-  a record's person is the same as a GedcomX person, creates person_evidence
-  entries with confidence and rationale, and creates stub persons when none
-  match. Also reviews and audits existing person_evidence links. GPS Step 3 —
+  a record's person matches a tree person, creates person_evidence entries with
+  confidence and rationale, and creates stub persons when none match. Also
+  reviews/audits existing person_evidence links, and builds out a record's
+  household skeleton in the tree from extracted assertions. GPS Step 3 —
   Analysis and Correlation. Use when the user says "is this the same person?",
-  "link this to [person]", "link all roles in this record", "review/confirm
-  this identity link", "audit the person_evidence entries", after assertions
-  are extracted and need person assignment, or to evaluate whether two records
-  refer to the same individual using records already in hand — never searching
-  for new ones. Do NOT use to find or gather more records, including to
-  confirm or disprove an identity (use search-records); to extract assertions
-  (use record-extraction); to resolve a genuine conflict where multiple
-  candidates compete (use conflict-resolution); or to merge
-  confirmed-identical persons (use tree-edit after proof-conclusion).
+  "link this to [person]", "link all roles in this record", "build out this
+  household in the tree", "audit the person_evidence entries", after assertions
+  are extracted and need person assignment, or evaluate whether two records are
+  the same individual using records in hand — never searching new ones. Do NOT
+  use to find or gather more records (use search-records); extract assertions
+  (use record-extraction); resolve a conflict where multiple candidates compete
+  (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
+  after proof-conclusion).
 allowed-tools:
   - research_append
   - tree_edit
@@ -621,8 +621,16 @@ When multiple candidates share the same name in the same area:
 - **Rationale is mandatory.** Every link must explain WHY. "Name
   matches" is insufficient — include age, place, household context,
   relationship fit.
-- **Relationship assertions link to multiple persons.** Always
-  create links for both parties in a relationship assertion.
+- **Relationship assertions link to multiple persons — but "link" means
+  the `pe_` entries, not a tree relationship.** Create a `pe_` link for
+  each party a relationship assertion names (a marriage record → one `pe_`
+  for each spouse; a will naming an heir → one for the testator and one for
+  the heir). Do **not** create the `Couple`/`ParentChild` relationship
+  itself, and do **not** write the couple-event fact (Marriage, Divorce)
+  here — person-evidence owns stub `persons` and `pe_` links only. The
+  relationship and its facts are written later by proof-conclusion →
+  tree-edit, which own the `relationships` section (see also "proof-conclusion
+  populates them later" under stub creation).
 
 ## Re-invocation behavior
 

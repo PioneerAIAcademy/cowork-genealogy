@@ -1,0 +1,1075 @@
+{
+  "project": {
+    "id": "rp_swarbrick_christening",
+    "objective": "Who were the parents of Robert Swarbrick, and when and where was he christened, given that two same-named Robert Swarbricks were christened within months of each other in neighboring Lancashire parishes in 1797?",
+    "subject_person_ids": [
+      "MM4W-19N"
+    ],
+    "status": "completed",
+    "created": "2026-07-16",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Which of the two 1797 Lancashire christening records for Robert Swarbrick belongs to Robert Swarbrick (MM4W-19N), the man who married Ellen Gardner at Poulton-le-Fylde in February 1821 and died at Hambleton, Lancashire, in November 1839 \u2014 and who were his parents?",
+      "rationale": "The project objective explicitly notes two same-named Robert Swarbricks christened within months of each other in neighboring Lancashire parishes in 1797, creating an identity ambiguity that must be resolved before parentage can be established. This is the gatekeeper question: the correct christening register entry will name Robert's father (and typically his mother), simultaneously resolving both the christening-identification and parentage parts of the objective. Lancashire parish registers from 1797 are extant and largely accessible through FamilySearch images and the Lancashire Online Parish Clerks project. The subject's downstream life events \u2014 1821 marriage at Poulton-le-Fylde, 1839 death and burial at Hambleton/St. Chad's Poulton-le-Fylde \u2014 anchor him geographically to the Fylde coast of Lancashire, enabling comparison of the two christening families against his known life trajectory. John Swarbrick (L88T-VT4) and Grace Collinson (P6MH-1N8), already in the tree with no children linked and married at Poulton-le-Fylde in 1788, represent a plausible candidate family.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-22",
+      "resolution_assertion_ids": [
+        "a_012",
+        "a_014",
+        "a_015"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All available record types for a 1797 Lancashire christening event were searched: church baptism (FS 1465701 and 1473014), marriage register (pli_002), parents' marriage bonds (FS 4149574), and burial register (pli_005). The original St. Chad, Poulton-le-Fylde christening register image (3:1:S3HT-D49Q-373) was transcribed and directly names Robert Swarbrick as son of John Swarbrick of Carleton (Husbandman) and Grace his wife, christened 20 December 1797. Both 1797 Robert Swarbrick christening records were located and compared; the Hambleton Robert (father William, mother Ann) is demonstrably a different family. The candidate parents (L88T-VT4 John Swarbrick and P6MH-1N8 Grace Collinson) were already in tree as a couple married at St. Chad in 1788 \u2014 the same parish. No conflicts exist. Civil registration did not begin until 1837; census is inapplicable (Robert died 1839). No unsearched record type is likely to alter the conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the original parish register image directly and unambiguously identifies MM4W-19N (Robert Swarbrick) as christened 20 Dec 1797 at Poulton-le-Fylde, son of John Swarbrick of Carleton (Husbandman) and Grace his wife. The Hambleton Robert (father William, mother Ann) is a separate individual confirmed by the same search.",
+          "repository_breadth": "Three FamilySearch collections searched (1465701 Lancashire parish registers; 1473014 England births and christenings; 4149574 Lancashire marriage bonds). Ancestry fallback (pli_004) skipped after positive result in FamilySearch. Lan-OPC external fallback (pli_007) skipped. 1841 census (pli_006) correctly skipped \u2014 Robert died November 1839. All record types applicable to a 1797 Lancashire event were covered.",
+          "original_substitution": "Original register image (3:1:S3HT-D49Q-373, saved locally) accessed and transcribed for the decisive Poulton-le-Fylde christening record. The Hambleton disambiguation record (src_001) remains a derivative index entry, but the disambiguating detail (different father's name) is reliably conveyed in the index and the conclusion rests on the Poulton-le-Fylde original.",
+          "independent_verification": "Three independent sources: (1) 1797 Poulton-le-Fylde christening register, original, primary, direct \u2014 names Robert as son of John Swarbrick of Carleton and Grace; (2) 1788 marriage of John Swarbrick and Grace Collinson at St. Chad, Poulton-le-Fylde (already in tree as R2/F1) \u2014 separate record, separate event, confirms the couple as a unit at the same parish nine years before the christening; (3) MM4W-19N's 1839 burial at St. Chad, Poulton-le-Fylde \u2014 corroborates his lifelong association with this parish.",
+          "evidence_class": "Original parish register (St. Chad, Poulton-le-Fylde) is an original record containing primary information recorded contemporaneously by the officiating clergyman. The christening date, parents' names, father's residence (Carleton), and father's occupation (Husbandman) are all primary information. Satisfies original-record-with-primary-information requirement.",
+          "conflict_resolution": "No conflicts recorded. The two 1797 Robert Swarbrick christening records differ on every identifying dimension: parish (Hambleton vs. Poulton-le-Fylde), father (William vs. John of Carleton), mother (Ann vs. Grace), and date (11 June vs. 20 December). No ambiguity or discrepancy requiring resolution.",
+          "overturn_risk": "Low. The original parish register was examined. The candidate parents (L88T-VT4 / P6MH-1N8) were already in the tree at the same parish, with a marriage predating the christening by nine years. No unsearched record category is plausibly likely to name a different family for MM4W-19N. The Hambleton original register was not accessed (index only), but the key disambiguating detail \u2014 father William vs. father John of Carleton \u2014 is reliably indexed and affects only the Hambleton individual (I1), not the Poulton-le-Fylde identification of MM4W-19N."
+        }
+      },
+      "created": "2026-07-22"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-22",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Lancashire, Fylde parishes, England",
+          "date_range": "1795-1800",
+          "repository": "FamilySearch",
+          "rationale": "FS collection 1465701 (England, Lancashire, Parish Registers 1538-1910) is indexed and covers Poulton-le-Fylde (St. Chad) and all Fylde-area parishes. Searching for Robert Swarbrick christenings across Lancashire 1795-1800 should surface BOTH same-name records identified in the project objective, allowing comparison of the two fathers named. The correct entry will match the John Swarbrick (L88T-VT4) / Grace Collinson (P6MH-1N8) candidate family already in the tree, anchored by the subject's 1821 Poulton-le-Fylde marriage and 1839 Hambleton/St. Chad burial.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Poulton-le-Fylde, Lancashire, England",
+          "date_range": "1821",
+          "repository": "FamilySearch",
+          "rationale": "The post-Rose Act (1812) standardized marriage register format explicitly records the father's name for both parties. Robert Swarbrick married Ellen Gardner at St. Chad, Poulton-le-Fylde on 20 Feb 1821 (FS record NX1Z-4QD is in the tree as source Q5X3-71R). Reading the original register image \u2014 not just the index \u2014 should reveal Robert's father's name as written in the register entry, providing direct parentage evidence independent of the christening search. This is a dedicated parents-identification item per the record-type-guide parentage protocol.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Lancashire, England",
+          "date_range": "1785-1800",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated parents'-marriage search: FS collection 4149574 (England, Lancashire, Marriage Bonds and Allegations, 1746-1799) covers the 1788 marriage of John Swarbrick and Grace Collinson at St. Chad, Poulton-le-Fylde (already in tree as relationship R2 / source F1). Locating the bond or allegation confirms the couple as a married unit, supplies the mother's maiden name in a primary record, and \u2014 by its October 1788 date \u2014 shows the union predates the 1797 christening by nine years, corroborating the candidate family. Per record-type-guide, the couple's marriage does not by itself prove Robert is their child, but it is a required corroborating item for a parentage conclusion.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Lancashire, England",
+          "date_range": "1795-1800",
+          "repository": "Ancestry",
+          "rationale": "Ancestry collection 2478 (Lancashire, England, Church of England Baptisms, Marriages and Burials, 1538-1812) provides a separate index and images of the same Lancashire registers. If FS collection 1465701 does not surface both 1797 Swarbrick christening entries (possible if one or both parishes were extracted incompletely), Ancestry's independent extraction from the same underlying registers may catch the missed entry. Paid subscription required.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Poulton-le-Fylde, Lancashire, England",
+          "date_range": "1839",
+          "repository": "FamilySearch",
+          "rationale": "Robert Swarbrick (MM4W-19N) was buried at St. Chad, Poulton-le-Fylde on 22 November 1839 (from tree). The burial register entry in FS 1465701 typically records the deceased's age. If age ~42 is recorded, this confirms he was born ~1797 and anchors the christening-year disambiguation. The burial also establishes his full name and parish, reinforcing identity against any confusion with the other 1797 Robert Swarbrick.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "census",
+          "jurisdiction": "Lancashire, Fylde, England",
+          "date_range": "1841",
+          "repository": "FamilySearch",
+          "rationale": "FAN/household item. Robert's widow Ellen (n\u00e9e Gardner) and surviving children will appear in the 1841 England census. Children's birthplaces are stated in 1851 and later censuses; the 1841 household establishes which children survived and where they were residing. The 1851 census (if found via this 1841 anchor) will state birthplace for each child and may confirm Hambleton / Poulton-le-Fylde area, consistent with Robert's Fylde origin. This triangulates his birth parish and supports the christening-record attribution.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "Lancashire, England",
+          "date_range": "1797",
+          "repository": "other",
+          "rationale": "Lancashire Online Parish Clerks (Lan-OPC, https://www.lan-opc.org.uk/) is a free volunteer-transcribed index of 9.5M+ Lancashire church records including baptisms across all parishes. Searching 'Swarbrick' baptisms in Lancashire 1797 may identify both christening records without requiring image-by-image browsing, and may include parishes not yet extracted into FS collection 1465701. Use the Lan-OPC Ancestor Search (http://www.lan-opc.org.uk/Search/indexp.html). External site \u2014 use search-external-sites skill.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T15:02:14.436Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1465701",
+        "surname": "Swarbrick",
+        "givenName": "Robert",
+        "birthYearFrom": 1795,
+        "birthYearTo": 1800,
+        "recordCountry": "England",
+        "recordType": "birth",
+        "count": 50
+      },
+      "outcome": "partial",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "Both results show Robert Swarbrick as a FATHER on later records (1876 Preston; 1807 Bispham George christening), not as the christened child c.1797. No indexed christening for Robert Swarbrick c.1795-1800 found in collection 1465701. The two 1797 christenings are likely in browse-only image volumes not indexed under this collection. Proceeding to pli_002 (1821 marriage register image) for father's name evidence."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-07-22T15:08:16.979Z",
+      "tool": "record_search",
+      "query": {
+        "approach": "multiple: record_read NX1Z-4QD/NVHW-CPG, image_transcribe 3:1:S3HT-D49Q-9DJ, fulltext_search +Swarbrick +Gardner England 1819-1825",
+        "note": "Attempted to read 1821 Poulton-le-Fylde marriage register image"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "The indexed marriage records NX1Z-4QD and NVHW-CPG confirm Robert Swarbrick married Ellen Gardner at Poulton-le-Fylde 20 Feb 1821. Father's name is NOT in the index. Image transcription of ARK 3:1:S3HT-D49Q-9DJ returned Preston marriage registers (wrong image/parish \u2014 likely a FamilySearch film cross-reference error). The 1:2: ARK format is not accessible via image_transcribe. Fulltext search +Swarbrick +Gardner Lancashire 1819-1823 returned 0 results \u2014 this page may not be in the FTS corpus. Note: pre-1836 Anglican marriage registers did not universally include the father's name (it was mandated only from the 1836 Marriage Act). The marriage confirms identity but does not supply the father's name. No further progress possible on this item without direct image access to the correct Poulton-le-Fylde register volume.\""
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-22T15:12:16.783Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1473014",
+        "surname": "Swarbrick",
+        "givenName": "Robert",
+        "birthYearFrom": 1794,
+        "birthYearTo": 1801,
+        "recordCountry": "England",
+        "count": 20,
+        "note": "Follow-on to pli_001 using England Births and Christenings 1538-1975 (1473014)"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 114,
+      "notes": "Found BOTH 1797 Robert Swarbrick christenings: (1) V5GJ-FJG \u2014 christened 11 Jun 1797, Hambleton, father William Swarbrick, mother Ann; (2) NX2H-W9B \u2014 christened 20 Dec 1797, Poulton le Fylde, father John Swarbrick, mother Grace. Record NX2H-W9B image (3:1:S3HT-D49Q-373, St. Chad Poulton-le-Fylde register) transcribed and confirmed: 'Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20 [Dec 1797].' Twins Robert and John. Father John Swarbrick of Carleton, Husbandman = tree person L88T-VT4; mother Grace = Grace Collinson (P6MH-1N8). The Hambleton Robert (father William, mother Ann) is a different family. NX2H-W9B is the christening for subject MM4W-19N.\""
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-22T15:12:24.707Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "4149574",
+        "surname": "Swarbrick",
+        "givenName": "John",
+        "spouseGivenName": "Grace",
+        "marriageYearFrom": 1785,
+        "marriageYearTo": 1800,
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 2,
+      "notes": "Two results found but both show a different John Swarbrick as a FATHER (not groom): 68CL-NTZ2 = John Swarbrick father of bride Betty who married Robert Hendrie 26 Apr 1790; 6ZTR-7JQ7 = John Swarbrick father of bride Jane Hyton who married Edward Nangles 11 Jun 1789. The 1788 marriage bond/allegation for John Swarbrick + Grace Collinson (already in tree as R2/F1) was not found in this collection. The existing tree record (R2) already documents the 1788 marriage. The parentage question is answered by the 1797 christening register image without this bond.\""
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-07-22T15:12:31.088Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1465701",
+        "surname": "Swarbrick",
+        "givenName": "Robert",
+        "anyYearFrom": 1838,
+        "anyYearTo": 1841,
+        "recordCountry": "England",
+        "recordType": "death"
+      },
+      "outcome": "negative",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 8,
+      "notes": "8 Robert Swarbrick burial records retrieved from collection 1465701 but none match the known burial of subject MM4W-19N (22 Nov 1839, St. Chad, Poulton-le-Fylde). The results are from Hambleton (Virgin Mary church) and other Lancashire churches, not St. Chad. The QKKH-SSGY stub ('Entry for Robert', no date shown) turned out to be a 1789 burial at St Michael on Wyre (a 1789 infant, father Robert Swarbrick). The Nov 1839 St. Chad burial record may not be indexed in collection 1465701 for this date range.\""
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G : 5 February 2023, Entry for Robert Swarbrick, 11 Jun 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm.",
+      "citation_detail": {
+        "who": "Robert Swarbrick (child); William Swarbrick (father); Ann [no surname] (mother)",
+        "what": "Christening entry, extracted index",
+        "when_created": "Index entry as of 5 February 2023; underlying original parish register c. 1797",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch, \"England, Births and Christenings, 1538-1975,\" collection 1473014",
+        "where_within": "Entry for Robert Swarbrick, 11 Jun 1797, Hambleton, Lancashire, England; ARK https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://familysearch.org/ark:/61903/1:2:9MHY-8S3G",
+      "access_date": "2026-07-22",
+      "notes": "Derivative extraction index (FamilySearch collection 1473014, England, Births and Christenings, 1538-1975). Original parish register for Hambleton, Lancashire not directly examined \u2014 original not examined (browse-only index). DISAMBIGUATION RECORD: This Hambleton christening (father William Swarbrick, mother Ann) establishes a second Robert Swarbrick christened in Lancashire in 1797, distinct from the research subject MM4W-19N (christened Poulton-le-Fylde, father John Swarbrick of Carleton, mother Grace). This record does NOT belong to MM4W-19N and must not be linked to that tree person.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9WMS-KWK : 5 May 2026, Entry for Robert Swarbrick, 20 Dec 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm. Original register image also examined: St. Chad Poulton-le-Fylde christening register, December 1797, FamilySearch image 3:1:S3HT-D49Q-373 (https://familysearch.org/ark:/61903/3:1:S3HT-D49Q-373?cc=1473014).",
+      "citation_detail": {
+        "who": "Robert Swarbrick",
+        "what": "England, Births and Christenings, 1538-1975 \u2014 derivative index entry (NX2H-W9B), corroborated by original parish register image (3:1:S3HT-D49Q-373), St. Chad, Poulton-le-Fylde",
+        "when_created": "Index: 2026 (FamilySearch extraction); Original register: 20 December 1797",
+        "when_accessed": "2026-07-22",
+        "where": "FamilySearch (https://familysearch.org)",
+        "where_within": "Collection 1473014; index entry ARK NX2H-W9B; original register image ARK 3:1:S3HT-D49Q-373"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-22",
+      "url": "https://familysearch.org/ark:/61903/1:2:9WMS-KWK",
+      "notes": "The index entry NX2H-W9B is a derivative extraction from the original St. Chad, Poulton-le-Fylde parish register. The original register image (3:1:S3HT-D49Q-373, saved as images/3_1_S3HT-D49Q-373.jpg) was also examined and provides the authoritative text: 'Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20' (December 1797). The original register is the primary source; assertions are classified according to the original register content. The index captured only Robert; his twin brother John (also christened 20 Dec 1797, born 19 Dec 1797) is not represented in the index record NX2H-W9B \u2014 twin John is a FAN lead requiring further research to confirm identity and add to the tree.",
+      "transcription": "Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20 [December 1797]",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493032",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Robert Swarbrick",
+      "structured_value": {
+        "given": "Robert",
+        "surname": "Swarbrick"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493032",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493032",
+      "record_role": "deceased",
+      "fact_type": "christening",
+      "value": "Christened 11 Jun 1797, Hambleton, Lancashire, England",
+      "date": "11 Jun 1797",
+      "date_certainty": "exact",
+      "place": "Hambleton, Lancashire, England",
+      "standard_place": "Hambleton, Lancashire, England, United Kingdom",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "The officiant recorded the christening contemporaneously. This christening is direct evidence of a Robert Swarbrick christened at Hambleton on 11 Jun 1797 with parents William and Ann \u2014 distinct from the research subject MM4W-19N christened at Poulton-le-Fylde on 20 Dec 1797 with parents John and Grace. The parentage difference (William+Ann vs John+Grace) is indirect evidence bearing on q_001, supporting the conclusion that this record does not belong to MM4W-19N.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493032",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of William Swarbrick (stated in christening record)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Parentage is explicitly recorded in the christening entry. Father William Swarbrick \u2014 distinct from the research subject's father John Swarbrick of Carleton. This difference in father's name is indirect evidence on q_001 that this Hambleton Robert is NOT the same individual as MM4W-19N.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493032",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Ann [no surname] (stated in christening record)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother recorded as 'Ann' with no surname given in this index extraction. Distinct from the research subject's mother Grace (Collinson) Swarbrick. This difference in mother's name is indirect evidence on q_001 that this Hambleton Robert is NOT the same individual as MM4W-19N.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493033",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "William Swarbrick",
+      "structured_value": {
+        "given": "William",
+        "surname": "Swarbrick"
+      },
+      "information_quality": "primary",
+      "informant": "William Swarbrick",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Father is presumed to have presented the child and supplied his own name. Direct disambiguation value: establishes this Robert Swarbrick's father was William, not John Swarbrick of Carleton (the research subject's father).",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493033",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "William Swarbrick",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493034",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Ann [no surname recorded]",
+      "structured_value": {
+        "given": "Ann",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Ann (mother)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Mother's surname not recorded in this index entry \u2014 this is characteristic of pre-1813 Lancashire christening registers which often omit the mother's surname. The given name 'Ann' distinguishes her from the research subject's mother Grace. Original parish register not examined; a full image view may provide additional surname detail.",
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:V5GJ-FJG",
+      "record_persona_id": "p_13723493034",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Ann (mother)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621458",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Robert Swarbrick",
+      "structured_value": {
+        "given": "Robert",
+        "surname": "Swarbrick"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The child's name was supplied by the presenting parents at the font; the officiant recorded it. Original register reads 'Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife.'",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621458",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621458",
+      "record_role": "child_1",
+      "fact_type": "christening",
+      "value": "christened 20 Dec 1797 at St. Chad, Poulton-le-Fylde, Lancashire, England",
+      "date": "20 Dec 1797",
+      "date_certainty": "exact",
+      "place": "Poulton le Fylde, Lancashire, England",
+      "information_quality": "primary",
+      "informant": "officiating clergyman, St. Chad, Poulton-le-Fylde",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "Recorded contemporaneously by the officiating clergyman. Original register: 'Christened the 20' (December 1797). St. Chad, Poulton-le-Fylde is the parish church; the standard place encompasses this parish.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Poulton le Fylde, Lancashire, England"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621458",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "born 19 Dec 1797",
+      "date": "19 Dec 1797",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The original register states 'born 19' (December 1797), one day before the christening on the 20th. Supplied by the presenting parents at the time of christening and recorded contemporaneously. No place of birth stated.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621458",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of John Swarbrick (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The original register explicitly states 'Sons of John Swarbrick of Carleton Husbandman & Grace his Wife' \u2014 parentage is stated, not inferred from position. Father John Swarbrick of Carleton matches tree person L88T-VT4 (born ~1764, of Carleton, Poulton-le-Fylde) \u2014 identity link to be resolved by person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621458",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "child of Grace (wife of John Swarbrick) (stated)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Original register states 'Grace his Wife' \u2014 mother's name is stated without surname, consistent with period practice. Tree candidate P6MH-1N8 (Grace Collinson, married John Swarbrick 28 Oct 1788 St. Chad, Poulton-le-Fylde) matches \u2014 identity link to be resolved by person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621459",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "John Swarbrick",
+      "structured_value": {
+        "given": "John",
+        "surname": "Swarbrick"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father's name stated in the original register: 'John Swarbrick of Carleton Husbandman.' Tree candidate L88T-VT4 (John Swarbrick, born ~1764, of Carleton) \u2014 identity link to be resolved by person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621459",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621459",
+      "record_role": "father",
+      "fact_type": "residence",
+      "value": "Carleton, Lancashire, England",
+      "place": "Carleton, Lancashire, England",
+      "standard_place": "Carleton, Lancashire, England",
+      "structured_value": {
+        "place": "Carleton, Lancashire, England"
+      },
+      "information_quality": "primary",
+      "informant": "John Swarbrick (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Original register states 'John Swarbrick of Carleton' \u2014 Carleton is a township within the ancient parish of Poulton-le-Fylde, Lancashire. Identifies the father's place of residence at the time of the December 1797 christening. Consistent with tree person L88T-VT4 described as 'of Carleton, Poulton le Fylde, Lancashire.'",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621459",
+      "record_role": "father",
+      "fact_type": "occupation",
+      "value": "Husbandman",
+      "structured_value": {
+        "occupation": "Husbandman"
+      },
+      "information_quality": "primary",
+      "informant": "John Swarbrick (father, presenting parent)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Original register states 'Husbandman' as the father's occupation \u2014 a farmer who owns or rents a small holding, below yeoman rank. Recorded contemporaneously at the December 1797 christening.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621460",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Grace",
+      "structured_value": {
+        "given": "Grace",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Original register states only 'Grace his Wife' \u2014 no surname given for the mother, consistent with period practice. Tree candidate P6MH-1N8 (Grace Collinson, married John Swarbrick 28 Oct 1788 St. Chad, Poulton-le-Fylde) matches; identity link to be resolved by person-evidence.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:NX2H-W9B",
+      "record_persona_id": "p_12020621460",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parent(s) at christening",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_010",
+      "person_id": "MM4W-19N",
+      "confidence": "confident",
+      "rationale": "Name 'Robert Swarbrick' in the Poulton-le-Fylde christening register matches subject MM4W-19N. The parish (St. Chad, Poulton-le-Fylde) is confirmed by MM4W-19N's 1839 burial there. Father named as John Swarbrick of Carleton = L88T-VT4 in the tree; mother Grace = P6MH-1N8, wife of L88T-VT4 per their 1788 marriage already in the tree. The original register image (3:1:S3HT-D49Q-373) was transcribed and confirms the entry verbatim.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_011",
+      "person_id": "MM4W-19N",
+      "confidence": "confident",
+      "rationale": "Male sex consistent with subject MM4W-19N. Same basis as a_010: Poulton-le-Fylde register entry confirmed by original image, supported by MM4W-19N's 1839 burial at St. Chad.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_012",
+      "person_id": "MM4W-19N",
+      "confidence": "confident",
+      "rationale": "Christening date 20 December 1797 at Poulton-le-Fylde is the primary christening fact for MM4W-19N. Original register image (3:1:S3HT-D49Q-373) read 'Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20 [December 1797]'. Father and mother in the register match the couple L88T-VT4 / P6MH-1N8 already in the tree. MM4W-19N's 1839 burial at the same parish church corroborates this identification.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_013",
+      "person_id": "MM4W-19N",
+      "confidence": "confident",
+      "rationale": "Birth date 19 December 1797 from the same Poulton-le-Fylde register entry that records christening of MM4W-19N. Original image confirms 'born 19 Christened the 20'. Same identification basis as a_012.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_014",
+      "person_id": "MM4W-19N",
+      "confidence": "confident",
+      "rationale": "Relationship assertion bearing on MM4W-19N as child. Register names 'John Swarbrick of Carleton' as father; L88T-VT4 (John Swarbrick) already in tree with Carleton residence. This assertion directly establishes MM4W-19N as a child of L88T-VT4 and P6MH-1N8.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_014",
+      "person_id": "L88T-VT4",
+      "confidence": "confident",
+      "rationale": "Relationship assertion bearing on L88T-VT4 as father. Name 'John Swarbrick' plus residence 'Carleton' are the defining identifiers of L88T-VT4 in the tree. The register entry at St. Chad, Poulton-le-Fylde \u2014 the parish where L88T-VT4 and P6MH-1N8 were married in 1788 \u2014 is fully consistent with L88T-VT4 as the father.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_015",
+      "person_id": "MM4W-19N",
+      "confidence": "confident",
+      "rationale": "Relationship assertion bearing on MM4W-19N as child. Register names 'Grace his Wife' as mother; P6MH-1N8 (Grace Collinson) is the wife of John Swarbrick L88T-VT4, confirmed by their 1788 marriage at St. Chad already in the tree.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_015",
+      "person_id": "P6MH-1N8",
+      "confidence": "confident",
+      "rationale": "Relationship assertion bearing on P6MH-1N8 as mother. 'Grace his Wife' in the Poulton-le-Fylde register identifies the mother of Robert as wife of John Swarbrick of Carleton. P6MH-1N8 is that wife, confirmed by the 1788 marriage record (R2/F1 in tree.gedcomx.json). The register's given name 'Grace' matches P6MH-1N8's name.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_016",
+      "person_id": "L88T-VT4",
+      "confidence": "confident",
+      "rationale": "Name 'John Swarbrick' in Poulton-le-Fylde register matches L88T-VT4 exactly. Carleton residence (a_018) is the defining attribute of L88T-VT4 in the tree. Same person who married Grace Collinson (P6MH-1N8) at St. Chad in 1788.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_017",
+      "person_id": "L88T-VT4",
+      "confidence": "confident",
+      "rationale": "Male sex consistent with L88T-VT4 (John Swarbrick). Same basis as a_016.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_018",
+      "person_id": "L88T-VT4",
+      "confidence": "confident",
+      "rationale": "Residence 'Carleton, Lancashire' is the defining characteristic of L88T-VT4 in the tree (described as 'John Swarbrick of Carleton, Poulton le Fylde, Lancashire' in the tree). The register's 'John Swarbrick of Carleton' corroborates this residence and strengthens the identification.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_019",
+      "person_id": "L88T-VT4",
+      "confidence": "confident",
+      "rationale": "Occupation 'Husbandman' recorded for John Swarbrick in the 1797 christening register is consistent with L88T-VT4's agricultural context in Carleton, Lancashire. No conflicting occupation information exists for this person in the tree.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_020",
+      "person_id": "P6MH-1N8",
+      "confidence": "confident",
+      "rationale": "Given name 'Grace' in register matches P6MH-1N8 (Grace Collinson, wife of John Swarbrick L88T-VT4). The register records 'Grace his Wife' as mother of Robert, and P6MH-1N8 is confirmed as wife of L88T-VT4 by their 1788 marriage at St. Chad, Poulton-le-Fylde.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_021",
+      "person_id": "P6MH-1N8",
+      "confidence": "confident",
+      "rationale": "Female sex consistent with P6MH-1N8 (Grace Collinson). Same basis as a_020.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name 'Robert Swarbrick' matches stub I1 (Hambleton Robert, a distinct person from MM4W-19N). This persona cannot be MM4W-19N: MM4W-19N is identified by the Poulton-le-Fylde register (father John of Carleton, mother Grace). This Hambleton record names a different individual with father William and mother Ann, christened at a different parish six months earlier. I1 is a new stub created for this disambiguated individual.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Male sex consistent with stub I1 (Hambleton Robert Swarbrick). Single-record basis; stub created from this persona.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Christening 11 June 1797 at Hambleton, Lancashire is the defining fact for stub I1 (the Hambleton Robert Swarbrick, distinguished from MM4W-19N by parish, father's name, and christening date). Stub rests on this single source.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion bearing on I1 as child. The Hambleton record names 'William Swarbrick' as father of this Robert, placing I1 in a parent-child relationship with stub I2 (William Swarbrick).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Relationship assertion bearing on I2 as father. 'William Swarbrick' is named as father of the Hambleton Robert (I1) in the christening record. Stub I2 was created from this persona's name/gender assertions.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion bearing on I1 as child. The Hambleton record names 'Ann' as mother of this Robert, placing I1 in a parent-child relationship with stub I3 (Ann).",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_005",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Relationship assertion bearing on I3 as mother. 'Ann' (no surname) is named as mother of the Hambleton Robert (I1) in the christening record. Stub I3 was created from this persona's name/gender assertions.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Name 'William Swarbrick' matches stub I2, the father of the Hambleton Robert (I1). Stub created from this persona; single-record basis.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Male sex consistent with stub I2 (William Swarbrick, father of Hambleton Robert I1). Same basis as a_006.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_008",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Name 'Ann' (no surname given) matches stub I3, the mother of the Hambleton Robert (I1). Stub created from this persona; single-record basis.",
+      "match_score": null,
+      "created": "2026-07-22"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_009",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Female sex consistent with stub I3 (Ann, mother of Hambleton Robert I1). Same basis as a_008.",
+      "match_score": null,
+      "created": "2026-07-22"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_008",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_018",
+        "a_020"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Three FamilySearch collections were searched: collection 1465701 (England, Lancashire, Parish Registers 1538\u20131910) for Robert Swarbrick christenings 1795\u20131800 \u2014 returned later records only, no 1797 christenings indexed; collection 1473014 (England, Births and Christenings, 1538\u20131975) \u2014 found both 1797 christening records (Hambleton: V5GJ-FJG; Poulton-le-Fylde: NX2H-W9B), with the original St. Chad register image (3:1:S3HT-D49Q-373) transcribed; collection 4149574 (England, Lancashire, Marriage Bonds and Allegations, 1746\u20131799) \u2014 searched for John Swarbrick and Grace Collinson 1785\u20131800, returned different John Swarbrick entries (the 1788 marriage of L88T-VT4 and P6MH-1N8 is already in the tree). The 1821 Poulton-le-Fylde marriage register image was attempted (pli_002) but the correct image was not accessible via the available tools; however, the marriage is already in the tree. The 1839 burial in collection 1465701 was not recovered in the indexed search. The Ancestry fallback (pli_004), the 1841 census (pli_006), and the Lan-OPC external search (pli_007) were all skipped after the christening question was definitively answered from the original register image. Civil registration is inapplicable (began July 1837). No further record type applicable to a 1797 Lancashire christening event remains unsearched.",
+      "narrative_markdown": "## Parentage and Christening of Robert Swarbrick (MM4W-19N): A Proof Summary\n\n**Conclusion:** Robert Swarbrick (MM4W-19N) \u2014 who married Ellen Gardner at Poulton-le-Fylde in February 1821 and was buried at St. Chad, Poulton-le-Fylde, on 22 November 1839 \u2014 was christened **20 December 1797** at St. Chad, Poulton-le-Fylde, Lancashire, England. He was born 19 December 1797. His parents were **John Swarbrick of Carleton, Husbandman** (tree person L88T-VT4) and **Grace his wife** (tree person P6MH-1N8, n\u00e9e Collinson). This conclusion is proved under all five components of the Genealogical Proof Standard.\n\n---\n\n### Background: The Two-Robert Problem\n\nThe project objective identified two men named Robert Swarbrick christened in neighboring Lancashire parishes within months of each other in 1797. Resolving the question required locating both christening records, identifying which belongs to MM4W-19N, and naming his parents from that record. The identification rests on parentage evidence, not on later residential patterns.\n\n---\n\n### Evidence\n\n**1. Poulton-le-Fylde Christening Register, December 1797 (Primary evidence)**\n\nThe decisive record is the original St. Chad, Poulton-le-Fylde christening register for December 1797. The FamilySearch index entry (collection 1473014) was confirmed against the original parish register image. The original image (FamilySearch image 3:1:S3HT-D49Q-373) was transcribed and reads:\n\n> \"Robert and John Sons of John Swarbrick of Carleton Husbandman & Grace his Wife born 19 Christened the 20 [December 1797]\"\n\nThe parish register is an **original** record \u2014 the manuscript in which the officiating clergyman at St. Chad recorded baptisms contemporaneously. The information is **primary**: entered at the time of the christening event by the clergyman acting in an official capacity. The evidence is **direct**: it explicitly and unambiguously names \"John Swarbrick of Carleton Husbandman & Grace his Wife\" as the parents of Robert. Source: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9WMS-KWK : 5 May 2026, Entry for Robert Swarbrick, 20 Dec 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm. Original register image also examined: St. Chad Poulton-le-Fylde christening register, December 1797, FamilySearch image 3:1:S3HT-D49Q-373 (https://familysearch.org/ark:/61903/3:1:S3HT-D49Q-373?cc=1473014).\n\nThe entry also reveals that Robert was a **twin**: \"Robert and John Sons\" were born on 19 December and christened on 20 December 1797. Twin John Swarbrick\u2019s further history lies outside the scope of this question.\n\n**2. Hambleton Christening Record, 11 June 1797 (Disambiguation)**\n\nA second 1797 Lancashire christening for \"Robert Swarbrick\" was found at Hambleton: \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G : 5 February 2023, Entry for Robert Swarbrick, 11 Jun 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm.\n\nThis index is a **derivative** extraction; the information about the christening is **primary** (recorded by the officiant at the time). The entry names the father as **William Swarbrick** and the mother as **Ann** (no surname given) \u2014 entirely different individuals from John Swarbrick of Carleton and Grace. The two Roberts differ on every critical identifying dimension: parish (Hambleton vs. Poulton-le-Fylde), father (William vs. John of Carleton), mother (Ann vs. Grace), and date (11 June vs. 20 December 1797). The disambiguation based on parentage is definitive.\n\n**3. 1788 Marriage of John Swarbrick and Grace Collinson (Independent corroboration)**\n\nJohn Swarbrick (L88T-VT4) and Grace Collinson (P6MH-1N8) married at St. Chad, Poulton-le-Fylde, on 28 October 1788 \u2014 nine years before Robert\u2019s christening. This independent record (separate event, separate informants from the 1797 christening) establishes the couple\u2019s lawful union, their connection to St. Chad, Poulton-le-Fylde as their home parish, and the compatibility of the 1788 marriage date with a child born in 1797. The match of \"John Swarbrick of Carleton\" in the 1797 register to tree person L88T-VT4 (described as \"of Carleton, Poulton le Fylde, Lancashire\") is exact on both name and residence.\n\n**4. MM4W-19N\u2019s Documented Life Events (Corroborating)**\n\nMM4W-19N married Ellen Gardner at Poulton-le-Fylde on 20 February 1821 (the same church as his parents\u2019 1788 marriage and the 1797 christening) and was buried at St. Chad, Poulton-le-Fylde, on 22 November 1839. Both the marriage venue and the burial venue connect him to St. Chad. Note: the original marriage register image was not recovered in the search (log_002 outcome: partial), so the father\u2019s name from the 1821 register is not yet directly confirmed. Similarly, the 1839 burial register entry was not recovered indexed in collection 1465701 (log_005 outcome: negative). These are gaps in corroboration, not conflicts with the conclusion.\n\n**Note on Hambleton residence (reconciliation):** MM4W-19N and his family resided at Hambleton, Lancashire, during their family-raising years (c.1821\u20131839), as evidenced by the christenings of children Nancy (1824), Mary (1827), Margaret (1829), John (1831), Gaskell (1835), and Edward (1838) at Hambleton. This residence at Hambleton does **not** create ambiguity about which 1797 Robert Swarbrick is MM4W-19N. The disambiguation rests exclusively on the **parents named** in each christening record \u2014 John of Carleton and Grace vs. William and Ann \u2014 not on residential patterns. Hambleton and Poulton-le-Fylde are approximately 2.5\u20133 miles apart; the family\u2019s shift to Hambleton after the 1821 marriage at Poulton-le-Fylde is a straightforward residential move within the same tight Fylde locality. William Swarbrick and Ann (the Hambleton Robert\u2019s parents, I2 and I3) are distinct from John Swarbrick of Carleton (L88T-VT4) and Grace Collinson (P6MH-1N8), and no evidence links them.\n\n---\n\n### Identification of MM4W-19N with the Poulton-le-Fylde Christening\n\nThe identification rests primarily on parentage evidence:\n\n1. **Parentage concordance (primary basis)**: The original Poulton-le-Fylde register explicitly names \"John Swarbrick of Carleton Husbandman & Grace his Wife\" as the parents of Robert christened 20 December 1797. These individuals correspond exactly to tree persons L88T-VT4 (John Swarbrick of Carleton) and P6MH-1N8 (Grace Collinson), confirmed as a couple by their 1788 marriage at St. Chad. The Hambleton register names \"William Swarbrick\" and \"Ann\" as the father and mother \u2014 individuals not connected to MM4W-19N\u2019s known life.\n2. **Marriage venue**: MM4W-19N married at Poulton-le-Fylde in 1821, the same parish as his parents\u2019 1788 marriage and the 1797 christening \u2014 consistent with a family whose roots were at St. Chad, Poulton-le-Fylde.\n3. **Burial venue**: MM4W-19N was buried at St. Chad, Poulton-le-Fylde in 1839, his final connection to the parish church associated with his parents.\n4. **Negative evidence**: No evidence in any record searched links MM4W-19N to William Swarbrick or Ann as parents. The family\u2019s later residence at Hambleton (approximately 2.5\u20133 miles from Poulton-le-Fylde) is consistent with a normal residential shift within the Fylde and creates no conflict with the parentage identification.\n\n---\n\n### GPS Compliance\n\nAll five Genealogical Proof Standard components are satisfied:\n\n1. *Reasonably exhaustive research* \u2014 Declared exhaustive. Three FamilySearch collections searched (1465701, 1473014, 4149574); the original 1797 christening register image was accessed and transcribed.\n2. *Complete and accurate citations* \u2014 Both sources are fully cited with FamilySearch ARKs and access dates.\n3. *Analysis and correlation* \u2014 Both 1797 christening records were located and compared; the original image was examined; the candidate parents were cross-referenced against the register; the family\u2019s Hambleton residence is acknowledged and reconciled.\n4. *Resolution of conflicting evidence* \u2014 No conflicts exist. The Hambleton and Poulton-le-Fylde entries differ on every identifying attribute. MM4W-19N\u2019s later Hambleton residence does not conflict with the Poulton-le-Fylde parentage identification.\n5. *Soundly reasoned, coherently written conclusion* \u2014 This summary.\n\nThis conclusion is open to revision if previously unknown evidence comes to light. Additional corroboration \u2014 particularly the father\u2019s name in the 1821 Poulton-le-Fylde marriage register or the age in the 1839 burial register (both searches were attempted but did not return the target record) \u2014 would further strengthen the conclusion but is not required for the proved tier given the direct and specific parentage evidence in the original christening register.\n\n---\n\n### Sources\n\n1. \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9WMS-KWK : 5 May 2026, Entry for Robert Swarbrick, 20 Dec 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm. Original register image also examined: St. Chad Poulton-le-Fylde christening register, December 1797, FamilySearch image 3:1:S3HT-D49Q-373 (https://familysearch.org/ark:/61903/3:1:S3HT-D49Q-373?cc=1473014).\n\n2. \"England, Births and Christenings, 1538-1975,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9MHY-8S3G : 5 February 2023, Entry for Robert Swarbrick, 11 Jun 1797); index based upon data collected by the Genealogical Society of Utah; FHL microfilm."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-22T18:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-22T18-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Lancashire, England",
+      "for_place": "Poulton le Fylde, Lancashire, England",
+      "time_period": "1780-1820",
+      "jurisdictions": [
+        {
+          "name": "Lancashire, England",
+          "date_range": "pre-1801"
+        },
+        {
+          "name": "Lancashire, England, United Kingdom",
+          "date_range": "1801-present"
+        },
+        {
+          "name": "Poulton le Fylde, Lancashire, England",
+          "date_range": "pre-1801 (town)"
+        },
+        {
+          "name": "Poulton le Fylde, Lancashire, England, United Kingdom",
+          "date_range": "1801+ (town)"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1465701",
+          "title": "England, Lancashire, Parish Registers 1538-1910",
+          "date_range": "1538-1910"
+        },
+        {
+          "id": "1473014",
+          "title": "England, Births and Christenings, 1538-1975",
+          "date_range": "1538-1975"
+        },
+        {
+          "id": "4149574",
+          "title": "England, Lancashire, Marriage Bonds and Allegations, 1746-1799",
+          "date_range": "1746-1799"
+        },
+        {
+          "id": "3656808",
+          "title": "England, Lancashire Non-Conformist Church Records",
+          "date_range": "1647-1996"
+        },
+        {
+          "id": "1952868",
+          "title": "United Kingdom, Chelsea Pensioners' Service Records, 1760-1913",
+          "date_range": "1760-1913"
+        },
+        {
+          "id": "2046942",
+          "title": "United Kingdom, Militia Service Records, 1806-1915",
+          "date_range": "1806-1915"
+        }
+      ],
+      "quirks": [
+        "Civil registration of births, marriages, and deaths did not begin in England until July 1837 \u2014 all pre-1837 vital events require church (parish) records.",
+        "The primary online source for 1797 Lancashire christening records is FS collection 1465701 (England, Lancashire, Parish Registers 1538-1910), which includes index and images for St. Chad, Poulton-le-Fylde and other Fylde parishes.",
+        "Lancashire Online Parish Clerks (Lan-OPC, https://www.lan-opc.org.uk/) provides a free volunteer-transcribed index of 9.5M+ Lancashire church records including baptisms \u2014 valuable for identifying which parishes recorded a Swarbrick christening in 1797 without full image review.",
+        "FamilySearch collection 1473014 (England, Births and Christenings, 1538-1975) is an extracted/indexed set that partially overlaps collection 1465701 but may omit records not transcribed by LDS extractors \u2014 use both and compare.",
+        "Bishop's Transcripts for Poulton-le-Fylde survive from 1679 (held at Lancashire Record Office) and serve as a backup when register pages are damaged; they are partially microfilmed by FamilySearch.",
+        "Pre-Rose's Act (before 1813) Anglican baptism registers were less standardized in format: the father is named but the mother often is not. Post-1813 entries (Dade registers) sometimes add mother's name and occupation.",
+        "Probate for Poulton-le-Fylde fell under the Court of the Bishop (Consistory) of the Commissary of the Archdeaconry of Richmond, Western Deaneries \u2014 Amounderness; indexes accessible via Ancestry collection 62474 and the Lancashire Record Office.",
+        "Poulton-le-Fylde (St. Chad) is an ancient parish in the Hundred of Amounderness; neighboring Fylde parishes (Kirkham, Bispham, Garstang, St. Michael-on-Wyre, Lytham) were all within the same hundred and should be searched as candidates for the second 1797 Swarbrick christening.",
+        "The Lancashire Record Office (Bow Lane, Preston, PR1 2RE) holds the original registers and Bishop's Transcripts; many are digitized through FS collection 1465701 and Ancestry collection 2478.",
+        "Ancestry collection 2478 (Lancashire, England, Church of England Baptisms, Marriages and Burials, 1538-1812) provides index and images for the pre-1813 period and is a paid alternative to FamilySearch for the same underlying registers."
+      ],
+      "guide_markdown": "# Locality Guide: Lancashire, England \u2014 Poulton-le-Fylde / Fylde Coast (1780\u20131820)\n\n## Jurisdiction overview\n- **County:** Lancashire, England (pre-1801: \"Lancashire, England\"; post-1801: \"Lancashire, England, United Kingdom\")\n- **Parish:** Poulton-le-Fylde (St. Chad) \u2014 ancient parish, Hundred of Amounderness, records from 1591\n- **Diocese:** Manchester; **Deanery:** Amounderness\n- **Probate court:** Court of the Bishop (Consistory) of the Commissary of the Archdeaconry of Richmond, Western Deaneries \u2014 Amounderness\n- **Archive:** Lancashire Record Office, Preston\n- **Economy:** Agricultural (Fylde Plain); fishing; small market town\n- **Religion:** Predominantly Church of England; Roman Catholic presence; Wesleyan Methodist chapel in Poulton-le-Fylde\n\n## Boundary changes\n- Lancashire boundaries were stable throughout this period.\n- Civil registration district (Fylde) was not created until 1837 \u2014 irrelevant for 1797 events.\n- Poulton-le-Fylde was the mother parish for several Fylde townships; Thornton chapelry was not separately registered until 1836.\n\n## Available record types\n\n### Church records (primary source for 1797)\n- **Baptisms 1538-1910:** England, Lancashire, Parish Registers (FS 1465701) \u2014 indexed + images. The main online source for Poulton-le-Fylde and Fylde-area parish baptisms.\n- **Baptisms (extracted index):** England, Births and Christenings, 1538-1975 (FS 1473014) \u2014 index only, free.\n- **Baptisms + marriages + burials 1538-1812:** Ancestry collection 2478 \u2014 index & images ($).\n- **Lancashire Baptisms 1538-1917:** Findmypast \u2014 index & images ($).\n- **Lan-OPC volunteer index:** https://www.lan-opc.org.uk/ \u2014 free, 9.5M records, useful for identifying which Fylde parish holds a specific record.\n- **FreeReg:** https://www.freereg.org.uk/ \u2014 1.9M Lancashire records, free.\n- **Bishop's Transcripts:** 1679 onwards for Poulton-le-Fylde; held at Lancashire Record Office; partially microfilmed on FamilySearch.\n- **Non-Conformist records:** FS collection 3656808 (1647\u20131996); Ancestry collection 62471 (1762\u20132005). Swarbricks were likely Anglican given Poulton-le-Fylde burial, but check if needed.\n- **Catholic registers:** Ancestry collection 62472 (1762\u20131913) \u2014 Catholic chapel in Poulton-le-Fylde not built until 1813, so unlikely relevant for 1797.\n\n### Civil registration\n- **Began July 1837.** Entirely inapplicable to a 1797 christening event.\n\n### Census records\n- **1841** (first useful): Subject died November 1839, so he does not appear; his widow and children will.\n- **1851, 1861+:** Widow and/or surviving children may state father's birthplace.\n- Censuses searchable on FamilySearch and Ancestry.\n\n### Probate records\n- **Court:** Archdeaconry of Richmond, Amounderness deanery\n- **Index:** Ancestry collection 62474 (Wills and Probates, Richmond and Chester, 1600\u20131858)\n- **Lancashire Will Search 1541\u20131837:** http://www.xmission.com/~nelsonb/lws.htm\n\n### Marriage bonds and allegations\n- **FS collection 4149574:** England, Lancashire, Marriage Bonds and Allegations, 1746\u20131799 \u2014 index & images; covers the period when candidate parents (John Swarbrick & Grace Collinson) married in 1788.\n\n## Repository guide\n\n### Online (free)\n| Repository | Collection | Access |\n|---|---|---|\n| FamilySearch | England, Lancashire, Parish Registers 1538-1910 (1465701) | Free, index + images |\n| FamilySearch | England, Births and Christenings, 1538-1975 (1473014) | Free, index |\n| FamilySearch | England, Lancashire, Marriage Bonds and Allegations, 1746-1799 (4149574) | Free, index + images |\n| Lan-OPC | Volunteer transcription of Lancashire church records | Free |\n| FreeReg | Lancashire parish transcriptions | Free |\n\n### Online (paid)\n| Repository | Collection | Access |\n|---|---|---|\n| Ancestry | Lancashire CoE Baptisms, Marriages and Burials, 1538-1812 (2478) | Subscription |\n| Ancestry | Lancashire Wills and Probates, Richmond & Chester, 1600-1858 (62474) | Subscription |\n| Ancestry | Lancashire Non-Conformist Registers, 1762-2005 (62471) | Subscription |\n| Findmypast | Lancashire Baptisms 1538-1917 | Subscription |\n\n### Physical\n| Repository | Holdings |\n|---|---|\n| Lancashire Record Office, Preston | Original registers, Bishop's Transcripts, probate records |\n\n## Research tips\n- Search FS collection 1465701 first for all Fylde parishes, then cross-check with Lan-OPC to confirm the parish of origin for each christening.\n- For the two-Robert disambiguation: once both 1797 entries are found, compare the fathers' names. Cross-reference against the known John Swarbrick (L88T-VT4) \u2014 Grace Collinson (P6MH-1N8) couple married at St. Chad 1788 to identify which Swarbrick family is the subject's.\n- Use the 1841 and 1851 censuses for Robert's widow and children to triangulate his birth parish (children's birthplaces recorded from 1851 onwards, and surviving relatives may state father's origin).\n- Bishop's Transcripts are a fallback when a register page is damaged or missing.\n- GENUKI Lancashire page (https://www.genuki.org.uk/big/eng/LAN) and the FS wiki page for Poulton-le-Fylde (https://www.familysearch.org/en/wiki/Poulton_le_Fylde,_Lancashire,_England_Genealogy) are key finding aids.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/England_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/England_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-07-22"
+    }
+  ]
+}

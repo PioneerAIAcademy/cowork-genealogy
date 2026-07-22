@@ -5,11 +5,18 @@
     "name": "FAN-pivot plan when direct records are exhausted",
     "type": "positive",
     "description": "Census records and death certificate have been searched (first plan complete). The skill proposes a new plan that pivots to FAN research — Family, Associates, Neighbors — as a strategy to find indirect parentage evidence: neighbors in the 1850 census who share a surname, witnesses on Patrick's or Thomas's documents, fellow parishioners in church records. Tests the GPS principle of exhaustive search via community network expansion when direct lines stall.",
-    "tags": ["planning", "fan-pivot", "family-associates-neighbors", "parentage", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status"]
+    "tags": [
+      "planning",
+      "fan-pivot",
+      "family-associates-neighbors",
+      "parentage",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status"
+    ]
   },
   "input": {
     "user_message": "Direct census and vital records haven't proved parentage yet — create a new plan that takes a FAN approach for the parentage question.",
-    "scenario": "flynn-census-exhausted"
+    "scenario": "flynn-census-exhausted-surveyed"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",

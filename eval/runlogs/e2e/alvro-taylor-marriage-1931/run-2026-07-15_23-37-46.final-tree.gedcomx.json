@@ -1,0 +1,432 @@
+{
+  "persons": [
+    {
+      "id": "KWJZ-ZNT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Alvro Bair",
+          "surname": "Taylor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "4 September 1909",
+          "standard_date": "4 Sep 1909",
+          "place": "Marsh Center, Bannock, Idaho, United States",
+          "standard_place": "Marsh Center, Bannock, Idaho, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "11 August 1940",
+          "standard_date": "11 Aug 1940",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "4138d24d-2604-4e91-8749-e64895c235b6",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Robin, Bannock, Idaho, USA",
+          "standard_place": "Robin, Bannock, Idaho, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Robin, , Idaho",
+          "standard_place": "Robin, Bannock, Idaho, United States"
+        },
+        {
+          "id": "409138dc-cd52-49fa-a0c6-6369ffc1bd8b",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "5 Johnson Avenue, East Garibaldi, Tillamook, Oregon, USA",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "East Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "7d0f68e2-d561-4b97-a225-b672058d923f",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Rural, Tillamook, Oregon",
+          "standard_place": "Tillamook, Oregon, United States"
+        },
+        {
+          "id": "3318ad8d-cd1d-4aca-912f-b3a4796e4d29",
+          "type": "Burial",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Lincoln Memorial Park, Portland, Multnomah, Oregon, United States of America",
+          "standard_place": "Lincoln Memorial Park, Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "bb9d8f95-5404-47e2-b6c7-b1f6a8ae3819",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States",
+          "standard_place": "Clatskanie Election Precinct 2, Columbia, Oregon, United States"
+        },
+        {
+          "id": "43dd751b-0ac6-4064-bddf-91611761aeb2",
+          "type": "Obituary",
+          "date": "13 Aug 1940",
+          "standard_date": "13 Aug 1940"
+        },
+        {
+          "id": "5cf336c6-a7bf-4991-ab74-318e178609d8",
+          "type": "Obituary",
+          "date": "14 Aug 1940",
+          "standard_date": "14 Aug 1940",
+          "place": "Oregon",
+          "standard_place": "Oregon, United States"
+        },
+        {
+          "id": "360ce154-cfc8-4d47-9074-f25578908ec0",
+          "type": "Cause+of+Death",
+          "value": "Kidney Disease"
+        },
+        {
+          "id": "59381ba2-320e-4c41-bc58-c830bd75ec81",
+          "type": "Occupation",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States",
+          "value": "Lumber Mill Worker"
+        }
+      ]
+    },
+    {
+      "id": "KWZ8-3RD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Autossie Ann",
+          "surname": "Bair"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "21 May 1883",
+          "standard_date": "21 May 1883",
+          "place": "Richmond, Cache, Utah, United States",
+          "standard_place": "Richmond, Cache, Utah, United States"
+        },
+        {
+          "id": "ad4d8c97-486e-4411-8d60-d7f1e41f2d98",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Robin, Bannock, Idaho, United States",
+          "standard_place": "Robin, Bannock, Idaho, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "East Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "b62801ae-f0f2-4a16-859e-9dbb8737220c",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "standard_place": "Same, Manufahi, Timor-Leste"
+        },
+        {
+          "id": "40b552a4-b1f9-47d8-9a87-f37717773ba4",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+          "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "af26d3a9-80f8-43df-9291-a427ff207b7a",
+          "type": "Residence",
+          "date": "3 April 1950",
+          "standard_date": "3 Apr 1950",
+          "place": "Hobsonville, Tillamook, Oregon, United States",
+          "standard_place": "Hobsonville, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "252a8268-101d-45f4-8688-165d61e64068",
+          "type": "Social Program Claim",
+          "date": "21 May 1951",
+          "standard_date": "21 May 1951"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "24 November 1962",
+          "standard_date": "24 Nov 1962",
+          "place": "Winnemucca, Humboldt, Nevada, United States",
+          "standard_place": "Winnemucca, Humboldt, Nevada, United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "after 24 November 1962",
+          "standard_date": "Aft 24 Nov 1962",
+          "place": "Portland, Multnomah, Oregon, United States",
+          "standard_place": "Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "829d2e8f-8512-4731-bfb6-8f25c065ac4f",
+          "type": "Residence",
+          "date": "27 Nov 1962",
+          "standard_date": "27 Nov 1962",
+          "place": "Garibaldi",
+          "standard_place": "Garibaldi, Rio Grande do Sul, Brazil"
+        },
+        {
+          "id": "4870f4b0-c65f-4d7a-bc1e-95d435c8d1c0",
+          "type": "Obituary",
+          "date": "27 Nov 1962",
+          "standard_date": "27 Nov 1962"
+        }
+      ]
+    },
+    {
+      "id": "KW8G-33L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Silvester Jay",
+          "surname": "Taylor"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "29 May 1877",
+          "standard_date": "29 May 1877",
+          "place": "Fairview, Franklin, Idaho, United States",
+          "standard_place": "Fairview, Franklin, Idaho, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Franklin, Oneida, Idaho, United States",
+          "standard_place": "Franklin, Oneida, Idaho, United States"
+        },
+        {
+          "id": "e91ebe34-6832-4d0b-85d6-f13a796831b8",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Bannock County, Idaho, United States",
+          "standard_place": "Bannock, Idaho, United States"
+        },
+        {
+          "id": "19162845-a784-493a-b893-9763da341265",
+          "type": "Residence",
+          "date": "from about 1925 to 1926",
+          "standard_date": "Bet Abt 1925 and 1926",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States",
+          "value": "Moved from McCammon, Idaho"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "East Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "3b8759cd-71c9-41de-9777-112dccfd439f",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States",
+          "standard_place": "East Garibaldi Election Precinct, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "10 March 1944",
+          "standard_date": "10 Mar 1944",
+          "place": "Garibaldi, Tillamook, Oregon, United States",
+          "standard_place": "Garibaldi, Tillamook, Oregon, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "17 March 1944",
+          "standard_date": "17 Mar 1944",
+          "place": "Lincoln Memorial Park, Portland, Multnomah, Oregon, United States",
+          "standard_place": "Lincoln Memorial Park, Portland, Multnomah, Oregon, United States"
+        },
+        {
+          "id": "184021b5-5a1a-494e-b188-0092f613f5d7",
+          "type": "Occupation",
+          "place": "McCammon, Bannock, Idaho, United States",
+          "standard_place": "McCammon, Bannock, Idaho, United States",
+          "value": "Farmer - 160 Acres"
+        }
+      ]
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "given": "Mildred M.",
+          "surname": "Misner",
+          "preferred": true,
+          "id": "N5"
+        }
+      ],
+      "id": "I1"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KW8G-33L",
+      "person2": "KWZ8-3RD",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "21 October 1901",
+          "standard_date": "21 Oct 1901",
+          "place": "Logan, Cache, Utah, United States",
+          "standard_place": "Logan, Cache, Utah, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KW8G-33L",
+      "child": "KWJZ-ZNT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KWZ8-3RD",
+      "child": "KWJZ-ZNT",
+      "subtype": "Biological"
+    },
+    {
+      "type": "Couple",
+      "person1": "KWJZ-ZNT",
+      "person2": "I1",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "25 April 1931",
+          "place": "Tillamook County, Oregon, United States",
+          "id": "F2",
+          "standard_place": "Tillamook, Oregon, United States"
+        }
+      ],
+      "id": "R5"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7HSC-9PS",
+      "title": "Alvro Bair Taylor, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP1Y-3SQ2 : Fri Mar 15 05:37:37 UTC 2024), Entry for Alvro Bair Taylor and Mildred, 13 Aug 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP1Y-3SQ2"
+    },
+    {
+      "id": "QC8V-XGR",
+      "title": "Alvro Bair Taylor, \"Oregon, Oregon State Archives, Death Records, 1864-1968\"",
+      "citation": "\"Oregon, Oregon State Archives, Death Records, 1864-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZKS3-7NPZ : Tue Jan 21 02:01:39 UTC 2025), Entry for Alvro Bair Taylor and Sylvester Jay Taylor, 11 Aug 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZKS3-7NPZ"
+    },
+    {
+      "id": "3X44-6WC",
+      "title": "Al B Taylor, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VRRV-DFJ : Fri Jan 03 01:30:17 UTC 2025), Entry for Al B Taylor and Mildred Taylor, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VRRV-DFJ"
+    },
+    {
+      "id": "3CX6-V1S",
+      "title": "Alvro B Taylor, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP1Y-4M2W : Fri Mar 15 04:41:45 UTC 2024), Entry for Alvro B Taylor and Mildred, 14 Aug 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP1Y-4M2W"
+    },
+    {
+      "id": "37LS-F4Q",
+      "title": "Alvive Barr Taylor, \"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Church Census Records (Worldwide), 1914-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:83XK-9RW2 : Mon Mar 30 07:17:40 UTC 2026), Entry for Alvive Barr Taylor, 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:83XK-9RW2"
+    },
+    {
+      "id": "924P-XP9",
+      "title": "Alvro Taylor, \"Oregon Death Index, 1903-1998\"",
+      "citation": "\"Oregon, Death Index, 1903-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZHH-VHC : Wed Feb 19 08:53:14 UTC 2025), Entry for Alvro Taylor and Mildred Taylor, 11 Aug 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VZHH-VHC"
+    },
+    {
+      "id": "9KSB-BY4",
+      "title": "Alvro B. Taylor, \"Find A Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVLY-BPSV : Tue Jul 07 23:49:44 UTC 2026), Entry for Alvro B. Taylor.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVLY-BPSV"
+    },
+    {
+      "id": "96BX-752",
+      "title": "Alvro B Taylor, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XCS8-45Z : Sat Mar 09 08:25:17 UTC 2024), Entry for Jay S Taylor and Autossie A Taylor, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XCS8-45D"
+    },
+    {
+      "id": "98WY-75J",
+      "title": "Alviro Taylor, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MLHF-K7L : Wed Oct 29 20:57:16 UTC 2025), Entry for Jay S Taylor and Tossie Taylor, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MLHF-K7Y"
+    },
+    {
+      "id": "S1",
+      "title": "Tillamook, Oregon, United States Marriage Certificate 1931 - Alvro Bair Taylor and Mildred M. Misner",
+      "author": "Tillamook County, Oregon (E. Wanley, Justice of the Peace, officiating)",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G991-37MK"
+    },
+    {
+      "id": "S2",
+      "title": "Household of Al B Taylor, United States, Census, 1940",
+      "author": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VRRV-DFJ"
+    },
+    {
+      "id": "S3",
+      "title": "Entry for Alvro Bair Taylor, United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QP1Y-3SQ2"
+    }
+  ]
+}

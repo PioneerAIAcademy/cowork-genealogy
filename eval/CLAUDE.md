@@ -21,6 +21,7 @@ eval/
   Start.bat              Launch the Next.js CRUD UI
   RunTests.bat           Execute the Python test harness
   GateSkill.bat          Gate a candidate SKILL.md edit against its pre-edit baseline
+  OptimizeSkill.bat      Tune a skill's description (the vendored triggering optimizer)
   app/                   Next.js CRUD UI (test authoring + annotation + comparison)
   harness/               Python test runner (Claude Agent SDK)
     harness/             Implementation modules (snapshot, versioning, runlog, …)

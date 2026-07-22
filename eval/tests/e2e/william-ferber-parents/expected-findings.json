@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "William H. Ferber's father was Gerhard Ferber, a German immigrant born about 1820 who settled in Cincinnati, Ohio.",
+      "details": {
+        "subject_person": "William H. Ferber (G7JB-YH6)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Gerhard Ferber",
+          "birth": "~1820, Germany"
+        }
+      },
+      "supporting_sources": [
+        "1870 U.S. Federal Census, Cincinnati Ward 7, Hamilton County, Ohio -- household of Gerhard and Eva Faerber, including young son William",
+        "Ohio County Death Records, 1840-2001 -- entry for Wm. Ferber naming Gerhard Ferber, 11 Mar 1903"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "William H. Ferber's mother was Eva Engermann (Ferber), born about 1834 in Bavaria, Germany.",
+      "details": {
+        "subject_person": "William H. Ferber (G7JB-YH6)",
+        "relation": "parent",
+        "target_person": {
+          "name": "Eva Engermann",
+          "birth": "~1834, Bavaria, Germany"
+        }
+      },
+      "supporting_sources": [
+        "1870 U.S. Federal Census, Cincinnati Ward 7, Hamilton County, Ohio -- household of Gerhard and Eva Faerber, including young son William"
+      ],
+      "required": true
+    }
+  ]
+}

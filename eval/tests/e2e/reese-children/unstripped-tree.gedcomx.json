@@ -1,0 +1,1599 @@
+{
+  "persons": [
+    {
+      "id": "L4X1-2RB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Benjamin Franklin",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "8 April 1878",
+          "standard_date": "8 Apr 1878",
+          "place": "Haywood, North Carolina, United States",
+          "standard_place": "Haywood, North Carolina, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "12 October 1938",
+          "standard_date": "12 Oct 1938",
+          "place": "Buffalo, Leon, Texas, United States",
+          "standard_place": "Buffalo, Leon, Texas, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pigeon, Haywood, North Carolina, United States",
+          "standard_place": "Pigeon Township, Haywood, North Carolina, United States"
+        },
+        {
+          "id": "31b6c37f-535f-4557-9a9c-41c58a7c808e",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 2, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 2, Navarro, Texas, United States"
+        },
+        {
+          "id": "b1c7a389-f3f6-480b-9461-55056c216768",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "0f30da43-08d9-4ca3-a65f-d9de27b67c86",
+          "type": "Military Draft Registration",
+          "date": "1917-1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Draft Registration"
+        },
+        {
+          "id": "7a716747-ead3-4de1-8bd7-df846070f97c",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "df56667f-c7d9-4bf9-b4fa-af9b2d86520d",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "b38ae326-e9c2-482c-8292-5fe61cfef6ac",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "date": "October 1938",
+          "standard_date": "Oct 1938",
+          "place": "Lummus Cemetery, Leon, Texas, United States",
+          "standard_place": "Lummus Cemetery, Flo, Leon, Texas, United States"
+        },
+        {
+          "id": "299e96d2-b663-4d8b-9dcc-e4d69add2615",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ]
+    },
+    {
+      "id": "L5YS-JGQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Janie Faye",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "308c35b4-7b81-4e11-9946-758e5cc95a98",
+          "type": "Residence",
+          "date": "1921",
+          "standard_date": "1921",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "6eced2b2-705b-421c-b989-77fece27f7ad",
+          "type": "Birth",
+          "date": "4 November 1921",
+          "standard_date": "4 Nov 1921",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "fbf7e3a1-b502-4c3a-bf97-1be273752d49",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "6f139dda-f0d8-43b4-8ebb-0ee1dfcd8ae3",
+          "type": "Social Program Application",
+          "date": "Aug 1945",
+          "standard_date": "Aug 1945"
+        },
+        {
+          "id": "1671c9dc-e760-4960-97ae-5a785c2ab322",
+          "type": "Death",
+          "date": "April 1993",
+          "standard_date": "Apr 1993"
+        },
+        {
+          "id": "c5e3e62d-418e-47fb-933f-e5ef909745fa",
+          "type": "Christening",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "ee1f8bec-8d18-4b0f-a7de-b1c917ae63f5",
+          "type": "Previous Residence",
+          "place": "Waco, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "9b27ae16-f257-4c6e-9073-a00a295e4363",
+          "type": "Burial",
+          "place": "Buffalo Cemetery, Buffalo, Leon, Texas, United States",
+          "standard_place": "Buffalo Cemetery, Buffalo, Leon, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "L5YS-V5Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Jessie Cleveland",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a65f2e1a-8377-490c-a8a7-ec98e41e2798",
+          "type": "Birth",
+          "date": "1906",
+          "standard_date": "1906"
+        },
+        {
+          "id": "4430348f-0a8e-4df4-bc9d-9ca5377d62d1",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 2, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 2, Navarro, Texas, United States"
+        },
+        {
+          "id": "650002ef-d9b2-4b7b-bada-f3195b162e02",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "e8ad6b69-591e-4e85-a752-245662c00bd6",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "197f951a-7407-43de-8e79-ff66ba70bf07",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Rural, Leon, Texas",
+          "standard_place": "Leon, Texas, United States"
+        },
+        {
+          "id": "fc342b2e-4427-4b1f-96a2-12373e61e576",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Centerville, Justice Precinct 1, Leon, Texas, United States",
+          "standard_place": "Justice Precinct 1, Leon, Texas, United States"
+        },
+        {
+          "id": "b97b4651-7918-4bbf-97c9-e9d9302ee267",
+          "type": "Death",
+          "date": "7 November 1978",
+          "standard_date": "7 Nov 1978",
+          "place": "San Antonio, Bexar, Texas, United States",
+          "standard_place": "San Antonio, Bexar, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "LVC4-XNC",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Whitfield Donald",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a8ce200d-398f-46b0-9a3d-90d1d805e270",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-2",
+          "type": "Birth",
+          "date": "20 August 1915",
+          "standard_date": "20 Aug 1915",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "77a3813c-01a7-494b-a8d8-38d820494214",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "7abbb3e8-c838-44a3-9b9d-60161421fcad",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521-2",
+          "type": "Burial",
+          "date": "December 1963",
+          "standard_date": "Dec 1963",
+          "place": "Mexia City Cemetery, Mexia, Limestone, Texas, United States",
+          "standard_place": "Mexia City Cemetery, Mexia, Limestone, Texas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "16 December 1963",
+          "standard_date": "16 Dec 1963",
+          "place": "Mexia, Limestone, Texas, United States",
+          "standard_place": "Mexia, Limestone, Texas, United States"
+        },
+        {
+          "id": "4d802516-f6e6-4a2c-8179-971d701ec304",
+          "type": "Christening",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "LVJG-YHH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Abner Wesley",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "79622560-b979-4204-98bf-34e4f965d5b7",
+          "type": "Birth",
+          "date": "11 August 1919",
+          "standard_date": "11 Aug 1919",
+          "place": "Corsicana, Navarro, Texas, United States",
+          "standard_place": "Corsicana, Navarro, Texas, United States"
+        },
+        {
+          "id": "7e8fe597-4577-423e-8d55-15714eb0f859",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "be8b3a33-cba5-48f6-93f1-32f657cf3aab",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "3143a6ce-77f0-490a-a4c1-9341da75e4f0",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Rural, Navarro, Texas",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "d54f4c4b-2b18-42be-86d5-e1126a8ce552",
+          "type": "Social Program Application",
+          "date": "Oct 1938",
+          "standard_date": "Oct 1938"
+        },
+        {
+          "id": "e43a974c-c7d2-4ea5-802d-3720acabf82a",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Justice Precinct 1, Leon, Texas, United States",
+          "standard_place": "Justice Precinct 1, Leon, Texas, United States"
+        },
+        {
+          "id": "8ebc8bfe-98af-4ec2-8a9f-2371b9faffa9",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Buffalo, Leon, Texas, United States",
+          "standard_place": "Buffalo, Leon, Texas, United States"
+        },
+        {
+          "id": "3663d6e2-272a-404b-a366-d430f40eddc6",
+          "type": "Death",
+          "date": "10 April 1991",
+          "standard_date": "10 Apr 1991",
+          "place": "Buffalo, Leon, Texas, United States",
+          "standard_place": "Buffalo, Leon, Texas, United States"
+        },
+        {
+          "id": "fc30de70-823f-4852-91a3-ec94704349dc",
+          "type": "Burial",
+          "date": "April 1991",
+          "standard_date": "Apr 1991",
+          "place": "Buffalo Cemetery, Buffalo, Leon, Texas, United States",
+          "standard_place": "Buffalo Cemetery, Buffalo, Leon, Texas, United States"
+        },
+        {
+          "id": "901fc62e-edb5-4b63-bd57-6ddd5b9159a5",
+          "type": "Previous Residence",
+          "place": "Buffalo, Leon, Texas, United States",
+          "standard_place": "Buffalo, Leon, Texas, United States"
+        },
+        {
+          "id": "85f58cc1-a4b2-4d20-9413-f5aa9b8fd756",
+          "type": "Race",
+          "value": "White"
+        },
+        {
+          "id": "3b77ef7c-f1bf-4ff0-97b2-dc8112ecbb8c",
+          "type": "MilitaryDraftRegistration",
+          "place": "Hempstead, Waller, Texas, United States",
+          "standard_place": "Hempstead, Waller, Texas, United States"
+        },
+        {
+          "id": "c5a42288-56d6-4e0f-8640-a11b5a9d39f4",
+          "type": "Occupation",
+          "value": "Repairing Roads"
+        },
+        {
+          "id": "8c1aacb0-fc15-4a28-97e2-2b35c55e80b4",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "70485100-b2cd-43bb-911e-9a8eddfa0d93",
+          "type": "Residence",
+          "place": "Hempstead",
+          "standard_place": "Hempstead, Waller, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "LVMC-19R",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Margaret",
+          "surname": "Inman"
+        }
+      ],
+      "facts": [
+        {
+          "id": "377e6373-a54b-4d9c-8dbb-21e46d2d96e2",
+          "type": "Birth",
+          "date": "22 April 1849",
+          "standard_date": "22 Apr 1849",
+          "place": "Haywood, North Carolina, United States",
+          "standard_place": "Haywood, North Carolina, United States"
+        },
+        {
+          "id": "c43def6c-b887-469e-9a2e-c357fe84d486",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "37th Division, Haywood, North Carolina, United States",
+          "standard_place": "Haywood, North Carolina, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pigeon, Haywood, North Carolina, United States",
+          "standard_place": "Pigeon Township, Haywood, North Carolina, United States"
+        },
+        {
+          "id": "cca5764b-714b-4c7d-ad98-c1f9cdd7fc20",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 2, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 2, Navarro, Texas, United States"
+        },
+        {
+          "id": "7f5b3390-1f25-42dd-83e7-64e6f0b1b7d5",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 6, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 6, Hill, Texas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0-2",
+          "type": "Death",
+          "date": "30 September 1931",
+          "standard_date": "30 Sep 1931",
+          "place": "Itasca, Hill, Texas, United States",
+          "standard_place": "Itasca, Hill, Texas, United States"
+        },
+        {
+          "id": "a5ae7402-77a9-4c47-b4e9-39937130055d",
+          "type": "LifeSketch",
+          "value": "PHOTO AND BIO FROM FIND A GRAVE...\nMaggie Inman Reece was the daughter of Anderson and Mary Kerby Inman. When she was about 12 or 13, her father and her uncles left to fight in the Civil War. She and her mother and nine brothers and sisters were left to keep the farm and household running while the husband and father was gone.\nIn 1870, she married Thomas M. Hix Reece, son of John and Aliff Caroline Evans Reece. They lived in Haywood County for a little over 20 years, and left for Texas about 1893. They settled in Navarro County, TX for a time, then went to Oklahoma for a short time. They came back to Navarro county and farmed there until 1912 when Hix died.\nAfter Hix's death, Maggie lived with her children, going from one to the other for several months at a time.\nShe was remembered with great love and fondness by her children and grandchildren. She died on September 30, 1931, in Itasca, Hill County, TX, and she is buried in the Itasca Cemetery."
+        },
+        {
+          "id": "ac09a283-348b-4443-9154-0fc5e8b37dec",
+          "type": "Burial",
+          "place": "Itasca Cemetery, Itasca, Hill, Texas, United States",
+          "standard_place": "Itasca Cemetery, Itasca, Hill, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "L4X1-NQX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Mallie",
+          "surname": "Shue"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-3",
+          "type": "Birth",
+          "date": "13 September 1886",
+          "standard_date": "13 Sep 1886",
+          "place": "Travis, Texas, United States",
+          "standard_place": "Travis, Texas, United States"
+        },
+        {
+          "id": "395409de-3a85-4ce1-830f-63f8e15147e3",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 2, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 2, Navarro, Texas, United States"
+        },
+        {
+          "id": "3ad352e5-48bb-4492-a5be-ec94c4c3ea61",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "7c81bd75-17fb-4c28-9963-9537c110bc99",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "45f39492-9d56-4601-a92f-883abf7fd066",
+          "type": "Social Program Application",
+          "date": "Jan 1943",
+          "standard_date": "Jan 1943"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521-3",
+          "type": "Burial",
+          "date": "December 1952",
+          "standard_date": "Dec 1952",
+          "place": "Lummus Cemetery, Flo, Leon, Texas, United States",
+          "standard_place": "Lummus Cemetery, Flo, Leon, Texas, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922-2",
+          "type": "Death",
+          "date": "21 December 1952",
+          "standard_date": "21 Dec 1952",
+          "place": "San Antonio, Bexar, Texas, United States",
+          "standard_place": "San Antonio, Bexar, Texas, United States"
+        },
+        {
+          "id": "fc2f3087-04a4-4739-808f-7527aed869bf",
+          "type": "LifeSketch",
+          "value": "Mallie Shue Reese\nBIRTH\t13 Sep 1875\nFalls County, Texas, USA\nDEATH\t15 Dec 1951 (aged 76)\nSan Antonio, Bexar County, Texas, USA\nBURIAL\t\nLummus Cemetery\nFlo, Leon County, Texas, USA\nMEMORIAL ID\t39176153 · View Source"
+        }
+      ]
+    },
+    {
+      "id": "LVC4-XZS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Floyd Haden",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4cf02e9d-e24e-4896-850d-5735e1134351",
+          "type": "Residence",
+          "date": "1924",
+          "standard_date": "1924",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-4",
+          "type": "Birth",
+          "date": "8 July 1924",
+          "standard_date": "8 Jul 1924",
+          "place": "Chatfield, Navarro, Texas, United States",
+          "standard_place": "Chatfield, Navarro, Texas, United States"
+        },
+        {
+          "id": "06347dc4-d3fb-4308-b0e8-a8af142e9542",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "0ab0555e-dd3b-4d92-8c43-988cab6d32fc",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Rural, Navarro, Texas",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "a5fc8b94-8a68-4b11-a778-01428c7114d1",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Justice Precinct 3, Leon, Texas, United States",
+          "standard_place": "Justice Precinct 3, Leon, Texas, United States"
+        },
+        {
+          "id": "3aa967a5-41ed-411f-88ae-fabbc472d35f",
+          "type": "Military Draft Registration",
+          "date": "17 December 1942",
+          "standard_date": "17 Dec 1942",
+          "place": "Buffalo, Leon, Texas, United States",
+          "standard_place": "Buffalo, Leon, Texas, United States"
+        },
+        {
+          "id": "3013dcc5-2d5d-48f7-af61-84646124726f",
+          "type": "MilitaryService",
+          "date": "22 Mar 1943",
+          "standard_date": "22 Mar 1943",
+          "place": "Houston, Texas, United States",
+          "standard_place": "Houston County, Texas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0-3",
+          "type": "Death",
+          "date": "15 February 1945",
+          "standard_date": "15 Feb 1945",
+          "place": "Philippines",
+          "standard_place": "Philippines"
+        },
+        {
+          "id": "d363e3af-940f-4e31-9318-e70103209073",
+          "type": "MilitaryService",
+          "value": "PFC"
+        },
+        {
+          "id": "bbe9919e-b8d8-4306-ab62-45fe23b43882",
+          "type": "Christening",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521-4",
+          "type": "Burial",
+          "place": "Manila American Cemetery & Memorial, Manila, Metro Manila, National Capital Region, Philippines",
+          "standard_place": "Manila American Cemetery and Memorial, Fort Bonifacio, Taguig, Rizal, Philippines"
+        }
+      ]
+    },
+    {
+      "id": "LVC4-XM8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Delia",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100-5",
+          "type": "Birth",
+          "date": "11 June 1907",
+          "standard_date": "11 Jun 1907",
+          "place": "Belton, Bell, Texas, United States",
+          "standard_place": "Belton, Bell, Texas, United States"
+        },
+        {
+          "id": "350526d0-56dc-4a3b-b2ef-f918c66f0ee8",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 2, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 2, Navarro, Texas, United States"
+        },
+        {
+          "id": "48b9feb8-5831-4941-a0e5-be529706eb88",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "b0dc23e8-2ffd-4993-9482-95d042fd59c1",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Itasca, Hill, Texas, United States",
+          "standard_place": "Itasca, Hill, Texas, United States"
+        },
+        {
+          "id": "75aa2a57-5e80-4a8a-bdc9-b3538d8b8ef6",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Justice Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States"
+        },
+        {
+          "id": "1e569be2-2ef7-44d1-9425-db182810f8cf",
+          "type": "Residence",
+          "date": "11 April 1950",
+          "standard_date": "11 Apr 1950",
+          "place": "Corsicana, Navarro, Texas, United States",
+          "standard_place": "Corsicana, Navarro, Texas, United States"
+        },
+        {
+          "id": "1555e8ae-09df-4c57-ac77-b5cc768ba5b1",
+          "type": "Social Program Claim",
+          "date": "20 May 1972",
+          "standard_date": "20 May 1972"
+        },
+        {
+          "id": "92ae4c29-58e8-4418-af41-7cc37c799bb2",
+          "type": "Social Program Application",
+          "date": "23 Feb 1999",
+          "standard_date": "23 Feb 1999"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521-5",
+          "type": "Burial",
+          "date": "September 2002",
+          "standard_date": "Sep 2002",
+          "place": "Waco Memorial Park, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0-4",
+          "type": "Death",
+          "date": "26 September 2002",
+          "standard_date": "26 Sep 2002",
+          "place": "Waco, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        },
+        {
+          "id": "3b92ce62-8606-4cb4-b54e-0b03240d5721",
+          "type": "Previous Residence",
+          "place": "Waco, McLennan, Texas, United States",
+          "standard_place": "Waco, McLennan, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "22B8-3JD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Thomas Milas Hix",
+          "surname": "Reece"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1853",
+          "standard_date": "1853",
+          "place": "Haywood, North Carolina, United States",
+          "standard_place": "Haywood, North Carolina, United States"
+        },
+        {
+          "id": "e28231e3-b161-49ad-b96f-74418af12297",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "37 Division, Haywood, North Carolina, United States",
+          "standard_place": "Haywood, North Carolina, United States"
+        },
+        {
+          "id": "7963f690-3d40-4721-81b3-5bb2a2f3b679",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Pigeon, Haywood, North Carolina, United States",
+          "standard_place": "Pigeon Township, Haywood, North Carolina, United States"
+        },
+        {
+          "id": "5b1b13b2-910b-4eee-bf5c-619044e0340d",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 2, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 2, Navarro, Texas, United States"
+        },
+        {
+          "id": "bed67f04-09bc-4308-a069-62c1d3aeaa12",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "23 August 1912",
+          "standard_date": "23 Aug 1912",
+          "place": "Temple, Bell, Texas, United States",
+          "standard_place": "Temple, Bell, Texas, United States"
+        },
+        {
+          "id": "e2d7bf47-1626-438b-86f8-246d56f42183",
+          "type": "LifeSketch",
+          "value": "T. M. Hix Reece came to Texas about 1894. He and his family lived in the Navarro County area except for a brief time when they went to OK. He died in Temple, Bell Co., TX, while on a visit and his body was brought back to Corsicana. It is believed that he was buried at Petty's Chapel although there is no marker.\nHe was born in Haywood Co., NC, to John Reece and Aliff Caroline Evans Reece. \nHe had five brothers: Edward Z. Reece, Rufus Govan Reece, James E Reece, John Bird Reece, and Daniel H Reece. "
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521-6",
+          "type": "Burial",
+          "place": "Pettys Chapel Cemetery, Corsicana, Navarro, Texas, United States",
+          "standard_place": "Pettys Chapel Cemetery, Corsicana, Navarro, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "GH8N-6VD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Lida Mae",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f839eb03-f4d1-4e0e-a182-2fd3636f5274",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "8e268c87-9b16-45c7-a3c0-9f01be372dc5",
+          "type": "Birth",
+          "date": "20 August 1911",
+          "standard_date": "20 Aug 1911",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "ff00055a-e8e4-4a9d-a91f-14bcdec10791",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "783bab17-73a9-450c-8674-b2e5d916c41e",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "value": "same place"
+        },
+        {
+          "id": "72921acb-9781-466c-a7a0-3bdc8a4f8c5d",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Justice Precinct 1, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 1, Navarro, Texas, United States"
+        },
+        {
+          "id": "5fdf0887-462f-4802-89d8-8e9e09bc14fb",
+          "type": "Death",
+          "date": "2 January 1993",
+          "standard_date": "2 Jan 1993"
+        },
+        {
+          "id": "85b24d92-0b99-4b50-9e11-a6e4ad59bc98",
+          "type": "Christening",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "7a5c8734-6818-4881-b12b-d9f69fe9a007",
+          "type": "Burial",
+          "place": "Resthaven Memorial Park, Corsicana, Navarro, Texas, United States",
+          "standard_place": "Resthaven Memorial Park, Corsicana, Navarro, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "G7S1-TLQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Willard Franklin",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d511d669-86ad-4d1d-8381-2cf5561ef510",
+          "type": "Birth",
+          "date": "6 September 1917",
+          "standard_date": "6 Sep 1917",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "6e1b2091-eb2c-42be-bc56-fa6c18693e78",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "a3bd0689-7d67-496f-9a9c-c2456b180246",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "623d6a86-d2d6-445c-95c8-9960bf842179",
+          "type": "Military Draft Registration",
+          "date": "16 October 1940",
+          "standard_date": "16 Oct 1940",
+          "place": "Hempstead, Waller, Texas, United States",
+          "standard_place": "Hempstead, Waller, Texas, United States"
+        },
+        {
+          "id": "eafb1421-fa22-4166-9751-c789059beccc",
+          "type": "Residence",
+          "date": "1 April 1950",
+          "standard_date": "1 Apr 1950",
+          "place": "San Antonio, Bexar, Texas, United States",
+          "standard_place": "San Antonio, Bexar, Texas, United States"
+        },
+        {
+          "id": "e672fd21-ebfe-4c5d-bb6e-a5d36884c81a",
+          "type": "Death",
+          "date": "18 May 1978",
+          "standard_date": "18 May 1978",
+          "place": "San Antonio, Bexar, Texas, United States",
+          "standard_place": "San Antonio, Bexar, Texas, United States"
+        },
+        {
+          "id": "64e5ae59-9b61-4415-a244-9b7b95d2bfdb",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "215a3a23-bf54-4c70-b93d-75e70082dabc",
+          "type": "Residence",
+          "place": "Hempstead",
+          "standard_place": "Hempstead, Rockland, New York, United States"
+        },
+        {
+          "id": "34ae5ec0-30fd-4b37-823c-f4a8cfe2504f",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "29cd06b3-de74-40a1-847e-440575fc3951",
+          "type": "Occupation",
+          "value": "Auto Mechanic"
+        }
+      ]
+    },
+    {
+      "id": "L5YS-J74",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N13",
+          "given": "Cora Bell",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "38c4eb55-b7b4-497e-9ec3-16021300ceb6",
+          "type": "Birth",
+          "date": "13 March 1909",
+          "standard_date": "13 Mar 1909",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "2957cfa5-3e4a-40df-b108-9842c3ae0a54",
+          "type": "Residence",
+          "date": "1909",
+          "standard_date": "1909",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        },
+        {
+          "id": "fd795e19-4552-48ea-90b2-ed1af6e3c725",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Justice Precinct 2, Navarro, Texas, United States",
+          "standard_place": "Justice Precinct 2, Navarro, Texas, United States"
+        },
+        {
+          "id": "b8e03975-1a26-43dc-9b0a-fc1a0ed61bd7",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "8c1ecc4d-6982-4c9b-9b0d-0b8afaa61c1b",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Justice Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "85bf1cf9-78c4-4dee-ad21-31157b86762d",
+          "type": "Death",
+          "date": "1948",
+          "standard_date": "1948"
+        },
+        {
+          "id": "be27db6a-5eea-4750-9849-67381f85b775",
+          "type": "Christening",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "G73M-QXH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N14",
+          "given": "Mary Janice",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "751e21af-cc3c-43fa-9181-437768bff6c6",
+          "type": "Birth",
+          "date": "18 March 1927",
+          "standard_date": "18 Mar 1927",
+          "place": "Texas, United States",
+          "standard_place": "Texas, United States"
+        },
+        {
+          "id": "b380f84a-3e73-4597-af73-150cb25c69eb",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "4a3cfb41-545e-4ae1-8a00-37b55437f856",
+          "type": "Death",
+          "date": "26 January 1982",
+          "standard_date": "26 Jan 1982",
+          "place": "San Antonio, Bexar, Texas, United States",
+          "standard_place": "San Antonio, Bexar, Texas, United States"
+        },
+        {
+          "id": "8721ce41-f76c-486d-b499-f7615b620b95",
+          "type": "Burial",
+          "place": "Leesville Cemetery Leesville Gonzales County Texas, United States",
+          "standard_place": "Leesville, Gonzales, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "G7S1-YH9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N15",
+          "given": "Patsy Ruth",
+          "surname": "Reese"
+        }
+      ],
+      "facts": [
+        {
+          "id": "180310a3-7dd6-4ce5-acec-6336a27eb6fb",
+          "type": "Birth",
+          "date": "2 March 1930",
+          "standard_date": "2 Mar 1930",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "993eabe2-a7c4-4e85-ad0e-f0e37198f440",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Precinct 2, Hill, Texas, United States",
+          "standard_place": "Justice Precinct 2, Hill, Texas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "16abb388-3b37-427c-a0d8-ef31bc5e05c3",
+          "type": "Social Program Claim",
+          "date": "12 May 1973",
+          "standard_date": "12 May 1973"
+        },
+        {
+          "id": "45ba4b9f-c287-4aba-be98-ead47c5178f5",
+          "type": "Social Program Application",
+          "date": "1 Nov 1976",
+          "standard_date": "1 Nov 1976"
+        },
+        {
+          "id": "3b920e59-dc64-4541-9dfc-0742c301a845",
+          "type": "Death",
+          "date": "7 February 2001",
+          "standard_date": "7 Feb 2001"
+        },
+        {
+          "id": "a59dfd2e-cba3-46d4-88a8-05246a6f243f",
+          "type": "Previous Residence",
+          "place": "San Antonio, Bexar, Texas, United States",
+          "standard_place": "San Antonio, Bexar, Texas, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L4X1-2RB",
+      "person2": "L4X1-NQX",
+      "facts": [
+        {
+          "id": "98383908-deed-45a8-9927-490f24f6513b",
+          "type": "Marriage",
+          "date": "11 March 1905",
+          "standard_date": "11 Mar 1905"
+        },
+        {
+          "id": "9627ef86-b52e-41ed-9cd7-eea416ff7504",
+          "type": "Marriage",
+          "date": "12 March 1905",
+          "standard_date": "12 Mar 1905",
+          "place": "Navarro, Texas, United States",
+          "standard_place": "Navarro, Texas, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "22B8-3JD",
+      "person2": "LVMC-19R",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "11 December 1870",
+          "standard_date": "11 Dec 1870",
+          "place": "Haywood, North Carolina, United States",
+          "standard_place": "Haywood, North Carolina, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "22B8-3JD",
+      "child": "L4X1-2RB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LVMC-19R",
+      "child": "L4X1-2RB",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "L5YS-V5Q"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "L5YS-V5Q"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "LVC4-XM8"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "LVC4-XM8"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "L5YS-J74"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "L5YS-J74"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "GH8N-6VD"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "GH8N-6VD"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "LVC4-XNC"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "LVC4-XNC"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "G7S1-TLQ"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "G7S1-TLQ"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "LVJG-YHH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "LVJG-YHH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "L5YS-JGQ"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "L5YS-JGQ"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "LVC4-XZS"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "LVC4-XZS"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "G73M-QXH"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "G73M-QXH"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "L4X1-2RB",
+      "child": "G7S1-YH9"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "L4X1-NQX",
+      "child": "G7S1-YH9"
+    }
+  ],
+  "sources": [
+    {
+      "id": "39CF-J21",
+      "title": "Benjamin Franklin Reese, \"Texas, Birth Index, 1903-1997\"",
+      "citation": "\"Texas, Birth Index, 1903-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V83T-397 : Tue Feb 25 07:27:51 UTC 2025), Entry for Patsy Ruth Reese and Benjamin Franklin Reese, 02 Mar 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V83T-393"
+    },
+    {
+      "id": "QWH7-RMP",
+      "title": "Benjamin F Reese, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7G-K8T4 : Fri Jul 03 22:27:09 UTC 2026), Entry for Patricia Ruth Shepard and Patricia R Ellis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7G-K8T8"
+    },
+    {
+      "id": "S2CT-C5Z",
+      "title": "Benjamin Franklin Reese in entry for Cora Bell Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LGN-YBT2 : 12 March 2020), Benjamin Franklin Reese in entry for Cora Bell Reese, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LGN-YBT2"
+    },
+    {
+      "id": "39CF-JQQ",
+      "title": "Benjamin Franklin Reese in entry for Jannie Faye Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LNF-Y5MM : 12 March 2020), Benjamin Franklin Reese in entry for Jannie Faye Reese, 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LNF-Y5MM"
+    },
+    {
+      "id": "39CF-JYG",
+      "title": "Benjamin Franklin Reese, \"Texas, Deaths, 1977-1986\"",
+      "citation": "\"Texas, Deaths, 1977-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KS8L-Z5P : Fri Jul 05 18:24:53 UTC 2024), Entry for Willard F Reese and Benjamin Franklin Reese, 18 May 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KS8L-Z55"
+    },
+    {
+      "id": "39CF-VQB",
+      "title": "B F Reece, \"Texas, County Marriage Records, 1837-2010\"",
+      "citation": "\"Texas, County Marriage Records, 1837-2010\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV1C-QGMW : Sat Mar 09 17:11:25 UTC 2024), Entry for B F Reece and Mollie Shoe.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV1C-QGMW"
+    },
+    {
+      "id": "3QJH-22X",
+      "title": "B F Reese, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M23T-8T5 : Wed Aug 13 18:52:12 UTC 2025), Entry for B F Reese and Mollie Reese, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M23T-8T5"
+    },
+    {
+      "id": "Q7WV-2HN",
+      "title": "B. T. Reece, \"Texas, County Marriage Records, 1837-2010\"",
+      "citation": "\"Texas, County Marriage Records, 1837-2010\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK8R-6YBS : Fri Mar 08 14:17:14 UTC 2024), Entry for B. T. Reece and Mollie Shoe, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK8R-6YBS"
+    },
+    {
+      "id": "9NJ2-54B",
+      "title": "Ben F. Reese in entry for Whitfield Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6PB-CBB : 13 February 2020), Ben F. Reese in entry for Whitfield Reese, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6PB-CBB"
+    },
+    {
+      "id": "9NJ2-RSK",
+      "title": "Ben F. Reese in entry for Whitfield Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F659-3FL : 13 February 2020), Ben F. Reese in entry for Whitfield Reese, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:F659-3FL"
+    },
+    {
+      "id": "39CF-NXR",
+      "title": "Benjamin Franklin Reese in entry for Lida Mae Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4L2Y-N8N2 : 12 March 2020), Benjamin Franklin Reese in entry for Lida Mae Reese, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:4L2Y-N8N2"
+    },
+    {
+      "id": "39CF-J9G",
+      "title": "Benjamin Franklin Reese, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKF-B13Y : Tue Apr 01 14:55:12 UTC 2025), Entry for Benjamin Franklin Reese, 1938.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKF-B13Y"
+    },
+    {
+      "id": "QWHQ-V7T",
+      "title": "Benjamin F Reese, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K75-J2WS : Mon Jul 06 01:19:45 UTC 2026), Entry for Abner Wesley Reece and Benjamin F Reese.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K75-J2W7"
+    },
+    {
+      "id": "9KDH-W73",
+      "title": "Ben F Reese in entry for Whisfield Reese, \"Texas Birth Certificates, 1903-1935\"",
+      "citation": "\"Texas, Birth Certificates, 1903-1936\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X2GV-68N : Mon Jul 08 07:31:51 UTC 2024), Entry for Whisfield Reese and Ben F Reese, 20 Aug 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X2GV-68J"
+    },
+    {
+      "id": "39CF-N2G",
+      "title": "Benjamin Franklin Reese in entry for Lida Mae Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LNF-YPZM : 12 March 2020), Benjamin Franklin Reese in entry for Lida Mae Reese, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LNF-YPZM"
+    },
+    {
+      "id": "39CF-J8D",
+      "title": "Benjamin F. Reece in entry for Abner Wesley Reece, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LN8-48T2 : 12 March 2020), Benjamin F. Reece in entry for Abner Wesley Reece, 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LN8-48T2"
+    },
+    {
+      "id": "39CF-VM2",
+      "title": "Benjamin Franklin Reese in entry for Dee Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LV9-WRN2 : 14 February 2020), Benjamin Franklin Reese in entry for Dee Reese, 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LV9-WRN2"
+    },
+    {
+      "id": "QWHQ-KKB",
+      "title": "Benjamin F Reese, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K74-4LD8 : Mon Jul 06 09:45:30 UTC 2026), Entry for Janie F Dubois and Benjamin F Reese.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K74-4LDX"
+    },
+    {
+      "id": "3SCZ-V8W",
+      "title": "Ben Reese, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MH17-99Z : Mon Jan 20 22:58:24 UTC 2025), Entry for Ben Reese and Mattie Reese, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MH17-99Z"
+    },
+    {
+      "id": "Q7WV-V2P",
+      "title": "B. T. Reece, \"Texas, Marriages, 1837-1973\"",
+      "citation": "\"Texas, Marriages, 1837-1973\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F61W-BM5 : 22 January 2020), B. T. Reece, 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F61W-BM5"
+    },
+    {
+      "id": "7PML-W74",
+      "title": "Ben Franklin Reese, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7JTH-6RPZ : Fri Oct 31 07:48:19 UTC 2025), Entry for Ben Franklin Reese and Mallie Reese, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7JTH-6RPZ"
+    },
+    {
+      "id": "39CF-J4Y",
+      "title": "Benjamin Franklin Reese in entry for Jannie Faye Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LHV-XHPZ : 12 March 2020), Benjamin Franklin Reese in entry for Jannie Faye Reese, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LHV-XHPZ"
+    },
+    {
+      "id": "39CF-JVW",
+      "title": "Benjamin Franklin Reese in entry for Floyd Hayden Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LND-YDN2 : 12 March 2020), Benjamin Franklin Reese in entry for Floyd Hayden Reese, 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LND-YDN2"
+    },
+    {
+      "id": "39CF-J51",
+      "title": "Benjamin Franklin Reese, \"Texas, Birth Certificates, 1903-1936\"",
+      "citation": "\"Texas, Birth Certificates, 1903-1936\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K6LQ-P3G : Wed Jan 15 07:31:30 UTC 2025), Entry for Patsy Ruth Reese and Benjamin Franklin Reese, 02 Mar 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K6LQ-P32"
+    },
+    {
+      "id": "39CF-V3L",
+      "title": "Ben Franklin Reese, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZXP-XGY : Fri Oct 31 07:48:19 UTC 2025), Entry for Ben Franklin Reese, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZXP-XGY"
+    },
+    {
+      "id": "QWHQ-W2T",
+      "title": "Benjamin Franklin Reese, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7V-DK9K : Mon Jul 06 11:57:44 UTC 2026), Entry for Dee R Brotherton and Dee R Brotherton.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7V-DK9G"
+    },
+    {
+      "id": "9NJ2-KWV",
+      "title": "Ben F. Reese in entry for Whitfield Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6P6-FV9 : 12 March 2020), Ben F. Reese in entry for Whitfield Reese, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6P6-FV9"
+    },
+    {
+      "id": "S2CT-CWW",
+      "title": "Benjamin Franklin Reese in entry for Cora Bell Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LNF-YP2M : 12 March 2020), Benjamin Franklin Reese in entry for Cora Bell Reese, 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LNF-YP2M"
+    },
+    {
+      "id": "39CF-JXJ",
+      "title": "Benjamin Franklin Reese in entry for Floyd Hayden Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4LHL-LV2M : 12 March 2020), Benjamin Franklin Reese in entry for Floyd Hayden Reese, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:4LHL-LV2M"
+    },
+    {
+      "id": "39CF-VNK",
+      "title": "Benjamin Reese, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CMNJ-P2M : Sat May 23 09:07:41 UTC 2026), Entry for Benjamin Reese and Mallie Reese, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CMNJ-P2M"
+    },
+    {
+      "id": "M9PT-V8W",
+      "title": "Legacy NFS Source: Benjamin Franklin Reese - Government record: Census record: birth-name: Benjamin Franklin Reese",
+      "citation": "1910 & 1920 census of Navarro, Texas"
+    },
+    {
+      "id": "9NJ2-FF4",
+      "title": "Benjamin Franklin Reese in entry for Floyd Hayden Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6P6-XRC : 12 March 2020), Benjamin Franklin Reese in entry for Floyd Hayden Reese, 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6P6-XRC"
+    },
+    {
+      "id": "9NJ2-8GC",
+      "title": "Benjamin Franklin Reese in entry for Cora Bell Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6G6-DSH : 12 March 2020), Benjamin Franklin Reese in entry for Cora Bell Reese, 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6G6-DSH"
+    },
+    {
+      "id": "9NJ2-6F9",
+      "title": "Benjamin Franklin Reese in entry for Jannie Faye Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6G6-DH4 : 12 March 2020), Benjamin Franklin Reese in entry for Jannie Faye Reese, 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6G6-DH4"
+    },
+    {
+      "id": "9NJ2-8DK",
+      "title": "Benjamin F Reese, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3XF-KRM : Mon Jun 09 23:51:40 UTC 2025), Entry for Whittie Benjamin Reese and Benjamin F Reese, 16 December 1963.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3XF-KR9"
+    },
+    {
+      "id": "9NJ2-XH3",
+      "title": "Benjamin F Reese, \"Texas, Deaths, 1977-1986\"",
+      "citation": "\"Texas, Deaths, 1977-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KS8R-VWZ : Tue Jan 21 12:33:08 UTC 2025), Entry for Jessie Cleveland Reese and Benjamin F Reese, 07 Nov 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KS8R-VW8"
+    },
+    {
+      "id": "9NJ2-XL8",
+      "title": "Benjamin Franklin Reese in entry for Lida Mae Reese, \"Texas, Births and Christenings, 1840-1981\"",
+      "citation": "\"Texas, Births and Christenings, 1840-1981\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6G6-DS7 : 12 March 2020), Benjamin Franklin Reese in entry for Lida Mae Reese, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6G6-DS7"
+    },
+    {
+      "id": "MS2Z-W6Q",
+      "title": "Benjmin F. Reece, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCX9-SX7 : Thu Jan 16 12:47:23 UTC 2025), Entry for Hicks Reece and Margaret Reece, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MCX9-SXZ"
+    }
+  ]
+}

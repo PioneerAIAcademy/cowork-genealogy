@@ -13,9 +13,10 @@ genealogy. Neither role does the whole loop alone — the genealogist owns
 work*, and they decide together at the points that matter.
 
 ```
-  1 create → 2 test → 3 review+annotate → 4 audit rubric → 5 improve body → 6 verify → 7 release
-                                                                 │
-                       8 optimize description  ◄── co-tune ──────┘
+  0 branch → 1 create → 2 test → 3 review+annotate → 4 audit rubric →
+                             5 improve body → 6 verify → 7 release
+                                    │
+              8 optimize description  ◄── co-tune ──┘
 
   One skill at a time. Body loop (5) = skill-improver, which proposes SKILL.md
   edits and routes test-data / triggering / rubric causes elsewhere.
@@ -32,36 +33,79 @@ If you're brand new, read the two walkthroughs first:
 [`eval/JUNIOR-WALKTHROUGH.md`](../eval/JUNIOR-WALKTHROUGH.md) (genealogist)
 and [`eval/SENIOR-WALKTHROUGH.md`](../eval/SENIOR-WALKTHROUGH.md).
 
+## Where each step happens
+
+Every stage below opens with a **Who / Where / How** line. There are only
+three places, and each command has both a `make` form and a Windows
+double-click form — use whichever your machine has:
+
+| Place | What it is | How you run things there |
+|---|---|---|
+| **Terminal** | A shell at the repo root (macOS/Linux) — or File Explorer on Windows, where you double-click a `.bat` in `eval\`. | `make <target>` — Windows: double-click `eval\<Name>.bat`, which prompts for the skill or test name instead of taking `SKILL=`/`TEST=` arguments. |
+| **Claude Code** | A `claude` session started at the repo root — **not** Cowork. This is where the repo-local dev skills and agents live. | Type the slash command, e.g. `/improve-skill citation`. |
+| **Cowork** | The real product, with the plugin + MCP extension installed. | Only for trying a skill by hand in the shipping product. Rebuild and reinstall the artifacts first: `make plugin` (Windows: `eval\BuildPlugin.bat`) and `make mcpb` (Windows: `eval\BuildMcpb.bat`), then remove the old plugin in Cowork → Customize, upload the new `.zip`, and fully quit and reopen Desktop. |
+
+The `.bat` files live in `eval\` and are listed in
+[`eval/README.md`](../eval/README.md). Windows users never need `make`, and
+macOS/Linux users never need the `.bat` files — every step is available both
+ways.
+
 ---
 
 ## The stages
 
+### 0. Make a branch
+
+**Who:** whoever is driving. **Where:** terminal (or GitHub Desktop).
+**How:**
+
+```bash
+git checkout main && git pull
+git checkout -b <your-name>-<skill>        # e.g. dallan-citation
+```
+
+**GitHub Desktop:** Current Branch dropdown → **New branch…** → name it
+`<your-name>-<skill>` → base it on `main` → **Create branch**.
+
+Do this **first**, before you touch a file. Everything the rest of the loop
+produces — the SKILL.md edit, new tests, the run log, your grading
+corrections — is committed together on this one branch, and **one skill per
+PR**. Pushes to `main` are blocked, so starting on `main` just means moving
+the work later.
+
 ### 1. Create / edit a skill
 
-**Pair.** Write the SKILL.md to the prose standard in
-[`docs/skill-authoring-guide.md`](skill-authoring-guide.md); for a new
-tool-wrapping skill, scaffold it with the `cowork-skill-builder` agent
-first. (The authoring guide's "What kind of skill are you writing?"
-section covers whether it should be a skill at all and which of the three
-kinds — workflow, reference, or guardrail — it is.) The genealogist drives
-the domain content; the developer drives shape, frontmatter limits, and
-any `scripts/` helper.
+**Who:** pair. **Where:** Claude Code at the repo root (or any text editor —
+the skill is just `packages/engine/plugin/skills/<skill>/SKILL.md`).
+**How:** for a new tool-wrapping skill, ask Claude Code to scaffold it with
+the `cowork-skill-builder` agent; otherwise edit the file directly.
+
+Write the SKILL.md to the prose standard in
+[`docs/skill-authoring-guide.md`](skill-authoring-guide.md). (The authoring
+guide's "What kind of skill are you writing?" section covers whether it
+should be a skill at all and which of the three kinds — workflow,
+reference, or guardrail — it is.) The genealogist drives the domain
+content; the developer drives shape, frontmatter limits, and any
+`scripts/` helper.
 
 ### 2. Test
 
-**Pair, genealogist-led.** Run the harness one skill at a time:
+**Who:** pair, genealogist-led. **Where:** terminal at the repo root.
+**How:**
 
 ```bash
-make eval-skill SKILL=<skill>     # from repo root: rebuilds the engine if stale, then runs
-# manual equivalent: cd eval/harness && uv run python run_tests.py --skill <skill>
+make eval-skill SKILL=<skill>     # rebuilds the engine if stale, then runs
 ```
+
+**Windows:** double-click `eval\RunTests.bat` — it rebuilds the MCP server
+and then asks which skill to test.
 
 The harness drives the skill against mocked tool responses in a seeded
 starting state (a *scenario*), an LLM judge grades each run, and it saves
 a **run-log** — the scores plus a snapshot of the exact skill, tests,
-scenario, and fixtures used, so the run can be reproduced. Each full
-`--skill` run writes a new run-log; running a single test (`--test`)
-makes a throwaway "scratch" run that isn't saved. Tests are **slow
+scenario, and fixtures used, so the run can be reproduced. Each run here
+writes a new run-log — the releasable candidate; the step-6 gate runs a
+single test instead and deliberately writes none. Tests are **slow
 (~2–3 min each) and cost money** — scope every run to one skill, never run
 several invocations at once (they fight for memory and get killed).
 
@@ -70,8 +114,18 @@ single biggest lever on whether the rest of the loop works.
 
 ### 3. Review & annotate
 
-**Genealogist.** Open the CRUD UI (`make eval-ui`, or `cd eval/app && npm
-run dev`), read each run, and correct the judge's grades. The UI pre-fills
+**Who:** genealogist. **Where:** the CRUD UI in your browser
+(<http://localhost:3000>), started from a terminal. **How:**
+
+```bash
+make eval-ui                      # then open http://localhost:3000
+```
+
+**Windows:** double-click `eval\Start.bat` — it starts the UI and opens the
+browser tab for you. Leave that window open while you work; closing it stops
+the app.
+
+Read each run and correct the judge's grades. The UI pre-fills
 every dimension with the judge's score, so you only change the ones you
 **disagree with** and add a comment on those (matching dimensions need no
 comment). This is where human judgment enters the system — it's what every
@@ -102,17 +156,36 @@ comment is an edit waiting to happen; the first one isn't.
 
 ### 4. Audit the rubric (periodic; before a body-optimization push)
 
-**Pair.** Before trusting the improver to optimize toward a rubric, make sure
+**Who:** pair. **Where:** Claude Code at the repo root — not Cowork, not the
+terminal. **How:**
+
+```
+/audit-rubric <skill>
+```
+
+Type the slash command; don't ask for it in prose (see "Type the commands"
+below for why that matters). There is no `make` target or `.bat` for this
+one — it runs inside Claude Code.
+
+Before trusting the improver to optimize toward a rubric, make sure
 the rubric *discriminates*. The **rubric-critic** agent (read-only) reads a
 skill's run logs (best across versions) + `.ann` corrections + `rubric.md` and
 flags non-discriminating dimensions (always 3 or always 1), flaky dimensions,
-dimensions no test exercises, and systematic judge-vs-human disagreement.
-Invoke it in Claude Code: *"audit the rubric for `<skill>`"*. It only
-*suggests* — rubric edits are the senior's, judge-prompt edits a separate
+dimensions no test exercises, and systematic judge-vs-human disagreement. It
+only *suggests* — rubric edits are the senior's, judge-prompt edits a separate
 cadence. A skill-improver that hill-climbs a weak rubric optimizes noise, so
 run this periodically and whenever a dimension looks off.
 
 ### 5. Improve the skill body
+
+**Who:** pair. **Where:** Claude Code at the repo root. **How:**
+
+```
+/improve-skill <skill>
+```
+
+The agent is report-only: it proposes a diff, you apply it (in Claude Code
+or any editor). No `make` target or `.bat` — it runs inside Claude Code.
 
 **The lane rule — classify every finding BEFORE touching skill prose.**
 The 2026-07 record-extraction audit found most of a month's SKILL.md
@@ -138,12 +211,11 @@ contended prompt. When in doubt between 2 and 4, check whether the
 transcript shows the skill *following* its written instruction — if yes,
 it's lane 2.
 
-**Pair.** Cluster the failures across the skill's tests and revise the
+Cluster the failures across the skill's tests and revise the
 SKILL.md prose to fix them — explaining the *why*, not bolting on
 another MUST (see the authoring guide). The **skill-improver** agent
 (report-only) assists by reading the latest annotated run-log,
-clustering, and proposing an evidence-cited diff for the pair to approve.
-Invoke it in Claude Code: *"improve `<skill>` from its eval results"*. It
+clustering, and proposing an evidence-cited diff for the pair to approve. It
 **routes by cause** — a correction that actually points at a test-data gap, a
 triggering miss, or a rubric problem goes to the test author / description
 optimizer (step 8) / rubric review (step 4), not into a body edit; only a
@@ -172,7 +244,14 @@ body-located cause becomes SKILL.md prose. Either way the discipline is the same
 annotated run-log, the on-ramp differs but the machinery is the same.
 First **reproduce it live** — replay the user's exact prompt against the
 real skill and watch the bug happen before you change anything; live APIs
-are noisy, so re-run once if it doesn't show. Between fix attempts, reset
+are noisy, so re-run once if it doesn't show. Do that replay in **Claude
+Code opened on the unpacked case directory** (`make feedback-case ZIP=…`;
+Windows: `scripts\setup-feedback-case.bat`), which is the cheap loop — the
+skills are symlinked in, so an edit takes effect on the next run with no
+rebuild. Only drop to **Cowork** when you need to see it in the shipping
+product, and rebuild both artifacts first (`make plugin` / `make mcpb`;
+Windows: `eval\BuildPlugin.bat` / `eval\BuildMcpb.bat`). Between fix
+attempts, reset
 *two* things: start a fresh conversation (so the agent isn't anchored on
 its earlier bad reasoning) and reset the case's data to its starting state
 (leftover changes contaminate the next run). Once it's fixed, **promote
@@ -181,12 +260,22 @@ the commit message be the lesson — what went wrong and why the fix works.
 
 ### 6. Verify the fix
 
-**Pair.** We are early in the cycle — **catching big problems, not
+**Who:** pair. **Where:** terminal at the repo root. **How:**
+
+```bash
+make gate-skill SKILL=<skill> TEST=<test-id>
+```
+
+**Windows:** double-click `eval\GateSkill.bat` — it asks for the skill and
+the test id.
+
+We are early in the cycle — **catching big problems, not
 polishing small ones** — so verification is cheap and qualitative, not a
 statistical bake-off:
 
-- **Re-run only the affected tests** while iterating (`--test <id>`);
-  reserve the full `--skill` run for the release candidate.
+- **Iterate with the gate, not the full suite.** `make gate-skill` runs only
+  the affected test plus the hold-outs; reserve the full `make eval-skill`
+  run for the release candidate.
 - **One run is enough for a big fix.** A real problem is a dimension that
   fails *consistently* (a 1, not a flicker); a single run sees that.
   Don't require multiple runs to chase small score deltas you can't trust
@@ -198,40 +287,102 @@ statistical bake-off:
   — a binary a single run answers — not "did the weighted mean rise by
   X."
 
+**The gate answers that binary for you.** Apply the improver's edits to
+SKILL.md **first**, then run it. It runs the named test plus the skill's
+hold-out set against your edited skill and compares to the **annotated**
+scores from your pre-edit run — so
+you're measuring against human ground truth, not judge-versus-judge. It
+prints one of:
+
+- **LOOKS GOOD** — the failing dimension passes and nothing regressed.
+- **NEEDS YOUR EYES** — the fix didn't land, or a hold-out dropped. Adjust
+  and re-run.
+- **INCONCLUSIVE** — the bug never reproduced on the *old* skill, so nothing
+  was proven either way. Usually a too-weak test; grading isn't deterministic,
+  so re-run once before re-mining.
+
+It's advice, not a verdict — you still decide. Two things to know: it needs a
+pre-edit annotated run to compare against, and **it writes no run logs**,
+which is why it's cheap enough to iterate on and why the release run in step 7
+still has to happen.
+
+> **Why not just re-run `make eval-skill` and diff the scores?** A re-run
+> costs a full suite twice and grades judge against judge. And a score diff
+> can't distinguish "the fix didn't work" from "the bug never reproduced" —
+> it shows two passing runs and you conclude, wrongly, that you're done.
+> `INCONCLUSIVE` is the value the gate adds.
+
 ### 7. Release
 
-**Senior blesses, developer ships.** Each full run you commit is a
-**candidate**; a senior reviews the corrected grades and clicks **Release**
-on the good one, which makes it the official version (v1, v2, … — one
-released run-log per version). Before they can, the run-log must be
+**Who:** senior blesses, developer ships. **Where:** two places — a terminal
+for the release run and the push, the CRUD UI for the Release click.
+**How:**
+
+1. **Terminal** — do the full release run on the edited skill (the gate in
+   step 6 writes no run log, so this is not optional):
+
+   ```bash
+   make eval-skill SKILL=<skill>          # Windows: eval\RunTests.bat
+   ```
+
+2. **CRUD UI** (`make eval-ui`; Windows: `eval\Start.bat`) — annotate every
+   dimension of that run. CI fails on a partly-annotated one.
+
+3. **Terminal or GitHub Desktop** — commit the skill edit, any test changes,
+   the run log and its `.ann.json` together, push the step-0 branch, and
+   open the PR:
+
+   ```bash
+   git add packages/engine/plugin/skills/<skill>/ eval/tests/unit/<skill>/ \
+           eval/runlogs/unit/<skill>/
+   git commit -m "<skill>: <what changed and why>"
+   git push -u origin <your-branch>
+   gh pr create                            # or open the PR from GitHub's web UI
+   ```
+
+4. **CRUD UI, senior** — they review the PR diff plus your corrected grades,
+   then click **Release** on the good candidate and push that rename to your
+   branch. The project owner merges.
+
+Each full run you commit is a **candidate**; releasing one makes it the
+official version (v1, v2, … — one released run-log per version). Before a
+senior can release it, the run-log must be
 **active** — its snapshot still matches the skill files in the repo. Edit
 SKILL.md or a test and the UI shows "no active version" until you re-run
 the harness; that's your signal the latest results are stale. It must also
 be fully annotated. CI enforces both.
 
+**Want to see it in the real product before you ship?** That's the one step
+that happens in **Cowork**: `make plugin` and `make mcpb` (Windows:
+`eval\BuildPlugin.bat`, `eval\BuildMcpb.bat`), remove the old plugin in
+Cowork → Customize, upload the new `.zip`, install the `.mcpb` in Desktop →
+Settings → Extensions, then fully quit and reopen Desktop. Optional — the
+harness run, not the Cowork walkthrough, is what CI and the release gate
+check.
+
 ### 8. Optimize the description (separate, automated loop)
 
-**Developer.** A skill has two parts that are tuned separately: the
+**Who:** developer. **Where:** terminal at the repo root. **How:**
+
+```bash
+make optimize-skill SKILL=<skill>
+```
+
+**Windows:** double-click `eval\OptimizeSkill.bat` — it asks which skill's
+description to tune. Both forms build the trigger query set and then run the
+optimizer; it makes real `claude -p` calls, so it needs network and costs
+money, and it is **not** in CI.
+
+A skill has two parts that are tuned separately: the
 one-line **description** controls *when* the skill fires; the **body**
 (steps 5–7) teaches Claude *how* to do the task. A *triggering* problem —
 the skill fires when it shouldn't, or doesn't when it should — is a
 **description** fix; an "it did the task wrong" problem is a **body** fix.
 Don't conflate them.
 
-The description optimizer builds should-trigger / should-not-trigger query
-sets for free from your positive and negative tests, then tunes the
-description against them. Run it on demand (it makes real `claude -p` calls
-— network + model cost, **not** CI):
-
-```bash
-make optimize-skill SKILL=<skill>   # build the trigger query set, then run the optimizer
-# no make? cd eval/triggering, then run these two:
-#   uv run python build_eval_set.py --skill <skill>
-#   uv run python -m scripts.run_loop --eval-set eval_sets/<skill>.json \
-#     --skill-path ../../packages/engine/plugin/skills/<skill> --model <session-model>
-```
-
-It tunes the **description only** — it never runs the skill or a tool.
+The optimizer builds should-trigger / should-not-trigger query sets for free
+from your positive and negative tests, then tunes the description against
+them. It tunes the **description only** — it never runs the skill or a tool.
 Apply the proposed new description as a human-reviewed SKILL.md edit; the
 optimizer's report lands in `eval/runlogs/optimizer/`, separate from your
 test run-logs.
@@ -297,25 +448,40 @@ weighing it (e.g. "overconfident conclusion") becomes a **rubric**
 dimension. If you're still hand-catching the same class of issue ten rounds
 in, the loop isn't learning.
 
-## Status
+## Command card
 
-Every step has tooling in place:
+Every step has tooling in place. The whole loop, in one table:
 
-- **Author** — the authoring guide + a blocking frontmatter lint in CI.
-- **Test** — `make eval-skill SKILL=<name>` (or `cd eval/harness && uv run python run_tests.py --skill <name>`).
-- **Review** — the CRUD UI (`make eval-ui`, or `cd eval/app && npm run dev`) + the holdout toggle.
-- **Audit** — the `rubric-critic` agent.
-- **Improve** — the `skill-improver` agent (report-only: it proposes
-  evidence-cited SKILL.md edits and routes non-body causes elsewhere; the
-  pair applies, re-runs, and commits — it never edits files itself).
-- **Optimize** — `make optimize-skill SKILL=<name>` (on-demand; manual commands in step 8).
+| Step | Where | macOS / Linux | Windows |
+|---|---|---|---|
+| 0 Branch | terminal | `git checkout -b <name>` | GitHub Desktop → New branch… |
+| 1 Author | Claude Code / editor | the authoring guide + a blocking frontmatter lint in CI | same |
+| 2 Test | terminal | `make eval-skill SKILL=<name>` | `eval\RunTests.bat` |
+| 3 Review | CRUD UI (browser) | `make eval-ui` | `eval\Start.bat` |
+| 4 Audit | Claude Code | `/audit-rubric <name>` | `/audit-rubric <name>` |
+| 5 Improve | Claude Code | `/improve-skill <name>` | `/improve-skill <name>` |
+| 6 Gate | terminal | `make gate-skill SKILL=<name> TEST=<id>` | `eval\GateSkill.bat` |
+| 7 Release | terminal + CRUD UI | `make eval-skill`, then Release in the UI, then push + PR | `eval\RunTests.bat`, then Release in the UI, then GitHub Desktop |
+| 8 Optimize | terminal | `make optimize-skill SKILL=<name>` | `eval\OptimizeSkill.bat` |
+| *(optional)* try it in Cowork | Cowork | `make plugin`, `make mcpb` | `eval\BuildPlugin.bat`, `eval\BuildMcpb.bat` |
 
-**To run the skill-improver on skill `X`:** it needs an *active*,
-*annotated* run-log. So run the harness on current code (`make eval-skill
-SKILL=X`, or `cd eval/harness && uv run python run_tests.py --skill X`),
-annotate the candidate in the CRUD UI, then ask Claude Code to "improve `X`
-from its eval results". Against a stale or unannotated run-log it proposes
+Steps 4 and 5 are Claude Code slash commands on both platforms — the agents
+(`rubric-critic`, `skill-improver`) are read-only and propose edits you
+apply. The `.bat` files prompt for the skill or test name instead of taking
+`SKILL=`/`TEST=` arguments; they are listed in
+[`eval/README.md`](../eval/README.md).
+
+**To run the improver on skill `X`:** it needs an *active*, *annotated*
+run-log. So run the harness on current code (`make eval-skill SKILL=X`;
+Windows `eval\RunTests.bat`), annotate the candidate in the CRUD UI, then
+type `/improve-skill X`. Against a stale or unannotated run-log it proposes
 nothing and asks you to re-run — that's correct, not a failure.
+
+**Type the commands rather than asking in prose.** Both agents are read-only
+by construction — they propose, you apply. Phrasing it as a request relies on
+description matching, and a miss doesn't fail loudly: you get ordinary Claude,
+which *does* have Edit and Write, doing the job instead, and the 3-edit budget
+and the you-apply-them gate quietly disappear.
 
 ## Doc index
 
@@ -325,8 +491,8 @@ Everyday docs:
 |---|---|
 | Write a SKILL.md well | [`docs/skill-authoring-guide.md`](skill-authoring-guide.md) |
 | Run the harness / read a run-log | [`eval/README.md`](../eval/README.md) |
-| Audit a skill's rubric quality | the `rubric-critic` agent — `.claude/agents/rubric-critic.md` |
-| Improve a SKILL.md body from eval results | the `skill-improver` agent — `.claude/agents/skill-improver.md` |
+| Audit a skill's rubric quality | `/audit-rubric <name>` — the `rubric-critic` agent |
+| Improve a SKILL.md body from eval results | `/improve-skill <name>` — the `skill-improver` agent |
 | Do your first PR (genealogist / senior) | [`eval/JUNIOR-WALKTHROUGH.md`](../eval/JUNIOR-WALKTHROUGH.md), [`eval/SENIOR-WALKTHROUGH.md`](../eval/SENIOR-WALKTHROUGH.md) |
 
 **Go deeper only if you're changing the machinery itself** — you don't need
@@ -338,4 +504,4 @@ these to follow the flow above:
 | Test JSON format, fixtures, validators | [`docs/specs/unit-test-spec.md`](specs/unit-test-spec.md) |
 | Per-PR review + run-log release/active/candidate mechanics | [`docs/plan/per-pr-review-workflow.md`](plan/per-pr-review-workflow.md), [`docs/plan/eval-runlog-versioning.md`](plan/eval-runlog-versioning.md) |
 | The vendored description optimizer | `eval/triggering/` (vendoring notes in `VENDORED.md`) |
-| Triaging an actual user feedback zip (per-platform setup + click-paths) | [`docs/feedback-workflow.md`](feedback-workflow.md) — superseded as the canonical flow by this doc |
+| Triaging an actual user feedback zip (per-platform setup + click-paths) | [`docs/alpha-feedback-guide.md`](alpha-feedback-guide.md), walked through in [`docs/alpha-feedback-example.md`](alpha-feedback-example.md) |

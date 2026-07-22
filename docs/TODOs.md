@@ -48,6 +48,40 @@ recorded so it can be re-examined rather than re-derived.
   start in prod (e.g. when `PUBLIC_URL` is https, or behind an explicit flag) if
   it's still the dev default, so a deploy can't silently mint forgeable
   per-sandbox WS tokens.
+- [ ] **`WS_TOKEN_SECRET` is still create-time env** — the last instance of the
+  anti-pattern #762 removed for the Anthropic key ("a sandbox's environment is
+  fixed at `create()`"). `E2BProvider.create` bakes
+  `HMAC(ws_signing_key, sandbox_id)` into the WS server's process env
+  (`sandbox/e2b.py`), and that server is deliberately never restarted across
+  pause/resume, so rotating `ws_signing_key` orphans every existing sandbox: the
+  CP mints against the new key, the sandbox verifies against the old one, and
+  every handshake fails `bad/expired token` with no recovery but a new session.
+  It cannot use the decision-#2 secrets *file* — the WS server reads its secret
+  once at boot, not per turn — so the fix is either a restart-on-connect when the
+  derived secret has changed, or a key-id in the token so the sandbox can verify
+  against the key that minted it. Not urgent: rotation is rare and the alpha hang
+  was TTL expiry, not rotation.
+- [ ] **`tool_result` is correlated to its chip by tool NAME, not id** —
+  `real_agent.map_message` resolves `tool_use_id → name` correctly, then
+  `ChatPane` re-matches with `findIndex((t) => t.tool === ev.tool && !t.done)`.
+  Parallel calls to the same tool (several `mcp__genealogy__*` searches at once,
+  or two subagents both running `Bash`) mark the wrong chip done. The id is
+  available at the boundary and is discarded; carry it into the event and match
+  on it. Cosmetic today, but it misreports which call is still running.
+- [ ] **Operator misconfiguration reaches the user as a raw SDK error string** —
+  when the Agent SDK's first call fails auth, `real_agent.handle_turn` wraps the
+  exception verbatim (`_event("error", text=f"Agent error: {exc}")`) and
+  `ChatPane` renders it as-is, so an alpha tester saw *"Failed to authenticate.
+  API Error: 401 API key is invalid."* after ~90s of waiting — a message about
+  the operator's Anthropic key, phrased as if it were about the tester's own
+  login. Two testers each reported it as a FamilySearch problem, which is the
+  real cost: it sends people to debug the wrong credential. Wanted: classify the
+  failure in `handle_turn` and emit an operator-vs-user framing — 401/403 from
+  the SDK → "This service is misconfigured; the administrator has been notified"
+  (plus a server-side log loud enough to page), while genuinely user-actionable
+  failures (an expired FamilySearch token) keep their current specific wording.
+  Surfaced by the 2026-07-20 outage; the credential-freeze half of that bug is
+  fixed (`app/agent_secrets.py`), this half is not.
 
 ## Engine — image transcription
 - [ ] **User-invoked Opus transcription (`image_transcribe` Flow 2)** — brainstormed,
@@ -586,3 +620,49 @@ sized by the Phase-0 latency analysis and are not covered by the parent plan's p
   is why it was documented in the skill's Re-invocation section rather than
   changed. Decide: keep and document, or refuse to overwrite an existing
   backup / write per-run timestamped restore files.
+- **`evidence_type: "negative"` is not tied to `record_role: "absent"` in
+  `validator.ts`** — the runtime validator checks each assertion field
+  independently and has no cross-field rule, so `extraction_append` happily
+  persists a negative assertion carrying a real role. Doctrine is already
+  explicit and correct (`packages/engine/plugin/agents/record-extractor.md`
+  "Negative evidence": "A negative assertion always concerns a *person*
+  (`record_role: "absent"`)"; `research-schema-spec.md:95,378` name `absent`
+  as *the* role for negative evidence) — record-extraction ut_001 violated it
+  anyway on the 2026-07-19 run and self-corrected on the next, i.e. it is
+  unguarded variance, not a prose gap. Deferred from the validator-failure PR
+  because the check does not land cleanly: `eval/fixtures/scenarios/
+  flynn-parentage-not-proved/research.json` `a_012` is `negative` with
+  `record_role: "deceased"` (a "father: not recorded" blank-field negative —
+  itself against doctrine), and proof-conclusion ut_005 calls `research_append`
+  against that scenario, so whole-document validation would reject a currently
+  passing test. To land: retag `a_012` to `record_role: "absent"`, add the
+  cross-field check next to `checkStringOrNull` in the assertions loop, and
+  re-run proof-conclusion (the scenario edit flips its runlog inactive).
+- **`init-project` writes both project files with `Write`, not a writer tool** —
+  its `allowed-tools` is `person_search` / `person_read` / `place_search`, so the
+  initial `research.json` and `tree.gedcomx.json` are hand-serialized with no
+  validate-before-persist. It escapes the universal
+  `test_project_file_changes_route_through_writer_tools` validator only because a
+  new project has no `before_state` to diff against. The cost is real: ut_002
+  (2026-07-19) wrote a name with no `given` key and the invalid tree landed on
+  disk, which in production would make every later `tree_edit` reject the whole
+  document — the same project-wide write block that the D5-invalid
+  `flynn-household-skeleton` fixture caused for person-evidence. The prose bug is
+  fixed; the missing guard is not. Options: give init-project a writer tool for
+  the seed write, or have the validator treat an absent `before_state` as a diff
+  against empty rather than a skip.
+
+- **`max_cost_usd` does not cap anything in the e2e harness** — `cost_cap` is
+  applied inside the `ResultMessage` branch of `orchestrator.py`, and that
+  message only arrives once the run has already finished, so the "cap" is a
+  post-hoc label on a completed run. All five `cost_cap` runs in the corpus
+  ended with the SDK's own `end_turn` and `is_error: false` — spend ran to
+  $15.86–$20.84 against a $15 cap with nothing interrupted. Real enforcement
+  needs two pieces the harness lacks: a per-model price table for *agent*
+  models (`judge.py::JUDGE_PRICING` covers judge models only, and a run spans
+  the parent plus each subagent on its own `.md` pin), and a way to see
+  subagent tokens — they never appear in the main SDK message stream, so an
+  in-flight estimate built only from streamed usage under-counts by a margin
+  consistent with the unattributed portion of a real run's cost. Deliberately
+  not half-built: a cap that silently fires late is worse than a documented
+  reporting threshold. The spec (`e2e-test-spec.md` §5) now says so explicitly.

@@ -139,7 +139,7 @@ if exist "!FB_JSON!" (
 echo.
 echo Then: /compare-state --against=what-went-wrong
 echo.
-echo Full workflow: docs\feedback-workflow.md
+echo Full workflow: docs\alpha-feedback-guide.md
 exit /b 0
 
 :usage
