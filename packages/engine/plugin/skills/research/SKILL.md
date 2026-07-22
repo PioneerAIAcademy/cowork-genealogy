@@ -80,6 +80,23 @@ actually satisfied. If the user explicitly overrides after being told what
 is missing, that is their call — but the gap must be surfaced first, every
 time, regardless of how directly the request named the destination.
 
+## Proof tier guardrail — MANDATORY
+
+Never write directly to `research_append` with a `proof_summaries` op
+that sets or changes the `tier` field. The `proof-conclusion` skill is
+the ONLY permitted path for setting or upgrading a proof tier. It is
+the only layer that evaluates all five GPS components — including
+reasonably exhaustive research — before assigning a tier.
+
+Direct writes to `proof_summaries` via `research_append` are permitted
+ONLY for non-tier fields (e.g. `exhaustive_search_summary`,
+`narrative_markdown`, `supporting_assertion_ids`) when the tier is not
+changing.
+
+If new evidence is found that might justify a tier upgrade, invoke
+`proof-conclusion` and let it make the tier decision. Do not upgrade
+the tier inline.
+
 ## What to do
 
 1. **Read `research.json`.** Identify the current state: which

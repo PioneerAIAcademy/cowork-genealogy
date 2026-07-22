@@ -31,6 +31,20 @@ allowed-tools:
 
 **Read `references/gps-proof-writing.md` before writing any conclusion.** It contains GPS standards, proof-conclusion form selection tests, writing standards, and phrasing guidance this skill depends on.
 
+## Sole owner of proof tiers
+
+This skill is the sole owner of proof tier decisions. No other skill
+or tool call may set `tier` on a `proof_summaries` entry. When invoked
+after new evidence is found, always re-evaluate all five GPS components
+from scratch — do not inherit the previous tier as a starting point.
+Specifically, before assigning `proved`, confirm the active question
+carries a current `exhaustive_declaration` (the authoritative
+reasonably-exhaustive signal, owned by `research-exhaustiveness`);
+treat any remaining `plan_items` with status `planned` or
+`in_progress` as a prompt to confirm that declaration still holds — a
+plan is a prioritized list, not a checklist to drain — not an
+automatic block.
+
 ## Preconditions — mandatory, mechanical gate (run before Step 1)
 
 Run this check before touching Step 1, and show your work. A direct user
@@ -191,7 +205,7 @@ is already persisted.
 - **Cite everything; acknowledge limitations.** State what was not searched, what conflicts remain, what assumptions are made. A well-written "Not Proved" is better than a fabricated "Proved."
 - **Never assert unresolvability without testing it.** Before writing that resolving X "requires direct examination of [source]" or that [source] is "the only path," explicitly ask: what other record types could independently establish this same fact? If alternatives exist that were not searched, name them as unsearched alternatives rather than claiming the fact is unresolvable. Asserting unresolvability that was never tested embeds a GPS Component 1 gap inside the GPS Component 5 narrative.
   - **The distinction is between the evidence and the fact.** It is correct to write that X "is not established by the evidence gathered so far" or "remains unresolved pending [named record types]" — a claim about the *current* record set. It is forbidden to write that X "cannot be established," "cannot be inferred, assumed, or assigned," is "indeterminable," or "unobtainable" while any relevant record type is unsearched — a claim about the *fact itself*. The first invites the next search; the second forecloses it. When a target fact is unresolved, every sentence that states so **must**, in the same breath, name at least one specific unsearched record type that could still establish it (e.g. "…remains unresolved pending a premarital census or a birth/baptism record"). A bare "cannot be determined from the record" with no such pairing is a fail, even when the tier (Not Proved / Possible) is otherwise correct.
-- **Do not resolve conflicts here** — recommend conflict-resolution. Do not evaluate exhaustiveness here — reference the existing declaration and tier accordingly.
+- **Do not resolve conflicts here** — recommend conflict-resolution. Do not *evaluate* exhaustiveness here — the substantive judgment (the 5 threshold questions + 7-point stop criteria) belongs to `research-exhaustiveness`; reference its existing declaration and tier accordingly. The one narrow exception is the `proved` guardrail in **Sole owner of proof tiers** above: before assigning `proved`, confirm the question carries a current `exhaustive_declaration`, treating any still-open `plan_items` as a prompt to re-confirm that declaration rather than an automatic block.
 
 ## Re-invocation behavior
 
