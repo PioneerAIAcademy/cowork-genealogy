@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_broyles_siblings",
+    "objective": "Who were the siblings of Charles Robinson Broyles (MJ7L-SL9), born 9 December 1878 and died 18 March 1966, and what evidence supports their relationship to him?",
+    "subject_person_ids": [
+      "MJ7L-SL9"
+    ],
+    "status": "active",
+    "created": "2026-07-22",
+    "updated": "2026-07-22"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
