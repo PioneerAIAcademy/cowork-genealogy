@@ -3,6 +3,7 @@
     {
       "id": "G7JB-YH6",
       "gender": "Male",
+      "living": false,
       "names": [
         { "id": "N1", "preferred": true, "given": "William H", "surname": "Ferber", "type": "BirthName" }
       ],
@@ -18,6 +19,7 @@
     {
       "id": "G7JB-2T6",
       "gender": "Female",
+      "living": false,
       "names": [
         { "id": "N2", "preferred": true, "given": "Emma", "surname": "Becker", "type": "BirthName" }
       ],
@@ -32,6 +34,7 @@
     {
       "id": "G7JB-Y46",
       "gender": "Male",
+      "living": false,
       "names": [
         { "id": "N3", "preferred": true, "given": "Charles Hubert", "surname": "Ferber", "type": "BirthName" }
       ],
