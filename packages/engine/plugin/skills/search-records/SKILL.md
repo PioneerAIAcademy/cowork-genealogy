@@ -133,7 +133,9 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Add when available to improve result quality |
 
-For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. For place hierarchy expansion and date range behavior, read `references/place-date-mechanics.md`. For collection-specific strategies, read `references/collection-quirks.md`.
+For wildcard rules and fuzzy matching behavior, read `references/name-search-mechanics.md`. For place hierarchy expansion and date range behavior, read `references/place-date-mechanics.md`.
+
+**Before finalizing queries for a named collection (a specific `collectionId`, or a collection you can name — e.g. "Norway, Marriages, 1660-1926"), check `references/collection-quirks.md` for an entry on it and apply its guidance exactly.** This is a required check, not an optional pointer — the reference documents transcription and indexing behaviors (abbreviations, vowel substitutions, wildcard restrictions) that the general name-variant strategy above will not surface on its own. If an entry says two fields must be varied together (for example, a given name and a surname abbreviation), trying only one field is not sufficient — vary the fields the reference specifies, together, in the same call, before concluding a plan item is exhausted.
 
 **Name variant strategy:** If the exact name returns few results, try:
 - Phonetic variants (Flynn → Flyn, Flinn)
