@@ -1,0 +1,609 @@
+{
+  "persons": [
+    {
+      "id": "G7JB-YH6",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "William H",
+          "surname": "Ferber",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "December 1869",
+          "standard_date": "Dec 1869",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Death",
+          "date": "11 March 1903",
+          "standard_date": "11 Mar 1903",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Burial",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 1
+            },
+            {
+              "ref": "S5",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "G7JB-2T6",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Emma",
+          "surname": "Becker",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "25 March 1870",
+          "standard_date": "25 Mar 1870",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "date": "1903",
+          "standard_date": "1903",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Death",
+          "date": "7 December 1948",
+          "standard_date": "7 Dec 1948",
+          "place": "Dayton, Campbell, Kentucky, United States",
+          "standard_place": "Dayton, Campbell, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Burial",
+          "date": "10 December 1948",
+          "standard_date": "10 Dec 1948",
+          "place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Spring Grove Cemetery, Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "G7JB-Y46",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Charles Hubert",
+          "surname": "Ferber",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Birth",
+          "date": "22 June 1891",
+          "standard_date": "22 Jun 1891",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "standard_place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Death",
+          "date": "12 December 1967",
+          "standard_date": "12 Dec 1967",
+          "place": "Fort Lauderdale, Broward, Florida, United States",
+          "standard_place": "Fort Lauderdale, Broward, Florida, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "preferred": true,
+          "given": "Gerhardt",
+          "surname": "Faerber",
+          "type": "BirthName",
+          "id": "N4"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1822",
+          "place": "Prussia",
+          "sources": [
+            {
+              "ref": "S6"
+            }
+          ],
+          "id": "F15",
+          "standard_place": "Prussia, Germany"
+        }
+      ],
+      "id": "I1"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "preferred": true,
+          "given": "Eva",
+          "surname": "Faerber",
+          "type": "BirthName",
+          "id": "N5"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1832",
+          "place": "Bavaria",
+          "sources": [
+            {
+              "ref": "S6"
+            }
+          ],
+          "id": "F16",
+          "standard_place": "Bavaria, Germany"
+        }
+      ],
+      "id": "I2"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "preferred": true,
+          "given": "Gustave",
+          "surname": "Faerber",
+          "type": "BirthName",
+          "id": "N6"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1857",
+          "place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S6"
+            }
+          ],
+          "id": "F17",
+          "standard_place": "Ohio, United States",
+          "standard_date": "abt 1857"
+        }
+      ],
+      "id": "I3"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "preferred": true,
+          "given": "Jacob",
+          "surname": "Faerber",
+          "type": "BirthName",
+          "id": "N7"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1860",
+          "place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S6"
+            }
+          ],
+          "id": "F18",
+          "standard_place": "Ohio, United States",
+          "standard_date": "abt 1860"
+        }
+      ],
+      "id": "I4"
+    },
+    {
+      "gender": "Male",
+      "names": [
+        {
+          "preferred": true,
+          "given": "Charles",
+          "surname": "Faerber",
+          "type": "BirthName",
+          "id": "N8"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1865",
+          "place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S6"
+            }
+          ],
+          "id": "F19",
+          "standard_place": "Ohio, United States",
+          "standard_date": "abt 1865"
+        }
+      ],
+      "id": "I5"
+    },
+    {
+      "gender": "Female",
+      "names": [
+        {
+          "preferred": true,
+          "given": "Margarette",
+          "surname": "Faerber",
+          "type": "BirthName",
+          "id": "N9"
+        }
+      ],
+      "facts": [
+        {
+          "type": "Birth",
+          "date": "about 1867",
+          "place": "Ohio, United States",
+          "sources": [
+            {
+              "ref": "S6"
+            }
+          ],
+          "id": "F20",
+          "standard_place": "Ohio, United States",
+          "standard_date": "abt 1867"
+        }
+      ],
+      "id": "I6"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G7JB-YH6",
+      "person2": "G7JB-2T6",
+      "facts": [
+        {
+          "id": "F14",
+          "type": "Marriage",
+          "date": "10 September 1890",
+          "standard_date": "10 Sep 1890",
+          "place": "Hamilton, Ohio, United States",
+          "standard_place": "Hamilton, Ohio, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "G7JB-YH6",
+      "child": "G7JB-Y46",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G7JB-2T6",
+      "child": "G7JB-Y46",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I2",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R4"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "G7JB-YH6",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R5"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "G7JB-YH6",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R6"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R7"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S6"
+        }
+      ],
+      "id": "R14"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree",
+      "url": "https://www.familysearch.org/tree/person/details/G7JB-YH6"
+    },
+    {
+      "id": "S2",
+      "title": "Ohio, County Marriages, 1789-2016 -- Wm. H. Ferber and Emma Becker, 1890",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZR1-JZP"
+    },
+    {
+      "id": "S3",
+      "title": "United States, Census, 1900 -- William Ferber and Emma Ferber",
+      "url": "https://familysearch.org/ark:/61903/1:1:MM88-DGG"
+    },
+    {
+      "id": "S4",
+      "title": "Cincinnati, Ohio, U.S., Spring Grove Cemetery Index, 1845-2012",
+      "url": "https://search.ancestry.com/collections/9246/records/81391"
+    },
+    {
+      "id": "S5",
+      "title": "U.S., Find a Grave Index -- William H Ferber",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV2R-MD6H"
+    },
+    {
+      "id": "S6",
+      "title": "United States, Census, 1870 \u2014 Household of Gerhardt Faerber, Cincinnati, Hamilton County, Ohio",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MHXJ-Y4S"
+    },
+    {
+      "id": "S7",
+      "title": "Ohio, County Death Records, 1840-2001 \u2014 Entry for Wm. Ferber, 11 March 1903",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MXGX-5SW"
+    }
+  ]
+}

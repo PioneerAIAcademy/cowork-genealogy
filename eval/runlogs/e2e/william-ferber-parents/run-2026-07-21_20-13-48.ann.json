@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f2": "Eva correctly identified as the mother with matching approximate vitals (birth ~1832 vs expected ~1834, Bavaria), but recovered only under her married name (Faerber) -- no 'Engermann' appears anywhere in the tree. Likely an inherent limit of the 1870 census household source itself, which would show her married name, not her maiden name."
+  }
+}

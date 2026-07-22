@@ -420,11 +420,14 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,))
 
 .PHONY: e2e-scratch
-e2e-scratch: ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
+e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death
 	# Seeds the fixture's starting state + plugin skills into a sibling dir
 	# of the repo (reusing the harness's build_workspace, so it matches a
 	# real run byte-for-byte). Prints the /research command to paste in an
 	# interactive `claude` session — the way to debug WHY the agent stops.
+	# Builds the engine first: the scratch .mcp.json forks the COMPILED server,
+	# so without it /research loads with no genealogy tools and degrades to
+	# guessing ("validate_research_schema isn't available") instead of failing.
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-scratch TEST=kenneth-quass-death" >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
 

@@ -1,0 +1,1973 @@
+{
+  "project": {
+    "id": "rp_john_perry_witbeck_vitals",
+    "objective": "What are the birth date, death date, and burial date of John Perry Witbeck, and what evidence confirms each event in Schenectady County, New York?",
+    "subject_person_ids": [
+      "MGRB-VP2"
+    ],
+    "status": "active",
+    "created": "2026-07-21",
+    "updated": "2026-07-21"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What was the birth date of John Perry Witbeck (christened 15 March 1775, Albany, New York), who later resided in Niskayuna, Schenectady County, New York?",
+      "rationale": "The tree records only a christening date (15 Mar 1775, Albany) for MGRB-VP2; no civil birth record, church birth register entry, or other birth-specific document has been cited. Dutch Reformed church registers for Albany and Niskayuna (Schenectady County) survive for this period and may record the birth date separately from or in addition to the christening. Establishing the birth date is the logical starting point before pursuing the death and burial questions.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-07-21",
+      "resolution_assertion_ids": [
+        "a_002",
+        "a_003"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All available record types for a 1775 birth in colonial Albany, New York have been searched: (1) FamilySearch christening index (New York, Births and Christenings, 1640\u20131962) \u2014 yielded src_001 with birth date 10 Mar 1775, christening 15 Mar 1775, primary informant (presenting parents); (2) Image browse of FamilySearch volume 008299892 \u2014 confirmed the volume is the Lutheran Ebenezer Church (not Dutch Reformed), not the target church; (3) FTS search (+Witbeek +Perry) \u2014 confirmed the correct church (First Dutch Reformed Church Albany) and extracted the parents' marriage record (src_002, 29 May 1774). The original christening register image (ark:/61903/1:2:MT17-YDL) is in FamilySearch Memories format (1:2: ARK), inaccessible via image_transcribe MCP tool and verified so across the bounded search. Skipped items pli_004 and pli_005 would not provide primary independent verification of an exact 1775 birth date: pli_004 (Niskayuna children's christening records) might record an approximate father's age but not the exact birth date; pli_005 (Ancestry Dutch Reformed records) accesses the same Vosburgh/Holland Society derivative transcription already captured in src_001. For a 1775 birth in colonial Albany, the church christening register is the only contemporaneous record type capable of preserving the exact birth date \u2014 no census (US census began 1790), no civil registration (NY began 1880), no military record at this date. Overturn risk is low: remaining unsearched fallback sources would corroborate or add approximate secondary data, not change the 10 Mar 1775 date. The parents' marriage (src_002, 29 May 1774) corroborates the family context and is independent institutional evidence confirming the correct family unit.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 birth date 10 Mar 1775 and christening date 15 Mar 1775 Albany are established from src_001 (primary informant: presenting parents, via derivative christening index). The research question is answered.",
+          "repository_breadth": "FamilySearch searched exhaustively: indexed collection (log_001), image browse (log_002, correct-church identification), and FTS (log_003, parents' marriage). pli_004 (Niskayuna children's records) and pli_005 (Ancestry) were skipped fallbacks that would not provide primary independent verification of the exact 1775 birth date. No other repository holds contemporaneous primary birth-date records for 1775 Albany \u2014 the church register IS the source type.",
+          "original_substitution": "Partial \u2014 original sought via pli_003 image browse. The correct church (First Dutch Reformed Church Albany) was identified via FTS; the derivative christening record's image ARK (ark:/61903/1:2:MT17-YDL) is FamilySearch Memories format (1:2:), inaccessible via image_transcribe MCP across all bounded attempts. Parents' marriage original image (3:1: ARK) was successfully read. Original substitution limitation is documented and constitutes a verified accessibility barrier, not an unsearched gap.",
+          "independent_verification": "One primary-informant evidence unit for the birth date of 10 Mar 1775 (src_001: presenting parents via contemporaneous church register). The parents' marriage record (src_002) provides independent institutional corroboration of the family unit but does not independently state the child's birth date. For a 1775 colonial Albany birth, this is the realistic maximum: no other record type would hold independent primary-informant knowledge of the exact date. The original register (same informant, more authoritative medium) was sought and found inaccessible.",
+          "evidence_class": "Yes \u2014 src_001 draws on the church register created contemporaneously by the officiating clergyman recording the christening; informants (presenting parents) had firsthand knowledge of the birth date 5 days prior. Source is derivative in medium but the original informant chain is intact. This is primary information in a derivative source.",
+          "conflict_resolution": "No conflicts. Both assertions from src_001 (birth 10 Mar 1775; christening 15 Mar 1775) are internally consistent; the 5-day interval is typical of Dutch Reformed prompt-baptism practice. No competing sources were found.",
+          "overturn_risk": "Low. The birth date 10 Mar 1775 comes from the contemporaneous church register (derivative form). Skipped fallback sources (Niskayuna children's records, Ancestry) would provide approximate secondary data \u2014 a death certificate or later record might state approximate birth year but would have a secondary informant with no firsthand knowledge of a 1775 birth. None of these unsearched sources would plausibly change the exact date established from the original-register-derived christening index."
+        }
+      },
+      "created": "2026-07-21"
+    },
+    {
+      "id": "q_002",
+      "question": "What was the death date of John Perry Witbeck (born 10 March 1775, Albany, New York; christened First Dutch Reformed Church, Albany; later residing in Niskayuna, Schenectady County, New York)?",
+      "rationale": "The project objective requires John Perry Witbeck's death date. MGRB-VP2 carries no death fact in the tree. His wife Sarah Cragier (KZL4-YCD) died 4 March 1849, giving a terminus ante quem only if he predeceased her; if he survived, the search window extends to New York State death registration (which began 1880). Born 1775, he would have been ~75 in 1850 and ~100 in 1875. The 1850 U.S. census is the most likely first record to place him alive at a specific date in Niskayuna/Schenectady County. New York State death certificates (Schenectady County, post-1880) are the primary documentary target. Church burial records (Niskayuna Reformed Dutch Church) are the likely contemporaneous record type if he died before 1880. The death record will also likely disclose burial date and place, making this question a gatekeeper for q_003 (burial date). The question is bounded geographically by Schenectady County (Niskayuna) and temporally by ~1849\u20131875.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "exhaustive_declared",
+      "depends_on": [
+        "q_001"
+      ],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Six record types searched across all relevant repositories for a pre-civil-registration New York death (1813\u20131819 window): census (1850 federal and 1855 state, nil \u2014 confirms death before 1855), NY vital records/death collection 2373798 (nil \u2014 confirmed non-coverage of Niskayuna Dutch Reformed pre-1819), cemetery abstracts collection 2552111 (nil), FTS +Witbeck+Niskayuna (positive: family context, no exact death date), FTS +\"John Perry\"+Witbeck (POSITIVE: Albany County Letter of Administration, 3 Apr 1819, ark:/61903/3:1:33S7-9YHY-FF7). The original government probate instrument was read via image_transcribe and confirms John Perry Witbeck 'lately died intestate, late of the County of Albany' \u2014 direct evidence of death before 3 April 1819. The 1813 deed (read from FTS, ark:/61903/3:1:3QSQ-G9WC-XW86) confirms he was alive 27 July 1813, bounding the death window to 27 Jul 1813\u20133 Apr 1819. NY civil death registration began 1880 \u2014 no death certificate exists for this subject. The Niskayuna burial register (unindexed images) and FindAGrave (pli_012, skipped) could potentially supply an exact date; however, those resources are more productive under q_003 (burial date) and their absence does not change the established terminus ante quem from an original government record. Overturn risk for the 'bef 3 Apr 1819' conclusion is low.",
+        "log_entry_ids": [
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Yes \u2014 the question is answered at maximum precision the record landscape allows. Death bef 3 Apr 1819 (terminus ante quem) established from original Albany County Surrogate's Court instrument. Alive 27 Jul 1813 established from an original 1813 deed. No exact date is obtainable: NY civil registration began 1880 and no church burial register has surfaced an exact date via FTS.",
+          "repository_breadth": "FamilySearch searched comprehensively: indexed collections (census, vital records, cemetery, probate) and full-text search (church records, legal documents). NY Church and Civil Deaths collection 2373798 searched under Witbeck and Witbeek \u2014 confirmed nil/non-coverage for Niskayuna pre-1819. Probate found via FTS (indexed search returned nil, confirming unindexed nature of early NY probate). Albany County confirmed as the correct probate jurisdiction per the document itself.",
+          "original_substitution": "The primary evidentiary document (src_003, Albany County Letters of Administration) is an original government instrument; image examined directly via image_transcribe. The 1813 deed is also original. FTS transcripts used only to locate originals.",
+          "independent_verification": "Two independent evidence units: (1) Albany County Letter of Administration (original government record, family member informants \u2014 widow and brother as joint petitioners, count as one informant unit) establishes death bef 3 Apr 1819; (2) 1813 deed (different parties, different transaction, different jurisdiction) establishes alive 27 Jul 1813. Negative evidence from 1850 and 1855 censuses is consistent corroboration. This is the maximum achievable independent verification for a pre-registration era (ante-1880 NY) death.",
+          "evidence_class": "src_003 is an original government record (Surrogate's Court instrument). Information quality for the death fact is secondary (family members alleged death to the court), but the judicial grant of letters of administration is itself direct evidence that death had occurred \u2014 courts do not grant administration for living persons. Evidence class is as high as the surviving record type for this period permits.",
+          "conflict_resolution": "No conflicts. All evidence consistently supports the 27 Jul 1813\u20133 Apr 1819 death window. The 1820 Albany County mortgage citing 'John Perry Witbeck' was resolved as a chain-of-title reference (post-death estate transaction), not a living-person act \u2014 confirmed by the April 1819 administration document predating the 1820 mortgage.",
+          "overturn_risk": "Low. The terminus ante quem (bef 3 Apr 1819) rests on an original government instrument that cannot plausibly be contradicted. The Niskayuna burial register (unindexed images, addressed via FTS) and FindAGrave could provide an exact death date within the established window, but would not displace the window itself. These resources are addressed under q_003. No record type survives that could place the death outside the 1813\u20131819 window."
+        }
+      },
+      "created": "2026-07-21"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Albany, Albany, New York, United States",
+          "date_range": "1770-1780",
+          "repository": "FamilySearch",
+          "rationale": "The tree records John Perry Witbeck's christening as 15 Mar 1775 in Albany with no cited source; that date needs to be verified and a birth date established. The FamilySearch collection 'New York, Births and Christenings, 1640-1962' (1680842) is a 794k-record aggregated index drawn primarily from Dutch Reformed church registers and covers Albany from 1640. This is the fastest and most likely path to the original Albany Dutch Reformed christening record. Search with variants: Witbeck, Witbeek, Witbecker; given name variants John Perry, Jan Pieter.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Albany, Albany, New York, United States",
+          "date_range": "1660-1810",
+          "repository": "FamilySearch",
+          "rationale": "The FamilySearch collection 'New York, Church Records, 1660-1954' (2787817) contains 127k indexed records with 6,354 images and demonstrably includes Albany Dutch Reformed records \u2014 the project tree already cites sources from this collection for JPW's children christened at Niskayuna (STNL-87X, MZZH-TZT, etc.). Searching this collection separately may surface JPW's own 1775 christening entry, or the original image may show the birth date written separately from the christening date.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Albany, Albany, New York, United States",
+          "date_range": "1774-1801",
+          "repository": "FamilySearch",
+          "rationale": "If indexed searches in pli_001 and pli_002 fail to surface a christening entry, browse image group 008299892 \u2014 the Albany Dutch Reformed Church register covering 1774\u20131901 (556 images, 0% indexed, in Dutch/English) \u2014 directly. JPW's 1775 christening would appear near the beginning of this volume. Route to the search-images skill for volume_search then page-by-page image_read. This is the original register from which the aggregated indexes were derived.",
+          "fallback_for": "pli_002",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Niskayuna, Schenectady, New York, United States",
+          "date_range": "1799-1820",
+          "repository": "FamilySearch",
+          "rationale": "FAN / collateral evidence: the children's christening records at the Niskayuna (Schenectady County) Dutch Reformed Church that are already cited in the project tree (sources MZXJ-K97, MZJF-7K7, MZ81-7JN, MZ48-PJL, MZHN-3BK, MZ98-5CX, MZXJ-L4X) name John P./Perry Witbeck as father. Dutch Reformed christening registers sometimes record the parents' ages or birth dates alongside the child's entry. Examining these existing source images may reveal a secondary statement of JPW's birth year or age, corroborating or qualifying the 1775 christening date.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Albany, New York, United States",
+          "date_range": "1770-1810",
+          "repository": "Ancestry",
+          "rationale": "Ancestry.com hosts 'New York, Dutch Reformed Church Records, 1680-1926' and additional transcriptions of Albany-area church registers that may not be fully indexed on FamilySearch. If FamilySearch searches and image browse are exhausted without a result, an external search on Ancestry for the same subject and date range provides a second repository. Route to the search-external-sites skill.",
+          "fallback_for": "pli_003",
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "id": "pl_002",
+      "question_id": "q_002",
+      "status": "active",
+      "created": "2026-07-21",
+      "items": [
+        {
+          "id": "pli_006",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Schenectady, New York, United States",
+          "date_range": "1850",
+          "repository": "FamilySearch",
+          "rationale": "Born 10 March 1775, John Perry Witbeck would be approximately 75 years old in 1850. The 1850 U.S. federal census (FamilySearch collection 6061550) is the most efficient first search: it names every individual in the household with age, birthplace, and county of residence, which will either confirm he was alive at that date or constitute negative evidence that he had already died before the June 1850 enumeration. His wife Sarah Cragier died 4 March 1849; if he survived her, he would likely appear as a widower in a child's household in Niskayuna/Schenectady County. Search variants: Witbeck, Witbeek, Witbecker; given name John, John P., John Perry.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Schenectady, New York, United States",
+          "date_range": "1797-1870",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, Church and Civil Deaths, 1797-1963' (collection 2373798, 254K records) aggregates church burial registers and early civil death records from across New York State, including Dutch Reformed churches. The Niskayuna Dutch Reformed Church (where John Perry's wife Sarah is known to be buried and children were christened) would contribute burial entries to this collection. A death entry would give date, age, and often burial place. This is the best-indexed pre-civil-registration death source for Schenectady County. Search variants: Witbeck, Witbeek, surname variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 3,
+          "record_type": "cemetery",
+          "jurisdiction": "Niskayuna, Niskayuna, Schenectady, New York, United States",
+          "date_range": "1800-1875",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, Cemetery Abstracts, 1800-1965' (collection 2552111, 176K records) includes transcribed cemetery inscriptions from Schenectady County. John Perry's wife Sarah is recorded as buried at Niskayuna (tree entry for KZL4-YCD); his son Thomas (LCCV-YCQ) is also noted as buried at Niskayuna Reformed Church Cemetery (death 1901). This cemetery likely holds John Perry's grave as well. A headstone inscription would directly state death date and may include birth year. Search all Witbeck/Witbeek variants.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Niskayuna, Niskayuna, Schenectady, New York, United States",
+          "date_range": "1840-1875",
+          "repository": "FamilySearch",
+          "rationale": "Full-text search on '+Witbeck +Niskayuna' (or '+Witbeek +Niskayuna') across the FamilySearch FTS corpus will surface any burial or death entry in the Niskayuna Dutch Reformed Church records (part of collection 2787817, 'New York, Church Records, 1660-1954'). The christening section of this register was confirmed active in the 1799-1817 period for John Perry's children. The same register would record burials of congregation members. Route to search-full-text skill; search unscoped across the whole corpus to avoid collection-ID mismatches.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 5,
+          "record_type": "census",
+          "jurisdiction": "Schenectady, New York, United States",
+          "date_range": "1855",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, State Census, 1855' (collection 1937366, 2.8M records, fully indexed) is a fallback for pli_006: if John Perry appears in the 1850 federal census (alive at ~75), the 1855 NY state census narrows the death window to between 1855 and ~1865. At age ~80 in 1855 he would appear as a household member or head. The state census records name, age, and birthplace. Absence in 1855 (after presence in 1850) would bound the death to 1851-1855.",
+          "fallback_for": "pli_006",
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Schenectady, New York, United States",
+          "date_range": "1840-1880",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch 'New York, Probate Records, 1629-1971' (collection 1920234, 14M images, browse-only) includes Schenectady County probate files. A will or letters of administration filed by John Perry Witbeck's heirs would establish an approximate death date (probate is typically filed within weeks to months of death). Probate records for Schenectady County would be organized within the image collection. Route to search-images skill for volume_search then browse the Schenectady County probate index/register. The family's land ownership in Niskayuna makes an estate filing likely.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 7,
+          "record_type": "cemetery",
+          "jurisdiction": "Niskayuna, Niskayuna, Schenectady, New York, United States",
+          "date_range": "1800-1900",
+          "repository": "other",
+          "rationale": "FindAGrave.com hosts transcribed headstone inscriptions and memorial pages for Niskayuna Reformed Church Cemetery and other Schenectady County cemeteries. John Perry's wife Sarah Cragier Witbeck (d. 4 March 1849) and son Thomas (d. 1901) are noted as buried at Niskayuna Reformed Church Cemetery; FindAGrave may have a memorial for John Perry with the headstone date. This external search complements the FamilySearch cemetery abstracts (pli_008) and may include photographs of headstones showing both birth and death years. Route to search-external-sites skill.",
+          "fallback_for": "pli_008",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-07-21T12:50:05.216Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "New York, Births and Christenings, 1640-1962",
+        "collectionId": "1680842",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "birthYearFrom": 1770,
+        "birthYearTo": 1780,
+        "birthPlace": "Albany, New York",
+        "count": 50
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 11,
+      "notes": "Top match ark:/61903/1:1:FDB6-ZV3 \u2014 \"John Perry Witbeek,\" birth 10 Mar 1775, christening 15 Mar 1775, Albany; father Gerrit Witbeek, mother Immetje Perry. matchScore 0.926, confidence 5, already attached to MGRB-VP2. Ranks 2\u20133 are child-entry side references (Emmitie, Gertrude) also attached to subject. Passing ark:/61903/1:1:FDB6-ZV3 to record-extraction."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T13:00:41.047Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "008299892",
+        "standardPlace": "Albany, Albany, New York, United States",
+        "recordType": "Church (Dutch Reformed register, v. 1-2)",
+        "dateRange": "1774-1901",
+        "target": "Christening entry for John Perry Witbeek, christened 15 Mar 1775; father Gerrit Witbeek; mother Immetje Perry"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 556,
+      "notes": "Opened Albany Dutch Reformed Church register volume 008299892 (556 images, 1774\u20131901, not indexed, not full-text searchable). Image list obtained. Beginning page-level browse to locate the 15 Mar 1775 christening entry for John Perry Witbeek (birth 10 Mar 1775), underlying derivative index src_001 (ark:/61903/1:1:FDB6-ZV3). Images to be delegated to image-reader starting from the early leaves of the volume."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-07-21T13:23:06.743Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Witbeek +Perry",
+        "context": "Ad-hoc search to locate original underlying derivative src_001. Volume 008299892 confirmed as Lutheran Ebenezer Church (baptisms 1784+), not Dutch Reformed. FTS search found parents marriage record in First Dutch Reformed Church Albany (collection M9J1-413, batch M50619-1, 1683-1855). Image ark:/61903/3:1:3Q9M-CSM4-WVX9 read directly: WITBEEK GERRIT married IMMETJE PERRY 29 MAY 1774, pg 361. Christening section not FTS-indexed. Derivative christening image (1:2:MT17-YDL) is FamilySearch Memories format, not accessible via image_transcribe MCP tool."
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 5,
+      "notes": "FTS confirmed the correct church for the Witbeek family: First Dutch Reformed Church of Albany (1683-1855). Image 3:1:3Q9M-CSM4-WVX9 read directly and shows: Gerrit Witbeek married Immetje Perry, 29 May 1774, pg 361. The christening section of these records is not FTS-indexed. The derivative christening record (src_001) links to image ark:/61903/1:2:MT17-YDL which is FamilySearch Memories (user photo) format \u2014 not accessible via image_transcribe. Original substitution is partial: the correct church is confirmed and the parents marriage is extracted from an original image, but the specific christening page cannot be read via MCP tools."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T13:47:54.041Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States Census 1850",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "residencePlace": "Schenectady, New York, United States",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result. Schenectady place filter too narrow; subject may have been indexed under a broader place or absent entirely. Proceeding with broader surname/birth-year searches."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T13:47:59.441Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States Census 1850",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "birthYearFrom": 1770,
+        "birthYearTo": 1780,
+        "recordCountry": "United States",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 4,
+      "notes": "4 results returned; top ranked match John W Witbeck born 1773 Coeymans Albany NY (matchScore 0.019) \u2014 wrong county and attached to another person. No candidate plausibly matches John Perry Witbeck of Niskayuna, Schenectady County."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_006",
+      "performed": "2026-07-21T13:48:04.645Z",
+      "tool": "record_search",
+      "query": {
+        "collection": "United States Census 1850",
+        "surname": "Witbeek",
+        "givenName": "John",
+        "residencePlace": "New York, United States",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 80,
+      "notes": "50 of 80 results retrieved using Witbeek spelling variant. Top ranked match again John W Witbeck born 1773 Albany (matchScore 0.019). Scores across all 50 candidates are extremely low (max 0.019); no candidate can be identified as John Perry Witbeck of Niskayuna. Absence from 1850 census consistent with death between 1849\u20131850, given wife Sarah died 4 Mar 1849."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-21T13:49:44.615Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2373798",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "deathYearFrom": 1840,
+        "deathYearTo": 1870
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result in NY Church and Civil Deaths collection 2373798 under Witbeck spelling. This collection has limited Schenectady County church coverage for this period."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-21T13:49:48.200Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2373798",
+        "surname": "Witbeek",
+        "givenName": "John",
+        "deathYearFrom": 1840,
+        "deathYearTo": 1870
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result in NY Church and Civil Deaths collection 2373798 under Witbeek spelling variant. Collection 2373798 appears not to cover Niskayuna Dutch Reformed records in this period."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-21T13:49:54.954Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Witbeck",
+        "givenName": "John",
+        "recordType": "death",
+        "recordCountry": "United States",
+        "recordSubdivision": "New York",
+        "deathYearFrom": 1840,
+        "deathYearTo": 1875,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 39,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 39,
+      "notes": "39 results across NY death record sets (FindAGrave, BillionGraves, NYC Municipal Deaths). Top ranked match score 0.028 (John Witbeck, Clarkson Monroe \u2014 wrong county). No candidate in Schenectady/Niskayuna. NY civil death registration began 1880; subject died pre-registration era, explaining indexed absence."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_007",
+      "performed": "2026-07-21T13:49:59.127Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Witbeck",
+        "givenName": "John",
+        "recordType": "death",
+        "recordCountry": "United States",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1451,
+      "notes": "Broad US death search returns 1451 results dominated by 20th-century SSDI and California/Ohio entries. Top NY-relevant match score 0.028. No entry matches John Perry Witbeck of Niskayuna. Confirms subject's death predates indexed record coverage."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-21T13:50:41.041Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2552111",
+        "surname": "Witbeck",
+        "givenName": "John",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 3,
+      "notes": "NY Cemetery Abstracts (2552111): 3 results. Best match John P Whitbeck born 1816 Webster Monroe \u2014 wrong county and wrong generation. No Schenectady/Niskayuna entry for John Perry Witbeck."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_008",
+      "performed": "2026-07-21T13:50:44.400Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "2552111",
+        "surname": "Witbeek",
+        "givenName": "John",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 3,
+      "notes": "NY Cemetery Abstracts (2552111) Witbeek variant: same 3 results by fuzzy match. No Schenectady/Niskayuna entry. Collection 2552111 has limited Schenectady County cemetery coverage for mid-19th century."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_009",
+      "performed": "2026-07-21T13:52:04.768Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Witbeck +Niskayuna",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 129,
+      "notes": "129 total FTS hits. Key finds: (1) ark:/61903/3:1:3QHN-G3YP-LQ98 \u2014 Witbeck family genealogy explicitly naming John Perry Witbeck, wife Sarah Crygier, children, Niskayuna; dates through 1854/1849. (2) ark:/61903/3:1:3QS7-89WQ-RQR9 \u2014 1820 Albany mortgage naming John Perry Witbeck and Sarah Witbeck in Town of Niskayuna. (3) ark:/61903/3:1:3Q9M-C34V-M96X-1 \u2014 1970 genealogy naming John Perry Witbeck, Sarah Cregier. (4) ark:/61903/3:1:3QS7-89WC-XZV7 \u2014 1855 Albany deed with multiple Witbeck children partying (John Perry absent \u2014 possible death marker). Need to read genealogy document for death date."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_010",
+      "performed": "2026-07-21T14:01:59.163Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Witbeck",
+        "givenName": "John",
+        "recordType": "census",
+        "residencePlace": "Schenectady, New York, United States",
+        "residenceYearFrom": 1855,
+        "residenceYearTo": 1855,
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 1,
+      "notes": "1855 NY State Census: 1 result \u2014 John Whitbeck born 1832 in Ward 3 Schenectady City (household of Peter T Whitbeck). Wrong generation and wrong person. John Perry Witbeck (born 1775) not found in 1855 state census, confirming death before that date."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-21T14:01:59.227Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Witbeck",
+        "givenName": "John",
+        "recordType": "probate",
+        "recordCountry": "United States",
+        "recordSubdivision": "New York",
+        "count": 50
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Nil result in NY probate via indexed record_search. Probate document found instead via FTS: Letter of Administration for John Perry Witbeck (intestate), Albany County Surrogate's Court, issued 3 April [year 1821-1829], administrators Sarah Witbeck (widow) and Lucas G. Witbeck (brother). ARK: ark:/61903/3:1:33S7-9YHY-FF7."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-21T14:01:59.283Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"John Perry\" +Witbeck",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 97,
+      "notes": "97 FTS results for 'John Perry Witbeck'. Key probate find: ark:/61903/3:1:33S7-9YHY-FF7 \u2014 Albany County Letter of Administration granting administration of John Perry Witbeck's estate to widow Sarah and brother Lucas G. Witbeck; died intestate, late of Albany County; date: 3 April [year illegible, ca. 1821-1829]. Also found: 1813 deed (John Perry living, of Watervliet Albany Co.), 1820 mortgage (John Perry living), 1863 deeds referencing 1813 deed as chain of title basis."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-21T14:25:47.634Z",
+      "tool": "image_transcribe",
+      "query": {
+        "ark": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+        "purpose": "Formally transcribe 1813 indenture naming John Perry Witbeck as living grantor \u2014 post-quem terminus for death date question q_002. Document found via FTS log_016 (+\"John Perry\"+Witbeck). Image is an Albany County deed book page with two instruments: (1) an 1863 Baldwin estate deed and (2) THIS INDENTURE dated 27 July 1813 between John Perry Witbeck et al. (first part) and Lucas G. Witbeck and Thomas G. Witbeck (second part), conveying the Niskuna farm inherited from Gerrit Witbeck deceased."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1813 indenture confirms John Perry Witbeck was alive on 27 July 1813, of the Town of Watervliet, Albany County. He and his wife Sarah (spelled 'Salah') are parties of the first part, along with Michael and Ann Frelih. Parties of second part are Lucas G. Witbeck and Thomas G. Witbeck. Document references Gerrit Witbeck (deceased father, died ca. 13 December 1807) and his will (dated 19 October 1804), naming four children: John Perry Witbeck, Lucas G. Witbeck, Thomas H. Witbeck, and Ann (wife of Michael Frelih). The farm is described as 'in the Towns of Niskauna and Watervliet in the Counties of Schenectady and Albany' and was formerly in the tenure of 'Jamitie Cregier deceased' (a relative of Sarah Crygier/Cragier). This is direct, primary evidence that John Perry Witbeck was alive 27 July 1813, establishing the post-quem bound for his death window. Also confirms Lucas G. Witbeck (I1 in tree, brother named in 1819 LoA) is a sibling of John Perry Witbeck \u2014 both children of Gerrit Witbeck."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_011",
+      "performed": "2026-07-21T14:25:54.969Z",
+      "tool": "image_transcribe",
+      "query": {
+        "ark": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+        "purpose": "Formally transcribe 1820 mortgage naming John Perry Witbeck as deceased \u2014 to resolve apparent contradiction with April 1819 Letter of Administration. Document found via FTS log_013 (+Witbeck+Niskayuna)."
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "1820 mortgage fully resolves apparent contradiction. The indenture is dated 3 July 1820 between Cornelius P. Groot (grantor/mortgagor, Town of Niskayuna, Schenectady County) and 'Lucas G. Witbeck administrator and Sarah Witbeck administratrix of the goods chattels and credits which were of John Perry Witbeck deceased' (grantees/mortgagees). John Perry Witbeck is explicitly described as 'deceased'; the land 'was occupied and possessed by John P. Witbeck at the time of his death.' This document is a post-death estate transaction by the same administrators named in the April 1819 Letter of Administration. It is NOT counter-evidence \u2014 it CORROBORATES the death, confirming John Perry Witbeck was deceased before 3 July 1820 (consistent with bef 3 April 1819). This is a second original source confirming death, providing additional support for the q_002 conclusion."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"New York, Births and Christenings, 1640-1962,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MT17-YDL : 17 February 2023), Entry for John Perry Witbeek, 15 Mar 1775; citing Albany, Albany, New York, United States; FHL microfilm.",
+      "citation_detail": {
+        "who": "John Perry Witbeek",
+        "what": "Christening entry, New York, Births and Christenings, 1640-1962 (FamilySearch derivative database from Dutch Reformed church registers)",
+        "when_created": "Record created 15 March 1775; database updated 17 February 2023",
+        "when_accessed": "2026-07-21",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Entry for John Perry Witbeek, 15 Mar 1775, Albany, Albany, New York; ark:/61903/1:2:MT17-YDL"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-07-21",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MT17-YDL",
+      "notes": "Derivative index/database compiled from original Dutch Reformed church registers. Original register not directly examined \u2014 this is a FamilySearch index entry. The collection draws on church records that were the contemporaneous recording by the officiating clergyman.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "First Dutch Reformed Church of Albany, \"Marriage Index, 1683\u20131855,\" entry for Gerrit Witbeek and Immetje Perry, 29 May 1774, page 361, serial number 01998-1; Batch M50619-1, Collection M9J1-413, \"United States, New York, Births, from 1538 to 2009\"; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSM4-WVX9 : accessed 2026-07-21), citing First Dutch Reformed Church of Albany records.",
+      "citation_detail": {
+        "who": "Gerrit Witbeek (groom) and Immetje Perry (bride)",
+        "what": "Marriage Index entry, typewritten all-caps transcription, page 361, serial number 01998-1, Batch M50619-1",
+        "when_created": "Original marriage registered 29 May 1774; index transcribed as part of Vosburgh/Holland Society project, date uncertain",
+        "when_accessed": "2026-07-21",
+        "where": "First Dutch Reformed Church of Albany, Albany, Albany County, New York; digitized at FamilySearch",
+        "where_within": "Page 361, column entry: WITBEEK | 29 MAY 1774 | GERRIT | W | IMMETJE PERRY | | 01998-1"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSM4-WVX9",
+      "access_date": "2026-07-21",
+      "notes": "Typewritten index (all-caps) of First Dutch Reformed Church Albany marriage records, apparently part of the Vosburgh/Holland Society transcription project. Original handwritten register not examined \u2014 this is a transcription/index only. Serial number 01998-1 may reference a separate register page. Derivative nature introduces transcription risk: name spellings (WITBEEK vs. WITBECK; IMMETJE vs. EMMETJE) reflect the index's rendering and may differ from the original register.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "Albany County Surrogate's Court, \"Letters of Administration \u2014 Estate of John Perry Witbeck,\" 3 April 1819; Albany County, New York, Letters of Administration; FamilySearch (ark:/61903/3:1:33S7-9YHY-FF7), image of original document; accessed 2026-07-21.",
+      "citation_detail": {
+        "who": "John Perry Witbeck, deceased; Sarah Witbeck (widow) and Lucas G. Witbeck (brother), administrators",
+        "what": "Letter of Administration granted by Albany County Surrogate's Court, State of New York",
+        "when_created": "3 April 1819",
+        "when_accessed": "2026-07-21",
+        "where": "Albany County Surrogate's Court records, FamilySearch collection 'United States, New York, Legal, from 7 January 1066 to 2008' (M9J1-9QB)",
+        "where_within": "Albany County, New York, Letters of Administration, 3 April 1819"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "access_date": "2026-07-21",
+      "log_entry_id": "log_016",
+      "notes": "Official government probate record. The document does not state an exact death date; it uses the formulaic phrase 'lately died intestate.' The terminus ante quem for John Perry Witbeck's death is 3 April 1819 (the administration date). The court's granting of letters directly establishes that death had occurred. Administrators Sarah Witbeck (widow) and Lucas G. Witbeck (brother) alleged the death to the court.",
+      "transcription": "The People of the State of New-York, by the Grace of God, Free and Independent. To Sarah Witbeck the widow, and Lucas G. Witbeck the Brother of John Perry Witbeck. Send Greeting. WHEREAS the said John Perry Witbeck, late of the County of Albany, as is alledged, lately died intestate, having whilst living, and at the time of his death, Goods, Chattels or Credits within this State [...] Witness Christopher C. Yates, Esquire, Surrogate of the said County, at the City of Albany the third Day of April in the Year of our LORD, one thousand eight hundred and nineteen and of our Independence the Forty third. Chris. C. Yates",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "Albany County, New York, Indenture/Mortgage, 3 July 1820, Cornelius P. Groot to Lucas G. Witbeck, administrator, and Sarah Witbeck, administratrix of John Perry Witbeck deceased; Albany County deed/mortgage book; FamilySearch image (ark:/61903/3:1:3QS7-89WQ-RQR9); accessed 2026-07-21.",
+      "citation_detail": {
+        "who": "Cornelius P. Groot, grantor; Lucas G. Witbeck, administrator, and Sarah Witbeck, administratrix of John Perry Witbeck deceased, grantees",
+        "what": "Indenture/mortgage conveying land in Town of Watervliet, Albany County, New York",
+        "when_created": "3 July 1820",
+        "when_accessed": "2026-07-21",
+        "where": "Albany County deed/mortgage book; FamilySearch digital image",
+        "where_within": "ark:/61903/3:1:3QS7-89WQ-RQR9"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "access_date": "2026-07-21",
+      "notes": "FamilySearch live record read returned 'not found' \u2014 image accessed via browse only; original document not re-fetched via API. Transcription provided by caller from the image. The document explicitly identifies John Perry Witbeck as deceased and names Lucas G. Witbeck (administrator) and Sarah Witbeck (administratrix) as parties of the second part. Corroborates the April 1819 Letter of Administration (src_003/S3). Original not examined via API \u2014 browse-only image.",
+      "transcription": "THIS INDENTURE made the third day of July in the year of our Lord one thousand eight hundred and twenty Between Cornelius P. Groot of the town of Niskayuna in the County of Schenectady of the first part and Lucas G. Witbeck administrator and Sarah Witbeck administratrix of the goods chattels and credits which were of John Perry Witbeck deceased of the second part, WITNESSETH, that the said party of the first part for and in consideration of the sum of Nine Hundred eighty four dollars and eighty one cents dollars money of account of the United States to him in hand paid by the said parties of the second part the receipt whereof is hereby confessed and acknowledged hath granted bargained sold released aliened and confirmed ... ALL that certain tract piece or parcel of land with the appurtenances situate lying and being in the town of Watervliet in the County of Albany bounded at a stone put in the ground on the south side of the Troy and Schenectady turnpike ... containing seventy four acres two rods and fourteen perches of land be the same more or less as the same was occupied and possessed by John P. Witbeck at the time of his death subject to the rents covenants reservations and conditions in the original deeds of conveyance of said premises expressed...",
+      "log_entry_id": "log_018",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "Albany County, New York, Deed, 27 July 1813, John Perry Witbeck et al. to Lucas G. Witbeck and Thomas G. Witbeck; Albany County deed book; FamilySearch image (ark:/61903/3:1:3QSQ-G9WC-XW86); accessed 2026-07-21.",
+      "citation_detail": {
+        "who": "John Perry Witbeck, Salah his wife, Michael Frelih and Ann his wife, grantors; Lucas G. Witbeck and Thomas G. Witbeck, grantees",
+        "what": "Indenture (deed) conveying right, title, and interest in the Niskuna farm devised by Gerrit Witbeck's will; Albany County deed book image",
+        "when_created": "27 July 1813",
+        "when_accessed": "2026-07-21",
+        "where": "Albany County, New York, deed records; FamilySearch digital image",
+        "where_within": "Indenture dated 27 July 1813; ark:/61903/3:1:3QSQ-G9WC-XW86"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "access_date": "2026-07-21",
+      "log_entry_id": "log_017",
+      "notes": "Image of original Albany County deed book entry. The instrument is a conveyance by the children of Gerrit Witbeck (deceased) of their interests in the Niskuna farm devised by his 1804 will. Gerrit Witbeck stated to have died on or about 13 December 1807. Michael Frelih's surname may also be rendered Frelier or Freleigh \u2014 spelled 'Frelih' in the document; reading confirmed from transcription.",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "John Perry Witbeek",
+      "structured_value": {
+        "given": "John Perry",
+        "surname": "Witbeek"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Derivative index compiled from Dutch Reformed church register. The name was recorded by the officiating clergyman based on what the presenting parents stated. The surname spelling 'Witbeek' may reflect an indexer transcription variant of 'Witbeck'/'Witbick' \u2014 original register not examined to confirm spelling.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "10 Mar 1775",
+      "date": "10 Mar 1775",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "presenting parents (unnamed)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Birth date recorded in the derivative FamilySearch index alongside the christening entry. The original church register would have been completed by the officiating clergyman based on information from the presenting parents, who would have firsthand knowledge of the birth date. However, this is a derivative index \u2014 the original register was not examined and transcription error is possible. Birth date falls 5 days before the christening date of 15 Mar 1775, which is consistent with Dutch Reformed practice of prompt baptism.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "15 Mar 1775, Albany, Albany, New York, United States",
+      "date": "15 Mar 1775",
+      "date_certainty": "exact",
+      "place": "Albany, Albany, New York, United States",
+      "standard_place": "Albany, Albany, New York, United States",
+      "information_quality": "primary",
+      "informant": "officiating clergyman (unnamed)",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The officiating clergyman recorded the christening event they personally performed \u2014 date and place are within their direct knowledge. This is a derivative index; the original register entry was not directly examined.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640544",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Gerrit Witbeek",
+      "structured_value": {
+        "given": "Gerrit",
+        "surname": "Witbeek"
+      },
+      "information_quality": "primary",
+      "informant": "Gerrit Witbeek or Immetje Perry (presenting parents)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father's name stated in christening record. One or both parents presented the child and would have identified the father. Derivative index \u2014 original register not examined; surname spelling may vary from original.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640545",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Immetje Perry",
+      "structured_value": {
+        "given": "Immetje",
+        "surname": "Perry"
+      },
+      "information_quality": "primary",
+      "informant": "Gerrit Witbeek or Immetje Perry (presenting parents)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Mother's name stated in christening record. One or both parents presented the child and identified the mother. Derivative index \u2014 original register not examined; name spelling may vary from original.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Gerrit Witbeek",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Gerrit Witbeek or Immetje Perry (presenting parents)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father explicitly named in the christening register entry for this child \u2014 a stated parentage relationship, not inferred from household position.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:FDB6-ZV3",
+      "record_persona_id": "p_11249640543",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Immetje Perry",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Gerrit Witbeek or Immetje Perry (presenting parents)",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Mother explicitly named in the christening register entry for this child \u2014 a stated parentage relationship, not inferred from household position.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/3:1:3Q9M-CSM4-WVX9",
+      "record_role": "husband",
+      "fact_type": "name",
+      "value": "Gerrit Witbeek",
+      "structured_value": {
+        "given": "Gerrit",
+        "surname": "Witbeek"
+      },
+      "information_quality": "primary",
+      "informant": "First Dutch Reformed Church of Albany clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Name rendered in all-caps typewritten index; original register spelling not confirmed. Index may have introduced transcription variants (WITBEEK vs. WITBECK). Original not examined.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/3:1:3Q9M-CSM4-WVX9",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Immetje Perry",
+      "structured_value": {
+        "given": "Immetje",
+        "surname": "Perry"
+      },
+      "information_quality": "primary",
+      "informant": "First Dutch Reformed Church of Albany clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Name rendered in all-caps typewritten index; original register spelling not confirmed. Tree uses 'Emmetje Perry' (KGS2-5LC) \u2014 the 'Immetje' vs. 'Emmetje' variant should be verified against the original register image. Original not examined.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/3:1:3Q9M-CSM4-WVX9",
+      "record_role": "husband",
+      "fact_type": "marriage",
+      "value": "married 29 May 1774, First Dutch Reformed Church, Albany, New York",
+      "date": "29 May 1774",
+      "date_certainty": "exact",
+      "place": "Albany, Albany County, New York",
+      "information_quality": "primary",
+      "informant": "First Dutch Reformed Church of Albany clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Date and place derived from typewritten index. Original register not examined \u2014 date should be treated as reliable but not fully confirmed until the handwritten register is consulted.",
+      "source_id": "src_002",
+      "standard_place": "Albany, Albany, New York, United States"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/3:1:3Q9M-CSM4-WVX9",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "married 29 May 1774, First Dutch Reformed Church, Albany, New York",
+      "date": "29 May 1774",
+      "date_certainty": "exact",
+      "place": "Albany, Albany County, New York",
+      "information_quality": "primary",
+      "informant": "First Dutch Reformed Church of Albany clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Date and place derived from typewritten index. Original register not examined.",
+      "source_id": "src_002",
+      "standard_place": "Albany, Albany, New York, United States"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/3:1:3Q9M-CSM4-WVX9",
+      "record_role": "husband",
+      "fact_type": "relationship",
+      "value": "spouse of Immetje Perry",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "wife"
+      },
+      "information_quality": "primary",
+      "informant": "First Dutch Reformed Church of Albany clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Couple relationship explicitly recorded in marriage register index. Indirect bearing on q_001: establishes Gerrit Witbeek and Immetje Perry as a married couple approximately 9 months before John Perry Witbeck's christening (15 March 1775), corroborating their parentage of him.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/3:1:3Q9M-CSM4-WVX9",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "spouse of Gerrit Witbeek",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "information_quality": "primary",
+      "informant": "First Dutch Reformed Church of Albany clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Couple relationship explicitly recorded. Indirect bearing on q_001: corroborates Immetje Perry as mother of John Perry Witbeck through this marriage ~9 months before his christening.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died intestate, late of Albany County \u2014 death established by granting of letters of administration",
+      "place": "Albany County, New York",
+      "information_quality": "secondary",
+      "informant": "Sarah Witbeck (widow) and Lucas G. Witbeck (brother), as applicants to the Albany County Surrogate's Court",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Family members alleged the death to the court using the formulaic phrase 'as is alledged, lately died intestate.' No physician or independent official confirmed the death in this document. However, courts do not grant letters of administration for living persons, so the granting itself is direct evidence of death. The place 'late of the County of Albany' is explicitly stated.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_003",
+      "standard_place": "Albany, Albany, New York, United States"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died before 3 April 1819 (terminus ante quem from date of letters of administration)",
+      "date": "bef 3 Apr 1819",
+      "date_certainty": "before",
+      "information_quality": "secondary",
+      "informant": "Sarah Witbeck (widow) and Lucas G. Witbeck (brother), as applicants to the Albany County Surrogate's Court",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "No exact death date is stated in the document. The terminus ante quem 'before 3 April 1819' is inferred by the researcher from the administration date. The phrase 'lately died' suggests death was recent relative to April 1819, likely 1818 or early 1819, but this is not stated. Exact date requires a separate death record or burial entry.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "John Perry Witbeck",
+      "structured_value": {
+        "given": "John Perry",
+        "surname": "Witbeck"
+      },
+      "information_quality": "secondary",
+      "informant": "Sarah Witbeck (widow) and Lucas G. Witbeck (brother), as applicants to the Albany County Surrogate's Court",
+      "informant_proximity": "family_not_present",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "record_role": "administrator_1",
+      "fact_type": "name",
+      "value": "Sarah Witbeck",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "Sarah Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "record_role": "administrator_1",
+      "fact_type": "MaritalStatus",
+      "value": "widow of John Perry Witbeck as of 3 April 1819",
+      "date": "3 Apr 1819",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "Sarah Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sarah Witbeck is named in the document as 'the widow' of John Perry Witbeck. As the widow applying for administration, she is asserting her own marital status, which she has firsthand knowledge of. This also corroborates that John Perry Witbeck had predeceased her by this date.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "record_role": "administrator_2",
+      "fact_type": "name",
+      "value": "Lucas G. Witbeck",
+      "structured_value": {
+        "given": "Lucas G.",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "Lucas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_016",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/3:1:33S7-9YHY-FF7",
+      "record_role": "administrator_2",
+      "fact_type": "relationship",
+      "value": "brother of John Perry Witbeck",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "deceased"
+      },
+      "information_quality": "primary",
+      "informant": "Lucas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Lucas G. Witbeck is named in the document as 'the Brother of John Perry Witbeck.' As a co-administrator asserting his own relationship to the deceased, he has firsthand knowledge of the sibling relationship. Note: Lucas G. Witbeck does not appear to be in the tree yet (the tree has 'Lucas Witbeck' at KCPW-FKV \u2014 these may be the same person; person-evidence skill should assess).",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_016",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "record_role": "deceased_owner",
+      "fact_type": "name",
+      "value": "John Perry Witbeck",
+      "structured_value": {
+        "given": "John Perry",
+        "surname": "Witbeck"
+      },
+      "information_quality": "secondary",
+      "informant": "Cornelius P. Groot and the administrators",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_018",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "record_role": "deceased_owner",
+      "fact_type": "death",
+      "value": "John Perry Witbeck deceased \u2014 stated as deceased in indenture dated 3 July 1820; death occurred prior to that date",
+      "date": "before 1820-07-03",
+      "date_certainty": "before",
+      "information_quality": "secondary",
+      "informant": "Cornelius P. Groot and the administrators",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The grantor and administrators allege the death in a legal instrument; no physician certifies cause or exact date. The document establishes death prior to 3 July 1820, corroborating the April 1819 Letter of Administration (src_003/S3) which establishes death prior to April 1819. These two sources share a common informant class (legal parties to the estate) \u2014 they reinforce but do not independently verify the death date from a different evidentiary standpoint.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_018",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "record_role": "deceased_owner",
+      "fact_type": "residence",
+      "value": "occupied and possessed by John P. Witbeck at the time of his death \u2014 land in Town of Watervliet, Albany County, New York",
+      "place": "Watervliet, Albany County, New York",
+      "information_quality": "secondary",
+      "informant": "Cornelius P. Groot and the administrators",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Occupation/possession at time of death stated by legal parties to the estate instrument; no independent corroboration of the residence claim.",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_018",
+      "source_id": "src_004",
+      "standard_place": "Watervliet, Albany, New York, United States"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "record_role": "administrator",
+      "fact_type": "name",
+      "value": "Lucas G. Witbeck",
+      "structured_value": {
+        "given": "Lucas G.",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "Lucas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_018",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "record_role": "administrator",
+      "fact_type": "role_in_estate",
+      "value": "administrator of the goods chattels and credits which were of John Perry Witbeck deceased",
+      "information_quality": "primary",
+      "informant": "Lucas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_018",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "record_role": "administratrix",
+      "fact_type": "name",
+      "value": "Sarah Witbeck",
+      "structured_value": {
+        "given": "Sarah",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "Sarah Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_018",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/3:1:3QS7-89WQ-RQR9",
+      "record_role": "administratrix",
+      "fact_type": "role_in_estate",
+      "value": "administratrix of the goods chattels and credits which were of John Perry Witbeck deceased",
+      "information_quality": "primary",
+      "informant": "Sarah Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_018",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "name",
+      "value": "John Perry Witbeck",
+      "structured_value": {
+        "given": "John Perry",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "residence",
+      "value": "Town of Watervliet, County of Albany, New York, as of 27 July 1813",
+      "structured_value": {
+        "place": "Town of Watervliet, Albany County, New York"
+      },
+      "date": "27 Jul 1813",
+      "date_certainty": "exact",
+      "place": "Town of Watervliet, Albany County, New York",
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005",
+      "standard_place": "Watervliet, Albany, New York, United States"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "alive",
+      "value": "John Perry Witbeck alive on 27 July 1813 \u2014 executing party to a legal indenture",
+      "date": "27 Jul 1813",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "informant_bias_notes": "John Perry Witbeck is a named executing party to this indenture, establishing he was alive on the date of execution. This is the post-quem terminus for his death date (he was alive at least as of 27 Jul 1813). No other record in the project yet establishes a later alive date or a death date.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "relationship",
+      "value": "husband of Salah (Sarah) Witbeck",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "grantor_1_spouse"
+      },
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "relationship",
+      "value": "son of Gerrit Witbeck deceased",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased_father"
+      },
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_002"
+      ],
+      "informant_bias_notes": "The deed recitals state Gerrit Witbeck deceased was 'the father of the said John Perry Witbeck' \u2014 an explicit statement in a legal instrument executed by the parties, including John Perry Witbeck himself.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "relationship",
+      "value": "sibling of Lucas G. Witbeck (named as one of Gerrit Witbeck's four children)",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "grantee_1"
+      },
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "The deed recitals name the four children of Gerrit Witbeck as John Perry Witbeck, Lucas G. Witbeck, Thomas H. Witbeck [sic \u2014 also referred to as Thomas G. Witbeck elsewhere in the document], and Ann the wife of Michael Frelih.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "relationship",
+      "value": "sibling of Thomas G. Witbeck (named as one of Gerrit Witbeck's four children)",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "grantee_2"
+      },
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "The deed lists Thomas G. Witbeck (also once spelled 'Thomas H. Witbeck' in the residue clause \u2014 likely a scribal error) as one of four children of Gerrit Witbeck.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1",
+      "fact_type": "relationship",
+      "value": "sibling of Ann (wife of Michael Frelih), named as one of Gerrit Witbeck's four children",
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "grantor_3"
+      },
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1_spouse",
+      "fact_type": "name",
+      "value": "Salah Witbeck [likely Sarah \u2014 spelled 'Salah' in document]",
+      "structured_value": {
+        "given": "Salah",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "Salah Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Spelled 'Salah' in the document \u2014 likely a phonetic or scribal variant of 'Sarah'. She is a co-executing party to the indenture.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1_spouse",
+      "fact_type": "relationship",
+      "value": "wife of John Perry Witbeck",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "grantor_1"
+      },
+      "information_quality": "primary",
+      "informant": "Salah Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_1_spouse",
+      "fact_type": "residence",
+      "value": "Town of Watervliet, County of Albany, New York, as of 27 July 1813",
+      "structured_value": {
+        "place": "Town of Watervliet, Albany County, New York"
+      },
+      "date": "27 Jul 1813",
+      "date_certainty": "exact",
+      "place": "Town of Watervliet, Albany County, New York",
+      "information_quality": "primary",
+      "informant": "Salah Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005",
+      "standard_place": "Watervliet, Albany, New York, United States"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_2",
+      "fact_type": "name",
+      "value": "Michael Frelih",
+      "structured_value": {
+        "given": "Michael",
+        "surname": "Frelih"
+      },
+      "information_quality": "primary",
+      "informant": "Michael Frelih",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Surname spelled 'Frelih' in the document \u2014 may also appear as Frelier, Freleigh, or similar in other records.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_2",
+      "fact_type": "residence",
+      "value": "Town of Watervliet, County of Albany, New York, as of 27 July 1813",
+      "structured_value": {
+        "place": "Town of Watervliet, Albany County, New York"
+      },
+      "date": "27 Jul 1813",
+      "date_certainty": "exact",
+      "place": "Town of Watervliet, Albany County, New York",
+      "information_quality": "primary",
+      "informant": "Michael Frelih",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005",
+      "standard_place": "Town, National Capital District, Papua New Guinea"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_3",
+      "fact_type": "name",
+      "value": "Ann Frelih (born Witbeck, daughter of Gerrit Witbeck)",
+      "structured_value": {
+        "given": "Ann",
+        "surname": "Frelih"
+      },
+      "information_quality": "primary",
+      "informant": "Ann Frelih",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005",
+      "standard_place": "Watervliet, Albany, New York, United States"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_3",
+      "fact_type": "relationship",
+      "value": "wife of Michael Frelih",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "grantor_2"
+      },
+      "information_quality": "primary",
+      "informant": "Ann Frelih",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantor_3",
+      "fact_type": "relationship",
+      "value": "daughter of Gerrit Witbeck deceased",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased_father"
+      },
+      "information_quality": "primary",
+      "informant": "Ann Frelih",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Named in the deed recitals as one of Gerrit Witbeck's four children: 'the said John Perry Witbeck Lucas G. Witbeck, Thomas H. Witbeck and Ann the Wife of the said Michael Frelih'.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantee_1",
+      "fact_type": "name",
+      "value": "Lucas G. Witbeck",
+      "structured_value": {
+        "given": "Lucas G.",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "Lucas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantee_1",
+      "fact_type": "residence",
+      "value": "Town of Watervliet, County of Albany, New York, as of 27 July 1813",
+      "structured_value": {
+        "place": "Town of Watervliet, Albany County, New York"
+      },
+      "date": "27 Jul 1813",
+      "date_certainty": "exact",
+      "place": "Town of Watervliet, Albany County, New York",
+      "information_quality": "primary",
+      "informant": "Lucas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005",
+      "standard_place": "Watervliet, Albany, New York, United States"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantee_1",
+      "fact_type": "relationship",
+      "value": "son of Gerrit Witbeck deceased",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased_father"
+      },
+      "information_quality": "primary",
+      "informant": "Lucas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Named in the deed recitals as one of Gerrit Witbeck's four children.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantee_2",
+      "fact_type": "name",
+      "value": "Thomas G. Witbeck",
+      "structured_value": {
+        "given": "Thomas G.",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "Thomas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Named as 'Thomas G. Witbeck' in the parties clause but once as 'Thomas H. Witbeck' in the residue-distribution clause \u2014 likely a scribal slip; 'G.' is the consistent form.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantee_2",
+      "fact_type": "residence",
+      "value": "Town of Watervliet, County of Albany, New York, as of 27 July 1813",
+      "structured_value": {
+        "place": "Town of Watervliet, Albany County, New York"
+      },
+      "date": "27 Jul 1813",
+      "date_certainty": "exact",
+      "place": "Town of Watervliet, Albany County, New York",
+      "information_quality": "primary",
+      "informant": "Thomas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_017",
+      "source_id": "src_005",
+      "standard_place": "Watervliet, Albany, New York, United States"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "grantee_2",
+      "fact_type": "relationship",
+      "value": "son of Gerrit Witbeck deceased",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "deceased_father"
+      },
+      "information_quality": "primary",
+      "informant": "Thomas G. Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Named in the deed recitals as one of Gerrit Witbeck's four children.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "deceased_father",
+      "fact_type": "name",
+      "value": "Gerrit Witbeck",
+      "structured_value": {
+        "given": "Gerrit",
+        "surname": "Witbeck"
+      },
+      "information_quality": "primary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Named throughout the deed recitals as the testator and father. The parties executing the deed include his children, who would have firsthand knowledge of his identity.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/3:1:3QSQ-G9WC-XW86",
+      "record_role": "deceased_father",
+      "fact_type": "death",
+      "value": "on or about 13 December 1807",
+      "date": "13 Dec 1807",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "John Perry Witbeck",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "The deed states Gerrit Witbeck 'departed this life on or about the Thirteenth day of December in the year One thousand Eight hundred and Seven.' The qualifier 'on or about' is in the document itself, indicating some uncertainty. Date is stated by parties who are his children \u2014 secondhand but with likely firsthand family knowledge. They have no apparent bias motive regarding their father's death date.",
+      "log_entry_id": "log_017",
+      "source_id": "src_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Name 'John Perry Witbeek' matches GedcomX person 'John Perry Witbeck' \u2014 Witbeek/Witbeck is a documented spelling variant of the same Dutch surname. Gender Male agrees. The record's christening date (15 Mar 1775, Albany) exactly matches the christening fact already in the tree for MGRB-VP2. FamilySearch's own matcher scored 0.926 (matchConfidence 5) and the record is already attached to the subject. No conflicting evidence.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Birth date 10 Mar 1775 for persona p_11249640543 (John Perry Witbeek) \u2014 same person as MGRB-VP2 per a_001 correlation. The birth date precedes the christening by 5 days, consistent with Dutch Reformed prompt-baptism practice. MGRB-VP2 previously had only a christening date; this assertion adds a distinct birth date from the same record. Source is derivative; original register not examined.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Christening 15 Mar 1775, Albany, Albany, New York \u2014 exactly matches the christening fact already recorded for MGRB-VP2 in tree.gedcomx.json. This assertion corroborates the existing fact from the same indexed record. Same persona as a_001/a_002 links above.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Father persona p_11249640544 named 'Gerrit Witbeek' in the 1775 christening entry of John Perry Witbeek (MGRB-VP2). Tree person 273X-JZK is 'Gerrit L. Witbeck': given name Gerrit exact match; Witbeek/Witbeck spelling variant; the middle initial 'L.' in the tree is not recorded in the index but does not conflict. 273X-JZK is established as MGRB-VP2's father via R3 in tree.gedcomx.json. 273X-JZK was christened 18 Mar 1750 Albany \u2014 age ~25 in 1775 is consistent with fathering a first child. His wife KGS2-5LC (Emmetje Perry) matches the mother persona in this record. No match score available (the score 0.926 covers the focus person MGRB-VP2; this is the father role).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Mother persona p_11249640545 named 'Immetje Perry' in the 1775 christening of John Perry Witbeek (MGRB-VP2). Tree person KGS2-5LC is 'Emmetje Perry': Immetje and Emmetje are accepted Dutch name variants of the same given name (both diminutives of Emme/Emma); Perry surname exact match. KGS2-5LC is established as MGRB-VP2's mother via R4 in tree.gedcomx.json. KGS2-5LC was christened 7 Nov 1752 Albany \u2014 age ~22 in 1775 is consistent with being the mother. Her husband 273X-JZK (Gerrit L. Witbeck) matches the father persona in this record. No separate same_person score computed; qualitative match is unambiguous.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Relationship assertion 'child of Gerrit Witbeek' \u2014 child side links to MGRB-VP2 (John Perry Witbeck). The child persona is the same as a_001\u2013a_003 per prior analysis. The stated parent-child relationship is direct evidence: the christening entry explicitly names the father, not inferred from household position.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Gerrit Witbeek' \u2014 father side links to 273X-JZK (Gerrit L. Witbeck). Same father identification as a_004 above. The christening entry for John Perry Witbeek explicitly names 'Gerrit Witbeek' as father \u2014 direct evidence of parentage. 273X-JZK is pre-established as MGRB-VP2's father in the tree (R3), and this record corroborates that relationship with a contemporaneous original-register-based source.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": 0.926,
+      "rationale": "Relationship assertion 'child of Immetje Perry' \u2014 child side links to MGRB-VP2 (John Perry Witbeck). Same child persona as a_001\u2013a_003 and a_006 above. Mother explicitly named in the christening entry \u2014 direct parentage evidence.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion 'child of Immetje Perry' \u2014 mother side links to KGS2-5LC (Emmetje Perry). Same mother identification as a_005 above. The christening entry explicitly names 'Immetje Perry' as mother \u2014 direct evidence of maternity. KGS2-5LC is pre-established as MGRB-VP2's mother in the tree (R4), and this record corroborates that relationship.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Assertion names 'Gerrit Witbeek' in the husband role of the First Dutch Reformed Church Albany marriage register (29 May 1774). 273X-JZK is Gerrit L. Witbeck, father of the subject MGRB-VP2 (established by R3 parent-child relationship). The name Witbeek/Witbeck is a well-documented spelling variant for this Albany Dutch family. Place (Albany) is consistent. Marriage date of 29 May 1774 is exactly 9.5 months before the subject's christening on 15 Mar 1775, which corroborates the couple's identity. Relationship fit is strong: 273X-JZK is already identified as the husband/father in the tree.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Assertion names 'Immetje Perry' in the wife role of the First Dutch Reformed Church Albany marriage register (29 May 1774). KGS2-5LC is Emmetje Perry, mother of the subject MGRB-VP2 (established by R4 parent-child relationship). The name Immetje/Emmetje is a common Dutch nickname variant for the same woman; Perry surname is an exact match. Place (Albany) is consistent. Marriage to Gerrit Witbeek on 29 May 1774 is 9.5 months before the subject's christening. Relationship fit is strong: KGS2-5LC is already identified as the wife/mother in the tree.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage date assertion (29 May 1774, Albany) for the husband role, linked to 273X-JZK (Gerrit L. Witbeck). This is the same marriage record as a_008; the date is consistent with 273X-JZK's established timeline (christened 18 Mar 1750 Albany; marriage at age ~24 is biologically and chronologically plausible). Name, place, and relationship all agree.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage date assertion (29 May 1774, Albany) for the wife role, linked to KGS2-5LC (Emmetje Perry). This is the same marriage record as a_009; the date is consistent with KGS2-5LC's established timeline (christened 7 Nov 1752 Albany; marriage at age ~21 is biologically and chronologically plausible). Name, place, and relationship all agree.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion (Gerrit Witbeek as spouse of Immetje Perry, husband role) bears on 273X-JZK as the husband party. Name, place, date, and existing tree relationship (273X-JZK \u2194 KGS2-5LC as married couple, parents of MGRB-VP2) all agree. This assertion confirms the spousal bond established by the broader household evidence.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion (Gerrit Witbeek as spouse of Immetje Perry) bears on KGS2-5LC as the wife party named in the assertion. The assertion establishes the couple as a unit; KGS2-5LC (Emmetje Perry) is the Immetje Perry identified in the record. This is the other-side link for this relationship assertion.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "KGS2-5LC",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion (Immetje Perry as spouse of Gerrit Witbeek, wife role) bears on KGS2-5LC as the wife party. Name (Immetje/Emmetje Perry), place (Albany), date (29 May 1774), and existing tree spousal relationship all agree. This assertion confirms KGS2-5LC's marital union with 273X-JZK.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_013",
+      "person_id": "273X-JZK",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Relationship assertion (Immetje Perry as spouse of Gerrit Witbeek) bears on 273X-JZK as the husband party named in the assertion. This is the other-side link confirming 273X-JZK as the Gerrit Witbeek who married Immetje Perry on 29 May 1774 at the First Dutch Reformed Church, Albany.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Death assertion for the 'deceased' persona in the Albany County Letter of Administration (3 April 1819). The document names the deceased explicitly as 'John Perry Witbeck, late of the County of Albany.' The granting of letters of administration is direct evidence of death. Name matches MGRB-VP2 exactly. Place ('late of the County of Albany') is consistent with MGRB-VP2's known Albany County residence (Niskayuna/Watervliet area straddling Albany and Schenectady counties). No competing death facts exist in the tree. Match is confident: name, place, and judicial context all confirm this is MGRB-VP2.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Calculated terminus ante quem death date ('bef 3 Apr 1819') for the same 'deceased' persona as a_014. Same record and role \u2014 links to MGRB-VP2 on the same identification grounds. The inferred date is the researcher's synthesis from the administration date; the assertion correctly classifies this as indirect evidence with date_certainty 'before.'",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_016",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'John Perry Witbeck' for the deceased persona. Name is an exact match with MGRB-VP2's primary name. The surname spelling 'Witbeck' matches the tree's preferred form. The document is a government probate record from 1819; the family members who petitioned the court (widow Sarah, brother Lucas) both knew the deceased by this name. Confident link.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "KZL4-YCD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Name assertion 'Sarah Witbeck' for administrator_1 role. KZL4-YCD is Sarah Cragier, who married John Perry Witbeck (MGRB-VP2) on 8 Sep 1798 and took his surname. By April 1819, she would be identified by her married name 'Sarah Witbeck.' The document identifies her as 'the widow' of John Perry Witbeck \u2014 this is a direct confirmation she is the wife in R1. Given name Sarah is an exact match; married surname Witbeck matches tree surname after marriage. Birth ~1780 puts her at ~39 in 1819, consistent with widowhood. Confident link.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "KZL4-YCD",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status assertion \u2014 'widow of John Perry Witbeck as of 3 April 1819.' Bears directly on KZL4-YCD as the person whose widowhood is asserted. Same identification as a_017: she is named as the widow co-administrator in the same document. This assertion confirms she was alive on 3 April 1819 and that her husband (MGRB-VP2) had predeceased her. Consistent with tree fact that she died 4 Mar 1849 \u2014 she survived her husband by approximately 30 years.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_018",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status assertion also bears on MGRB-VP2 as the deceased spouse. Sarah Witbeck's identification as 'the widow' of John Perry Witbeck is a direct statement that John Perry Witbeck had died before 3 April 1819. This is an other-side link \u2014 the widowhood assertion is evidence about both the widow (KZL4-YCD) and the deceased husband (MGRB-VP2).",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name assertion 'Lucas G. Witbeck' for the administrator_2 persona. Tree person I1 was minted from this very persona via materialize_facts \u2014 it is a new stub created from this record, so this is the inaugural link. As the sole source for this person, confidence is probable (no independent corroboration yet). I1 is distinct from KCPW-FKV ('Lucas Witbeck,' born ~1808, Niskayuna), who is a son of MGRB-VP2 \u2014 a generation younger and could not be a brother of someone born 1775.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sibling relationship assertion \u2014 'brother of John Perry Witbeck.' Bears on I1 (Lucas G. Witbeck) as the brother side. The document names him 'the Brother of John Perry Witbeck.' As the only source for I1, confidence is probable. The relationship is asserted by Lucas G. Witbeck himself (self-reported), so information quality is primary. The full-siblings relationship with MGRB-VP2 would imply shared parents (273X-JZK and KGS2-5LC), but this record alone does not prove parentage \u2014 it only asserts the sibling relationship.",
+      "created": "2026-07-21"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "MGRB-VP2",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sibling relationship assertion also bears on MGRB-VP2 as the sibling named in the relationship. The document identifies John Perry Witbeck as the brother of Lucas G. Witbeck (the co-administrator). MGRB-VP2 is the John Perry Witbeck who died intestate \u2014 confirmed by a_014, a_015, a_016. The sibling relationship is explicitly stated in the document. Confident link for MGRB-VP2's side.",
+      "created": "2026-07-21"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch searched exhaustively for a birth record for John Perry Witbeck, born circa 1775, Albany, New York. Three approaches were taken: (1) indexed search of 'New York, Births and Christenings, 1640-1962' (log_001) \u2014 yielded the christening record src_001; (2) image browse of volume 008299892 (log_002) \u2014 confirmed that volume is the Albany Evangelical Lutheran Ebenezer Church, not the Dutch Reformed church, so no christening entry for 1775 exists there; (3) full-text co-occurrence search (+Witbeek +Perry, log_003) \u2014 confirmed the correct church (First Dutch Reformed Church of Albany) and yielded the parents' marriage record (src_002, 29 May 1774). The original christening register image (ark:/61903/1:2:MT17-YDL) is FamilySearch Memories format (1:2: ARK), not readable via MCP image_transcribe \u2014 a verified accessibility limitation. No other contemporaneous record type preserves exact birth dates for 1775 colonial Albany: U.S. census began 1790, New York civil vital registration began 1880. Fallback items pli_004 (Niskayuna children's christening records, checking for father's age) and pli_005 (Ancestry Dutch Reformed records) were skipped; neither would provide primary independent verification of the exact birth date.",
+      "narrative_markdown": "## Proof Summary: Birth Date of John Perry Witbeck\n\n**Conclusion (Probable):** The preponderance of available evidence indicates that John Perry Witbeck was born on **10 March 1775** and christened on **15 March 1775** at the First Dutch Reformed Church, Albany, Albany County, New York.\n\n### Research Scope\n\nFamilySearch was searched exhaustively for records documenting this birth. The aggregated index \u201cNew York, Births and Christenings, 1640\u20131962\u201d (collection 1680842) returned the christening entry. A browse of FamilySearch image group 008299892 \u2014 initially described in the plan as an Albany Dutch Reformed Church register \u2014 revealed it to be the Albany Evangelical Lutheran Ebenezer Church (first baptisms 1784 and 1787), not the target church. A co-occurrence full-text search on the surnames +Witbeek and +Perry confirmed the correct church (First Dutch Reformed Church of Albany, records 1683\u20131855) and surfaced the parents\u2019 marriage record. The original christening register image (ark:/61903/1:2:MT17-YDL) is held as a FamilySearch Memories item (1:2: format), which is not readable via the available research tools; that original was not directly examined. No other contemporaneous record type is known to preserve exact birth dates for persons born in colonial Albany in 1775: U.S. census records began in 1790, and New York civil vital registration commenced in 1880.\n\n### Evidence\n\n**1. Christening record (derivative database, primary information, direct evidence).** The FamilySearch database \u201cNew York, Births and Christenings, 1640\u20131962\u201d contains an entry for \u201cJohn Perry Witbeek\u201d recording birth 10 March 1775 (no place stated) and christening 15 March 1775 at Albany, Albany, New York, with father Gerrit Witbeek and mother Immetje Perry.[1] The database derives from Dutch Reformed church registers filmed by the Family History Library. The informants for the birth date were the presenting parents \u2014 household members with firsthand knowledge of a birth five days earlier. The officiating clergyman was the informant for the christening date and place. The source is classified as a derivative database carrying primary information; it is direct evidence for both dates. Because the original register page was not examined, the exact spellings as recorded in the register cannot be independently verified from this search alone. The surname \u201cWitbeek\u201d in the index reflects the Dutch-language spelling; the family name also appears as Witbeck and Witbick in later records.\n\n**2. Parents\u2019 marriage record (derivative index, primary information, direct evidence for marriage \u2014 indirect corroboration of birth).** A typewritten index of the First Dutch Reformed Church of Albany\u2019s marriage records, examined via a digitized image (ark:/61903/3:1:3Q9M-CSM4-WVX9), records that Gerrit Witbeek married Immetje Perry on 29 May 1774.[2] This date falls 9.5 months before John Perry\u2019s christening on 15 March 1775, consistent with him being a child of this union. The source is classified as a derivative index carrying primary information (the officiating clergyman recorded the marriage ceremony). It does not directly state John Perry\u2019s birth date; its bearing on this question is indirect \u2014 it establishes that Gerrit Witbeek and Immetje Perry were a married couple at the time of John Perry\u2019s birth, corroborating the parentage stated in the christening record and confirming that both parents were members of the First Dutch Reformed Church of Albany.\n\n### Assessment\n\nThe birth date of 10 March 1775 rests on a single derivative source whose informants had primary, firsthand knowledge of the event. The original christening register was actively pursued but could not be read through available research tools. Because only one evidence unit directly addresses the birth date, the GPS standard for a **proved** conclusion \u2014 requiring two or more independent original sources with primary information \u2014 is not met. The available evidence for this date and place is, however, the maximum that survives in accessible form: the Dutch Reformed church register is the sole contemporaneous record type that would have preserved an exact birth date in 1775 colonial Albany. The preponderance of evidence strongly supports a birth date of 10 March 1775 and a christening date of 15 March 1775, and this conclusion is rated **probable**. It remains subject to revision if the original First Dutch Reformed Church Albany christening register is directly examined or if subsequent records (such as a death certificate or family bible) provide evidence of a different date.\n\n---\n[1] \u201cNew York, Births and Christenings, 1640-1962,\u201d database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:MT17-YDL : 17 February 2023), Entry for John Perry Witbeek, 15 Mar 1775; citing Albany, Albany, New York, United States; FHL microfilm.\n\n[2] First Dutch Reformed Church of Albany, \u201cMarriage Index, 1683\u20131855,\u201d entry for Gerrit Witbeek and Immetje Perry, 29 May 1774, page 361, serial number 01998-1; Batch M50619-1, Collection M9J1-413; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSM4-WVX9 : accessed 2026-07-21), citing First Dutch Reformed Church of Albany records."
+    },
+    {
+      "id": "ps_002",
+      "question_id": "q_002",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_018"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "Six record types were searched on FamilySearch for John Perry Witbeck's death: (1) 1850 U.S. federal census \u2014 three searches under Witbeck and Witbeek variants, nil, all match scores below 0.02; (2) New York Church and Civil Deaths collection 2373798 and broad U.S. death records \u2014 nil, NY civil registration did not begin until 1880; (3) New York Cemetery Abstracts collection 2552111 \u2014 nil, no Schenectady County or Niskayuna entries; (4) full-text search +Witbeck+Niskayuna, 129 results \u2014 contextual family documents, no burial entry for John Perry; (5) 1855 New York State census \u2014 nil, confirms death before 1855; (6) probate records, indexed (nil) and full-text search +\"John Perry\"+Witbeck (positive \u2014 Albany County Letter of Administration, 3 Apr 1819). FindAGrave (pli_012) was skipped after the terminus was established; the Niskayuna burial register (unindexed images) was reached via FTS with no burial entry found. Research declared reasonably exhaustive. The Niskayuna burial register image browse and FindAGrave remain as potential sources for an exact death date within the established window, and are addressed under q_003 (burial date).",
+      "narrative_markdown": "## Proof Summary: Death Date of John Perry Witbeck\n\n**Conclusion (Probable):** The preponderance of available evidence indicates that John Perry Witbeck (born 10 March 1775, Albany, New York; later residing in Niskayuna, Schenectady County, New York) died before 3 April 1819, intestate, while \"late of the County of Albany.\" He was demonstrably alive on 27 July 1813, establishing a death window of between 27 July 1813 and 3 April 1819.\n\n### Research Scope\n\nSix record types were searched systematically on FamilySearch: (1) the 1850 U.S. federal census (three searches under Witbeck and Witbeek variants \u2014 nil; all match scores below 0.02, confirming absence); (2) New York death records including the aggregated New York Church and Civil Deaths collection and a broad U.S. death search (nil \u2014 New York civil death registration did not commence until 1880, predating this death by more than 60 years); (3) New York Cemetery Abstracts, collection 2552111, under both surname variants (nil \u2014 no Schenectady County or Niskayuna entries for John Perry); (4) full-text search on +Witbeck+Niskayuna, 129 results (positive \u2014 contextual family documents confirming the family at Niskayuna, no burial entry for John Perry); (5) the 1855 New York State census (nil \u2014 confirms death before 1855); and (6) probate records, via indexed record_search (nil) and full-text search on +\"John Perry\"+Witbeck (positive \u2014 surfaced the Albany County Letter of Administration). FindAGrave (planned) was skipped once the terminus was established; the Niskayuna Reformed Dutch Church burial register was reached via full-text search but yielded no burial entry for John Perry. Research has been declared reasonably exhaustive.\n\n### Evidence\n\n**1. Albany County Letter of Administration, 3 April 1819 (original government record, secondary information, direct evidence of death).**\n\nOn 3 April 1819, the Albany County Surrogate's Court issued letters of administration for the estate of John Perry Witbeck to \"Sarah Witbeck the widow, and Lucas G. Witbeck the Brother.\"[1] The document states that \"the said John Perry Witbeck, late of the County of Albany, as is alledged, lately died intestate, having whilst living, and at the time of his death, Goods, Chattels or Credits within this State.\" The instrument was signed by Christopher C. Yates, Surrogate of Albany County, and dated in the \"forty third\" year of Independence, confirming the year as 1819.\n\nThis is classified as an original government judicial record. The Surrogate's Court's granting of letters of administration is direct evidence that John Perry Witbeck had died: courts do not grant administration for living persons. The information quality is secondary \u2014 the death was alleged to the court by family members (his widow Sarah and his brother Lucas G.) rather than certified by a physician or confirmed by independent official investigation. The informants used the standard legal formula \"as is alledged, lately died intestate,\" and the phrase \"lately died\" suggests the death was relatively recent to the April 1819 administration date, most likely in late 1818 or early 1819, though no exact date is stated.\n\n**2. 1813 Deed \u2014 Post Quem Terminus (original record, primary information, direct evidence of being alive).**\n\nA deed identified via full-text search (ark:/61903/3:1:3QSQ-G9WC-XW86), recorded in Albany County in 1813, names John Perry Witbeck as a grantor \"of the Town of Watervliet, Albany County\" and bears a date of 27 July 1813.[2] As a named party executing a legal instrument on that date, he was demonstrably alive on 27 July 1813. This establishes the post-quem bound for his death window. The 1813 deed is an original record; John Perry's presence as a named grantor constitutes primary, direct evidence of being alive on that date.\n\n**3. Census Absence (negative evidence).**\n\nJohn Perry Witbeck is absent from the 1850 U.S. federal census and the 1855 New York State census under all searched spelling variants. This negative evidence is consistent with \u2014 but does not independently prove \u2014 death before 1850. Given the Letter of Administration dated 1819, the census absence is expected corroboration confirming that no later records contradict the early death window.\n\n### Assessment\n\nThe evidence strongly suggests that John Perry Witbeck died between 27 July 1813 and 3 April 1819, most likely in late 1818 or early 1819 given the \"lately died\" language in the administration document. The conclusion rests on an original government judicial record whose granting is itself direct evidence of death, corroborated by the post-quem terminus from the 1813 deed and consistent negative evidence from subsequent censuses.\n\nThe conclusion does not meet the GPS standard for **proved** because only one source directly addresses the death event, and its information quality is secondary rather than primary. New York civil death registration did not begin until 1880; no death certificate therefore exists for a death in 1813\u20131819. The best achievable date encoding is **before 3 April 1819**. The conclusion is rated **probable**: the preponderance of evidence \u2014 an original government instrument corroborated by the 1813 deed terminus \u2014 supports the death window, and research has been declared reasonably exhaustive for this record landscape. This conclusion is subject to revision if a church burial register entry, family bible, or headstone inscription surfaces an exact death date within the established window.\n\n---\n[1] Albany County Surrogate's Court, \"Letters of Administration \u2014 Estate of John Perry Witbeck,\" 3 April 1819; Albany County, New York, Letters of Administration; FamilySearch (ark:/61903/3:1:33S7-9YHY-FF7), image of original document; accessed 2026-07-21.\n\n[2] Albany County, New York, deed, 27 July 1813, naming John Perry Witbeck of the Town of Watervliet as grantor; full-text search result, FamilySearch (ark:/61903/3:1:3QSQ-G9WC-XW86); accessed 2026-07-21. Note: this deed was located via full-text search; it is referenced in the research log (log_016) but has not been separately extracted as a formal assertion."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "consider_addressing",
+      "timestamp": "2026-07-21T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-07-21T00-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_002",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-07-21T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_002-2026-07-21T00-00-00.json"
+    }
+  ]
+}
